@@ -13,7 +13,7 @@ plugins {
 	id 'org.openapi.generator' version '4.2.3'
 }
 
-group = 'bio.terra.TEMPLATE'
+group = 'bio.terra.workspace'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '1.8'
 

@@ -1,4 +1,4 @@
-# kernel-service-poc
+# terra-workspace-manager
 This repository started as a proof-of-concept. It is expanding to serve as a template
 project for MC Terra services.
 
@@ -152,7 +152,7 @@ There are sample tests for the ping service to illustrate two styles of unit tes
 ## Deployment
 ### On commit to master
 1. New commit is merged to master
-2. [The master_push workflow](https://github.com/DataBiosphere/kernel-service-poc/blob/gm-deployment/.github/workflows/master_push.yml) is triggered. It builds the image, tags the image & commit, and pushes the image to GCR. It then sends a [dispatch](https://help.github.com/en/actions/reference/events-that-trigger-workflows#external-events-repository_dispatch) with the new version for the service to the [framework-version repo](https://github.com/DataBiosphere/framework-version).
+2. [The master_push workflow](https://github.com/DataBiosphere/terra-workspace-manager/blob/gm-deployment/.github/workflows/master_push.yml) is triggered. It builds the image, tags the image & commit, and pushes the image to GCR. It then sends a [dispatch](https://help.github.com/en/actions/reference/events-that-trigger-workflows#external-events-repository_dispatch) with the new version for the service to the [framework-version repo](https://github.com/DataBiosphere/framework-version).
 3. This triggers the [update workflow](https://github.com/DataBiosphere/framework-version/blob/master/.github/workflows/update.yml), which updates the JSON that maps services to versions to map to the new version for the service whose repo sent the dispatch. The JSON is then committed and pushed.
 4. This triggers the [tag workflow](https://github.com/DataBiosphere/framework-version/blob/master/.github/workflows/tag.yml), which tags the new commit in the framework-version repo with a bumped semantic version, yielding a new version of the whole stack incorporating the newly available version of the service.
 5. The new commit corresponding to the above version of the stack is now visible on the [deliverybot dashboard](https://app.deliverybot.dev/DataBiosphere/framework-version/branch/master). It can now be manually selected for deployment to an environment.
