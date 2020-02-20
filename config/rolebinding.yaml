@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kernel-service-poc-service-role-binding
+roleRef:
+  kind: Role
+  name: kernel-service-poc-service-role
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+# Authorize specific service accounts:
+- kind: ServiceAccount
+  name: kernel-service-poc-service-sa

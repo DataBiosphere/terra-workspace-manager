@@ -1,0 +1,97 @@
+openapi: 3.0.0
+info:
+  title: TEMPLATE API
+  description: |
+    Template REST API to illustrate the plumbing of an endpoint through to a service
+    executing something. In general, replace the word TEMPLATE everywhere with your
+    service.
+  version: 0.0.1
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+  '/status':
+    get:
+      description: |
+        Returns the operational status of the service
+      operationId: serviceStatus
+      tags:
+        - unauthenticated
+      responses:
+        200:
+          description: Service is functional
+          $ref: '#/components/responses/StatusResponse'
+        500:
+          description: Service is broken
+          $ref: '#/components/responses/StatusResponse'
+
+  '/api/template/v1/ping':
+    post:
+      description: |
+        Send a message and get it back in the response
+      operationId: ping
+      tags:
+        - template
+      parameters:
+        - in: query
+          name: message
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+        500:
+          $ref: '#/components/responses/ErrorResponse'
+
+components:
+  schemas:
+    ErrorReport:
+      type: object
+      properties:
+        message:
+          type: string
+        statusCode:
+          type: integer
+        causes:
+          type: array
+          items:
+            type: string
+
+    SystemStatus:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          description: status of this service
+        systems:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              ok:
+                type: boolean
+              messages:
+                type: array
+                items:
+                  type: string
+
+  responses:
+    ErrorResponse:
+      description: common error response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorReport'
+
+    StatusResponse:
+      description: common status response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SystemStatus'
+
