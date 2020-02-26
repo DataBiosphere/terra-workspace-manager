@@ -31,6 +31,12 @@ paths:
       operationId: create
       tags:
         - workspace
+      requestBody:
+        description: "Auth token, spend profile, and policy information from Folder Manager"
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceRequestBody'
       responses:
         200:
           description: OK
@@ -69,6 +75,24 @@ components:
                 type: array
                 items:
                   type: string
+    CreateWorkspaceRequestBody:
+      type: object
+      properties:
+        authToken:
+          description: Requesting user's auth token
+          type: string
+        spendProfile:
+          description: UUID of provided spend profile
+          type: string
+          nullable: true
+          format: uuid
+        policies:
+          description: Policies provided by the containing folder
+          type: array
+          nullable: true
+          items:
+            type: string
+            format: uuid
     CreatedWorkspace:
       type: object
       properties:

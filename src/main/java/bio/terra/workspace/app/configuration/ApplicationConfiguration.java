@@ -1,17 +1,18 @@
 package bio.terra.workspace.app.configuration;
 
+import bio.terra.stairway.DefaultExceptionSerializer;
+import bio.terra.stairway.ExceptionSerializer;
+import bio.terra.stairway.Stairway;
 import bio.terra.workspace.app.StartupInitializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
-import org.apache.commons.dbcp2.ConnectionFactory;
-import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.apache.commons.dbcp2.PoolableConnection;
-import org.apache.commons.dbcp2.PoolableConnectionFactory;
 import org.apache.commons.dbcp2.PoolingDataSource;
-import org.apache.commons.pool2.ObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -19,11 +20,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-
-import java.util.Properties;
 
 @Configuration
 @EnableConfigurationProperties
@@ -32,92 +29,44 @@ import java.util.Properties;
 public class ApplicationConfiguration {
 
     // Configurable properties
-    private String dbUsername;
-    private String dbPassword;
-    private String dbUri;
-    // These properties control code in the StartupInitializer. We would not use these in production, but they
-    // are handy to set for development and testing. There are only three interesting states:
-    // 1. initialize is true; upgrade is irrelevant - initialize and recreate an empty database
-    // 2. initialize is false; upgrade is true - apply changesets to an existing database
-    // 3. initialize is false; upgrade is false - do nothing to the database
-    private boolean dbInitializeOnStart;
-    private boolean dbUpgradeOnStart;
+    private String samAddress;
+    private int maxStairwayThreads;
 
     // Not a property
     private PoolingDataSource<PoolableConnection> dataSource;
+    private Stairway stairway;
 
-    public String getDbUsername() {
-        return dbUsername;
+
+
+
+    public String getSamAddress() {
+        return samAddress;
     }
 
-    public void setDbUsername(String dbUsername) {
-        this.dbUsername = dbUsername;
+    public void setSamAddress(String samAddress) {
+        this.samAddress = samAddress;
     }
 
-    public String getDbPassword() {
-        return dbPassword;
+    public int getMaxStairwayThreads() {
+        return maxStairwayThreads;
     }
 
-    public void setDbPassword(String dbPassword) {
-        this.dbPassword = dbPassword;
+    public void setMaxStairwayThreads(int maxStairwayThreads) {
+        this.maxStairwayThreads = maxStairwayThreads;
     }
 
-    public String getDbUri() {
-        return dbUri;
-    }
-
-    public void setDbUri(String dbUri) {
-        this.dbUri = dbUri;
-    }
-
-    public boolean isDbInitializeOnStart() {
-        return dbInitializeOnStart;
-    }
-
-    public void setDbInitializeOnStart(boolean dbInitializeOnStart) {
-        this.dbInitializeOnStart = dbInitializeOnStart;
-    }
-
-    public boolean isDbUpgradeOnStart() {
-        return dbUpgradeOnStart;
-    }
-
-    public void setDbUpgradeOnStart(boolean dbUpgradeOnStart) {
-        this.dbUpgradeOnStart = dbUpgradeOnStart;
-    }
-
-    public PoolingDataSource<PoolableConnection> getDataSource() {
-        // Lazy allocation of the data source
-        if (dataSource == null) {
-            Properties props = new Properties();
-            props.setProperty("user", getDbUsername());
-            props.setProperty("password", getDbPassword());
-
-            ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(getDbUri(), props);
-
-            PoolableConnectionFactory poolableConnectionFactory =
-                    new PoolableConnectionFactory(connectionFactory, null);
-
-            ObjectPool<PoolableConnection> connectionPool =
-                    new GenericObjectPool<>(poolableConnectionFactory);
-
-            poolableConnectionFactory.setPool(connectionPool);
-
-            dataSource = new PoolingDataSource<>(connectionPool);
+    public Stairway getStairway() {
+        if (stairway == null) {
+            ExecutorService executorService = Executors.newFixedThreadPool(getMaxStairwayThreads());
+            ExceptionSerializer serializer = new DefaultExceptionSerializer();
+            stairway = new Stairway(executorService, null, serializer);
         }
-        return dataSource;
-    }
-
-    // This bean plus the @EnableTransactionManagement annotation above enables the use of the
-    // @Transaction annotation to control the transaction properties of the data source.
-    @Bean("transactionManager")
-    public PlatformTransactionManager getTransactionManager() {
-        return new DataSourceTransactionManager(getDataSource());
+        return stairway;
     }
 
     @Bean("jdbcTemplate")
-    public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
-        return new NamedParameterJdbcTemplate(getDataSource());
+    public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate(WorkspaceManagerJdbcConfiguration config) {
+        return new NamedParameterJdbcTemplate(config.getDataSource());
     }
 
     @Bean("objectMapper")
@@ -125,7 +74,8 @@ public class ApplicationConfiguration {
         return new ObjectMapper()
                 .registerModule(new ParameterNamesModule())
                 .registerModule(new Jdk8Module())
-                .registerModule(new JavaTimeModule());
+                .registerModule(new JavaTimeModule())
+                .registerModule(new JsonNullableModule());
     }
 
     // This is a "magic bean": It supplies a method that Spring calls after the application is setup,
