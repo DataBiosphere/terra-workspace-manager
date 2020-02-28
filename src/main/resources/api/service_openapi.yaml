@@ -78,6 +78,10 @@ components:
     CreateWorkspaceRequestBody:
       type: object
       properties:
+        id:
+          description: The ID of the workspace
+          type: string
+          format: uuid
         authToken:
           description: Requesting user's auth token
           type: string

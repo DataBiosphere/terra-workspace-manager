@@ -45,28 +45,24 @@ public class CreateServiceTest {
   @Test
   public void testReturnedUUID() throws Exception {
     CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody();
+    body.setId(UUID.randomUUID());
     body.setAuthToken("TODO: add token");
     body.setSpendProfile(JsonNullable.undefined());
     body.setPolicies(JsonNullable.undefined());
     MvcResult firstResult = mvc.perform(post("/api/v1/create").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(body)))
         .andExpect(status().isOk())
         .andReturn();
-    MvcResult secondResult = mvc.perform(post("/api/v1/create").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(body)))
-        .andExpect(status().isOk())
-        .andReturn();
-    CreatedWorkspace firstWorkspace = objectMapper
+
+    CreatedWorkspace workspace = objectMapper
         .readValue(firstResult.getResponse().getContentAsString(), CreatedWorkspace.class);
-    CreatedWorkspace secondWorkspace = objectMapper
-        .readValue(secondResult.getResponse().getContentAsString(), CreatedWorkspace.class);
-    assertThat("First UUID is not empty or null", firstWorkspace.getId(), not(blankOrNullString()));
-    assertThat("Second UUID is not empty or null", secondWorkspace.getId(),
-        not(blankOrNullString()));
-    assertThat("UUIDs don't match", firstWorkspace.getId(), not(equalTo(secondWorkspace.getId())));
+
+    assertThat("First UUID is not empty or null", workspace.getId(), not(blankOrNullString()));
   }
 
   @Test
   public void testWithSpendProfileAndPolicies() throws Exception {
     CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody();
+    body.setId(UUID.randomUUID());
     body.setAuthToken("TODO: add token");
     body.setSpendProfile(JsonNullable.of(UUID.randomUUID()));
     body.setPolicies(JsonNullable.of(Collections.singletonList(UUID.randomUUID())));
