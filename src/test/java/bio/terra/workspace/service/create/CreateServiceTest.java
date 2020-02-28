@@ -56,7 +56,7 @@ public class CreateServiceTest {
     CreatedWorkspace workspace = objectMapper
         .readValue(firstResult.getResponse().getContentAsString(), CreatedWorkspace.class);
 
-    assertThat("UUID is not empty or null", workspace.getId(), not(blankOrNullString()));
+    assertThat("First UUID is not empty or null", workspace.getId(), not(blankOrNullString()));
   }
 
   @Test
