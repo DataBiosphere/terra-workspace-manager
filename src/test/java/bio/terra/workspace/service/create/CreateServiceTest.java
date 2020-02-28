@@ -46,7 +46,7 @@ public class CreateServiceTest {
   public void testReturnedUUID() throws Exception {
     CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody();
     body.setId(UUID.randomUUID());
-    body.setAuthToken("TODO: add token");
+    body.setAuthToken("todo: add token");
     body.setSpendProfile(JsonNullable.undefined());
     body.setPolicies(JsonNullable.undefined());
     MvcResult firstResult = mvc.perform(post("/api/v1/create").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(body)))
@@ -56,14 +56,14 @@ public class CreateServiceTest {
     CreatedWorkspace workspace = objectMapper
         .readValue(firstResult.getResponse().getContentAsString(), CreatedWorkspace.class);
 
-    assertThat("First UUID is not empty or null", workspace.getId(), not(blankOrNullString()));
+    assertThat("UUID is not empty or null", workspace.getId(), not(blankOrNullString()));
   }
 
   @Test
   public void testWithSpendProfileAndPolicies() throws Exception {
     CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody();
     body.setId(UUID.randomUUID());
-    body.setAuthToken("TODO: add token");
+    body.setAuthToken("todo: add token");
     body.setSpendProfile(JsonNullable.of(UUID.randomUUID()));
     body.setPolicies(JsonNullable.of(Collections.singletonList(UUID.randomUUID())));
     MvcResult result = mvc.perform(post("/api/v1/create").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(body)))
