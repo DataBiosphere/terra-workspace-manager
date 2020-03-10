@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.create.exception;
 
 import bio.terra.workspace.common.exception.ErrorReportException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
@@ -10,7 +9,9 @@ import org.springframework.http.HttpStatus;
 public class SamApiException extends ErrorReportException {
 
   public SamApiException(ApiException samException) {
-    super("Error from SAM: ", Collections.singletonList(samException.getResponseBody()),
+    super(
+        "Error from SAM: ",
+        Collections.singletonList(samException.getResponseBody()),
         HttpStatus.resolve(samException.getCode()));
   }
 
@@ -26,13 +27,12 @@ public class SamApiException extends ErrorReportException {
     super(cause);
   }
 
-  public SamApiException(String message, List<String> causes,
-      HttpStatus statusCode) {
+  public SamApiException(String message, List<String> causes, HttpStatus statusCode) {
     super(message, causes, statusCode);
   }
 
-  public SamApiException(String message, Throwable cause,
-      List<String> causes, HttpStatus statusCode) {
+  public SamApiException(
+      String message, Throwable cause, List<String> causes, HttpStatus statusCode) {
     super(message, cause, causes, statusCode);
   }
 }

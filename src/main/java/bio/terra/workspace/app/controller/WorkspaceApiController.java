@@ -10,20 +10,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 
-
 @Controller
 public class WorkspaceApiController implements WorkspaceApi {
   private CreateService createService;
 
   @Autowired
   public WorkspaceApiController(CreateService createService) {
-      this.createService = createService;
+    this.createService = createService;
   }
 
   @Override
   public ResponseEntity<CreatedWorkspace> create(@RequestBody CreateWorkspaceRequestBody body) {
-      CreatedWorkspace result = createService.createWorkspace(body);
-      return new ResponseEntity<>(result, HttpStatus.OK);
+    CreatedWorkspace result = createService.createWorkspace(body);
+    return new ResponseEntity<>(result, HttpStatus.OK);
   }
-
 }

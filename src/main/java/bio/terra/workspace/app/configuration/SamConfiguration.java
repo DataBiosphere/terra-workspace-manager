@@ -8,14 +8,13 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "sam")
 public class SamConfiguration {
-    private String basePath;
+  private String basePath;
 
-    public String getBasePath() {
-        return basePath;
-    }
+  public String getBasePath() {
+    return basePath;
+  }
 
-    public void setBasePath(String basePath) {
-        this.basePath = basePath;
-    }
-
+  public void setBasePath(String basePath) {
+    this.basePath = basePath;
+  }
 }

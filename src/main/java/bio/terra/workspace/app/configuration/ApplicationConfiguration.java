@@ -28,66 +28,63 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @ConfigurationProperties(prefix = "workspace")
 public class ApplicationConfiguration {
 
-    // Configurable properties
-    private String samAddress;
-    private int maxStairwayThreads;
+  // Configurable properties
+  private String samAddress;
+  private int maxStairwayThreads;
 
-    // Not a property
-    private PoolingDataSource<PoolableConnection> dataSource;
-    private Stairway stairway;
+  // Not a property
+  private PoolingDataSource<PoolableConnection> dataSource;
+  private Stairway stairway;
 
+  public String getSamAddress() {
+    return samAddress;
+  }
 
+  public void setSamAddress(String samAddress) {
+    this.samAddress = samAddress;
+  }
 
+  public int getMaxStairwayThreads() {
+    return maxStairwayThreads;
+  }
 
-    public String getSamAddress() {
-        return samAddress;
+  public void setMaxStairwayThreads(int maxStairwayThreads) {
+    this.maxStairwayThreads = maxStairwayThreads;
+  }
+
+  public Stairway getStairway() {
+    if (stairway == null) {
+      ExecutorService executorService = Executors.newFixedThreadPool(getMaxStairwayThreads());
+      ExceptionSerializer serializer = new DefaultExceptionSerializer();
+      stairway = new Stairway(executorService, null, serializer);
     }
+    return stairway;
+  }
 
-    public void setSamAddress(String samAddress) {
-        this.samAddress = samAddress;
-    }
+  @Bean("jdbcTemplate")
+  public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate(
+      WorkspaceManagerJdbcConfiguration config) {
+    return new NamedParameterJdbcTemplate(config.getDataSource());
+  }
 
-    public int getMaxStairwayThreads() {
-        return maxStairwayThreads;
-    }
+  @Bean("objectMapper")
+  public ObjectMapper objectMapper() {
+    return new ObjectMapper()
+        .registerModule(new ParameterNamesModule())
+        .registerModule(new Jdk8Module())
+        .registerModule(new JavaTimeModule())
+        .registerModule(new JsonNullableModule());
+  }
 
-    public void setMaxStairwayThreads(int maxStairwayThreads) {
-        this.maxStairwayThreads = maxStairwayThreads;
-    }
-
-    public Stairway getStairway() {
-        if (stairway == null) {
-            ExecutorService executorService = Executors.newFixedThreadPool(getMaxStairwayThreads());
-            ExceptionSerializer serializer = new DefaultExceptionSerializer();
-            stairway = new Stairway(executorService, null, serializer);
-        }
-        return stairway;
-    }
-
-    @Bean("jdbcTemplate")
-    public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate(WorkspaceManagerJdbcConfiguration config) {
-        return new NamedParameterJdbcTemplate(config.getDataSource());
-    }
-
-    @Bean("objectMapper")
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper()
-                .registerModule(new ParameterNamesModule())
-                .registerModule(new Jdk8Module())
-                .registerModule(new JavaTimeModule())
-                .registerModule(new JsonNullableModule());
-    }
-
-    // This is a "magic bean": It supplies a method that Spring calls after the application is setup,
-    // but before the port is opened for business. That lets us do database migration and stairway
-    // initialization on a system that is otherwise fully configured. The rule of thumb is that all
-    // bean initialization should avoid database access. If there is additional database work to be
-    // done, it should happen inside this method.
-    @Bean
-    public SmartInitializingSingleton postSetupInitialization(ApplicationContext applicationContext) {
-        return () -> {
-            StartupInitializer.initialize(applicationContext);
-        };
-    }
-
+  // This is a "magic bean": It supplies a method that Spring calls after the application is setup,
+  // but before the port is opened for business. That lets us do database migration and stairway
+  // initialization on a system that is otherwise fully configured. The rule of thumb is that all
+  // bean initialization should avoid database access. If there is additional database work to be
+  // done, it should happen inside this method.
+  @Bean
+  public SmartInitializingSingleton postSetupInitialization(ApplicationContext applicationContext) {
+    return () -> {
+      StartupInitializer.initialize(applicationContext);
+    };
+  }
 }

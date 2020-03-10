@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.configuration;
 
+import java.util.Properties;
 import org.apache.commons.dbcp2.ConnectionFactory;
 import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnection;
@@ -10,11 +11,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 
-import java.util.Properties;
-
-/**
- * Base class for accessing JDBC configuration properties.
- */
+/** Base class for accessing JDBC configuration properties. */
 public class JdbcConfiguration {
   private String uri;
   private String username;
@@ -35,7 +32,8 @@ public class JdbcConfiguration {
     return password;
   }
 
-  // NOTE: even though the setters appear unused, the Spring infrastructure uses them to populate the properties.
+  // NOTE: even though the setters appear unused, the Spring infrastructure uses them to populate
+  // the properties.
   public void setUri(String uri) {
     this.uri = uri;
   }
@@ -80,7 +78,8 @@ public class JdbcConfiguration {
     return new ToStringBuilder(this, ToStringStyle.JSON_STYLE)
         .append("uri", uri)
         .append("username", username)
-        // .append("password", password) NOTE: password is not printed; that avoids it showing up in logs
+        // .append("password", password) NOTE: password is not printed; that avoids it showing up in
+        // logs
         .toString();
   }
 }

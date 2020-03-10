@@ -3,7 +3,7 @@ package bio.terra.workspace.common.exception.stairway;
 
 import bio.terra.stairway.exception.StairwayRuntimeException;
 
-public class StairwayInitializationException  extends StairwayRuntimeException {
+public class StairwayInitializationException extends StairwayRuntimeException {
 
   public StairwayInitializationException(String message) {
     super(message);
