@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kernel-service-poc-deployment
+  name: terra-workspace-manager-deployment
   labels:
     version: v1
 spec:
   replicas: 1
   template:
     metadata:
-      name: kernel-service-poc-service
+      name: terra-workspace-manager-service
       labels:
         version: v1
     spec:
-      serviceAccountName: kernel-service-poc-service-sa
+      serviceAccountName: terra-workspace-manager-service-sa
       containers:
-      - name: kernel-service-poc
-        image: gcr.io/terra-kernel-k8s/kernel-service-poc:0.0.0
+      - name: terra-workspace-manager
+        image: gcr.io/terra-kernel-k8s/terra-workspace-manager:0.0.0
         imagePullPolicy: Always
         ports:
         - containerPort: 8080

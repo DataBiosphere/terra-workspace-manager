@@ -1,10 +1,8 @@
 openapi: 3.0.0
 info:
-  title: TEMPLATE API
+  title: Workspace Manager API
   description: |
-    Template REST API to illustrate the plumbing of an endpoint through to a service
-    executing something. In general, replace the word TEMPLATE everywhere with your
-    service.
+    Workspace Manager REST API to manage workspaces.
   version: 0.0.1
 
 servers:
@@ -26,25 +24,23 @@ paths:
           description: Service is broken
           $ref: '#/components/responses/StatusResponse'
 
-  '/api/template/v1/ping':
+  '/api/v1/create':
     post:
       description: |
-        Send a message and get it back in the response
-      operationId: ping
+        Create a new Workspace. This should only be called by Folder Manager.
+      operationId: create
       tags:
-        - template
-      parameters:
-        - in: query
-          name: message
-          schema:
-            type: string
+        - workspace
+      requestBody:
+        description: "Auth token, spend profile, and policy information from Folder Manager"
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceRequestBody'
       responses:
         200:
           description: OK
-          content:
-            text/plain:
-              schema:
-                type: string
+          $ref: '#/components/responses/CreateResponse'
         500:
           $ref: '#/components/responses/ErrorResponse'
 
@@ -79,6 +75,34 @@ components:
                 type: array
                 items:
                   type: string
+    CreateWorkspaceRequestBody:
+      type: object
+      properties:
+        id:
+          description: The ID of the workspace
+          type: string
+          format: uuid
+        authToken:
+          description: Requesting user's auth token
+          type: string
+        spendProfile:
+          description: UUID of provided spend profile
+          type: string
+          nullable: true
+          format: uuid
+        policies:
+          description: Policies provided by the containing folder
+          type: array
+          nullable: true
+          items:
+            type: string
+            format: uuid
+    CreatedWorkspace:
+      type: object
+      properties:
+        id:
+          type: string
+          description: UUID of a newly-created workspace
 
   responses:
     ErrorResponse:
@@ -94,4 +118,11 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/SystemStatus'
+
+    CreateResponse:
+      description: Response to Create calls
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedWorkspace'
 
