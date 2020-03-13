@@ -1,0 +1,81 @@
+name: Tag, Build, and Push Image
+
+on:
+  push:
+    branches:
+    - master
+    paths-ignore:
+    - 'README.md'
+    - '.github/**'
+env:
+  SERVICE_NAME: ${{ github.event.repository.name }}
+  GOOGLE_PROJECT: terra-kernel-k8s
+  GKE_CLUSTER: terra-kernel-k8s
+  VAULT_PATH_GCR: secret/dsde/terra/kernel/test
+  VAULT_ADDR: https://clotho.broadinstitute.org:8200
+jobs:
+  tag-build-push:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout current code
+      uses: actions/checkout@master
+    - name: Bump version and push tag
+      id: tag
+      uses: broadinstitute/github-tag-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        WITH_V: false
+    - name: Pull Vault image
+      run: docker pull vault:1.1.0
+    # Currently, there's no way to add capabilities to Docker actions on Git, and Vault needs IPC_LOCK to run.
+    - name: Get Vault token
+      id: vault-token-step
+      run: |
+        VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
+          -e "VAULT_ADDR=${VAULT_ADDR}" \
+          vault:1.1.0 \
+          vault write -field token \
+            auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+            secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+        echo ::set-output name=vault-token::$VAULT_TOKEN
+        echo ::add-mask::$VAULT_TOKEN
+    - name: Get Vault secrets
+      id: vault-secret-step
+      run: |
+        GCR_EMAIL=$(docker run --rm --cap-add IPC_LOCK \
+          -e "VAULT_TOKEN=${{ steps.vault-token-step.outputs.vault-token }}" \
+          -e "VAULT_ADDR=${VAULT_ADDR}" \
+          vault:1.1.0 \
+          vault read -field ci-gcr-sa-email ${VAULT_PATH_GCR})
+        GCR_KEY=$(docker run --rm --cap-add IPC_LOCK \
+          -e "VAULT_TOKEN=${{ steps.vault-token-step.outputs.vault-token }}" \
+          -e "VAULT_ADDR=${VAULT_ADDR}" \
+          vault:1.1.0 \
+          vault read -field ci-gcr-sa-key ${VAULT_PATH_GCR})
+        echo ::set-output name=gcr-email::$GCR_EMAIL
+        echo ::add-mask::$GCR_EMAIL
+        echo ::set-output name=gcr-key::$GCR_KEY
+        echo ::add-mask::$GCR_KEY
+    - name: Auth to GCR
+      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+        version: '270.0.0'
+        service_account_email: ${{ steps.vault-secret-step.outputs.gcr-email }}
+        service_account_key: ${{ steps.vault-secret-step.outputs.gcr-key }}
+    - name: Explicitly auth Docker for GCR
+      run: gcloud auth configure-docker --quiet
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    - name: Build and push GCR image using Jib
+      run: "./gradlew jib --image=gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:${{ steps.tag.outputs.tag }}"
+    - name: Update Framework Version Mapping
+      uses: broadinstitute/repository-dispatch@master
+      with:
+        token: ${{ secrets.REPO_ACCESS_TOKEN }}
+        repository: databiosphere/framework-version
+        event-type: version-bump
+        client-payload: '{"service": "${{ env.SERVICE_NAME }}", "version": "${{ steps.tag.outputs.tag }}"}'

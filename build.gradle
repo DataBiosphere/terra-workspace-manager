@@ -1,0 +1,92 @@
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+}
+
+plugins {
+	id 'java'
+	id 'idea'
+	id 'org.springframework.boot' version '2.2.2.RELEASE'
+	id 'io.spring.dependency-management' version '1.0.8.RELEASE'
+	id 'com.google.cloud.tools.jib' version '1.8.0'
+	id 'org.openapi.generator' version '4.2.3'
+}
+
+group = 'bio.terra.TEMPLATE'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jdbc'
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
+	implementation group: 'org.postgresql', name: 'postgresql', version: '42.1.4'
+	implementation group: 'org.apache.commons', name: 'commons-dbcp2', version: '2.7.0'
+	implementation group: 'org.apache.commons', name: 'commons-pool2', version: '2.8.0'
+	implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
+	implementation group: 'org.liquibase' , name: 'liquibase-core', version: '3.8.6'
+	implementation group: 'org.webjars', name: 'swagger-ui', version: '3.24.0'
+
+	// -- OpenAPI CodeGen dependencies --
+	// TODO: this version of swagger-annotations is old, but the code gen is still relying on it
+	//  There is an open bug tracking the fix: https://github.com/OpenAPITools/openapi-generator/issues/4245
+	implementation group: 'io.swagger', name: 'swagger-annotations', version: '1.6.0'
+	implementation group: 'org.openapitools', name: 'jackson-databind-nullable', version: '0.2.1'
+	// -- --
+
+	testImplementation('org.springframework.boot:spring-boot-starter-test') {
+		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+	}
+}
+
+// Exclude the Spring logger, so everything will use SLF4J
+configurations.all {
+	exclude group: "commons-logging", module: "commons-logging"
+}
+
+// OpenAPI Server Generation
+// - specify the source and target
+// - define the generation
+// - define the validation
+// - define dependencies to include the generated code
+
+def openapiSourceFile = "${projectDir}/src/main/resources/api/service_openapi.yaml"
+def openapiTargetDir = "${buildDir}/generated"
+
+openApiGenerate {
+	generatorName = "spring"
+	inputSpec = "${openapiSourceFile}".toString()
+	outputDir = "${openapiTargetDir}".toString()
+	packageName = "${group}"
+	apiPackage = "${group}.generated.controller"
+	modelPackage = "${group}.generated.model"
+	configOptions = [
+	        interfaceOnly : "true",
+			useTags : "true",
+			library : "spring-boot",
+			dateLibrary : "java8",
+			generateApiTests : "false",
+			generateApiDocumentation : "false",
+			generateModelTests : "false",
+			generateModelDocumentation : "false",
+	]
+}
+
+openApiValidate {
+	inputSpec = "${openapiSourceFile}".toString()
+}
+
+compileJava.dependsOn tasks.openApiGenerate
+sourceSets.main.java.srcDir "${openapiTargetDir}/src/main/java"
+ideaModule.dependsOn tasks.openApiGenerate
+
+// end of OpenAPI Server Generation
+
+test {
+	useJUnitPlatform()
+}
+

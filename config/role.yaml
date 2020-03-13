@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kernel-service-poc-service-role
+rules:
+- apiGroups: ['policy']
+  resources: ['podsecuritypolicies']
+  verbs:     ['use']
+  resourceNames:
+  - kernel-service-poc-service-psp
+- apiGroups: ['']
+  resources: ['secrets']
+  verbs: ['get', 'create']
