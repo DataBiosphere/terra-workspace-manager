@@ -28,20 +28,23 @@ paths:
     post:
       description: |
         Create a new Workspace. This should only be called by Folder Manager.
-      operationId: create
+      operationId: createWorkspace
       tags:
-        - workspace
+      - workspace
       requestBody:
-        description: "Auth token, spend profile, and policy information from Folder Manager"
+        description: |
+          Auth token, spend profile, and policy information from
+          Folder Manager, as well as async job information.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateWorkspaceRequestBody'
       responses:
-        200:
-          description: OK
-          $ref: '#/components/responses/CreateResponse'
+        202:
+          description: Accepted
+          $ref: '#/components/responses/JobModelResponse'
         500:
+          description: Creation request error
           $ref: '#/components/responses/ErrorResponse'
   '/api/v1/jobs/{id}':
     parameters:
