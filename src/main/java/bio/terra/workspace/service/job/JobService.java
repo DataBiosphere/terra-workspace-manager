@@ -227,7 +227,6 @@ public class JobService {
       FlightFilter filter = new FlightFilter();
       filter.addFilterInputParameter(
           JobMapKeys.SUBJECT_ID.getKeyName(), FlightFilterOp.EQUAL, userReq.getSubjectId());
-
       flightStateList = stairway.getFlights(offset, limit, filter);
     } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);

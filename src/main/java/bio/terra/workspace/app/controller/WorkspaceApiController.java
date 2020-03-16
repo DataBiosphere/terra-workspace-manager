@@ -66,4 +66,11 @@ public class WorkspaceApiController implements WorkspaceApi {
         jobService.retrieveJobResult(id, Object.class, userReq);
     return new ResponseEntity<>(jobResultHolder.getResult(), jobResultHolder.getStatusCode());
   }
+
+  public ResponseEntity<Object> retrieveJobResult(@PathVariable("id") String id) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    JobResultWithStatus<Object> jobResultHolder =
+        jobService.retrieveJobResult(id, Object.class, userReq);
+    return new ResponseEntity<>(jobResultHolder.getResult(), jobResultHolder.getStatusCode());
+  }
 }
