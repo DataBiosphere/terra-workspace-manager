@@ -12,31 +12,31 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class Sam {
-    private final SamConfiguration samConfig;
+  private final SamConfiguration samConfig;
 
-    @Autowired
-    public Sam(SamConfiguration samConfig) {
-        this.samConfig = samConfig;
+  @Autowired
+  public Sam(SamConfiguration samConfig) {
+    this.samConfig = samConfig;
+  }
+
+  private ApiClient getApiClient(String accessToken) {
+    ApiClient client = new ApiClient();
+    client.setAccessToken(accessToken);
+    return client.setBasePath(samConfig.getBasePath());
+  }
+
+  private ResourcesApi samResourcesApi(String accessToken) {
+    return new ResourcesApi(getApiClient(accessToken));
+  }
+
+  public void createDefaultResource(CreateWorkspaceRequestBody body) {
+    ResourcesApi resourceApi = samResourcesApi(body.getAuthToken());
+
+    try {
+      resourceApi.createResourceWithDefaults(
+          SamUtils.SAM_WORKSPACE_RESOURCE, body.getId().toString());
+    } catch (ApiException apiException) {
+      throw new SamApiException(apiException);
     }
-
-    private ApiClient getApiClient(String accessToken) {
-        ApiClient client = new ApiClient();
-        client.setAccessToken(accessToken);
-        return client.setBasePath(samConfig.getBasePath());
-    }
-
-    private ResourcesApi samResourcesApi(String accessToken) {
-        return new ResourcesApi(getApiClient(accessToken));
-    }
-
-    public void createDefaultResource(CreateWorkspaceRequestBody body) {
-        ResourcesApi resourceApi = samResourcesApi(body.getAuthToken());
-
-        try {
-            resourceApi.createResourceWithDefaults(SamUtils.SAM_WORKSPACE_RESOURCE, body.getId().toString());
-        } catch (ApiException apiException) {
-            throw new SamApiException(apiException);
-        }
-    }
-
+  }
 }
