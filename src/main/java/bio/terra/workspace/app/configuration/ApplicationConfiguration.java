@@ -1,15 +1,10 @@
 package bio.terra.workspace.app.configuration;
 
-import bio.terra.stairway.DefaultExceptionSerializer;
-import bio.terra.stairway.ExceptionSerializer;
-import bio.terra.stairway.Stairway;
 import bio.terra.workspace.app.StartupInitializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import org.apache.commons.dbcp2.PoolableConnection;
 import org.apache.commons.dbcp2.PoolingDataSource;
 import org.openapitools.jackson.nullable.JsonNullableModule;
@@ -32,9 +27,10 @@ public class ApplicationConfiguration {
   private String samAddress;
   private int maxStairwayThreads;
 
+  private String resourceId;
+
   // Not a property
   private PoolingDataSource<PoolableConnection> dataSource;
-  private Stairway stairway;
 
   public String getSamAddress() {
     return samAddress;
@@ -52,13 +48,12 @@ public class ApplicationConfiguration {
     this.maxStairwayThreads = maxStairwayThreads;
   }
 
-  public Stairway getStairway() {
-    if (stairway == null) {
-      ExecutorService executorService = Executors.newFixedThreadPool(getMaxStairwayThreads());
-      ExceptionSerializer serializer = new DefaultExceptionSerializer();
-      stairway = new Stairway(executorService, null, serializer);
-    }
-    return stairway;
+  public String getResourceId() {
+    return resourceId;
+  }
+
+  public void setResourceId(String resourceId) {
+    this.resourceId = resourceId;
   }
 
   @Bean("jdbcTemplate")

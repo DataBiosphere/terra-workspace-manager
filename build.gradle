@@ -29,7 +29,7 @@ repositories {
 }
 
 dependencies {
-	compile(group: 'bio.terra', name: 'stairway', version: '0.0.1-SNAPSHOT')
+	compile(group: 'bio.terra', name: 'stairway', version: '0.0.4-SNAPSHOT')
 	compile(group: 'org.broadinstitute.dsde.workbench', name: 'sam-client_2.12', version: '0.1-11a7002')
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jdbc'
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
@@ -89,6 +89,9 @@ openApiValidate {
 	inputSpec = "${openapiSourceFile}".toString()
 }
 
+// Note: Spotless deletes the classes OpenApi generates.
+// The order needs to be spotlessApply -> openApiGenerate -> build/test/run
+tasks.openApiGenerate.dependsOn tasks.spotlessApply
 compileJava.dependsOn tasks.openApiGenerate
 sourceSets.main.java.srcDir "${openapiTargetDir}/src/main/java"
 ideaModule.dependsOn tasks.openApiGenerate

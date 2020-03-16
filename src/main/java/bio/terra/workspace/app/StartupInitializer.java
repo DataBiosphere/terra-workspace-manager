@@ -1,12 +1,7 @@
 package bio.terra.workspace.app;
 
-import bio.terra.stairway.exception.DatabaseOperationException;
-import bio.terra.stairway.exception.DatabaseSetupException;
-import bio.terra.stairway.exception.MigrateException;
-import bio.terra.workspace.app.configuration.ApplicationConfiguration;
-import bio.terra.workspace.app.configuration.StairwayJdbcConfiguration;
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
-import bio.terra.workspace.common.exception.stairway.StairwayInitializationException;
+import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.migrate.MigrateService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,14 +13,11 @@ public final class StartupInitializer {
 
   public static void initialize(ApplicationContext applicationContext) {
     // Initialize or upgrade the database depending on the configuration
-    ApplicationConfiguration appConfig =
-        (ApplicationConfiguration) applicationContext.getBean("applicationConfiguration");
     MigrateService migrateService = (MigrateService) applicationContext.getBean("migrateService");
     WorkspaceManagerJdbcConfiguration workspaceManagerJdbcConfiguration =
         (WorkspaceManagerJdbcConfiguration)
             applicationContext.getBean("workspaceManagerJdbcConfiguration");
-    StairwayJdbcConfiguration stairwayJdbcConfiguration =
-        (StairwayJdbcConfiguration) applicationContext.getBean("stairwayJdbcConfiguration");
+    JobService jobService = (JobService) applicationContext.getBean("jobService");
 
     if (workspaceManagerJdbcConfiguration.isInitializeOnStart()) {
       migrateService.initialize(changelogPath, workspaceManagerJdbcConfiguration.getDataSource());
@@ -33,19 +25,12 @@ public final class StartupInitializer {
       migrateService.upgrade(changelogPath, workspaceManagerJdbcConfiguration.getDataSource());
     }
 
-    // TODO: TEMPLATE: Fill in this method with any other initialization that needs to happen
+    // The JobService initialization also handles Stairway initialization.
+    jobService.initialize();
+
+    // TODO: Fill in this method with any other initialization that needs to happen
     //  between the point of having the entire application initialized and
     //  the point of opening the port to start accepting REST requests.
-    try {
-      appConfig
-          .getStairway()
-          .initialize(
-              stairwayJdbcConfiguration.getDataSource(),
-              stairwayJdbcConfiguration.isForceClean(),
-              stairwayJdbcConfiguration.isMigrateUpgrade());
-    } catch (DatabaseSetupException | DatabaseOperationException | MigrateException e) {
-      throw new StairwayInitializationException(
-          "Stairway failed during initialization: " + e.toString());
-    }
+
   }
 }

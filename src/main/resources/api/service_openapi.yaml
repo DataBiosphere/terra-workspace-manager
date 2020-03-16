@@ -6,7 +6,7 @@ info:
   version: 0.0.1
 
 servers:
-  - url: http://localhost:8080
+- url: http://localhost:8080
 
 paths:
   '/status':
@@ -15,7 +15,7 @@ paths:
         Returns the operational status of the service
       operationId: serviceStatus
       tags:
-        - unauthenticated
+      - unauthenticated
       responses:
         200:
           description: Service is functional
@@ -43,8 +43,64 @@ paths:
           $ref: '#/components/responses/CreateResponse'
         500:
           $ref: '#/components/responses/ErrorResponse'
-
+  '/api/v1/jobs/{id}':
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    get:
+      description: |
+        Poll the status of an existing async operation via job ID.
+      operationId: pollAsyncJob
+      tags:
+      - workspace
+      responses:
+        202:
+          description: Async job is incomplete
+          $ref: '#/components/responses/JobModelResponse'
+        200:
+          description: Async job is complete
+          $ref: '#/components/responses/JobModelResponse'
+        400:
+          description: Bad request - invalid id, badly formed
+          $ref: '#/components/responses/ErrorResponse'
+        403:
+          description: No permission to see job
+          $ref: '#/components/responses/ErrorResponse'
+        404:
+          description: Not found - job id does not exist
+          $ref: '#/components/responses/ErrorResponse'
+    delete:  ## delete job data
+      description: Delete the job and data associated with it
+      operationId: deleteJob
+      tags:
+      - workspace
+      responses:
+        204:
+          description: Job was deleted
+  '/api/v1/jobs/{id}/result':
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    get:
+      description: |
+        Retrieve the results of a completed async job specified by ID.
+      operationId: retrieveJobResult
+      tags:
+      - workspace
+      responses:
+        default:
+          description: Successful responses return the type of object specified by the job; otherwise, ErrorModel
+          content:
+            application/json:
+              schema:
+                type: object
 components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      description: A UUID to used to identify an object in the workspace manager
+      required: true
+      schema:
+        type: string
   schemas:
     ErrorReport:
       type: object
@@ -57,7 +113,49 @@ components:
           type: array
           items:
             type: string
-
+    JobControl:
+      type: object
+      required:
+      - jobid
+      properties:
+        jobid:
+          type: string
+        pubsub:
+          type: object
+          required:
+          - projectid
+          - topicid
+          properties:
+            projectid:
+              type: string
+            topicid:
+              type: string
+    JobModel:
+      type: object
+      required:
+      - id
+      - status
+      - status_code
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum:
+          - RUNNING
+          - SUCCEEDED
+          - FAILED
+        statusCode:
+          description: HTTP code
+          type: integer
+        submitted:
+          type: string
+        completed:
+          type: string
+        estimatedRemainingTimeMS:
+          type: integer
     SystemStatus:
       type: object
       properties:
@@ -97,6 +195,8 @@ components:
           items:
             type: string
             format: uuid
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
     CreatedWorkspace:
       type: object
       properties:
@@ -126,3 +226,9 @@ components:
           schema:
             $ref: '#/components/schemas/CreatedWorkspace'
 
+    JobModelResponse:
+      description: Response with a JobModel
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/JobModel'
