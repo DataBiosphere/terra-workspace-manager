@@ -1,0 +1,12 @@
+#This is a Skaffold configuration, which lets developers continuously push new images to their development namespaces.
+apiVersion: skaffold/v2alpha4
+kind: Config
+build:
+  artifacts:
+  - image: gcr.io/terra-kernel-k8s/terra-workspace-manager
+    context: ../
+    jib: {}
+deploy:
+  kustomize:
+    paths:
+    - terra-workspace-manager-config/NAMESPACE
