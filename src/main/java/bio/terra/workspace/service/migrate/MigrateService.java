@@ -62,11 +62,9 @@ public class MigrateService {
                 changesetFile, lock.getId(), lock.getLockedBy(), lock.getLockGranted()));
 
         // We can get into this state where one of the APIs is running migrations and gets shut down
-        // so that
-        // another API container can run. It will result in a lock that doesn't get released. This
-        // is similar
-        // to the problems we will have from deploying multiple containers at once that try to run
-        // migrations.
+        // so that another API container can run. It will result in a lock that doesn't get
+        // released. This is similar to the problems we will have from deploying multiple containers
+        // at once that try to run migrations.
         logger.warn("Forcing lock release");
         liquibase.forceReleaseLocks();
       }
