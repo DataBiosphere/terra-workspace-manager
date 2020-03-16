@@ -94,5 +94,4 @@ CreateService code into steps/flights and actually use Stairway.
 2. The `create` endpoint is currently synchronous - we expect most endpoints
 will be async. This means changing the existing endpoint to return a pollable
 endpoint, and actually building the pollable endpoint.
-3. Unit tests currently call the development instance of Sam. They should call a mock Sam instead.
-4. README is copied directly from kernel-service-poc and needs updates.
+3. README is copied directly from kernel-service-poc and needs updates.
