@@ -2,7 +2,7 @@ package bio.terra.workspace.service.create.flight;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
-import bio.terra.workspace.service.create.CreateDao;
+import bio.terra.workspace.service.create.CreateDAO;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -14,7 +14,7 @@ public class WorkspaceCreateFlight extends Flight {
     super(inputParameters, applicationContext);
 
     ApplicationContext appContext = (ApplicationContext) applicationContext;
-    CreateDao createDao = (CreateDao) appContext.getBean("createDao");
+    CreateDAO createDao = (CreateDAO) appContext.getBean("createDAO");
     SamService iamClient = (SamService) appContext.getBean("samService");
 
     // get data from inputs that steps need

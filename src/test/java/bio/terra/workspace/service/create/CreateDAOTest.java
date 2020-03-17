@@ -29,13 +29,13 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ContextConfiguration(classes = Main.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-public class CreateDaoTest {
+public class CreateDAOTest {
 
   @Autowired WorkspaceManagerJdbcConfiguration jdbcConfiguration;
 
   private NamedParameterJdbcTemplate jdbcTemplate;
 
-  @Autowired CreateDao createDao;
+  @Autowired CreateDAO createDao;
 
   private UUID workspaceId;
   private UUID spendProfileId;

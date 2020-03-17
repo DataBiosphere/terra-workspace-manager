@@ -10,11 +10,11 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CreateDao {
+public class CreateDAO {
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   @Autowired
-  public CreateDao(WorkspaceManagerJdbcConfiguration jdbcConfiguration) {
+  public CreateDAO(WorkspaceManagerJdbcConfiguration jdbcConfiguration) {
     jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
   }
 

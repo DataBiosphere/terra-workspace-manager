@@ -7,16 +7,16 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
-import bio.terra.workspace.service.create.CreateDao;
+import bio.terra.workspace.service.create.CreateDAO;
 import java.util.UUID;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.http.HttpStatus;
 
 public class CreateWorkspaceStep implements Step {
 
-  private CreateDao createDao;
+  private CreateDAO createDao;
 
-  public CreateWorkspaceStep(CreateDao createDao) {
+  public CreateWorkspaceStep(CreateDAO createDao) {
     this.createDao = createDao;
   }
 

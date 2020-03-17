@@ -47,14 +47,12 @@ import org.springframework.test.web.servlet.MvcResult;
 @SpringBootTest
 @AutoConfigureMockMvc
 public class CreateServiceTest {
-  // TODO: these tests currently fail. The API was changed in this revision, but the create endpoint
-  // is updated in a followup change.
 
   @Autowired private MockMvc mvc;
 
   @MockBean private SamService mockSamService;
 
-  // Mock MVC doesn't populate the fields used to build this.
+  // Mock MVC doesn't populate the fields used to build authenticated requests.
   @MockBean private AuthenticatedUserRequestFactory mockAuthenticatedUserRequestFactory;
 
   @Autowired private ObjectMapper objectMapper;
@@ -63,7 +61,6 @@ public class CreateServiceTest {
 
   @BeforeEach
   public void setup() {
-
     doNothing().when(mockSamService).createWorkspaceWithDefaults(any(), any());
     AuthenticatedUserRequest fakeAuthentication = new AuthenticatedUserRequest();
     fakeAuthentication
