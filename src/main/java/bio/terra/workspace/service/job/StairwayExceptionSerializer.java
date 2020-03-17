@@ -80,7 +80,7 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
               + fields.getMessage());
     }
 
-    // If this is a data repo exception and the exception exposes a constructor with the
+    // If this is an ErrorReport exception and the exception exposes a constructor with the
     // error details, then we try to use that.
     if (fields.isErrorReportException()) {
       try {
@@ -97,7 +97,7 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
       }
     }
 
-    // We have either a data repo exception that doesn't support error details or some other runtime
+    // We have either an ErrorReport exception that doesn't support error details or some other runtime
     // exception
     try {
       Constructor<?> ctor = clazz.getConstructor(String.class);

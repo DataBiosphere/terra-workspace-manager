@@ -125,7 +125,7 @@ public class JobService {
 
   void waitForJob(String jobId) {
     try {
-      stairway.waitForFlight(jobId, 10, appConfig.getStairwayTimeoutSeconds()/10);
+      stairway.waitForFlight(jobId, 10, appConfig.getStairwayTimeoutSeconds() / 10);
     } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
@@ -221,18 +221,12 @@ public class JobService {
   }
 
   public List<JobModel> enumerateJobs(int offset, int limit, AuthenticatedUserRequest userReq) {
-    boolean canListAnyJob = checkUserCanListAnyJob(userReq);
 
-    // if the user has access to all jobs, then fetch everything
-    // otherwise, filter the jobs on the user
     List<FlightState> flightStateList;
     try {
       FlightFilter filter = new FlightFilter();
-
-      if (!canListAnyJob) {
-        filter.addFilterInputParameter(
-            JobMapKeys.SUBJECT_ID.getKeyName(), FlightFilterOp.EQUAL, userReq.getSubjectId());
-      }
+      filter.addFilterInputParameter(
+          JobMapKeys.SUBJECT_ID.getKeyName(), FlightFilterOp.EQUAL, userReq.getSubjectId());
 
       flightStateList = stairway.getFlights(offset, limit, filter);
     } catch (StairwayException stairwayEx) {
@@ -248,14 +242,9 @@ public class JobService {
   }
 
   public JobModel retrieveJob(String jobId, AuthenticatedUserRequest userReq) {
-    boolean canListAnyJob = checkUserCanListAnyJob(userReq);
 
     try {
-      // if the user has access to all jobs, then fetch the requested one
-      // otherwise, check that the user has access to it first
-      if (!canListAnyJob) {
-        verifyUserAccess(jobId, userReq); // jobId=flightId
-      }
+      verifyUserAccess(jobId, userReq); // jobId=flightId
       FlightState flightState = stairway.getFlightState(jobId);
       return mapFlightStateToJobModel(flightState);
     } catch (StairwayException stairwayEx) {
@@ -288,14 +277,9 @@ public class JobService {
    */
   public <T> JobResultWithStatus<T> retrieveJobResult(
       String jobId, Class<T> resultClass, AuthenticatedUserRequest userReq) {
-    boolean canListAnyJob = checkUserCanListAnyJob(userReq);
 
     try {
-      // if the user has access to all jobs, then fetch the requested result
-      // otherwise, check that the user has access to it first
-      if (!canListAnyJob) {
-        verifyUserAccess(jobId, userReq); // jobId=flightId
-      }
+      verifyUserAccess(jobId, userReq); // jobId=flightId
       return retrieveJobResultWorker(jobId, resultClass);
     } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
@@ -349,18 +333,6 @@ public class JobService {
       throw new InvalidResultStateException("No result map returned from flight");
     }
     return resultMap;
-  }
-
-  private boolean checkUserCanListAnyJob(AuthenticatedUserRequest userReq) {
-    try {
-      return samService.isAuthorized(
-          userReq.getRequiredToken(),
-          SamUtils.SAM_WORKSPACE_MANAGER_RESOURCE,
-          appConfig.getResourceId(),
-          SamUtils.SAM_WORKSPACE_MANAGER_LIST_JOBS_ACTION);
-    } catch (ApiException samEx) {
-      throw new SamApiException(samEx);
-    }
   }
 
   private void verifyUserAccess(String jobId, AuthenticatedUserRequest userReq) {
