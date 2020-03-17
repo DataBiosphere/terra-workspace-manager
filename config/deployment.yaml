@@ -23,29 +23,44 @@ spec:
         - name: DATABASE_USER
           valueFrom:
             secretKeyRef:
-              name: cloudsql-user-creds
+              name: terra-workspace-manager-postgres-db-creds
               key: username
         - name: DATABASE_USER_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: cloudsql-user-creds
+              name: terra-workspace-manager-postgres-db-creds
               key: password
         - name: DATABASE_NAME
           valueFrom:
             secretKeyRef:
-              name: cloudsql-db-name
-              key: db-name
+              name: terra-workspace-manager-postgres-db-name
+              key: name
+        - name: STAIRWAY_DATABASE_USER
+          valueFrom:
+            secretKeyRef:
+              name: terra-workspace-manager-stairway-db-creds
+              key: username
+        - name: STAIRWAY_DATABASE_USER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: terra-workspace-manager-stairway-db-creds
+              key: password
+        - name: STAIRWAY_DATABASE_NAME
+          valueFrom:
+            secretKeyRef:
+              name: terra-workspace-manager-stairway-db-name
+              key: name
       - name: cloudsql-proxy
         image: gcr.io/cloudsql-docker/gce-proxy:1.16
         env:
         - name: SQL_INSTANCE_NAME
           valueFrom:
             secretKeyRef:
-              name: cloudsql-instance-name
+              name: cloudsql-postgres-instance-name
               key: name
         command: ["/cloud_sql_proxy",
                   "-instances=terra-kernel-k8s:us-central1:$(SQL_INSTANCE_NAME)=tcp:5432",
-                  "-credential_file=/secrets/cloudsql/sql-creds.json"]
+                  "-credential_file=/secrets/cloudsql/service-account.json"]
         securityContext:
           runAsUser: 2  # non-root user
           allowPrivilegeEscalation: false
@@ -54,6 +69,6 @@ spec:
           mountPath: /secrets/cloudsql
           readOnly: true
       volumes:
-        - name: cloudsql-sa-creds
-          secret:
-            secretName: cloudsql-sa-creds
+      - name: cloudsql-sa-creds
+        secret:
+          secretName: cloudsql-sa-creds

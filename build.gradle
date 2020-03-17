@@ -89,6 +89,7 @@ openApiValidate {
 	inputSpec = "${openapiSourceFile}".toString()
 }
 
+tasks.openApiGenerate.dependsOn tasks.spotlessApply
 compileJava.dependsOn tasks.openApiGenerate
 sourceSets.main.java.srcDir "${openapiTargetDir}/src/main/java"
 ideaModule.dependsOn tasks.openApiGenerate
