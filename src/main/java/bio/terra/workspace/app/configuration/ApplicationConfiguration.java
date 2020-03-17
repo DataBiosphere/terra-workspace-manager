@@ -24,20 +24,19 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 public class ApplicationConfiguration {
 
   // Configurable properties
-  private String samAddress;
   private int maxStairwayThreads;
-
+  private int stairwayTimeoutSeconds;
   private String resourceId;
 
   // Not a property
   private PoolingDataSource<PoolableConnection> dataSource;
 
-  public String getSamAddress() {
-    return samAddress;
+  public int getStairwayTimeoutSeconds() {
+    return stairwayTimeoutSeconds;
   }
 
-  public void setSamAddress(String samAddress) {
-    this.samAddress = samAddress;
+  public void setStairwayTimeoutSeconds(int stairwayTimeoutSeconds) {
+    this.stairwayTimeoutSeconds = stairwayTimeoutSeconds;
   }
 
   public int getMaxStairwayThreads() {

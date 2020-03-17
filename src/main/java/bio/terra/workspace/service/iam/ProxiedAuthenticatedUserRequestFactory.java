@@ -11,15 +11,16 @@ public class ProxiedAuthenticatedUserRequestFactory implements AuthenticatedUser
   // Method to build an AuthenticatedUserRequest from data available to the controller
   public AuthenticatedUserRequest from(HttpServletRequest servletRequest) {
     String token =
-        Optional.ofNullable(servletRequest.getHeader("oidc_access_token"))
+        Optional.ofNullable(servletRequest.getHeader(AuthHeaderKeys.OIDC_ACCESS_TOKEN.getKeyName()))
             .orElseGet(
                 () -> {
-                  String authHeader = servletRequest.getHeader("Authorization");
+                  String authHeader =
+                      servletRequest.getHeader(AuthHeaderKeys.AUTHORIZATION.getKeyName());
                   return StringUtils.substring(authHeader, "Bearer:".length());
                 });
     return new AuthenticatedUserRequest()
-        .email(servletRequest.getHeader("oidc_claim_email"))
-        .subjectId(servletRequest.getHeader("oidc_claim_user_id"))
+        .email(servletRequest.getHeader(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName()))
+        .subjectId(servletRequest.getHeader(AuthHeaderKeys.OIDC_CLAIM_USER_ID.getKeyName()))
         .token(Optional.ofNullable(token));
   }
 }

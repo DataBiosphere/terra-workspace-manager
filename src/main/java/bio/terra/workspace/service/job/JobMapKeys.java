@@ -21,4 +21,11 @@ public enum JobMapKeys {
   public String getKeyName() {
     return keyName;
   }
+
+  public static boolean isRequiredKey(String keyName) {
+    return keyName.equals(JobMapKeys.DESCRIPTION.getKeyName())
+        || keyName.equals(JobMapKeys.REQUEST.getKeyName())
+        || keyName.equals(JobMapKeys.AUTH_USER_INFO.getKeyName())
+        || keyName.equals((JobMapKeys.SUBJECT_ID.getKeyName()));
+  }
 }

@@ -15,7 +15,7 @@ import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
 import bio.terra.workspace.generated.model.ErrorReport;
 import bio.terra.workspace.service.create.exception.SamApiException;
-import bio.terra.workspace.service.iam.Sam;
+import bio.terra.workspace.service.iam.SamService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.UUID;
@@ -40,10 +40,12 @@ import org.springframework.test.web.servlet.MvcResult;
 @SpringBootTest
 @AutoConfigureMockMvc
 public class CreateServiceTest {
+  // TODO: these tests currently fail. The API was changed in this revision, but the create endpoint
+  // is updated in a followup change.
 
   @Autowired private MockMvc mvc;
 
-  @MockBean private Sam mockSam;
+  @MockBean private SamService mockSam;
 
   @Autowired private ObjectMapper objectMapper;
 
@@ -51,7 +53,7 @@ public class CreateServiceTest {
 
   @BeforeEach
   public void setup() {
-    doNothing().when(mockSam).createDefaultResource(any());
+    doNothing().when(mockSam).createWorkspaceWithDefaults(any(), any());
   }
 
   @Test
@@ -91,14 +93,16 @@ public class CreateServiceTest {
             .andExpect(status().isOk())
             .andReturn();
     CreatedWorkspace workspace =
-        objectMapper.readValue(result.getResponse().getContentAsString(), CreatedWorkspace.class);
+        objectMapper.readValue(result.getResponse().getContentAsString(),
+CreatedWorkspace.class);
     assertThat("UUID is not empty or null", workspace.getId(), not(blankOrNullString()));
   }
 
   @Test
   public void testUnauthorizedUserIsRejected() throws Exception {
     String errorMsg = "fake SAM error message";
-    doThrow(new SamApiException(errorMsg)).when(mockSam).createDefaultResource(any());
+    doThrow(new SamApiException(errorMsg)).when(mockSam).createWorkspaceWithDefaults(any(),
+any());
 
     CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody();
     body.setId(UUID.randomUUID());

@@ -125,7 +125,7 @@ public class JobService {
 
   void waitForJob(String jobId) {
     try {
-      stairway.waitForFlight(jobId, null, null);
+      stairway.waitForFlight(jobId, 10, appConfig.getStairwayTimeoutSeconds()/10);
     } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }

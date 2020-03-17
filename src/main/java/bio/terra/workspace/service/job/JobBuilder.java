@@ -41,10 +41,7 @@ public class JobBuilder {
 
     // check that keyName doesn't match one of the required parameter names
     // i.e. disallow overwriting one of the required parameters
-    if (keyName.equals(JobMapKeys.DESCRIPTION.getKeyName())
-        || keyName.equals(JobMapKeys.REQUEST.getKeyName())
-        || keyName.equals(JobMapKeys.AUTH_USER_INFO.getKeyName())
-        || keyName.equals((JobMapKeys.SUBJECT_ID.getKeyName()))) {
+    if (JobMapKeys.isRequiredKey(keyName)) {
       throw new InvalidJobParameterException(
           "Required parameters can only be set by the constructor. (" + keyName + ")");
     }

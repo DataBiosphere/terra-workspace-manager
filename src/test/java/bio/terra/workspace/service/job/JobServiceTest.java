@@ -103,7 +103,6 @@ public class JobServiceTest {
     JobService.JobResultWithStatus<String> resultHolder =
         jobService.retrieveJobResult(fids.get(2), String.class, testUser);
 
-    // Assert.assertThat(resultHolder.getStatusCode(), is(equalTo(HttpStatus.I_AM_A_TEAPOT)));
     assertThat(resultHolder.getStatusCode(), equalTo(HttpStatus.I_AM_A_TEAPOT));
     assertThat(resultHolder.getResult(), equalTo(makeDescription(2)));
   }

@@ -58,6 +58,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<CreatedWorkspace> create(@RequestBody CreateWorkspaceRequestBody body) {
     CreatedWorkspace result = createService.createWorkspace(body);
     return new ResponseEntity<>(result, HttpStatus.OK);
+  }
 
   public ResponseEntity<Object> retrieveJobResult(@PathVariable("id") String id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
