@@ -18,13 +18,13 @@ public class CreateDAO {
     jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
   }
 
-  public String create(String workspaceId, JsonNullable<UUID> spendProfile) {
+  public String createWorkspace(UUID workspaceId, JsonNullable<UUID> spendProfile) {
     String sql =
         "INSERT INTO workspace (workspace_id, spend_profile, profile_settable) values "
             + "(:id, :spend_profile, :spend_profile_settable)";
 
     Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put("id", workspaceId);
+    paramMap.put("id", workspaceId.toString());
     if (spendProfile.isPresent()) {
       paramMap.put("spend_profile", spendProfile.get().toString());
       paramMap.put("spend_profile_settable", false);
@@ -34,6 +34,14 @@ public class CreateDAO {
     }
 
     jdbcTemplate.update(sql, paramMap);
-    return workspaceId;
+    return workspaceId.toString();
+  }
+
+  public boolean deleteWorkspace(UUID workspaceId) {
+    Map<String, Object> paramMap = new HashMap<String, Object>();
+    paramMap.put("id", workspaceId.toString());
+    int rowsAffected =
+        jdbcTemplate.update("DELETE FROM workspace WHERE workspace_id = :id", paramMap);
+    return rowsAffected > 0;
   }
 }

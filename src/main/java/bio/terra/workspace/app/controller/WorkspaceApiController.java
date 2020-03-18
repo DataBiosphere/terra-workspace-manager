@@ -2,7 +2,6 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.CreatedWorkspace;
 import bio.terra.workspace.generated.model.JobModel;
 import bio.terra.workspace.service.create.CreateService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -41,6 +40,15 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
+  public ResponseEntity<JobModel> createWorkspace(@RequestBody CreateWorkspaceRequestBody body) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    createService.createWorkspace(body, userReq);
+    // Look up the newly-created job
+    JobModel createJob = jobService.retrieveJob(body.getJobControl().getJobid(), userReq);
+    return new ResponseEntity<JobModel>(createJob, HttpStatus.valueOf(createJob.getStatusCode()));
+  }
+
+  @Override
   public ResponseEntity<Void> deleteJob(@PathVariable("id") String id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     jobService.releaseJob(id, userReq);
@@ -55,11 +63,6 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<CreatedWorkspace> create(@RequestBody CreateWorkspaceRequestBody body) {
-    CreatedWorkspace result = createService.createWorkspace(body);
-    return new ResponseEntity<>(result, HttpStatus.OK);
-  }
-
   public ResponseEntity<Object> retrieveJobResult(@PathVariable("id") String id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     JobResultWithStatus<Object> jobResultHolder =

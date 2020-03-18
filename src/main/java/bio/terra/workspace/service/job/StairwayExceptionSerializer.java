@@ -97,8 +97,8 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
       }
     }
 
-    // We have either an ErrorReport exception that doesn't support error details or some other runtime
-    // exception
+    // We have either an ErrorReport exception that doesn't support error details or some other
+    // runtime exception
     try {
       Constructor<?> ctor = clazz.getConstructor(String.class);
       Object object = ctor.newInstance(fields.getMessage());
