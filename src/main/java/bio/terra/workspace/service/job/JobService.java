@@ -276,7 +276,7 @@ public class JobService {
    */
   public <T> JobResultWithStatus<T> retrieveJobResult(
       String jobId, Class<T> resultClass, AuthenticatedUserRequest userReq) {
-    
+
     try {
       verifyUserAccess(jobId, userReq); // jobId=flightId
       return retrieveJobResultWorker(jobId, resultClass);
