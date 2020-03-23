@@ -1,9 +1,9 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.generated.controller.WorkspaceApi;
-import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.JobModel;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.create.CreateService;
+import bio.terra.workspace.service.get.GetService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Controller
 public class WorkspaceApiController implements WorkspaceApi {
   private CreateService createService;
+  private GetService getService;
   private JobService jobService;
   private AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
@@ -26,10 +27,12 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Autowired
   public WorkspaceApiController(
       CreateService createService,
+      GetService getService,
       JobService jobService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request) {
     this.createService = createService;
+    this.getService = getService;
     this.jobService = jobService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
@@ -46,6 +49,14 @@ public class WorkspaceApiController implements WorkspaceApi {
     // Look up the newly-created job
     JobModel createJob = jobService.retrieveJob(body.getJobControl().getJobid(), userReq);
     return new ResponseEntity<JobModel>(createJob, HttpStatus.valueOf(createJob.getStatusCode()));
+  }
+
+  @Override
+  public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("id") String id) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    WorkspaceDescription desc = getService.getWorkspace(id, userReq);
+
+    return new ResponseEntity<WorkspaceDescription>(desc, HttpStatus.OK);
   }
 
   @Override
