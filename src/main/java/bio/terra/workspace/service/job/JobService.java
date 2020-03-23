@@ -221,6 +221,7 @@ public class JobService {
   }
 
   public List<JobModel> enumerateJobs(int offset, int limit, AuthenticatedUserRequest userReq) {
+
     List<FlightState> flightStateList;
     try {
       FlightFilter filter = new FlightFilter();
@@ -240,6 +241,7 @@ public class JobService {
   }
 
   public JobModel retrieveJob(String jobId, AuthenticatedUserRequest userReq) {
+
     try {
       verifyUserAccess(jobId, userReq); // jobId=flightId
       FlightState flightState = stairway.getFlightState(jobId);
@@ -274,6 +276,7 @@ public class JobService {
    */
   public <T> JobResultWithStatus<T> retrieveJobResult(
       String jobId, Class<T> resultClass, AuthenticatedUserRequest userReq) {
+    
     try {
       verifyUserAccess(jobId, userReq); // jobId=flightId
       return retrieveJobResultWorker(jobId, resultClass);
