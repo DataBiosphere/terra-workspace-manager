@@ -6,18 +6,18 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
-import bio.terra.workspace.service.create.CreateDAO;
 import java.util.UUID;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.http.HttpStatus;
 
 public class CreateWorkspaceStep implements Step {
 
-  private CreateDAO createDao;
+  private WorkspaceDao workspaceDao;
 
-  public CreateWorkspaceStep(CreateDAO createDao) {
-    this.createDao = createDao;
+  public CreateWorkspaceStep(WorkspaceDao workspaceDao) {
+    this.workspaceDao = workspaceDao;
   }
 
   @Override
@@ -32,7 +32,7 @@ public class CreateWorkspaceStep implements Step {
       nullableSpendProfileId = JsonNullable.of(spendProfileId);
     }
 
-    createDao.createWorkspace(workspaceId, nullableSpendProfileId);
+    workspaceDao.createWorkspace(workspaceId, nullableSpendProfileId);
 
     CreatedWorkspace response = new CreatedWorkspace();
     response.setId(workspaceId.toString());
@@ -45,7 +45,7 @@ public class CreateWorkspaceStep implements Step {
   public StepResult undoStep(FlightContext flightContext) {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    createDao.deleteWorkspace(workspaceId);
+    workspaceDao.deleteWorkspace(workspaceId);
     return StepResult.getStepResultSuccess();
   }
 }

@@ -24,7 +24,7 @@ paths:
           description: Service is broken
           $ref: '#/components/responses/StatusResponse'
 
-  '/api/v1/create':
+  '/api/v1/workspaces':
     post:
       description: |
         Create a new Workspace. This should only be called by Folder Manager.
@@ -45,6 +45,22 @@ paths:
           $ref: '#/components/responses/JobModelResponse'
         500:
           description: Creation request error
+          $ref: '#/components/responses/ErrorResponse'
+  '/api/v1/workspaces/{id}':
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    get:
+      description: |
+        Get an existing Workspace.
+      operationId: getWorkspace
+      tags:
+        - workspace
+      responses:
+        200:
+          description: OK
+          $ref: '#/components/responses/GetResponse'
+        500:
+          description: Get request error
           $ref: '#/components/responses/ErrorResponse'
   '/api/v1/jobs/{id}':
     parameters:
@@ -206,6 +222,18 @@ components:
         id:
           type: string
           description: UUID of a newly-created workspace
+    WorkspaceDescription:
+      type: object
+      properties:
+        id:
+          description: The ID of the workspace
+          type: string
+          format: uuid
+        spendProfile:
+          description: UUID of provided spend profile
+          type: string
+          nullable: true
+          format: uuid
 
   responses:
     ErrorResponse:
@@ -228,6 +256,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreatedWorkspace'
+
+    GetResponse:
+      description: Response to Get calls
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WorkspaceDescription'
 
     JobModelResponse:
       description: Response with a JobModel
