@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Component
 @EnableConfigurationProperties
-@EnableTransactionManagement
 @ConfigurationProperties(prefix = "db.stairway")
 public class StairwayJdbcConfiguration extends JdbcConfiguration {
   private String migrateUpgrade;

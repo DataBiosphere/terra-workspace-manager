@@ -11,8 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
+@Transactional(propagation =  Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
 public class WorkspaceDao {
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
