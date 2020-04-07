@@ -1,23 +1,23 @@
-package bio.terra.workspace.service.resource.uncontrolled.create;
+package bio.terra.workspace.service.datareference.create;
 
 import bio.terra.workspace.generated.model.CreateWorkspaceDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.JobControl;
+import bio.terra.workspace.service.datareference.create.flight.DataReferenceCreateFlight;
+import bio.terra.workspace.service.datareference.create.flight.DataReferenceFlightMapKeys;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.uncontrolled.create.flight.UncontrolledResourceCreateFlight;
-import bio.terra.workspace.service.resource.uncontrolled.create.flight.UncontrolledResourceFlightMapKeys;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CreateUncontrolledResourceService {
+public class CreateDataReferenceService {
 
   private JobService jobService;
 
   @Autowired
-  public CreateUncontrolledResourceService(JobService jobService) {
+  public CreateDataReferenceService(JobService jobService) {
     this.jobService = jobService;
   }
 
@@ -34,16 +34,12 @@ public class CreateUncontrolledResourceService {
     JobBuilder createJob =
         jobService
             .newJob(
-                description,
-                jobControl.getJobid(),
-                UncontrolledResourceCreateFlight.class,
-                body,
-                userReq)
-            .addParameter(UncontrolledResourceFlightMapKeys.REFERENCE_ID, referenceId)
-            .addParameter(UncontrolledResourceFlightMapKeys.WORKSPACE_ID, id)
-            .addParameter(UncontrolledResourceFlightMapKeys.NAME, body.getName())
-            .addParameter(UncontrolledResourceFlightMapKeys.REFERENCE_TYPE, body.getReferenceType())
-            .addParameter(UncontrolledResourceFlightMapKeys.REFERENCE, body.getReference());
+                description, jobControl.getJobid(), DataReferenceCreateFlight.class, body, userReq)
+            .addParameter(DataReferenceFlightMapKeys.REFERENCE_ID, referenceId)
+            .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, id)
+            .addParameter(DataReferenceFlightMapKeys.NAME, body.getName())
+            .addParameter(DataReferenceFlightMapKeys.REFERENCE_TYPE, body.getReferenceType())
+            .addParameter(DataReferenceFlightMapKeys.REFERENCE, body.getReference());
     createJob.submit();
   }
 }

@@ -9,16 +9,16 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-public class UncontrolledResourceDao {
+public class DataReferenceDao {
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   @Autowired
-  public UncontrolledResourceDao(WorkspaceManagerJdbcConfiguration jdbcConfiguration) {
+  public DataReferenceDao(WorkspaceManagerJdbcConfiguration jdbcConfiguration) {
     jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
   }
 
-  public String createUncontrolledResource(
+  public String createDataReference(
       UUID referenceId, UUID workspaceId, String name, String referenceType, String reference) {
     String sql =
         "INSERT INTO workspace_data_reference (workspace_id, reference_id, name, resource_id, credential_id, cloning_instructions, reference_type, reference) values "
@@ -38,7 +38,7 @@ public class UncontrolledResourceDao {
     return referenceId.toString();
   }
 
-  public boolean deleteUncontrolledResource(UUID referenceId) {
+  public boolean deleteDataReference(UUID referenceId) {
     Map<String, Object> paramMap = new HashMap<String, Object>();
     paramMap.put("id", referenceId.toString());
     int rowsAffected =

@@ -1,7 +1,7 @@
-package bio.terra.workspace.service.resource.uncontrolled.create.flight;
+package bio.terra.workspace.service.datareference.create.flight;
 
-public final class UncontrolledResourceFlightMapKeys {
-  private UncontrolledResourceFlightMapKeys() {}
+public final class DataReferenceFlightMapKeys {
+  private DataReferenceFlightMapKeys() {}
 
   public static final String REFERENCE_ID = "referenceId";
   public static final String WORKSPACE_ID = "workspaceId";

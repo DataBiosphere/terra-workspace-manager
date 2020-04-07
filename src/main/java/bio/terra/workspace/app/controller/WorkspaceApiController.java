@@ -2,11 +2,11 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.service.datareference.create.CreateDataReferenceService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.JobResultWithStatus;
-import bio.terra.workspace.service.resource.uncontrolled.create.CreateUncontrolledResourceService;
 import bio.terra.workspace.service.workspace.create.CreateService;
 import bio.terra.workspace.service.workspace.get.GetService;
 import javax.servlet.http.HttpServletRequest;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Controller
 public class WorkspaceApiController implements WorkspaceApi {
   private CreateService createService;
-  private CreateUncontrolledResourceService createUncontrolledResourceService;
+  private CreateDataReferenceService createDataReferenceService;
   private GetService getService;
   private JobService jobService;
   private AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
@@ -29,7 +29,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Autowired
   public WorkspaceApiController(
       CreateService createService,
-      CreateUncontrolledResourceService createUncontrolledResourceService,
+      CreateDataReferenceService createDataReferenceService,
       GetService getService,
       JobService jobService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
@@ -66,7 +66,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<JobModel> createDataReference(
       @PathVariable("id") String id, @RequestBody CreateWorkspaceDataReferenceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    createUncontrolledResourceService.createDataReference(id, body, userReq);
+    createDataReferenceService.createDataReference(id, body, userReq);
     // Look up the newly-created job
     JobModel createJob = jobService.retrieveJob(body.getJobControl().getJobid(), userReq);
     return new ResponseEntity<JobModel>(createJob, HttpStatus.valueOf(createJob.getStatusCode()));
