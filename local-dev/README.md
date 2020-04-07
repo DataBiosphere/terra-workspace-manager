@@ -13,4 +13,14 @@ You can now push to the specified environment by running
 ```
 skaffold run
 ```
-or by using IntelliJ's Cloud Code integration, which will auto-detect the generated skaffold.yaml file.
+or by using IntelliJ's Cloud Code integration, which will auto-detect the 
+generated skaffold.yaml file.
+
+In order to use the swagger-ui functionality to execute requests, you'll need to
+locally modify the API definition at `src/resources/api/service_openapi.yaml` by
+adding your url prefix to the `servers` list. Currently, url prefixes are
+`/{environment name}-{service name}`. 
+
+For example, the `terra-workspace-manager` 
+service instance in the `dev` environment would have prefix 
+`/dev-terra-workspace-manager`.
