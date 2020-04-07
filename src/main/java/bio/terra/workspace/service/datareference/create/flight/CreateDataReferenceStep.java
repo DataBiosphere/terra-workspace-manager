@@ -8,6 +8,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.generated.model.CreatedDataReference;
+import bio.terra.workspace.model.DataRepoSnapshot;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
@@ -26,7 +27,8 @@ public class CreateDataReferenceStep implements Step {
     UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.class);
     String name = inputMap.get(DataReferenceFlightMapKeys.NAME, String.class);
     String referenceType = inputMap.get(DataReferenceFlightMapKeys.REFERENCE_TYPE, String.class);
-    String reference = inputMap.get(DataReferenceFlightMapKeys.REFERENCE, String.class);
+    DataRepoSnapshot reference =
+        inputMap.get(DataReferenceFlightMapKeys.REFERENCE, DataRepoSnapshot.class);
 
     dataReferenceDao.createDataReference(referenceId, workspaceId, name, referenceType, reference);
 

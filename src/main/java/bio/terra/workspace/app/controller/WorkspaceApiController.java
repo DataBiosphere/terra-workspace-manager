@@ -64,7 +64,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<JobModel> createDataReference(
-      @PathVariable("id") String id, @RequestBody CreateWorkspaceDataReferenceRequestBody body) {
+      @PathVariable("id") String id, @RequestBody CreateDataReferenceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     createDataReferenceService.createDataReference(id, body, userReq);
     // Look up the newly-created job
