@@ -1,12 +1,12 @@
-package bio.terra.workspace.service.create;
+package bio.terra.workspace.service.workspace.create;
 
 import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.JobControl;
-import bio.terra.workspace.service.create.flight.WorkspaceCreateFlight;
-import bio.terra.workspace.service.create.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.workspace.create.flight.WorkspaceCreateFlight;
+import bio.terra.workspace.service.workspace.create.flight.WorkspaceFlightMapKeys;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

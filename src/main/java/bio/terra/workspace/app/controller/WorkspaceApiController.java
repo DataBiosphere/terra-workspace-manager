@@ -2,12 +2,12 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.*;
-import bio.terra.workspace.service.create.CreateService;
-import bio.terra.workspace.service.get.GetService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.JobResultWithStatus;
+import bio.terra.workspace.service.workspace.create.CreateService;
+import bio.terra.workspace.service.workspace.get.GetService;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

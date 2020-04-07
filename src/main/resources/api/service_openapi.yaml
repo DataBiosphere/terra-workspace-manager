@@ -62,6 +62,29 @@ paths:
         500:
           description: Get request error
           $ref: '#/components/responses/ErrorResponse'
+  '/api/v1/workspaces/{id}/references':
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      description: |
+        Create a new data reference in a workspace.
+      operationId: createDataReference
+      tags:
+        - workspace
+      requestBody:
+        description: |
+          Stuff TBD
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceDataReferenceRequestBody'
+      responses:
+        202:
+          description: Accepted
+          $ref: '#/components/responses/JobModelResponse'
+        500:
+          description: Creation request error
+          $ref: '#/components/responses/ErrorResponse'
   '/api/v1/jobs/{id}':
     parameters:
     - $ref: '#/components/parameters/Id'
@@ -216,6 +239,25 @@ components:
             format: uuid
         jobControl:
           $ref: '#/components/schemas/JobControl'
+    CreateWorkspaceDataReferenceRequestBody:
+      type: object
+      properties:
+        name:
+          description: The name of the data reference
+          type: string
+        referenceType:
+          description: The type of the data reference (i.e. TDR snapshot, AWS bucket, etc)
+          type: string
+        reference:
+          description: The reference to the data (i.e. gs://...) todo- describe as json instead
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+    CreatedDataReference:
+      type: object
+      properties:
+        id:
+          type: string
+          description: UUID of the newly referenced data todo- add more detail
     CreatedWorkspace:
       type: object
       properties:

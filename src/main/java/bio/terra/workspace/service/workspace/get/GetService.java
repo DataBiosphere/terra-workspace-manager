@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.get;
+package bio.terra.workspace.service.workspace.get;
 
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.utils.SamUtils;

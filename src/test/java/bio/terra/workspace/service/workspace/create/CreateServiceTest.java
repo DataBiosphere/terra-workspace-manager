@@ -1,21 +1,28 @@
-package bio.terra.workspace.service.get;
+package bio.terra.workspace.service.workspace.create;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.blankOrNullString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.app.Main;
-import bio.terra.workspace.generated.model.*;
-import bio.terra.workspace.service.create.CreateService;
+import bio.terra.workspace.common.exception.SamApiException;
+import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
+import bio.terra.workspace.generated.model.CreatedWorkspace;
+import bio.terra.workspace.generated.model.ErrorReport;
+import bio.terra.workspace.generated.model.JobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,20 +46,18 @@ import org.springframework.test.web.servlet.MvcResult;
 @ContextConfiguration(classes = Main.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-public class GetServiceTest {
+public class CreateServiceTest {
 
   @Autowired private MockMvc mvc;
 
   @MockBean private SamService mockSamService;
 
-  // Mock MVC doesn't populate the fields used to build this.
+  // Mock MVC doesn't populate the fields used to build authenticated requests.
   @MockBean private AuthenticatedUserRequestFactory mockAuthenticatedUserRequestFactory;
 
   @Autowired private ObjectMapper objectMapper;
 
   @Autowired private CreateService createService;
-
-  @Autowired private GetService getService;
 
   @BeforeEach
   public void setup() {
@@ -66,20 +71,9 @@ public class GetServiceTest {
   }
 
   @Test
-  public void testGetMissingWorkspace() throws Exception {
-    MvcResult callResult =
-        mvc.perform(get("/api/v1/workspaces/" + "fake-id")).andExpect(status().is(404)).andReturn();
-
-    ErrorReport error =
-        objectMapper.readValue(callResult.getResponse().getContentAsString(), ErrorReport.class);
-    assertThat(error.getStatusCode(), equalTo(HttpStatus.NOT_FOUND.value()));
-  }
-
-  @Test
-  public void testGetExistingWorkspace() throws Exception {
+  public void workspaceCreatedFromJobRequest() throws Exception {
     CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody();
-    UUID workspaceId = UUID.randomUUID();
-    body.setId(workspaceId);
+    body.setId(UUID.randomUUID());
     body.setAuthToken("fake-user-auth-token");
     body.setSpendProfile(JsonNullable.undefined());
     body.setPolicies(JsonNullable.undefined());
@@ -91,17 +85,54 @@ public class GetServiceTest {
     CreatedWorkspace workspace = runCreateWorkspaceCall(body, jobId);
 
     assertThat(workspace.getId(), not(blankOrNullString()));
+  }
+
+  @Test
+  public void testWithSpendProfileAndPolicies() throws Exception {
+    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody();
+    body.setId(UUID.randomUUID());
+    body.setAuthToken("todo: add token");
+    body.setSpendProfile(JsonNullable.of(UUID.randomUUID()));
+    body.setPolicies(JsonNullable.of(Collections.singletonList(UUID.randomUUID())));
+    JobControl jobControl = new JobControl();
+    String jobId = UUID.randomUUID().toString();
+    jobControl.setJobid(jobId);
+    body.setJobControl(jobControl);
+
+    CreatedWorkspace workspace = runCreateWorkspaceCall(body, jobId);
+
+    assertThat(workspace.getId(), not(blankOrNullString()));
+  }
+
+  @Test
+  public void testUnauthorizedUserIsRejected() throws Exception {
+    String errorMsg = "fake SAM error message";
+
+    doThrow(new SamApiException(errorMsg))
+        .when(mockSamService)
+        .createWorkspaceWithDefaults(any(), any());
+
+    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody();
+    body.setId(UUID.randomUUID());
+    body.setAuthToken("todo: add token");
+    body.setSpendProfile(JsonNullable.undefined());
+    body.setPolicies(JsonNullable.undefined());
+    JobControl jobControl = new JobControl();
+    String jobId = UUID.randomUUID().toString();
+    jobControl.setJobid(jobId);
+    body.setJobControl(jobControl);
+
+    MvcResult createResponse = callCreateEndpoint(body);
+    pollJobUntilComplete(jobId);
 
     MvcResult callResult =
-        mvc.perform(get("/api/v1/workspaces/" + workspace.getId()))
-            .andExpect(status().is(200))
+        mvc.perform(get("/api/v1/jobs/" + jobId + "/result"))
+            .andExpect(status().is(500))
             .andReturn();
 
-    WorkspaceDescription desc =
-        objectMapper.readValue(
-            callResult.getResponse().getContentAsString(), WorkspaceDescription.class);
-
-    assertThat(desc.getId(), equalTo(workspaceId));
+    ErrorReport samError =
+        objectMapper.readValue(callResult.getResponse().getContentAsString(), ErrorReport.class);
+    assertThat(samError.getMessage(), equalTo(errorMsg));
   }
 
   private CreatedWorkspace runCreateWorkspaceCall(CreateWorkspaceRequestBody request, String jobId)
@@ -138,4 +169,16 @@ public class GetServiceTest {
     return objectMapper.readValue(
         callResult.getResponse().getContentAsString(), CreatedWorkspace.class);
   }
+
+  // TODO: blank tests that should be written as more functionality gets added.
+  // @Test
+  // public void testLockedWorkspaceIsInaccessible() {
+  // }
+  // @Test
+  // public void testCreateFromNonFolderManagerIsRejected() {
+  // }
+  // @Test
+  // public void testPolicy() {
+  // }
+
 }

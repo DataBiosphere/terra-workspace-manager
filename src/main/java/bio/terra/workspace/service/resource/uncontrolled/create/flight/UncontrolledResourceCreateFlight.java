@@ -1,27 +1,27 @@
-package bio.terra.workspace.service.create.flight;
+package bio.terra.workspace.service.resource.uncontrolled.create.flight;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
-import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.db.UncontrolledResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import org.springframework.context.ApplicationContext;
 
-public class WorkspaceCreateFlight extends Flight {
+public class UncontrolledResourceCreateFlight extends Flight {
 
-  public WorkspaceCreateFlight(FlightMap inputParameters, Object applicationContext) {
+  public UncontrolledResourceCreateFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
 
     ApplicationContext appContext = (ApplicationContext) applicationContext;
-    WorkspaceDao workspaceDao = (WorkspaceDao) appContext.getBean("workspaceDao");
+    UncontrolledResourceDao uncontrolledResourceDao =
+        (UncontrolledResourceDao) appContext.getBean("UncontrolledResourceDao");
     SamService iamClient = (SamService) appContext.getBean("samService");
 
     // get data from inputs that steps need
     AuthenticatedUserRequest userReq =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    addStep(new CreateWorkspaceStep(workspaceDao));
-    addStep(new CreateWorkspaceAuthzStep(iamClient, userReq));
+    addStep(new CreateUncontrolledResourceStep(uncontrolledResourceDao));
   }
 }
