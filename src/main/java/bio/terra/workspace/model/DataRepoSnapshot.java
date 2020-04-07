@@ -29,18 +29,4 @@ public class DataRepoSnapshot {
   public void setSnapshotId(String snapshotId) {
     this.snapshotId = snapshotId;
   }
-
-  @Override
-  public String toString() {
-    return "{"
-        + "\"instance\":"
-        + "\""
-        + instance
-        + "\""
-        + ", \"snapshotId\":"
-        + "\""
-        + snapshotId
-        + "\""
-        + "}";
-  }
 }

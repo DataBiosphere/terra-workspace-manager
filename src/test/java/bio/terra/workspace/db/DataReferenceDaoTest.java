@@ -5,9 +5,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import bio.terra.workspace.app.Main;
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
+import bio.terra.workspace.model.DataReference;
 import bio.terra.workspace.model.DataRepoSnapshot;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -38,34 +37,33 @@ public class DataReferenceDaoTest {
   private UUID workspaceId;
   private UUID spendProfileId;
   private UUID referenceId;
-  private String readSql =
-      "SELECT workspace_id, reference_id, name, reference_type, reference FROM workspace_data_reference WHERE reference_id = :id";
 
   @BeforeEach
   public void setup() {
     workspaceId = UUID.randomUUID();
-    spendProfileId = UUID.randomUUID();
     referenceId = UUID.randomUUID();
     jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
   }
 
   @Test
-  public void verifyCreatedDataReferenceExists() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, JsonNullable.of(spendProfileId));
+  public void verifyCreatedDataReferenceExists() {
+    workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
 
     dataReferenceDao.createDataReference(
         referenceId, workspaceId, "testName", "tdr-snapshot", new DataRepoSnapshot("foo", "bar"));
-    Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put("id", referenceId.toString());
-    Map<String, Object> queryOutput = jdbcTemplate.queryForMap(readSql, paramMap);
+    DataReference reference = dataReferenceDao.getDataReference(referenceId);
 
-    assertThat(queryOutput.get("workspace_id"), equalTo(workspaceId.toString()));
-    assertThat(queryOutput.get("reference_id"), equalTo(referenceId.toString()));
-    assertThat(queryOutput.get("name"), equalTo("testName"));
-    assertThat(queryOutput.get("reference_type"), equalTo("tdr-snapshot"));
-    assertThat(queryOutput.get("reference"), equalTo(new DataRepoSnapshot("foo", "bar")));
-
-    // This test doesn't clean up after itself - be sure it only runs on unit test DBs, which
-    // are always re-created for tests.
+    assertThat(reference.getWorkspaceId(), equalTo(workspaceId));
+    assertThat(reference.getReferenceId(), equalTo(referenceId));
+    assertThat(reference.getName(), equalTo("testName"));
+    assertThat(reference.getReferenceType(), equalTo("tdr-snapshot"));
+    assertThat(reference.getReference().getSnapshotId(), equalTo("foo"));
+    assertThat(reference.getReference().getInstance(), equalTo("bar"));
   }
+
+  public void verifyCreateDataReferenceRequiresWorkspace() {}
+
+  public void verifyGetDataReference() {}
+
+  public void verifyDeleteDataReference() {}
 }
