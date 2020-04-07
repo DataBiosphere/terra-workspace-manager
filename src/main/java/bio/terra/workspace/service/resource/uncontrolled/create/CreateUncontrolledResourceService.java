@@ -9,7 +9,9 @@ import bio.terra.workspace.service.resource.uncontrolled.create.flight.Uncontrol
 import bio.terra.workspace.service.resource.uncontrolled.create.flight.UncontrolledResourceFlightMapKeys;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class CreateUncontrolledResourceService {
 
   private JobService jobService;

@@ -15,7 +15,7 @@ public class UncontrolledResourceCreateFlight extends Flight {
 
     ApplicationContext appContext = (ApplicationContext) applicationContext;
     UncontrolledResourceDao uncontrolledResourceDao =
-        (UncontrolledResourceDao) appContext.getBean("UncontrolledResourceDao");
+        (UncontrolledResourceDao) appContext.getBean("uncontrolledResourceDao");
     SamService iamClient = (SamService) appContext.getBean("samService");
 
     // get data from inputs that steps need
