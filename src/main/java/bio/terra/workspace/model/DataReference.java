@@ -7,7 +7,7 @@ public class DataReference {
   private UUID workspaceId;
   private UUID referenceId;
   private String name;
-  private String resourceId;
+  private UUID resourceId;
   private String credentialId;
   private String cloningInstructions; // todo: enum
   private String referenceType; // todo: enum
@@ -17,7 +17,7 @@ public class DataReference {
       UUID workspaceId,
       UUID referenceId,
       String name,
-      String resourceId,
+      UUID resourceId,
       String credentialId,
       String cloningInstructions,
       String referenceType,
@@ -60,11 +60,11 @@ public class DataReference {
     this.name = name;
   }
 
-  public String getResourceId() {
+  public UUID getResourceId() {
     return resourceId;
   }
 
-  public void setResourceId(String resourceId) {
+  public void setResourceId(UUID resourceId) {
     this.resourceId = resourceId;
   }
 

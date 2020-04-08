@@ -53,6 +53,9 @@ public class CreateDataReferenceService {
             .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, id)
             .addParameter(DataReferenceFlightMapKeys.NAME, body.getName())
             .addParameter(DataReferenceFlightMapKeys.REFERENCE_TYPE, body.getReferenceType())
+            .addParameter(
+                DataReferenceFlightMapKeys.CLONING_INSTRUCTIONS, body.getCloningInstructions())
+            .addParameter(DataReferenceFlightMapKeys.CREDENTIAL_ID, body.getCredentialId())
             .addParameter(DataReferenceFlightMapKeys.REFERENCE, body.getReference());
     createJob.submit();
   }

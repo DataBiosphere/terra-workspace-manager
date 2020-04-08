@@ -103,6 +103,8 @@ databaseChangeLog:
               name: workspace_id
               type: text
               constraints:
+                references: workspace(workspace_id)
+                foreignKeyName: fk_workspace_id
                 nullable: false
           - column:
               name: reference_id
@@ -134,8 +136,6 @@ databaseChangeLog:
               name: reference_type
               # TODO: this should be an enum
               type: text
-              constraints:
-                nullable: false
           - column:
               name: reference
               type: json

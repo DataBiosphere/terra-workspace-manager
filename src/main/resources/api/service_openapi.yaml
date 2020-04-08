@@ -245,11 +245,25 @@ components:
         name:
           description: The name of the data reference
           type: string
+        resourceId:
+          description: The ID of the resource
+          type: string
+          nullable: true
         referenceType:
           description: The type of the data reference (i.e. TDR snapshot, AWS bucket, etc)
           type: string
+          nullable: true
         reference:
           description: The reference to the data (i.e. gs://...) todo- describe as json instead
+          type: object
+          nullable: true
+        cloningInstructions:
+          description: The cloning instructions for the reference
+          type: string
+        credentialId:
+          description: The IDs of the credentials to use with this resource
+          type: string
+          nullable: true
         jobControl:
           $ref: '#/components/schemas/JobControl'
     CreatedDataReference:
@@ -264,6 +278,49 @@ components:
         id:
           type: string
           description: UUID of a newly-created workspace
+    DataReference:
+      type: object
+      properties:
+        referenceId:
+          description: The ID of the data reference
+          type: string
+          format: uuid
+        name:
+          description: The name of the data reference
+          type: string
+        workspaceId:
+          description: The ID of the workspace containing the reference
+          type: string
+          format: uuid
+        resourceId:
+          description: The ID of the resource
+          type: string
+          format: uuid
+          nullable: true
+        referenceType:
+          description: The type of the reference
+          type: string #TODO: enum
+          nullable: true
+        reference:
+          description: The reference
+          $ref: '#/components/schemas/DataRepoSnapshot'
+          nullable: true
+        credentialId:
+          description: The ID of the credential to use when accessing the resource
+          type: string
+          nullable: true
+        cloningInstructions:
+          description: The rules to follow when cloning
+          type: string #TODO: enum
+    DataRepoSnapshot:
+      type: object
+      properties:
+        instance:
+          description: todo
+          type: string
+        snapshot:
+            description: todo
+            type: string
     WorkspaceDescription:
       type: object
       properties:
