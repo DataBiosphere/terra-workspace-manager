@@ -1,27 +1,14 @@
 # terra-workspace-manager
-This repository started as a proof-of-concept. It is expanding to serve as a template
-project for MC Terra services.
+This repository holds the Workspace Manager service, the MC-Terra component
+responsible for managing resources and the applications/resources they use.
 
-In general, once you copy this project, you can search for the word "template" and
-fill in your service or some other appropriate name.
-
+To push versions of this repository to different environments (including 
+per-developer integration environments), use deliverybot:
 [Deliverybot Dashboard](https://app.deliverybot.dev/DataBiosphere/framework-version/branch/master)
 
 ## OpenAPI V3 - formerly swagger
-The template provides a simple OpenAPI V3 yaml document that includes a /status
-endpoint and a /api/template/v1/ping endpoint. The ping endpoint is there to
-show the full plumbing for an endpoint that uses the common exception handler to 
-return an ErrorReport.
-
-The OpenAPI document also contains two components that we would like to have common
-across all of our APIs:
-<ul>
-<li>ErrorReport - a common error return structure</li>
-<li>SystemStatus - a common response to the /status endpoint</li>
-</ul>
-
 A swagger-ui page is available at /api/swagger-ui.html on any running instance. 
-TEMPLATE: Once a service has a stable dev/alpha instance, a link to its 
+TODO: Once we have a stable and persistent dev instance, a link to its 
 swagger-ui page should go here.
 
 ## Spring Boot
