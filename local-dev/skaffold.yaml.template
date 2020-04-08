@@ -9,4 +9,4 @@ build:
 deploy:
   kustomize:
     paths:
-    - terra-workspace-manager-config/NAMESPACE
+    - terra-config/NAMESPACE/terra-workspace-manager
