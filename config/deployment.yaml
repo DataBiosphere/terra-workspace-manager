@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: terra-workspace-manager-deployment
+  labels:
+    version: v1
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: terra-workspace-manager-service
+      labels:
+        version: v1
+    spec:
+      serviceAccountName: terra-workspace-manager-service-sa
+      containers:
+      - name: terra-workspace-manager
+        image: gcr.io/terra-kernel-k8s/terra-workspace-manager:0.0.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DATABASE_USER
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-user-creds
+              key: username
+        - name: DATABASE_USER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-user-creds
+              key: password
+        - name: DATABASE_NAME
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-db-name
+              key: db-name
+      - name: cloudsql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:1.16
+        env:
+        - name: SQL_INSTANCE_NAME
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-instance-name
+              key: name
+        command: ["/cloud_sql_proxy",
+                  "-instances=terra-kernel-k8s:us-central1:$(SQL_INSTANCE_NAME)=tcp:5432",
+                  "-credential_file=/secrets/cloudsql/sql-creds.json"]
+        securityContext:
+          runAsUser: 2  # non-root user
+          allowPrivilegeEscalation: false
+        volumeMounts:
+        - name: cloudsql-sa-creds
+          mountPath: /secrets/cloudsql
+          readOnly: true
+      volumes:
+        - name: cloudsql-sa-creds
+          secret:
+            secretName: cloudsql-sa-creds

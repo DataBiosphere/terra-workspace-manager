@@ -1,0 +1,44 @@
+HELP.md
+.gradle/
+build/
+local-dev/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**
+!**/src/test/**
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### Emacs backup files
+*.*~
+
+### Mac directory metadata
+.DS_Store
+
+### OpenAPI CodeGen detritus
+.openapi-generator/
+pom.xml
+

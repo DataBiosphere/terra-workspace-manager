@@ -1,0 +1,21 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: terra-workspace-manager-vservice
+# Basic Istio virtual service to illustrate kustomize base+overlay
+# The below spec will be overwritten by the environment overlay to 
+#   namespace traffic to the right environment based on a prefix.
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - template-gateway.default.svc.cluster.local
+  http:
+  - match:
+    - uri:
+        prefix: /terra-workspace-manager
+    route:
+    - destination:
+        port:
+          number: 8080
+        host: terra-workspace-manager-service.default.svc.cluster.local

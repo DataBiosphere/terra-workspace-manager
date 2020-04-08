@@ -1,0 +1,272 @@
+openapi: 3.0.0
+info:
+  title: Workspace Manager API
+  description: |
+    Workspace Manager REST API to manage workspaces.
+  version: 0.0.1
+
+servers:
+- url: http://localhost:8080
+
+paths:
+  '/status':
+    get:
+      description: |
+        Returns the operational status of the service
+      operationId: serviceStatus
+      tags:
+      - unauthenticated
+      responses:
+        200:
+          description: Service is functional
+          $ref: '#/components/responses/StatusResponse'
+        500:
+          description: Service is broken
+          $ref: '#/components/responses/StatusResponse'
+
+  '/api/v1/workspaces':
+    post:
+      description: |
+        Create a new Workspace. This should only be called by Folder Manager.
+      operationId: createWorkspace
+      tags:
+      - workspace
+      requestBody:
+        description: |
+          Auth token, spend profile, and policy information from
+          Folder Manager, as well as async job information.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceRequestBody'
+      responses:
+        202:
+          description: Accepted
+          $ref: '#/components/responses/JobModelResponse'
+        500:
+          description: Creation request error
+          $ref: '#/components/responses/ErrorResponse'
+  '/api/v1/workspaces/{id}':
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    get:
+      description: |
+        Get an existing Workspace.
+      operationId: getWorkspace
+      tags:
+        - workspace
+      responses:
+        200:
+          description: OK
+          $ref: '#/components/responses/GetResponse'
+        500:
+          description: Get request error
+          $ref: '#/components/responses/ErrorResponse'
+  '/api/v1/jobs/{id}':
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    get:
+      description: |
+        Poll the status of an existing async operation via job ID.
+      operationId: pollAsyncJob
+      tags:
+      - workspace
+      responses:
+        202:
+          description: Async job is incomplete
+          $ref: '#/components/responses/JobModelResponse'
+        200:
+          description: Async job is complete
+          $ref: '#/components/responses/JobModelResponse'
+        400:
+          description: Bad request - invalid id, badly formed
+          $ref: '#/components/responses/ErrorResponse'
+        403:
+          description: No permission to see job
+          $ref: '#/components/responses/ErrorResponse'
+        404:
+          description: Not found - job id does not exist
+          $ref: '#/components/responses/ErrorResponse'
+    delete:  ## delete job data
+      description: Delete the job and data associated with it
+      operationId: deleteJob
+      tags:
+      - workspace
+      responses:
+        204:
+          description: Job was deleted
+  '/api/v1/jobs/{id}/result':
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    get:
+      description: |
+        Retrieve the results of a completed async job specified by ID.
+      operationId: retrieveJobResult
+      tags:
+      - workspace
+      responses:
+        default:
+          description: Successful responses return the type of object specified by the job; otherwise, ErrorModel
+          content:
+            application/json:
+              schema:
+                type: object
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      description: A UUID to used to identify an object in the workspace manager
+      required: true
+      schema:
+        type: string
+  schemas:
+    ErrorReport:
+      type: object
+      properties:
+        message:
+          type: string
+        statusCode:
+          type: integer
+        causes:
+          type: array
+          items:
+            type: string
+    JobControl:
+      type: object
+      required:
+      - jobid
+      properties:
+        jobid:
+          type: string
+        pubsub:
+          type: object
+          required:
+          - projectid
+          - topicid
+          properties:
+            projectid:
+              type: string
+            topicid:
+              type: string
+    JobModel:
+      type: object
+      required:
+      - id
+      - status
+      - status_code
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum:
+          - RUNNING
+          - SUCCEEDED
+          - FAILED
+        statusCode:
+          description: HTTP code
+          type: integer
+        submitted:
+          type: string
+        completed:
+          type: string
+        estimatedRemainingTimeMS:
+          type: integer
+    SystemStatus:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          description: status of this service
+        systems:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              ok:
+                type: boolean
+              messages:
+                type: array
+                items:
+                  type: string
+    CreateWorkspaceRequestBody:
+      type: object
+      properties:
+        id:
+          description: The ID of the workspace
+          type: string
+          format: uuid
+        authToken:
+          description: Requesting user's auth token
+          type: string
+        spendProfile:
+          description: UUID of provided spend profile
+          type: string
+          nullable: true
+          format: uuid
+        policies:
+          description: Policies provided by the containing folder
+          type: array
+          nullable: true
+          items:
+            type: string
+            format: uuid
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+    CreatedWorkspace:
+      type: object
+      properties:
+        id:
+          type: string
+          description: UUID of a newly-created workspace
+    WorkspaceDescription:
+      type: object
+      properties:
+        id:
+          description: The ID of the workspace
+          type: string
+          format: uuid
+        spendProfile:
+          description: UUID of provided spend profile
+          type: string
+          nullable: true
+          format: uuid
+
+  responses:
+    ErrorResponse:
+      description: common error response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorReport'
+
+    StatusResponse:
+      description: common status response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SystemStatus'
+
+    CreateResponse:
+      description: Response to Create calls
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedWorkspace'
+
+    GetResponse:
+      description: Response to Get calls
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WorkspaceDescription'
+
+    JobModelResponse:
+      description: Response with a JobModel
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/JobModel'
