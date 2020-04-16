@@ -58,7 +58,7 @@ public class DataReferenceDaoTest {
     resourceId =
         null; // eventually we will more thoroughly support controlled resources, so this won't
     // always be null
-    cloningInstructions = UUID.randomUUID().toString();
+    cloningInstructions = "COPY_NOTHING";
     jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
   }
 

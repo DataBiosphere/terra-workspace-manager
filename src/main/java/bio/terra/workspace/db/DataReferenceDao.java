@@ -3,6 +3,7 @@ package bio.terra.workspace.db;
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.DataReference;
+import bio.terra.workspace.generated.model.DataReference.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.DataReferenceList;
 import bio.terra.workspace.generated.model.ResourceDescription;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
@@ -89,7 +90,8 @@ public class DataReferenceDao {
     reference.setName(queryOutput.get("name").toString());
     reference.setReferenceType(JsonNullable.of(queryOutput.get("reference_type").toString()));
     reference.setCredentialId(JsonNullable.of(queryOutput.get("credential_id").toString()));
-    reference.setCloningInstructions(queryOutput.get("cloning_instructions").toString());
+    reference.setCloningInstructions(
+        CloningInstructionsEnum.fromValue(queryOutput.get("cloning_instructions").toString()));
 
     if (queryOutput.getOrDefault("resource_id", null) == null) {
       reference.setResourceDescription(null);
@@ -169,7 +171,8 @@ public class DataReferenceDao {
                   ? null
                   : resourceDescriptionMapper.mapRow(rs, rowNum))
           .credentialId(rs.getString("credential_id"))
-          .cloningInstructions(rs.getString("cloning_instructions"))
+          .cloningInstructions(
+              CloningInstructionsEnum.fromValue(rs.getString("cloning_instructions")))
           .referenceType(rs.getString("reference_type"))
           .reference(rs.getString("reference"));
     }
