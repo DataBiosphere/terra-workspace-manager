@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.datareference.create.exception;
+package bio.terra.workspace.service.datareference.exception;
 
 import bio.terra.workspace.common.exception.InternalServerErrorException;
 

@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.datareference.create.flight;
+package bio.terra.workspace.service.datareference.flight;
 
 public final class DataReferenceFlightMapKeys {
   private DataReferenceFlightMapKeys() {}

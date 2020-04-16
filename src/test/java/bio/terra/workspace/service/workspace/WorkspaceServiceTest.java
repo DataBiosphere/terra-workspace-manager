@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.create;
+package bio.terra.workspace.service.workspace;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.blankOrNullString;
@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -18,6 +19,7 @@ import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
 import bio.terra.workspace.generated.model.ErrorReport;
 import bio.terra.workspace.generated.model.JobControl;
+import bio.terra.workspace.generated.model.WorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -46,28 +48,68 @@ import org.springframework.test.web.servlet.MvcResult;
 @ContextConfiguration(classes = Main.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-public class CreateServiceTest {
+public class WorkspaceServiceTest {
 
   @Autowired private MockMvc mvc;
 
   @MockBean private SamService mockSamService;
 
-  // Mock MVC doesn't populate the fields used to build authenticated requests.
+  // Mock MVC doesn't populate the fields used to build this.
   @MockBean private AuthenticatedUserRequestFactory mockAuthenticatedUserRequestFactory;
 
   @Autowired private ObjectMapper objectMapper;
 
-  @Autowired private CreateService createService;
+  @Autowired private WorkspaceService workspaceService;
 
   @BeforeEach
   public void setup() {
     doNothing().when(mockSamService).createWorkspaceWithDefaults(any(), any());
+    doReturn(true).when(mockSamService).isAuthorized(any(), any(), any(), any());
     AuthenticatedUserRequest fakeAuthentication = new AuthenticatedUserRequest();
     fakeAuthentication
         .token(Optional.of("fake-token"))
         .email("fake@email.com")
         .subjectId("fakeID123");
     when(mockAuthenticatedUserRequestFactory.from(any())).thenReturn(fakeAuthentication);
+  }
+
+  @Test
+  public void testGetMissingWorkspace() throws Exception {
+    MvcResult callResult =
+        mvc.perform(get("/api/v1/workspaces/" + "fake-id")).andExpect(status().is(404)).andReturn();
+
+    ErrorReport error =
+        objectMapper.readValue(callResult.getResponse().getContentAsString(), ErrorReport.class);
+    assertThat(error.getStatusCode(), equalTo(HttpStatus.NOT_FOUND.value()));
+  }
+
+  @Test
+  public void testGetExistingWorkspace() throws Exception {
+    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody();
+    UUID workspaceId = UUID.randomUUID();
+    body.setId(workspaceId);
+    body.setAuthToken("fake-user-auth-token");
+    body.setSpendProfile(JsonNullable.undefined());
+    body.setPolicies(JsonNullable.undefined());
+    JobControl jobControl = new JobControl();
+    String jobId = UUID.randomUUID().toString();
+    jobControl.setJobid(jobId);
+    body.setJobControl(jobControl);
+
+    CreatedWorkspace workspace = runCreateWorkspaceCall(body, jobId);
+
+    assertThat(workspace.getId(), not(blankOrNullString()));
+
+    MvcResult callResult =
+        mvc.perform(get("/api/v1/workspaces/" + workspace.getId()))
+            .andExpect(status().is(200))
+            .andReturn();
+
+    WorkspaceDescription desc =
+        objectMapper.readValue(
+            callResult.getResponse().getContentAsString(), WorkspaceDescription.class);
+
+    assertThat(desc.getId(), equalTo(workspaceId));
   }
 
   @Test
@@ -134,6 +176,16 @@ public class CreateServiceTest {
         objectMapper.readValue(callResult.getResponse().getContentAsString(), ErrorReport.class);
     assertThat(samError.getMessage(), equalTo(errorMsg));
   }
+  // TODO: blank tests that should be written as more functionality gets added.
+  // @Test
+  // public void testLockedWorkspaceIsInaccessible() {
+  // }
+  // @Test
+  // public void testCreateFromNonFolderManagerIsRejected() {
+  // }
+  // @Test
+  // public void testPolicy() {
+  // }
 
   private CreatedWorkspace runCreateWorkspaceCall(CreateWorkspaceRequestBody request, String jobId)
       throws Exception {
@@ -169,16 +221,4 @@ public class CreateServiceTest {
     return objectMapper.readValue(
         callResult.getResponse().getContentAsString(), CreatedWorkspace.class);
   }
-
-  // TODO: blank tests that should be written as more functionality gets added.
-  // @Test
-  // public void testLockedWorkspaceIsInaccessible() {
-  // }
-  // @Test
-  // public void testCreateFromNonFolderManagerIsRejected() {
-  // }
-  // @Test
-  // public void testPolicy() {
-  // }
-
 }

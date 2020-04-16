@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.datareference.create.flight;
+package bio.terra.workspace.service.datareference.flight;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -8,7 +8,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.generated.model.CreatedDataReference;
-import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import java.util.UUID;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.http.HttpStatus;
@@ -32,8 +31,7 @@ public class CreateDataReferenceStep implements Step {
     String cloningInstructions =
         inputMap.get(DataReferenceFlightMapKeys.CLONING_INSTRUCTIONS, String.class);
     String referenceType = inputMap.get(DataReferenceFlightMapKeys.REFERENCE_TYPE, String.class);
-    DataRepoSnapshot reference =
-        inputMap.get(DataReferenceFlightMapKeys.REFERENCE, DataRepoSnapshot.class);
+    String reference = inputMap.get(DataReferenceFlightMapKeys.REFERENCE, String.class);
 
     dataReferenceDao.createDataReference(
         referenceId,

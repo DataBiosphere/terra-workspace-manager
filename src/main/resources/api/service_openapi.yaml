@@ -85,6 +85,52 @@ paths:
         500:
           description: Creation request error
           $ref: '#/components/responses/ErrorResponse'
+    get:
+      description: |
+        Enumerate the data references in a workspace.
+      operationId: enumerateReferences
+      tags:
+      - workspace
+      parameters:
+      - in: query
+        name: offset
+        description: The number of items to skip before starting to collect the result set.
+        schema:
+          type: integer
+          default: 0
+      - in: query
+        name: limit
+        description: The numbers of items to return. Default 10
+        schema:
+          type: integer
+          default: 10
+      - in: query
+        name: filterControlled
+        description: |
+          Filter for selecting controlled vs. uncontrolled resources.
+        schema:
+          type: string
+          default: all
+          enum:
+          - controlled
+          - uncontrolled
+          - all
+      responses:
+        200:
+          description: OK
+          $ref: '#/components/responses/ReferenceListResponse'
+        400:
+          description: Error in request
+          $ref: '#/components/responses/ErrorResponse'
+        401:
+          description: Unauthorized access
+          $ref: '#/components/responses/ErrorResponse'
+        404:
+          description: Workspace or resource not found
+          $ref: '#/components/responses/ErrorResponse'
+        500:
+          description: Server Error
+          $ref: '#/components/responses/ErrorResponse'
   '/api/v1/jobs/{id}':
     parameters:
     - $ref: '#/components/parameters/Id'
@@ -292,18 +338,17 @@ components:
           description: The ID of the workspace containing the reference
           type: string
           format: uuid
-        resourceId:
-          description: The ID of the resource
-          type: string
-          format: uuid
+        resourceDescription:
+          description: Description of the workspace resource, if this is a controlled reference.
           nullable: true
+          $ref: '#/components/schemas/ResourceDescription'
         referenceType:
           description: The type of the reference
           type: string #TODO: enum
           nullable: true
         reference:
-          description: The reference
-          $ref: '#/components/schemas/DataRepoSnapshot'
+          description: JSON representation of reference information.
+          type: string
           nullable: true
         credentialId:
           description: The ID of the credential to use when accessing the resource
@@ -311,16 +356,42 @@ components:
           nullable: true
         cloningInstructions:
           description: The rules to follow when cloning
-          type: string #TODO: enum
-    DataRepoSnapshot:
+          type: string
+          enum: ["COPY_NOTHING", "COPY_DEFINITION", "COPY_RESOURCE", "COPY_REFERENCE"]
+    DataReferenceList:
       type: object
       properties:
-        instance:
-          description: todo
+        resources:
+          description: A list of controlled and/or uncontrolled data references
+          type: array
+          items:
+            $ref: '#/components/schemas/DataReference'
+    ResourceDescription:
+      type: object
+      properties:
+        resource_id:
+          description: The ID of the resource
           type: string
-        snapshot:
-            description: todo
-            type: string
+          format: uuid
+        workspace_id:
+          description: The ID of the workspace holding the resource
+          type: string
+          format: uuid
+        application_id:
+          description: ID of application this resource is associated with, if any
+          type: string
+          nullable: true
+        is_visible:
+          description: Whether this resource is visible or not
+          type: boolean
+        owner:
+          description: ID of owner. null for shared resources
+          type: string
+          nullable: true
+        attributes:
+          description: JSON map of user-provided attributes
+          type: string
+          nullable: true
     WorkspaceDescription:
       type: object
       properties:
@@ -369,3 +440,10 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/JobModel'
+
+    ReferenceListResponse:
+      description: Response to list resource calls
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DataReferenceList'

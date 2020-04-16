@@ -12,7 +12,6 @@ import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.workspace.app.configuration.ApplicationConfiguration;
 import bio.terra.workspace.app.configuration.StairwayJdbcConfiguration;
-import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.generated.model.JobModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -29,7 +28,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +58,9 @@ public class JobService {
     ExecutorService executorService =
         Executors.newFixedThreadPool(appConfig.getMaxStairwayThreads());
     StairwayExceptionSerializer serializer = new StairwayExceptionSerializer(objectMapper);
-    stairway = new Stairway(executorService, applicationContext, serializer);
+    stairway =
+        new Stairway(
+            executorService, applicationContext, serializer); // , UUID.randomUUID().toString());
   }
 
   public static class JobResultWithStatus<T> {
@@ -168,8 +168,6 @@ public class JobService {
       stairway.deleteFlight(jobId, false);
     } catch (StairwayException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
-    } catch (ApiException samEx) {
-      throw new SamApiException(samEx);
     }
   }
 
