@@ -40,9 +40,15 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateWorkspaceRequestBody'
       responses:
-        202:
-          description: Accepted
-          $ref: '#/components/responses/JobModelResponse'
+        200:
+          description: Ok
+          $ref: '#/components/responses/CreateResponse'
+        400:
+          description: Bad request - invalid id, badly formed
+          $ref: '#/components/responses/ErrorResponse'
+        403:
+          description: Permission denied
+          $ref: '#/components/responses/ErrorResponse'
         500:
           description: Creation request error
           $ref: '#/components/responses/ErrorResponse'
@@ -263,14 +269,24 @@ components:
           items:
             type: string
             format: uuid
-        jobControl:
-          $ref: '#/components/schemas/JobControl'
     CreatedWorkspace:
       type: object
       properties:
         id:
           type: string
           description: UUID of a newly-created workspace
+    WorkspaceDescription:
+      type: object
+      properties:
+        id:
+          description: The ID of the workspace
+          type: string
+          format: uuid
+        spendProfile:
+          description: UUID of provided spend profile
+          type: string
+          nullable: true
+          format: uuid
     DataReferenceDescription:
       type: object
       properties:
@@ -288,7 +304,8 @@ components:
         resourceDescription:
           description: Description of the workspace resource, if this is a controlled reference.
           nullable: true
-          $ref: '#/components/schemas/ResourceDescription'
+          allOf:
+          - $ref: '#/components/schemas/ResourceDescription'
         referenceType:
           description: The type of the reference, if an uncontrolled resource
           type: string

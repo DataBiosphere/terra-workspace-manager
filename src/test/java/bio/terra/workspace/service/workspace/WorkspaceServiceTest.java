@@ -18,7 +18,6 @@ import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
 import bio.terra.workspace.generated.model.ErrorReport;
-import bio.terra.workspace.generated.model.JobControl;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -91,12 +90,8 @@ public class WorkspaceServiceTest {
     body.setAuthToken("fake-user-auth-token");
     body.setSpendProfile(JsonNullable.undefined());
     body.setPolicies(JsonNullable.undefined());
-    JobControl jobControl = new JobControl();
-    String jobId = UUID.randomUUID().toString();
-    jobControl.setJobid(jobId);
-    body.setJobControl(jobControl);
 
-    CreatedWorkspace workspace = runCreateWorkspaceCall(body, jobId);
+    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
 
     assertThat(workspace.getId(), not(blankOrNullString()));
 
@@ -114,61 +109,54 @@ public class WorkspaceServiceTest {
 
   @Test
   public void workspaceCreatedFromJobRequest() throws Exception {
-    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody();
-    body.setId(UUID.randomUUID());
-    body.setAuthToken("fake-user-auth-token");
-    body.setSpendProfile(JsonNullable.undefined());
-    body.setPolicies(JsonNullable.undefined());
-    JobControl jobControl = new JobControl();
-    String jobId = UUID.randomUUID().toString();
-    jobControl.setJobid(jobId);
-    body.setJobControl(jobControl);
+    UUID workspaceId = UUID.randomUUID();
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .authToken("fake-user-auth-token")
+            .spendProfile(null)
+            .policies(null);
 
-    CreatedWorkspace workspace = runCreateWorkspaceCall(body, jobId);
+    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
 
-    assertThat(workspace.getId(), not(blankOrNullString()));
+    assertThat(workspace.getId(), equalTo(workspaceId.toString()));
   }
 
   @Test
   public void testWithSpendProfileAndPolicies() throws Exception {
-    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody();
-    body.setId(UUID.randomUUID());
-    body.setAuthToken("todo: add token");
-    body.setSpendProfile(JsonNullable.of(UUID.randomUUID()));
-    body.setPolicies(JsonNullable.of(Collections.singletonList(UUID.randomUUID())));
-    JobControl jobControl = new JobControl();
-    String jobId = UUID.randomUUID().toString();
-    jobControl.setJobid(jobId);
-    body.setJobControl(jobControl);
+    UUID workspaceId = UUID.randomUUID();
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .authToken("fake-user-auth-token")
+            .spendProfile(UUID.randomUUID())
+            .policies(Collections.singletonList(UUID.randomUUID()));
 
-    CreatedWorkspace workspace = runCreateWorkspaceCall(body, jobId);
+    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
 
-    assertThat(workspace.getId(), not(blankOrNullString()));
+    assertThat(workspace.getId(), equalTo(workspaceId.toString()));
   }
 
   @Test
-  public void testUnauthorizedUserIsRejected() throws Exception {
+  public void testHandlesSamError() throws Exception {
     String errorMsg = "fake SAM error message";
 
     doThrow(new SamApiException(errorMsg))
         .when(mockSamService)
         .createWorkspaceWithDefaults(any(), any());
 
-    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody();
-    body.setId(UUID.randomUUID());
-    body.setAuthToken("todo: add token");
-    body.setSpendProfile(JsonNullable.undefined());
-    body.setPolicies(JsonNullable.undefined());
-    JobControl jobControl = new JobControl();
-    String jobId = UUID.randomUUID().toString();
-    jobControl.setJobid(jobId);
-    body.setJobControl(jobControl);
-
-    MvcResult createResponse = callCreateEndpoint(body);
-    pollJobUntilComplete(jobId);
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody()
+            .id(UUID.randomUUID())
+            .authToken("todo: add token")
+            .spendProfile(null)
+            .policies(null);
 
     MvcResult callResult =
-        mvc.perform(get("/api/v1/jobs/" + jobId + "/result"))
+        mvc.perform(
+                post("/api/v1/workspaces")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(body)))
             .andExpect(status().is(500))
             .andReturn();
 
@@ -176,6 +164,7 @@ public class WorkspaceServiceTest {
         objectMapper.readValue(callResult.getResponse().getContentAsString(), ErrorReport.class);
     assertThat(samError.getMessage(), equalTo(errorMsg));
   }
+
   // TODO: blank tests that should be written as more functionality gets added.
   // @Test
   // public void testLockedWorkspaceIsInaccessible() {
@@ -187,38 +176,16 @@ public class WorkspaceServiceTest {
   // public void testPolicy() {
   // }
 
-  private CreatedWorkspace runCreateWorkspaceCall(CreateWorkspaceRequestBody request, String jobId)
+  private CreatedWorkspace runCreateWorkspaceCall(CreateWorkspaceRequestBody request)
       throws Exception {
-    MvcResult initialResult = callCreateEndpoint(request);
-    pollJobUntilComplete(jobId);
-    return getCreateJobResult(jobId);
-  }
-
-  private MvcResult callCreateEndpoint(CreateWorkspaceRequestBody request) throws Exception {
-    return mvc.perform(
-            post("/api/v1/workspaces")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-        .andExpect(status().is(202))
-        .andReturn();
-  }
-
-  private void pollJobUntilComplete(String jobId) throws Exception {
-    HttpStatus pollStatus = HttpStatus.valueOf(202);
-    while (pollStatus == HttpStatus.valueOf(202)) {
-      MvcResult pollResult = mvc.perform(get("/api/v1/jobs/" + jobId)).andReturn();
-      pollStatus = HttpStatus.valueOf(pollResult.getResponse().getStatus());
-    }
-    assertThat(pollStatus, equalTo(HttpStatus.OK));
-  }
-
-  private CreatedWorkspace getCreateJobResult(String jobId) throws Exception {
-    MvcResult callResult =
-        mvc.perform(get("/api/v1/jobs/" + jobId + "/result"))
+    MvcResult initialResult =
+        mvc.perform(
+                post("/api/v1/workspaces")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().is(200))
             .andReturn();
-
     return objectMapper.readValue(
-        callResult.getResponse().getContentAsString(), CreatedWorkspace.class);
+        initialResult.getResponse().getContentAsString(), CreatedWorkspace.class);
   }
 }

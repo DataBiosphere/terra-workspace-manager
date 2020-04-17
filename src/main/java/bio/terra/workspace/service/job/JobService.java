@@ -58,9 +58,7 @@ public class JobService {
     ExecutorService executorService =
         Executors.newFixedThreadPool(appConfig.getMaxStairwayThreads());
     StairwayExceptionSerializer serializer = new StairwayExceptionSerializer(objectMapper);
-    stairway =
-        new Stairway(
-            executorService, applicationContext, serializer); // , UUID.randomUUID().toString());
+    stairway = new Stairway(executorService, applicationContext, serializer);
   }
 
   public static class JobResultWithStatus<T> {
