@@ -62,7 +62,7 @@ public class DataReferenceServiceTest {
     when(mockAuthenticatedUserRequestFactory.from(any())).thenReturn(fakeAuthentication);
   }
 
-  // TODO tests: best case
+  // TODO: need a best case test, once an endpoint for creating a DataReference exists.
 
   @Test
   public void enumerateFailsUnauthorized() throws Exception {

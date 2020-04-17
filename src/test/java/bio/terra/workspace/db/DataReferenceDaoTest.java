@@ -53,6 +53,10 @@ public class DataReferenceDaoTest {
     jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
   }
 
+  // TODO: This should be uncommented and tweaked when a final version of the Create endpoint is
+  // available.
+  // The tests below all passed using an in-progress version of the Create endpoint.
+
   // @Test
   // public void verifyCreatedDataReferenceExists() {
   //   workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
@@ -180,5 +184,5 @@ public class DataReferenceDaoTest {
   //   assertThat(result.getResources(), empty());
   // }
 
-  // TODO: no tests about controlled data resources :\
+  // TODO: currently no tests about controlled data resources, as we have no way to create them.
 }
