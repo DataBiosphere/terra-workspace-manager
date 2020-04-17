@@ -29,7 +29,7 @@ public class CreateService {
         jobService
             .newJob(
                 description,
-                UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), // JobId does not need persistence for sync calls.
                 WorkspaceCreateFlight.class,
                 body,
                 userReq)

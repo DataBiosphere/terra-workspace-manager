@@ -47,11 +47,6 @@ public class WorkspaceApiController implements WorkspaceApi {
       @RequestBody CreateWorkspaceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     return new ResponseEntity<>(createService.createWorkspace(body, userReq), HttpStatus.OK);
-    // createService.createWorkspace(body, userReq);
-    // Look up the newly-created job
-    // JobModel createJob = jobService.retrieveJob(body.getJobControl().getJobid(), userReq);
-    // return new ResponseEntity<JobModel>(createJob,
-    // HttpStatus.valueOf(createJob.getStatusCode()));
   }
 
   @Override
