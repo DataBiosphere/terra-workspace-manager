@@ -63,16 +63,6 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<JobModel> createDataReference(
-      @PathVariable("id") String id, @RequestBody CreateDataReferenceRequestBody body) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    dataReferenceService.createDataReference(id, body, userReq);
-    // Look up the newly-created job
-    JobModel createJob = jobService.retrieveJob(body.getJobControl().getJobid(), userReq);
-    return new ResponseEntity<JobModel>(createJob, HttpStatus.valueOf(createJob.getStatusCode()));
-  }
-
-  @Override
   public ResponseEntity<Void> deleteJob(@PathVariable("id") String id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     jobService.releaseJob(id, userReq);

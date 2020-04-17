@@ -311,32 +311,32 @@ components:
           description: Instructions for copying this reference when cloning the workspace
           type: string
           enum: ["COPY_NOTHING", "COPY_DEFINITION", "COPY_RESOURCE", "COPY_REFERENCE"]
-      ResourceDescription:
-        type: object
-        properties:
-          resource_id:
-            description: The ID of the resource
-            type: string
-            format: uuid
-          workspace_id:
-            description: The ID of the workspace holding the resource
-            type: string
-            format: uuid
-          application_id:
-            description: ID of application this resource is associated with, if any
-            type: string
-            nullable: true
-          is_visible:
-            description: Whether this resource is visible or not
-            type: boolean
-          owner:
-            description: ID of owner. null for shared resources
-            type: string
-            nullable: true
-          attributes:
-            description: JSON map of user-provided attributes
-            type: string
-            nullable: true
+    ResourceDescription:
+      type: object
+      properties:
+        resource_id:
+          description: The ID of the resource
+          type: string
+          format: uuid
+        workspace_id:
+          description: The ID of the workspace holding the resource
+          type: string
+          format: uuid
+        application_id:
+          description: ID of application this resource is associated with, if any
+          type: string
+          nullable: true
+        is_visible:
+          description: Whether this resource is visible or not
+          type: boolean
+        owner:
+          description: ID of owner. null for shared resources
+          type: string
+          nullable: true
+        attributes:
+          description: JSON map of user-provided attributes
+          type: string
+          nullable: true
     DataReferenceList:
       type: object
       properties:
@@ -344,7 +344,7 @@ components:
           description: A list of controlled and/or uncontrolled data references
           type: array
           items:
-            $ref: '#/components/schemas/DataReference'
+            $ref: '#/components/schemas/DataReferenceDescription'
     WorkspaceDescription:
       type: object
       properties:
