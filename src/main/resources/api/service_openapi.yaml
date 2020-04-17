@@ -40,9 +40,15 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateWorkspaceRequestBody'
       responses:
-        202:
-          description: Accepted
-          $ref: '#/components/responses/JobModelResponse'
+        200:
+          description: Ok
+          $ref: '#/components/responses/CreateResponse'
+        400:
+          description: Bad request - invalid id, badly formed
+          $ref: '#/components/responses/ErrorResponse'
+        403:
+          description: Permission denied
+          $ref: '#/components/responses/ErrorResponse'
         500:
           description: Creation request error
           $ref: '#/components/responses/ErrorResponse'
@@ -214,8 +220,6 @@ components:
           items:
             type: string
             format: uuid
-        jobControl:
-          $ref: '#/components/schemas/JobControl'
     CreatedWorkspace:
       type: object
       properties:
