@@ -234,6 +234,73 @@ components:
           type: string
           nullable: true
           format: uuid
+    DataReferenceDescription:
+      type: object
+      properties:
+        referenceId:
+          description: The ID of the data reference
+          type: string
+          format: uuid
+        name:
+          description: The name of the data reference; used to refer to the reference
+          type: string
+        workspaceId:
+          description: The ID of the workspace containing the reference
+          type: string
+          format: uuid
+        resourceDescription:
+          description: Description of the workspace resource, if this is a controlled reference.
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/ResourceDescription'
+        referenceType:
+          description: The type of the reference, if an uncontrolled resource
+          type: string
+          enum: ["DataRepoSnapshot"] #eventually include GCS bucket, etc.
+          nullable: true
+        reference:
+          # Once https://github.com/OpenAPITools/openapi-generator/issues/5381
+          # is resolved, we can use a oneOf field to validate different
+          # reference schemas. Until then, I don't have a better solution
+          # than accepting a JSON string and validating in the service instead.
+          description: The description of the reference, if an uncontrolled resource
+          type: string
+          format: json
+          nullable: true
+        credentialId:
+          description: The ID of the credential to use when accessing the resource
+          type: string
+          nullable: true
+        cloningInstructions:
+          description: Instructions for copying this reference when cloning the workspace
+          type: string
+          enum: ["COPY_NOTHING", "COPY_DEFINITION", "COPY_RESOURCE", "COPY_REFERENCE"]
+    ResourceDescription:
+      type: object
+      properties:
+        resource_id:
+          description: The ID of the resource
+          type: string
+          format: uuid
+        workspace_id:
+          description: The ID of the workspace holding the resource
+          type: string
+          format: uuid
+        application_id:
+          description: ID of application this resource is associated with, if any
+          type: string
+          nullable: true
+        is_visible:
+          description: Whether this resource is visible or not
+          type: boolean
+        owner:
+          description: ID of owner. null for shared resources
+          type: string
+          nullable: true
+        attributes:
+          description: JSON map of user-provided attributes
+          type: string
+          nullable: true
 
   responses:
     ErrorResponse:

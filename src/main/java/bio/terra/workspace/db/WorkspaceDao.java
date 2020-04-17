@@ -24,7 +24,7 @@ public class WorkspaceDao {
     jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
   }
 
-  @Transactional(propagation =  Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public String createWorkspace(UUID workspaceId, JsonNullable<UUID> spendProfile) {
     String sql =
         "INSERT INTO workspace (workspace_id, spend_profile, profile_settable) values "
@@ -44,7 +44,7 @@ public class WorkspaceDao {
     return workspaceId.toString();
   }
 
-  @Transactional(propagation =  Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public boolean deleteWorkspace(UUID workspaceId) {
     Map<String, Object> paramMap = new HashMap<String, Object>();
     paramMap.put("id", workspaceId.toString());
