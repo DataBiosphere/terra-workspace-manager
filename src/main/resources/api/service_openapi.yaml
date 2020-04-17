@@ -251,7 +251,8 @@ components:
         resourceDescription:
           description: Description of the workspace resource, if this is a controlled reference.
           nullable: true
-          $ref: '#/components/schemas/ResourceDescription'
+          allOf:
+          - $ref: '#/components/schemas/ResourceDescription'
         referenceType:
           description: The type of the reference, if an uncontrolled resource
           type: string
