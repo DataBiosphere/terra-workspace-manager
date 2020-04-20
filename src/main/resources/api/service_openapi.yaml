@@ -95,12 +95,7 @@ paths:
         description: |
           Filter for selecting controlled vs. uncontrolled resources.
         schema:
-          type: string
-          default: all
-          enum:
-          - controlled
-          - uncontrolled
-          - all
+          $ref: '#/components/schemas/FilterControlledEnum'
       responses:
         200:
           description: OK
@@ -362,18 +357,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DataReferenceDescription'
-    WorkspaceDescription:
-      type: object
-      properties:
-        id:
-          description: The ID of the workspace
-          type: string
-          format: uuid
-        spendProfile:
-          description: UUID of provided spend profile
-          type: string
-          nullable: true
-          format: uuid
+    # An enum class is only generated if this is defined here instead of in line
+    # with parameters.
+    FilterControlledEnum:
+      type: string
+      enum: ["CONTROLLED", "UNCONTROLLED", "ALL"]
 
   responses:
     ErrorResponse:

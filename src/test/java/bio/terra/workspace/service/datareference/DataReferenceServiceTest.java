@@ -68,7 +68,7 @@ public class DataReferenceServiceTest {
   public void enumerateFailsUnauthorized() throws Exception {
     doReturn(false).when(mockSamService).isAuthorized(any(), any(), any(), any());
     MvcResult failResult =
-        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), 0, 10, "all")))
+        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), 0, 10, "ALL")))
             .andExpect(status().is(401))
             .andReturn();
     ErrorReport validationError =
@@ -80,7 +80,7 @@ public class DataReferenceServiceTest {
   public void enumerateFailsWithMissingWorkspace() throws Exception {
     String fakeId = UUID.randomUUID().toString();
     MvcResult failResult =
-        mvc.perform(get(buildEnumerateEndpoint(fakeId, 0, 10, "all")))
+        mvc.perform(get(buildEnumerateEndpoint(fakeId, 0, 10, "ALL")))
             .andExpect(status().is(404))
             .andReturn();
     ErrorReport validationError =
@@ -91,7 +91,7 @@ public class DataReferenceServiceTest {
   @Test
   public void enumerateFailsWithInvalidOffset() throws Exception {
     MvcResult failResult =
-        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), -1, 10, "all")))
+        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), -1, 10, "ALL")))
             .andExpect(status().is(400))
             .andReturn();
     ErrorReport validationError =
@@ -102,7 +102,7 @@ public class DataReferenceServiceTest {
   @Test
   public void enumerateFailsWithInvalidLimit() throws Exception {
     MvcResult failResult =
-        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), 0, 0, "all")))
+        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), 0, 0, "ALL")))
             .andExpect(status().is(400))
             .andReturn();
     ErrorReport validationError =

@@ -6,6 +6,7 @@ import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.DataReferenceList;
+import bio.terra.workspace.generated.model.FilterControlledEnum;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +31,7 @@ public class DataReferenceService {
       String workspaceId,
       int offset,
       int limit,
-      String filterControlled,
+      FilterControlledEnum filterControlled,
       AuthenticatedUserRequest userReq) {
     if (!samService.isAuthorized(
         userReq.getRequiredToken(),
