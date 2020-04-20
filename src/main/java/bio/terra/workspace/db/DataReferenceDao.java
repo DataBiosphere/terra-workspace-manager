@@ -43,14 +43,14 @@ public class DataReferenceDao {
     whereClauses.add(uncontrolledOrVisibleResourcesClause(owner, "resource", "ref"));
     String filterSql = combineWhereClauses(whereClauses);
     String sql =
-        "SELECT ref.workspace_id, ref.reference_id, ref.name, ref.resource_id, ref.credential_id, ref.cloning_instructions, ref.reference_type, ref.reference, "
-            + "resource.resource_id, resource.associated_app, resource.is_visible, resource.owner, resource.attributes  "
-            + "FROM workspace_data_reference AS ref "
-            + "LEFT JOIN workspace_resource AS resource ON ref.resource_id = resource.resource_id "
+        "SELECT ref.workspace_id, ref.reference_id, ref.name, ref.resource_id, ref.credential_id, ref.cloning_instructions, ref.reference_type, ref.reference,"
+            + " resource.resource_id, resource.associated_app, resource.is_visible, resource.owner, resource.attributes"
+            + " FROM workspace_data_reference AS ref"
+            + " LEFT JOIN workspace_resource AS resource ON ref.resource_id = resource.resource_id"
             + filterSql
-            + " ORDER BY ref.reference_id "
-            + "OFFSET :offset "
-            + "LIMIT :limit";
+            + " ORDER BY ref.reference_id"
+            + " OFFSET :offset"
+            + " LIMIT :limit";
     MapSqlParameterSource params = new MapSqlParameterSource();
     params.addValue("id", workspaceId);
     params.addValue("offset", offset);
@@ -145,10 +145,8 @@ public class DataReferenceDao {
   // Combines a list of String SQL conditions with the delimiter `" AND "` to create a single
   // SQL `WHERE` clause. Ignores null and empty strings.
   public static String combineWhereClauses(List<String> clauses) {
-    return "WHERE ("
-        + clauses.stream()
-            .filter(s -> s != null && !s.isEmpty())
-            .collect(Collectors.joining(" AND "))
+    return " WHERE ("
+        + clauses.stream().filter(StringUtils::isNotBlank).collect(Collectors.joining(" AND "))
         + ")";
   }
 }
