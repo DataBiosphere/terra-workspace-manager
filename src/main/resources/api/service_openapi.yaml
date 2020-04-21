@@ -68,6 +68,52 @@ paths:
         500:
           description: Get request error
           $ref: '#/components/responses/ErrorResponse'
+  '/api/v1/workspaces/{id}/datareferences':
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      description: |
+        Create a new data reference in a workspace.
+      operationId: createDataReference
+      tags:
+        - workspace
+      requestBody:
+        description: |
+          Stuff TBD
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDataReferenceRequestBody'
+      responses:
+        200:
+          description: OK
+          $ref: '#/components/responses/DataReferenceResponse'
+        400:
+          description: Bad request
+          $ref: '#/components/responses/ErrorResponse'
+        403:
+          description: Permission denied
+          $ref: '#/components/responses/ErrorResponse'
+        500:
+          description: Creation request error
+          $ref: '#/components/responses/ErrorResponse'
+  '/api/v1/workspaces/{id}/datareferences/{referenceId}':
+    parameters:
+      - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/ReferenceId'
+    get:
+      description: |
+        Gets a data reference from a workspace.
+      operationId: getDataReference
+      tags:
+        - workspace
+      responses:
+        200:
+          description: OK
+          $ref: '#/components/responses/DataReferenceResponse'
+        500:
+          description: Creation request error
+          $ref: '#/components/responses/ErrorResponse'
   '/api/v1/jobs/{id}':
     parameters:
     - $ref: '#/components/parameters/Id'
@@ -126,6 +172,13 @@ components:
       required: true
       schema:
         type: string
+    ReferenceId:
+        name: referenceId
+        in: path
+        description: A UUID used to identify a data reference in a workspace
+        required: true
+        schema:
+          type: string
   schemas:
     ErrorReport:
       type: object
@@ -238,6 +291,37 @@ components:
           type: string
           nullable: true
           format: uuid
+    CreateDataReferenceRequestBody:
+      type: object
+      properties:
+        name:
+          description: The name of the data reference
+          type: string
+        resourceId:
+          description: The ID of the resource
+          type: string
+          nullable: true
+        referenceType:
+          description: The type of the data reference (i.e. TDR snapshot, AWS bucket, etc)
+          type: string
+          nullable: true
+        reference:
+          description: The reference to the data (i.e. gs://...) #todo- describe as json instead
+          type: object
+          nullable: true
+        cloningInstructions:
+          description: The cloning instructions for the reference
+          type: string
+        credentialId:
+          description: The IDs of the credentials to use with this resource
+          type: string
+          nullable: true
+    CreatedDataReference:
+      type: object
+      properties:
+        id:
+          type: string
+          description: UUID of the newly referenced data todo- add more detail
     DataReferenceDescription:
       type: object
       properties:
@@ -305,6 +389,27 @@ components:
           description: JSON map of user-provided attributes
           type: string
           nullable: true
+    DataRepoSnapshot:
+      type: object
+      properties:
+        instance:
+          description: The location (DNS address) of the Data Repo instance
+          type: string
+        snapshot:
+            description: The ID of the Data Repo snapshot
+            type: string
+    WorkspaceDescription:
+      type: object
+      properties:
+        id:
+          description: The ID of the workspace
+          type: string
+          format: uuid
+        spendProfile:
+          description: UUID of provided spend profile
+          type: string
+          nullable: true
+          format: uuid
 
   responses:
     ErrorResponse:
@@ -334,6 +439,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/WorkspaceDescription'
+
+    DataReferenceResponse:
+      description: Response to getDataReference calls
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DataReferenceDescription'
 
     JobModelResponse:
       description: Response with a JobModel
