@@ -2,21 +2,13 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.*;
-<<<<<<< HEAD
-import bio.terra.workspace.service.create.CreateService;
-import bio.terra.workspace.service.get.GetService;
-=======
 import bio.terra.workspace.service.datareference.DataReferenceService;
->>>>>>> add uncontrolled resource endpoints
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.JobResultWithStatus;
-<<<<<<< HEAD
-=======
 import bio.terra.workspace.service.workspace.create.CreateService;
 import bio.terra.workspace.service.workspace.get.GetService;
->>>>>>> add uncontrolled resource endpoints
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,10 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class WorkspaceApiController implements WorkspaceApi {
   private CreateService createService;
   private GetService getService;
-<<<<<<< HEAD
-=======
   private DataReferenceService dataReferenceService;
->>>>>>> add uncontrolled resource endpoints
   private JobService jobService;
   private AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
@@ -41,18 +30,12 @@ public class WorkspaceApiController implements WorkspaceApi {
   public WorkspaceApiController(
       CreateService createService,
       GetService getService,
-<<<<<<< HEAD
-=======
       DataReferenceService dataReferenceService,
->>>>>>> add uncontrolled resource endpoints
       JobService jobService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request) {
     this.createService = createService;
-<<<<<<< HEAD
-=======
     this.dataReferenceService = dataReferenceService;
->>>>>>> add uncontrolled resource endpoints
     this.getService = getService;
     this.jobService = jobService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;

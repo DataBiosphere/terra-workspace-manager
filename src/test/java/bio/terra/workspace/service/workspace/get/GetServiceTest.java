@@ -83,12 +83,8 @@ public class GetServiceTest {
     body.setAuthToken("fake-user-auth-token");
     body.setSpendProfile(JsonNullable.undefined());
     body.setPolicies(JsonNullable.undefined());
-    JobControl jobControl = new JobControl();
-    String jobId = UUID.randomUUID().toString();
-    jobControl.setJobid(jobId);
-    body.setJobControl(jobControl);
 
-    CreatedWorkspace workspace = runCreateWorkspaceCall(body, jobId);
+    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
 
     assertThat(workspace.getId(), not(blankOrNullString()));
 
@@ -104,38 +100,16 @@ public class GetServiceTest {
     assertThat(desc.getId(), equalTo(workspaceId));
   }
 
-  private CreatedWorkspace runCreateWorkspaceCall(CreateWorkspaceRequestBody request, String jobId)
+  private CreatedWorkspace runCreateWorkspaceCall(CreateWorkspaceRequestBody request)
       throws Exception {
-    MvcResult initialResult = callCreateEndpoint(request);
-    pollJobUntilComplete(jobId);
-    return getCreateJobResult(jobId);
-  }
-
-  private MvcResult callCreateEndpoint(CreateWorkspaceRequestBody request) throws Exception {
-    return mvc.perform(
-            post("/api/v1/workspaces")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-        .andExpect(status().is(202))
-        .andReturn();
-  }
-
-  private void pollJobUntilComplete(String jobId) throws Exception {
-    HttpStatus pollStatus = HttpStatus.valueOf(202);
-    while (pollStatus == HttpStatus.valueOf(202)) {
-      MvcResult pollResult = mvc.perform(get("/api/v1/jobs/" + jobId)).andReturn();
-      pollStatus = HttpStatus.valueOf(pollResult.getResponse().getStatus());
-    }
-    assertThat(pollStatus, equalTo(HttpStatus.OK));
-  }
-
-  private CreatedWorkspace getCreateJobResult(String jobId) throws Exception {
-    MvcResult callResult =
-        mvc.perform(get("/api/v1/jobs/" + jobId + "/result"))
+    MvcResult initialResult =
+        mvc.perform(
+                post("/api/v1/workspaces")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().is(200))
             .andReturn();
-
     return objectMapper.readValue(
-        callResult.getResponse().getContentAsString(), CreatedWorkspace.class);
+        initialResult.getResponse().getContentAsString(), CreatedWorkspace.class);
   }
 }

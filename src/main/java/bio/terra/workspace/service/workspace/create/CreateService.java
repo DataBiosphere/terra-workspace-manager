@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.workspace.create;
 
 import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.JobControl;
+import bio.terra.workspace.generated.model.CreatedWorkspace;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
@@ -20,20 +20,23 @@ public class CreateService {
     this.jobService = jobService;
   }
 
-  public void createWorkspace(CreateWorkspaceRequestBody body, AuthenticatedUserRequest userReq) {
+  public CreatedWorkspace createWorkspace(
+      CreateWorkspaceRequestBody body, AuthenticatedUserRequest userReq) {
 
-    // CreatedWorkspace workspace = new CreatedWorkspace();
     UUID workspaceId = body.getId();
     String description = "Create workspace " + workspaceId.toString();
-    JobControl jobControl = body.getJobControl();
-    // TODO: Need to support pubsub notifications here.
     JobBuilder createJob =
         jobService
-            .newJob(description, jobControl.getJobid(), WorkspaceCreateFlight.class, body, userReq)
+            .newJob(
+                description,
+                UUID.randomUUID().toString(), // JobId does not need persistence for sync calls.
+                WorkspaceCreateFlight.class,
+                body,
+                userReq)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
     if (body.getSpendProfile().isPresent()) {
       createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, body.getSpendProfile().get());
     }
-    createJob.submit();
+    return createJob.submitAndWait(CreatedWorkspace.class);
   }
 }
