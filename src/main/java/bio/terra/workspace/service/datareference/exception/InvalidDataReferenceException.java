@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.datareference.exception;
 
-import bio.terra.workspace.common.exception.InternalServerErrorException;
+import bio.terra.workspace.common.exception.BadRequestException;
 
-public class InvalidDataReferenceException extends InternalServerErrorException {
+public class InvalidDataReferenceException extends BadRequestException {
 
   public InvalidDataReferenceException(String message) {
     super(message);

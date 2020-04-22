@@ -49,9 +49,6 @@ To run unit tests:
 
 `./gradlew test`
 
-Currently the unit tests hit dev Sam. This is obviously bad practice but until we have implemented 
-mocks, this will.
-
 
 ## Running Workspace Manager
 
@@ -61,9 +58,9 @@ To run locally, you'll first need to export a few environment variables:
 export DATABASE_USER=wmuser
 export DATABASE_USER_PASSWORD=wmpwd
 export DATABASE_NAME=wm
-export DATABASE_USER=stairwayuser
-export DATABASE_USER_PASSWORD=stairwaypwd
-export DATABASE_NAME=stairwaylib
+export STAIRWAY_DATABASE_USER=stairwayuser
+export STAIRWAY_DATABASE_USER_PASSWORD=stairwaypwd
+export STAIRWAY_DATABASE_NAME=stairwaylib
 ```
 
 To run the application:
@@ -85,13 +82,3 @@ You may also want to periodically rebuild and refresh any auto-generated code:
 
 TODO: It would be nice to have a kickstart script that new devs can run that configures much of this, but
 for now it will be documented here to help us know what should be scripted/simplified.
-
-## Status as of 2/28:
-The repo is currently in a usable state, but doesn't meet all the goals of
-AS-197. The missing requirements are:
-1. Stairway is configured and initialized, but never used. We need to move
-CreateService code into steps/flights and actually use Stairway.
-2. The `create` endpoint is currently synchronous - we expect most endpoints
-will be async. This means changing the existing endpoint to return a pollable
-endpoint, and actually building the pollable endpoint.
-3. README is copied directly from kernel-service-poc and needs updates.

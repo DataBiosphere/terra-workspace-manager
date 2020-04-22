@@ -65,7 +65,6 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<DataReferenceDescription> createDataReference(
       @PathVariable("id") String id, @RequestBody CreateDataReferenceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    dataReferenceService.createDataReference(id, body, userReq);
 
     return new ResponseEntity<DataReferenceDescription>(
         dataReferenceService.createDataReference(id, body, userReq), HttpStatus.OK);

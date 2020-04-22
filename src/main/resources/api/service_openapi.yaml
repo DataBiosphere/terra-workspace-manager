@@ -316,12 +316,6 @@ components:
           description: The IDs of the credentials to use with this resource
           type: string
           nullable: true
-    CreatedDataReference:
-      type: object
-      properties:
-        id:
-          type: string
-          description: UUID of the newly referenced data todo- add more detail
     DataReferenceDescription:
       type: object
       properties:
@@ -398,18 +392,6 @@ components:
         snapshot:
             description: The ID of the Data Repo snapshot
             type: string
-    WorkspaceDescription:
-      type: object
-      properties:
-        id:
-          description: The ID of the workspace
-          type: string
-          format: uuid
-        spendProfile:
-          description: UUID of provided spend profile
-          type: string
-          nullable: true
-          format: uuid
 
   responses:
     ErrorResponse:
