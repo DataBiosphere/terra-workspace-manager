@@ -77,18 +77,6 @@ public class DataReferenceServiceTest {
   }
 
   @Test
-  public void enumerateFailsWithMissingWorkspace() throws Exception {
-    String fakeId = UUID.randomUUID().toString();
-    MvcResult failResult =
-        mvc.perform(get(buildEnumerateEndpoint(fakeId, 0, 10, "ALL")))
-            .andExpect(status().is(404))
-            .andReturn();
-    ErrorReport validationError =
-        objectMapper.readValue(failResult.getResponse().getContentAsString(), ErrorReport.class);
-    assertThat(validationError.getMessage(), containsString(fakeId));
-  }
-
-  @Test
   public void enumerateFailsWithInvalidOffset() throws Exception {
     MvcResult failResult =
         mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), -1, 10, "ALL")))

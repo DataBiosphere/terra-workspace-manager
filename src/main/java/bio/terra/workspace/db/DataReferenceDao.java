@@ -40,7 +40,7 @@ public class DataReferenceDao {
     List<String> whereClauses = new ArrayList<>();
     whereClauses.add("(ref.workspace_id = :id)");
     whereClauses.add(filterControlledWhereClause(filterControlled, "ref"));
-    whereClauses.add(uncontrolledOrVisibleResourcesClause(owner, "resource", "ref"));
+    whereClauses.add(uncontrolledOrVisibleResourcesClause("resource", "ref"));
     String filterSql = combineWhereClauses(whereClauses);
     String sql =
         "SELECT ref.workspace_id, ref.reference_id, ref.name, ref.resource_id, ref.credential_id, ref.cloning_instructions, ref.reference_type, ref.reference,"
@@ -53,6 +53,7 @@ public class DataReferenceDao {
             + " LIMIT :limit";
     MapSqlParameterSource params = new MapSqlParameterSource();
     params.addValue("id", workspaceId);
+    params.addValue("owner", owner);
     params.addValue("offset", offset);
     params.addValue("limit", limit);
     List<DataReferenceDescription> resultList =
@@ -119,11 +120,11 @@ public class DataReferenceDao {
   // controlled references. Uncontrolled references are not tracked as resources, and their
   // existence is always visible to all workspace readers.
   public static String uncontrolledOrVisibleResourcesClause(
-      String owner, String resourceTableAlias, String referenceTableAlias) {
+      String resourceTableAlias, String referenceTableAlias) {
     return "(("
         + referenceTableAlias
         + ".resource_id IS NULL) OR "
-        + visibleResourcesClause(owner, resourceTableAlias)
+        + visibleResourcesClause(resourceTableAlias)
         + ")";
   }
 
@@ -132,14 +133,12 @@ public class DataReferenceDao {
   // is false AND the resource owner is not the user issuing the query.
   // Uncontrolled references are not tracked as resources, and their existence is always visible
   // to all workspace readers.
-  public static String visibleResourcesClause(String owner, String resourceTableAlias) {
+  public static String visibleResourcesClause(String resourceTableAlias) {
     return "("
         + resourceTableAlias
         + ".is_visible = true OR "
         + resourceTableAlias
-        + ".owner = \'"
-        + owner
-        + "\')";
+        + ".owner = :owner)";
   }
 
   // Combines a list of String SQL conditions with the delimiter `" AND "` to create a single

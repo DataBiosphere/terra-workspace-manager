@@ -6,7 +6,7 @@ import java.util.List;
 
 public final class ControllerValidationUtils {
 
-  public static void ValidatePaginationParams(int offset, int limit) {
+  public static void validatePaginationParams(int offset, int limit) {
     List<String> errors = new ArrayList<>();
     if (offset < 0) {
       errors.add("offset must be greater than or equal to 0.");

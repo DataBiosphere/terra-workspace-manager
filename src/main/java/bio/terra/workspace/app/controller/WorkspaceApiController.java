@@ -89,7 +89,7 @@ public class WorkspaceApiController implements WorkspaceApi {
       @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
       @Valid @RequestParam(value = "filterControlled", required = false, defaultValue = "all")
           FilterControlledEnum filterControlled) {
-    ControllerValidationUtils.ValidatePaginationParams(offset, limit);
+    ControllerValidationUtils.validatePaginationParams(offset, limit);
     DataReferenceList enumerateResult =
         dataReferenceService.enumerateDataReferences(
             id, offset, limit, filterControlled, getAuthenticatedInfo());

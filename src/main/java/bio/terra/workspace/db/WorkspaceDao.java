@@ -9,7 +9,6 @@ import java.util.UUID;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
@@ -71,17 +70,6 @@ public class WorkspaceDao {
       return desc;
     } catch (EmptyResultDataAccessException e) {
       throw new WorkspaceNotFoundException("Workspace not found.");
-    }
-  }
-
-  public boolean workspaceExists(String id) {
-    String sql = "SELECT workspace_id FROM workspace where workspace_id = :id LIMIT 1";
-    MapSqlParameterSource paramMap = new MapSqlParameterSource().addValue("id", id);
-    try {
-      Map<String, Object> queryOutput = jdbcTemplate.queryForMap(sql, paramMap);
-      return true;
-    } catch (EmptyResultDataAccessException e) {
-      return false;
     }
   }
 }
