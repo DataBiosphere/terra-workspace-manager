@@ -42,7 +42,9 @@ public class DataReferenceValidationUtils {
       String reference, AuthenticatedUserRequest userReq) {
     try {
       DataRepoSnapshot ref = objectMapper.readValue(reference, DataRepoSnapshot.class);
-      dataRepoService.snapshotExists(ref.getInstance(), ref.getSnapshot(), userReq);
+      if (!dataRepoService.snapshotExists(ref.getInstance(), ref.getSnapshot(), userReq)) {
+        throw new InvalidDataReferenceException("Snapshot could not be found in Data Repo");
+      }
       return ref;
     } catch (JsonProcessingException e) {
       throw new InvalidDataReferenceException("Invalid DataRepoSnapshot specified");

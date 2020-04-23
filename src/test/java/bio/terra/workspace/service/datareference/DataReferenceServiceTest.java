@@ -59,6 +59,7 @@ public class DataReferenceServiceTest {
   public void setup() {
     doNothing().when(mockSamService).createWorkspaceWithDefaults(any(), any());
     doReturn(true).when(mockDataRepoService).snapshotExists(any(), any(), any());
+    doReturn(false).when(mockDataRepoService).snapshotExists(any(), eq("fake-id"), any());
     //        doReturn(true).when(mockSamService).isAuthorized(any(), any(), any(), any());
     AuthenticatedUserRequest fakeAuthentication = new AuthenticatedUserRequest();
     fakeAuthentication
@@ -98,7 +99,39 @@ public class DataReferenceServiceTest {
   }
 
   @Test
-  public void testGetDataReference() {}
+  public void testGetDataReference() throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .authToken("fake-user-auth-token")
+            .spendProfile(null)
+            .policies(null);
+
+    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
+
+    DataRepoSnapshot snapshot = new DataRepoSnapshot();
+    snapshot.setSnapshot("foo");
+    snapshot.setInstance("bar");
+
+    CreateDataReferenceRequestBody refBody =
+        new CreateDataReferenceRequestBody()
+            .name("name")
+            .cloningInstructions("COPY_NOTHING")
+            .referenceType("DataRepoSnapshot")
+            .reference(snapshot);
+
+    DataReferenceDescription createResponse =
+        runCreateDataReferenceCall(workspaceId.toString(), refBody);
+
+    String referenceId = createResponse.getReferenceId().toString();
+
+    DataReferenceDescription getResponse =
+        runGetDataReferenceCall(workspaceId.toString(), referenceId);
+
+    assertThat(getResponse.getWorkspaceId(), equalTo(workspaceId));
+    assertThat(getResponse.getName(), equalTo("name"));
+  }
 
   @Test
   public void testGetMissingDataReference() throws Exception {
@@ -116,10 +149,62 @@ public class DataReferenceServiceTest {
   }
 
   @Test
-  public void testCreateDataSnapshotNotInDataRepo() {}
+  public void testCreateDataSnapshotNotInDataRepo() throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .authToken("fake-user-auth-token")
+            .spendProfile(null)
+            .policies(null);
+
+    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
+
+    DataRepoSnapshot snapshot = new DataRepoSnapshot();
+    snapshot.setSnapshot("fake-id");
+    snapshot.setInstance("bar");
+
+    CreateDataReferenceRequestBody refBody =
+        new CreateDataReferenceRequestBody()
+            .name("name")
+            .cloningInstructions("COPY_NOTHING")
+            .referenceType("DataRepoSnapshot")
+            .reference(snapshot);
+
+    mvc.perform(
+            post("/api/v1/workspaces/" + workspaceId + "/datareferences")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refBody)))
+        .andExpect(status().is(400))
+        .andReturn();
+  }
 
   @Test
-  public void testCreateInvalidDataReference() {}
+  public void testCreateInvalidDataReference() throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .authToken("fake-user-auth-token")
+            .spendProfile(null)
+            .policies(null);
+
+    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
+
+    CreateDataReferenceRequestBody refBody =
+        new CreateDataReferenceRequestBody()
+            .name("name")
+            .cloningInstructions("COPY_NOTHING")
+            .referenceType("DataRepoSnapshot")
+            .reference("bad-reference");
+
+    mvc.perform(
+            post("/api/v1/workspaces/" + workspaceId + "/datareferences")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refBody)))
+        .andExpect(status().is(400))
+        .andReturn();
+  }
 
   private CreatedWorkspace runCreateWorkspaceCall(CreateWorkspaceRequestBody request)
       throws Exception {
@@ -141,6 +226,18 @@ public class DataReferenceServiceTest {
                 post("/api/v1/workspaces/" + workspaceId + "/datareferences")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().is(200))
+            .andReturn();
+    return objectMapper.readValue(
+        initialResult.getResponse().getContentAsString(), DataReferenceDescription.class);
+  }
+
+  private DataReferenceDescription runGetDataReferenceCall(String workspaceId, String referenceId)
+      throws Exception {
+    MvcResult initialResult =
+        mvc.perform(
+                get("/api/v1/workspaces/" + workspaceId + "/datareferences/" + referenceId)
+                    .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().is(200))
             .andReturn();
     return objectMapper.readValue(
