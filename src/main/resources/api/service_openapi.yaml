@@ -80,7 +80,6 @@ paths:
       parameters:
       - $ref: '#/components/parameters/Offset'
       - $ref: '#/components/parameters/Limit'
-      - $ref: '#/components/parameters/Filter'
       responses:
         200:
           description: OK
@@ -166,14 +165,6 @@ components:
       schema:
         type: integer
         default: 10
-    Filter:
-      name: filter
-      in: query
-      description: |
-        JSON filter for selecting objects. The set of valid keys and values
-        depends on the endpoint.
-      schema:
-        type: object
   schemas:
     ErrorReport:
       type: object

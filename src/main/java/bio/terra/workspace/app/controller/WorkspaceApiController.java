@@ -86,13 +86,10 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<DataReferenceList> enumerateReferences(
       @PathVariable("id") String id,
       @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
-      @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
-      @Valid @RequestParam(value = "filterControlled", required = false, defaultValue = "all")
-          FilterControlledEnum filterControlled) {
+      @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
     ControllerValidationUtils.validatePaginationParams(offset, limit);
     DataReferenceList enumerateResult =
-        dataReferenceService.enumerateDataReferences(
-            id, offset, limit, filterControlled, getAuthenticatedInfo());
+        dataReferenceService.enumerateDataReferences(id, offset, limit, getAuthenticatedInfo());
     return ResponseEntity.ok(enumerateResult);
   }
 }

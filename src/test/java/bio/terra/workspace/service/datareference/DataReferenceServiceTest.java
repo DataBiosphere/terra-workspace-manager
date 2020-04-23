@@ -68,7 +68,7 @@ public class DataReferenceServiceTest {
   public void enumerateFailsUnauthorized() throws Exception {
     doReturn(false).when(mockSamService).isAuthorized(any(), any(), any(), any());
     MvcResult failResult =
-        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), 0, 10, "ALL")))
+        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), 0, 10)))
             .andExpect(status().is(401))
             .andReturn();
     ErrorReport validationError =
@@ -79,7 +79,7 @@ public class DataReferenceServiceTest {
   @Test
   public void enumerateFailsWithInvalidOffset() throws Exception {
     MvcResult failResult =
-        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), -1, 10, "ALL")))
+        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), -1, 10)))
             .andExpect(status().is(400))
             .andReturn();
     ErrorReport validationError =
@@ -90,7 +90,7 @@ public class DataReferenceServiceTest {
   @Test
   public void enumerateFailsWithInvalidLimit() throws Exception {
     MvcResult failResult =
-        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), 0, 0, "ALL")))
+        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), 0, 0)))
             .andExpect(status().is(400))
             .andReturn();
     ErrorReport validationError =
@@ -98,15 +98,12 @@ public class DataReferenceServiceTest {
     assertThat(validationError.getCauses().get(0), containsString("limit"));
   }
 
-  private String buildEnumerateEndpoint(
-      String workspaceId, int offset, int limit, String filterControlled) {
+  private String buildEnumerateEndpoint(String workspaceId, int offset, int limit) {
     return "/api/v1/workspaces/"
         + workspaceId
         + "/datareferences?offset="
         + offset
         + "&limit="
-        + limit
-        + "&filterControlled="
-        + filterControlled;
+        + limit;
   }
 }

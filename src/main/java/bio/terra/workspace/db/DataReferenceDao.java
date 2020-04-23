@@ -1,12 +1,10 @@
 package bio.terra.workspace.db;
 
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
-import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataReferenceDescription.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.DataReferenceDescription.ReferenceTypeEnum;
 import bio.terra.workspace.generated.model.DataReferenceList;
-import bio.terra.workspace.generated.model.FilterControlledEnum;
 import bio.terra.workspace.generated.model.ResourceDescription;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -32,14 +30,9 @@ public class DataReferenceDao {
   }
 
   public DataReferenceList enumerateDataReferences(
-      String workspaceId,
-      String owner,
-      int offset,
-      int limit,
-      FilterControlledEnum filterControlled) {
+      String workspaceId, String owner, int offset, int limit) {
     List<String> whereClauses = new ArrayList<>();
     whereClauses.add("(ref.workspace_id = :id)");
-    whereClauses.add(filterControlledWhereClause(filterControlled, "ref"));
     whereClauses.add(uncontrolledOrVisibleResourcesClause("resource", "ref"));
     String filterSql = combineWhereClauses(whereClauses);
     String sql =
@@ -88,31 +81,6 @@ public class DataReferenceDao {
               CloningInstructionsEnum.fromValue(rs.getString("cloning_instructions")))
           .referenceType(ReferenceTypeEnum.fromValue(rs.getString("reference_type")))
           .reference(rs.getString("reference"));
-    }
-  }
-
-  // Returns a SQL condition as a string that selects controlled resources, uncontrolled resources,
-  // or both, depending on the value of filterControlled.
-  public static String filterControlledWhereClause(
-      FilterControlledEnum filterControlled, String referenceTableAlias) {
-    // filterControlled is one of "controlled", "uncontrolled", or "all" (enum in OpenAPI yaml).
-    // This corresponds to the workspace_data_reference.resource_id column being not null, null, or
-    // either, respectively.
-    switch (filterControlled) {
-      case CONTROLLED:
-        return "(" + referenceTableAlias + ".resource_id IS NOT NULL)";
-      case UNCONTROLLED:
-        return "(" + referenceTableAlias + ".resource_id IS NULL)";
-      case ALL:
-        return StringUtils.EMPTY;
-      default:
-        // This case should not happen, as OpenAPI should enforce that this value is an enum.
-        // Most likely cause is that a new enum value is added to the definition but not
-        // added here.
-        throw new ValidationException(
-            "Invalid value for filterControlled: "
-                + filterControlled
-                + " in filterControlledWhereClause. Has a new value been added to FilterControlledEnum?");
     }
   }
 
