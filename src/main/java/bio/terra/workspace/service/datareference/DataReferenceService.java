@@ -99,10 +99,7 @@ public class DataReferenceService {
   private void authz(AuthenticatedUserRequest userReq, String workspaceId, String action) {
     try {
       samService.isAuthorized(
-              userReq.getRequiredToken(),
-              SamUtils.SAM_WORKSPACE_RESOURCE,
-              workspaceId,
-              action);
+          userReq.getRequiredToken(), SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId, action);
     } catch (ApiException samEx) {
       throw new SamApiException(samEx);
     }

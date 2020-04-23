@@ -3,12 +3,16 @@ package bio.terra.workspace.db;
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
+import bio.terra.workspace.generated.model.ResourceDescription;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -59,21 +63,7 @@ public class DataReferenceDao {
     paramMap.put("id", referenceId.toString());
 
     try {
-      Map<String, Object> queryOutput = jdbcTemplate.queryForMap(sql, paramMap);
-
-      return new DataReferenceDescription()
-          .workspaceId(UUID.fromString(queryOutput.get("workspace_id").toString()))
-          .referenceId(UUID.fromString(queryOutput.get("reference_id").toString()))
-          .cloningInstructions(
-              DataReferenceDescription.CloningInstructionsEnum.fromValue(
-                  queryOutput.get("cloning_instructions").toString()))
-          .name(queryOutput.get("name").toString())
-          .referenceType(
-              DataReferenceDescription.ReferenceTypeEnum.fromValue(
-                  queryOutput.get("reference_type").toString()))
-          .reference(queryOutput.get("reference").toString())
-          // TODO: query for resource once controlled resources are implemented
-          .resourceDescription(null);
+      return jdbcTemplate.queryForObject(sql, paramMap, new DataReferenceMapper());
     } catch (EmptyResultDataAccessException e) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
     }
@@ -86,5 +76,37 @@ public class DataReferenceDao {
         jdbcTemplate.update(
             "DELETE FROM workspace_data_reference WHERE reference_id = :id", paramMap);
     return rowsAffected > 0;
+  }
+
+  private static class ResourceDescriptionMapper implements RowMapper<ResourceDescription> {
+    public ResourceDescription mapRow(ResultSet rs, int rowNum) throws SQLException {
+      return new ResourceDescription()
+          .workspaceId(UUID.fromString(rs.getString("workspace_id")))
+          .resourceId(UUID.fromString(rs.getString("resource_id")))
+          .isVisible(rs.getBoolean("is_visible"))
+          .owner(rs.getString("owner"))
+          .attributes(rs.getString("attributes"));
+    }
+  }
+
+  private static class DataReferenceMapper implements RowMapper<DataReferenceDescription> {
+    public DataReferenceDescription mapRow(ResultSet rs, int rowNum) throws SQLException {
+      ResourceDescriptionMapper resourceDescriptionMapper = new ResourceDescriptionMapper();
+      return new DataReferenceDescription()
+          .workspaceId(UUID.fromString(rs.getString("workspace_id")))
+          .referenceId(UUID.fromString(rs.getString("reference_id")))
+          .name(rs.getString("name"))
+          .resourceDescription(
+              rs.getString("resource_id") == null
+                  ? null
+                  : resourceDescriptionMapper.mapRow(rs, rowNum))
+          .credentialId(rs.getString("credential_id"))
+          .cloningInstructions(
+              DataReferenceDescription.CloningInstructionsEnum.fromValue(
+                  rs.getString("cloning_instructions")))
+          .referenceType(
+              DataReferenceDescription.ReferenceTypeEnum.fromValue(rs.getString("reference_type")))
+          .reference(rs.getString("reference"));
+    }
   }
 }
