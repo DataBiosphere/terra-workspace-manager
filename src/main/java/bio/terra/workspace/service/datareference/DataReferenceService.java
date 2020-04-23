@@ -39,15 +39,7 @@ public class DataReferenceService {
   public DataReferenceDescription getDataReference(
       String workspaceId, String referenceId, AuthenticatedUserRequest userReq) {
 
-    try {
-      samService.isAuthorized(
-          userReq.getRequiredToken(),
-          SamUtils.SAM_WORKSPACE_RESOURCE,
-          workspaceId,
-          SamUtils.SAM_WORKSPACE_READ_ACTION);
-    } catch (ApiException samEx) {
-      throw new SamApiException(samEx);
-    }
+    authz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
 
     return dataReferenceDao.getDataReference(UUID.fromString(referenceId));
   }
@@ -62,15 +54,7 @@ public class DataReferenceService {
           "Data reference must contain either a resource id or a reference type and a reference description");
     }
 
-    try {
-      samService.isAuthorized(
-          userReq.getRequiredToken(),
-          SamUtils.SAM_WORKSPACE_RESOURCE,
-          workspaceId,
-          SamUtils.SAM_WORKSPACE_WRITE_ACTION);
-    } catch (ApiException samEx) {
-      throw new SamApiException(samEx);
-    }
+    authz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
 
     UUID referenceId = UUID.randomUUID();
     String description =
@@ -110,5 +94,17 @@ public class DataReferenceService {
     createJob.submitAndWait(String.class);
 
     return dataReferenceDao.getDataReference(referenceId);
+  }
+
+  private void authz(AuthenticatedUserRequest userReq, String workspaceId, String action) {
+    try {
+      samService.isAuthorized(
+              userReq.getRequiredToken(),
+              SamUtils.SAM_WORKSPACE_RESOURCE,
+              workspaceId,
+              action);
+    } catch (ApiException samEx) {
+      throw new SamApiException(samEx);
+    }
   }
 }
