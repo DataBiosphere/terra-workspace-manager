@@ -78,24 +78,9 @@ paths:
       tags:
       - workspace
       parameters:
-      - in: query
-        name: offset
-        description: The number of items to skip before starting to collect the result set.
-        schema:
-          type: integer
-          default: 0
-      - in: query
-        name: limit
-        description: The numbers of items to return. Default 10
-        schema:
-          type: integer
-          default: 10
-      - in: query
-        name: filterControlled
-        description: |
-          Filter for selecting controlled vs. uncontrolled resources.
-        schema:
-          $ref: '#/components/schemas/FilterControlledEnum'
+      - $ref: '#/components/parameters/Offset'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Filter'
       responses:
         200:
           description: OK
@@ -105,9 +90,6 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         401:
           description: Unauthorized access
-          $ref: '#/components/responses/ErrorResponse'
-        404:
-          description: Workspace or resource not found
           $ref: '#/components/responses/ErrorResponse'
         500:
           description: Server Error
@@ -170,6 +152,28 @@ components:
       required: true
       schema:
         type: string
+    Offset:
+      name: offset
+      in: query
+      description: The number of items to skip before starting to collect the result set.
+      schema:
+        type: integer
+        default: 0
+    Limit:
+      name: limit
+      in: query
+      description: The numbers of items to return. Default 10
+      schema:
+        type: integer
+        default: 10
+    Filter:
+      name: filter
+      in: query
+      description: |
+        JSON filter for selecting objects. The set of valid keys and values
+        depends on the endpoint.
+      schema:
+        type: object
   schemas:
     ErrorReport:
       type: object
