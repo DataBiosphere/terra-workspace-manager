@@ -48,9 +48,7 @@ public class DataReferenceDao {
     paramMap.put("resource_id", resourceId.orElse(null));
     paramMap.put("reference_type", referenceType.orElse(null));
     paramMap.put("reference", reference.orElse(null));
-
-    System.out.println(reference);
-
+    
     jdbcTemplate.update(sql, paramMap);
     return referenceId.toString();
   }
