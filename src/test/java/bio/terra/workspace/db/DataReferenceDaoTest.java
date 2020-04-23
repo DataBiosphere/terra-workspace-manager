@@ -8,6 +8,9 @@ import bio.terra.workspace.app.Main;
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
+import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -35,12 +38,13 @@ public class DataReferenceDaoTest {
 
   @Autowired DataReferenceDao dataReferenceDao;
   @Autowired WorkspaceDao workspaceDao;
+  @Autowired ObjectMapper objectMapper;
 
   private UUID workspaceId;
   private UUID referenceId;
   private String name;
-  private DataReferenceDescription.ReferenceTypeEnum referenceType;
-  private DataRepoSnapshot reference;
+  private String referenceType;
+  private String reference;
   private String credentialId;
   private UUID resourceId;
   private String cloningInstructions;
@@ -50,15 +54,18 @@ public class DataReferenceDaoTest {
     workspaceId = UUID.randomUUID();
     referenceId = UUID.randomUUID();
     name = UUID.randomUUID().toString();
-    referenceType = DataReferenceDescription.ReferenceTypeEnum.DATAREPOSNAPSHOT;
-    reference = new DataRepoSnapshot();
-    reference.setInstance(UUID.randomUUID().toString());
-    reference.setSnapshot(UUID.randomUUID().toString());
+    referenceType = DataReferenceDescription.ReferenceTypeEnum.DATAREPOSNAPSHOT.getValue();
+
+    DataRepoSnapshot drs = new DataRepoSnapshot();
+    drs.setInstance(UUID.randomUUID().toString());
+    drs.setSnapshot(UUID.randomUUID().toString());
+    reference = objectToString(drs);
+
     credentialId = UUID.randomUUID().toString();
     resourceId =
         null; // eventually we will more thoroughly support controlled resources, so this won't
     // always be null
-    cloningInstructions = UUID.randomUUID().toString();
+    cloningInstructions = "COPY_NOTHING";
     jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
   }
 
@@ -74,7 +81,7 @@ public class DataReferenceDaoTest {
         JsonNullable.of(credentialId),
         cloningInstructions,
         JsonNullable.of(referenceType),
-        JsonNullable.of(reference.toString()));
+        JsonNullable.of(reference));
     DataReferenceDescription reference = dataReferenceDao.getDataReference(referenceId);
 
     assertThat(reference.getReferenceId(), equalTo(referenceId));
@@ -115,7 +122,10 @@ public class DataReferenceDaoTest {
     assertThat(result.getWorkspaceId(), equalTo(workspaceId));
     assertThat(result.getReferenceId(), equalTo(referenceId));
     assertThat(result.getName(), equalTo(name));
-    assertThat(result.getReferenceType(), equalTo(JsonNullable.of(referenceType)));
+    assertThat(
+        result.getReferenceType(),
+        equalTo(
+            JsonNullable.of(DataReferenceDescription.ReferenceTypeEnum.fromValue(referenceType))));
     //    assertThat(result.getReference().getSnapshot(), equalTo(reference.getSnapshot()));
     //    assertThat(result.getReference().getInstance(), equalTo(reference.getInstance()));
   }
@@ -143,5 +153,13 @@ public class DataReferenceDaoTest {
   @Test
   public void deleteNonExistentWorkspaceFails() throws Exception {
     assertFalse(dataReferenceDao.deleteDataReference(referenceId));
+  }
+
+  private String objectToString(Object obj) {
+    try {
+      return objectMapper.writeValueAsString(obj);
+    } catch (JsonProcessingException e) {
+      throw new InvalidDataReferenceException("Invalid data reference");
+    }
   }
 }

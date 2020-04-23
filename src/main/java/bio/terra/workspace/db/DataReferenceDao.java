@@ -1,14 +1,14 @@
 package bio.terra.workspace.db;
 
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
+import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
-import bio.terra.workspace.service.datareference.exception.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -16,13 +16,10 @@ import org.springframework.stereotype.Component;
 public class DataReferenceDao {
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
-  private final ObjectMapper objectMapper;
 
   @Autowired
-  public DataReferenceDao(
-      WorkspaceManagerJdbcConfiguration jdbcConfiguration, ObjectMapper objectMapper) {
+  public DataReferenceDao(WorkspaceManagerJdbcConfiguration jdbcConfiguration) {
     this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
-    this.objectMapper = objectMapper;
   }
 
   public String createDataReference(
@@ -44,9 +41,11 @@ public class DataReferenceDao {
     paramMap.put("name", name);
     paramMap.put("cloning_instructions", cloningInstructions);
     paramMap.put("credential_id", credentialId.orElse(null));
-    paramMap.put("resource_id", resourceId.isPresent() ? resourceId.get() : null);
-    paramMap.put("reference_type", referenceType.isPresent() ? referenceType.get() : null);
-    paramMap.put("reference", reference.isPresent() ? reference.get() : null);
+    paramMap.put("resource_id", resourceId.orElse(null));
+    paramMap.put("reference_type", referenceType.orElse(null));
+    paramMap.put("reference", reference.orElse(null));
+
+    System.out.println(reference);
 
     jdbcTemplate.update(sql, paramMap);
     return referenceId.toString();
@@ -59,21 +58,25 @@ public class DataReferenceDao {
     Map<String, Object> paramMap = new HashMap<>();
     paramMap.put("id", referenceId.toString());
 
-    Map<String, Object> queryOutput = jdbcTemplate.queryForMap(sql, paramMap);
+    try {
+      Map<String, Object> queryOutput = jdbcTemplate.queryForMap(sql, paramMap);
 
-    return new DataReferenceDescription()
-        .workspaceId(UUID.fromString(queryOutput.get("workspace_id").toString()))
-        .referenceId(UUID.fromString(queryOutput.get("reference_id").toString()))
-        .cloningInstructions(
-            DataReferenceDescription.CloningInstructionsEnum.fromValue(
-                queryOutput.get("cloning_instructions").toString()))
-        .name(queryOutput.get("name").toString())
-        .referenceType(
-            DataReferenceDescription.ReferenceTypeEnum.fromValue(
-                queryOutput.get("reference_type").toString()))
-        .reference(queryOutput.get("reference").toString())
-        // TODO: query for resource once controlled resources are implemented
-        .resourceDescription(null);
+      return new DataReferenceDescription()
+          .workspaceId(UUID.fromString(queryOutput.get("workspace_id").toString()))
+          .referenceId(UUID.fromString(queryOutput.get("reference_id").toString()))
+          .cloningInstructions(
+              DataReferenceDescription.CloningInstructionsEnum.fromValue(
+                  queryOutput.get("cloning_instructions").toString()))
+          .name(queryOutput.get("name").toString())
+          .referenceType(
+              DataReferenceDescription.ReferenceTypeEnum.fromValue(
+                  queryOutput.get("reference_type").toString()))
+          .reference(queryOutput.get("reference").toString())
+          // TODO: query for resource once controlled resources are implemented
+          .resourceDescription(null);
+    } catch (EmptyResultDataAccessException e) {
+      throw new DataReferenceNotFoundException("Data Reference not found.");
+    }
   }
 
   public boolean deleteDataReference(UUID referenceId) {
