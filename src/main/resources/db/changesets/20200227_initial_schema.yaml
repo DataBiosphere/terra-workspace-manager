@@ -136,8 +136,12 @@ databaseChangeLog:
               name: reference_type
               # TODO: this should be an enum
               type: text
+              constraints:
+                nullable: true
           - column:
               name: reference
               type: json
+              constraints:
+                nullable: true
 
 
