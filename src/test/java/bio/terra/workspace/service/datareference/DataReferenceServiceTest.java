@@ -85,7 +85,7 @@ public class DataReferenceServiceTest {
 
     DataReferenceDescription response = runCreateDataReferenceCall(initialWorkspaceId, refBody);
 
-    assertThat(response.getWorkspaceId(), equalTo(initialWorkspaceId));
+    assertThat(response.getWorkspaceId().toString(), equalTo(initialWorkspaceId));
     assertThat(response.getName(), equalTo("name"));
   }
 
@@ -111,7 +111,7 @@ public class DataReferenceServiceTest {
 
     DataReferenceDescription getResponse = runGetDataReferenceCall(initialWorkspaceId, referenceId);
 
-    assertThat(getResponse.getWorkspaceId(), equalTo(initialWorkspaceId));
+    assertThat(getResponse.getWorkspaceId().toString(), equalTo(initialWorkspaceId));
     assertThat(getResponse.getName(), equalTo("name"));
   }
 
