@@ -26,7 +26,6 @@ public class CreateDataReferenceStep implements Step {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID referenceId = inputMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
     UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    UUID resourceId = inputMap.get(DataReferenceFlightMapKeys.RESOURCE_ID, UUID.class);
     String reference = inputMap.get(DataReferenceFlightMapKeys.REFERENCE, String.class);
     CreateDataReferenceRequestBody body =
         inputMap.get(JobMapKeys.REQUEST.getKeyName(), CreateDataReferenceRequestBody.class);
@@ -35,7 +34,7 @@ public class CreateDataReferenceStep implements Step {
         referenceId,
         workspaceId,
         body.getName(),
-        JsonNullable.of(resourceId),
+        body.getResourceId(),
         body.getCredentialId(),
         body.getCloningInstructions(),
         body.getReferenceType(),
