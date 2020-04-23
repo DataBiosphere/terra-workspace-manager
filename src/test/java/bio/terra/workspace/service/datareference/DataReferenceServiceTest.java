@@ -2,6 +2,7 @@ package bio.terra.workspace.service.datareference;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -179,54 +180,46 @@ public class DataReferenceServiceTest {
         .andReturn();
   }
 
-  private CreatedWorkspace runCreateWorkspaceCall(CreateWorkspaceRequestBody request)
-      throws Exception {
-    MvcResult initialResult =
-        mvc.perform(
-                post("/api/v1/workspaces")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)))
+  @Test
+  public void enumerateDataReferences() throws Exception {
+    String initialWorkspaceId = createDefaultWorkspace().getId();
+
+    DataRepoSnapshot snapshot = new DataRepoSnapshot();
+    snapshot.setSnapshot("foo");
+    snapshot.setInstance("bar");
+
+    CreateDataReferenceRequestBody refBody =
+        new CreateDataReferenceRequestBody()
+            .name("name")
+            .cloningInstructions("COPY_NOTHING")
+            .referenceType("DataRepoSnapshot")
+            .reference(snapshot);
+    DataReferenceDescription firstReference =
+        runCreateDataReferenceCall(initialWorkspaceId, refBody);
+
+    DataRepoSnapshot secondSnapshot = new DataRepoSnapshot();
+    snapshot.setSnapshot("foo2");
+    snapshot.setInstance("bar2");
+    CreateDataReferenceRequestBody secondRefBody =
+        new CreateDataReferenceRequestBody()
+            .name("second_name")
+            .cloningInstructions("COPY_NOTHING")
+            .referenceType("DataRepoSnapshot")
+            .reference(secondSnapshot);
+    DataReferenceDescription secondReference =
+        runCreateDataReferenceCall(initialWorkspaceId, secondRefBody);
+
+    MvcResult enumerateResult =
+        mvc.perform(get(buildEnumerateEndpoint(initialWorkspaceId, 0, 10)))
             .andExpect(status().is(200))
             .andReturn();
-    return objectMapper.readValue(
-        initialResult.getResponse().getContentAsString(), CreatedWorkspace.class);
-  }
-
-  private DataReferenceDescription runCreateDataReferenceCall(
-      String workspaceId, CreateDataReferenceRequestBody request) throws Exception {
-    MvcResult initialResult =
-        mvc.perform(
-                post("/api/v1/workspaces/" + workspaceId + "/datareferences")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().is(200))
-            .andReturn();
-    return objectMapper.readValue(
-        initialResult.getResponse().getContentAsString(), DataReferenceDescription.class);
-  }
-
-  private DataReferenceDescription runGetDataReferenceCall(String workspaceId, String referenceId)
-      throws Exception {
-    MvcResult initialResult =
-        mvc.perform(
-                get("/api/v1/workspaces/" + workspaceId + "/datareferences/" + referenceId)
-                    .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().is(200))
-            .andReturn();
-    return objectMapper.readValue(
-        initialResult.getResponse().getContentAsString(), DataReferenceDescription.class);
-  }
-
-  private CreatedWorkspace createDefaultWorkspace() throws Exception {
-    UUID workspaceId = UUID.randomUUID();
-    CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody()
-            .id(workspaceId)
-            .authToken("fake-user-auth-token")
-            .spendProfile(null)
-            .policies(null);
-
-    return runCreateWorkspaceCall(body);
+    DataReferenceList result =
+        objectMapper.readValue(
+            enumerateResult.getResponse().getContentAsString(), DataReferenceList.class);
+    assertThat(result.getResources().size(), equalTo(2));
+    assertThat(
+        result.getResources(),
+        containsInAnyOrder(equalTo(firstReference), equalTo(secondReference)));
   }
 
   @Test
@@ -270,5 +263,54 @@ public class DataReferenceServiceTest {
         + offset
         + "&limit="
         + limit;
+  }
+
+  private CreatedWorkspace runCreateWorkspaceCall(CreateWorkspaceRequestBody request)
+      throws Exception {
+    MvcResult initialResult =
+        mvc.perform(
+                post("/api/v1/workspaces")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().is(200))
+            .andReturn();
+    return objectMapper.readValue(
+        initialResult.getResponse().getContentAsString(), CreatedWorkspace.class);
+  }
+
+  private DataReferenceDescription runCreateDataReferenceCall(
+      String workspaceId, CreateDataReferenceRequestBody request) throws Exception {
+    MvcResult initialResult =
+        mvc.perform(
+                post("/api/v1/workspaces/" + workspaceId + "/datareferences")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().is(200))
+            .andReturn();
+    return objectMapper.readValue(
+        initialResult.getResponse().getContentAsString(), DataReferenceDescription.class);
+  }
+
+  private DataReferenceDescription runGetDataReferenceCall(String workspaceId, String referenceId)
+      throws Exception {
+    MvcResult initialResult =
+        mvc.perform(
+                get("/api/v1/workspaces/" + workspaceId + "/datareferences/" + referenceId)
+                    .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().is(200))
+            .andReturn();
+    return objectMapper.readValue(
+        initialResult.getResponse().getContentAsString(), DataReferenceDescription.class);
+  }
+
+  private CreatedWorkspace createDefaultWorkspace() throws Exception {
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .authToken("fake-user-auth-token")
+            .spendProfile(null)
+            .policies(null);
+
+    return runCreateWorkspaceCall(body);
   }
 }
