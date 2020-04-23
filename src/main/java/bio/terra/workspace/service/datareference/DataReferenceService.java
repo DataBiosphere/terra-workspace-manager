@@ -12,7 +12,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
-
 import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,15 +88,18 @@ public class DataReferenceService {
 
   private void authz(AuthenticatedUserRequest userReq, String workspaceId, String action) {
     try {
-      boolean isAuthorized = samService.isAuthorized(
-          userReq.getRequiredToken(), SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId, action);
-      if(!isAuthorized) throw new SamUnauthorizedException("User "
-              + userReq.getEmail()
-              + " is not authorized to"
-              + action
-              + " workspace "
-              + workspaceId
-              + " or it doesn't exist.");
+      boolean isAuthorized =
+          samService.isAuthorized(
+              userReq.getRequiredToken(), SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId, action);
+      if (!isAuthorized)
+        throw new SamUnauthorizedException(
+            "User "
+                + userReq.getEmail()
+                + " is not authorized to"
+                + action
+                + " workspace "
+                + workspaceId
+                + " or it doesn't exist.");
     } catch (ApiException samEx) {
       throw new SamApiException(samEx);
     }

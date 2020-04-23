@@ -18,6 +18,7 @@ import bio.terra.workspace.service.workspace.create.CreateService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import java.util.UUID;
+import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -56,10 +57,11 @@ public class DataReferenceServiceTest {
   @Autowired private DataReferenceService dataReferenceService;
 
   @BeforeEach
-  public void setup() {
-    doNothing().when(mockSamService).createWorkspaceWithDefaults(any(), any());
+  public void setup() throws ApiException {
+    doReturn(true).when(mockSamService).isAuthorized(any(), any(), any(), any());
     doReturn(true).when(mockDataRepoService).snapshotExists(any(), any(), any());
     doReturn(false).when(mockDataRepoService).snapshotExists(any(), eq("fake-id"), any());
+
     AuthenticatedUserRequest fakeAuthentication = new AuthenticatedUserRequest();
     fakeAuthentication
         .token(Optional.of("fake-token"))
