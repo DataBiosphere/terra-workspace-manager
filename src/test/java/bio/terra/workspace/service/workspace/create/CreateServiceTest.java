@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.create;
+package bio.terra.workspace.service.workspace.create;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
