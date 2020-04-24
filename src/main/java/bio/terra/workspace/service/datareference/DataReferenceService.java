@@ -100,7 +100,7 @@ public class DataReferenceService {
       throw new SamUnauthorizedException(
           "User "
               + userReq.getEmail()
-              + " is not authorized to"
+              + " is not authorized to "
               + action
               + " workspace "
               + workspaceId
