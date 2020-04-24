@@ -48,9 +48,12 @@ public class SamService {
   }
 
   public boolean isAuthorized(
-      String accessToken, String iamResourceType, String resourceId, String action)
-      throws ApiException {
+      String accessToken, String iamResourceType, String resourceId, String action) {
     ResourcesApi resourceApi = samResourcesApi(accessToken);
-    return resourceApi.resourceAction(iamResourceType, resourceId, action);
+    try {
+      return resourceApi.resourceAction(iamResourceType, resourceId, action);
+    } catch (ApiException samException) {
+      throw new SamApiException(samException);
+    }
   }
 }

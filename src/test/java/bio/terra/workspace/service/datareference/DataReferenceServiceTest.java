@@ -1,24 +1,28 @@
 package bio.terra.workspace.service.datareference;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.app.Main;
 import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.generated.model.ErrorReport;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.workspace.create.CreateService;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import java.util.UUID;
-import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -52,16 +56,18 @@ public class DataReferenceServiceTest {
 
   @Autowired private ObjectMapper objectMapper;
 
-  @Autowired private CreateService createService;
+  @Autowired private WorkspaceService workspaceService;
 
   @Autowired private DataReferenceService dataReferenceService;
 
+  private UUID workspaceId;
+
   @BeforeEach
-  public void setup() throws ApiException {
+  public void setup() {
+    workspaceId = UUID.randomUUID();
     doReturn(true).when(mockSamService).isAuthorized(any(), any(), any(), any());
     doReturn(true).when(mockDataRepoService).snapshotExists(any(), any(), any());
     doReturn(false).when(mockDataRepoService).snapshotExists(any(), eq("fake-id"), any());
-
     AuthenticatedUserRequest fakeAuthentication = new AuthenticatedUserRequest();
     fakeAuthentication
         .token(Optional.of("fake-token"))
@@ -174,6 +180,91 @@ public class DataReferenceServiceTest {
         .andReturn();
   }
 
+  @Test
+  public void enumerateDataReferences() throws Exception {
+    String initialWorkspaceId = createDefaultWorkspace().getId();
+
+    DataRepoSnapshot snapshot = new DataRepoSnapshot();
+    snapshot.setSnapshot("foo");
+    snapshot.setInstance("bar");
+
+    CreateDataReferenceRequestBody refBody =
+        new CreateDataReferenceRequestBody()
+            .name("name")
+            .cloningInstructions("COPY_NOTHING")
+            .referenceType("DataRepoSnapshot")
+            .reference(snapshot);
+    DataReferenceDescription firstReference =
+        runCreateDataReferenceCall(initialWorkspaceId, refBody);
+
+    DataRepoSnapshot secondSnapshot = new DataRepoSnapshot();
+    snapshot.setSnapshot("foo2");
+    snapshot.setInstance("bar2");
+    CreateDataReferenceRequestBody secondRefBody =
+        new CreateDataReferenceRequestBody()
+            .name("second_name")
+            .cloningInstructions("COPY_NOTHING")
+            .referenceType("DataRepoSnapshot")
+            .reference(secondSnapshot);
+    DataReferenceDescription secondReference =
+        runCreateDataReferenceCall(initialWorkspaceId, secondRefBody);
+
+    MvcResult enumerateResult =
+        mvc.perform(get(buildEnumerateEndpoint(initialWorkspaceId, 0, 10)))
+            .andExpect(status().is(200))
+            .andReturn();
+    DataReferenceList result =
+        objectMapper.readValue(
+            enumerateResult.getResponse().getContentAsString(), DataReferenceList.class);
+    assertThat(result.getResources().size(), equalTo(2));
+    assertThat(
+        result.getResources(),
+        containsInAnyOrder(equalTo(firstReference), equalTo(secondReference)));
+  }
+
+  @Test
+  public void enumerateFailsUnauthorized() throws Exception {
+    doReturn(false).when(mockSamService).isAuthorized(any(), any(), any(), any());
+    MvcResult failResult =
+        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), 0, 10)))
+            .andExpect(status().is(401))
+            .andReturn();
+    ErrorReport validationError =
+        objectMapper.readValue(failResult.getResponse().getContentAsString(), ErrorReport.class);
+    assertThat(validationError.getMessage(), containsString("not authorized"));
+  }
+
+  @Test
+  public void enumerateFailsWithInvalidOffset() throws Exception {
+    MvcResult failResult =
+        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), -1, 10)))
+            .andExpect(status().is(400))
+            .andReturn();
+    ErrorReport validationError =
+        objectMapper.readValue(failResult.getResponse().getContentAsString(), ErrorReport.class);
+    assertThat(validationError.getCauses().get(0), containsString("offset"));
+  }
+
+  @Test
+  public void enumerateFailsWithInvalidLimit() throws Exception {
+    MvcResult failResult =
+        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), 0, 0)))
+            .andExpect(status().is(400))
+            .andReturn();
+    ErrorReport validationError =
+        objectMapper.readValue(failResult.getResponse().getContentAsString(), ErrorReport.class);
+    assertThat(validationError.getCauses().get(0), containsString("limit"));
+  }
+
+  private String buildEnumerateEndpoint(String workspaceId, int offset, int limit) {
+    return "/api/v1/workspaces/"
+        + workspaceId
+        + "/datareferences?offset="
+        + offset
+        + "&limit="
+        + limit;
+  }
+
   private CreatedWorkspace runCreateWorkspaceCall(CreateWorkspaceRequestBody request)
       throws Exception {
     MvcResult initialResult =
@@ -213,7 +304,6 @@ public class DataReferenceServiceTest {
   }
 
   private CreatedWorkspace createDefaultWorkspace() throws Exception {
-    UUID workspaceId = UUID.randomUUID();
     CreateWorkspaceRequestBody body =
         new CreateWorkspaceRequestBody()
             .id(workspaceId)

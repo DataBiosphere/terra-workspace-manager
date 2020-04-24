@@ -32,13 +32,8 @@ public class WorkspaceDao {
 
     Map<String, Object> paramMap = new HashMap<>();
     paramMap.put("id", workspaceId.toString());
-    if (spendProfile.isPresent()) {
-      paramMap.put("spend_profile", spendProfile.get().toString());
-      paramMap.put("spend_profile_settable", false);
-    } else {
-      paramMap.put("spend_profile", null);
-      paramMap.put("spend_profile_settable", true);
-    }
+    paramMap.put("spend_profile", spendProfile.orElse(null));
+    paramMap.put("spend_profile_settable", !spendProfile.isPresent());
 
     jdbcTemplate.update(sql, paramMap);
     return workspaceId.toString();

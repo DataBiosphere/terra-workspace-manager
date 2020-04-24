@@ -97,6 +97,28 @@ paths:
         500:
           description: Creation request error
           $ref: '#/components/responses/ErrorResponse'
+    get:
+      description: |
+        Enumerate the data references in a workspace.
+      operationId: enumerateReferences
+      tags:
+      - workspace
+      parameters:
+      - $ref: '#/components/parameters/Offset'
+      - $ref: '#/components/parameters/Limit'
+      responses:
+        200:
+          description: OK
+          $ref: '#/components/responses/ReferenceListResponse'
+        400:
+          description: Error in request
+          $ref: '#/components/responses/ErrorResponse'
+        401:
+          description: Unauthorized access
+          $ref: '#/components/responses/ErrorResponse'
+        500:
+          description: Server Error
+          $ref: '#/components/responses/ErrorResponse'
   '/api/v1/workspaces/{id}/datareferences/{referenceId}':
     parameters:
       - $ref: '#/components/parameters/Id'
@@ -114,6 +136,7 @@ paths:
         500:
           description: Creation request error
           $ref: '#/components/responses/ErrorResponse'
+
   '/api/v1/jobs/{id}':
     parameters:
     - $ref: '#/components/parameters/Id'
@@ -172,6 +195,20 @@ components:
       required: true
       schema:
         type: string
+    Offset:
+      name: offset
+      in: query
+      description: The number of items to skip before starting to collect the result set.
+      schema:
+        type: integer
+        default: 0
+    Limit:
+      name: limit
+      in: query
+      description: The numbers of items to return. Default 10
+      schema:
+        type: integer
+        default: 10
     ReferenceId:
         name: referenceId
         in: path
@@ -384,6 +421,14 @@ components:
           description: JSON map of user-provided attributes
           type: string
           nullable: true
+    DataReferenceList:
+      type: object
+      properties:
+        resources:
+          description: A list of controlled and/or uncontrolled data references
+          type: array
+          items:
+            $ref: '#/components/schemas/DataReferenceDescription'
     DataRepoSnapshot:
       type: object
       properties:
@@ -436,3 +481,10 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/JobModel'
+
+    ReferenceListResponse:
+      description: Response to list resource calls
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DataReferenceList'

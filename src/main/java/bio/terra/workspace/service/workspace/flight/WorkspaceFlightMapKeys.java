@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.create.flight;
+package bio.terra.workspace.service.workspace.flight;
 
 public final class WorkspaceFlightMapKeys {
   private WorkspaceFlightMapKeys() {}

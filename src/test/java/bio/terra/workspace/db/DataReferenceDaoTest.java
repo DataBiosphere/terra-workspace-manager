@@ -2,11 +2,14 @@ package bio.terra.workspace.db;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.workspace.app.Main;
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
+import bio.terra.workspace.generated.model.DataReferenceList;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -155,6 +158,51 @@ public class DataReferenceDaoTest {
     assertFalse(dataReferenceDao.deleteDataReference(referenceId));
   }
 
+  @Test
+  public void enumerateWorkspaceReferences() throws Exception {
+    workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
+    // Create two references in the same workspace.
+    dataReferenceDao.createDataReference(
+        referenceId,
+        workspaceId,
+        name,
+        JsonNullable.undefined(),
+        JsonNullable.of(credentialId),
+        cloningInstructions,
+        JsonNullable.of(referenceType),
+        JsonNullable.of(reference));
+    DataReferenceDescription firstReference = dataReferenceDao.getDataReference(referenceId);
+
+    UUID secondReferenceId = UUID.randomUUID();
+    dataReferenceDao.createDataReference(
+        secondReferenceId,
+        workspaceId,
+        name,
+        JsonNullable.undefined(),
+        JsonNullable.of(credentialId),
+        cloningInstructions,
+        JsonNullable.of(referenceType),
+        JsonNullable.of(reference));
+    DataReferenceDescription secondReference = dataReferenceDao.getDataReference(secondReferenceId);
+
+    // Validate that both DataReferences are enumerated
+    DataReferenceList enumerateResult =
+        dataReferenceDao.enumerateDataReferences(workspaceId.toString(), name, 0, 10);
+    assertThat(enumerateResult.getResources().size(), equalTo(2));
+    assertThat(
+        enumerateResult.getResources(),
+        containsInAnyOrder(equalTo(firstReference), equalTo(secondReference)));
+  }
+
+  @Test
+  public void enumerateEmptyReferenceList() throws Exception {
+    workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
+
+    DataReferenceList result =
+        dataReferenceDao.enumerateDataReferences(workspaceId.toString(), name, 0, 10);
+    assertThat(result.getResources(), empty());
+  }
+
   private String objectToString(Object obj) {
     try {
       return objectMapper.writeValueAsString(obj);
@@ -162,4 +210,7 @@ public class DataReferenceDaoTest {
       throw new InvalidDataReferenceException("Invalid data reference");
     }
   }
+
+  // TODO: currently no tests enumerating controlled data resources, as we have no way to create
+  // them.
 }

@@ -1,21 +1,29 @@
-package bio.terra.workspace.service.workspace.get;
+package bio.terra.workspace.service.workspace;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.blankOrNullString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.app.Main;
-import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.common.exception.SamApiException;
+import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
+import bio.terra.workspace.generated.model.CreatedWorkspace;
+import bio.terra.workspace.generated.model.ErrorReport;
+import bio.terra.workspace.generated.model.WorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.workspace.create.CreateService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +47,7 @@ import org.springframework.test.web.servlet.MvcResult;
 @ContextConfiguration(classes = Main.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-public class GetServiceTest {
+public class WorkspaceServiceTest {
 
   @Autowired private MockMvc mvc;
 
@@ -50,13 +58,12 @@ public class GetServiceTest {
 
   @Autowired private ObjectMapper objectMapper;
 
-  @Autowired private CreateService createService;
-
-  @Autowired private GetService getService;
+  @Autowired private WorkspaceService workspaceService;
 
   @BeforeEach
   public void setup() {
     doNothing().when(mockSamService).createWorkspaceWithDefaults(any(), any());
+    doReturn(true).when(mockSamService).isAuthorized(any(), any(), any(), any());
     AuthenticatedUserRequest fakeAuthentication = new AuthenticatedUserRequest();
     fakeAuthentication
         .token(Optional.of("fake-token"))
@@ -99,6 +106,75 @@ public class GetServiceTest {
 
     assertThat(desc.getId(), equalTo(workspaceId));
   }
+
+  @Test
+  public void workspaceCreatedFromJobRequest() throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .authToken("fake-user-auth-token")
+            .spendProfile(null)
+            .policies(null);
+
+    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
+
+    assertThat(workspace.getId(), equalTo(workspaceId.toString()));
+  }
+
+  @Test
+  public void testWithSpendProfileAndPolicies() throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .authToken("fake-user-auth-token")
+            .spendProfile(UUID.randomUUID())
+            .policies(Collections.singletonList(UUID.randomUUID()));
+
+    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
+
+    assertThat(workspace.getId(), equalTo(workspaceId.toString()));
+  }
+
+  @Test
+  public void testHandlesSamError() throws Exception {
+    String errorMsg = "fake SAM error message";
+
+    doThrow(new SamApiException(errorMsg))
+        .when(mockSamService)
+        .createWorkspaceWithDefaults(any(), any());
+
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody()
+            .id(UUID.randomUUID())
+            .authToken("todo: add token")
+            .spendProfile(null)
+            .policies(null);
+
+    MvcResult callResult =
+        mvc.perform(
+                post("/api/v1/workspaces")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(body)))
+            .andExpect(status().is(500))
+            .andReturn();
+
+    ErrorReport samError =
+        objectMapper.readValue(callResult.getResponse().getContentAsString(), ErrorReport.class);
+    assertThat(samError.getMessage(), equalTo(errorMsg));
+  }
+
+  // TODO: blank tests that should be written as more functionality gets added.
+  // @Test
+  // public void testLockedWorkspaceIsInaccessible() {
+  // }
+  // @Test
+  // public void testCreateFromNonFolderManagerIsRejected() {
+  // }
+  // @Test
+  // public void testPolicy() {
+  // }
 
   private CreatedWorkspace runCreateWorkspaceCall(CreateWorkspaceRequestBody request)
       throws Exception {

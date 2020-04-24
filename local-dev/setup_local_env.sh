@@ -10,7 +10,7 @@ set -e
 #Required input
 NAMESPACE=$1
 
-# For other services forking this TEMPLATE repo, change this line to the appropriate config repo. 
+# For other services forking this TEMPLATE repo, change this line to the appropriate config repo.
 git clone https://github.com/DataBiosphere/terra-config
 
 # Point skaffold to the new kustomize base
