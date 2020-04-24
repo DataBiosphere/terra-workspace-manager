@@ -6,12 +6,14 @@ buildscript {
 
 plugins {
 	id 'java'
+	id 'scala'
 	id 'idea'
 	id 'org.springframework.boot' version '2.2.2.RELEASE'
 	id 'io.spring.dependency-management' version '1.0.8.RELEASE'
 	id 'com.google.cloud.tools.jib' version '1.8.0'
 	id 'org.openapi.generator' version '4.2.3'
 	id 'com.diffplug.gradle.spotless' version '3.27.2'
+	id 'com.github.lkishalmi.gatling' version '3.3.0'
 }
 
 group = 'bio.terra.workspace'
@@ -50,6 +52,9 @@ dependencies {
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
+
+	gatling 'org.scala-lang:scala-library:2.12.0'
+	gatling group: 'com.google.auth', name: 'google-auth-library-oauth2-http', version: '0.20.0'
 }
 
 // Exclude the Spring logger, so everything will use SLF4J
@@ -107,4 +112,3 @@ spotless {
 		googleJavaFormat()
 	}
 }
-
