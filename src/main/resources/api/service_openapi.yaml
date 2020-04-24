@@ -337,6 +337,7 @@ components:
         resourceId:
           description: The ID of the resource
           type: string
+          format: uuid
           nullable: true
         referenceType:
           description: The type of the data reference (i.e. TDR snapshot, AWS bucket, etc)

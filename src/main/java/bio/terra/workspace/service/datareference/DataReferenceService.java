@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.datareference;
 
-import bio.terra.workspace.common.exception.SamUnauthorizedException;
+import bio.terra.workspace.common.exception.*;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
@@ -69,10 +69,7 @@ public class DataReferenceService {
                 body,
                 userReq)
             .addParameter(DataReferenceFlightMapKeys.REFERENCE_ID, referenceId)
-            .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.fromString(workspaceId))
-            .addParameter(DataReferenceFlightMapKeys.NAME, body.getName())
-            .addParameter(
-                DataReferenceFlightMapKeys.CLONING_INSTRUCTIONS, body.getCloningInstructions());
+            .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.fromString(workspaceId));
 
     if (body.getReferenceType().isPresent() && body.getReference().isPresent()) {
       String ref =
@@ -80,15 +77,7 @@ public class DataReferenceService {
               DataReferenceDescription.ReferenceTypeEnum.fromValue(body.getReferenceType().get()),
               body.getReference().get(),
               userReq);
-
-      createJob.addParameter(
-          DataReferenceFlightMapKeys.REFERENCE_TYPE, body.getReferenceType().get());
       createJob.addParameter(DataReferenceFlightMapKeys.REFERENCE, ref);
-    }
-
-    if (body.getCredentialId().isPresent()) {
-      createJob.addParameter(
-          DataReferenceFlightMapKeys.CREDENTIAL_ID, body.getCredentialId().get());
     }
 
     createJob.submitAndWait(String.class);
@@ -98,21 +87,23 @@ public class DataReferenceService {
 
   public DataReferenceList enumerateDataReferences(
       String workspaceId, int offset, int limit, AuthenticatedUserRequest userReq) {
-    if (!authz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION)) {
-      throw new SamUnauthorizedException(
-          "User "
-              + userReq.getEmail()
-              + " is not authorized to read workspace "
-              + workspaceId
-              + " or it doesn't exist.");
-    }
-
+    authz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
     return dataReferenceDao.enumerateDataReferences(
         workspaceId, userReq.getReqId().toString(), offset, limit);
   }
 
-  private boolean authz(AuthenticatedUserRequest userReq, String workspaceId, String action) {
-    return samService.isAuthorized(
-        userReq.getRequiredToken(), SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId, action);
+  private void authz(AuthenticatedUserRequest userReq, String workspaceId, String action) {
+    boolean isAuthorized =
+        samService.isAuthorized(
+            userReq.getRequiredToken(), SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId, action);
+    if (!isAuthorized)
+      throw new SamUnauthorizedException(
+          "User "
+              + userReq.getEmail()
+              + " is not authorized to"
+              + action
+              + " workspace "
+              + workspaceId
+              + " or it doesn't exist.");
   }
 }

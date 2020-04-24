@@ -211,5 +211,6 @@ public class DataReferenceDaoTest {
     }
   }
 
-  // TODO: currently no tests about controlled data resources, as we have no way to create them.
+  // TODO: currently no tests enumerating controlled data resources, as we have no way to create
+  // them.
 }
