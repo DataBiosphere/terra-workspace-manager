@@ -429,11 +429,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DataReferenceDescription'
-    # An enum class is only generated if this is defined here instead of in line
-    # with parameters.
-    FilterControlledEnum:
-      type: string
-      enum: ["CONTROLLED", "UNCONTROLLED", "ALL"]
     DataRepoSnapshot:
       type: object
       properties:
