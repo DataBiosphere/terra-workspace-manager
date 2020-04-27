@@ -107,7 +107,7 @@ databaseChangeLog:
               type: text
               constraints:
                 references: workspace(workspace_id)
-                foreignKeyName: fk_workspace_id_cascade
+                foreignKeyName: fk_workspace_id
                 nullable: false
                 deleteCascade: true
           - column:
