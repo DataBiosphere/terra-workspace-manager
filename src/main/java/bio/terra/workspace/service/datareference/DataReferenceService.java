@@ -40,7 +40,7 @@ public class DataReferenceService {
   public DataReferenceDescription getDataReference(
       String workspaceId, String referenceId, AuthenticatedUserRequest userReq) {
 
-    authz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
+    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
 
     return dataReferenceDao.getDataReference(UUID.fromString(referenceId));
   }
@@ -55,7 +55,7 @@ public class DataReferenceService {
           "Data reference must contain either a resource id or a reference type and a reference description");
     }
 
-    authz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
 
     UUID referenceId = UUID.randomUUID();
     String description =
@@ -88,7 +88,7 @@ public class DataReferenceService {
 
   public DataReferenceList enumerateDataReferences(
       String workspaceId, int offset, int limit, AuthenticatedUserRequest userReq) {
-    authz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
+    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
     return dataReferenceDao.enumerateDataReferences(
         workspaceId, userReq.getReqId().toString(), offset, limit);
   }
@@ -96,7 +96,7 @@ public class DataReferenceService {
   public void deleteDataReference(
       String workspaceId, String referenceId, AuthenticatedUserRequest userReq) {
 
-    authz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
 
     if (dataReferenceDao.isControlled(UUID.fromString(referenceId))) {
       throw new ControlledResourceNotImplementedException(
@@ -106,20 +106,5 @@ public class DataReferenceService {
     if (!dataReferenceDao.deleteDataReference(UUID.fromString(referenceId))) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
     }
-  }
-
-  private void authz(AuthenticatedUserRequest userReq, String workspaceId, String action) {
-    boolean isAuthorized =
-        samService.isAuthorized(
-            userReq.getRequiredToken(), SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId, action);
-    if (!isAuthorized)
-      throw new SamUnauthorizedException(
-          "User "
-              + userReq.getEmail()
-              + " is not authorized to "
-              + action
-              + " workspace "
-              + workspaceId
-              + " or it doesn't exist.");
   }
 }

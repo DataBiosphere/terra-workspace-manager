@@ -61,6 +61,16 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
+  public ResponseEntity<Void> deleteWorkspace(
+      @PathVariable("id") String id, DeleteWorkspaceRequestBody body) {
+    // Note: we do NOT use getAuthenticatedInfo here, as the request's authentication info comes
+    // from the folder manager, not the requesting user.
+    String userToken = body.getAuthToken();
+    workspaceService.deleteWorkspace(id, userToken);
+    return new ResponseEntity<>(HttpStatus.valueOf(204));
+  }
+
+  @Override
   public ResponseEntity<DataReferenceDescription> createDataReference(
       @PathVariable("id") String id, @RequestBody CreateDataReferenceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
