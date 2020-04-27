@@ -8,8 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.app.Main;
@@ -125,10 +124,14 @@ public class DataReferenceServiceTest {
 
   @Test
   public void testGetMissingDataReference() throws Exception {
+    String initialWorkspaceId = createDefaultWorkspace().getId();
+
     MvcResult callResult =
         mvc.perform(
                 get(
-                    "/api/v1/workspaces/fake-workspace/datareferences/"
+                    "/api/v1/workspaces/"
+                        + initialWorkspaceId
+                        + "/datareferences/"
                         + UUID.randomUUID().toString()))
             .andExpect(status().is(404))
             .andReturn();
@@ -265,6 +268,54 @@ public class DataReferenceServiceTest {
         + limit;
   }
 
+  public void testDeleteDataReference() throws Exception {
+    String initialWorkspaceId = createDefaultWorkspace().getId();
+
+    DataRepoSnapshot snapshot = new DataRepoSnapshot();
+    snapshot.setSnapshot("foo");
+    snapshot.setInstance("bar");
+
+    CreateDataReferenceRequestBody refBody =
+        new CreateDataReferenceRequestBody()
+            .name("name")
+            .cloningInstructions("COPY_NOTHING")
+            .referenceType("DataRepoSnapshot")
+            .reference(snapshot);
+
+    DataReferenceDescription response = runCreateDataReferenceCall(initialWorkspaceId, refBody);
+    DataReferenceDescription getResponse =
+        runGetDataReferenceCall(initialWorkspaceId, response.getReferenceId().toString());
+
+    assertThat(getResponse.getName(), equalTo("name"));
+
+    runDeleteDataReferenceCall(initialWorkspaceId, response.getReferenceId().toString());
+
+    // assert that reference is now deleted
+    mvc.perform(
+            get("/api/v1/workspaces/"
+                    + initialWorkspaceId
+                    + "/datareferences/"
+                    + response.getReferenceId().toString())
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().is(404))
+        .andReturn();
+  }
+
+  @Test
+  public void testDeleteMissingDataReference() throws Exception {
+    MvcResult callResult =
+        mvc.perform(
+                delete(
+                    "/api/v1/workspaces/fake-workspace/datareferences/"
+                        + UUID.randomUUID().toString()))
+            .andExpect(status().is(404))
+            .andReturn();
+
+    ErrorReport error =
+        objectMapper.readValue(callResult.getResponse().getContentAsString(), ErrorReport.class);
+    assertThat(error.getStatusCode(), equalTo(HttpStatus.NOT_FOUND.value()));
+  }
+
   private CreatedWorkspace runCreateWorkspaceCall(CreateWorkspaceRequestBody request)
       throws Exception {
     MvcResult initialResult =
@@ -301,6 +352,14 @@ public class DataReferenceServiceTest {
             .andReturn();
     return objectMapper.readValue(
         initialResult.getResponse().getContentAsString(), DataReferenceDescription.class);
+  }
+
+  private void runDeleteDataReferenceCall(String workspaceId, String referenceId) throws Exception {
+    mvc.perform(
+            delete("/api/v1/workspaces/" + workspaceId + "/datareferences/" + referenceId)
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().is(204))
+        .andReturn();
   }
 
   private CreatedWorkspace createDefaultWorkspace() throws Exception {

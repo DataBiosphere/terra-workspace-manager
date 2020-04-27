@@ -73,6 +73,20 @@ public class DataReferenceDao {
     }
   }
 
+  public boolean isControlled(UUID referenceId) {
+    String sql =
+        "SELECT CASE WHEN resource_id IS NULL THEN 'false' ELSE 'true' END FROM workspace_data_reference where reference_id = :id";
+
+    Map<String, Object> paramMap = new HashMap<>();
+    paramMap.put("id", referenceId.toString());
+
+    try {
+      return jdbcTemplate.queryForObject(sql, paramMap, Boolean.class).booleanValue();
+    } catch (EmptyResultDataAccessException e) {
+      throw new DataReferenceNotFoundException("Data Reference not found.");
+    }
+  }
+
   public boolean deleteDataReference(UUID referenceId) {
     Map<String, Object> paramMap = new HashMap<String, Object>();
     paramMap.put("id", referenceId.toString());

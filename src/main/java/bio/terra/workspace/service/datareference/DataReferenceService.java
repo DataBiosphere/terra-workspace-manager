@@ -6,6 +6,7 @@ import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataReferenceList;
+import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.flight.*;
 import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
@@ -90,6 +91,21 @@ public class DataReferenceService {
     authz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
     return dataReferenceDao.enumerateDataReferences(
         workspaceId, userReq.getReqId().toString(), offset, limit);
+  }
+
+  public void deleteDataReference(
+      String workspaceId, String referenceId, AuthenticatedUserRequest userReq) {
+
+    authz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+
+    if (dataReferenceDao.isControlled(UUID.fromString(referenceId))) {
+      throw new ControlledResourceNotImplementedException(
+          "Unable to delete controlled resource. This functionality will be implemented in the future.");
+    }
+
+    if (!dataReferenceDao.deleteDataReference(UUID.fromString(referenceId))) {
+      throw new DataReferenceNotFoundException("Data Reference not found.");
+    }
   }
 
   private void authz(AuthenticatedUserRequest userReq, String workspaceId, String action) {

@@ -136,6 +136,21 @@ paths:
         500:
           description: Creation request error
           $ref: '#/components/responses/ErrorResponse'
+    delete:
+      description: |
+        Deletes a data reference from a workspace.
+      operationId: deleteDataReference
+      tags:
+        - workspace
+      responses:
+        204:
+          description: No Content
+        403:
+          description: No permission to delete
+          $ref: '#/components/responses/ErrorResponse'
+        500:
+          description: Delete request error
+          $ref: '#/components/responses/ErrorResponse'
 
   '/api/v1/jobs/{id}':
     parameters:

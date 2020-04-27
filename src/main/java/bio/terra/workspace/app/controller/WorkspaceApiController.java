@@ -80,6 +80,15 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
+  public ResponseEntity<Void> deleteDataReference(
+      @PathVariable("id") String workspaceId, @PathVariable("referenceId") String referenceId) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    dataReferenceService.deleteDataReference(workspaceId, referenceId, userReq);
+
+    return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
   public ResponseEntity<Void> deleteJob(@PathVariable("id") String id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     jobService.releaseJob(id, userReq);
