@@ -61,7 +61,7 @@ public class WorkspaceService {
   public void deleteWorkspace(String id, String userToken) {
 
     AuthenticatedUserRequest userReq = new AuthenticatedUserRequest().token(Optional.of(userToken));
-    samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+    samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_DELETE_ACTION);
 
     String description = "Delete workspace " + id;
     JobBuilder deleteJob =
