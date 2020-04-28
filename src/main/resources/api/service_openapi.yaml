@@ -68,6 +68,31 @@ paths:
         500:
           description: Get request error
           $ref: '#/components/responses/ErrorResponse'
+    delete:
+      description: |
+        Delete a Workspace. This should only be called by the Folder Manager.
+      operationId: deleteWorkspace
+      tags:
+      - workspace
+      requestBody:
+        description: |
+          Auth token of user requesting the delete.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteWorkspaceRequestBody'
+      responses:
+        204:
+          description: Success
+        400:
+          description: Bad Request
+          $ref: '#/components/responses/ErrorResponse'
+        401:
+          description: Unauthorized or not found
+          $ref: '#/components/responses/ErrorResponse'
+        500:
+          description: Server Error
+          $ref: '#/components/responses/ErrorResponse'
   '/api/v1/workspaces/{id}/datareferences':
     parameters:
       - $ref: '#/components/parameters/Id'
@@ -331,6 +356,12 @@ components:
         id:
           type: string
           description: UUID of a newly-created workspace
+    DeleteWorkspaceRequestBody:
+      type: object
+      properties:
+        authToken:
+          description: Requesting user's auth token
+          type: string
     WorkspaceDescription:
       type: object
       properties:

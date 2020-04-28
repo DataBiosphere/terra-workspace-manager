@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.app.Main;
+import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.generated.model.ErrorReport;
 import bio.terra.workspace.service.datarepo.DataRepoService;
@@ -64,7 +65,7 @@ public class DataReferenceServiceTest {
   @BeforeEach
   public void setup() {
     workspaceId = UUID.randomUUID();
-    doReturn(true).when(mockSamService).isAuthorized(any(), any(), any(), any());
+    doNothing().when(mockSamService).workspaceAuthz(any(), any(), any());
     doReturn(true).when(mockDataRepoService).snapshotExists(any(), any(), any());
     doReturn(false).when(mockDataRepoService).snapshotExists(any(), eq("fake-id"), any());
     AuthenticatedUserRequest fakeAuthentication = new AuthenticatedUserRequest();
@@ -227,14 +228,17 @@ public class DataReferenceServiceTest {
 
   @Test
   public void enumerateFailsUnauthorized() throws Exception {
-    doReturn(false).when(mockSamService).isAuthorized(any(), any(), any(), any());
+    String samMessage = "Fake Sam unauthorized message";
+    doThrow(new SamUnauthorizedException(samMessage))
+        .when(mockSamService)
+        .workspaceAuthz(any(), any(), any());
     MvcResult failResult =
         mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), 0, 10)))
             .andExpect(status().is(401))
             .andReturn();
     ErrorReport validationError =
         objectMapper.readValue(failResult.getResponse().getContentAsString(), ErrorReport.class);
-    assertThat(validationError.getMessage(), containsString("not authorized"));
+    assertThat(validationError.getMessage(), containsString(samMessage));
   }
 
   @Test

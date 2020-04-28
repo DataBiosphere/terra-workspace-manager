@@ -38,6 +38,7 @@ databaseChangeLog:
                 references: workspace(workspace_id)
                 foreignKeyName: fk_workspace_id
                 nullable: false
+                deleteCascade: true
           - column:
               name: application_id
               type: text
@@ -54,6 +55,7 @@ databaseChangeLog:
                 references: workspace(workspace_id)
                 foreignKeyName: fk_workspace_id
                 nullable: false
+                deleteCascade: true
           - column:
               name: resource_id
               type: text
@@ -86,6 +88,7 @@ databaseChangeLog:
               constraints:
                 primaryKey: true
                 nullable: false
+                deleteCascade: true
           - column:
               name: cloud_type
               # TODO: this should be an enum
@@ -106,6 +109,7 @@ databaseChangeLog:
                 references: workspace(workspace_id)
                 foreignKeyName: fk_workspace_id
                 nullable: false
+                deleteCascade: true
           - column:
               name: reference_id
               type: text

@@ -2,6 +2,7 @@ package bio.terra.workspace.service.iam;
 
 import bio.terra.workspace.app.configuration.SamConfiguration;
 import bio.terra.workspace.common.exception.SamApiException;
+import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.common.utils.SamUtils;
 import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
@@ -55,5 +56,20 @@ public class SamService {
     } catch (ApiException samException) {
       throw new SamApiException(samException);
     }
+  }
+
+  public void workspaceAuthz(AuthenticatedUserRequest userReq, String workspaceId, String action) {
+    boolean isAuthorized =
+        isAuthorized(
+            userReq.getRequiredToken(), SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId, action);
+    if (!isAuthorized)
+      throw new SamUnauthorizedException(
+          "User "
+              + userReq.getEmail()
+              + " is not authorized to "
+              + action
+              + " workspace "
+              + workspaceId
+              + " or it doesn't exist.");
   }
 }

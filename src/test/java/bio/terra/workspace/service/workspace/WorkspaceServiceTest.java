@@ -9,16 +9,22 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.app.Main;
 import bio.terra.workspace.common.exception.SamApiException;
+import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
+import bio.terra.workspace.generated.model.DataReferenceDescription;
+import bio.terra.workspace.generated.model.DataRepoSnapshot;
+import bio.terra.workspace.generated.model.DeleteWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ErrorReport;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
+import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -56,6 +62,8 @@ public class WorkspaceServiceTest {
   // Mock MVC doesn't populate the fields used to build this.
   @MockBean private AuthenticatedUserRequestFactory mockAuthenticatedUserRequestFactory;
 
+  @MockBean private DataRepoService dataRepoService;
+
   @Autowired private ObjectMapper objectMapper;
 
   @Autowired private WorkspaceService workspaceService;
@@ -63,7 +71,8 @@ public class WorkspaceServiceTest {
   @BeforeEach
   public void setup() {
     doNothing().when(mockSamService).createWorkspaceWithDefaults(any(), any());
-    doReturn(true).when(mockSamService).isAuthorized(any(), any(), any(), any());
+    doNothing().when(mockSamService).workspaceAuthz(any(), any(), any());
+    doReturn(true).when(dataRepoService).snapshotExists(any(), any(), any());
     AuthenticatedUserRequest fakeAuthentication = new AuthenticatedUserRequest();
     fakeAuthentication
         .token(Optional.of("fake-token"))
@@ -163,6 +172,101 @@ public class WorkspaceServiceTest {
     ErrorReport samError =
         objectMapper.readValue(callResult.getResponse().getContentAsString(), ErrorReport.class);
     assertThat(samError.getMessage(), equalTo(errorMsg));
+  }
+
+  @Test
+  public void createAndDeleteWorkspace() throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .authToken("fake-user-auth-token")
+            .spendProfile(null)
+            .policies(null);
+
+    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
+    assertThat(workspace.getId(), equalTo(workspaceId.toString()));
+
+    DeleteWorkspaceRequestBody deleteBody =
+        new DeleteWorkspaceRequestBody().authToken("fake-user-auth-token");
+    MvcResult deleteResult =
+        mvc.perform(
+                delete("/api/v1/workspaces/" + workspaceId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(deleteBody)))
+            .andExpect(status().is(204))
+            .andReturn();
+    // Finally, assert that a call to the deleted workspace gives a 404
+    MvcResult getResult =
+        mvc.perform(get("/api/v1/workspaces/" + workspaceId))
+            .andExpect(status().is(404))
+            .andReturn();
+  }
+
+  @Test
+  public void deleteWorkspaceWithDataReference() throws Exception {
+    // First, create a workspace.
+    UUID workspaceId = UUID.randomUUID();
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .authToken("fake-user-auth-token")
+            .spendProfile(null)
+            .policies(null);
+    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
+    assertThat(workspace.getId(), equalTo(workspaceId.toString()));
+
+    // Next, add a data reference to that workspace.
+    DataRepoSnapshot reference =
+        new DataRepoSnapshot().instance("fake instance").snapshot("fake snapshot");
+    CreateDataReferenceRequestBody referenceRequest =
+        new CreateDataReferenceRequestBody()
+            .name("fake-data-reference")
+            .cloningInstructions("COPY_NOTHING")
+            .referenceType("DataRepoSnapshot")
+            .reference(reference);
+    MvcResult dataReferenceResult =
+        mvc.perform(
+                post("/api/v1/workspaces/" + workspaceId + "/datareferences")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(referenceRequest)))
+            .andExpect(status().is(200))
+            .andReturn();
+    DataReferenceDescription dataReferenceResponse =
+        objectMapper.readValue(
+            dataReferenceResult.getResponse().getContentAsString(), DataReferenceDescription.class);
+    // Validate that the reference exists.
+    MvcResult getReferenceResult =
+        mvc.perform(
+                get("/api/v1/workspaces/"
+                        + workspaceId
+                        + "/datareferences/"
+                        + dataReferenceResponse.getReferenceId().toString())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(referenceRequest)))
+            .andExpect(status().is(200))
+            .andReturn();
+    // Delete the workspace.
+    DeleteWorkspaceRequestBody deleteRequest =
+        new DeleteWorkspaceRequestBody().authToken("fake-user-auth-token");
+    MvcResult deleteResult =
+        mvc.perform(
+                delete("/api/v1/workspaces/" + workspaceId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(deleteRequest)))
+            .andExpect(status().is(204))
+            .andReturn();
+    // Verify that the contained data reference is no longer returned.
+    MvcResult getDeletedReferenceResult =
+        mvc.perform(
+                get("/api/v1/workspaces/"
+                        + workspaceId
+                        + "/datareferences/"
+                        + dataReferenceResponse.getReferenceId().toString())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(referenceRequest)))
+            .andExpect(status().is(404))
+            .andReturn();
   }
 
   // TODO: blank tests that should be written as more functionality gets added.
