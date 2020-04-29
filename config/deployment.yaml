@@ -50,6 +50,9 @@ spec:
             secretKeyRef:
               name: workspace-stairway-db-creds
               key: db
+        # TODO: how should this be provided?
+        - name: SAM_ADDRESS
+          value: https://sam.dsde-dev.broadinstitute.org/
       - name: cloudsql-proxy
         image: gcr.io/cloudsql-docker/gce-proxy:1.16
         env:
