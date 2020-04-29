@@ -7,6 +7,7 @@ info:
 
 servers:
 - url: http://localhost:8080
+- url: /dev-terra-workspace-manager
 
 paths:
   '/status':
@@ -227,6 +228,10 @@ paths:
               schema:
                 type: object
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
   parameters:
     Id:
       name: id
@@ -534,3 +539,5 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/DataReferenceList'
+security:
+- bearerAuth: []
