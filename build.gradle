@@ -6,12 +6,14 @@ buildscript {
 
 plugins {
 	id 'java'
+	id 'scala'
 	id 'idea'
 	id 'org.springframework.boot' version '2.2.2.RELEASE'
 	id 'io.spring.dependency-management' version '1.0.8.RELEASE'
 	id 'com.google.cloud.tools.jib' version '1.8.0'
 	id 'org.openapi.generator' version '4.2.3'
 	id 'com.diffplug.gradle.spotless' version '3.27.2'
+	id 'com.github.lkishalmi.gatling' version '3.3.0'
 }
 
 group = 'bio.terra.workspace'
@@ -39,6 +41,7 @@ dependencies {
 	implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
 	implementation group: 'org.liquibase' , name: 'liquibase-core', version: '3.8.6'
 	implementation group: 'org.webjars', name: 'swagger-ui', version: '3.24.0'
+	//implementation 'org.scala-lang:scala-library:2.12.0'
 
 	// -- OpenAPI CodeGen dependencies --
 	// TODO: this version of swagger-annotations is old, but the code gen is still relying on it
@@ -49,6 +52,20 @@ dependencies {
 
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+	}
+
+	gatling 'org.scala-lang:scala-library:2.12.0'
+	gatling group: 'com.google.auth', name: 'google-auth-library-oauth2-http', version: '0.20.0'
+}
+
+sourceSets {
+	gatling {
+		scala {
+			srcDirs = [ 'gatling/src/test/scala' ]
+		}
+		resources {
+			srcDirs = [ 'gatling/src/test/resources' ]
+		}
 	}
 }
 
@@ -107,4 +124,3 @@ spotless {
 		googleJavaFormat()
 	}
 }
-
