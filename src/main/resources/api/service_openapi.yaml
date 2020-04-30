@@ -449,19 +449,19 @@ components:
     ResourceDescription:
       type: object
       properties:
-        resource_id:
+        resourceId:
           description: The ID of the resource
           type: string
           format: uuid
-        workspace_id:
+        workspaceId:
           description: The ID of the workspace holding the resource
           type: string
           format: uuid
-        application_id:
+        applicationId:
           description: ID of application this resource is associated with, if any
           type: string
           nullable: true
-        is_visible:
+        isVisible:
           description: Whether this resource is visible or not
           type: boolean
         owner:
