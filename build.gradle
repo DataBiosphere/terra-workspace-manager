@@ -41,7 +41,7 @@ dependencies {
 	implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
 	implementation group: 'org.liquibase' , name: 'liquibase-core', version: '3.8.6'
 	implementation group: 'org.webjars', name: 'swagger-ui', version: '3.24.0'
-	//implementation 'org.scala-lang:scala-library:2.12.0'
+	//implementation 'org.scala-lang:scala-library:2.12.11'
 
 	// -- OpenAPI CodeGen dependencies --
 	// TODO: this version of swagger-annotations is old, but the code gen is still relying on it
@@ -54,7 +54,7 @@ dependencies {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
 
-	gatling 'org.scala-lang:scala-library:2.12.0'
+	gatling 'org.scala-lang:scala-library:2.12.11'
 	gatling group: 'com.google.auth', name: 'google-auth-library-oauth2-http', version: '0.20.0'
 }
 
