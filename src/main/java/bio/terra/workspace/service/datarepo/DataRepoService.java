@@ -1,47 +1,32 @@
 package bio.terra.workspace.service.datarepo;
 
+import bio.terra.datarepo.api.RepositoryApi;
+import bio.terra.datarepo.client.ApiClient;
+import bio.terra.datarepo.client.ApiException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 @Component
 public class DataRepoService {
 
-  private RestTemplate restTemplate;
-
-  @Bean
-  private RestTemplate restTemplate(RestTemplateBuilder builder) {
-    return builder.build();
+  private ApiClient getApiClient(String accessToken) {
+    ApiClient client = new ApiClient();
+    client.setAccessToken(accessToken);
+    return client;
   }
 
-  public DataRepoService() {
-    this.restTemplate = new RestTemplate();
-  }
-
-  private String getSnapshotUrl(String instance, String snapshotId) {
-    return instance + "/api/repository/v1/snapshots/" + snapshotId;
+  private RepositoryApi repositoryApi(String instance, AuthenticatedUserRequest userReq) {
+    return new RepositoryApi(getApiClient(userReq.getRequiredToken()).setBasePath(instance));
   }
 
   public boolean snapshotExists(
       String instance, String snapshotId, AuthenticatedUserRequest userReq) {
+    RepositoryApi repositoryApi = repositoryApi(instance, userReq);
+
     try {
-      HttpHeaders headers = new HttpHeaders();
-      headers.setBearerAuth(userReq.getRequiredToken());
-
-      HttpEntity<String> entity = new HttpEntity<>(headers);
-      ResponseEntity response =
-          restTemplate.exchange(
-              getSnapshotUrl(instance, snapshotId), HttpMethod.GET, entity, Object.class);
-
-      return response.getStatusCode().is2xxSuccessful();
-    } catch (RestClientException e) {
+      repositoryApi.retrieveSnapshot(snapshotId);
+      return true;
+    } catch (ApiException e) {
       return false;
     }
   }
