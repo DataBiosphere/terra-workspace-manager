@@ -64,12 +64,11 @@ class BasicSimulation extends Simulation {
   )
 
   val api : String = "api/v1/workspaces"
+  // Optional: spendProfile, policies
   val body = """
                |{
                |  "id": "${workspaceId}",
-               |  "authToken": "${authToken}",
-               |  "spendProfile": "${workspaceId}",
-               |  "policies": [ "${workspaceId}" ]
+               |  "authToken": "${authToken}"
                |}
                |""".stripMargin
   val httpConf = http.baseUrl(baseUrl)
