@@ -146,3 +146,21 @@ There are sample tests for the ping service to illustrate two styles of unit tes
 6. Deploying a version of the stack to an environment from the dashboard triggers the [deploy workflow](https://github.com/DataBiosphere/framework-version/blob/master/.github/workflows/deploy.yml). This sends a dispatch to the [framework-env repo](https://github.com/DataBiosphere/framework-env) with the version that the chosen commit is tagged with, and the desired environment.
 7. The dispatch triggers the [update workflow in that repo](https://github.com/DataBiosphere/framework-env/blob/master/.github/workflows/update.yml), which similarly to the one in the framework-version one, updates a JSON. This JSON maps environments to versions of the stack. It is updated to reflect the desired deployment of the new stack version to the specified environment and the change is pushed up.
 8. The change to the JSON triggers the [apply workflow](https://github.com/DataBiosphere/framework-env/blob/master/.github/workflows/apply.yml), which actually deploys the desired resources to k8s. It determines the services that must be updated by diffing the stack versions that the environment in question is transitioning between and re-deploys the services that need updates.
+
+
+## Api Client
+Workspace Manager publishes an API client library based on the OpenAPI Spec v3. 
+
+### Usage
+
+```
+...
+compile(group: 'bio.terra', name: 'terra-workspace-manager-client', version: '0.0.1-SNAPSHOT')
+...
+```
+
+
+Note that the publishing of this artifact is currently manual. Whenever the OpenAPI definitions change,
+we should publish a new version of this library to artifactory. Backwards compatible changes should
+have a minor version bump, and breaking changes should have a major version bump. We will try to avoid
+breaking changes at all costs.
