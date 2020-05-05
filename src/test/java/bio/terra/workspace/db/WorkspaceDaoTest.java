@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.app.Main;
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
+import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
 import java.util.HashMap;
@@ -114,5 +115,15 @@ public class WorkspaceDaoTest {
   @Test
   public void deleteNonExistentWorkspaceFails() throws Exception {
     assertFalse(workspaceDao.deleteWorkspace(workspaceId));
+  }
+
+  @Test
+  public void duplicateWorkspaceFails() throws Exception {
+    workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
+    assertThrows(
+        DuplicateWorkspaceException.class,
+        () -> {
+          workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
+        });
   }
 }

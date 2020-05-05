@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.blankOrNullString;
 import static org.hamcrest.Matchers.equalTo;
@@ -129,6 +130,30 @@ public class WorkspaceServiceTest {
     CreatedWorkspace workspace = runCreateWorkspaceCall(body);
 
     assertThat(workspace.getId(), equalTo(workspaceId.toString()));
+  }
+
+  @Test
+  public void duplicateWorkspaceRejected() throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .authToken("fake-user-auth-token")
+            .spendProfile(null)
+            .policies(null);
+    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
+    assertThat(workspace.getId(), equalTo(workspaceId.toString()));
+
+    MvcResult failureResult =
+        mvc.perform(
+                post("/api/v1/workspaces")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(body)))
+            .andExpect(status().is(400))
+            .andReturn();
+    ErrorReport error =
+        objectMapper.readValue(failureResult.getResponse().getContentAsString(), ErrorReport.class);
+    assertThat(error.getMessage(), containsString("already exists"));
   }
 
   @Test
