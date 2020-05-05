@@ -125,6 +125,7 @@ artifactory {
 clean {
     // clean up the leftovers from codegen
     delete ".gradle/"
+    delete ".openapi-generator/"
     delete ".openapi-generator-ignore"
     delete ".travis.yml"
     delete "README.md"
