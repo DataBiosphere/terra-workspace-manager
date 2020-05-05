@@ -1,8 +1,4 @@
 buildscript {
-    ext {
-        openapi = "4.2.3"
-    }
-
     repositories {
         mavenCentral()
         jcenter()
@@ -27,13 +23,13 @@ sourceCompatibility = 1.8
 // TODO: there may be a better way to supply these values than envvars.
 // This and the test below makes sure the build will fail reasonably if you try
 // to publish without the environment variables defined.
-def artifactory_user = System.getenv('ARTIFACTORY_USER')
+def artifactory_username = System.getenv('ARTIFACTORY_USERNAME')
 def artifactory_password = System.getenv('ARTIFACTORY_PASSWORD')
 
 gradle.taskGraph.whenReady { taskGraph ->
     if (taskGraph.hasTask(artifactoryPublish) &&
-        (artifactory_user == null || artifactory_password == null)) {
-        throw new GradleException("Set env vars ARTIFACTORY_USER and ARTIFACTORY_PASSWORD to publish")
+        (artifactory_username == null || artifactory_password == null)) {
+        throw new GradleException("Set env vars ARTIFACTORY_USERNAME and ARTIFACTORY_PASSWORD to publish")
     }
 }
 
@@ -51,7 +47,7 @@ dependencies {
         jackson = "2.10.2"
         jersey = "2.30.1"
         junit = "4.13"
-        swagger = "1.5.22"
+        swagger = "1.6.0"
         hamcrest = "2.2"
     }
 
@@ -70,7 +66,7 @@ dependencies {
     testCompile group: 'org.hamcrest', name: 'hamcrest', version: '2.1'
 }
 
-// -- Swagger Client Generation --
+// -- OpenAPI Client Generation --
 import org.openapitools.codegen.config.CodegenConfigurator
 import org.openapitools.codegen.DefaultGenerator
 def openapiSourceFile = "$projectDir/../src/main/resources/api/service_openapi.yaml"
@@ -85,9 +81,6 @@ task generateApi {
         config.setInputSpec("file:///$openapiSourceFile")
         config.setOutputDir("$projectDir")
         config.setGeneratorName("java")
-        // These properties are not well documented. The only way I've found to figure them out is to
-        // locally install the swagger-codegen tool and invoke it to get the specific help for the
-        // spring boot options.
         config.setAdditionalProperties([
             'interfaceOnly' : 'true',                  // only generate the model and API interfaces
             'library'       : 'jersey2',               // do jersey code generation so we use Jackson JSON
@@ -116,7 +109,7 @@ artifactory {
         contextUrl = 'https://broadinstitute.jfrog.io/broadinstitute/'
         repository {
             repoKey = 'libs-snapshot-local' // The Artifactory repository key to publish to
-            username = "${artifactory_user}" // The publisher user name
+            username = "${artifactory_username}" // The publisher user name
             password = "${artifactory_password}" // The publisher password
         }
         defaults {
@@ -130,10 +123,9 @@ artifactory {
 }
 
 clean {
-    // clean up all of the swagger codegen crud
+    // clean up the leftovers from codegen
     delete ".gradle/"
-    delete ".swagger-codegen-ignore"
-    delete ".swagger-codegen/"
+    delete ".openapi-generator-ignore"
     delete ".travis.yml"
     delete "README.md"
     delete "build.sbt"
