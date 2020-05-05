@@ -10,6 +10,7 @@ public class SamApiException extends ErrorReportException {
   public SamApiException(ApiException samException) {
     super(
         "Error from SAM: ",
+        samException,
         Collections.singletonList(samException.getResponseBody()),
         HttpStatus.resolve(samException.getCode()));
   }

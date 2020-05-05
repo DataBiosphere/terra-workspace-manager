@@ -47,7 +47,7 @@ paths:
         400:
           description: Bad request - invalid id, badly formed
           $ref: '#/components/responses/ErrorResponse'
-        403:
+        401:
           description: Permission denied
           $ref: '#/components/responses/ErrorResponse'
         500:
