@@ -8,6 +8,7 @@ public class StairwayExceptionFields {
   private String className;
   private String message;
   private List<String> errorDetails;
+  private int errorCode;
 
   public boolean isErrorReportException() {
     return isErrorReportException;
@@ -42,6 +43,15 @@ public class StairwayExceptionFields {
 
   public StairwayExceptionFields setErrorDetails(List<String> errorDetails) {
     this.errorDetails = errorDetails;
+    return this;
+  }
+
+  public int getErrorCode() {
+    return errorCode;
+  }
+
+  public StairwayExceptionFields setErrorCode(int errorCode) {
+    this.errorCode = errorCode;
     return this;
   }
 }

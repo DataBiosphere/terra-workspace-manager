@@ -9,6 +9,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.JobResultWithStatus;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +49,10 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<CreatedWorkspace> createWorkspace(
       @RequestBody CreateWorkspaceRequestBody body) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    // Note: we do NOT use getAuthenticatedInfo here, as the request's authentication info comes
+    // from the folder manager, not the requesting user.
+    String userToken = body.getAuthToken();
+    AuthenticatedUserRequest userReq = new AuthenticatedUserRequest().token(Optional.of(userToken));
     return new ResponseEntity<>(workspaceService.createWorkspace(body, userReq), HttpStatus.OK);
   }
 

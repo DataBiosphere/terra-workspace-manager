@@ -11,6 +11,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpStatus;
 
 public class StairwayExceptionSerializer implements ExceptionSerializer {
   private ObjectMapper objectMapper;
@@ -38,7 +39,8 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
     if (exception instanceof ErrorReportException) {
       fields
           .setErrorReportException(true)
-          .setErrorDetails(((ErrorReportException) exception).getCauses());
+          .setErrorDetails(((ErrorReportException) exception).getCauses())
+          .setErrorCode(((ErrorReportException) exception).getStatusCode().value());
     } else {
       fields.setErrorReportException(false);
     }
@@ -81,7 +83,29 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
     }
 
     // If this is an ErrorReport exception and the exception exposes a constructor with the
-    // error details, then we try to use that.
+    // error details, then we try to use that. We first try a version with a message, causes, and
+    // status code.
+    if (fields.isErrorReportException()) {
+      try {
+        Constructor<?> ctor = clazz.getConstructor(String.class, List.class, HttpStatus.class);
+        Object object =
+            ctor.newInstance(
+                fields.getMessage(),
+                fields.getErrorDetails(),
+                HttpStatus.valueOf(fields.getErrorCode()));
+        return (Exception) object;
+      } catch (NoSuchMethodException
+          | SecurityException
+          | InstantiationException
+          | IllegalAccessException
+          | IllegalArgumentException
+          | InvocationTargetException ex) {
+        // We didn't find a constructor with error these error details or construction failed.
+      }
+    }
+
+    // If this is an ErrorReport exception but didn't match the above constructor signature, we
+    // try again with another common pattern of message + causes.
     if (fields.isErrorReportException()) {
       try {
         Constructor<?> ctor = clazz.getConstructor(String.class, List.class);

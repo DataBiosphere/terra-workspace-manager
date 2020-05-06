@@ -21,7 +21,7 @@ public class WorkspaceCreateFlight extends Flight {
     AuthenticatedUserRequest userReq =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    addStep(new CreateWorkspaceStep(workspaceDao));
     addStep(new CreateWorkspaceAuthzStep(iamClient, userReq));
+    addStep(new CreateWorkspaceStep(workspaceDao));
   }
 }
