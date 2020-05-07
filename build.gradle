@@ -47,6 +47,8 @@ dependencies {
 	implementation group: 'org.openapitools', name: 'jackson-databind-nullable', version: '0.2.1'
 	// -- --
 
+	compile 'com.google.auth:google-auth-library-oauth2-http:0.20.0'
+
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
@@ -100,6 +102,26 @@ ideaModule.dependsOn tasks.openApiGenerate
 
 test {
 	useJUnitPlatform()
+}
+
+task unitTest(type: Test) {
+	useJUnitPlatform {
+		includeTags 'unit'
+	}
+	testLogging {
+		events = ["passed", "failed", "skipped", "started"]
+	}
+	outputs.upToDateWhen { false }
+}
+
+task integrationTest(type: Test) {
+	useJUnitPlatform {
+		includeTags 'integration'
+	}
+	testLogging {
+		events = ["passed", "failed", "skipped", "started"]
+	}
+	outputs.upToDateWhen { false }
 }
 
 spotless {
