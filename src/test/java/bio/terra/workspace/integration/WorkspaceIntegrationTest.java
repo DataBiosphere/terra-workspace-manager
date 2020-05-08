@@ -3,6 +3,7 @@ package bio.terra.workspace.integration;
 import bio.terra.workspace.app.Main;
 import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
+import bio.terra.workspace.integration.common.auth.AuthService;
 import bio.terra.workspace.integration.common.configuration.TestConfiguration;
 import bio.terra.workspace.integration.common.response.WorkspaceResponse;
 import bio.terra.workspace.integration.common.utils.TestUtils;
@@ -33,6 +34,8 @@ public class WorkspaceIntegrationTest {
 
   @Autowired private TestConfiguration testConfig;
 
+  @Autowired private AuthService authService;
+
   @BeforeEach
   public void setup() {}
 
@@ -41,10 +44,11 @@ public class WorkspaceIntegrationTest {
     UUID workspaceId = UUID.randomUUID();
     String path = testConfig.getCreateWorkspaceUrlDev();
     String userEmail = testConfig.getServiceAccountEmail();
+    String token = authService.getAuthToken(userEmail);
     CreateWorkspaceRequestBody body =
         new CreateWorkspaceRequestBody()
             .id(workspaceId)
-            .authToken("invalidToken")
+            .authToken(token)
             .spendProfile(null)
             .policies(null);
     String json = testUtils.mapToJson(body);

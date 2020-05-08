@@ -45,7 +45,8 @@ public class WorkspaceManagerTestClient {
 
   private HttpHeaders getHeaders(String userEmail) throws IOException, InterruptedException {
     HttpHeaders headersCopy = new HttpHeaders(headers);
-    headersCopy.setBearerAuth(authService.getAuthToken(userEmail));
+    // Uncomment the line below when we start to validate header access token
+    // headersCopy.setBearerAuth(authService.getAuthToken(userEmail));
     return headersCopy;
   }
 
