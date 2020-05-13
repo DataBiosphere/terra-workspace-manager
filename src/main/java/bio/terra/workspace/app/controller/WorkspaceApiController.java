@@ -94,6 +94,18 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
+  public ResponseEntity<DataReferenceDescription> getDataReferenceByName(
+      @PathVariable("id") String workspaceId,
+      @PathVariable("referenceType") String referenceType,
+      @PathVariable("name") String name) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    DataReferenceDescription ref =
+        dataReferenceService.getDataReferenceByName(workspaceId, referenceType, name, userReq);
+
+    return new ResponseEntity<DataReferenceDescription>(ref, HttpStatus.OK);
+  }
+
+  @Override
   public ResponseEntity<Void> deleteDataReference(
       @PathVariable("id") String workspaceId, @PathVariable("referenceId") String referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();

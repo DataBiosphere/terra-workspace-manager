@@ -178,6 +178,25 @@ paths:
           description: Delete request error
           $ref: '#/components/responses/ErrorResponse'
 
+  '/api/v1/workspaces/{id}/datareferences/{referenceType}/{name}':
+    parameters:
+      - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/ReferenceType'
+      - $ref: '#/components/parameters/Name'
+    get:
+      description: |
+        Gets a data reference from a workspace by name and type.
+      operationId: getDataReferenceByName
+      tags:
+        - workspace
+      responses:
+        200:
+          description: OK
+          $ref: '#/components/responses/DataReferenceResponse'
+        500:
+          description: Creation request error
+          $ref: '#/components/responses/ErrorResponse'
+
   '/api/v1/jobs/{id}':
     parameters:
     - $ref: '#/components/parameters/Id'
@@ -261,6 +280,20 @@ components:
         required: true
         schema:
           type: string
+    ReferenceType:
+      name: referenceType
+      in: path
+      description: The type of a data reference in a workspace
+      required: true
+      schema:
+        type: string
+    Name:
+      name: name
+      in: path
+      description: A name used to identify an object in the workspace manager
+      required: true
+      schema:
+        type: string
   schemas:
     ErrorReport:
       type: object
