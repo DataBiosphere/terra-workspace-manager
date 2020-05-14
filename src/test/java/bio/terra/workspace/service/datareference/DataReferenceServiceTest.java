@@ -124,6 +124,31 @@ public class DataReferenceServiceTest {
   }
 
   @Test
+  public void testGetDataReferenceByName() throws Exception {
+    String initialWorkspaceId = createDefaultWorkspace().getId();
+
+    DataRepoSnapshot snapshot = new DataRepoSnapshot();
+    snapshot.setSnapshot("foo");
+    snapshot.setInstance("bar");
+
+    CreateDataReferenceRequestBody refBody =
+        new CreateDataReferenceRequestBody()
+            .name("name")
+            .cloningInstructions("COPY_NOTHING")
+            .referenceType("DataRepoSnapshot")
+            .reference(snapshot);
+
+    DataReferenceDescription createResponse =
+        runCreateDataReferenceCall(initialWorkspaceId, refBody);
+
+    DataReferenceDescription getResponse =
+        runGetDataReferenceByNameCall(initialWorkspaceId, "DataRepoSnapshot", "name");
+
+    assertThat(getResponse.getWorkspaceId().toString(), equalTo(initialWorkspaceId));
+    assertThat(getResponse.getName(), equalTo("name"));
+  }
+
+  @Test
   public void testGetMissingDataReference() throws Exception {
     String initialWorkspaceId = createDefaultWorkspace().getId();
 
@@ -351,6 +376,23 @@ public class DataReferenceServiceTest {
     MvcResult initialResult =
         mvc.perform(
                 get("/api/v1/workspaces/" + workspaceId + "/datareferences/" + referenceId)
+                    .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().is(200))
+            .andReturn();
+    return objectMapper.readValue(
+        initialResult.getResponse().getContentAsString(), DataReferenceDescription.class);
+  }
+
+  private DataReferenceDescription runGetDataReferenceByNameCall(
+      String workspaceId, String referenceType, String name) throws Exception {
+    MvcResult initialResult =
+        mvc.perform(
+                get("/api/v1/workspaces/"
+                        + workspaceId
+                        + "/datareferences/"
+                        + referenceType
+                        + "/"
+                        + name)
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().is(200))
             .andReturn();

@@ -2,6 +2,7 @@ package bio.terra.workspace.db;
 
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
+import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataReferenceList;
 import bio.terra.workspace.generated.model.ResourceDescription;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -55,8 +57,13 @@ public class DataReferenceDao {
     paramMap.put("reference_type", referenceType.orElse(null));
     paramMap.put("reference", reference.orElse(null));
 
-    jdbcTemplate.update(sql, paramMap);
-    return referenceId.toString();
+    try {
+      jdbcTemplate.update(sql, paramMap);
+      return referenceId.toString();
+    } catch (DuplicateKeyException e) {
+      throw new DuplicateDataReferenceException(
+          "A data reference of this name and type already exists in the workspace");
+    }
   }
 
   public DataReferenceDescription getDataReference(UUID referenceId) {
@@ -65,6 +72,23 @@ public class DataReferenceDao {
 
     Map<String, Object> paramMap = new HashMap<>();
     paramMap.put("id", referenceId.toString());
+
+    try {
+      return jdbcTemplate.queryForObject(sql, paramMap, new DataReferenceMapper());
+    } catch (EmptyResultDataAccessException e) {
+      throw new DataReferenceNotFoundException("Data Reference not found.");
+    }
+  }
+
+  public DataReferenceDescription getDataReferenceByName(
+      String workspaceId, DataReferenceDescription.ReferenceTypeEnum type, String name) {
+    String sql =
+        "SELECT workspace_id, reference_id, name, resource_id, credential_id, cloning_instructions, reference_type, reference from workspace_data_reference where workspace_id = :id AND reference_type = :type AND name = :name";
+
+    Map<String, Object> paramMap = new HashMap();
+    paramMap.put("id", workspaceId);
+    paramMap.put("type", type.getValue());
+    paramMap.put("name", name);
 
     try {
       return jdbcTemplate.queryForObject(sql, paramMap, new DataReferenceMapper());

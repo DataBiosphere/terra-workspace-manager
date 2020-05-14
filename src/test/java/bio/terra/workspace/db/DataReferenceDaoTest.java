@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.workspace.app.Main;
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
+import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataReferenceList;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -108,6 +110,57 @@ public class DataReferenceDaoTest {
   }
 
   @Test
+  public void verifyCreateDuplicateNameFails() throws Exception {
+    workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
+
+    dataReferenceDao.createDataReference(
+        referenceId,
+        workspaceId,
+        name,
+        JsonNullable.undefined(),
+        JsonNullable.of(credentialId),
+        cloningInstructions,
+        JsonNullable.of(referenceType),
+        JsonNullable.of(reference));
+
+    assertThrows(
+        DuplicateDataReferenceException.class,
+        () -> {
+          dataReferenceDao.createDataReference(
+              referenceId,
+              workspaceId,
+              name,
+              JsonNullable.undefined(),
+              JsonNullable.of(credentialId),
+              cloningInstructions,
+              JsonNullable.of(referenceType),
+              JsonNullable.of(reference));
+        });
+  }
+
+  @Test
+  public void verifyGetDataReferenceByName() {
+    workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
+
+    dataReferenceDao.createDataReference(
+        referenceId,
+        workspaceId,
+        name,
+        JsonNullable.undefined(),
+        JsonNullable.of(credentialId),
+        cloningInstructions,
+        JsonNullable.of(referenceType),
+        JsonNullable.of(reference));
+
+    DataReferenceDescription ref =
+        dataReferenceDao.getDataReferenceByName(
+            workspaceId.toString(),
+            DataReferenceDescription.ReferenceTypeEnum.fromValue(referenceType),
+            name);
+    assertThat(ref.getReferenceId(), equalTo(referenceId));
+  }
+
+  @Test
   public void verifyGetDataReference() {
     workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
 
@@ -177,7 +230,7 @@ public class DataReferenceDaoTest {
     dataReferenceDao.createDataReference(
         secondReferenceId,
         workspaceId,
-        name,
+        name + "2",
         JsonNullable.undefined(),
         JsonNullable.of(credentialId),
         cloningInstructions,
