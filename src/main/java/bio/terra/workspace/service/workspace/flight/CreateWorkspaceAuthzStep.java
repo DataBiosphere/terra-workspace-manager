@@ -15,6 +15,8 @@ public class CreateWorkspaceAuthzStep implements Step {
   private SamService samService;
   private AuthenticatedUserRequest userReq;
 
+  private static final String AUTHZ_COMPLETED_KEY = "createWorkspaceAuthzStepCompleted";
+
   public CreateWorkspaceAuthzStep(SamService samService, AuthenticatedUserRequest userReq) {
     this.samService = samService;
     this.userReq = userReq;
@@ -24,6 +26,8 @@ public class CreateWorkspaceAuthzStep implements Step {
   public StepResult doStep(FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    FlightMap workingMap = flightContext.getWorkingMap();
+    workingMap.put(AUTHZ_COMPLETED_KEY, false);
 
     // This may seem a bit counterintuitive, but in many of the existing use-cases, the workspace
     // resource already exists
@@ -38,15 +42,20 @@ public class CreateWorkspaceAuthzStep implements Step {
         workspaceID.toString(),
         SamUtils.SAM_WORKSPACE_READ_ACTION)) {
       samService.createWorkspaceWithDefaults(userReq.getRequiredToken(), workspaceID);
+      workingMap.put(AUTHZ_COMPLETED_KEY, true);
     }
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    FlightMap inputMap = flightContext.getInputParameters();
-    UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);
+    // Only delete the Sam resource if we actually created it in the do step.
+    FlightMap workingMap = flightContext.getWorkingMap();
+    if (workingMap.get(AUTHZ_COMPLETED_KEY, Boolean.class) == true) {
+      FlightMap inputMap = flightContext.getInputParameters();
+      UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+      samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);
+    }
     return StepResult.getStepResultSuccess();
   }
 }
