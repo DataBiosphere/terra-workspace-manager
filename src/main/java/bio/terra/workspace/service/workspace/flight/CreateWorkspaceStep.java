@@ -16,6 +16,8 @@ public class CreateWorkspaceStep implements Step {
 
   private WorkspaceDao workspaceDao;
 
+  private static final String CREATE_WORKSPACE_COMPLETED_KEY = "createWorkspaceStepCompleted";
+
   public CreateWorkspaceStep(WorkspaceDao workspaceDao) {
     this.workspaceDao = workspaceDao;
   }
@@ -24,6 +26,9 @@ public class CreateWorkspaceStep implements Step {
   public StepResult doStep(FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    FlightMap workingMap = flightContext.getWorkingMap();
+    workingMap.put(CREATE_WORKSPACE_COMPLETED_KEY, false);
+
     // This can be null if no spend profile is specified
     JsonNullable<UUID> nullableSpendProfileId = JsonNullable.undefined();
 
@@ -33,6 +38,7 @@ public class CreateWorkspaceStep implements Step {
     }
 
     workspaceDao.createWorkspace(workspaceId, nullableSpendProfileId);
+    workingMap.put(CREATE_WORKSPACE_COMPLETED_KEY, true);
 
     CreatedWorkspace response = new CreatedWorkspace();
     response.setId(workspaceId.toString());
@@ -43,9 +49,12 @@ public class CreateWorkspaceStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    FlightMap inputMap = flightContext.getInputParameters();
-    UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    workspaceDao.deleteWorkspace(workspaceId);
+    FlightMap workingMap = flightContext.getWorkingMap();
+    if (workingMap.get(CREATE_WORKSPACE_COMPLETED_KEY, Boolean.class) == true) {
+      FlightMap inputMap = flightContext.getInputParameters();
+      UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+      workspaceDao.deleteWorkspace(workspaceId);
+    }
     return StepResult.getStepResultSuccess();
   }
 }
