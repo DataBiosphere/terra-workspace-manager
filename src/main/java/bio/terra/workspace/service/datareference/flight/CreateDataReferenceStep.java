@@ -17,6 +17,9 @@ public class CreateDataReferenceStep implements Step {
 
   private DataReferenceDao dataReferenceDao;
 
+  private static final String CREATE_DATA_REFERENCE_COMPLETED_KEY =
+      "createDataReferenceStepCompleted";
+
   public CreateDataReferenceStep(DataReferenceDao dataReferenceDao) {
     this.dataReferenceDao = dataReferenceDao;
   }
@@ -24,6 +27,8 @@ public class CreateDataReferenceStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
+    FlightMap workingMap = flightContext.getWorkingMap();
+    workingMap.put(CREATE_DATA_REFERENCE_COMPLETED_KEY, false);
     UUID referenceId = inputMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
     UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.class);
     String reference = inputMap.get(DataReferenceFlightMapKeys.REFERENCE, String.class);
@@ -39,6 +44,7 @@ public class CreateDataReferenceStep implements Step {
         body.getCloningInstructions(),
         body.getReferenceType(),
         JsonNullable.of(reference));
+    workingMap.put(CREATE_DATA_REFERENCE_COMPLETED_KEY, true);
 
     FlightUtils.setResponse(flightContext, referenceId.toString(), HttpStatus.OK);
 
@@ -47,9 +53,12 @@ public class CreateDataReferenceStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    FlightMap inputMap = flightContext.getInputParameters();
-    UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
-    dataReferenceDao.deleteDataReference(workspaceId);
+    FlightMap workingMap = flightContext.getWorkingMap();
+    if (workingMap.get(CREATE_DATA_REFERENCE_COMPLETED_KEY, Boolean.class) == true) {
+      FlightMap inputMap = flightContext.getInputParameters();
+      UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
+      dataReferenceDao.deleteDataReference(workspaceId);
+    }
     return StepResult.getStepResultSuccess();
   }
 }
