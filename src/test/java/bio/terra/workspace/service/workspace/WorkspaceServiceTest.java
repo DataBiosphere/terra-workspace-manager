@@ -85,7 +85,7 @@ public class WorkspaceServiceTest {
   @Test
   public void testGetMissingWorkspace() throws Exception {
     MvcResult callResult =
-        mvc.perform(get("/api/v1/workspaces/" + "fake-id")).andExpect(status().is(404)).andReturn();
+        mvc.perform(get("/api/workspaces/v1/" + "fake-id")).andExpect(status().is(404)).andReturn();
 
     ErrorReport error =
         objectMapper.readValue(callResult.getResponse().getContentAsString(), ErrorReport.class);
@@ -106,7 +106,7 @@ public class WorkspaceServiceTest {
     assertThat(workspace.getId(), not(blankOrNullString()));
 
     MvcResult callResult =
-        mvc.perform(get("/api/v1/workspaces/" + workspace.getId()))
+        mvc.perform(get("/api/workspaces/v1/" + workspace.getId()))
             .andExpect(status().is(200))
             .andReturn();
 
@@ -146,7 +146,7 @@ public class WorkspaceServiceTest {
 
     MvcResult failureResult =
         mvc.perform(
-                post("/api/v1/workspaces")
+                post("/api/workspaces/v1")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(body)))
             .andExpect(status().is(400))
@@ -188,7 +188,7 @@ public class WorkspaceServiceTest {
 
     MvcResult callResult =
         mvc.perform(
-                post("/api/v1/workspaces")
+                post("/api/workspaces/v1")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(body)))
             .andExpect(status().is(500))
@@ -216,14 +216,14 @@ public class WorkspaceServiceTest {
         new DeleteWorkspaceRequestBody().authToken("fake-user-auth-token");
     MvcResult deleteResult =
         mvc.perform(
-                delete("/api/v1/workspaces/" + workspaceId)
+                delete("/api/workspaces/v1/" + workspaceId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(deleteBody)))
             .andExpect(status().is(204))
             .andReturn();
     // Finally, assert that a call to the deleted workspace gives a 404
     MvcResult getResult =
-        mvc.perform(get("/api/v1/workspaces/" + workspaceId))
+        mvc.perform(get("/api/workspaces/v1/" + workspaceId))
             .andExpect(status().is(404))
             .andReturn();
   }
@@ -252,7 +252,7 @@ public class WorkspaceServiceTest {
             .reference(reference);
     MvcResult dataReferenceResult =
         mvc.perform(
-                post("/api/v1/workspaces/" + workspaceId + "/datareferences")
+                post("/api/workspaces/v1/" + workspaceId + "/datareferences")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(referenceRequest)))
             .andExpect(status().is(200))
@@ -263,7 +263,7 @@ public class WorkspaceServiceTest {
     // Validate that the reference exists.
     MvcResult getReferenceResult =
         mvc.perform(
-                get("/api/v1/workspaces/"
+                get("/api/workspaces/v1/"
                         + workspaceId
                         + "/datareferences/"
                         + dataReferenceResponse.getReferenceId().toString())
@@ -276,7 +276,7 @@ public class WorkspaceServiceTest {
         new DeleteWorkspaceRequestBody().authToken("fake-user-auth-token");
     MvcResult deleteResult =
         mvc.perform(
-                delete("/api/v1/workspaces/" + workspaceId)
+                delete("/api/workspaces/v1/" + workspaceId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(deleteRequest)))
             .andExpect(status().is(204))
@@ -284,7 +284,7 @@ public class WorkspaceServiceTest {
     // Verify that the contained data reference is no longer returned.
     MvcResult getDeletedReferenceResult =
         mvc.perform(
-                get("/api/v1/workspaces/"
+                get("/api/workspaces/v1/"
                         + workspaceId
                         + "/datareferences/"
                         + dataReferenceResponse.getReferenceId().toString())
@@ -309,7 +309,7 @@ public class WorkspaceServiceTest {
       throws Exception {
     MvcResult initialResult =
         mvc.perform(
-                post("/api/v1/workspaces")
+                post("/api/workspaces/v1")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().is(200))
