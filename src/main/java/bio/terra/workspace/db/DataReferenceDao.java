@@ -66,12 +66,13 @@ public class DataReferenceDao {
     }
   }
 
-  public DataReferenceDescription getDataReference(UUID referenceId) {
+  public DataReferenceDescription getDataReference(UUID workspaceId, UUID referenceId) {
     String sql =
-        "SELECT workspace_id, reference_id, name, resource_id, credential_id, cloning_instructions, reference_type, reference from workspace_data_reference where reference_id = :id";
+        "SELECT workspace_id, reference_id, name, resource_id, credential_id, cloning_instructions, reference_type, reference from workspace_data_reference where workspace_id = :workspace_id AND reference_id = :reference_id";
 
     Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put("id", referenceId.toString());
+    paramMap.put("workspace_id", workspaceId.toString());
+    paramMap.put("reference_id", referenceId.toString());
 
     try {
       return jdbcTemplate.queryForObject(sql, paramMap, new DataReferenceMapper());
