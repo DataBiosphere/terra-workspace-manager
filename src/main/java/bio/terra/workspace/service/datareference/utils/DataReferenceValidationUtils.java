@@ -49,6 +49,8 @@ public class DataReferenceValidationUtils {
                 + ref.getSnapshot()
                 + "] could not be found in Data Repo located at ["
                 + ref.getInstance()
+                + "]. Verify that your reference was correctly defined: ["
+                + reference
                 + "]");
       }
       return ref;
