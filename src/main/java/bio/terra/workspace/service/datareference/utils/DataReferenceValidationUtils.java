@@ -31,10 +31,11 @@ public class DataReferenceValidationUtils {
         validateDataRepoReference(ref, userReq);
         return ref;
       } catch (JsonProcessingException e) {
-        throw new InvalidDataReferenceException("Invalid DataRepoSnapshot specified");
+        throw new InvalidDataReferenceException("Invalid DataRepoSnapshot specified: " + reference);
       }
     } else {
-      throw new InvalidDataReferenceException("Invalid reference type specified");
+      throw new InvalidDataReferenceException(
+          "Invalid reference type specified: " + referenceType.getValue());
     }
   }
 
@@ -43,11 +44,16 @@ public class DataReferenceValidationUtils {
     try {
       DataRepoSnapshot ref = objectMapper.readValue(reference, DataRepoSnapshot.class);
       if (!dataRepoService.snapshotExists(ref.getInstance(), ref.getSnapshot(), userReq)) {
-        throw new InvalidDataReferenceException("Snapshot could not be found in Data Repo");
+        throw new InvalidDataReferenceException(
+            "Snapshot ["
+                + ref.getSnapshot()
+                + "] could not be found in Data Repo located at ["
+                + ref.getInstance()
+                + "]");
       }
       return ref;
     } catch (JsonProcessingException e) {
-      throw new InvalidDataReferenceException("Invalid DataRepoSnapshot specified");
+      throw new InvalidDataReferenceException("Invalid DataRepoSnapshot specified: " + reference);
     }
   }
 }
