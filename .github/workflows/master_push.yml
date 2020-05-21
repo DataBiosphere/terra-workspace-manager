@@ -72,10 +72,10 @@ jobs:
       run: chmod +x gradlew
     - name: Build and push GCR image using Jib
       run: "./gradlew jib --image=gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:${{ steps.tag.outputs.tag }}"
-    - name: Update Framework Version Mapping
+    - name: Update Version Mapping
       uses: broadinstitute/repository-dispatch@master
       with:
         token: ${{ secrets.REPO_ACCESS_TOKEN }}
-        repository: databiosphere/framework-version
+        repository: broadinstitute/terra-helmfile
         event-type: version-bump
-        client-payload: '{"service": "${{ env.SERVICE_NAME }}", "version": "${{ steps.tag.outputs.tag }}"}'
+        client-payload: '{"service": "workspacemanager", "version": "${{ steps.tag.outputs.tag }}"}'
