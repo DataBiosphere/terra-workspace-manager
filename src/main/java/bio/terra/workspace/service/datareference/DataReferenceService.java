@@ -42,7 +42,8 @@ public class DataReferenceService {
 
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
 
-    return dataReferenceDao.getDataReference(UUID.fromString(referenceId));
+    return dataReferenceDao.getDataReference(
+        UUID.fromString(workspaceId), UUID.fromString(referenceId));
   }
 
   public DataReferenceDescription getDataReferenceByName(
@@ -92,7 +93,7 @@ public class DataReferenceService {
 
     createJob.submitAndWait(String.class);
 
-    return dataReferenceDao.getDataReference(referenceId);
+    return dataReferenceDao.getDataReference(UUID.fromString(workspaceId), referenceId);
   }
 
   public DataReferenceList enumerateDataReferences(
