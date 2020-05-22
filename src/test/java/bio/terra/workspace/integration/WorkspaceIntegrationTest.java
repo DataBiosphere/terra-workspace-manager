@@ -1,31 +1,31 @@
 package bio.terra.workspace.integration;
 
 import bio.terra.workspace.app.Main;
-import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.CreatedWorkspace;
 import bio.terra.workspace.integration.common.auth.AuthService;
 import bio.terra.workspace.integration.common.configuration.TestConfiguration;
 import bio.terra.workspace.integration.common.response.WorkspaceResponse;
 import bio.terra.workspace.integration.common.utils.TestUtils;
 import bio.terra.workspace.integration.common.utils.WorkspaceManagerTestClient;
 import java.util.UUID;
+import bio.terra.workspace.model.CreateWorkspaceRequestBody;
+import bio.terra.workspace.model.CreatedWorkspace;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @Tag("integration")
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = Main.class)
 @SpringBootTest
-@AutoConfigureMockMvc
+@TestPropertySource("classpath:application-integration-test.properties")
 public class WorkspaceIntegrationTest {
 
   @Autowired private WorkspaceManagerTestClient workspaceManagerTestClient;
@@ -41,9 +41,13 @@ public class WorkspaceIntegrationTest {
 
   @Test
   public void createWorkspace() throws Exception {
+    // todo: Seeing that we have https://broadworkbench.atlassian.net/browse/AS-315 in the upcoming,
+    //  Let's reused the code to-be-written there to clean up workspaces after creating them
+    //  Clean up manually for now
     UUID workspaceId = UUID.randomUUID();
-    String path = testConfig.getCreateWorkspaceUrlDev();
+    String path = testConfig.getWsmCreateWorkspaceUrl();
     String userEmail = testConfig.getServiceAccountEmail();
+    // Remove token from request body when we start to validate header access token
     String token = authService.getAuthToken(userEmail);
     CreateWorkspaceRequestBody body =
         new CreateWorkspaceRequestBody()
@@ -57,8 +61,9 @@ public class WorkspaceIntegrationTest {
         workspaceManagerTestClient.post(userEmail, path, json, CreatedWorkspace.class);
 
     Assertions.assertEquals(workspaceResponse.getStatusCode(), HttpStatus.OK);
-    Assertions.assertNotNull(workspaceResponse.getResponseObject());
-    CreatedWorkspace createdWorkspace = workspaceResponse.getResponseObject().get();
+    CreatedWorkspace createdWorkspace = workspaceResponse.getResponseObject().orElse(null);
+    Assertions.assertNotNull(createdWorkspace);
     Assertions.assertEquals(workspaceId.toString(), createdWorkspace.getId());
   }
+
 }

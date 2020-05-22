@@ -1,12 +1,12 @@
 package bio.terra.workspace.integration.common.response;
 
-import bio.terra.workspace.generated.model.ErrorReport;
 import java.util.Optional;
+import bio.terra.workspace.model.ErrorReport;
 import org.springframework.http.HttpStatus;
 
 public class WorkspaceResponse<T> {
 
-  private ObjectOrErrorResponse<ErrorReport, T> response;
+  private final ObjectOrErrorResponse<ErrorReport, T> response;
 
   public WorkspaceResponse(ObjectOrErrorResponse<ErrorReport, T> response) {
     this.response = response;

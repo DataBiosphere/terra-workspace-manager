@@ -1,12 +1,12 @@
 package bio.terra.workspace.integration.common.utils;
 
-import bio.terra.workspace.generated.model.ErrorReport;
 import bio.terra.workspace.integration.common.auth.AuthService;
 import bio.terra.workspace.integration.common.response.ObjectOrErrorResponse;
 import bio.terra.workspace.integration.common.response.WorkspaceResponse;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
+import bio.terra.workspace.model.ErrorReport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +33,7 @@ public class WorkspaceManagerTestClient {
     restTemplate.setErrorHandler(new WorkspaceManagerClientErrorHandler());
     headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
-    headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+    headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
   }
 
   public <T> WorkspaceResponse<T> post(
@@ -53,7 +53,7 @@ public class WorkspaceManagerTestClient {
   private <S, T> ObjectOrErrorResponse<S, T> sendRequest(
       String path,
       HttpMethod method,
-      HttpEntity entity,
+      HttpEntity<String> entity,
       Class<T> responseClass,
       Class<S> errorClass)
       throws Exception {

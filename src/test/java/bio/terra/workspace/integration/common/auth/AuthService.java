@@ -4,6 +4,7 @@ import bio.terra.workspace.integration.common.configuration.TestConfiguration;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -12,68 +13,36 @@ import org.springframework.stereotype.Component;
 public class AuthService {
 
   private final TestConfiguration testConfig;
-  private final Map<String, String> userTokens = new HashMap<>();
-  private final List<String> domainWideDelegationAccessScopes =
+  private File serviceAccountFile;
+  private final List<String> userLoginScopes =
       Arrays.asList(
           "openid",
           "email",
-          "profile",
-          "https://www.googleapis.com/auth/devstorage.full_control",
-          "https://www.googleapis.com/auth/cloud-platform");
+          "profile");
 
   @Autowired
   public AuthService(TestConfiguration testConfig) {
     this.testConfig = testConfig;
+    Optional<String> serviceAccountFilePath = Optional.ofNullable(this.testConfig.getServiceAccountFilePath());
+    serviceAccountFilePath.ifPresent(s -> serviceAccountFile = new File(s));
   }
 
-  public String getAuthToken(String userEmail) throws IOException, InterruptedException {
-    if (!userTokens.containsKey(userEmail)) {
-      String vaultPath = testConfig.getVaultPath();
-      userTokens.put(userEmail, getDomainWideDelegationAccessToken(userEmail, vaultPath));
+  public String getAuthToken(String userEmail) throws IOException {
+    // todo: revisit the need for a cache and implement Caffeine as needed
+    return getAccessToken(userEmail);
+  }
+
+  private String getAccessToken(String userEmail) throws IOException {
+    if (!Optional.ofNullable(serviceAccountFile).isPresent()) {
+      throw new IllegalStateException(String.format("pemfile not found: %s", testConfig.getServiceAccountFilePath()));
     }
-    return userTokens.get(userEmail);
-  }
-
-  private String getDomainWideDelegationAccessToken(
-      String userEmail, String serviceAccountVaultPath) throws IOException, InterruptedException {
-    String serviceAccountJson = getJsonSecretFromVault(serviceAccountVaultPath);
     GoogleCredentials credentials =
-        GoogleCredentials.fromStream(new ByteArrayInputStream(serviceAccountJson.getBytes()))
-            .createScoped(domainWideDelegationAccessScopes)
+        GoogleCredentials.fromStream(new ByteArrayInputStream(Files.readAllBytes(serviceAccountFile.toPath())))
+            .createScoped(userLoginScopes)
             .createDelegated(userEmail);
     credentials.refreshIfExpired();
     AccessToken newAccessToken = credentials.getAccessToken();
     return newAccessToken.getTokenValue();
   }
 
-  private String getJsonSecretFromVault(String path) throws IOException, InterruptedException {
-    String vaultAddress = testConfig.getVaultAddress();
-    String vaultToken = getVaultToken();
-    String command =
-        "docker run --cap-add IPC_LOCK --rm -e VAULT_TOKEN="
-            + vaultToken
-            + " -e VAULT_ADDR="
-            + vaultAddress
-            + " vault:1.1.0 vault read -format json -field data "
-            + path;
-    return runShellCommand(command);
-  }
-
-  private String getVaultToken() throws InterruptedException, IOException {
-    String userHome = System.getProperty("user.home");
-    String command = "cat " + userHome + "/" + testConfig.getVaultTokenFileName();
-    return runShellCommand(command);
-  }
-
-  private String runShellCommand(String command) throws IOException, InterruptedException {
-    Process process = Runtime.getRuntime().exec(command);
-    process.waitFor();
-    BufferedReader buf = new BufferedReader(new InputStreamReader(process.getInputStream()));
-    StringBuilder output = new StringBuilder();
-    String line = "";
-    while ((line = buf.readLine()) != null) {
-      output.append(line);
-    }
-    return output.toString();
-  }
 }

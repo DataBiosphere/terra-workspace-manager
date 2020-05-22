@@ -42,3 +42,6 @@ out/
 .openapi-generator/
 pom.xml
 
+### Integration configs
+*account.json
+

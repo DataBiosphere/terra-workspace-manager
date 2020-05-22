@@ -9,34 +9,16 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "it")
 public class TestConfiguration {
 
-  private String vaultAddress;
-  private String vaultPath;
-  private String createWorkspaceUrlDev;
+  private String wsmCreateWorkspaceUrl;
   private String serviceAccountEmail;
-  private String vaultTokenFileName;
+  private String serviceAccountFilePath;
 
-  public String getVaultAddress() {
-    return vaultAddress;
+  public String getWsmCreateWorkspaceUrl() {
+    return wsmCreateWorkspaceUrl;
   }
 
-  public void setVaultAddress(String vaultAddress) {
-    this.vaultAddress = vaultAddress;
-  }
-
-  public String getVaultPath() {
-    return vaultPath;
-  }
-
-  public void setVaultPath(String vaultPath) {
-    this.vaultPath = vaultPath;
-  }
-
-  public String getCreateWorkspaceUrlDev() {
-    return createWorkspaceUrlDev;
-  }
-
-  public void setCreateWorkspaceUrlDev(String createWorkspaceUrlDev) {
-    this.createWorkspaceUrlDev = createWorkspaceUrlDev;
+  public void setWsmCreateWorkspaceUrl(String wsmCreateWorkspaceUrl) {
+    this.wsmCreateWorkspaceUrl = wsmCreateWorkspaceUrl;
   }
 
   public String getServiceAccountEmail() {
@@ -47,11 +29,11 @@ public class TestConfiguration {
     this.serviceAccountEmail = serviceAccountEmail;
   }
 
-  public String getVaultTokenFileName() {
-    return vaultTokenFileName;
+  public String getServiceAccountFilePath() {
+    return serviceAccountFilePath;
   }
 
-  public void setVaultTokenFileName(String vaultTokenFileName) {
-    this.vaultTokenFileName = vaultTokenFileName;
+  public void setServiceAccountFilePath(String serviceAccountFilePath) {
+    this.serviceAccountFilePath = serviceAccountFilePath;
   }
 }
