@@ -428,7 +428,7 @@ components:
           type: string
           nullable: true
         reference:
-          description: The reference to the data (i.e. gs://...)
+          description: The serialized object containing details specific to the referenceType. For instance, TDR snapshots must be serialized json.
           type: string
           nullable: true
         cloningInstructions:
