@@ -89,7 +89,7 @@ public class DataReferenceServiceTest {
             .name("name")
             .cloningInstructions("COPY_NOTHING")
             .referenceType("DataRepoSnapshot")
-            .reference(snapshot);
+            .reference(objectMapper.writeValueAsString(snapshot));
 
     DataReferenceDescription response = runCreateDataReferenceCall(initialWorkspaceId, refBody);
 
@@ -110,7 +110,7 @@ public class DataReferenceServiceTest {
             .name("name")
             .cloningInstructions("COPY_NOTHING")
             .referenceType("DataRepoSnapshot")
-            .reference(snapshot);
+            .reference(objectMapper.writeValueAsString(snapshot));
 
     DataReferenceDescription createResponse =
         runCreateDataReferenceCall(initialWorkspaceId.toString(), refBody);
@@ -136,7 +136,7 @@ public class DataReferenceServiceTest {
             .name("name")
             .cloningInstructions("COPY_NOTHING")
             .referenceType("DataRepoSnapshot")
-            .reference(snapshot);
+            .reference(objectMapper.writeValueAsString(snapshot));
 
     DataReferenceDescription createResponse =
         runCreateDataReferenceCall(initialWorkspaceId, refBody);
@@ -180,7 +180,7 @@ public class DataReferenceServiceTest {
             .name("name")
             .cloningInstructions("COPY_NOTHING")
             .referenceType("DataRepoSnapshot")
-            .reference(snapshot);
+            .reference(objectMapper.writeValueAsString(snapshot));
 
     mvc.perform(
             post("/api/workspaces/v1/" + initialWorkspaceId + "/datareferences")
@@ -222,7 +222,7 @@ public class DataReferenceServiceTest {
             .name("name")
             .cloningInstructions("COPY_NOTHING")
             .referenceType("DataRepoSnapshot")
-            .reference(snapshot);
+            .reference(objectMapper.writeValueAsString(snapshot));
     DataReferenceDescription firstReference =
         runCreateDataReferenceCall(initialWorkspaceId, refBody);
 
@@ -234,7 +234,7 @@ public class DataReferenceServiceTest {
             .name("second_name")
             .cloningInstructions("COPY_NOTHING")
             .referenceType("DataRepoSnapshot")
-            .reference(secondSnapshot);
+            .reference(objectMapper.writeValueAsString(secondSnapshot));
     DataReferenceDescription secondReference =
         runCreateDataReferenceCall(initialWorkspaceId, secondRefBody);
 
@@ -309,7 +309,7 @@ public class DataReferenceServiceTest {
             .name("name")
             .cloningInstructions("COPY_NOTHING")
             .referenceType("DataRepoSnapshot")
-            .reference(snapshot);
+            .reference(objectMapper.writeValueAsString(snapshot));
 
     DataReferenceDescription response = runCreateDataReferenceCall(initialWorkspaceId, refBody);
     DataReferenceDescription getResponse =
