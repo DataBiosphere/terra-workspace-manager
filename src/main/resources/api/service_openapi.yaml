@@ -428,8 +428,8 @@ components:
           type: string
           nullable: true
         reference:
-          description: The reference to the data (i.e. gs://...) #todo- describe as json instead
-          type: object
+          description: The reference to the data (i.e. gs://...)
+          type: string
           nullable: true
         cloningInstructions:
           description: The cloning instructions for the reference

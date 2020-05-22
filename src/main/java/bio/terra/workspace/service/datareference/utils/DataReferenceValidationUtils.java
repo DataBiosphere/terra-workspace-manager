@@ -22,17 +22,12 @@ public class DataReferenceValidationUtils {
 
   public String validateReference(
       DataReferenceDescription.ReferenceTypeEnum referenceType,
-      Object reference,
+      String reference,
       AuthenticatedUserRequest userReq) {
 
     if (referenceType.equals(DataReferenceDescription.ReferenceTypeEnum.DATAREPOSNAPSHOT)) {
-      try {
-        String ref = objectMapper.writeValueAsString(reference);
-        validateDataRepoReference(ref, userReq);
-        return ref;
-      } catch (JsonProcessingException e) {
-        throw new InvalidDataReferenceException("Invalid DataRepoSnapshot specified: " + reference);
-      }
+      validateDataRepoReference(reference, userReq);
+      return reference;
     } else {
       throw new InvalidDataReferenceException(
           "Invalid reference type specified: " + referenceType.getValue());
