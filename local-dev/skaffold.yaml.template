@@ -7,6 +7,16 @@ build:
     context: ../
     jib: {}
 deploy:
-  kustomize:
-    paths:
-    - terra-config/NAMESPACE/terra-workspace-manager
+  helm:
+    releases:
+      - name: workspacemanager-ENV
+        namespace: terra-ENV
+        chartPath: terra-helm/charts/workspacemanager
+        skipBuildDependencies: true
+        values:
+          image: gcr.io/terra-kernel-k8s/terra-workspace-manager
+        valuesFiles:
+          - values.yaml
+          - terra-helmfile/terra/values/workspacemanager.yaml
+          - terra-helmfile/terra/values/workspacemanager/personal.yaml
+          - terra-helmfile/terra/values/workspacemanager/personal/ENV.yaml

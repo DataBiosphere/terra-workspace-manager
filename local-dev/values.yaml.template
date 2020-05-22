@@ -1,0 +1,5 @@
+imageConfig:
+  imagePullPolicy: IfNotPresent
+global:
+  terraEnv: ENV
+devDeploy: true

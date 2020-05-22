@@ -42,7 +42,17 @@ public class DataReferenceService {
 
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
 
-    return dataReferenceDao.getDataReference(UUID.fromString(referenceId));
+    return dataReferenceDao.getDataReference(
+        UUID.fromString(workspaceId), UUID.fromString(referenceId));
+  }
+
+  public DataReferenceDescription getDataReferenceByName(
+      String workspaceId, String referenceType, String name, AuthenticatedUserRequest userReq) {
+
+    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
+
+    return dataReferenceDao.getDataReferenceByName(
+        workspaceId, DataReferenceDescription.ReferenceTypeEnum.fromValue(referenceType), name);
   }
 
   public DataReferenceDescription createDataReference(
@@ -83,7 +93,7 @@ public class DataReferenceService {
 
     createJob.submitAndWait(String.class);
 
-    return dataReferenceDao.getDataReference(referenceId);
+    return dataReferenceDao.getDataReference(UUID.fromString(workspaceId), referenceId);
   }
 
   public DataReferenceList enumerateDataReferences(

@@ -25,7 +25,7 @@ paths:
           description: Service is broken
           $ref: '#/components/responses/StatusResponse'
 
-  '/api/v1/workspaces':
+  '/api/workspaces/v1':
     post:
       description: |
         Create a new Workspace. This should only be called by Folder Manager.
@@ -47,13 +47,13 @@ paths:
         400:
           description: Bad request - invalid id, badly formed
           $ref: '#/components/responses/ErrorResponse'
-        403:
+        401:
           description: Permission denied
           $ref: '#/components/responses/ErrorResponse'
         500:
           description: Creation request error
           $ref: '#/components/responses/ErrorResponse'
-  '/api/v1/workspaces/{id}':
+  '/api/workspaces/v1/{id}':
     parameters:
     - $ref: '#/components/parameters/Id'
     get:
@@ -94,7 +94,7 @@ paths:
         500:
           description: Server Error
           $ref: '#/components/responses/ErrorResponse'
-  '/api/v1/workspaces/{id}/datareferences':
+  '/api/workspaces/v1/{id}/datareferences':
     parameters:
       - $ref: '#/components/parameters/Id'
     post:
@@ -145,7 +145,7 @@ paths:
         500:
           description: Server Error
           $ref: '#/components/responses/ErrorResponse'
-  '/api/v1/workspaces/{id}/datareferences/{referenceId}':
+  '/api/workspaces/v1/{id}/datareferences/{referenceId}':
     parameters:
       - $ref: '#/components/parameters/Id'
       - $ref: '#/components/parameters/ReferenceId'
@@ -178,7 +178,26 @@ paths:
           description: Delete request error
           $ref: '#/components/responses/ErrorResponse'
 
-  '/api/v1/jobs/{id}':
+  '/api/workspaces/v1/{id}/datareferences/{referenceType}/{name}':
+    parameters:
+      - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/ReferenceType'
+      - $ref: '#/components/parameters/Name'
+    get:
+      description: |
+        Gets a data reference from a workspace by name and type.
+      operationId: getDataReferenceByName
+      tags:
+        - workspace
+      responses:
+        200:
+          description: OK
+          $ref: '#/components/responses/DataReferenceResponse'
+        500:
+          description: Creation request error
+          $ref: '#/components/responses/ErrorResponse'
+
+  '/api/jobs/v1/{id}':
     parameters:
     - $ref: '#/components/parameters/Id'
     get:
@@ -211,7 +230,7 @@ paths:
       responses:
         204:
           description: Job was deleted
-  '/api/v1/jobs/{id}/result':
+  '/api/jobs/v1/{id}/result':
     parameters:
     - $ref: '#/components/parameters/Id'
     get:
@@ -261,6 +280,20 @@ components:
         required: true
         schema:
           type: string
+    ReferenceType:
+      name: referenceType
+      in: path
+      description: The type of a data reference in a workspace
+      required: true
+      schema:
+        type: string
+    Name:
+      name: name
+      in: path
+      description: A name used to identify an object in the workspace manager
+      required: true
+      schema:
+        type: string
   schemas:
     ErrorReport:
       type: object

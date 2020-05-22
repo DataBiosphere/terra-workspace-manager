@@ -1,0 +1,17 @@
+databaseChangeLog:
+- changeSet:
+    id: addDataReferenceUniqueIndex
+    author: mbemis
+    changes:
+      - createIndex:
+          columns:
+            - column:
+                name: workspace_id
+            - column:
+                name: reference_type
+            - column:
+                name: name
+          tableName: workspace_data_reference
+          clustered: true
+          indexName: idx_data_reference_unique
+          unique: true

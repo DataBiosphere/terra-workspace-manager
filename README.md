@@ -3,8 +3,7 @@ This repository holds the Workspace Manager service, the MC-Terra component
 responsible for managing resources and the applications/resources they use.
 
 To push versions of this repository to different environments (including 
-per-developer integration environments), use deliverybot:
-[Deliverybot Dashboard](https://app.deliverybot.dev/DataBiosphere/framework-version/branch/master)
+per-developer integration environments), update the [terra-helmfile deployment definitions](https://github.com/broadinstitute/terra-helmfile/pull/13).
 
 ## OpenAPI V3 - formerly swagger
 A swagger-ui page is available at /api/swagger-ui.html on any running instance. 
@@ -139,10 +138,28 @@ There are sample tests for the ping service to illustrate two styles of unit tes
 ## Deployment
 ### On commit to master
 1. New commit is merged to master
-2. [The master_push workflow](https://github.com/DataBiosphere/terra-workspace-manager/blob/gm-deployment/.github/workflows/master_push.yml) is triggered. It builds the image, tags the image & commit, and pushes the image to GCR. It then sends a [dispatch](https://help.github.com/en/actions/reference/events-that-trigger-workflows#external-events-repository_dispatch) with the new version for the service to the [framework-version repo](https://github.com/DataBiosphere/framework-version).
-3. This triggers the [update workflow](https://github.com/DataBiosphere/framework-version/blob/master/.github/workflows/update.yml), which updates the JSON that maps services to versions to map to the new version for the service whose repo sent the dispatch. The JSON is then committed and pushed.
-4. This triggers the [tag workflow](https://github.com/DataBiosphere/framework-version/blob/master/.github/workflows/tag.yml), which tags the new commit in the framework-version repo with a bumped semantic version, yielding a new version of the whole stack incorporating the newly available version of the service.
-5. The new commit corresponding to the above version of the stack is now visible on the [deliverybot dashboard](https://app.deliverybot.dev/DataBiosphere/framework-version/branch/master). It can now be manually selected for deployment to an environment.
-6. Deploying a version of the stack to an environment from the dashboard triggers the [deploy workflow](https://github.com/DataBiosphere/framework-version/blob/master/.github/workflows/deploy.yml). This sends a dispatch to the [framework-env repo](https://github.com/DataBiosphere/framework-env) with the version that the chosen commit is tagged with, and the desired environment.
-7. The dispatch triggers the [update workflow in that repo](https://github.com/DataBiosphere/framework-env/blob/master/.github/workflows/update.yml), which similarly to the one in the framework-version one, updates a JSON. This JSON maps environments to versions of the stack. It is updated to reflect the desired deployment of the new stack version to the specified environment and the change is pushed up.
-8. The change to the JSON triggers the [apply workflow](https://github.com/DataBiosphere/framework-env/blob/master/.github/workflows/apply.yml), which actually deploys the desired resources to k8s. It determines the services that must be updated by diffing the stack versions that the environment in question is transitioning between and re-deploys the services that need updates.
+2. [The master_push workflow](https://github.com/DataBiosphere/terra-workspace-manager/blob/gm-deployment/.github/workflows/master_push.yml) is triggered. It builds the image, tags the image & commit, and pushes the image to GCR. It then sends a [dispatch](https://help.github.com/en/actions/reference/events-that-trigger-workflows#external-events-repository_dispatch) with the new version for the service to the [terra-helmfile repo](https://github.com/broadinstitute/terra-helmfile).
+3. This updates the default [version mapping for the app in question](https://github.com/broadinstitute/terra-helmfile/blob/master/versions.yaml).
+4. [Our deployment of ArgoCD](https://ap-argocd.dsp-devops.broadinstitute.org/applications) monitors the above repo, and any environments in which the app is set to auto-sync will immediately pick up the new version of the image. If the app is not set to auto-sync in an environment, it can be manually synced via the ArgoCD UI or API.
+
+## Api Client
+Workspace Manager publishes an API client library based on the OpenAPI Spec v3. 
+
+### Usage
+
+```
+...
+compile(group: 'bio.terra', name: 'terra-workspace-manager-client', version: '0.0.1-SNAPSHOT')
+...
+```
+
+Note that the publishing of this artifact is currently manual. Whenever the OpenAPI definitions change,
+we should publish a new version of this library to artifactory. Backwards compatible changes should
+have a minor version bump, and breaking changes should have a major version bump. We will try to avoid
+breaking changes at all costs.
+
+### Publishing
+
+To publish, you will need to export the `ARTIFACTORY_USERNAME` and `ARTIFACTORY_PASSWORD` environment variables for the Broad artifactory. To build, publish, and clean, run:
+
+`./gradlew terra-workspace-manager-client:generateApi terra-workspace-manager-client:artifactoryPublish terra-workspace-manager-client:clean`

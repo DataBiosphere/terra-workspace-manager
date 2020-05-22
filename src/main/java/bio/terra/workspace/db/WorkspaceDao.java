@@ -1,6 +1,7 @@
 package bio.terra.workspace.db;
 
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
+import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
 import java.util.HashMap;
@@ -8,6 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -35,7 +37,12 @@ public class WorkspaceDao {
     paramMap.put("spend_profile", spendProfile.orElse(null));
     paramMap.put("spend_profile_settable", !spendProfile.isPresent());
 
-    jdbcTemplate.update(sql, paramMap);
+    try {
+      jdbcTemplate.update(sql, paramMap);
+    } catch (DuplicateKeyException e) {
+      throw new DuplicateWorkspaceException(
+          "Workspace " + workspaceId.toString() + " already exists.", e);
+    }
     return workspaceId.toString();
   }
 

@@ -15,7 +15,7 @@ plugins {
 }
 
 group = 'bio.terra.workspace'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.2-SNAPSHOT'
 sourceCompatibility = '1.8'
 
 repositories {
@@ -30,6 +30,7 @@ repositories {
 
 dependencies {
 	compile(group: 'bio.terra', name: 'stairway', version: '0.0.4.1-SNAPSHOT')
+	compile(group: 'bio.terra', name: 'datarepo-client', version: '1.0.1-SNAPSHOT')
 	compile(group: 'bio.terra', name: 'terra-workspace-manager-client', version: '0.0.2-SNAPSHOT')
 	compile(group: 'org.broadinstitute.dsde.workbench', name: 'sam-client_2.12', version: '0.1-11a7002')
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jdbc'
