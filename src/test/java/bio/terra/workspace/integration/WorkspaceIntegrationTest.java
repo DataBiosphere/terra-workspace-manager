@@ -42,7 +42,7 @@ public class WorkspaceIntegrationTest {
   @Test
   public void createWorkspace() throws Exception {
     // todo: Seeing that we have https://broadworkbench.atlassian.net/browse/AS-315 in the upcoming,
-    //  Let's reused the code to-be-written there to clean up workspaces after creating them
+    //  Let's reuse the code to-be-written there to clean up workspaces after creating them
     //  Clean up manually for now
     UUID workspaceId = UUID.randomUUID();
     String path = testConfig.getWsmCreateWorkspaceUrl();

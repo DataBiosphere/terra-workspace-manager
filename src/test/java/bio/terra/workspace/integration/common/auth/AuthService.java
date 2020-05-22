@@ -34,7 +34,7 @@ public class AuthService {
 
   private String getAccessToken(String userEmail) throws IOException {
     if (!Optional.ofNullable(serviceAccountFile).isPresent()) {
-      throw new IllegalStateException(String.format("pemfile not found: %s", testConfig.getServiceAccountFilePath()));
+      throw new IllegalStateException(String.format("Service account file not found: %s", testConfig.getServiceAccountFilePath()));
     }
     GoogleCredentials credentials =
         GoogleCredentials.fromStream(new ByteArrayInputStream(Files.readAllBytes(serviceAccountFile.toPath())))
