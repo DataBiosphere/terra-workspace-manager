@@ -5,14 +5,14 @@ buildscript {
     }
     dependencies {
         // This is for the artifactory plugin
-        classpath group: 'com.jfrog.artifactory', name: 'com.jfrog.artifactory.gradle.plugin', version: '4.13.0', ext: 'pom'
+        classpath group: 'com.jfrog.artifactory', name: 'com.jfrog.artifactory.gradle.plugin', version: '4.15.2', ext: 'pom'
     }
 }
 
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'com.jfrog.artifactory' version '4.13.0'
+    id 'com.jfrog.artifactory' version '4.15.2'
     id 'org.openapi.generator'
 }
 
@@ -44,26 +44,26 @@ dependencies {
         googleClient = "1.30.7"
         googleCloudStorage = "1.103.1"
         googleOauthClientJetty = "1.30.5"
-        jackson = "2.10.2"
+        jackson = "2.11.0"
         jersey = "2.30.1"
         junit = "4.13"
         swagger = "1.6.0"
         hamcrest = "2.2"
     }
 
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: "${jackson}"
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: "${jackson}"
-    compile group: 'org.openapitools', name: 'jackson-databind-nullable', version: '0.2.1'
-    compile group: 'io.swagger', name: 'swagger-annotations', version: "${swagger}"
-    compile group: 'org.glassfish.jersey.core', name: 'jersey-client', version: "${jersey}"
-    compile group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.2'
-    compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: "${jersey}"
-    compile group: 'org.glassfish.jersey.media', name: 'jersey-media-multipart', version: "${jersey}"
-    compile "org.glassfish.jersey.inject:jersey-hk2:${jersey}"
-    compile group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: "${jackson}"
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: "${jackson}"
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: "${jackson}"
+    implementation group: 'org.openapitools', name: 'jackson-databind-nullable', version: '0.2.1'
+    implementation group: 'io.swagger', name: 'swagger-annotations', version: "${swagger}"
+    implementation group: 'org.glassfish.jersey.core', name: 'jersey-client', version: "${jersey}"
+    implementation group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.2'
+    implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: "${jersey}"
+    implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-multipart', version: "${jersey}"
+    implementation "org.glassfish.jersey.inject:jersey-hk2:${jersey}"
+    implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: "${jackson}"
 
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile group: 'org.hamcrest', name: 'hamcrest', version: '2.1'
+    testImplementation group: 'junit', name: 'junit', version: '4.13'
+    testImplementation group: 'org.hamcrest', name: 'hamcrest', version: '2.2'
 }
 
 // -- OpenAPI Client Generation --
