@@ -19,7 +19,7 @@ public class TestUtils {
       return objectMapper.readValue(content, valueType);
     } catch (IOException ex) {
       logger.error(
-          "Unable to map JSON response to " + valueType.getName() + "JSON: " + content, ex);
+          "Unable to map JSON response to " + valueType.getName());
       throw ex;
     }
   }
@@ -28,7 +28,7 @@ public class TestUtils {
     try {
       return objectMapper.writeValueAsString(value);
     } catch (JsonProcessingException ex) {
-      logger.error("Unable to map value to JSON. Value is: " + value, ex);
+      logger.error("Unable to map value to JSON.");
     }
     return null;
   }

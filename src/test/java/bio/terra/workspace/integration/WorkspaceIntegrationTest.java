@@ -47,7 +47,6 @@ public class WorkspaceIntegrationTest {
     UUID workspaceId = UUID.randomUUID();
     String path = testConfig.getWsmCreateWorkspaceUrl();
     String userEmail = testConfig.getServiceAccountEmail();
-    // Remove token from request body when we start to validate header access token
     String token = authService.getAuthToken(userEmail);
     CreateWorkspaceRequestBody body =
         new CreateWorkspaceRequestBody()
@@ -61,7 +60,7 @@ public class WorkspaceIntegrationTest {
         workspaceManagerTestClient.post(userEmail, path, json, CreatedWorkspace.class);
 
     Assertions.assertEquals(workspaceResponse.getStatusCode(), HttpStatus.OK);
-    CreatedWorkspace createdWorkspace = workspaceResponse.getResponseObject().orElse(null);
+    CreatedWorkspace createdWorkspace = workspaceResponse.getData().getOrNull();
     Assertions.assertNotNull(createdWorkspace);
     Assertions.assertEquals(workspaceId.toString(), createdWorkspace.getId());
   }

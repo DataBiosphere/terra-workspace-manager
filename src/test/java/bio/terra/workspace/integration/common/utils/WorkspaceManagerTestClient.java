@@ -1,11 +1,9 @@
 package bio.terra.workspace.integration.common.utils;
 
 import bio.terra.workspace.integration.common.auth.AuthService;
-import bio.terra.workspace.integration.common.response.ObjectOrErrorResponse;
 import bio.terra.workspace.integration.common.response.WorkspaceResponse;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.Optional;
 import bio.terra.workspace.model.ErrorReport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,8 +37,7 @@ public class WorkspaceManagerTestClient {
   public <T> WorkspaceResponse<T> post(
       String userEmail, String path, String json, Class<T> responseClass) throws Exception {
     HttpEntity<String> entity = new HttpEntity<>(json, getHeaders(userEmail));
-    return new WorkspaceResponse<>(
-        sendRequest(path, HttpMethod.POST, entity, responseClass, ErrorReport.class));
+    return sendRequest(path, HttpMethod.POST, entity, ErrorReport.class, responseClass);
   }
 
   private HttpHeaders getHeaders(String userEmail) throws IOException, InterruptedException {
@@ -50,31 +47,26 @@ public class WorkspaceManagerTestClient {
     return headersCopy;
   }
 
-  private <S, T> ObjectOrErrorResponse<S, T> sendRequest(
+  private <S, T> WorkspaceResponse<T> sendRequest(
       String path,
       HttpMethod method,
       HttpEntity<String> entity,
-      Class<T> responseClass,
-      Class<S> errorClass)
+      Class<S> errorClass,
+      Class<T> responseClass)
       throws Exception {
 
     logger.info("api request: method={} path={}", method.toString(), path);
     ResponseEntity<String> response = restTemplate.exchange(path, method, entity, String.class);
-    ObjectOrErrorResponse<S, T> workspaceResponse = new ObjectOrErrorResponse<>();
+    WorkspaceResponse<T> workspaceResponse = new WorkspaceResponse<>();
     workspaceResponse.setStatusCode(response.getStatusCode());
-
     if (response.getStatusCode().is2xxSuccessful()) {
       if (responseClass != null) {
         T responseObject = testUtils.mapFromJson(response.getBody(), responseClass);
-        workspaceResponse.setResponseObject(Optional.of(responseObject));
-      } else {
-        workspaceResponse.setResponseObject(Optional.empty());
+        workspaceResponse.setResponseObject(responseObject);
       }
-      workspaceResponse.setErrorModel(Optional.empty());
     } else {
       S errorObject = testUtils.mapFromJson(response.getBody(), errorClass);
-      workspaceResponse.setErrorModel(Optional.of(errorObject));
-      workspaceResponse.setResponseObject(Optional.empty());
+      workspaceResponse.setErrorObject((ErrorReport) errorObject);
     }
     return workspaceResponse;
   }

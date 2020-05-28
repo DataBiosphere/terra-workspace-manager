@@ -33,6 +33,7 @@ dependencies {
 	compile(group: 'bio.terra', name: 'datarepo-client', version: '1.0.1-SNAPSHOT')
 	compile(group: 'bio.terra', name: 'terra-workspace-manager-client', version: '0.0.2-SNAPSHOT')
 	compile(group: 'org.broadinstitute.dsde.workbench', name: 'sam-client_2.12', version: '0.1-11a7002')
+	compile(group: 'io.vavr', name: 'vavr', version: '0.10.3')
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jdbc'
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
 	implementation group: 'org.postgresql', name: 'postgresql', version: '42.1.4'
