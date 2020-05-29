@@ -14,16 +14,13 @@ public class AuthService {
 
   private final TestConfiguration testConfig;
   private File serviceAccountFile;
-  private final List<String> userLoginScopes =
-      Arrays.asList(
-          "openid",
-          "email",
-          "profile");
+  private final List<String> userLoginScopes = Arrays.asList("openid", "email", "profile");
 
   @Autowired
   public AuthService(TestConfiguration testConfig) {
     this.testConfig = testConfig;
-    Optional<String> serviceAccountFilePath = Optional.ofNullable(this.testConfig.getServiceAccountFilePath());
+    Optional<String> serviceAccountFilePath =
+        Optional.ofNullable(this.testConfig.getServiceAccountFilePath());
     serviceAccountFilePath.ifPresent(s -> serviceAccountFile = new File(s));
   }
 
@@ -34,15 +31,17 @@ public class AuthService {
 
   private String getAccessToken(String userEmail) throws IOException {
     if (!Optional.ofNullable(serviceAccountFile).isPresent()) {
-      throw new IllegalStateException(String.format("Service account file not found: %s", testConfig.getServiceAccountFilePath()));
+      throw new IllegalStateException(
+          String.format(
+              "Service account file not found: %s", testConfig.getServiceAccountFilePath()));
     }
     GoogleCredentials credentials =
-        GoogleCredentials.fromStream(new ByteArrayInputStream(Files.readAllBytes(serviceAccountFile.toPath())))
+        GoogleCredentials.fromStream(
+                new ByteArrayInputStream(Files.readAllBytes(serviceAccountFile.toPath())))
             .createScoped(userLoginScopes)
             .createDelegated(userEmail);
     credentials.refreshIfExpired();
     AccessToken newAccessToken = credentials.getAccessToken();
     return newAccessToken.getTokenValue();
   }
-
 }

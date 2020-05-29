@@ -2,9 +2,9 @@ package bio.terra.workspace.integration.common.utils;
 
 import bio.terra.workspace.integration.common.auth.AuthService;
 import bio.terra.workspace.integration.common.response.WorkspaceResponse;
+import bio.terra.workspace.model.ErrorReport;
 import java.io.IOException;
 import java.util.Collections;
-import bio.terra.workspace.model.ErrorReport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

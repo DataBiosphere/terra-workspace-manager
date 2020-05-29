@@ -6,9 +6,9 @@ import bio.terra.workspace.integration.common.configuration.TestConfiguration;
 import bio.terra.workspace.integration.common.response.WorkspaceResponse;
 import bio.terra.workspace.integration.common.utils.TestUtils;
 import bio.terra.workspace.integration.common.utils.WorkspaceManagerTestClient;
-import java.util.UUID;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
+import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -60,9 +60,8 @@ public class WorkspaceIntegrationTest {
         workspaceManagerTestClient.post(userEmail, path, json, CreatedWorkspace.class);
 
     Assertions.assertEquals(workspaceResponse.getStatusCode(), HttpStatus.OK);
-    CreatedWorkspace createdWorkspace = workspaceResponse.getData().getOrNull();
-    Assertions.assertNotNull(createdWorkspace);
+    Assertions.assertTrue(workspaceResponse.isResponseObject());
+    CreatedWorkspace createdWorkspace = workspaceResponse.getResponseObject();
     Assertions.assertEquals(workspaceId.toString(), createdWorkspace.getId());
   }
-
 }

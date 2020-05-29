@@ -1,6 +1,7 @@
 package bio.terra.workspace.integration.common.response;
 
 import io.vavr.control.Either;
+import java.util.NoSuchElementException;
 import org.springframework.http.HttpStatus;
 
 public class ErrorOrObjectResponse<S, T> {
@@ -28,4 +29,19 @@ public class ErrorOrObjectResponse<S, T> {
     data = Either.right(right);
   }
 
+  public S getErrorObject() throws NoSuchElementException {
+    return data.getLeft();
+  }
+
+  public T getResponseObject() throws NoSuchElementException {
+    return data.get();
+  }
+
+  public boolean isErrorObject() {
+    return data.isLeft();
+  }
+
+  public boolean isResponseObject() {
+    return data.isRight();
+  }
 }
