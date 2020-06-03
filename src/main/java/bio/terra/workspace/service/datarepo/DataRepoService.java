@@ -27,9 +27,12 @@ public class DataRepoService {
   }
 
   private RepositoryApi repositoryApi(String instance, AuthenticatedUserRequest userReq) {
-    if (INSTANCE_WHITELIST.contains(instance)) {
-      return new RepositoryApi(getApiClient(userReq.getRequiredToken()).setBasePath(instance));
-    } else {
+    validateInstance(instance);
+    return new RepositoryApi(getApiClient(userReq.getRequiredToken()).setBasePath(instance));
+  }
+
+  public void validateInstance(String instance) {
+    if (!INSTANCE_WHITELIST.contains(instance)) {
       throw new ValidationException("Data repository instance " + instance + " is not allowed.");
     }
   }
