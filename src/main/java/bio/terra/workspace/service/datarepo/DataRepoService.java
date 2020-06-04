@@ -3,22 +3,21 @@ package bio.terra.workspace.service.datarepo;
 import bio.terra.datarepo.api.RepositoryApi;
 import bio.terra.datarepo.client.ApiClient;
 import bio.terra.datarepo.client.ApiException;
+import bio.terra.workspace.app.configuration.DataRepoConfig;
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DataRepoService {
 
-  private static final Set<String> INSTANCE_WHITELIST =
-      Stream.of(
-              "https://jade.datarepo-dev.broadinstitute.org",
-              "https://jade-terra.datarepo-prod.broadinstitute.org",
-              "https://data.terra.bio")
-          .collect(Collectors.toSet());
+  private final DataRepoConfig dataRepoConfig;
+
+  @Autowired
+  public DataRepoService(DataRepoConfig dataRepoConfig) {
+    this.dataRepoConfig = dataRepoConfig;
+  }
 
   private ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();
@@ -32,7 +31,7 @@ public class DataRepoService {
   }
 
   public void validateInstance(String instance) {
-    if (!INSTANCE_WHITELIST.contains(instance)) {
+    if (!dataRepoConfig.getInstances().contains(instance)) {
       throw new ValidationException("Data repository instance " + instance + " is not allowed.");
     }
   }

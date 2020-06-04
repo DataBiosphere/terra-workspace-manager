@@ -9,6 +9,7 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
@@ -21,25 +22,22 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @AutoConfigureMockMvc
 public class DataRepoServiceTest {
 
+  @Autowired private DataRepoService dataRepoService;
+
   @Test
   public void testValidateInvalidDataRepoInstance() throws Exception {
-
-    DataRepoService testService = new DataRepoService();
-
     assertThrows(
         ValidationException.class,
         () -> {
-          testService.validateInstance("foo");
+          dataRepoService.validateInstance("https://fake-invalid-data-repo-url.broadinstitute.org");
         });
   }
 
   @Test
   public void testValidateValidDataRepoInstance() throws Exception {
-
-    DataRepoService testService = new DataRepoService();
-
     try {
-      testService.validateInstance("https://data.terra.bio");
+      // the valid url is set in test/resources/application.properties
+      dataRepoService.validateInstance("https://fake-valid-data-repo-url.broadinstitute.org");
     } catch (ValidationException e) {
       fail("Valid Data Repo instance was rejected.");
     }
