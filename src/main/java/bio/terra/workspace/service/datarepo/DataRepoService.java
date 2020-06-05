@@ -32,7 +32,11 @@ public class DataRepoService {
 
   public void validateInstance(String instance) {
     if (!dataRepoConfig.getInstances().contains(instance)) {
-      throw new ValidationException("Data repository instance " + instance + " is not allowed.");
+      throw new ValidationException(
+          "Data repository instance "
+              + instance
+              + " is not allowed. Valid instances are: "
+              + String.join(", ", dataRepoConfig.getInstances()));
     }
   }
 
