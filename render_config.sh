@@ -3,7 +3,7 @@
 VAULT_TOKEN=${1:-$(cat $HOME/.vault-token)}
 TARGET_ENV=${2:-dev}
 
-//todo: Make config-rendering reusable for testing other services AS-366
+#todo: Make config-rendering reusable for testing other services AS-366
 
 DOCKER_MOUNT_DIRECTORY=terra-workspace-manager
 TEMPLATE_INPUT_PATH=${DOCKER_MOUNT_DIRECTORY}/config-templates
