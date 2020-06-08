@@ -62,7 +62,7 @@ public class DataReferenceDaoTest {
     referenceType = DataReferenceDescription.ReferenceTypeEnum.DATAREPOSNAPSHOT.getValue();
 
     DataRepoSnapshot drs = new DataRepoSnapshot();
-    drs.setInstance(UUID.randomUUID().toString());
+    drs.setInstanceName(UUID.randomUUID().toString());
     drs.setSnapshot(UUID.randomUUID().toString());
     reference = objectToString(drs);
 

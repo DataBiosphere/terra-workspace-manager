@@ -29,16 +29,16 @@ public class DataRepoServiceTest {
     assertThrows(
         ValidationException.class,
         () -> {
-          dataRepoService.validateInstance("https://fake-invalid-data-repo-url.broadinstitute.org");
+          dataRepoService.getInstanceUrl("fake-invalid-test");
         });
   }
 
   @Test
   public void testValidateValidDataRepoInstance() throws Exception {
     try {
-      // the valid url is set in test/resources/application.properties
+      // the valid k/v is set in test/resources/application.properties
       // we trim and toLowerCase the string, so this verifies that too
-      dataRepoService.validateInstance(" https://FaKe-VaLiD-data-repo-url.broadinstitute.org  ");
+      dataRepoService.getInstanceUrl(" FaKe-VaLiD-tEsT  ");
     } catch (ValidationException e) {
       fail("Valid Data Repo instance was rejected.");
     }

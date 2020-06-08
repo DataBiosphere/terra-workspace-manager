@@ -6,6 +6,7 @@ import bio.terra.datarepo.client.ApiException;
 import bio.terra.workspace.app.configuration.DataRepoConfig;
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import java.util.HashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -25,24 +26,30 @@ public class DataRepoService {
     return client;
   }
 
-  private RepositoryApi repositoryApi(String instance, AuthenticatedUserRequest userReq) {
-    validateInstance(instance);
-    return new RepositoryApi(getApiClient(userReq.getRequiredToken()).setBasePath(instance));
+  private RepositoryApi repositoryApi(String instanceName, AuthenticatedUserRequest userReq) {
+    String instanceUrl = getInstanceUrl(instanceName);
+    return new RepositoryApi(getApiClient(userReq.getRequiredToken()).setBasePath(instanceUrl));
   }
 
-  public void validateInstance(String instance) {
-    if (!dataRepoConfig.getInstances().containsValue(instance.toLowerCase().trim())) {
+  public String getInstanceUrl(String instanceName) {
+    HashMap<String, String> dataRepoInstances = dataRepoConfig.getInstances();
+    String cleanedInstanceName = instanceName.toLowerCase().trim();
+
+    if (dataRepoInstances.containsKey(cleanedInstanceName)) {
+      return dataRepoInstances.get(cleanedInstanceName);
+    } else {
       throw new ValidationException(
-          "Data repository instance "
-              + instance
-              + " is not allowed. Valid instances are: "
-              + String.join(", ", dataRepoConfig.getInstances().keySet()));
+          "Data repository instance \""
+              + cleanedInstanceName
+              + "\" is not allowed. Valid instances are: \""
+              + String.join("\", \"", dataRepoInstances.keySet())
+              + "\"");
     }
   }
 
   public boolean snapshotExists(
-      String instance, String snapshotId, AuthenticatedUserRequest userReq) {
-    RepositoryApi repositoryApi = repositoryApi(instance, userReq);
+      String instanceName, String snapshotId, AuthenticatedUserRequest userReq) {
+    RepositoryApi repositoryApi = repositoryApi(instanceName, userReq);
 
     try {
       repositoryApi.retrieveSnapshot(snapshotId);
