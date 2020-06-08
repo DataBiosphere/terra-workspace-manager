@@ -31,12 +31,12 @@ public class DataRepoService {
   }
 
   public void validateInstance(String instance) {
-    if (!dataRepoConfig.getInstances().contains(instance)) {
+    if (!dataRepoConfig.getInstances().containsValue(instance)) {
       throw new ValidationException(
           "Data repository instance "
               + instance
               + " is not allowed. Valid instances are: "
-              + String.join(", ", dataRepoConfig.getInstances()));
+              + String.join(", ", dataRepoConfig.getInstances().keySet()));
     }
   }
 

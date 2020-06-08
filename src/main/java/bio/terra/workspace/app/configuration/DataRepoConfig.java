@@ -1,6 +1,6 @@
 package bio.terra.workspace.app.configuration;
 
-import java.util.Set;
+import java.util.HashMap;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -9,13 +9,13 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "datarepo")
 public class DataRepoConfig {
-  private Set<String> instances;
+  private HashMap<String, String> instances;
 
-  public Set<String> getInstances() {
+  public HashMap<String, String> getInstances() {
     return instances;
   }
 
-  public void setInstances(Set<String> instances) {
+  public void setInstances(HashMap<String, String> instances) {
     this.instances = instances;
   }
 }
