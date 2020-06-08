@@ -37,7 +37,8 @@ public class DataRepoServiceTest {
   public void testValidateValidDataRepoInstance() throws Exception {
     try {
       // the valid url is set in test/resources/application.properties
-      dataRepoService.validateInstance("https://fake-valid-data-repo-url.broadinstitute.org");
+      // we trim and toLowerCase the string, so this verifies that too
+      dataRepoService.validateInstance(" https://FaKe-VaLiD-data-repo-url.broadinstitute.org  ");
     } catch (ValidationException e) {
       fail("Valid Data Repo instance was rejected.");
     }

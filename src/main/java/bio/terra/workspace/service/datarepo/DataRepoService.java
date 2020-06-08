@@ -31,7 +31,7 @@ public class DataRepoService {
   }
 
   public void validateInstance(String instance) {
-    if (!dataRepoConfig.getInstances().containsValue(instance)) {
+    if (!dataRepoConfig.getInstances().containsValue(instance.toLowerCase().trim())) {
       throw new ValidationException(
           "Data repository instance "
               + instance
