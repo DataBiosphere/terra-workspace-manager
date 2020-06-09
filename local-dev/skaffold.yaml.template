@@ -16,7 +16,7 @@ deploy:
         values:
           image: gcr.io/terra-kernel-k8s/terra-workspace-manager
         valuesFiles:
-          - values.yaml
           - terra-helmfile/terra/values/workspacemanager.yaml
           - terra-helmfile/terra/values/workspacemanager/personal.yaml
           - terra-helmfile/terra/values/workspacemanager/personal/ENV.yaml
+          - values.yaml
