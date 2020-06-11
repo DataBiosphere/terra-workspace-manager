@@ -16,7 +16,7 @@ jobs:
         env:
           POSTGRES_PASSWORD: postgres
         options: >-
-          --volume ./local-dev/local-postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
+          --mount ./local-dev/local-postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
