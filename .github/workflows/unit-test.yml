@@ -6,9 +6,23 @@ name: Run Unit Tests
 on: [push]
 
 jobs:
-  build:
+  unit-test:
 
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:9.6
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --volume ./local-dev/local-postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
     - uses: actions/checkout@v2
@@ -16,13 +30,6 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
-    - name: Setup PostgreSQL With Init Scripts
-      uses: m4nu56/postgresql-action@1.0
-      with:
-        # Version of PostgreSQL to use
-        postgresql version: 9.6
-        # POSTGRES_INIT_SCRIPTS - directory containing DB init scripts
-        postgresql init scripts: 'local-dev'
     - name: Cache Gradle packages
       uses: actions/cache@v2
       with:
