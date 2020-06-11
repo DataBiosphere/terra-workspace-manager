@@ -6,7 +6,7 @@ name: Run Unit Tests
 on: [push]
 
 jobs:
-  build:
+  test:
 
     runs-on: ubuntu-latest
 
@@ -19,9 +19,9 @@ jobs:
     - name: Setup PostgreSQL With Init Scripts
       uses: m4nu56/postgresql-action@1.0
       with:
-        # Version of PostgreSQL to use
         postgresql version: 9.6
-        # POSTGRES_INIT_SCRIPTS - directory containing DB init scripts
+        postgresql user: 'postgres'
+        postgresql password: 'postgres'
         postgresql init scripts: 'local-dev'
     - name: Cache Gradle packages
       uses: actions/cache@v2
