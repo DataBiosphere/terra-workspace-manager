@@ -60,6 +60,14 @@ dependencies {
 	annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 }
 
+// for scans
+gradleEnterprise {
+	buildScan {
+		termsOfServiceUrl = "https://gradle.com/terms-of-service"
+		termsOfServiceAgree = "yes"
+	}
+}
+
 // Exclude the Spring logger, so everything will use SLF4J
 configurations.all {
 	exclude group: "commons-logging", module: "commons-logging"

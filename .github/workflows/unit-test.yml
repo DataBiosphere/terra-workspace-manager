@@ -49,4 +49,4 @@ jobs:
         STAIRWAY_DATABASE_USER: stairwayuser
         STAIRWAY_DATABASE_USER_PASSWORD: stairwaypwd
         STAIRWAY_DATABASE_NAME: stairwaylib
-      run: ./gradlew unitTest
+      run: ./gradlew unitTest --scan
