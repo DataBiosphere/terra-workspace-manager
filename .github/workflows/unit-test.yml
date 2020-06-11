@@ -36,7 +36,9 @@ jobs:
     - name: Cache Gradle packages
       uses: actions/cache@v2
       with:
-        path: ~/.gradle/caches
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
         key: v1-${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
         restore-keys: v1-${{ runner.os }}-gradle
     - name: Grant execute permission for gradlew
