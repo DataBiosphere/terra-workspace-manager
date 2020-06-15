@@ -6,7 +6,7 @@ To push versions of this repository to different environments (including
 per-developer integration environments), update the [terra-helmfile deployment definitions](https://github.com/broadinstitute/terra-helmfile/pull/13).
 
 ## OpenAPI V3 - formerly swagger
-A swagger-ui page is available at /api/swagger-ui.html on any running instance. 
+A swagger-ui page is available at /swagger-ui.html on any running instance. 
 TODO: Once we have a stable and persistent dev instance, a link to its 
 swagger-ui page should go here.
 
