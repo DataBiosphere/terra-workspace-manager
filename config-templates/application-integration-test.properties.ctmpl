@@ -1,4 +1,4 @@
-{{- with $host := (( "http://34.71.179.202" )) -}}
+{{- with $host := (( "http://34.68.70.164" )) -}}
 {{- with $wsmBaseUrl := (( printf "%s/dev-terra-workspace-manager" $host )) -}}
 {{- with $wsmCreateWorkspaceUrl := (( printf "%s/api/workspaces/v1" $wsmBaseUrl )) -}}
 {{- with $serviceAccountEmail := (( "william.thunderlord@test.firecloud.org" )) -}}
