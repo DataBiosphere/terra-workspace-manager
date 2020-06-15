@@ -66,11 +66,6 @@ if (hasProperty('buildScan')) {
 		termsOfServiceUrl = 'https://gradle.com/terms-of-service'
 		termsOfServiceAgree = 'yes'
 	}
-
-	tasks.withType(Test) {
-		reports.html.enabled = false
-		reports.junitXml.enabled = false
-	}
 }
 
 // Exclude the Spring logger, so everything will use SLF4J
