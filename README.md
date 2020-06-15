@@ -36,12 +36,11 @@ the point of opening the port to start accepting REST requests.
 The typical pattern when using Spring is to make singleton classes for each service, controller, and DAO.	
 You do not have to write the class with its own singleton support. Instead, annotate the class with	
 the appropriate Spring annotation. Here are ones we use:
-<ul>
-<li><code>@Component</code> Regular singleton class, like a service.</li>
-<li><code>@Repository</code> DAO component</li>
-<li><code>@Controller</code> REST Controller</li>
-<li><code>@Configuration</code> Definition of properties</li>
-</ul>
+
+- `@Component` Regular singleton class, like a service.
+- `@Repository` DAO component
+- `@Controller` REST Controller
+- `@Configuration` Definition of properties
 
 ### Common Annotations
 There are other annotations that are handy to know about.
@@ -55,7 +54,8 @@ dynamically created objects.
 There are two styles for declaring autowiring.
 The preferred method of autowiring, is to put the annotation on the constructor
 of the class. Spring will autowire all of the inputs to the constructor.
-```
+
+```java
 @Component
 public class Foo {
     private Bar bar;
@@ -67,9 +67,11 @@ public class Foo {
         this.foo = foo;
     }
 ```
+
 Spring will pass in the instances of Bar and Fribble into the constructor.
 It is possible to autowire a specific class member, but that is rarely necessary:
-```
+
+```java
 @Component
 public class Foo {
     @Autowired
@@ -77,11 +79,10 @@ public class Foo {
 ```
 
 #### REST Annotations
-<ul>
-<li><code>@RequestBody</code> Marks the controller input parameter receiving the body of the request</li>
-<li><code>@PathVariable("x")</code> Marks the controller input parameter receiving the parameter <code>x</code></li>
-<li><code>@RequestParam("y")</code> Marks the controller input parameter receiving the query parameter<code>y</code></li>
-</ul>
+- `@RequestBody` Marks the controller input parameter receiving the body of the request
+- `@PathVariable("x")` Marks the controller input parameter receiving the parameter `x`
+- `@RequestParam("y")` Marks the controller input parameter receiving the query parameter`y`
+
 
 #### JSON Annotations
 We use the Jackson JSON library for serializing objects to and from JSON. Most of the time, you don't need to 
@@ -90,47 +91,44 @@ and let Jackson figure things out with interospection. There are cases where it 
 and you have to be specific.
 
 The common JSON annotations are:
-<ul>
-<li><code>@JsonValue</code> Marks a class member as data that should be (de)serialized to(from) JSON.
-You can specify a name as a parameter to specify the JSON name for the member.</li>
-<li><code>@JsonIgnore</code>  Marks a class member that should not be (de)serialized</li>
-<li><code>@JsonCreator</code> Marks a constructor to be used to create an object from JSON.</li>
-</ul>
+
+- `@JsonValue` Marks a class member as data that should be (de)serialized to(from) JSON.
+  You can specify a name as a parameter to specify the JSON name for the member.
+- `@JsonIgnore`  Marks a class member that should not be (de)serialized
+- `@JsonCreator` Marks a constructor to be used to create an object from JSON.
 
 For more details see [Jackson JSON Documentation](https://github.com/FasterXML/jackson-docs)
 
 ## Main Code Structure
 This section explains the code structure of the template. Here is the directory structure:
+
 ```
-/src
-  /main
-    /java
-      /bio/terra/TEMPLATE
-        /app
-          /configuration
-          /controller
-        /common
-          /exception
-        /service
-          /ping
-    /resources
+src/main/
+  java/
+    bio/terra/TEMPLATE/
+      app/
+        configuration/
+        controller/
+      common/
+        exception/
+      service/
+        ping/
+  resources/
 ```
-<ul>
-<li><code>/app</code> For the top of the application, including Main and the StartupInitializer</li>
-<li><code>/app/configuration</code> For all of the bean and property definitions</li>
-<li><code>/app/controller</code> For the REST controllers. The controllers typically do very little.
+- `app/` For the top of the application, including Main and the StartupInitializer
+- `app/configuration/` For all of the bean and property definitions
+- `app/controller/` For the REST controllers. The controllers typically do very little.
 They invoke a service to do the work and package the service output into the response. The
-controller package also defines the global exception handling.</li>
-<li><code>/common</code> For common models and common exceptions; for example, a model that is 
-shared by more than one service.</li>
-<li><code>/common/exception</code> The template provides abstract base classes for the commonly
+controller package also defines the global exception handling.
+- `common/` For common models and common exceptions; for example, a model that is 
+shared by more than one service.
+- `common/exception/` The template provides abstract base classes for the commonly
 used HTTP status responses. They are all based on the ErrorReportException that provides the
-explicit HTTP status and "causes" information for our standard ErrorReport model.</li>
-<li><code>/service</code> Each service gets a package within. We handle cloud-platform specializations
-within each service.</li>
-<li><code>/service/ping</code> The example service; please delete.</li>
-<li><code>/resources</code> Properties definitions, database schema definitions, and the REST API definition</li>
-</ul>
+explicit HTTP status and "causes" information for our standard ErrorReport model.
+- `service/` Each service gets a package within. We handle cloud-platform specializations
+within each service.
+- `service/ping/` The example service; please delete.
+- `resources/` Properties definitions, database schema definitions, and the REST API definition
 
 ## Test Structure
 There are sample tests for the ping service to illustrate two styles of unit testing.
@@ -145,12 +143,9 @@ There are sample tests for the ping service to illustrate two styles of unit tes
 ## Api Client
 Workspace Manager publishes an API client library based on the OpenAPI Spec v3. 
 
-### Usage
-
-```
-...
-compile(group: 'bio.terra', name: 'terra-workspace-manager-client', version: '0.0.1-SNAPSHOT')
-...
+### Usage (Gradle)
+```gradle
+implementation(group: 'bio.terra', name: 'terra-workspace-manager-client', version: '0.0.3-SNAPSHOT')
 ```
 
 Note that the publishing of this artifact is currently manual. Whenever the OpenAPI definitions change,
@@ -160,6 +155,8 @@ breaking changes at all costs.
 
 ### Publishing
 
-To publish, you will need to export the `ARTIFACTORY_USERNAME` and `ARTIFACTORY_PASSWORD` environment variables for the Broad artifactory. To build, publish, and clean, run:
+To publish, you will need to export the `ARTIFACTORY_USERNAME` and `ARTIFACTORY_PASSWORD` environment variables for the Broad artifactory. To build and publish:
 
-`./gradlew terra-workspace-manager-client:generateApi terra-workspace-manager-client:artifactoryPublish terra-workspace-manager-client:clean`
+```sh
+./gradlew terra-workspace-manager-client:artifactoryPublish
+```

@@ -243,7 +243,7 @@ public class WorkspaceServiceTest {
 
     // Next, add a data reference to that workspace.
     DataRepoSnapshot reference =
-        new DataRepoSnapshot().instance("fake instance").snapshot("fake snapshot");
+        new DataRepoSnapshot().instanceName("fake instance").snapshot("fake snapshot");
     CreateDataReferenceRequestBody referenceRequest =
         new CreateDataReferenceRequestBody()
             .name("fake-data-reference")

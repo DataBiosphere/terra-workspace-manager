@@ -38,12 +38,12 @@ public class DataReferenceValidationUtils {
       String reference, AuthenticatedUserRequest userReq) {
     try {
       DataRepoSnapshot ref = objectMapper.readValue(reference, DataRepoSnapshot.class);
-      if (!dataRepoService.snapshotExists(ref.getInstance(), ref.getSnapshot(), userReq)) {
+      if (!dataRepoService.snapshotExists(ref.getInstanceName(), ref.getSnapshot(), userReq)) {
         throw new InvalidDataReferenceException(
             "Snapshot ["
                 + ref.getSnapshot()
                 + "] could not be found in Data Repo located at ["
-                + ref.getInstance()
+                + ref.getInstanceName()
                 + "]. Verify that your reference was correctly defined: ["
                 + reference
                 + "]");

@@ -516,8 +516,8 @@ components:
     DataRepoSnapshot:
       type: object
       properties:
-        instance:
-          description: The location (DNS address) of the Data Repo instance
+        instanceName:
+          description: The name of the Data Repo instance
           type: string
         snapshot:
             description: The ID of the Data Repo snapshot

@@ -82,7 +82,7 @@ public class DataReferenceServiceTest {
 
     DataRepoSnapshot snapshot = new DataRepoSnapshot();
     snapshot.setSnapshot("foo");
-    snapshot.setInstance("bar");
+    snapshot.setInstanceName("bar");
 
     CreateDataReferenceRequestBody refBody =
         new CreateDataReferenceRequestBody()
@@ -103,7 +103,7 @@ public class DataReferenceServiceTest {
 
     DataRepoSnapshot snapshot = new DataRepoSnapshot();
     snapshot.setSnapshot("foo");
-    snapshot.setInstance("bar");
+    snapshot.setInstanceName("bar");
 
     CreateDataReferenceRequestBody refBody =
         new CreateDataReferenceRequestBody()
@@ -129,7 +129,7 @@ public class DataReferenceServiceTest {
 
     DataRepoSnapshot snapshot = new DataRepoSnapshot();
     snapshot.setSnapshot("foo");
-    snapshot.setInstance("bar");
+    snapshot.setInstanceName("bar");
 
     CreateDataReferenceRequestBody refBody =
         new CreateDataReferenceRequestBody()
@@ -173,7 +173,7 @@ public class DataReferenceServiceTest {
 
     DataRepoSnapshot snapshot = new DataRepoSnapshot();
     snapshot.setSnapshot("fake-id");
-    snapshot.setInstance("bar");
+    snapshot.setInstanceName("bar");
 
     CreateDataReferenceRequestBody refBody =
         new CreateDataReferenceRequestBody()
@@ -215,7 +215,7 @@ public class DataReferenceServiceTest {
 
     DataRepoSnapshot snapshot = new DataRepoSnapshot();
     snapshot.setSnapshot("foo");
-    snapshot.setInstance("bar");
+    snapshot.setInstanceName("bar");
 
     CreateDataReferenceRequestBody refBody =
         new CreateDataReferenceRequestBody()
@@ -228,7 +228,7 @@ public class DataReferenceServiceTest {
 
     DataRepoSnapshot secondSnapshot = new DataRepoSnapshot();
     snapshot.setSnapshot("foo2");
-    snapshot.setInstance("bar2");
+    snapshot.setInstanceName("bar2");
     CreateDataReferenceRequestBody secondRefBody =
         new CreateDataReferenceRequestBody()
             .name("second_name")
@@ -302,7 +302,7 @@ public class DataReferenceServiceTest {
 
     DataRepoSnapshot snapshot = new DataRepoSnapshot();
     snapshot.setSnapshot("foo");
-    snapshot.setInstance("bar");
+    snapshot.setInstanceName("bar");
 
     CreateDataReferenceRequestBody refBody =
         new CreateDataReferenceRequestBody()
