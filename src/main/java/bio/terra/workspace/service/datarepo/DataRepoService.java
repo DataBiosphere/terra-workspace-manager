@@ -1,10 +1,12 @@
 package bio.terra.workspace.service.datarepo;
 
 import bio.terra.datarepo.api.RepositoryApi;
+import bio.terra.datarepo.api.UnauthenticatedApi;
 import bio.terra.datarepo.client.ApiClient;
 import bio.terra.datarepo.client.ApiException;
 import bio.terra.workspace.app.configuration.DataRepoConfig;
 import bio.terra.workspace.common.exception.ValidationException;
+import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import java.util.HashMap;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +58,21 @@ public class DataRepoService {
       return true;
     } catch (ApiException e) {
       return false;
+    }
+  }
+
+  public SystemStatusSystems status(String instanceUrl) {
+    UnauthenticatedApi unauthenticatedApi =
+        new UnauthenticatedApi(new ApiClient().setBasePath(instanceUrl));
+    try {
+      // TDR serviceStatus method returns cleanly on a 200 response and throws an error otherwise,
+      // no other information is available through this endpoint.
+      unauthenticatedApi.serviceStatus();
+      return new SystemStatusSystems().ok(true);
+    } catch (ApiException nonOkStatusException) {
+      return new SystemStatusSystems()
+          .ok(false)
+          .addMessagesItem(nonOkStatusException.getResponseBody());
     }
   }
 }
