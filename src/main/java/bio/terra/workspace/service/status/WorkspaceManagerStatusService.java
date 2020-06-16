@@ -30,7 +30,7 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
                 .ok(jdbcTemplate.getJdbcTemplate().execute(this::isConnectionValid));
     registerSubsystem("Postgres", new StatusSubsystem(dbHealthFn, /*isCritical=*/ true));
 
-    // TODO: should we really be checking every instance?
+    // TODO: should we really be checking every instance? Are any of them critical?
     for (Map.Entry<String, String> instanceEntry : dataRepoConfig.getInstances().entrySet()) {
       Supplier<SystemStatusSystems> checkDataRepoInstanceFn =
           () -> dataRepoService.status(instanceEntry.getValue());
