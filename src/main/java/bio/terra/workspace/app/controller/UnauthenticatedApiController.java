@@ -21,6 +21,7 @@ public class UnauthenticatedApiController implements UnauthenticatedApi {
   @Override
   public ResponseEntity<SystemStatus> serviceStatus() {
     SystemStatus currentStatus = statusService.getCurrentStatus();
+    System.out.println(currentStatus.toString());
     return new ResponseEntity<>(
         currentStatus, currentStatus.getOk() ? HttpStatus.valueOf(200) : HttpStatus.valueOf(500));
   }

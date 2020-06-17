@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.status;
 
 import bio.terra.workspace.app.configuration.DataRepoConfig;
+import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
 import bio.terra.workspace.common.utils.BaseStatusService;
 import bio.terra.workspace.common.utils.StatusSubsystem;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
@@ -11,19 +12,24 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.function.Supplier;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
 public class WorkspaceManagerStatusService extends BaseStatusService {
 
+  private final NamedParameterJdbcTemplate jdbcTemplate;
+
   @Autowired
   public WorkspaceManagerStatusService(
       DataRepoService dataRepoService,
       DataRepoConfig dataRepoConfig,
-      NamedParameterJdbcTemplate jdbcTemplate,
-      SamService samService) {
-
+      WorkspaceManagerJdbcConfiguration jdbcConfiguration,
+      SamService samService,
+      @Value("${status-check-staleness-threshold.in.milliseconds}") long staleThresholdMillis) {
+    super(staleThresholdMillis);
+    this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
     Supplier<SystemStatusSystems> dbHealthFn =
         () ->
             new SystemStatusSystems()
@@ -39,7 +45,8 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
           new StatusSubsystem(checkDataRepoInstanceFn, /*isCritical=*/ false));
     }
 
-    registerSubsystem("Sam", new StatusSubsystem(samService::status, /*isCritical=*/ true));
+    Supplier<SystemStatusSystems> samStatusFn = () -> samService.status();
+    registerSubsystem("Sam", new StatusSubsystem(samStatusFn, /*isCritical=*/ true));
   }
 
   private Boolean isConnectionValid(Connection connection) throws SQLException {

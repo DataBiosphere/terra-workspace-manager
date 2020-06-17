@@ -5,7 +5,6 @@ import bio.terra.workspace.generated.model.SystemStatusSystems;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 
 /*
@@ -23,14 +22,13 @@ public class BaseStatusService {
   private ConcurrentHashMap<String, StatusSubsystem> subsystems;
   private long lastUpdatedTimestampMillis;
   private SystemStatus currentStatus;
-
-  @Value("${status-check-staleness-threshold.in.milliseconds}")
   private long staleThresholdMillis;
 
-  public BaseStatusService() {
+  public BaseStatusService(long staleThresholdMillis) {
     subsystems = new ConcurrentHashMap<>();
     currentStatus = new SystemStatus().ok(false);
     lastUpdatedTimestampMillis = 0;
+    this.staleThresholdMillis = staleThresholdMillis;
   }
 
   protected void registerSubsystem(String name, StatusSubsystem subsystem) {
@@ -38,7 +36,7 @@ public class BaseStatusService {
   }
 
   @Scheduled(fixedDelayString = "${status-check-frequency.in.milliseconds}")
-  private void checkSubsystems() {
+  public void checkSubsystems() {
     // SystemStatus uses the thread-unsafe HashMap to hold SystemStatusSystems objects by default.
     // Instead of calling putSystemsItems from multiple threads, we safely construct a subsystem
     // status map here and then pass the complete map.
