@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.springframework.scheduling.annotation.Scheduled;
 
 /*
- BaseStatusService is the Java replacement for workbench-libs' HealthMonitor utilities. It checks
+ BaseStatusService is a Spring replacement for workbench-libs' HealthMonitor utilities. It checks
  status information from subsystems asynchronously at regular intervals and provides a cached
  version of the latest statuses to support a high-traffic status endpoint.
  It also tracks time since the last update and returns an unhealthy status if subsystems are not

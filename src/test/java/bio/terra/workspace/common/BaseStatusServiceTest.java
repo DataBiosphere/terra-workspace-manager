@@ -26,7 +26,7 @@ public class BaseStatusServiceTest {
 
   private class BaseStatusServiceTestImpl extends BaseStatusService {
     public BaseStatusServiceTestImpl(List<StatusSubsystem> subsystems) {
-      super(600000);
+      super(/*staleThresholdMillis=*/600000);
       for (int i = 0; i < subsystems.size(); i++) {
         registerSubsystem("subsystem" + i, subsystems.get(i));
       }
@@ -37,7 +37,7 @@ public class BaseStatusServiceTest {
   public void testSingleComponent() throws Exception {
     List<StatusSubsystem> subsystems = new ArrayList<>();
     subsystems.add(new StatusSubsystem(() -> new SystemStatusSystems().ok(true), true));
-    
+
     BaseStatusServiceTestImpl statusService = new BaseStatusServiceTestImpl(subsystems);
     statusService.checkSubsystems();
     assertTrue(statusService.getCurrentStatus().getOk());
