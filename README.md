@@ -6,9 +6,14 @@ To push versions of this repository to different environments (including
 per-developer integration environments), update the [terra-helmfile deployment definitions](https://github.com/broadinstitute/terra-helmfile/pull/13).
 
 ## OpenAPI V3 - formerly swagger
-A swagger-ui page is available at /swagger-ui.html on any running instance. 
-TODO: Once we have a stable and persistent dev instance, a link to its 
-swagger-ui page should go here.
+A swagger-ui page is available at /swagger-ui.html on any running instance. For existing instances, those are:
+
+- dev: https://workspace.dsde-dev.broadinstitute.org/swagger-ui.html
+- alpha: https://workspace.dsde-alpha.broadinstitute.org/swagger-ui.html
+- staging: https://workspace.dsde-staging.broadinstitute.org/swagger-ui.html
+- perf: https://workspace.dsde-perf.broadinstitute.org/swagger-ui.html
+
+We currently do not deploy to a production environment.
 
 ## Spring Boot
 We use Spring Boot as our framework for REST servers. The objective is to use a minimal set
