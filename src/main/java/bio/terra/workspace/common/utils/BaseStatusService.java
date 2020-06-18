@@ -46,7 +46,15 @@ public class BaseStatusService {
     subsystems.forEach(
         /*parallelismThreshold=*/ 1,
         (name, subsystem) -> {
-          SystemStatusSystems subsystemStatus = subsystem.getStatusCheckFn().get();
+          SystemStatusSystems subsystemStatus = null;
+          try {
+            subsystemStatus = subsystem.getStatusCheckFn().get();
+          } catch (Exception e) {
+            subsystemStatus =
+                new SystemStatusSystems()
+                    .ok(false)
+                    .addMessagesItem("Error checking status: " + e.getLocalizedMessage());
+          }
           tmpSubsystemStatusMap.put(name, subsystemStatus);
           if (subsystem.isCritical() && !subsystemStatus.getOk()) {
             systemOk.set(false);

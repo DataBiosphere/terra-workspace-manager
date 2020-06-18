@@ -9,6 +9,7 @@ import bio.terra.workspace.common.utils.StatusSubsystem;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,7 +27,7 @@ public class BaseStatusServiceTest {
 
   private class BaseStatusServiceTestImpl extends BaseStatusService {
     public BaseStatusServiceTestImpl(List<StatusSubsystem> subsystems) {
-      super(/*staleThresholdMillis=*/600000);
+      super(/*staleThresholdMillis=*/ 600000);
       for (int i = 0; i < subsystems.size(); i++) {
         registerSubsystem("subsystem" + i, subsystems.get(i));
       }
@@ -63,5 +64,33 @@ public class BaseStatusServiceTest {
     BaseStatusServiceTestImpl statusService = new BaseStatusServiceTestImpl(subsystems);
     statusService.checkSubsystems();
     assertFalse(statusService.getCurrentStatus().getOk());
+  }
+
+  @Test
+  public void testNotOkWithCriticalException() throws Exception {
+    List<StatusSubsystem> subsystems = new ArrayList<>();
+    Supplier<SystemStatusSystems> exceptionSupplier =
+        () -> {
+          throw new RuntimeException("oh no");
+        };
+    subsystems.add(new StatusSubsystem(exceptionSupplier, true));
+
+    BaseStatusServiceTestImpl statusService = new BaseStatusServiceTestImpl(subsystems);
+    statusService.checkSubsystems();
+    assertFalse(statusService.getCurrentStatus().getOk());
+  }
+
+  @Test
+  public void testOkWithNonCriticalException() throws Exception {
+    List<StatusSubsystem> subsystems = new ArrayList<>();
+    Supplier<SystemStatusSystems> exceptionSupplier =
+        () -> {
+          throw new RuntimeException("oh no");
+        };
+    subsystems.add(new StatusSubsystem(exceptionSupplier, false));
+
+    BaseStatusServiceTestImpl statusService = new BaseStatusServiceTestImpl(subsystems);
+    statusService.checkSubsystems();
+    assertTrue(statusService.getCurrentStatus().getOk());
   }
 }
