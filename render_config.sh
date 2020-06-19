@@ -16,7 +16,9 @@ if [[ ! "$TARGET_ENV" =~ ^(dev|alpha|perf|staging|prod)$ ]]; then
     exit 1
 fi
 
-SERVICE_ACCOUNT_CREDS=`docker run --rm -e VAULT_TOKEN=$VAULT_TOKEN broadinstitute/dsde-toolbox:latest \
+DSDE_TOOLBOX_DOCKER_IMAGE=broadinstitute/dsde-toolbox:consul-0.20.0
+
+SERVICE_ACCOUNT_CREDS=`docker run --rm -e VAULT_TOKEN=$VAULT_TOKEN ${DSDE_TOOLBOX_DOCKER_IMAGE} \
     vault read -format=json ${FIRECLOUD_ACCOUNT_VAULT_PATH} | \
     jq .data`
 
@@ -26,8 +28,6 @@ if [[ -z "$SERVICE_ACCOUNT_CREDS" ]]; then
 fi
 
 echo "$SERVICE_ACCOUNT_CREDS" > ${SERVICE_ACCOUNT_OUTPUT_FILE_PATH}
-
-DSDE_TOOLBOX_DOCKER_IMAGE=broadinstitute/dsde-toolbox:consul-0.20.0
 
 # render configs
 docker run -v $PWD:/${DOCKER_MOUNT_DIRECTORY} \
