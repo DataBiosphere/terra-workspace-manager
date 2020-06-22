@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class MdcLogEnhancerFilter implements Filter {
 
+  private Hashids hashids = new Hashids("requestIdSalt", 8);
+
   @Override
   public void doFilter(
       ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
@@ -34,7 +36,6 @@ public class MdcLogEnhancerFilter implements Filter {
   }
 
   private String generateRequestId() {
-    Hashids hashids = new Hashids("requestIdSalt", 8); // min length will be 8
     long generatedLong = ThreadLocalRandom.current().nextLong(0, Integer.MAX_VALUE);
 
     return hashids.encode(generatedLong);
