@@ -17,12 +17,19 @@ public class MdcLogEnhancerFilter implements Filter {
       throws IOException, ServletException {
     HttpServletRequest httpRequest = (HttpServletRequest) servletRequest;
 
-    String requestId =
-        ((requestId = httpRequest.getHeader("Request-Id")) != null)
-            ? requestId
-            : generateRequestId();
+    /* Services calling Workspace Manager can supply an X-Request-ID or X-Correlation-ID
+       HTTP header to trace requests through the system. X-Request-ID will be preferred over
+       X-Correlation-ID. If neither header is present, Workspace Manager will generate one.
+    */
 
-    MDC.put("requestId", requestId + " ");
+    String requestId =
+        ((requestId = httpRequest.getHeader("X-Request-ID")) != null)
+            ? requestId
+            : ((requestId = httpRequest.getHeader("X-Correlation-ID")) != null)
+                ? requestId
+                : generateRequestId();
+
+    MDC.put("requestId", requestId);
     filterChain.doFilter(servletRequest, servletResponse);
   }
 
