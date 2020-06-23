@@ -45,6 +45,7 @@ dependencies {
 	implementation(group: 'bio.terra', name: 'terra-workspace-manager-client', version: '0.0.2-SNAPSHOT')
 	implementation(group: 'io.vavr', name: 'vavr', version: '0.10.3')
 	implementation(group: 'com.google.auth', name: 'google-auth-library-oauth2-http', version: '0.20.0')
+	implementation(group: 'org.hashids', name: 'hashids', version: '1.0.3')
 
 	// -- OpenAPI CodeGen dependencies --
 	// TODO: this version of swagger-annotations is old, but the code gen is still relying on it
