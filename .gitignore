@@ -43,5 +43,4 @@ out/
 pom.xml
 
 ### Integration configs
-*account.json
-application-integration-test.properties
+src/test/resources/rendered/*
