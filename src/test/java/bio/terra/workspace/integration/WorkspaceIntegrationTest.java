@@ -8,6 +8,7 @@ import bio.terra.workspace.integration.common.utils.TestUtils;
 import bio.terra.workspace.integration.common.utils.WorkspaceManagerTestClient;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
+import bio.terra.workspace.model.DeleteWorkspaceRequestBody;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +46,7 @@ public class WorkspaceIntegrationTest {
     //  Let's reuse the code to-be-written there to clean up workspaces after creating them
     //  Clean up manually for now
     UUID workspaceId = UUID.randomUUID();
-    String path = testConfig.getWsmCreateWorkspaceUrl();
+    String path = testConfig.getWsmWorkspaceBaseUrl();
     String userEmail = testConfig.getServiceAccountEmail();
     String token = authService.getAuthToken(userEmail);
     CreateWorkspaceRequestBody body =
@@ -64,4 +65,35 @@ public class WorkspaceIntegrationTest {
     CreatedWorkspace createdWorkspace = workspaceResponse.getResponseObject();
     Assertions.assertEquals(workspaceId.toString(), createdWorkspace.getId());
   }
+
+  @Test
+  public void deleteWorkspace() throws Exception {
+    String userEmail = testConfig.getServiceAccountEmail();
+    String token = authService.getAuthToken(userEmail);
+    String path = testConfig.getWsmWorkspaceBaseUrl();
+    UUID workspaceId = UUID.randomUUID();
+
+    CreateWorkspaceRequestBody createWorkspaceRequestBody =
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .authToken(token)
+            .spendProfile(null)
+            .policies(null);
+    String createWorkspaceRequestJson = testUtils.mapToJson(createWorkspaceRequestBody);
+
+    WorkspaceResponse<CreatedWorkspace> createWorkspaceResponse =
+        workspaceManagerTestClient.post(
+            userEmail, path, createWorkspaceRequestJson, CreatedWorkspace.class);
+
+    // todo: create ticket to implement caching for token
+    path = testConfig.getWsmWorkspaceBaseUrl() + "/" + workspaceId;
+    DeleteWorkspaceRequestBody body = new DeleteWorkspaceRequestBody().authToken(token);
+    String deleteWorkspaceRequestJson = testUtils.mapToJson(body);
+
+    WorkspaceResponse<?> deleteWorkspaceResponse =
+        workspaceManagerTestClient.delete(userEmail, path, deleteWorkspaceRequestJson);
+
+    Assertions.assertEquals(deleteWorkspaceResponse.getStatusCode(), HttpStatus.NO_CONTENT);
+  }
+
 }

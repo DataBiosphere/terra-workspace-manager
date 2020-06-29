@@ -9,16 +9,16 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "it")
 public class TestConfiguration {
 
-  private String wsmCreateWorkspaceUrl;
+  private String wsmWorkspaceBaseUrl;
   private String serviceAccountEmail;
   private String serviceAccountFilePath;
 
-  public String getWsmCreateWorkspaceUrl() {
-    return wsmCreateWorkspaceUrl;
+  public String getWsmWorkspaceBaseUrl() {
+    return wsmWorkspaceBaseUrl;
   }
 
-  public void setWsmCreateWorkspaceUrl(String wsmCreateWorkspaceUrl) {
-    this.wsmCreateWorkspaceUrl = wsmCreateWorkspaceUrl;
+  public void setWsmWorkspaceBaseUrl(String wsmWorkspaceBaseUrl) {
+    this.wsmWorkspaceBaseUrl = wsmWorkspaceBaseUrl;
   }
 
   public String getServiceAccountEmail() {

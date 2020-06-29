@@ -1,11 +1,10 @@
-{{- with $host := (( "http://34.68.70.164" )) -}}
-{{- with $wsmBaseUrl := (( printf "%s/dev-terra-workspace-manager" $host )) -}}
-{{- with $wsmCreateWorkspaceUrl := (( printf "%s/api/workspaces/v1" $wsmBaseUrl )) -}}
+{{- with $host := (( "https://workspace.dsde-dev.broadinstitute.org" )) -}}
+{{- with $wsmWorkspaceBaseUrl := (( printf "%s/api/workspaces/v1" $host )) -}}
 {{- with $serviceAccountEmail := (( "william.thunderlord@test.firecloud.org" )) -}}
 {{- with $serviceAccountFilePath := env "SERVICE_ACCOUNT_FILE_PATH" -}}
 
-it.wsmCreateWorkspaceUrl={{$wsmCreateWorkspaceUrl}}
+it.wsmWorkspaceBaseUrl={{$wsmWorkspaceBaseUrl}}
 it.serviceAccountEmail={{$serviceAccountEmail}}
 it.serviceAccountFilePath={{$serviceAccountFilePath}}
 
-{{end}}{{end}}{{end}}{{end}}{{end}}
+{{end}}{{end}}{{end}}{{end}}
