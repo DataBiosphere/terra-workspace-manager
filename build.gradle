@@ -13,6 +13,7 @@ plugins {
 	id 'org.openapi.generator' version '4.3.1'
 	id 'com.diffplug.gradle.spotless' version '4.0.1'
 	id "com.github.ben-manes.versions" version '0.28.0'
+	id 'com.palantir.git-version' version '0.12.3'
 }
 
 group = 'bio.terra.workspace'
@@ -59,6 +60,12 @@ dependencies {
 	}
 
 	annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+}
+
+task setGitVersion(type: WriteProperties) {
+	outputFile = file('src/main/resources/generated/version.properties')
+	property('git.hash', versionDetails().gitHash)
+	property('git.tag', gitVersion())
 }
 
 // for scans
@@ -109,6 +116,7 @@ openApiValidate {
 // Note: Spotless deletes the classes OpenApi generates.
 // The order needs to be spotlessApply -> openApiGenerate -> build/test/run
 tasks.openApiGenerate.dependsOn tasks.spotlessApply
+compileJava.dependsOn tasks.setGitVersion
 compileJava.dependsOn tasks.openApiGenerate
 sourceSets.main.java.srcDir "${openapiTargetDir}/src/main/java"
 ideaModule.dependsOn tasks.openApiGenerate
