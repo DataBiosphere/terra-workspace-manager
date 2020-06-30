@@ -14,13 +14,20 @@ import org.springframework.stereotype.Controller;
 public class UnauthenticatedApiController implements UnauthenticatedApi {
 
   private WorkspaceManagerStatusService statusService;
-  private VersionConfiguration versionConfiguration;
+  private SystemVersion currentVersion;
 
   @Autowired
   public UnauthenticatedApiController(
       WorkspaceManagerStatusService statusService, VersionConfiguration versionConfiguration) {
     this.statusService = statusService;
-    this.versionConfiguration = versionConfiguration;
+
+    this.currentVersion =
+        new SystemVersion()
+            .tag(versionConfiguration.getTag())
+            .hash(versionConfiguration.getHash())
+            .github(
+                "https://github.com/DataBiosphere/terra-workspace-manager/commit/"
+                    + versionConfiguration.getHash());
   }
 
   @Override
@@ -32,13 +39,6 @@ public class UnauthenticatedApiController implements UnauthenticatedApi {
 
   @Override
   public ResponseEntity<SystemVersion> serviceVersion() {
-    SystemVersion currentVersion =
-        new SystemVersion()
-            .tag(versionConfiguration.getTag())
-            .hash(versionConfiguration.getHash())
-            .github(
-                "https://github.com/DataBiosphere/terra-workspace-manager/commit/"
-                    + versionConfiguration.getHash());
     return new ResponseEntity<>(currentVersion, HttpStatus.valueOf(200));
   }
 }
