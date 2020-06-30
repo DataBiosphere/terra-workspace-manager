@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 public class TestConfiguration {
 
   @Value("${TEST_ENV:dev}")
-  private String TEST_ENV;
+  private String testEnv;
 
   private HashMap<String, String> wsmUrls;
   private HashMap<String, String> wsmEndpoints;
@@ -28,7 +28,7 @@ public class TestConfiguration {
   }
 
   public String getWsmCreateWorkspaceUrl() {
-    return this.wsmUrls.get(TEST_ENV) + this.wsmEndpoints.get("createWorkspace");
+    return this.wsmUrls.get(testEnv) + this.wsmEndpoints.get("createWorkspace");
   }
 
   public String getServiceAccountEmail() {
