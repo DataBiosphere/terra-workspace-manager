@@ -67,4 +67,6 @@ jobs:
           PGPASSWORD: postgres
         run: psql -h 127.0.0.1 -U postgres -f ./local-dev/local-postgres-init.sql
       - name: Run integration tests
+        env:
+          TEST_ENV: dev
         run: ./gradlew integrationTest --scan

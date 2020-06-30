@@ -1,6 +1,7 @@
 package bio.terra.workspace.integration.common.configuration;
 
 import java.util.HashMap;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +10,9 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "it")
 public class TestConfiguration {
+
+  @Value("${TEST_ENV:dev}")
+  private String TEST_ENV;
 
   private HashMap<String, String> wsmUrls;
   private HashMap<String, String> wsmEndpoints;
@@ -24,7 +28,7 @@ public class TestConfiguration {
   }
 
   public String getWsmCreateWorkspaceUrl() {
-    return this.wsmUrls.get("dev") + this.wsmEndpoints.get("createWorkspace");
+    return this.wsmUrls.get(TEST_ENV) + this.wsmEndpoints.get("createWorkspace");
   }
 
   public String getServiceAccountEmail() {
