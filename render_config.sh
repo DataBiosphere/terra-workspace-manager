@@ -13,13 +13,9 @@ fi
 
 DSDE_TOOLBOX_DOCKER_IMAGE=broadinstitute/dsde-toolbox:consul-0.20.0
 
-if type vault > /dev/null; then
-  SERVICE_ACCOUNT_CREDS=$(VAULT_ADDR="https://clotho.broadinstitute.org:8200" VAULT_TOKEN=$VAULT_TOKEN vault read -format=json ${FIRECLOUD_ACCOUNT_VAULT_PATH} | jq .data)
-else
-  SERVICE_ACCOUNT_CREDS=`docker run --rm -e VAULT_TOKEN=$VAULT_TOKEN ${DSDE_TOOLBOX_DOCKER_IMAGE} \
-      vault read -format=json ${FIRECLOUD_ACCOUNT_VAULT_PATH} | \
-      jq .data`
-fi
+SERVICE_ACCOUNT_CREDS=`docker run --rm -e VAULT_TOKEN=$VAULT_TOKEN ${DSDE_TOOLBOX_DOCKER_IMAGE} \
+    vault read -format=json ${FIRECLOUD_ACCOUNT_VAULT_PATH} | \
+    jq .data`
 
 if [[ -z "$SERVICE_ACCOUNT_CREDS" ]]; then
     printf "\033[0;31m Could not fetch service account creds. Check your vault token. \n\033[0m"

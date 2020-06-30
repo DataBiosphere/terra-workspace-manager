@@ -41,6 +41,3 @@ out/
 ### OpenAPI CodeGen detritus
 .openapi-generator/
 pom.xml
-
-### Integration configs
-src/test/resources/rendered/*
