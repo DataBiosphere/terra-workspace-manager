@@ -11,7 +11,7 @@ public class ApiResourceConfig implements WebMvcConfigurer {
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
     registry
         .addResourceHandler("/swagger-webjar/**")
-        .addResourceLocations("classpath:/META-INF/resources/webjars/swagger-ui/3.25.4/");
+        .addResourceLocations("classpath:/META-INF/resources/webjars/swagger-ui/3.28.0/");
     registry.addResourceHandler("/**").addResourceLocations("classpath:/api/");
   }
 }

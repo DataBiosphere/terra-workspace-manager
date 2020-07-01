@@ -1,7 +1,9 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.app.configuration.VersionConfiguration;
 import bio.terra.workspace.generated.controller.UnauthenticatedApi;
 import bio.terra.workspace.generated.model.SystemStatus;
+import bio.terra.workspace.generated.model.SystemVersion;
 import bio.terra.workspace.service.status.WorkspaceManagerStatusService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -12,10 +14,20 @@ import org.springframework.stereotype.Controller;
 public class UnauthenticatedApiController implements UnauthenticatedApi {
 
   private WorkspaceManagerStatusService statusService;
+  private SystemVersion currentVersion;
 
   @Autowired
-  public UnauthenticatedApiController(WorkspaceManagerStatusService statusService) {
+  public UnauthenticatedApiController(
+      WorkspaceManagerStatusService statusService, VersionConfiguration versionConfiguration) {
     this.statusService = statusService;
+
+    this.currentVersion =
+        new SystemVersion()
+            .tag(versionConfiguration.getTag())
+            .hash(versionConfiguration.getHash())
+            .github(
+                "https://github.com/DataBiosphere/terra-workspace-manager/commit/"
+                    + versionConfiguration.getHash());
   }
 
   @Override
@@ -23,5 +35,10 @@ public class UnauthenticatedApiController implements UnauthenticatedApi {
     SystemStatus currentStatus = statusService.getCurrentStatus();
     return new ResponseEntity<>(
         currentStatus, currentStatus.getOk() ? HttpStatus.valueOf(200) : HttpStatus.valueOf(500));
+  }
+
+  @Override
+  public ResponseEntity<SystemVersion> serviceVersion() {
+    return new ResponseEntity<>(currentVersion, HttpStatus.valueOf(200));
   }
 }

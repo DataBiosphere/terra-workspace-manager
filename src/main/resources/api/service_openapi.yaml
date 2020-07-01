@@ -23,6 +23,15 @@ paths:
         500:
           description: Service is broken
           $ref: '#/components/responses/StatusResponse'
+  '/version':
+    get:
+      description: Returns the deployed version of the service.
+      operationId: serviceVersion
+      tags:
+      - unauthenticated
+      responses:
+        200:
+          $ref: '#/components/responses/VersionResponse'
 
   '/api/workspaces/v1':
     post:
@@ -365,6 +374,18 @@ components:
                 type: array
                 items:
                   type: string
+    SystemVersion:
+      type: object
+      properties:
+        tag:
+          type: string
+          description: Git tag of currently deployed app.
+        hash:
+          type: string
+          description: Git hash of currently deployed app.
+        github:
+          type: string
+          description: Github link to currently deployed commit.
     CreateWorkspaceRequestBody:
       type: object
       properties:
@@ -536,6 +557,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/SystemStatus'
+
+    VersionResponse:
+      description: System version response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SystemVersion'
 
     CreateResponse:
       description: Response to Create calls
