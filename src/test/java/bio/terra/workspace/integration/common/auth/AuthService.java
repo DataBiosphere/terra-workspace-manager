@@ -25,7 +25,7 @@ public class AuthService {
   }
 
   public String getAuthToken(String userEmail) throws IOException {
-    // todo: revisit the need for a cache and implement Caffeine as needed
+    // TODO: Implement caching for auth token using Caffeine AS-428
     return getAccessToken(userEmail);
   }
 

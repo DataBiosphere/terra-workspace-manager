@@ -27,8 +27,8 @@ public class TestConfiguration {
     this.wsmUrls = wsmUrls;
   }
 
-  public String getWsmCreateWorkspaceUrl() {
-    return this.wsmUrls.get(testEnv) + this.wsmEndpoints.get("createWorkspace");
+  public String getWsmWorkspacesBaseUrl() {
+    return this.wsmUrls.get(testEnv) + this.wsmEndpoints.get("workspaces");
   }
 
   public String getServiceAccountEmail() {
