@@ -9,8 +9,8 @@ import bio.terra.workspace.integration.common.utils.WorkspaceManagerTestClient;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.DeleteWorkspaceRequestBody;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -36,18 +36,19 @@ public class WorkspaceIntegrationTest {
   @Autowired private TestUtils testUtils;
   @Autowired private TestConfiguration testConfig;
   @Autowired private AuthService authService;
-  private final String TAG_NEEDS_CLEANUP = "needs-cleanup";
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceIntegrationTest.class);
+  private final ConcurrentHashMap<String, List<UUID>> testToWorkspaceIdsMap =
+      new ConcurrentHashMap<>();
 
-  // Variable for workspace Id's to clean up in tearDown(TestInfo testInfo) method, after
-  // running applicable test method(s)
-  private UUID workspaceIdToCleanup;
+  // TODO: Create custom annotations for this tag, and also for the "integration" and "unit" tags in
+  //  this test and elsewhere. AS-431.
+  private final String TAG_NEEDS_CLEANUP = "needs-cleanup";
 
   @BeforeEach
   public void setup() {}
 
   /*
-   * TODO: Cloud Recourse Library (CRL) is planning to broadly address resource cleanup for integration tests in MC Terra
+   * TODO: Cloud Resource Library (CRL) is planning to broadly address resource cleanup for integration tests in MC Terra
    *  applications.
    *  The doc below proposes a "Resource Tracking" approach for cleaning up. We should follow the developments in CRL for
    *  potential utilization here in Workspace Manager.
@@ -57,15 +58,17 @@ public class WorkspaceIntegrationTest {
   public void tearDown(TestInfo testInfo) throws Exception {
     Set<String> tags = testInfo.getTags();
     if (tags != null && tags.contains(TAG_NEEDS_CLEANUP)) {
-      cleanUpWorkspace();
+      String testName = testInfo.getDisplayName();
+      cleanUpWorkspaces(testToWorkspaceIdsMap.get(testName));
     }
   }
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void createWorkspace() throws Exception {
+  public void createWorkspace(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
-    workspaceIdToCleanup = workspaceId;
+    testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
+
     WorkspaceResponse<CreatedWorkspace> workspaceResponse = createDefaultWorkspace(workspaceId);
 
     Assertions.assertEquals(workspaceResponse.getStatusCode(), HttpStatus.OK);
@@ -93,9 +96,9 @@ public class WorkspaceIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void deleteWorkspaceWithInvalidToken() throws Exception {
+  public void deleteWorkspaceWithInvalidToken(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
-    workspaceIdToCleanup = workspaceId;
+    testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
     WorkspaceResponse<CreatedWorkspace> workspaceResponse = createDefaultWorkspace(workspaceId);
 
     String userEmail = testConfig.getServiceAccountEmail();
@@ -127,26 +130,34 @@ public class WorkspaceIntegrationTest {
     return workspaceManagerTestClient.post(userEmail, path, jsonBody, CreatedWorkspace.class);
   }
 
-  private void cleanUpWorkspace() throws Exception {
+  private void cleanUpWorkspaces(List<UUID> workspaceIds) throws Exception {
+    /* TODO: Currently fetching token once here before cleaning up (potentially multiple workspaceIds) for each test
+        method. Is it likely that a token will expire mid-cleanup (i.e. works for one delete, but expires before
+        the next one)? In any case, caching the auth token will enable us to efficiently auth before EACH delete request.
+        This ticket will implement caching for auth token using Caffeine AS-428
+    */
     String userEmail = testConfig.getServiceAccountEmail();
     String token = authService.getAuthToken(userEmail);
-    String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceIdToCleanup;
+    String workspaceBaseUrl = testConfig.getWsmWorkspacesBaseUrl();
     DeleteWorkspaceRequestBody body = new DeleteWorkspaceRequestBody().authToken(token);
     String jsonBody = testUtils.mapToJson(body);
 
-    WorkspaceResponse<?> deleteWorkspaceResponse =
-        workspaceManagerTestClient.delete(userEmail, path, jsonBody);
+    for (UUID uuid : workspaceIds) {
+      String path = workspaceBaseUrl + "/" + uuid;
 
-    /*
-      TODO: If the delete call fails for some reason, we won't 'assert' as this is not a test. We
-       log a warning (can log an error instead) to indicate the cleanup step failure. Can we somehow indicate this
-       failure within GitHub workflow, BUT not actually fail the build? That way, we can easily see what builds (if any)
-       have failed cleanup steps, and potentially take manual action. Note that this all may not be needed if/when
-       we use Janitor Service or something similar that's proposed for MC Terra applications.
-    */
-    if (deleteWorkspaceResponse.getStatusCode() != HttpStatus.NO_CONTENT) {
-      logger.warn(
-          "Clean up failed for workspace={} path={}", workspaceIdToCleanup.toString(), path);
+      WorkspaceResponse<?> deleteWorkspaceResponse =
+          workspaceManagerTestClient.delete(userEmail, path, jsonBody);
+
+      /*
+        TODO: If the delete call fails for some reason, we won't 'assert' as this is not a test. We
+         log a warning (can log an error instead) to indicate the cleanup step failure. Can we somehow indicate this
+         failure within GitHub workflow, BUT not actually fail the build? That way, we can easily see what builds (if any)
+         have failed cleanup steps, and potentially take manual action. Note that this all may not be needed if/when
+         we use Janitor Service or something similar that's proposed for MC Terra applications.
+      */
+      if (deleteWorkspaceResponse.getStatusCode() != HttpStatus.NO_CONTENT) {
+        logger.warn("Clean up failed for workspace={} path={}", uuid.toString(), path);
+      }
     }
   }
 }
