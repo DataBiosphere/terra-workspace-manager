@@ -139,9 +139,9 @@ within each service.
 There are sample tests for the ping service to illustrate two styles of unit testing.
 
 ## Deployment
-### On commit to master
-1. New commit is merged to master
-2. [The master_push workflow](https://github.com/DataBiosphere/terra-workspace-manager/blob/gm-deployment/.github/workflows/master_push.yml) is triggered. It builds the image, tags the image & commit, and pushes the image to GCR. It then sends a [dispatch](https://help.github.com/en/actions/reference/events-that-trigger-workflows#external-events-repository_dispatch) with the new version for the service to the [terra-helmfile repo](https://github.com/broadinstitute/terra-helmfile).
+### On commit to dev
+1. New commit is merged to dev
+2. [The dev_push workflow](https://github.com/DataBiosphere/terra-workspace-manager/blob/dev/.github/workflows/dev_push.yml) is triggered. It builds the image, tags the image & commit, and pushes the image to GCR. It then sends a [dispatch](https://help.github.com/en/actions/reference/events-that-trigger-workflows#external-events-repository_dispatch) with the new version for the service to the [terra-helmfile repo](https://github.com/broadinstitute/terra-helmfile).
 3. This updates the default [version mapping for the app in question](https://github.com/broadinstitute/terra-helmfile/blob/master/versions.yaml).
 4. [Our deployment of ArgoCD](https://ap-argocd.dsp-devops.broadinstitute.org/applications) monitors the above repo, and any environments in which the app is set to auto-sync will immediately pick up the new version of the image. If the app is not set to auto-sync in an environment, it can be manually synced via the ArgoCD UI or API.
 
