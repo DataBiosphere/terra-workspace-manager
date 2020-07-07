@@ -1,219 +1,189 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   title: Workspace Manager API
-  description: |
-    Workspace Manager REST API to manage workspaces.
+  description: Workspace Manager REST API to manage workspaces.
   version: 0.0.1
 
-servers:
-- url: /
-
 paths:
-  '/status':
+  # Unauthorized Paths
+  /status:
     get:
-      description: |
-        Returns the operational status of the service
+      summary: Returns the operational status of the service
       operationId: serviceStatus
-      tags:
-      - unauthenticated
+      tags: [Unauthenticated]
       responses:
-        200:
+        '200':
           description: Service is functional
-          $ref: '#/components/responses/StatusResponse'
-        500:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStatus'
+        '500':
           description: Service is broken
-          $ref: '#/components/responses/StatusResponse'
-  '/version':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStatus'
+  /version:
     get:
-      description: Returns the deployed version of the service.
+      summary: Returns the deployed version of the service
       operationId: serviceVersion
-      tags:
-      - unauthenticated
+      tags: [Unauthenticated]
       responses:
-        200:
+        '200':
           $ref: '#/components/responses/VersionResponse'
 
-  '/api/workspaces/v1':
+  # Workspace paths
+  /api/workspaces/v1:
     post:
-      description: |
-        Create a new Workspace. This should only be called by Folder Manager.
+      summary: Create a new Workspace. This should only be called by Folder Manager.
       operationId: createWorkspace
-      tags:
-      - workspace
+      tags: [Workspace]
       requestBody:
-        description: |
-          Auth token, spend profile, and policy information from
-          Folder Manager, as well as async job information.
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateWorkspaceRequestBody'
       responses:
-        200:
-          description: Ok
-          $ref: '#/components/responses/CreateResponse'
-        400:
-          description: Bad request - invalid id, badly formed
-          $ref: '#/components/responses/ErrorResponse'
-        401:
-          description: Permission denied
-          $ref: '#/components/responses/ErrorResponse'
-        500:
-          description: Creation request error
-          $ref: '#/components/responses/ErrorResponse'
-  '/api/workspaces/v1/{id}':
+        '200':
+          $ref: '#/components/responses/CreatedWorkspaceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/NotFound'
+
+  /api/workspaces/v1/{id}:
     parameters:
     - $ref: '#/components/parameters/Id'
     get:
-      description: |
-        Get an existing Workspace.
+      summary: Get an existing Workspace.
       operationId: getWorkspace
-      tags:
-        - workspace
+      tags: [Workspace]
       responses:
-        200:
+        '200':
           description: OK
-          $ref: '#/components/responses/GetResponse'
-        500:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceDescription'
+        '500':
           description: Get request error
-          $ref: '#/components/responses/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorReport'
     delete:
-      description: |
-        Delete a Workspace. This should only be called by the Folder Manager.
+      summary: Delete a Workspace. This should only be called by the Folder Manager.
       operationId: deleteWorkspace
-      tags:
-      - workspace
+      tags: [Workspace]
       requestBody:
-        description: |
-          Auth token of user requesting the delete.
+        required: true
+        description: Auth token of user requesting the delete.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/DeleteWorkspaceRequestBody'
       responses:
-        204:
+        '204':
           description: Success
-        400:
-          description: Bad Request
-          $ref: '#/components/responses/ErrorResponse'
-        401:
-          description: Unauthorized or not found
-          $ref: '#/components/responses/ErrorResponse'
-        500:
-          description: Server Error
-          $ref: '#/components/responses/ErrorResponse'
-  '/api/workspaces/v1/{id}/datareferences':
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{id}/datareferences:
     parameters:
       - $ref: '#/components/parameters/Id'
     post:
-      description: |
-        Create a new data reference in a workspace.
+      summary: Create a new data reference in a workspace.
       operationId: createDataReference
-      tags:
-        - workspace
+      tags: [Workspace]
       requestBody:
-        description: |
-          Stuff TBD
+        required: true
+        description: Stuff TBD
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateDataReferenceRequestBody'
       responses:
-        200:
-          description: OK
+        '200':
           $ref: '#/components/responses/DataReferenceResponse'
-        400:
-          description: Bad request
-          $ref: '#/components/responses/ErrorResponse'
-        403:
-          description: Permission denied
-          $ref: '#/components/responses/ErrorResponse'
-        500:
-          description: Creation request error
-          $ref: '#/components/responses/ErrorResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
     get:
-      description: |
-        Enumerate the data references in a workspace.
+      summary: Enumerate the data references in a workspace.
       operationId: enumerateReferences
-      tags:
-      - workspace
+      tags: [Workspace]
       parameters:
       - $ref: '#/components/parameters/Offset'
       - $ref: '#/components/parameters/Limit'
       responses:
-        200:
-          description: OK
+        '200':
           $ref: '#/components/responses/ReferenceListResponse'
-        400:
-          description: Error in request
-          $ref: '#/components/responses/ErrorResponse'
-        401:
-          description: Unauthorized access
-          $ref: '#/components/responses/ErrorResponse'
-        500:
-          description: Server Error
-          $ref: '#/components/responses/ErrorResponse'
-  '/api/workspaces/v1/{id}/datareferences/{referenceId}':
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{id}/datareferences/{referenceId}:
     parameters:
       - $ref: '#/components/parameters/Id'
       - $ref: '#/components/parameters/ReferenceId'
     get:
-      description: |
-        Gets a data reference from a workspace.
+      summary: Gets a data reference from a workspace.
       operationId: getDataReference
-      tags:
-        - workspace
+      tags: [Workspace]
       responses:
-        200:
-          description: OK
+        '200':
           $ref: '#/components/responses/DataReferenceResponse'
-        500:
-          description: Creation request error
-          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
     delete:
-      description: |
-        Deletes a data reference from a workspace.
+      summary: Deletes a data reference from a workspace.
       operationId: deleteDataReference
-      tags:
-        - workspace
+      tags: [Workspace]
       responses:
-        204:
-          description: No Content
-        403:
-          description: No permission to delete
-          $ref: '#/components/responses/ErrorResponse'
-        500:
-          description: Delete request error
-          $ref: '#/components/responses/ErrorResponse'
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
-  '/api/workspaces/v1/{id}/datareferences/{referenceType}/{name}':
+  /api/workspaces/v1/{id}/datareferences/{referenceType}/{name}:
     parameters:
       - $ref: '#/components/parameters/Id'
       - $ref: '#/components/parameters/ReferenceType'
       - $ref: '#/components/parameters/Name'
     get:
-      description: |
-        Gets a data reference from a workspace by name and type.
+      summary: Gets a data reference from a workspace by name and type.
       operationId: getDataReferenceByName
-      tags:
-        - workspace
+      tags: [Workspace]
       responses:
-        200:
-          description: OK
+        '200':
           $ref: '#/components/responses/DataReferenceResponse'
-        500:
-          description: Creation request error
-          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
+  # Job paths
   '/api/jobs/v1/{id}':
     parameters:
     - $ref: '#/components/parameters/Id'
     get:
-      description: |
-        Poll the status of an existing async operation via job ID.
+      description: Poll the status of an existing async operation via job ID.
       operationId: pollAsyncJob
-      tags:
-      - workspace
+      tags: [Workspace]
       responses:
         202:
           description: Async job is incomplete
@@ -222,8 +192,7 @@ paths:
           description: Async job is complete
           $ref: '#/components/responses/JobModelResponse'
         400:
-          description: Bad request - invalid id, badly formed
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/BadRequest'
         403:
           description: No permission to see job
           $ref: '#/components/responses/ErrorResponse'
@@ -233,8 +202,7 @@ paths:
     delete:  ## delete job data
       description: Delete the job and data associated with it
       operationId: deleteJob
-      tags:
-      - workspace
+      tags: [Workspace]
       responses:
         204:
           description: Job was deleted
@@ -242,11 +210,9 @@ paths:
     parameters:
     - $ref: '#/components/parameters/Id'
     get:
-      description: |
-        Retrieve the results of a completed async job specified by ID.
+      description: Retrieve the results of a completed async job specified by ID.
       operationId: retrieveJobResult
-      tags:
-      - workspace
+      tags: [Workspace]
       responses:
         default:
           description: Successful responses return the type of object specified by the job; otherwise, ErrorModel
@@ -254,11 +220,8 @@ paths:
             application/json:
               schema:
                 type: object
+
 components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
   parameters:
     Id:
       name: id
@@ -267,6 +230,8 @@ components:
       required: true
       schema:
         type: string
+        # format: uuid
+
     Offset:
       name: offset
       in: query
@@ -274,6 +239,7 @@ components:
       schema:
         type: integer
         default: 0
+
     Limit:
       name: limit
       in: query
@@ -281,6 +247,7 @@ components:
       schema:
         type: integer
         default: 10
+
     ReferenceId:
         name: referenceId
         in: path
@@ -288,6 +255,8 @@ components:
         required: true
         schema:
           type: string
+          # format: uuid
+
     ReferenceType:
       name: referenceType
       in: path
@@ -295,6 +264,7 @@ components:
       required: true
       schema:
         type: string
+
     Name:
       name: name
       in: path
@@ -302,6 +272,7 @@ components:
       required: true
       schema:
         type: string
+
   schemas:
     ErrorReport:
       type: object
@@ -314,6 +285,7 @@ components:
           type: array
           items:
             type: string
+
     JobControl:
       type: object
       required:
@@ -331,6 +303,7 @@ components:
               type: string
             topicid:
               type: string
+
     JobModel:
       type: object
       required:
@@ -357,6 +330,7 @@ components:
           type: string
         estimatedRemainingTimeMS:
           type: integer
+
     SystemStatus:
       type: object
       properties:
@@ -374,6 +348,7 @@ components:
                 type: array
                 items:
                   type: string
+
     SystemVersion:
       type: object
       properties:
@@ -386,8 +361,10 @@ components:
         github:
           type: string
           description: Github link to currently deployed commit.
+
     CreateWorkspaceRequestBody:
       type: object
+      required: [id, authToken]
       properties:
         id:
           description: The ID of the workspace
@@ -408,18 +385,23 @@ components:
           items:
             type: string
             format: uuid
+
     CreatedWorkspace:
       type: object
       properties:
         id:
-          type: string
           description: UUID of a newly-created workspace
+          type: string
+          # format: uuid
+
     DeleteWorkspaceRequestBody:
       type: object
+      required: [authToken]
       properties:
         authToken:
           description: Requesting user's auth token
           type: string
+
     WorkspaceDescription:
       type: object
       properties:
@@ -432,8 +414,10 @@ components:
           type: string
           nullable: true
           format: uuid
+
     CreateDataReferenceRequestBody:
       type: object
+      required: [name, cloningInstructions]
       properties:
         name:
           description: The name of the data reference
@@ -458,6 +442,7 @@ components:
           description: The IDs of the credentials to use with this resource
           type: string
           nullable: true
+
     DataReferenceDescription:
       type: object
       properties:
@@ -499,6 +484,7 @@ components:
           description: Instructions for copying this reference when cloning the workspace
           type: string
           enum: ["COPY_NOTHING", "COPY_DEFINITION", "COPY_RESOURCE", "COPY_REFERENCE"]
+
     ResourceDescription:
       type: object
       properties:
@@ -525,6 +511,7 @@ components:
           description: JSON map of user-provided attributes
           type: string
           nullable: true
+
     DataReferenceList:
       type: object
       properties:
@@ -533,6 +520,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DataReferenceDescription'
+
     DataRepoSnapshot:
       type: object
       properties:
@@ -544,20 +532,6 @@ components:
             type: string
 
   responses:
-    ErrorResponse:
-      description: common error response
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorReport'
-
-    StatusResponse:
-      description: common status response
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/SystemStatus'
-
     VersionResponse:
       description: System version response
       content:
@@ -565,19 +539,12 @@ components:
           schema:
             $ref: '#/components/schemas/SystemVersion'
 
-    CreateResponse:
-      description: Response to Create calls
+    CreatedWorkspaceResponse:
+      description: Response to createWorkspace calls
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CreatedWorkspace'
-
-    GetResponse:
-      description: Response to Get calls
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/WorkspaceDescription'
 
     DataReferenceResponse:
       description: Response to getDataReference calls
@@ -599,5 +566,50 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/DataReferenceList'
+
+    # Error Responses
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorReport'
+    PermissionDenied:
+      description: Permission denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorReport'
+    NotFound:
+      description: Not found (or unauthorized)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorReport'
+    ServerError:
+      description: Server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorReport'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    authorization:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://accounts.google.com/o/oauth2/auth
+          scopes:
+            openid: open id authorization
+            email: email authorization
+            profile: profile authorization
+
 security:
-- bearerAuth: []
+  - bearerAuth: []
+  - authorization:
+    - openid
+    - email
+    - profile
