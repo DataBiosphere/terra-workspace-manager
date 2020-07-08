@@ -5,9 +5,10 @@ info:
   version: 0.0.1
 
 paths:
-  # Unauthorized Paths
+  # Unauthenticated Paths
   /status:
     get:
+      security: []
       summary: Returns the operational status of the service
       operationId: serviceStatus
       tags: [Unauthenticated]
@@ -26,12 +27,17 @@ paths:
                 $ref: '#/components/schemas/SystemStatus'
   /version:
     get:
+      security: []
       summary: Returns the deployed version of the service
       operationId: serviceVersion
       tags: [Unauthenticated]
       responses:
         '200':
-          $ref: '#/components/responses/VersionResponse'
+          description: System version response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemVersion'
 
   # Workspace paths
   /api/workspaces/v1:
@@ -527,13 +533,6 @@ components:
           type: string
 
   responses:
-    VersionResponse:
-      description: System version response
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/SystemVersion'
-
     CreatedWorkspaceResponse:
       description: Response to createWorkspace calls
       content:
