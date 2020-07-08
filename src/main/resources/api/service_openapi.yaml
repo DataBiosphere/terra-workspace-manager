@@ -208,7 +208,7 @@ paths:
       operationId: deleteJob
       tags: [Workspace]
       responses:
-        204:
+        '204':
           description: Job was deleted
   /api/jobs/v1/{id}/result:
     parameters:
