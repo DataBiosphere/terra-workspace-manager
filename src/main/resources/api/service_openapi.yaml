@@ -177,7 +177,7 @@ paths:
           $ref: '#/components/responses/ServerError'
 
   # Job paths
-  '/api/jobs/v1/{id}':
+  /api/jobs/v1/{id}:
     parameters:
     - $ref: '#/components/parameters/Id'
     get:
@@ -185,20 +185,24 @@ paths:
       operationId: pollAsyncJob
       tags: [Workspace]
       responses:
-        202:
+        '202':
           description: Async job is incomplete
-          $ref: '#/components/responses/JobModelResponse'
-        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobModel'
+        '200':
           description: Async job is complete
-          $ref: '#/components/responses/JobModelResponse'
-        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobModel'
+        '400':
           $ref: '#/components/responses/BadRequest'
-        403:
-          description: No permission to see job
-          $ref: '#/components/responses/ErrorResponse'
-        404:
-          description: Not found - job id does not exist
-          $ref: '#/components/responses/ErrorResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
     delete:  ## delete job data
       description: Delete the job and data associated with it
       operationId: deleteJob
@@ -206,7 +210,7 @@ paths:
       responses:
         204:
           description: Job was deleted
-  '/api/jobs/v1/{id}/result':
+  /api/jobs/v1/{id}/result:
     parameters:
     - $ref: '#/components/parameters/Id'
     get:
@@ -552,13 +556,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/DataReferenceDescription'
-
-    JobModelResponse:
-      description: Response with a JobModel
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/JobModel'
 
     ReferenceListResponse:
       description: Response to list resource calls
