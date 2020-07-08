@@ -152,5 +152,9 @@ spotless {
 	java {
 		googleJavaFormat()
 	}
+	format 'yaml', {
+		target '/src/main/resources/api/service_openapi.yaml'
+		prettier().config(['parser': 'yaml', 'printWidth': 100, 'singleQuote': true, 'trailingCommas': 'none'])
+	}
 }
 
