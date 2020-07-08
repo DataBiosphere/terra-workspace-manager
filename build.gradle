@@ -46,7 +46,6 @@ dependencies {
 	implementation group: 'org.webjars', name: 'swagger-ui', version: '3.28.0'
 	implementation group: 'bio.terra', name: 'terra-workspace-manager-client', version: '0.0.3-SNAPSHOT'
 	implementation group: 'org.hashids', name: 'hashids', version: '1.0.3'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
 	// -- OpenAPI CodeGen dependencies --
 	// TODO: this version of swagger-annotations is old, but the code gen is still relying on it

@@ -181,7 +181,7 @@ paths:
     parameters:
     - $ref: '#/components/parameters/Id'
     get:
-      description: Poll the status of an existing async operation via job ID.
+      summary: Poll the status of an existing async operation via job ID.
       operationId: pollAsyncJob
       tags: [Workspace]
       responses:
@@ -204,7 +204,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
     delete:  ## delete job data
-      description: Delete the job and data associated with it
+      summary: Delete the job and data associated with it
       operationId: deleteJob
       tags: [Workspace]
       responses:
@@ -214,7 +214,7 @@ paths:
     parameters:
     - $ref: '#/components/parameters/Id'
     get:
-      description: Retrieve the results of a completed async job specified by ID.
+      summary: Retrieve the results of a completed async job specified by ID.
       operationId: retrieveJobResult
       tags: [Workspace]
       responses:
