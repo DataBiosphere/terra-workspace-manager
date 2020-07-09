@@ -1,12 +1,12 @@
-<!-- HTML for static distribution bundle build -->
+<!-- Copied from the swagger-ui static file -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
     <title>Swagger UI</title>
-    <link rel="stylesheet" type="text/css" href="swagger-webjar/swagger-ui.css" >
-    <link rel="icon" type="image/png" href="swagger-webjar/favicon-32x32.png" sizes="32x32" />
-    <link rel="icon" type="image/png" href="swagger-webjar/favicon-16x16.png" sizes="16x16" />
+    <link rel="stylesheet" type="text/css" href="/webjars/swagger-ui/swagger-ui.css" >
+    <link rel="icon" type="image/png" href="/webjars/swagger-ui/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="/webjars/swagger-ui/favicon-16x16.png" sizes="16x16" />
     <style>
       html
       {
@@ -27,18 +27,51 @@
         margin:0;
         background: #fafafa;
       }
+
+       /* make the schema display full-width */
+      .swagger-ui .model-example .model-box {
+        display: block;
+      }
     </style>
   </head>
 
   <body>
     <div id="swagger-ui"></div>
 
-    <script src="swagger-webjar/swagger-ui-bundle.js"> </script>
-    <script src="swagger-webjar/swagger-ui-standalone-preset.js"> </script>
+    <script src="/webjars/swagger-ui/swagger-ui-bundle.js"> </script>
+    <script src="/webjars/swagger-ui/swagger-ui-standalone-preset.js"> </script>
     <script>
+    // since everything's application/json, the content-type dropdown just takes up space
+    // also, links are not useful, and we don't use markdown
+    const cleanupPlugin = function(system) {
+      return {
+        wrapComponents: {
+          responses: (Original) => {
+            return class extends system.React.Component {
+              render () {
+                return system.React.createElement(Original, this.props)
+              }
+
+              componentDidMount () {
+                document.querySelectorAll('section.response-controls, td.response-col_links')
+                .forEach(node => node.style.display = 'none')
+              }
+            }
+          }
+        },
+        components: {
+          Markdown: ({ source }) => {
+            return system.React.createElement('div', null, source);
+          },
+          contentType: ({ value, contentTypes }) => {
+            return system.React.createElement('div', null, value || contentTypes.first())
+          }
+        }
+      }
+    }
+
     window.onload = function() {
       // Begin Swagger UI call region
-
       const ui = SwaggerUIBundle({
         url: 'service_openapi.yaml',
         dom_id: '#swagger-ui',
@@ -48,14 +81,18 @@
           SwaggerUIStandalonePreset
         ],
         plugins: [
-          SwaggerUIBundle.plugins.DownloadUrl
+          SwaggerUIBundle.plugins.DownloadUrl,
+          cleanupPlugin
         ],
-        layout: "StandaloneLayout"
+        layout: 'StandaloneLayout',
+        defaultModelsExpandDepth: -1, // hide the huge list of schemas under the routes
+        defaultModelRendering: 'model', // schema has the descriptions, unlike the example value
+        defaultModelExpandDepth: 2, // affects the schema shown for a request or response
       })
       // End Swagger UI call region
 
       window.ui = ui
     }
-  </script>
+    </script>
   </body>
 </html>

@@ -42,9 +42,10 @@ dependencies {
 	implementation group: 'org.apache.commons', name: 'commons-pool2', version: '2.8.0'
 	implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.10'
 	implementation group: 'org.liquibase' , name: 'liquibase-core', version: '3.9.0'
-	implementation group: 'org.webjars', name: 'swagger-ui', version: '3.28.0' // if updating, change path in ApiResourceConfig.java
-	implementation(group: 'bio.terra', name: 'terra-workspace-manager-client', version: '0.0.3-SNAPSHOT')
-	implementation(group: 'org.hashids', name: 'hashids', version: '1.0.3')
+	implementation group: 'org.webjars', name: 'webjars-locator-core', version: '0.46'
+	implementation group: 'org.webjars', name: 'swagger-ui', version: '3.28.0'
+	implementation group: 'bio.terra', name: 'terra-workspace-manager-client', version: '0.0.3-SNAPSHOT'
+	implementation group: 'org.hashids', name: 'hashids', version: '1.0.3'
 
 	// -- OpenAPI CodeGen dependencies --
 	// TODO: this version of swagger-annotations is old, but the code gen is still relying on it
