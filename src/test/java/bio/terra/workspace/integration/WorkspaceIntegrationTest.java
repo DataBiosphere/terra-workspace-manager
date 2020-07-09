@@ -58,8 +58,13 @@ public class WorkspaceIntegrationTest {
   public void tearDown(TestInfo testInfo) throws Exception {
     Set<String> tags = testInfo.getTags();
     if (tags != null && tags.contains(TAG_NEEDS_CLEANUP)) {
-      String testName = testInfo.getDisplayName();
-      cleanUpWorkspaces(testToWorkspaceIdsMap.get(testName));
+      // String testName = testInfo.getDisplayName();
+      // cleanUpWorkspaces(testToWorkspaceIdsMap.get(testName));
+
+      List<UUID> uuidList = testToWorkspaceIdsMap.get(testInfo.getDisplayName());
+      if (uuidList != null) {
+        cleanUpWorkspaces(uuidList);
+      }
     }
   }
 
@@ -78,8 +83,10 @@ public class WorkspaceIntegrationTest {
   }
 
   @Test
-  public void deleteWorkspace() throws Exception {
+  @Tag(TAG_NEEDS_CLEANUP)
+  public void deleteWorkspace(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
+    testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
     WorkspaceResponse<CreatedWorkspace> workspaceResponse = createDefaultWorkspace(workspaceId);
 
     String userEmail = testConfig.getServiceAccountEmail();
@@ -91,7 +98,10 @@ public class WorkspaceIntegrationTest {
     WorkspaceResponse<?> deleteWorkspaceResponse =
         workspaceManagerTestClient.delete(userEmail, path, jsonBody);
 
-    Assertions.assertEquals(deleteWorkspaceResponse.getStatusCode(), HttpStatus.NO_CONTENT);
+    Assertions.assertEquals(HttpStatus.NO_CONTENT, deleteWorkspaceResponse.getStatusCode());
+
+    // remove from
+    testToWorkspaceIdsMap.remove(testInfo.getDisplayName());
   }
 
   @Test
