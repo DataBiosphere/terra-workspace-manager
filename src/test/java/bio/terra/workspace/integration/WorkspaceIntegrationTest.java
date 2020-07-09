@@ -58,9 +58,6 @@ public class WorkspaceIntegrationTest {
   public void tearDown(TestInfo testInfo) throws Exception {
     Set<String> tags = testInfo.getTags();
     if (tags != null && tags.contains(TAG_NEEDS_CLEANUP)) {
-      // String testName = testInfo.getDisplayName();
-      // cleanUpWorkspaces(testToWorkspaceIdsMap.get(testName));
-
       List<UUID> uuidList = testToWorkspaceIdsMap.get(testInfo.getDisplayName());
       if (uuidList != null) {
         cleanUpWorkspaces(uuidList);
@@ -76,7 +73,7 @@ public class WorkspaceIntegrationTest {
 
     WorkspaceResponse<CreatedWorkspace> workspaceResponse = createDefaultWorkspace(workspaceId);
 
-    Assertions.assertEquals(workspaceResponse.getStatusCode(), HttpStatus.OK);
+    Assertions.assertEquals(HttpStatus.OK, workspaceResponse.getStatusCode());
     Assertions.assertTrue(workspaceResponse.isResponseObject());
     CreatedWorkspace createdWorkspace = workspaceResponse.getResponseObject();
     Assertions.assertEquals(workspaceId.toString(), createdWorkspace.getId());
@@ -100,7 +97,15 @@ public class WorkspaceIntegrationTest {
 
     Assertions.assertEquals(HttpStatus.NO_CONTENT, deleteWorkspaceResponse.getStatusCode());
 
-    // remove from
+    /*
+     Remove the workspace id from the map, so cleanup process won't try to delete an already-deleted workspace.
+     The allows us to still clean up the workspace id in this test if the assertion above fails.
+
+     Note: The cleanup does the same thing as the deleteWorkspace request in this test (i.e. they both call the same
+     http endpoint with the same user, etc). So if the deleteWorkspace request in this test fails, there's a chance
+     that the cleanup may also fail. This may not apply to non-persistent failures such as temporary unavailability,
+     timeout, etc.
+    */
     testToWorkspaceIdsMap.remove(testInfo.getDisplayName());
   }
 
@@ -120,7 +125,7 @@ public class WorkspaceIntegrationTest {
     WorkspaceResponse<?> deleteWorkspaceResponse =
         workspaceManagerTestClient.delete(userEmail, path, jsonBody);
 
-    Assertions.assertEquals(deleteWorkspaceResponse.getStatusCode(), HttpStatus.UNAUTHORIZED);
+    Assertions.assertEquals(HttpStatus.UNAUTHORIZED, deleteWorkspaceResponse.getStatusCode());
     Assertions.assertTrue(deleteWorkspaceResponse.isErrorObject());
   }
 
