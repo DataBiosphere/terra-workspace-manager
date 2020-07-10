@@ -40,7 +40,13 @@ public class WorkspaceManagerTestClient {
     return sendRequest(path, HttpMethod.POST, entity, ErrorReport.class, responseClass);
   }
 
-  private HttpHeaders getHeaders(String userEmail) throws IOException, InterruptedException {
+  public <T> WorkspaceResponse<T> delete(String userEmail, String path, String json)
+      throws Exception {
+    HttpEntity<String> entity = new HttpEntity<>(json, getHeaders(userEmail));
+    return sendRequest(path, HttpMethod.DELETE, entity, ErrorReport.class, null);
+  }
+
+  private HttpHeaders getHeaders(String userEmail) throws IOException {
     HttpHeaders headersCopy = new HttpHeaders(headers);
     headersCopy.setBearerAuth(authService.getAuthToken(userEmail));
     return headersCopy;
