@@ -45,8 +45,8 @@ public class WorkspaceService {
                 body,
                 userReq)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
-    if (body.getSpendProfile().isPresent()) {
-      createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, body.getSpendProfile().get());
+    if (body.getSpendProfile() != null) {
+      createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, body.getSpendProfile());
     }
     return createJob.submitAndWait(CreatedWorkspace.class);
   }

@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -59,7 +58,7 @@ public class DataReferenceDaoTest {
     workspaceId = UUID.randomUUID();
     referenceId = UUID.randomUUID();
     name = UUID.randomUUID().toString();
-    referenceType = DataReferenceDescription.ReferenceTypeEnum.DATAREPOSNAPSHOT.getValue();
+    referenceType = DataReferenceDescription.ReferenceTypeEnum.DATAREPOSNAPSHOT.toString();
 
     DataRepoSnapshot drs = new DataRepoSnapshot();
     drs.setInstanceName(UUID.randomUUID().toString());
@@ -76,17 +75,17 @@ public class DataReferenceDaoTest {
 
   @Test
   public void verifyCreatedDataReferenceExists() {
-    workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
+    workspaceDao.createWorkspace(workspaceId, null);
 
     dataReferenceDao.createDataReference(
         referenceId,
         workspaceId,
         name,
-        JsonNullable.undefined(),
-        JsonNullable.of(credentialId),
+        null,
+        credentialId,
         cloningInstructions,
-        JsonNullable.of(referenceType),
-        JsonNullable.of(reference));
+        referenceType,
+        reference);
     DataReferenceDescription reference =
         dataReferenceDao.getDataReference(workspaceId, referenceId);
 
@@ -102,27 +101,27 @@ public class DataReferenceDaoTest {
               referenceId,
               UUID.randomUUID(), // non-existing workspace ID
               name,
-              JsonNullable.undefined(),
-              JsonNullable.of(credentialId),
+              null,
+              credentialId,
               cloningInstructions,
-              JsonNullable.of(referenceType),
-              JsonNullable.of(reference.toString()));
+              referenceType,
+              reference.toString());
         });
   }
 
   @Test
   public void verifyCreateDuplicateNameFails() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
+    workspaceDao.createWorkspace(workspaceId, null);
 
     dataReferenceDao.createDataReference(
         referenceId,
         workspaceId,
         name,
-        JsonNullable.undefined(),
-        JsonNullable.of(credentialId),
+        null,
+        credentialId,
         cloningInstructions,
-        JsonNullable.of(referenceType),
-        JsonNullable.of(reference));
+        referenceType,
+        reference);
 
     assertThrows(
         DuplicateDataReferenceException.class,
@@ -131,27 +130,27 @@ public class DataReferenceDaoTest {
               referenceId,
               workspaceId,
               name,
-              JsonNullable.undefined(),
-              JsonNullable.of(credentialId),
+              null,
+              credentialId,
               cloningInstructions,
-              JsonNullable.of(referenceType),
-              JsonNullable.of(reference));
+              referenceType,
+              reference);
         });
   }
 
   @Test
   public void verifyGetDataReferenceByName() {
-    workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
+    workspaceDao.createWorkspace(workspaceId, null);
 
     dataReferenceDao.createDataReference(
         referenceId,
         workspaceId,
         name,
-        JsonNullable.undefined(),
-        JsonNullable.of(credentialId),
+        null,
+        credentialId,
         cloningInstructions,
-        JsonNullable.of(referenceType),
-        JsonNullable.of(reference));
+        referenceType,
+        reference);
 
     DataReferenceDescription ref =
         dataReferenceDao.getDataReferenceByName(
@@ -163,17 +162,17 @@ public class DataReferenceDaoTest {
 
   @Test
   public void verifyGetDataReference() {
-    workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
+    workspaceDao.createWorkspace(workspaceId, null);
 
     dataReferenceDao.createDataReference(
         referenceId,
         workspaceId,
         name,
-        JsonNullable.undefined(),
-        JsonNullable.of(credentialId),
+        null,
+        credentialId,
         cloningInstructions,
-        JsonNullable.of(referenceType),
-        JsonNullable.of(reference.toString()));
+        referenceType,
+        reference.toString());
     DataReferenceDescription result = dataReferenceDao.getDataReference(workspaceId, referenceId);
 
     assertThat(result.getWorkspaceId(), equalTo(workspaceId));
@@ -181,8 +180,7 @@ public class DataReferenceDaoTest {
     assertThat(result.getName(), equalTo(name));
     assertThat(
         result.getReferenceType(),
-        equalTo(
-            JsonNullable.of(DataReferenceDescription.ReferenceTypeEnum.fromValue(referenceType))));
+        equalTo(DataReferenceDescription.ReferenceTypeEnum.fromValue(referenceType)));
     //    assertThat(result.getReference().getSnapshot(), equalTo(reference.getSnapshot()));
     //    assertThat(result.getReference().getInstance(), equalTo(reference.getInstance()));
   }
@@ -190,18 +188,18 @@ public class DataReferenceDaoTest {
   @Test
   public void verifyGetDataReferenceNotInWorkspaceNotFound() {
     UUID decoyWorkspaceId = UUID.randomUUID();
-    workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
-    workspaceDao.createWorkspace(decoyWorkspaceId, JsonNullable.undefined());
+    workspaceDao.createWorkspace(workspaceId, null);
+    workspaceDao.createWorkspace(decoyWorkspaceId, null);
 
     dataReferenceDao.createDataReference(
         referenceId,
         decoyWorkspaceId,
         name,
-        JsonNullable.undefined(),
-        JsonNullable.of(credentialId),
+        null,
+        credentialId,
         cloningInstructions,
-        JsonNullable.of(referenceType),
-        JsonNullable.of(reference));
+        referenceType,
+        reference);
 
     assertThrows(
         DataReferenceNotFoundException.class,
@@ -212,17 +210,17 @@ public class DataReferenceDaoTest {
 
   @Test
   public void verifyDeleteDataReference() {
-    workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
+    workspaceDao.createWorkspace(workspaceId, null);
 
     dataReferenceDao.createDataReference(
         referenceId,
         workspaceId,
         name,
-        JsonNullable.undefined(),
-        JsonNullable.of(credentialId),
+        null,
+        credentialId,
         cloningInstructions,
-        JsonNullable.of(referenceType),
-        JsonNullable.of(reference.toString()));
+        referenceType,
+        reference.toString());
 
     assertTrue(dataReferenceDao.deleteDataReference(referenceId));
 
@@ -237,17 +235,17 @@ public class DataReferenceDaoTest {
 
   @Test
   public void enumerateWorkspaceReferences() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
+    workspaceDao.createWorkspace(workspaceId, null);
     // Create two references in the same workspace.
     dataReferenceDao.createDataReference(
         referenceId,
         workspaceId,
         name,
-        JsonNullable.undefined(),
-        JsonNullable.of(credentialId),
+        null,
+        credentialId,
         cloningInstructions,
-        JsonNullable.of(referenceType),
-        JsonNullable.of(reference));
+        referenceType,
+        reference);
     DataReferenceDescription firstReference =
         dataReferenceDao.getDataReference(workspaceId, referenceId);
 
@@ -256,11 +254,11 @@ public class DataReferenceDaoTest {
         secondReferenceId,
         workspaceId,
         name + "2",
-        JsonNullable.undefined(),
-        JsonNullable.of(credentialId),
+        null,
+        credentialId,
         cloningInstructions,
-        JsonNullable.of(referenceType),
-        JsonNullable.of(reference));
+        referenceType,
+        reference);
     DataReferenceDescription secondReference =
         dataReferenceDao.getDataReference(workspaceId, secondReferenceId);
 
@@ -275,7 +273,7 @@ public class DataReferenceDaoTest {
 
   @Test
   public void enumerateEmptyReferenceList() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
+    workspaceDao.createWorkspace(workspaceId, null);
 
     DataReferenceList result =
         dataReferenceDao.enumerateDataReferences(workspaceId.toString(), name, 0, 10);

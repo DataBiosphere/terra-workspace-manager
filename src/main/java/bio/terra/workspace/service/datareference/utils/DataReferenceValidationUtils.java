@@ -30,7 +30,7 @@ public class DataReferenceValidationUtils {
       return reference;
     } else {
       throw new InvalidDataReferenceException(
-          "Invalid reference type specified: " + referenceType.getValue());
+          "Invalid reference type specified: " + referenceType.toString());
     }
   }
 

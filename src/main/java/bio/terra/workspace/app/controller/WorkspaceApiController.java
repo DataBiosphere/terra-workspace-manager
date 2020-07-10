@@ -9,6 +9,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.JobResultWithStatus;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -66,7 +67,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<Void> deleteWorkspace(
-      @PathVariable("id") String id, DeleteWorkspaceRequestBody body) {
+      DeleteWorkspaceRequestBody body, @PathVariable("id") String id) {
     // Note: we do NOT use getAuthenticatedInfo here, as the request's authentication info comes
     // from the folder manager, not the requesting user.
     String userToken = body.getAuthToken();
@@ -75,8 +76,18 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
+  public Optional<ObjectMapper> getObjectMapper() {
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<HttpServletRequest> getRequest() {
+    return Optional.empty();
+  }
+
+  @Override
   public ResponseEntity<DataReferenceDescription> createDataReference(
-      @PathVariable("id") String id, @RequestBody CreateDataReferenceRequestBody body) {
+      @RequestBody CreateDataReferenceRequestBody body, @PathVariable("id") String id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
 
     return new ResponseEntity<DataReferenceDescription>(

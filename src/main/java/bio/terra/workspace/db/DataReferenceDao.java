@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
-import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -38,11 +37,11 @@ public class DataReferenceDao {
       UUID referenceId,
       UUID workspaceId,
       String name,
-      JsonNullable<UUID> resourceId,
-      JsonNullable<String> credentialId,
+      UUID resourceId,
+      String credentialId,
       String cloningInstructions,
-      JsonNullable<String> referenceType,
-      JsonNullable<String> reference) {
+      String referenceType,
+      String reference) {
     String sql =
         "INSERT INTO workspace_data_reference (workspace_id, reference_id, name, resource_id, credential_id, cloning_instructions, reference_type, reference) VALUES "
             + "(:workspace_id, :reference_id, :name, :resource_id, :credential_id, :cloning_instructions, :reference_type, cast(:reference AS json))";
@@ -52,10 +51,10 @@ public class DataReferenceDao {
     paramMap.put("reference_id", referenceId.toString());
     paramMap.put("name", name);
     paramMap.put("cloning_instructions", cloningInstructions);
-    paramMap.put("credential_id", credentialId.orElse(null));
-    paramMap.put("resource_id", resourceId.orElse(null));
-    paramMap.put("reference_type", referenceType.orElse(null));
-    paramMap.put("reference", reference.orElse(null));
+    paramMap.put("credential_id", credentialId);
+    paramMap.put("resource_id", resourceId);
+    paramMap.put("reference_type", referenceType);
+    paramMap.put("reference", reference);
 
     try {
       jdbcTemplate.update(sql, paramMap);
@@ -88,7 +87,7 @@ public class DataReferenceDao {
 
     Map<String, Object> paramMap = new HashMap();
     paramMap.put("id", workspaceId);
-    paramMap.put("type", type.getValue());
+    paramMap.put("type", type.toString());
     paramMap.put("name", name);
 
     try {
@@ -148,12 +147,18 @@ public class DataReferenceDao {
 
   private static class ResourceDescriptionMapper implements RowMapper<ResourceDescription> {
     public ResourceDescription mapRow(ResultSet rs, int rowNum) throws SQLException {
-      return new ResourceDescription()
-          .workspaceId(UUID.fromString(rs.getString("workspace_id")))
-          .resourceId(UUID.fromString(rs.getString("resource_id")))
-          .isVisible(rs.getBoolean("is_visible"))
-          .owner(rs.getString("owner"))
-          .attributes(rs.getString("attributes"));
+      String resourceId = rs.getString("resource_id");
+
+      if (resourceId == null) {
+        return null;
+      } else {
+        return new ResourceDescription()
+            .workspaceId(UUID.fromString(rs.getString("workspace_id")))
+            .resourceId(UUID.fromString(resourceId))
+            .isVisible(rs.getBoolean("is_visible"))
+            .owner(rs.getString("owner"))
+            .attributes(rs.getString("attributes"));
+      }
     }
   }
 
@@ -162,12 +167,9 @@ public class DataReferenceDao {
       ResourceDescriptionMapper resourceDescriptionMapper = new ResourceDescriptionMapper();
       return new DataReferenceDescription()
           .workspaceId(UUID.fromString(rs.getString("workspace_id")))
-          .referenceId(UUID.fromString(rs.getString("reference_id")))
+          .referenceId(maybeParseUUID(rs.getString("reference_id")))
           .name(rs.getString("name"))
-          .resourceDescription(
-              rs.getString("resource_id") == null
-                  ? null
-                  : resourceDescriptionMapper.mapRow(rs, rowNum))
+          .resourceDescription(resourceDescriptionMapper.mapRow(rs, rowNum))
           .credentialId(rs.getString("credential_id"))
           .cloningInstructions(
               DataReferenceDescription.CloningInstructionsEnum.fromValue(
@@ -176,6 +178,11 @@ public class DataReferenceDao {
               DataReferenceDescription.ReferenceTypeEnum.fromValue(rs.getString("reference_type")))
           .reference(rs.getString("reference"));
     }
+  }
+
+  public static UUID maybeParseUUID(String stringOrNull) {
+
+    return stringOrNull == null ? null : UUID.fromString(stringOrNull);
   }
 
   // Returns a SQL condition as a string accepts both uncontrolled data references and visible

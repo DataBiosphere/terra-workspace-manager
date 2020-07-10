@@ -9,9 +9,17 @@ import bio.terra.workspace.integration.common.utils.WorkspaceManagerTestClient;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.DeleteWorkspaceRequestBody;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,11 +143,7 @@ public class WorkspaceIntegrationTest {
     String userEmail = testConfig.getServiceAccountEmail();
     String token = authService.getAuthToken(userEmail);
     CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody()
-            .id(workspaceId)
-            .authToken(token)
-            .spendProfile(null)
-            .policies(null);
+        new CreateWorkspaceRequestBody().id(workspaceId).authToken(token);
     String jsonBody = testUtils.mapToJson(body);
 
     return workspaceManagerTestClient.post(userEmail, path, jsonBody, CreatedWorkspace.class);

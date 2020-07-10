@@ -18,7 +18,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -54,7 +53,7 @@ public class WorkspaceDaoTest {
 
   @Test
   public void verifyCreatedWorkspaceExists() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, JsonNullable.of(spendProfileId));
+    workspaceDao.createWorkspace(workspaceId, spendProfileId);
     Map<String, Object> paramMap = new HashMap<>();
     paramMap.put("id", workspaceId.toString());
     Map<String, Object> queryOutput = jdbcTemplate.queryForMap(readSql, paramMap);
@@ -69,7 +68,7 @@ public class WorkspaceDaoTest {
 
   @Test
   public void createAndDeleteWorkspace() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
+    workspaceDao.createWorkspace(workspaceId, null);
     Map<String, Object> paramMap = new HashMap<>();
     paramMap.put("id", workspaceId.toString());
     Map<String, Object> queryOutput = jdbcTemplate.queryForMap(readSql, paramMap);
@@ -89,13 +88,13 @@ public class WorkspaceDaoTest {
 
   @Test
   public void createAndGetWorkspace() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
+    workspaceDao.createWorkspace(workspaceId, null);
 
     WorkspaceDescription workspace = workspaceDao.getWorkspace(workspaceId.toString());
 
     WorkspaceDescription expectedWorkspace = new WorkspaceDescription();
     expectedWorkspace.setId(workspaceId);
-    expectedWorkspace.setSpendProfile(JsonNullable.undefined());
+    expectedWorkspace.setSpendProfile(null);
 
     assertThat(workspace, equalTo(expectedWorkspace));
 
@@ -119,11 +118,11 @@ public class WorkspaceDaoTest {
 
   @Test
   public void duplicateWorkspaceFails() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
+    workspaceDao.createWorkspace(workspaceId, null);
     assertThrows(
         DuplicateWorkspaceException.class,
         () -> {
-          workspaceDao.createWorkspace(workspaceId, JsonNullable.undefined());
+          workspaceDao.createWorkspace(workspaceId, null);
         });
   }
 }

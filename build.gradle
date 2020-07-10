@@ -1,19 +1,15 @@
-buildscript {
-	repositories {
-		mavenCentral()
-	}
-}
-
 plugins {
-	id 'java'
 	id 'idea'
-	id 'org.springframework.boot' version '2.3.1.RELEASE'
-	id 'io.spring.dependency-management' version '1.0.9.RELEASE'
-	id 'com.google.cloud.tools.jib' version '2.4.0'
-	id 'org.openapi.generator' version '4.3.1'
+	id 'java'
+	id 'java-library'
+
 	id 'com.diffplug.gradle.spotless' version '4.4.0'
-	id "com.github.ben-manes.versions" version '0.28.0'
+	id 'com.github.ben-manes.versions' version '0.28.0'
+	id 'com.google.cloud.tools.jib' version '2.4.0'
 	id 'com.palantir.git-version' version '0.12.3'
+	id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+	id 'org.hidetake.swagger.generator' version '2.18.2'
+	id 'org.springframework.boot' version '2.3.1.RELEASE'
 }
 
 group = 'bio.terra.workspace'
@@ -31,42 +27,41 @@ repositories {
 }
 
 dependencies {
-	implementation group: 'bio.terra', name: 'stairway', version: '0.0.4.1-SNAPSHOT'
 	implementation group: 'bio.terra', name: 'datarepo-client', version: '1.0.1-SNAPSHOT'
-	implementation group: 'org.broadinstitute.dsde.workbench', name: 'sam-client_2.12', version: '0.1-3a0df80'
+	implementation group: 'bio.terra', name: 'stairway', version: '0.0.4.1-SNAPSHOT'
 	implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
+	implementation group: 'org.apache.commons', name: 'commons-dbcp2', version: '2.7.0'
+	implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.10'
+	implementation group: 'org.apache.commons', name: 'commons-pool2', version: '2.8.0'
+	implementation group: 'org.broadinstitute.dsde.workbench', name: 'sam-client_2.12', version: '0.1-3a0df80'
+	implementation group: 'org.hashids', name: 'hashids', version: '1.0.3'
+	implementation group: 'org.liquibase', name: 'liquibase-core', version: '3.9.0'
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jdbc'
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
 	runtimeOnly group: 'org.postgresql', name: 'postgresql', version: '42.2.14'
-	implementation group: 'org.apache.commons', name: 'commons-dbcp2', version: '2.7.0'
-	implementation group: 'org.apache.commons', name: 'commons-pool2', version: '2.8.0'
-	implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.10'
-	implementation group: 'org.liquibase' , name: 'liquibase-core', version: '3.9.0'
-	implementation group: 'org.webjars', name: 'webjars-locator-core', version: '0.46'
-	implementation group: 'org.webjars', name: 'swagger-ui', version: '3.28.0'
-	implementation group: 'bio.terra', name: 'terra-workspace-manager-client', version: '0.0.3-SNAPSHOT'
-	implementation group: 'org.hashids', name: 'hashids', version: '1.0.3'
 
-	// -- OpenAPI CodeGen dependencies --
-	// TODO: this version of swagger-annotations is old, but the code gen is still relying on it
-	//  There is an open bug tracking the fix: https://github.com/OpenAPITools/openapi-generator/issues/4245
-	implementation group: 'io.swagger', name: 'swagger-annotations', version: '1.6.1'
-	implementation group: 'org.openapitools', name: 'jackson-databind-nullable', version: '0.2.1'
-	// -- --
+	implementation group: 'io.swagger.core.v3', name: 'swagger-annotations', version: '2.1.3'
+	swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.20'
+	swaggerUI 'org.webjars:swagger-ui:3.28.0'
 
+	testImplementation(group: 'com.google.auth', name: 'google-auth-library-oauth2-http', version: '0.21.0')
+	testImplementation(group: 'io.vavr', name: 'vavr', version: '0.10.3')
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
-	testImplementation(group: 'com.google.auth', name: 'google-auth-library-oauth2-http', version: '0.21.0')
-	testImplementation(group: 'io.vavr', name: 'vavr', version: '0.10.3')
+	testImplementation project(':client')
 
 	annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 }
 
-task setGitVersion(type: WriteProperties) {
-	outputFile = file('src/main/resources/generated/version.properties')
-	property('git.hash', versionDetails().gitHash)
-	property('git.tag', gitVersion())
+// Exclude the Spring logger, so everything will use SLF4J
+configurations.all {
+	exclude group: "commons-logging", module: "commons-logging"
+}
+
+clean {
+	delete "${projectDir}/src/main/resources/generated/swagger-ui"
+	delete "${projectDir}/src/main/resources/generated/version.properties"
 }
 
 // for scans
@@ -77,52 +72,44 @@ if (hasProperty('buildScan')) {
 	}
 }
 
-// Exclude the Spring logger, so everything will use SLF4J
-configurations.all {
-	exclude group: "commons-logging", module: "commons-logging"
+// OpenAPI/Swagger Server Generation
+
+def openapiSourceLocation = "${projectDir}/src/main/resources/api"
+def openapiSourceFile = "${openapiSourceLocation}/service_openapi.yaml"
+def openapiSourceConfig = "${openapiSourceLocation}/swagger-config.json"
+def openapiTargetDir = "${buildDir}/server"
+def openapiClientTargetDir = "${buildDir}/client"
+
+swaggerSources {
+	server {
+		inputFile = file("${openapiSourceFile}")
+		code {
+			language = "spring"
+			library = "spring-boot"
+			outputDir = file("${openapiTargetDir}")
+			components = ['models', 'apis']
+			configFile = file("${openapiSourceConfig}")
+			rawOptions = [
+					"--api-package", "${this.group}.generated.controller",
+					"--model-package", "${this.group}.generated.model"
+			]
+		}
+		ui {
+			outputDir = file("${projectDir}/src/main/resources/generated/swagger-ui")
+			doLast {
+				copy {
+					from "${openapiSourceLocation}/swagger-ui.html"
+					from "${openapiSourceFile}"
+					into outputDir
+				}
+			}
+
+			outputs.upToDateWhen { false }
+		}
+	}
 }
 
-// OpenAPI Server Generation
-// - specify the source and target
-// - define the generation
-// - define the validation
-// - define dependencies to include the generated code
-
-def openapiSourceFile = "${projectDir}/src/main/resources/api/service_openapi.yaml"
-def openapiTargetDir = "${buildDir}/generated"
-
-openApiGenerate {
-	generatorName = "spring"
-	inputSpec = "${openapiSourceFile}".toString()
-	outputDir = "${openapiTargetDir}".toString()
-	packageName = "${group}"
-	apiPackage = "${group}.generated.controller"
-	modelPackage = "${group}.generated.model"
-	configOptions = [
-	        interfaceOnly : "true",
-			useTags : "true",
-			library : "spring-boot",
-			dateLibrary : "java8",
-			generateApiTests : "false",
-			generateApiDocumentation : "false",
-			generateModelTests : "false",
-			generateModelDocumentation : "false",
-	]
-}
-
-openApiValidate {
-	inputSpec = "${openapiSourceFile}".toString()
-}
-
-// Note: Spotless deletes the classes OpenApi generates.
-// The order needs to be spotlessApply -> openApiGenerate -> build/test/run
-tasks.openApiGenerate.dependsOn tasks.spotlessApply
-compileJava.dependsOn tasks.setGitVersion
-compileJava.dependsOn tasks.openApiGenerate
-sourceSets.main.java.srcDir "${openapiTargetDir}/src/main/java"
-ideaModule.dependsOn tasks.openApiGenerate
-
-// end of OpenAPI Server Generation
+// Testing config
 
 test {
 	useJUnitPlatform()
@@ -151,6 +138,23 @@ task integrationTest(type: Test) {
 spotless {
 	java {
 		googleJavaFormat()
+		targetExclude 'build/**'
 	}
 }
 
+// Custom tasks
+
+task setGitVersion(type: WriteProperties) {
+	outputFile = file('src/main/resources/generated/version.properties')
+	property('git.hash', versionDetails().gitHash)
+	property('git.tag', gitVersion())
+}
+
+// Internal dependencies
+
+sourceSets.main.java.srcDir "${openapiTargetDir}/src/main/java"
+sourceSets.test.java.srcDir "${projectDir}/client/build/client/src/main/java"
+compileJava.dependsOn swaggerSources.server.code, tasks.spotlessApply, tasks.setGitVersion
+
+processResources.dependsOn swaggerSources.server.ui
+ideaModule.dependsOn swaggerSources.server.code

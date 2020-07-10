@@ -1,0 +1,11 @@
+{
+  "sortParamsByRequiredFlag": false,
+  "interfaceOnly": true,
+  "defaultInterfaces": false,
+  "useTags": true,
+  "dateLibrary": "java8",
+  "generateApiTests": false,
+  "generateApiDocumentation": false,
+  "generateModelTests": false,
+  "generateModelDocumentation": false
+}

@@ -52,7 +52,7 @@ public class WorkspaceManagerStatusServiceTest {
   public void testStatusWithWorkingEndpoints() throws Exception {
     // Manually check subsystems, since @Scheduled doesn't work nicely in unit tests.
     statusService.checkSubsystems();
-    assertTrue(statusService.getCurrentStatus().getOk());
+    assertTrue(statusService.getCurrentStatus().isOk());
   }
 
   @Test
@@ -62,9 +62,9 @@ public class WorkspaceManagerStatusServiceTest {
         .status();
     // Manually check subsystems, since @Scheduled doesn't work nicely in unit tests.
     statusService.checkSubsystems();
-    assertFalse(statusService.getCurrentStatus().getOk());
+    assertFalse(statusService.getCurrentStatus().isOk());
     Map<String, SystemStatusSystems> subsystemStatus =
         statusService.getCurrentStatus().getSystems();
-    assertFalse(subsystemStatus.get("Sam").getOk());
+    assertFalse(subsystemStatus.get("Sam").isOk());
   }
 }

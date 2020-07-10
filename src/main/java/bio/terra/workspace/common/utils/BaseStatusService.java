@@ -56,7 +56,7 @@ public class BaseStatusService {
                     .addMessagesItem("Error checking status: " + e.getLocalizedMessage());
           }
           tmpSubsystemStatusMap.put(name, subsystemStatus);
-          if (subsystem.isCritical() && !subsystemStatus.getOk()) {
+          if (subsystem.isCritical() && !subsystemStatus.isOk()) {
             systemOk.set(false);
           }
         });
