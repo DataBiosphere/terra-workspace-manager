@@ -3,7 +3,6 @@ package bio.terra.workspace.app;
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.migrate.MigrateService;
-import bio.terra.workspace.service.trace.StackdriverTrace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -13,10 +12,6 @@ public final class StartupInitializer {
   private static final String changelogPath = "db/changelog.xml";
 
   public static void initialize(ApplicationContext applicationContext) {
-    StackdriverTrace stackdriverTrace =
-        (StackdriverTrace) applicationContext.getBean("stackdriverTrace");
-    stackdriverTrace.createAndRegister();
-
     // Initialize or upgrade the database depending on the configuration
     MigrateService migrateService = (MigrateService) applicationContext.getBean("migrateService");
     WorkspaceManagerJdbcConfiguration workspaceManagerJdbcConfiguration =
