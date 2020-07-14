@@ -9,11 +9,15 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.trace.StackdriverTrace;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import io.opencensus.common.Scope;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -23,12 +27,20 @@ public class WorkspaceService {
   private JobService jobService;
   private final WorkspaceDao workspaceDao;
   private final SamService samService;
+  private final StackdriverTrace trace;
+
+  private final Logger logger = LoggerFactory.getLogger(WorkspaceService.class);
 
   @Autowired
-  public WorkspaceService(JobService jobService, WorkspaceDao workspaceDao, SamService samService) {
+  public WorkspaceService(
+      JobService jobService,
+      WorkspaceDao workspaceDao,
+      SamService samService,
+      StackdriverTrace trace) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
+    this.trace = trace;
   }
 
   public CreatedWorkspace createWorkspace(
@@ -52,10 +64,14 @@ public class WorkspaceService {
   }
 
   public WorkspaceDescription getWorkspace(String id, AuthenticatedUserRequest userReq) {
-
-    samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_READ_ACTION);
-    WorkspaceDescription result = workspaceDao.getWorkspace(id);
-    return result;
+    try (Scope s = trace.scope("getWorkspaceSpan")) {
+      samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_READ_ACTION);
+      trace.annotate("authed!");
+      try (Scope ss = trace.scope("getWorkspaceDescription")) {
+        WorkspaceDescription result = workspaceDao.getWorkspace(id);
+        return result;
+      }
+    }
   }
 
   public void deleteWorkspace(String id, String userToken) {
