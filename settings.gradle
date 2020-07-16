@@ -1,2 +1,4 @@
 rootProject.name = 'terra-workspace-manager'
 include 'terra-workspace-manager-client'
+include 'terra-workspace-manager-performance'
+
