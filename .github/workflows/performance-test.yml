@@ -55,5 +55,11 @@ jobs:
         run: chmod +x gradlew
       - name: Change directory to performance project
         run: cd terra-workspace-manager-performance
+      - name: Debug Step 1
+        run: ls -l
+      - name: Debug Step 2
+        run: pwd
+      - name: Debug Step 3
+        run: ls -l ..
       - name: Run Gatling performance tests
         run: ../gradlew gatlingRun
