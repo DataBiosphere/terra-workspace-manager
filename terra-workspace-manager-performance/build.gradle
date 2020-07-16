@@ -1,0 +1,83 @@
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "gradle.plugin.com.google.cloud.tools:jib-gradle-plugin:2.4.0"
+    }
+}
+
+plugins {
+    id 'scala'
+    id 'java'
+    id 'com.github.lkishalmi.gatling' version '3.3.3'
+}
+
+def jibPluginId = 'com.google.cloud.tools.jib'
+final hasPlugin = project.getPlugins().hasPlugin(jibPluginId);
+if (hasPlugin) {
+    final Plugin plugin = project.getPlugins().getPlugin(jibPluginId)
+    println 'Plugin already applied - version ' + plugin.properties['jibPluginId']
+} else {
+    apply plugin: "com.google.cloud.tools.jib"
+}
+
+group 'bio.terra.workspace'
+version '0.0.3-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    implementation(group: 'com.google.auth', name: 'google-auth-library-oauth2-http', version: '0.20.0')
+    gatling 'org.scala-lang:scala-library:2.12.0'
+    gatling group: 'com.google.auth', name: 'google-auth-library-oauth2-http', version: '0.20.0'
+}
+
+def xms = System.getenv("JAVA_XMS_SIZE") ?: "512M"
+def xmx = System.getenv("JAVA_XMX_SIZE") ?: "512M"
+
+jib {
+    from {
+        //image = "openjdk:alpine"
+        image = "gradle:latest"
+    }
+    container {
+        workingDirectory = "/app/terra-workspace-manager-performance"
+    }
+    extraDirectories {
+        paths {
+            path {
+                from = file("..")
+                into = "/app"
+            }
+        }
+        permissions = [
+                "/app/gradlew": "755"
+        ]
+    }
+}
+
+gatling {
+//	toolVersion = '3.3.0'
+    jvmArgs = ['-server', '-XX:+UseThreadPriorities',
+               '-XX:ThreadPriorityPolicy=42',
+               "-Xms${xms}", "-Xmx${xmx}", '-Xmn100M',
+               '-XX:+HeapDumpOnOutOfMemoryError',
+               '-XX:+AggressiveOpts',
+               '-XX:+OptimizeStringConcat',
+               '-XX:+UseFastAccessorMethods',
+               '-XX:+UseParNewGC',
+               '-XX:+UseConcMarkSweepGC',
+               '-XX:+CMSParallelRemarkEnabled',
+               '-Djava.net.preferIPv4Stack=true',
+               '-Djava.net.preferIPv6Addresses=false'
+    ]
+    simulations = {
+        include "**/*Simulation.scala"
+    }
+}
