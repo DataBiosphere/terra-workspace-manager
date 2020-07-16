@@ -23,7 +23,7 @@ jobs:
           WSM_BASE_URL: https://workspace.ichang.integ.envs.broadinstitute.org/
           GATLING_CONCURRENCY: 10
           CICD: GHA
-          FIRECLOUD_SERVICE_ACCOUNT_PATH: /tmp/wsm-firecloud-account.json
+          FIRECLOUD_SERVICE_ACCOUNT_PATH: ../src/test/resources/rendered/wsm-firecloud-account.json
         run: |
           VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
             -e "VAULT_ADDR=${VAULT_ADDR}" \
@@ -50,7 +50,7 @@ jobs:
       - name: Render configuration for tests
         run: ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }} dev
       - name: Ensure read permissions for rendered files
-        run: sudo chmod +r /tmp/wsm-firecloud-account.json src/test/resources/application-integration-test.properties
+        run: sudo chmod +r src/test/resources/rendered/wsm-firecloud-account.json
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Change directory to performance project
