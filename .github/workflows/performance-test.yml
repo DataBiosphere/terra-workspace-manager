@@ -54,6 +54,11 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Run Gatling performance tests
+        env:
+          WSM_BASE_URL: https://workspace.ichang.integ.envs.broadinstitute.org/
+          GATLING_CONCURRENCY: 10
+          CICD: GHA
+          FIRECLOUD_SERVICE_ACCOUNT_PATH: ../src/test/resources/rendered/wsm-firecloud-account.json
         run: |
           cd terra-workspace-manager-performance
           ../gradlew gatlingRun
