@@ -1,0 +1,59 @@
+# This workflow will build a Java project with Gradle
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
+
+name: Run Gatling Performance Tests
+
+on:
+  push:
+    branches:
+      - iv-perf-devbase
+
+jobs:
+  performance-test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      # See master_push.yml
+      - name: Get Vault token
+        id: vault-token-step
+        env:
+          VAULT_ADDR: https://clotho.broadinstitute.org:8200
+          WSM_BASE_URL: https://workspace.ichang.integ.envs.broadinstitute.org/
+          GATLING_CONCURRENCY: 10
+          CICD: GHA
+          FIRECLOUD_SERVICE_ACCOUNT_PATH: /tmp/wsm-firecloud-account.json
+        run: |
+          VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
+            -e "VAULT_ADDR=${VAULT_ADDR}" \
+            vault:1.1.0 \
+            vault write -field token \
+              auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+              secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+          echo ::set-output name=vault-token::$VAULT_TOKEN
+          echo ::add-mask::$VAULT_TOKEN
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
+          restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+      - name: Grant execute permission for render_config
+        run: chmod +x render_config.sh
+      - name: Render configuration for tests
+        run: ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }} dev
+      - name: Ensure read permissions for rendered files
+        run: sudo chmod +r /tmp/wsm-firecloud-account.json src/test/resources/application-integration-test.properties
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Change directory to performance project
+        run: cd terra-workspace-manager-performance
+      - name: Run Gatling performance tests
+        run: ../gradlew gatlingRun
