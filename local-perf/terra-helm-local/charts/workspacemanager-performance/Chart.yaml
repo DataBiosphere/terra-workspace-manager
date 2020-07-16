@@ -1,0 +1,16 @@
+apiVersion: v2
+name: workspacemanager-performance
+version: 0.2.3
+
+description: Chart for Terra Workspace Manager Performance Tests
+type: application
+
+keywords:
+  - dsp
+  - broadinstitute
+  - terra
+  - workspacemanager
+
+sources:
+  - https://github.com/broadinstitute/terra-helm/tree/master/charts
+  - https://github.com/DataBiosphere/terra-workspace-manager/terra-workspace-manager-performance

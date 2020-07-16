@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: terra-workspace-manager-performance-gatling-job
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  activeDeadlineSeconds: 3600
+  backoffLimit: 3
+  completions: 10
+  parallelism: 10
+  template:
+    metadata:
+      name: {{ .Chart.Name }}-gatling-job
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      serviceAccountName: terra-workspace-manager-performance-sa
+      containers:
+        - name: {{ .Chart.Name }}-gatling-job
+          image: "{{- if .Values.image -}}
+              {{ .Values.image }}
+            {{- else -}}
+              {{ .Values.imageConfig.repository }}:{{ default .Values.appVersion .Values.imageConfig.tag }}
+            {{- end }}"
+          env:
+            - name: SERVICE_ACCOUNT_CREDS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Chart.Name }}-secrets
+                  key: service-account.json
+            - name: FIRECLOUD_SERVICE_ACCOUNT_CREDS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Chart.Name }}-secrets
+                  key: firecloud-account.json
+            - name: WSM_BASE_URL
+              value: https://workspace.{{ .Values.global.terraEnv }}.integ.envs.broadinstitute.org/
+            - name: GATLING_CONCURRENCY
+              value: "{{ default 1 .Values.gatling.concurrency }}"
+            - name: CICD
+              value: {{ .Values.global.CICD }}
+          command: ["../gradlew", "gatlingRun"]
+      restartPolicy: Never

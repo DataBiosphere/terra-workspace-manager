@@ -1,0 +1,23 @@
+#This is a Skaffold configuration, which lets developers continuously push new performance tests images to their development namespaces.
+apiVersion: skaffold/v2alpha4
+kind: Config
+build:
+  artifacts:
+    - image: gcr.io/terra-kernel-k8s/terra-workspace-manager-performance
+      context: ..
+      jib:
+        project: terra-workspace-manager-performance
+deploy:
+  helm:
+    releases:
+      - name: workspacemanager-performance-ENV
+        namespace: terra-ENV
+        chartPath: terra-helm-local/charts/workspacemanager-performance
+        skipBuildDependencies: true
+        values:
+          image: gcr.io/terra-kernel-k8s/terra-workspace-manager-performance
+        valuesFiles:
+          - terra-helmfile/terra/values/workspacemanager.yaml
+          - terra-helmfile/terra/values/workspacemanager/personal.yaml
+          - terra-helmfile/terra/values/workspacemanager/personal/ichang.yaml
+          - values.yaml

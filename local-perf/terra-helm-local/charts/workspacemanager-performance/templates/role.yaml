@@ -1,0 +1,15 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: terra-workspace-manager-performance-role
+  labels:
+    app: {{ .Chart.Name }}
+rules:
+  - apiGroups: ['policy']
+    resources: ['podsecuritypolicies']
+    verbs:     ['use']
+    resourceNames:
+      - terra-default-psp
+  - apiGroups: ['']
+    resources: ['secrets']
+    verbs: ['get', 'create']
