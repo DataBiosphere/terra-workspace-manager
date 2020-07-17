@@ -65,9 +65,12 @@ public class WorkspaceService {
 
   public WorkspaceDescription getWorkspace(String id, AuthenticatedUserRequest userReq) {
     try (Scope s = trace.scope("getWorkspaceSpan")) {
+      trace.
+      logger.info("GETWORKSPACESPAN");
       samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_READ_ACTION);
       trace.annotate("authed!");
       try (Scope ss = trace.scope("getWorkspaceDescription")) {
+        logger.info("GETWORKSPACEDESCRIPTION");
         WorkspaceDescription result = workspaceDao.getWorkspace(id);
         return result;
       }

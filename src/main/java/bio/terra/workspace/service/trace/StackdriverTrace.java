@@ -6,6 +6,7 @@ import bio.terra.workspace.common.utils.GoogleUtils;
 import io.opencensus.common.Scope;
 import io.opencensus.exporter.trace.stackdriver.StackdriverTraceConfiguration;
 import io.opencensus.exporter.trace.stackdriver.StackdriverTraceExporter;
+import io.opencensus.trace.Sampler;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
 import io.opencensus.trace.samplers.Samplers;
@@ -20,30 +21,34 @@ import org.springframework.stereotype.Component;
 @Component
 public class StackdriverTrace {
   private final StackdriverConfiguration stackdriverConfiguration;
+  private static Sampler sampler;
 
+  private final Logger logger = LoggerFactory.getLogger(StackdriverTrace.class);
 
   @Autowired
   public StackdriverTrace(StackdriverConfiguration stackdriverConfiguration) {
     this.stackdriverConfiguration = stackdriverConfiguration;
+    this.sampler = Samplers.alwaysSample();
+    // Samplers.probabilitySampler(stackdriverConfiguration.getSamplingProbability());
     // Creates and registers the exporter. This must be happen each time WSM is instantiated.
     // createAndRegister();
   }
 
-  private final Logger logger = LoggerFactory.getLogger(StackdriverTrace.class);
-  private static final Tracer tracer = Tracing.getTracer();
+  public static final Tracer tracer = Tracing.getTracer();
   private final List<String> traceScopes =
       Arrays.asList("https://www.googleapis.com/auth/trace.append");
 
-  private void createAndRegister() {
+  public void createAndRegister() {
     try {
       StackdriverTraceConfiguration conf =
           StackdriverTraceConfiguration.builder()
               .setProjectId(stackdriverConfiguration.getProjectId())
-              .setCredentials(GoogleUtils.getGoogleCredentials(
-                      stackdriverConfiguration.getServiceAccountFilePath(),
-                      traceScopes))
+              .setCredentials(
+                  GoogleUtils.getGoogleCredentials(
+                      stackdriverConfiguration.getServiceAccountFilePath(), traceScopes))
               .build();
       StackdriverTraceExporter.createAndRegister(conf);
+      logger.info("CREATEANDREGISTER");
     } catch (IOException e) {
       throw new StackdriverRegistrationException(
           "Failed to create and register OpenCensus Stackdriver Trace exporter", e);
@@ -51,10 +56,8 @@ public class StackdriverTrace {
   }
 
   public Scope scope(String traceName) {
-    return tracer
-        .spanBuilder(traceName)
-        .setSampler(Samplers.probabilitySampler(stackdriverConfiguration.getSamplingProbability()))
-        .startScopedSpan();
+    logger.info("SAMPLER: " + sampler.getDescription());
+    return tracer.spanBuilder(traceName).setSampler(sampler).startScopedSpan();
   }
 
   public void annotate(String annotation) {
