@@ -31,7 +31,7 @@ public class StackdriverTrace {
     this.sampler = Samplers.alwaysSample();
     // Samplers.probabilitySampler(stackdriverConfiguration.getSamplingProbability());
     // Creates and registers the exporter. This must be happen each time WSM is instantiated.
-    // createAndRegister();
+    createAndRegister();
   }
 
   public static final Tracer tracer = Tracing.getTracer();
