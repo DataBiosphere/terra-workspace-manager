@@ -10,8 +10,12 @@ It is currently not part of the terra-helm repo but will be in the future.
 The local-perf provides an example on **Distributed load testing using GKE** as described in this article:
 https://cloud.google.com/solutions/distributed-load-testing-using-gke
 
-To use this, first ensure Skaffold is installed on your local machine 
-(available at https://skaffold.dev/). 
+Using a containerzied solution for load testing gives us the following advantages
+1) The load test runner is completely ephemeral
+2) Complete ease to scale and run tests reliably and cost effectively
+
+To use this, first ensure Skaffold i
+(available at https://skaffold.dev
 
 > Older versions of Skaffold (v1.4.0 and earlier) do not have support for Helm 3 and will fail to deploy your 
 changes. If you're seeing errors like `UPGRADE FAILED: "(Release name)" has no 
