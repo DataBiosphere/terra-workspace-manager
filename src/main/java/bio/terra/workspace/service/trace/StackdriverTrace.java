@@ -13,8 +13,6 @@ import io.opencensus.trace.samplers.Samplers;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +21,6 @@ public class StackdriverTrace {
   private final StackdriverConfiguration stackdriverConfiguration;
   private static Sampler sampler;
 
-  private final Logger logger = LoggerFactory.getLogger(StackdriverTrace.class);
 
   @Autowired
   public StackdriverTrace(StackdriverConfiguration stackdriverConfiguration) {
@@ -38,7 +35,7 @@ public class StackdriverTrace {
   private final List<String> traceScopes =
       Arrays.asList("https://www.googleapis.com/auth/trace.append");
 
-  public void createAndRegister() {
+  private void createAndRegister() {
     try {
       StackdriverTraceConfiguration conf =
           StackdriverTraceConfiguration.builder()
@@ -48,7 +45,6 @@ public class StackdriverTrace {
                       stackdriverConfiguration.getServiceAccountFilePath(), traceScopes))
               .build();
       StackdriverTraceExporter.createAndRegister(conf);
-      logger.info("CREATEANDREGISTER");
     } catch (IOException e) {
       throw new StackdriverRegistrationException(
           "Failed to create and register OpenCensus Stackdriver Trace exporter", e);
@@ -56,7 +52,6 @@ public class StackdriverTrace {
   }
 
   public Scope scope(String traceName) {
-    logger.info("SAMPLER: " + sampler.getDescription());
     return tracer.spanBuilder(traceName).setSampler(sampler).startScopedSpan();
   }
 
