@@ -20,10 +20,6 @@ jobs:
         id: vault-token-step
         env:
           VAULT_ADDR: https://clotho.broadinstitute.org:8200
-          WSM_BASE_URL: https://workspace.ichang.integ.envs.broadinstitute.org/
-          GATLING_CONCURRENCY: 10
-          CICD: GHA
-          FIRECLOUD_SERVICE_ACCOUNT_PATH: ../src/test/resources/rendered/wsm-firecloud-account.json
         run: |
           VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
             -e "VAULT_ADDR=${VAULT_ADDR}" \
