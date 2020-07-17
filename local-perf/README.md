@@ -14,8 +14,8 @@ Using a containerzied solution for load testing gives us the following advantage
 1) The load test runner is completely ephemeral
 2) Complete ease to scale and run tests reliably and cost effectively
 
-To use this, first ensure Skaffold i
-(available at https://skaffold.dev
+To use this, first ensure Skaffold is installed on your local machine 
+(available at https://skaffold.dev/). 
 
 > Older versions of Skaffold (v1.4.0 and earlier) do not have support for Helm 3 and will fail to deploy your 
 changes. If you're seeing errors like `UPGRADE FAILED: "(Release name)" has no 
