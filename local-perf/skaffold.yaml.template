@@ -19,5 +19,5 @@ deploy:
         valuesFiles:
           - terra-helmfile/terra/values/workspacemanager.yaml
           - terra-helmfile/terra/values/workspacemanager/personal.yaml
-          - terra-helmfile/terra/values/workspacemanager/personal/ichang.yaml
+          - terra-helmfile/terra/values/workspacemanager/personal/ENV.yaml
           - values.yaml
