@@ -9,7 +9,6 @@ import sys.process._
 
 class CreateWorkspaceSimulation extends Simulation {
   val config: Config = ConfigFactory.load("application.conf")
-  //val wsmBaseUrl = config.getString("dev.terra.wsmBaseUrl")
   val wsmBaseUrl = System.getenv(
     config.getString("dev.terra.env.wsmBaseUrl")
   )
@@ -17,8 +16,6 @@ class CreateWorkspaceSimulation extends Simulation {
   val CICD = System.getenv("CICD")
 
   def GHA(): (Option[String], Option[Int]) = {
-    println("GHA")
-    //var serviceAccountFilePath = "/tmp/wsm-firecloud-account.json"
     var serviceAccountFilePath = System.getenv(
       config.getString("dev.sam.firecloudServiceAccountPath")
     )
@@ -30,7 +27,6 @@ class CreateWorkspaceSimulation extends Simulation {
   }
 
   def Skaffold_Helm(): (Option[String], Option[Int]) = {
-    println("Skaffold_Helm")
     var serviceAccountJson = System.getenv(
       config.getString("dev.sam.firecloudServiceAccount")
     )
