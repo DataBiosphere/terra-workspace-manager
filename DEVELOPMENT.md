@@ -63,7 +63,7 @@ To run the application:
 
 Then navigate to the Swagger at:
 
-`http://localhost:8080/api/swagger-ui.html`
+`http://localhost:8080/swagger-ui.html`
 
 
 ## Other

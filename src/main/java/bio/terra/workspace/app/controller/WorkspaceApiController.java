@@ -13,8 +13,6 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-
-import io.opencensus.common.Scope;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +28,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   private JobService jobService;
   private AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
-  private final StackdriverTrace trace;
+  // private final StackdriverTrace trace;
 
   @Autowired
   public WorkspaceApiController(
@@ -45,12 +43,14 @@ public class WorkspaceApiController implements WorkspaceApi {
     this.jobService = jobService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
-    this.trace = trace;
+    //  this.trace = trace;
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
     return authenticatedUserRequestFactory.from(request);
   }
+
+  // private final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
   @Override
   public ResponseEntity<CreatedWorkspace> createWorkspace(
@@ -64,12 +64,12 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("id") String id) {
-    try (Scope s = trace.scope(this.request.getPathInfo())) {
-      AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-      WorkspaceDescription desc = workspaceService.getWorkspace(id, userReq);
+    // try (Scope s = trace.scope(request.getRequestURI())) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    WorkspaceDescription desc = workspaceService.getWorkspace(id, userReq);
 
-      return new ResponseEntity<WorkspaceDescription>(desc, HttpStatus.OK);
-    }
+    return new ResponseEntity<WorkspaceDescription>(desc, HttpStatus.OK);
+    // }
   }
 
   @Override

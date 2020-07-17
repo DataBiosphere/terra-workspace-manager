@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "stackdriver")
-public class StackdriverConfiguration extends JdbcConfiguration {
+public class StackdriverConfiguration {
   private String serviceAccountFilePath;
   private String projectId;
   private Double samplingProbability;
@@ -35,5 +35,4 @@ public class StackdriverConfiguration extends JdbcConfiguration {
   public void setSamplingProbability(Double samplingProbability) {
     this.samplingProbability = samplingProbability;
   }
-
 }
