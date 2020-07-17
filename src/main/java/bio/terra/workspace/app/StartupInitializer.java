@@ -12,9 +12,6 @@ public final class StartupInitializer {
   private static final String changelogPath = "db/changelog.xml";
 
   public static void initialize(ApplicationContext applicationContext) {
-    //    StackdriverTrace stackdriverTrace =
-    //        (StackdriverTrace) applicationContext.getBean("stackdriverTrace");
-    //    stackdriverTrace.createAndRegister();
     // Initialize or upgrade the database depending on the configuration
     MigrateService migrateService = (MigrateService) applicationContext.getBean("migrateService");
     WorkspaceManagerJdbcConfiguration workspaceManagerJdbcConfiguration =
