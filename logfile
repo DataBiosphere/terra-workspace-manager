@@ -1,2 +1,0 @@
-postgres: could not access directory "/usr/local/pgsql/data": No such file or directory
-Run initdb or pg_basebackup to initialize a PostgreSQL data directory.
