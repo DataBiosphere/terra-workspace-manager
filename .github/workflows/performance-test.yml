@@ -6,7 +6,9 @@ name: Run Gatling Performance Tests
 on:
   push:
     branches:
+      - dev
       - iv-perf-devbase
+    tags:
 
 jobs:
   performance-test:
