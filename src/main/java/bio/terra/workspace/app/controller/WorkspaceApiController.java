@@ -50,7 +50,6 @@ public class WorkspaceApiController implements WorkspaceApi {
     return authenticatedUserRequestFactory.from(request);
   }
 
-  // private final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
   @Override
   public ResponseEntity<CreatedWorkspace> createWorkspace(
