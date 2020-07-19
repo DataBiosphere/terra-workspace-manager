@@ -10,6 +10,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.JobResultWithStatus;
 import bio.terra.workspace.service.trace.StackdriverTrace;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import io.opencensus.common.Scope;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -28,7 +29,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   private JobService jobService;
   private AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
-  // private final StackdriverTrace trace;
+  private final StackdriverTrace trace;
 
   @Autowired
   public WorkspaceApiController(
@@ -43,7 +44,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     this.jobService = jobService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
-    //  this.trace = trace;
+    this.trace = trace;
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
