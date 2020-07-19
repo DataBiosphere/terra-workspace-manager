@@ -10,6 +10,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.JobResultWithStatus;
 import bio.terra.workspace.service.trace.StackdriverTrace;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import io.opencensus.common.Scope;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -28,7 +29,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   private JobService jobService;
   private AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
-  // private final StackdriverTrace trace;
+  private final StackdriverTrace trace;
 
   @Autowired
   public WorkspaceApiController(
@@ -43,61 +44,70 @@ public class WorkspaceApiController implements WorkspaceApi {
     this.jobService = jobService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
-    //  this.trace = trace;
+    this.trace = trace;
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
-    return authenticatedUserRequestFactory.from(request);
+    try (Scope s = trace.scope("getAuthenticatedInfo")) {
+      return authenticatedUserRequestFactory.from(request);
+    }
   }
-
 
   @Override
   public ResponseEntity<CreatedWorkspace> createWorkspace(
       @RequestBody CreateWorkspaceRequestBody body) {
-    // Note: we do NOT use getAuthenticatedInfo here, as the request's authentication info comes
-    // from the folder manager, not the requesting user.
-    String userToken = body.getAuthToken();
-    AuthenticatedUserRequest userReq = new AuthenticatedUserRequest().token(Optional.of(userToken));
-    return new ResponseEntity<>(workspaceService.createWorkspace(body, userReq), HttpStatus.OK);
+    try (Scope s = trace.scope(request.getRequestURI())) {
+      // Note: we do NOT use getAuthenticatedInfo here, as the request's authentication info comes
+      // from the folder manager, not the requesting user.
+      String userToken = body.getAuthToken();
+      AuthenticatedUserRequest userReq =
+          new AuthenticatedUserRequest().token(Optional.of(userToken));
+      return new ResponseEntity<>(workspaceService.createWorkspace(body, userReq), HttpStatus.OK);
+    }
   }
 
   @Override
   public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("id") String id) {
-    // try (Scope s = trace.scope(request.getRequestURI())) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    WorkspaceDescription desc = workspaceService.getWorkspace(id, userReq);
-
-    return new ResponseEntity<WorkspaceDescription>(desc, HttpStatus.OK);
-    // }
+    try (Scope s = trace.scope(request.getRequestURI())) {
+      AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+      WorkspaceDescription desc = workspaceService.getWorkspace(id, userReq);
+      return new ResponseEntity<WorkspaceDescription>(desc, HttpStatus.OK);
+    }
   }
 
   @Override
   public ResponseEntity<Void> deleteWorkspace(
       @PathVariable("id") String id, DeleteWorkspaceRequestBody body) {
-    // Note: we do NOT use getAuthenticatedInfo here, as the request's authentication info comes
-    // from the folder manager, not the requesting user.
-    String userToken = body.getAuthToken();
-    workspaceService.deleteWorkspace(id, userToken);
-    return new ResponseEntity<>(HttpStatus.valueOf(204));
+    try (Scope s = trace.scope(request.getRequestURI())) {
+      // Note: we do NOT use getAuthenticatedInfo here, as the request's authentication info comes
+      // from the folder manager, not the requesting user.
+      String userToken = body.getAuthToken();
+      workspaceService.deleteWorkspace(id, userToken);
+      return new ResponseEntity<>(HttpStatus.valueOf(204));
+    }
   }
 
   @Override
   public ResponseEntity<DataReferenceDescription> createDataReference(
       @PathVariable("id") String id, @RequestBody CreateDataReferenceRequestBody body) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    try (Scope s = trace.scope(request.getRequestURI())) {
+      AuthenticatedUserRequest userReq = getAuthenticatedInfo();
 
-    return new ResponseEntity<DataReferenceDescription>(
-        dataReferenceService.createDataReference(id, body, userReq), HttpStatus.OK);
+      return new ResponseEntity<DataReferenceDescription>(
+          dataReferenceService.createDataReference(id, body, userReq), HttpStatus.OK);
+    }
   }
 
   @Override
   public ResponseEntity<DataReferenceDescription> getDataReference(
       @PathVariable("id") String workspaceId, @PathVariable("referenceId") String referenceId) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    DataReferenceDescription ref =
-        dataReferenceService.getDataReference(workspaceId, referenceId, userReq);
+    try (Scope s = trace.scope(request.getRequestURI())) {
+      AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+      DataReferenceDescription ref =
+          dataReferenceService.getDataReference(workspaceId, referenceId, userReq);
 
-    return new ResponseEntity<DataReferenceDescription>(ref, HttpStatus.OK);
+      return new ResponseEntity<DataReferenceDescription>(ref, HttpStatus.OK);
+    }
   }
 
   @Override
@@ -105,42 +115,52 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("id") String workspaceId,
       @PathVariable("referenceType") String referenceType,
       @PathVariable("name") String name) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    DataReferenceDescription ref =
-        dataReferenceService.getDataReferenceByName(workspaceId, referenceType, name, userReq);
+    try (Scope s = trace.scope(request.getRequestURI())) {
+      AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+      DataReferenceDescription ref =
+          dataReferenceService.getDataReferenceByName(workspaceId, referenceType, name, userReq);
 
-    return new ResponseEntity<DataReferenceDescription>(ref, HttpStatus.OK);
+      return new ResponseEntity<DataReferenceDescription>(ref, HttpStatus.OK);
+    }
   }
 
   @Override
   public ResponseEntity<Void> deleteDataReference(
       @PathVariable("id") String workspaceId, @PathVariable("referenceId") String referenceId) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    dataReferenceService.deleteDataReference(workspaceId, referenceId, userReq);
+    try (Scope s = trace.scope(request.getRequestURI())) {
+      AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+      dataReferenceService.deleteDataReference(workspaceId, referenceId, userReq);
 
-    return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+      return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+    }
   }
 
   @Override
   public ResponseEntity<Void> deleteJob(@PathVariable("id") String id) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    jobService.releaseJob(id, userReq);
-    return new ResponseEntity<>(HttpStatus.valueOf(204));
+    try (Scope s = trace.scope(request.getRequestURI())) {
+      AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+      jobService.releaseJob(id, userReq);
+      return new ResponseEntity<>(HttpStatus.valueOf(204));
+    }
   }
 
   @Override
   public ResponseEntity<JobModel> pollAsyncJob(@PathVariable("id") String id) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    JobModel job = jobService.retrieveJob(id, userReq);
-    return new ResponseEntity<JobModel>(job, HttpStatus.valueOf(job.getStatusCode()));
+    try (Scope s = trace.scope(request.getRequestURI())) {
+      AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+      JobModel job = jobService.retrieveJob(id, userReq);
+      return new ResponseEntity<JobModel>(job, HttpStatus.valueOf(job.getStatusCode()));
+    }
   }
 
   @Override
   public ResponseEntity<Object> retrieveJobResult(@PathVariable("id") String id) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    JobResultWithStatus<Object> jobResultHolder =
-        jobService.retrieveJobResult(id, Object.class, userReq);
-    return new ResponseEntity<>(jobResultHolder.getResult(), jobResultHolder.getStatusCode());
+    try (Scope s = trace.scope(request.getRequestURI())) {
+      AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+      JobResultWithStatus<Object> jobResultHolder =
+          jobService.retrieveJobResult(id, Object.class, userReq);
+      return new ResponseEntity<>(jobResultHolder.getResult(), jobResultHolder.getStatusCode());
+    }
   }
 
   @Override
@@ -148,9 +168,11 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("id") String id,
       @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
       @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
-    ControllerValidationUtils.validatePaginationParams(offset, limit);
-    DataReferenceList enumerateResult =
-        dataReferenceService.enumerateDataReferences(id, offset, limit, getAuthenticatedInfo());
-    return ResponseEntity.ok(enumerateResult);
+    try (Scope s = trace.scope(request.getRequestURI())) {
+      ControllerValidationUtils.validatePaginationParams(offset, limit);
+      DataReferenceList enumerateResult =
+          dataReferenceService.enumerateDataReferences(id, offset, limit, getAuthenticatedInfo());
+      return ResponseEntity.ok(enumerateResult);
+    }
   }
 }

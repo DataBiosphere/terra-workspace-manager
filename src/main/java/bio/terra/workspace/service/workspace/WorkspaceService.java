@@ -27,7 +27,6 @@ public class WorkspaceService {
   private final SamService samService;
   private final StackdriverTrace trace;
 
-
   @Autowired
   public WorkspaceService(
       JobService jobService,
@@ -61,10 +60,11 @@ public class WorkspaceService {
   }
 
   public WorkspaceDescription getWorkspace(String id, AuthenticatedUserRequest userReq) {
-    try (Scope s = trace.scope("getWorkspaceSpan")) {
-      samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_READ_ACTION);
-      trace.annotate("authed!");
-      try (Scope ss = trace.scope("getWorkspaceDescription")) {
+    try (Scope s = trace.scope("getWorkspace")) {
+      try (Scope ss = trace.scope("workspaceAuthz")) {
+        samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_READ_ACTION);
+      }
+      try (Scope ss = trace.scope("workspaceDao.getWorkspace")) {
         WorkspaceDescription result = workspaceDao.getWorkspace(id);
         return result;
       }
