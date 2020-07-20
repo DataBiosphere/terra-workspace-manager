@@ -6,8 +6,8 @@ plugins {
 	id 'org.hidetake.swagger.generator'
 }
 
-group = 'bio.terra.workspace'
-version = '0.0.3-SNAPSHOT'
+group = 'bio.terra'
+version = '0.0.4-SNAPSHOT'
 sourceCompatibility = '1.8'
 
 repositories {
@@ -31,6 +31,7 @@ dependencies {
 // OpenAPI/Swagger Client Generation
 
 def openapiSourceDir = "${projectDir}/../src/main/resources/api"
+def artifactGroup = "${this.group}.workspace"
 
 swaggerSources {
 	client {
@@ -40,11 +41,10 @@ swaggerSources {
 			library = "jersey2"
 			outputDir = file("${buildDir}")
 			rawOptions = [
-					"--model-package", "${this.group}.model",
-					"--api-package", "${this.group}.api",
-					"--invoker-package", "${this.group}.client",
-					"--group-id", "${this.group}",
-					"--artifact-id", "terra-workspace-manager-client",
+					"--model-package", "${artifactGroup}.model",
+					"--api-package", "${artifactGroup}.api",
+					"--invoker-package", "${artifactGroup}.client",
+					"--group-id", "${artifactGroup}",
 					"--artifact-version", "${this.version}",
 					"--ignore-file-override", "${projectDir}/.swagger-codegen-ignore",
 					"-D", "apiTests=false," +

@@ -49,7 +49,7 @@ dependencies {
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
-	testImplementation project(':client')
+	testImplementation project(':terra-workspace-manager-client')
 
 	annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 }
@@ -162,7 +162,7 @@ clean.dependsOn cleanSetGitVersion, cleanGenerateSwaggerUIServer
 
 idea {
 	module {
-		generatedSourceDirs = [file('build/src'), file('client/build/src')]
+		generatedSourceDirs = [file('build/src'), file('terra-workspace-manager-client/build/src')]
 
 		downloadJavadoc = true
 	}
