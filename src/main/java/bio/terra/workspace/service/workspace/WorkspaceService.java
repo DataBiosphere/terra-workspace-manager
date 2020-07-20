@@ -26,7 +26,7 @@ public class WorkspaceService {
   private JobService jobService;
   private final WorkspaceDao workspaceDao;
   private final SamService samService;
-  @Autowired private final Tracer tracer;
+  private final Tracer tracer;
 
   @Autowired
   public WorkspaceService(
