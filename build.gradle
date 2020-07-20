@@ -77,8 +77,7 @@ if (hasProperty('buildScan')) {
 def openapiSourceLocation = "${projectDir}/src/main/resources/api"
 def openapiSourceFile = "${openapiSourceLocation}/service_openapi.yaml"
 def openapiSourceConfig = "${openapiSourceLocation}/swagger-config.json"
-def openapiTargetDir = "${buildDir}/server"
-def openapiClientTargetDir = "${buildDir}/client"
+def openapiClientTargetDir = "${projectDir}/client/build/src"
 
 swaggerSources {
 	server {
@@ -86,7 +85,7 @@ swaggerSources {
 		code {
 			language = "spring"
 			library = "spring-boot"
-			outputDir = file("${openapiTargetDir}")
+			outputDir = file("${buildDir}")
 			components = ['models', 'apis']
 			configFile = file("${openapiSourceConfig}")
 			rawOptions = [
@@ -152,8 +151,7 @@ task setGitVersion(type: WriteProperties) {
 
 // Internal dependencies
 
-sourceSets.main.java.srcDir "${openapiTargetDir}/src/main/java"
-sourceSets.test.java.srcDir "${projectDir}/client/build/client/src/main/java"
+sourceSets.main.java.srcDir "${buildDir}/src"
 compileJava.dependsOn swaggerSources.server.code, tasks.spotlessApply, tasks.setGitVersion
 
 processResources.dependsOn swaggerSources.server.ui
