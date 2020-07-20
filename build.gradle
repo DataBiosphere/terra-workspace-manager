@@ -162,12 +162,8 @@ clean.dependsOn cleanSetGitVersion, cleanGenerateSwaggerUIServer
 
 idea {
 	module {
-		generatedSourceDirs += file('build/src')
-		generatedSourceDirs += file('client/build/src')
-
-		jdkName = sourceCompatibility
+		generatedSourceDirs = [file('build/src'), file('client/build/src')]
 
 		downloadJavadoc = true
-		downloadSources = true
 	}
 }
