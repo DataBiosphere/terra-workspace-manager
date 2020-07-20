@@ -30,25 +30,28 @@ dependencies {
 
 // OpenAPI/Swagger Client Generation
 
-def openapiSourceLocation = "${projectDir}/../src/main/resources/api"
-def openapiSourceFile = "${openapiSourceLocation}/service_openapi.yaml"
-def openapiSourceConfig = "${openapiSourceLocation}/swagger-config.json"
+def openapiSourceDir = "${projectDir}/../src/main/resources/api"
 
 swaggerSources {
 	client {
-		inputFile = file("${openapiSourceFile}")
+		inputFile = file("${openapiSourceDir}/service_openapi.yaml")
 		code {
 			language = "java"
 			library = "jersey2"
 			outputDir = file("${buildDir}")
-			configFile = file("${openapiSourceConfig}")
 			rawOptions = [
 					"--api-package", "${this.group}.controller",
 					"--model-package", "${this.group}.model",
 					"--group-id", "${this.group}",
 					"--artifact-id", "terra-workspace-manager-client",
 					"--artifact-version", "${this.version}",
-					"-D", "apiTests=false,apiDocs=false,modelTests=false,modelDocs=false"
+					"--ignore-file-override", "${projectDir}/.swagger-codegen-ignore",
+					"-D", "apiTests=false," +
+							"apiDocs=false," +
+							"modelTests=false," +
+							"modelDocs=false," +
+							"sortParamsByRequiredFlag=false," +
+							"dateLibrary=java8"
 			]
 		}
 	}
@@ -97,6 +100,6 @@ artifactory {
 
 // Internal dependencies
 
-sourceSets.main.java.srcDir "${buildDir}/src"
+sourceSets.main.java.srcDir "${swaggerSources.client.code.outputDir}/src"
 
 compileJava.dependsOn swaggerSources.client.code

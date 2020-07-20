@@ -59,10 +59,10 @@ configurations.all {
 	exclude group: "commons-logging", module: "commons-logging"
 }
 
-clean {
-	delete "${projectDir}/src/main/resources/generated/swagger-ui"
-	delete "${projectDir}/src/main/resources/generated/version.properties"
-}
+// Defs
+
+def generatedResourceDir = "${projectDir}/src/main/resources/generated"
+def openapiSourceDir = "${projectDir}/src/main/resources/api"
 
 // for scans
 if (hasProperty('buildScan')) {
@@ -74,32 +74,34 @@ if (hasProperty('buildScan')) {
 
 // OpenAPI/Swagger Server Generation
 
-def openapiSourceLocation = "${projectDir}/src/main/resources/api"
-def openapiSourceFile = "${openapiSourceLocation}/service_openapi.yaml"
-def openapiSourceConfig = "${openapiSourceLocation}/swagger-config.json"
-def openapiClientTargetDir = "${projectDir}/client/build/src"
-
 swaggerSources {
 	server {
-		inputFile = file("${openapiSourceFile}")
+		inputFile = file("${openapiSourceDir}/service_openapi.yaml")
 		code {
 			language = "spring"
 			library = "spring-boot"
 			outputDir = file("${buildDir}")
 			components = ['models', 'apis']
-			configFile = file("${openapiSourceConfig}")
 			rawOptions = [
 					"--api-package", "${this.group}.generated.controller",
-					"--model-package", "${this.group}.generated.model"
+					"--model-package", "${this.group}.generated.model",
+					"-D", "sortParamsByRequiredFlag=false," +
+							"interfaceOnly=true," +
+							"defaultInterfaces=false," +
+							"useTags=true," +
+							"dateLibrary=java8," +
+							"generateApiTests=false," +
+							"generateApiDocumentation=false," +
+							"generateModelTests=false," +
+							"generateModelDocumentation=false"
 			]
 		}
 		ui {
-			outputDir = file("${projectDir}/src/main/resources/generated/swagger-ui")
+			outputDir = file("${generatedResourceDir}/swagger-ui")
 			doLast {
 				copy {
-					from "${openapiSourceLocation}/swagger-ui.html"
-					from "${openapiSourceFile}"
-					into outputDir
+					from "${openapiSourceDir}"
+					into "${outputDir}"
 				}
 			}
 
@@ -144,15 +146,28 @@ spotless {
 // Custom tasks
 
 task setGitVersion(type: WriteProperties) {
-	outputFile = file('src/main/resources/generated/version.properties')
+	outputFile = file("${generatedResourceDir}/version.properties")
 	property('git.hash', versionDetails().gitHash)
 	property('git.tag', gitVersion())
 }
 
 // Internal dependencies
 
-sourceSets.main.java.srcDir "${buildDir}/src"
+sourceSets.main.java.srcDir "${swaggerSources.server.code.outputDir}/src"
 compileJava.dependsOn swaggerSources.server.code, tasks.spotlessApply, tasks.setGitVersion
 
 processResources.dependsOn swaggerSources.server.ui
-ideaModule.dependsOn swaggerSources.server.code
+
+clean.dependsOn cleanSetGitVersion, cleanGenerateSwaggerUIServer
+
+idea {
+	module {
+		generatedSourceDirs += file('build/src')
+		generatedSourceDirs += file('client/build/src')
+
+		jdkName = sourceCompatibility
+
+		downloadJavadoc = true
+		downloadSources = true
+	}
+}
