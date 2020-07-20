@@ -61,6 +61,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("id") String id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     WorkspaceDescription desc = workspaceService.getWorkspace(id, userReq);
+
     return new ResponseEntity<WorkspaceDescription>(desc, HttpStatus.OK);
   }
 
@@ -89,6 +90,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     DataReferenceDescription ref =
         dataReferenceService.getDataReference(workspaceId, referenceId, userReq);
+
     return new ResponseEntity<DataReferenceDescription>(ref, HttpStatus.OK);
   }
 
@@ -100,6 +102,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     DataReferenceDescription ref =
         dataReferenceService.getDataReferenceByName(workspaceId, referenceType, name, userReq);
+
     return new ResponseEntity<DataReferenceDescription>(ref, HttpStatus.OK);
   }
 
@@ -108,6 +111,7 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("id") String workspaceId, @PathVariable("referenceId") String referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     dataReferenceService.deleteDataReference(workspaceId, referenceId, userReq);
+
     return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
   }
 

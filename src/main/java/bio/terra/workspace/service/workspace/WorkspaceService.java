@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.common.utils.SamUtils;
-import bio.terra.workspace.common.utils.TraceUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
@@ -13,6 +12,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import brave.Span;
 import brave.Tracer;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,7 +26,7 @@ public class WorkspaceService {
   private JobService jobService;
   private final WorkspaceDao workspaceDao;
   private final SamService samService;
-  private final Tracer tracer;
+  @Autowired private final Tracer tracer;
 
   @Autowired
   public WorkspaceService(
@@ -59,8 +59,11 @@ public class WorkspaceService {
 
   @NewSpan
   public WorkspaceDescription getWorkspace(String id, AuthenticatedUserRequest userReq) {
-    try (Tracer.SpanInScope ws = TraceUtils.nextSpan(tracer, "workspaceAuthz")) {
+    Span newSpan = tracer.nextSpan().name("workspaceAuthz");
+    try (Tracer.SpanInScope ws = tracer.withSpanInScope(newSpan.start())) {
       samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_READ_ACTION);
+    } finally {
+      newSpan.finish();
     }
     WorkspaceDescription result = workspaceDao.getWorkspace(id);
     return result;
