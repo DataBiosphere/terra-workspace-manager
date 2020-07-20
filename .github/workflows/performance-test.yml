@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      # See master_push.yml
+      # See dev_push.yml
       - name: Get Vault token
         id: vault-token-step
         env:
