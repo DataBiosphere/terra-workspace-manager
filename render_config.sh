@@ -5,7 +5,7 @@ TARGET_ENV=${2:-dev}
 
 FIRECLOUD_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/${TARGET_ENV}/common/firecloud-account.json
 SERVICE_ACCOUNT_OUTPUT_FILE_PATH="$(dirname $0)"/src/main/resources/generated/wsm-firecloud-account.json
-SERVICE_ACCOUNT_TEST_OUTPUT_FILE_PATH="$(dirname $0)"/test/main/resources/rendered/wsm-firecloud-account.json
+SERVICE_ACCOUNT_TEST_OUTPUT_FILE_PATH="$(dirname $0)"/src/test/resources/rendered/wsm-firecloud-account.json
 
 if [[ ! "$TARGET_ENV" =~ ^(dev|alpha|perf|staging|prod)$ ]]; then
     printf "\033[0;31m Unknown environment: $TARGET_ENV \n Must be one of [dev, alpha, perf, staging, prod] \n\033[0m"
