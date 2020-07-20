@@ -8,9 +8,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.JobResultWithStatus;
-import bio.terra.workspace.service.trace.StackdriverTrace;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import io.opencensus.common.Scope;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -29,7 +27,6 @@ public class WorkspaceApiController implements WorkspaceApi {
   private JobService jobService;
   private AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
-  private final StackdriverTrace trace;
 
   @Autowired
   public WorkspaceApiController(
@@ -37,14 +34,12 @@ public class WorkspaceApiController implements WorkspaceApi {
       DataReferenceService dataReferenceService,
       JobService jobService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      HttpServletRequest request,
-      StackdriverTrace trace) {
+      HttpServletRequest request) {
     this.workspaceService = workspaceService;
     this.dataReferenceService = dataReferenceService;
     this.jobService = jobService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
-    this.trace = trace;
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
@@ -64,12 +59,9 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("id") String id) {
-    // try (Scope s = trace.scope(request.getRequestURI())) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     WorkspaceDescription desc = workspaceService.getWorkspace(id, userReq);
-
     return new ResponseEntity<WorkspaceDescription>(desc, HttpStatus.OK);
-    // }
   }
 
   @Override
@@ -84,7 +76,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<DataReferenceDescription> createDataReference(
-      @RequestBody CreateDataReferenceRequestBody body, @PathVariable("id") String id) {
+      @PathVariable("id") String id, @RequestBody CreateDataReferenceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
 
     return new ResponseEntity<DataReferenceDescription>(
@@ -97,7 +89,6 @@ public class WorkspaceApiController implements WorkspaceApi {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     DataReferenceDescription ref =
         dataReferenceService.getDataReference(workspaceId, referenceId, userReq);
-
     return new ResponseEntity<DataReferenceDescription>(ref, HttpStatus.OK);
   }
 
@@ -109,7 +100,6 @@ public class WorkspaceApiController implements WorkspaceApi {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     DataReferenceDescription ref =
         dataReferenceService.getDataReferenceByName(workspaceId, referenceType, name, userReq);
-
     return new ResponseEntity<DataReferenceDescription>(ref, HttpStatus.OK);
   }
 
@@ -118,7 +108,6 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("id") String workspaceId, @PathVariable("referenceId") String referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     dataReferenceService.deleteDataReference(workspaceId, referenceId, userReq);
-
     return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
   }
 
