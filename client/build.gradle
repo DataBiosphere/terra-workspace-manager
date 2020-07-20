@@ -40,8 +40,9 @@ swaggerSources {
 			library = "jersey2"
 			outputDir = file("${buildDir}")
 			rawOptions = [
-					"--api-package", "${this.group}.controller",
 					"--model-package", "${this.group}.model",
+					"--api-package", "${this.group}.api",
+					"--invoker-package", "${this.group}.client",
 					"--group-id", "${this.group}",
 					"--artifact-id", "terra-workspace-manager-client",
 					"--artifact-version", "${this.version}",
