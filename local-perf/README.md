@@ -22,7 +22,7 @@ changes. If you're seeing errors like `UPGRADE FAILED: "(Release name)" has no
 deployed releases`, try updating Skaffold.
 
 You may need to use gcloud to provide GCR
- credentials with `gcloud auth configure-docker`. Finally, run local-run.sh with
+ credentials with `gcloud auth configure-docker`. Finally, run ./setup_local_env.sh with
   your target environment as the first argument:
 
 ```
