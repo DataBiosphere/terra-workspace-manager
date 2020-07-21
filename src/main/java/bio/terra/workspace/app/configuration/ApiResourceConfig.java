@@ -28,10 +28,14 @@ public class ApiResourceConfig implements WebMvcConfigurer {
           public boolean preHandle(
               HttpServletRequest request, HttpServletResponse response, Object handler)
               throws Exception {
-            String mdcId = request.getHeader("X-Request-ID");
-            if (mdcId != null) spanCustomizer.tag("mdc-id", mdcId);
+            String mdcRequestId = request.getHeader("X-Request-ID");
+            if (mdcRequestId != null) spanCustomizer.tag("mdc-request-id", mdcRequestId);
 
+            String mdcCorrelationId = request.getHeader("X-Correlation-ID");
+            if (mdcCorrelationId != null)
+              spanCustomizer.tag("mdc-correlation-id", mdcCorrelationId);
             // add tags to Stackdriver traces here
+
             return true;
           }
         });
