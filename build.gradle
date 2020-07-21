@@ -12,9 +12,11 @@ plugins {
 	id 'org.springframework.boot' version '2.3.1.RELEASE'
 }
 
-group = 'bio.terra.workspace'
-version = '0.0.3-SNAPSHOT'
-sourceCompatibility = '1.8'
+allprojects {
+	group = 'bio.terra'
+	version = '0.1.0-SNAPSHOT'
+	sourceCompatibility = '1.8'
+}
 
 repositories {
 	mavenCentral()
@@ -49,7 +51,7 @@ dependencies {
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
-	testImplementation project(':terra-workspace-manager-client')
+	testImplementation project(':workspace-manager-client')
 
 	annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 }
@@ -157,7 +159,7 @@ clean.dependsOn cleanSetGitVersion, cleanGenerateSwaggerUIServer
 
 idea {
 	module {
-		generatedSourceDirs = [file('build/src'), file('terra-workspace-manager-client/build/src')]
+		generatedSourceDirs = [file('build/src'), file('workspace-manager-client/build/src')]
 
 		downloadJavadoc = true
 	}

@@ -6,10 +6,6 @@ plugins {
 	id 'org.hidetake.swagger.generator'
 }
 
-group = 'bio.terra'
-version = '0.0.4-SNAPSHOT'
-sourceCompatibility = '1.8'
-
 repositories {
 	mavenCentral()
 }
