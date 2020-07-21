@@ -28,9 +28,10 @@ public class ApiResourceConfig implements WebMvcConfigurer {
           public boolean preHandle(
               HttpServletRequest request, HttpServletResponse response, Object handler)
               throws Exception {
-            spanCustomizer.tag("session-id", request.getSession().getId());
-            // add tags to Stackdriver traces here
+            String mdcId = request.getHeader("X-Request-ID");
+            if (mdcId != null) spanCustomizer.tag("mdc-id", mdcId);
 
+            // add tags to Stackdriver traces here
             return true;
           }
         });
