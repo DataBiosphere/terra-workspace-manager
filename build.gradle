@@ -16,6 +16,10 @@ allprojects {
 	group = 'bio.terra'
 	version = '0.1.0-SNAPSHOT'
 	sourceCompatibility = '1.8'
+
+	ext {
+		artifactGroup = "${this.group}.workspace"
+	}
 }
 
 repositories {
@@ -85,8 +89,8 @@ swaggerSources {
 			outputDir = file("${buildDir}")
 			components = ['models', 'apis']
 			rawOptions = [
-					"--api-package", "${this.group}.generated.controller",
-					"--model-package", "${this.group}.generated.model",
+					"--api-package", "${this.artifactGroup}.generated.controller",
+					"--model-package", "${this.artifactGroup}.generated.model",
 					"-D", "interfaceOnly=true," +
 							"defaultInterfaces=false," +
 							"useTags=true," +
