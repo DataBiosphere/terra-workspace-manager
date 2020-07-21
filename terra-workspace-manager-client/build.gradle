@@ -51,7 +51,6 @@ swaggerSources {
 							"apiDocs=false," +
 							"modelTests=false," +
 							"modelDocs=false," +
-							"sortParamsByRequiredFlag=false," +
 							"dateLibrary=java8"
 			]
 		}

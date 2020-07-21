@@ -85,15 +85,10 @@ swaggerSources {
 			rawOptions = [
 					"--api-package", "${this.group}.generated.controller",
 					"--model-package", "${this.group}.generated.model",
-					"-D", "sortParamsByRequiredFlag=false," +
-							"interfaceOnly=true," +
+					"-D", "interfaceOnly=true," +
 							"defaultInterfaces=false," +
 							"useTags=true," +
-							"dateLibrary=java8," +
-							"generateApiTests=false," +
-							"generateApiDocumentation=false," +
-							"generateModelTests=false," +
-							"generateModelDocumentation=false"
+							"dateLibrary=java8"
 			]
 		}
 		ui {
@@ -154,7 +149,7 @@ task setGitVersion(type: WriteProperties) {
 // Internal dependencies
 
 sourceSets.main.java.srcDir "${swaggerSources.server.code.outputDir}/src"
-compileJava.dependsOn swaggerSources.server.code, tasks.spotlessApply, tasks.setGitVersion
+compileJava.dependsOn swaggerSources.server.code, spotlessApply, setGitVersion
 
 processResources.dependsOn swaggerSources.server.ui
 
