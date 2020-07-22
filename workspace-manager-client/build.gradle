@@ -11,24 +11,19 @@ repositories {
 }
 
 dependencies {
-	def jersey = "2.31"
-
-	implementation group: 'org.glassfish.jersey.core', name: 'jersey-client', version: "${jersey}"
-	implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: "${jersey}"
-	implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-multipart', version: "${jersey}"
-	implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.11.1'
-
-	implementation group: 'io.swagger.core.v3', name: 'swagger-annotations', version: '2.1.3'
-	swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.20'
+	implementation group: 'org.glassfish.jersey.core', name: 'jersey-client'
+	implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson'
+	implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-multipart'
+	implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310'
+	implementation group: 'io.swagger.core.v3', name: 'swagger-annotations'
+	swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli'
 }
 
 // OpenAPI/Swagger Client Generation
 
-def openapiSourceDir = "${projectDir}/../src/main/resources/api"
-
 swaggerSources {
 	client {
-		inputFile = file("${openapiSourceDir}/service_openapi.yaml")
+		inputFile = file("${projectDir}/../src/main/resources/api/service_openapi.yaml")
 		code {
 			language = "java"
 			library = "jersey2"
