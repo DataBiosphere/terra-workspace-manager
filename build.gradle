@@ -92,11 +92,6 @@ configurations.all {
 	exclude group: "commons-logging", module: "commons-logging"
 }
 
-// Defs
-
-def generatedResourceDir = "${resourceDir}/generated"
-def openapiSourceDir = "${resourceDir}/api"
-
 // for scans
 if (hasProperty("buildScan")) {
 	buildScan {
@@ -104,6 +99,11 @@ if (hasProperty("buildScan")) {
 		termsOfServiceAgree = "yes"
 	}
 }
+
+// Defs
+
+def generatedResourceDir = "${resourceDir}/generated"
+def openapiSourceDir = "${resourceDir}/api"
 
 // OpenAPI/Swagger Server & UI Generation
 
