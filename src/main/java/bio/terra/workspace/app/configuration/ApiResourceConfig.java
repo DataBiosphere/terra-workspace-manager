@@ -1,8 +1,10 @@
 package bio.terra.workspace.app.configuration;
 
 import brave.SpanCustomizer;
+import java.util.concurrent.ThreadLocalRandom;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.hashids.Hashids;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -26,18 +28,36 @@ public class ApiResourceConfig implements WebMvcConfigurer {
         new HandlerInterceptor() {
           @Override
           public boolean preHandle(
-              HttpServletRequest request, HttpServletResponse response, Object handler)
+              HttpServletRequest httpRequest, HttpServletResponse httpResponse, Object handler)
               throws Exception {
-            String mdcRequestId = request.getHeader("X-Request-ID");
-            if (mdcRequestId != null) spanCustomizer.tag("mdc-request-id", mdcRequestId);
 
-            String mdcCorrelationId = request.getHeader("X-Correlation-ID");
-            if (mdcCorrelationId != null)
-              spanCustomizer.tag("mdc-correlation-id", mdcCorrelationId);
-            // add tags to Stackdriver traces here
+            // get an mdc id from the request (if not found, create one), and pass it along in the response
+            String requestId = getMDCRequestId(httpRequest);
+            httpResponse.addHeader("X-Request-ID", requestId);
+
+            // add tags to Stackdriver traces
+            spanCustomizer.tag("requestId", requestId);
 
             return true;
           }
         });
+  }
+
+  private Hashids hashids = new Hashids("requestIdSalt", 8);
+
+  private String generateRequestId() {
+    long generatedLong = ThreadLocalRandom.current().nextLong(0, Integer.MAX_VALUE);
+
+    return hashids.encode(generatedLong);
+  }
+
+  private String getMDCRequestId(HttpServletRequest httpRequest) {
+    String requestId =
+        ((requestId = httpRequest.getHeader("X-Request-ID")) != null)
+            ? requestId
+            : ((requestId = httpRequest.getHeader("X-Correlation-ID")) != null)
+                ? requestId
+                : generateRequestId();
+    return requestId;
   }
 }
