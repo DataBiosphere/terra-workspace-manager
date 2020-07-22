@@ -15,7 +15,11 @@ allprojects {
 	group = "bio.terra"
 	version = "0.1.0-SNAPSHOT"
 	sourceCompatibility = "1.8"
-	ext { artifactGroup = "${group}.workspace" }
+	ext {
+		artifactGroup = "${group}.workspace"
+		swaggerOutputDir = "${buildDir}/swagger-code"
+		resourceDir = "${rootDir}/src/main/resources"
+	}
 
 	// specifying versions for dependencies, not adding the dependencies themselves (yet)
 	apply plugin: "io.spring.dependency-management"
@@ -26,6 +30,14 @@ allprojects {
 		dependencies {
 			dependency group: "io.swagger.core.v3", name: "swagger-annotations", version: "2.1.3"
 			dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.20"
+		}
+	}
+
+	apply plugin: "idea"
+	idea {
+		module {
+			generatedSourceDirs = [file("${swaggerOutputDir}/src/main/java")]
+			downloadJavadoc = true
 		}
 	}
 }
@@ -82,8 +94,8 @@ configurations.all {
 
 // Defs
 
-def generatedResourceDir = "${projectDir}/src/main/resources/generated"
-def openapiSourceDir = "${projectDir}/src/main/resources/api"
+def generatedResourceDir = "${resourceDir}/generated"
+def openapiSourceDir = "${resourceDir}/api"
 
 // for scans
 if (hasProperty("buildScan")) {
@@ -101,7 +113,7 @@ swaggerSources {
 		code {
 			language = "spring"
 			library = "spring-boot"
-			outputDir = file("${buildDir}")
+			outputDir = file("${swaggerOutputDir}")
 			components = ["models", "apis"]
 			rawOptions = [
 					"--api-package", "${artifactGroup}.generated.controller",
@@ -169,17 +181,9 @@ task setGitVersion(type: WriteProperties) {
 
 // Internal dependencies
 
-sourceSets.main.java.srcDir "${swaggerSources.server.code.outputDir}/src"
+sourceSets.main.java.srcDir "${swaggerOutputDir}/src/main/java"
 compileJava.dependsOn swaggerSources.server.code, spotlessApply, setGitVersion
 
 processResources.dependsOn swaggerSources.server.ui
 
 clean.dependsOn cleanSetGitVersion, cleanGenerateSwaggerUIServer
-
-idea {
-	module {
-		generatedSourceDirs = [file("build/src"), file("workspace-manager-client/build/src")]
-
-		downloadJavadoc = true
-	}
-}

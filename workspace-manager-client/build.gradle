@@ -24,11 +24,11 @@ dependencies {
 
 swaggerSources {
 	client {
-		inputFile = file("${projectDir}/../src/main/resources/api/service_openapi.yaml")
+		inputFile = file("${resourceDir}/api/service_openapi.yaml")
 		code {
 			language = "java"
 			library = "jersey2"
-			outputDir = file("${buildDir}")
+			outputDir = file("${swaggerOutputDir}")
 			rawOptions = [
 					"--model-package", "${artifactGroup}.model",
 					"--api-package", "${artifactGroup}.api",
@@ -89,5 +89,5 @@ artifactory {
 
 // Internal dependencies
 
-sourceSets.main.java.srcDir "${swaggerSources.client.code.outputDir}/src"
+sourceSets.main.java.srcDir "${swaggerOutputDir}/src/main/java"
 compileJava.dependsOn swaggerSources.client.code
