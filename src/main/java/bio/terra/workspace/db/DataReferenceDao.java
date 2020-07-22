@@ -181,7 +181,6 @@ public class DataReferenceDao {
   }
 
   public static UUID maybeParseUUID(String stringOrNull) {
-
     return stringOrNull == null ? null : UUID.fromString(stringOrNull);
   }
 
