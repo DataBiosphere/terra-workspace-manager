@@ -185,7 +185,7 @@ paths:
   # Job paths
   /api/jobs/v1/{id}:
     parameters:
-      - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/JobId'
     get:
       deprecated: true
       summary: Poll the status of an existing async operation via job ID.
@@ -220,7 +220,7 @@ paths:
           description: Job was deleted
   /api/jobs/v1/{id}/result:
     parameters:
-      - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/JobId'
     get:
       deprecated: true
       summary: Retrieve the results of a completed async job specified by ID.
@@ -243,7 +243,15 @@ components:
       required: true
       schema:
         type: string
-        # format: uuid
+        format: uuid
+
+    JobId:
+      name: jobId
+      in: path
+      description: A String ID to used to identify a job
+      required: true
+      schema:
+        type: string
 
     Offset:
       name: offset

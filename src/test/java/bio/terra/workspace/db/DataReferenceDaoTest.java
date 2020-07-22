@@ -154,9 +154,7 @@ public class DataReferenceDaoTest {
 
     DataReferenceDescription ref =
         dataReferenceDao.getDataReferenceByName(
-            workspaceId.toString(),
-            DataReferenceDescription.ReferenceTypeEnum.fromValue(referenceType),
-            name);
+            workspaceId, DataReferenceDescription.ReferenceTypeEnum.fromValue(referenceType), name);
     assertThat(ref.getReferenceId(), equalTo(referenceId));
   }
 
@@ -264,7 +262,7 @@ public class DataReferenceDaoTest {
 
     // Validate that both DataReferences are enumerated
     DataReferenceList enumerateResult =
-        dataReferenceDao.enumerateDataReferences(workspaceId.toString(), name, 0, 10);
+        dataReferenceDao.enumerateDataReferences(workspaceId, name, 0, 10);
     assertThat(enumerateResult.getResources().size(), equalTo(2));
     assertThat(
         enumerateResult.getResources(),
@@ -275,8 +273,7 @@ public class DataReferenceDaoTest {
   public void enumerateEmptyReferenceList() throws Exception {
     workspaceDao.createWorkspace(workspaceId, null);
 
-    DataReferenceList result =
-        dataReferenceDao.enumerateDataReferences(workspaceId.toString(), name, 0, 10);
+    DataReferenceList result = dataReferenceDao.enumerateDataReferences(workspaceId, name, 0, 10);
     assertThat(result.getResources(), empty());
   }
 

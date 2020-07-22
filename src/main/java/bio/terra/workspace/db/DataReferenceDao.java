@@ -81,12 +81,12 @@ public class DataReferenceDao {
   }
 
   public DataReferenceDescription getDataReferenceByName(
-      String workspaceId, DataReferenceDescription.ReferenceTypeEnum type, String name) {
+      UUID workspaceId, DataReferenceDescription.ReferenceTypeEnum type, String name) {
     String sql =
         "SELECT workspace_id, reference_id, name, resource_id, credential_id, cloning_instructions, reference_type, reference from workspace_data_reference where workspace_id = :id AND reference_type = :type AND name = :name";
 
     Map<String, Object> paramMap = new HashMap();
-    paramMap.put("id", workspaceId);
+    paramMap.put("id", workspaceId.toString());
     paramMap.put("type", type.toString());
     paramMap.put("name", name);
 
@@ -121,7 +121,7 @@ public class DataReferenceDao {
   }
 
   public DataReferenceList enumerateDataReferences(
-      String workspaceId, String owner, int offset, int limit) {
+      UUID workspaceId, String owner, int offset, int limit) {
     List<String> whereClauses = new ArrayList<>();
     whereClauses.add("(ref.workspace_id = :id)");
     whereClauses.add(uncontrolledOrVisibleResourcesClause("resource", "ref"));
@@ -136,7 +136,7 @@ public class DataReferenceDao {
             + " OFFSET :offset"
             + " LIMIT :limit";
     MapSqlParameterSource params = new MapSqlParameterSource();
-    params.addValue("id", workspaceId);
+    params.addValue("id", workspaceId.toString());
     params.addValue("owner", owner);
     params.addValue("offset", offset);
     params.addValue("limit", limit);

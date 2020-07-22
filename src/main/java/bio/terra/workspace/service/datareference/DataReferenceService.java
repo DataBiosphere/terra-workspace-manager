@@ -38,16 +38,15 @@ public class DataReferenceService {
   }
 
   public DataReferenceDescription getDataReference(
-      String workspaceId, String referenceId, AuthenticatedUserRequest userReq) {
+      UUID workspaceId, String referenceId, AuthenticatedUserRequest userReq) {
 
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
 
-    return dataReferenceDao.getDataReference(
-        UUID.fromString(workspaceId), UUID.fromString(referenceId));
+    return dataReferenceDao.getDataReference(workspaceId, UUID.fromString(referenceId));
   }
 
   public DataReferenceDescription getDataReferenceByName(
-      String workspaceId, String referenceType, String name, AuthenticatedUserRequest userReq) {
+      UUID workspaceId, String referenceType, String name, AuthenticatedUserRequest userReq) {
 
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
 
@@ -56,7 +55,7 @@ public class DataReferenceService {
   }
 
   public DataReferenceDescription createDataReference(
-      String workspaceId, CreateDataReferenceRequestBody body, AuthenticatedUserRequest userReq) {
+      UUID workspaceId, CreateDataReferenceRequestBody body, AuthenticatedUserRequest userReq) {
 
     // validate shape of request as soon as it comes in
     if ((body.getReferenceType() != null && body.getReference() != null)
@@ -80,7 +79,7 @@ public class DataReferenceService {
                 body,
                 userReq)
             .addParameter(DataReferenceFlightMapKeys.REFERENCE_ID, referenceId)
-            .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.fromString(workspaceId));
+            .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, workspaceId);
 
     if (body.getReferenceType() != null && body.getReference() != null) {
       String ref =
@@ -93,18 +92,18 @@ public class DataReferenceService {
 
     createJob.submitAndWait(String.class);
 
-    return dataReferenceDao.getDataReference(UUID.fromString(workspaceId), referenceId);
+    return dataReferenceDao.getDataReference(workspaceId, referenceId);
   }
 
   public DataReferenceList enumerateDataReferences(
-      String workspaceId, int offset, int limit, AuthenticatedUserRequest userReq) {
+      UUID workspaceId, int offset, int limit, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
     return dataReferenceDao.enumerateDataReferences(
         workspaceId, userReq.getReqId().toString(), offset, limit);
   }
 
   public void deleteDataReference(
-      String workspaceId, String referenceId, AuthenticatedUserRequest userReq) {
+      UUID workspaceId, String referenceId, AuthenticatedUserRequest userReq) {
 
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
 

@@ -84,7 +84,9 @@ public class WorkspaceServiceTest {
   @Test
   public void testGetMissingWorkspace() throws Exception {
     MvcResult callResult =
-        mvc.perform(get("/api/workspaces/v1/" + "fake-id")).andExpect(status().is(404)).andReturn();
+        mvc.perform(get("/api/workspaces/v1/" + UUID.randomUUID().toString()))
+            .andExpect(status().is(404))
+            .andReturn();
 
     ErrorReport error =
         objectMapper.readValue(callResult.getResponse().getContentAsString(), ErrorReport.class);

@@ -54,11 +54,11 @@ public class WorkspaceDao {
     return rowsAffected > 0;
   }
 
-  public WorkspaceDescription getWorkspace(String id) {
+  public WorkspaceDescription getWorkspace(UUID id) {
     String sql = "SELECT * FROM workspace where workspace_id = (:id)";
 
     Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put("id", id);
+    paramMap.put("id", id.toString());
 
     try {
       Map<String, Object> queryOutput = jdbcTemplate.queryForMap(sql, paramMap);

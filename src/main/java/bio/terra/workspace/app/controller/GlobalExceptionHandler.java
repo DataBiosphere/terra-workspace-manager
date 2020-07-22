@@ -7,9 +7,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 // This module provides a top-level exception handler for controllers.
@@ -29,6 +31,8 @@ public class GlobalExceptionHandler {
   // -- validation exceptions - we don't control the exception raised
   @ExceptionHandler({
     MethodArgumentNotValidException.class,
+    MethodArgumentTypeMismatchException.class,
+    HttpMessageNotReadableException.class,
     IllegalArgumentException.class,
     NoHandlerFoundException.class
   })

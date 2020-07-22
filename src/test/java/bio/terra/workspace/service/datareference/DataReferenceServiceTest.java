@@ -335,7 +335,9 @@ public class DataReferenceServiceTest {
     MvcResult callResult =
         mvc.perform(
                 delete(
-                    "/api/workspaces/v1/fake-workspace/datareferences/"
+                    "/api/workspaces/v1/"
+                        + workspaceId.toString()
+                        + "/datareferences/"
                         + UUID.randomUUID().toString()))
             .andExpect(status().is(404))
             .andReturn();
