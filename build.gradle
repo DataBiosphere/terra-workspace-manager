@@ -41,23 +41,30 @@ repositories {
 }
 
 dependencies {
+	// Terra deps
 	implementation group: "bio.terra", name: "datarepo-client", version: "1.0.1-SNAPSHOT"
 	implementation group: "bio.terra", name: "stairway", version: "0.0.4.1-SNAPSHOT"
+	implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.12", version: "0.1-3a0df80"
+
+	// Versioned direct deps
+	implementation group: "org.hashids", name: "hashids", version: "1.0.3"
+	implementation group: "org.liquibase", name: "liquibase-core", version: "3.9.0"
+	runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.2.14"
+
+	// Deps whose versions are controlled by Spring
 	implementation group: "javax.validation", name: "validation-api"
 	implementation group: "org.apache.commons", name: "commons-dbcp2"
 	implementation group: "org.apache.commons", name: "commons-lang3"
 	implementation group: "org.apache.commons", name: "commons-pool2"
-	implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.12", version: "0.1-3a0df80"
-	implementation group: "org.hashids", name: "hashids", version: "1.0.3"
-	implementation group: "org.liquibase", name: "liquibase-core", version: "3.9.0"
 	implementation group: "org.springframework.boot", name: "spring-boot-starter-data-jdbc"
 	implementation group: "org.springframework.boot", name: "spring-boot-starter-web"
-	runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.2.14"
 
+	// Swagger deps
 	implementation group: "io.swagger.core.v3", name: "swagger-annotations"
 	swaggerCodegen "io.swagger.codegen.v3:swagger-codegen-cli"
 	swaggerUI "org.webjars:swagger-ui:3.28.0"
 
+	// Test deps
 	testImplementation(group: "com.google.auth", name: "google-auth-library-oauth2-http", version: "0.21.0")
 	testImplementation(group: "io.vavr", name: "vavr", version: "0.10.3")
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
@@ -86,7 +93,7 @@ if (hasProperty("buildScan")) {
 	}
 }
 
-// OpenAPI/Swagger Server Generation
+// OpenAPI/Swagger Server & UI Generation
 
 swaggerSources {
 	server {
@@ -162,7 +169,7 @@ task setGitVersion(type: WriteProperties) {
 
 // Internal dependencies
 
-sourceSets.main.java.srcDir "${buildDir}/src"
+sourceSets.main.java.srcDir "${swaggerSources.server.code.outputDir}/src"
 compileJava.dependsOn swaggerSources.server.code, spotlessApply, setGitVersion
 
 processResources.dependsOn swaggerSources.server.ui

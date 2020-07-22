@@ -11,6 +11,7 @@ repositories {
 }
 
 dependencies {
+	// Swagger deps, versions controlled by dependencyManagement in root project
 	implementation group: "org.glassfish.jersey.core", name: "jersey-client"
 	implementation group: "org.glassfish.jersey.media", name: "jersey-media-json-jackson"
 	implementation group: "org.glassfish.jersey.media", name: "jersey-media-multipart"
