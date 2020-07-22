@@ -21,6 +21,8 @@ public class ApiResourceConfig implements WebMvcConfigurer {
   }
 
   @Autowired private SpanCustomizer spanCustomizer;
+  private String mdcRequestIdKey = "X-Request-ID";
+  private String mdcCorrelationIdKey = "X-Correlation-ID";
 
   @Override
   public void addInterceptors(InterceptorRegistry registry) {
@@ -33,7 +35,7 @@ public class ApiResourceConfig implements WebMvcConfigurer {
 
             // get an mdc id from the request (if not found, create one), and pass it along in the response
             String requestId = getMDCRequestId(httpRequest);
-            httpResponse.addHeader("X-Request-ID", requestId);
+            httpResponse.addHeader(mdcRequestIdKey, requestId);
 
             // add tags to Stackdriver traces
             spanCustomizer.tag("requestId", requestId);
@@ -53,9 +55,9 @@ public class ApiResourceConfig implements WebMvcConfigurer {
 
   private String getMDCRequestId(HttpServletRequest httpRequest) {
     String requestId =
-        ((requestId = httpRequest.getHeader("X-Request-ID")) != null)
+        ((requestId = httpRequest.getHeader(mdcRequestIdKey)) != null)
             ? requestId
-            : ((requestId = httpRequest.getHeader("X-Correlation-ID")) != null)
+            : ((requestId = httpRequest.getHeader(mdcCorrelationIdKey)) != null)
                 ? requestId
                 : generateRequestId();
     return requestId;
