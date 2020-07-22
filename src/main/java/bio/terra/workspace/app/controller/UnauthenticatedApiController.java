@@ -5,9 +5,6 @@ import bio.terra.workspace.generated.controller.UnauthenticatedApi;
 import bio.terra.workspace.generated.model.SystemStatus;
 import bio.terra.workspace.generated.model.SystemVersion;
 import bio.terra.workspace.service.status.WorkspaceManagerStatusService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Optional;
-import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,16 +28,6 @@ public class UnauthenticatedApiController implements UnauthenticatedApi {
             .github(
                 "https://github.com/DataBiosphere/terra-workspace-manager/commit/"
                     + versionConfiguration.getHash());
-  }
-
-  @Override
-  public Optional<ObjectMapper> getObjectMapper() {
-    return Optional.empty();
-  }
-
-  @Override
-  public Optional<HttpServletRequest> getRequest() {
-    return Optional.empty();
   }
 
   @Override

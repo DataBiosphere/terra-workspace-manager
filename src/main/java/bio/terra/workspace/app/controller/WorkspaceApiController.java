@@ -9,7 +9,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.JobResultWithStatus;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -73,16 +72,6 @@ public class WorkspaceApiController implements WorkspaceApi {
     String userToken = body.getAuthToken();
     workspaceService.deleteWorkspace(id, userToken);
     return new ResponseEntity<>(HttpStatus.valueOf(204));
-  }
-
-  @Override
-  public Optional<ObjectMapper> getObjectMapper() {
-    return Optional.empty();
-  }
-
-  @Override
-  public Optional<HttpServletRequest> getRequest() {
-    return Optional.empty();
   }
 
   @Override

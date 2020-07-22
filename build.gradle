@@ -119,7 +119,6 @@ swaggerSources {
 					"--api-package", "${artifactGroup}.generated.controller",
 					"--model-package", "${artifactGroup}.generated.model",
 					"-D", "interfaceOnly=true," +
-							"defaultInterfaces=false," +
 							"useTags=true," +
 							"dateLibrary=java8"
 			]
