@@ -10,13 +10,17 @@ import bio.terra.workspace.app.Main;
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
+import bio.terra.workspace.generated.model.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
+import bio.terra.workspace.generated.model.DataReferenceDescription.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.DataReferenceList;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
+import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
+import javax.ws.rs.HEAD;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -47,18 +51,18 @@ public class DataReferenceDaoTest {
   private UUID workspaceId;
   private UUID referenceId;
   private String name;
-  private String referenceType;
+  private ReferenceTypeEnum referenceType;
   private String reference;
   private String credentialId;
   private UUID resourceId;
-  private String cloningInstructions;
+  private CloningInstructionsEnum cloningInstructions;
 
   @BeforeEach
   public void setup() {
     workspaceId = UUID.randomUUID();
     referenceId = UUID.randomUUID();
     name = UUID.randomUUID().toString();
-    referenceType = DataReferenceDescription.ReferenceTypeEnum.DATAREPOSNAPSHOT.toString();
+    referenceType = ReferenceTypeEnum.DATAREPOSNAPSHOT;
 
     DataRepoSnapshot drs = new DataRepoSnapshot();
     drs.setInstanceName(UUID.randomUUID().toString());
@@ -69,7 +73,7 @@ public class DataReferenceDaoTest {
     resourceId =
         null; // eventually we will more thoroughly support controlled resources, so this won't
     // always be null
-    cloningInstructions = "COPY_NOTHING";
+    cloningInstructions = CloningInstructionsEnum.NOTHING;
     jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
   }
 
@@ -153,8 +157,7 @@ public class DataReferenceDaoTest {
         reference);
 
     DataReferenceDescription ref =
-        dataReferenceDao.getDataReferenceByName(
-            workspaceId, DataReferenceDescription.ReferenceTypeEnum.fromValue(referenceType), name);
+        dataReferenceDao.getDataReferenceByName(workspaceId, referenceType, name);
     assertThat(ref.getReferenceId(), equalTo(referenceId));
   }
 
@@ -170,7 +173,7 @@ public class DataReferenceDaoTest {
         credentialId,
         cloningInstructions,
         referenceType,
-        reference.toString());
+        reference);
     DataReferenceDescription result = dataReferenceDao.getDataReference(workspaceId, referenceId);
 
     assertThat(result.getWorkspaceId(), equalTo(workspaceId));
@@ -178,7 +181,7 @@ public class DataReferenceDaoTest {
     assertThat(result.getName(), equalTo(name));
     assertThat(
         result.getReferenceType(),
-        equalTo(DataReferenceDescription.ReferenceTypeEnum.fromValue(referenceType)));
+        equalTo(referenceType));
     //    assertThat(result.getReference().getSnapshot(), equalTo(reference.getSnapshot()));
     //    assertThat(result.getReference().getInstance(), equalTo(reference.getInstance()));
   }
@@ -218,7 +221,7 @@ public class DataReferenceDaoTest {
         credentialId,
         cloningInstructions,
         referenceType,
-        reference.toString());
+        reference);
 
     assertTrue(dataReferenceDao.deleteDataReference(referenceId));
 

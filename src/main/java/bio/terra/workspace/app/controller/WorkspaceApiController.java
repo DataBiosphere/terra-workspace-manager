@@ -97,7 +97,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<DataReferenceDescription> getDataReferenceByName(
       @PathVariable("id") UUID workspaceId,
-      @PathVariable("referenceType") String referenceType,
+      @PathVariable("referenceType") ReferenceTypeEnum referenceType,
       @PathVariable("name") String name) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     DataReferenceDescription ref =

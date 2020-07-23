@@ -284,7 +284,7 @@ components:
       description: The type of a data reference in a workspace
       required: true
       schema:
-        type: string
+        $ref: '#/components/schemas/ReferenceTypeEnum'
 
     Name:
       name: name
@@ -429,6 +429,16 @@ components:
           type: string
           format: uuid
 
+    CloningInstructionsEnum:
+      type: string
+      description: Instructions for copying this reference when cloning the workspace
+      enum: ['COPY_NOTHING', 'COPY_DEFINITION', 'COPY_RESOURCE', 'COPY_REFERENCE']
+
+    ReferenceTypeEnum:
+      type: string
+      description: The type of a reference, if an uncontrolled resource
+      enum: ['DATA_REPO_SNAPSHOT'] #eventually include GCS bucket, etc.
+
     CreateDataReferenceRequestBody:
       type: object
       required: [name, cloningInstructions]
@@ -441,14 +451,12 @@ components:
           type: string
           format: uuid
         referenceType:
-          description: The type of the data reference (i.e. TDR snapshot, AWS bucket, etc)
-          type: string
+          $ref: '#/components/schemas/ReferenceTypeEnum'
         reference:
           description: The serialized object containing details specific to the referenceType. For instance, TDR snapshots must be serialized json.
           type: string
         cloningInstructions:
-          description: The cloning instructions for the reference
-          type: string
+          $ref: '#/components/schemas/CloningInstructionsEnum'
         credentialId:
           description: The IDs of the credentials to use with this resource
           type: string
@@ -471,9 +479,7 @@ components:
         resourceDescription:
           $ref: '#/components/schemas/ResourceDescription'
         referenceType:
-          description: The type of the reference, if an uncontrolled resource
-          type: string
-          enum: ['DataRepoSnapshot'] #eventually include GCS bucket, etc.
+          $ref: '#/components/schemas/ReferenceTypeEnum'
         reference:
           # Once https://github.com/OpenAPITools/openapi-generator/issues/5381
           # is resolved, we can use a oneOf field to validate different
@@ -486,10 +492,7 @@ components:
           description: The ID of the credential to use when accessing the resource
           type: string
         cloningInstructions:
-          description: Instructions for copying this reference when cloning the workspace
-          type: string
-          enum: ['COPY_NOTHING', 'COPY_DEFINITION', 'COPY_RESOURCE', 'COPY_REFERENCE']
-
+          $ref: '#/components/schemas/CloningInstructionsEnum'
     ResourceDescription:
       description: Description of the workspace resource, if this is a controlled reference.
       type: object

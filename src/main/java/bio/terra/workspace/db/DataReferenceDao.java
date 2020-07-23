@@ -4,7 +4,9 @@ import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
+import bio.terra.workspace.generated.model.DataReferenceDescription.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.DataReferenceList;
+import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.generated.model.ResourceDescription;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -39,8 +41,8 @@ public class DataReferenceDao {
       String name,
       UUID resourceId,
       String credentialId,
-      String cloningInstructions,
-      String referenceType,
+      CloningInstructionsEnum cloningInstructions,
+      ReferenceTypeEnum referenceType,
       String reference) {
     String sql =
         "INSERT INTO workspace_data_reference (workspace_id, reference_id, name, resource_id, credential_id, cloning_instructions, reference_type, reference) VALUES "
@@ -81,7 +83,7 @@ public class DataReferenceDao {
   }
 
   public DataReferenceDescription getDataReferenceByName(
-      UUID workspaceId, DataReferenceDescription.ReferenceTypeEnum type, String name) {
+      UUID workspaceId, ReferenceTypeEnum type, String name) {
     String sql =
         "SELECT workspace_id, reference_id, name, resource_id, credential_id, cloning_instructions, reference_type, reference from workspace_data_reference where workspace_id = :id AND reference_type = :type AND name = :name";
 
@@ -172,10 +174,8 @@ public class DataReferenceDao {
           .resourceDescription(resourceDescriptionMapper.mapRow(rs, rowNum))
           .credentialId(rs.getString("credential_id"))
           .cloningInstructions(
-              DataReferenceDescription.CloningInstructionsEnum.fromValue(
-                  rs.getString("cloning_instructions")))
-          .referenceType(
-              DataReferenceDescription.ReferenceTypeEnum.fromValue(rs.getString("reference_type")))
+              CloningInstructionsEnum.fromValue(rs.getString("cloning_instructions")))
+          .referenceType(ReferenceTypeEnum.fromValue(rs.getString("reference_type")))
           .reference(rs.getString("reference"));
     }
   }

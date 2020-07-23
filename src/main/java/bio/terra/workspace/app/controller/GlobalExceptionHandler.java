@@ -42,7 +42,9 @@ public class GlobalExceptionHandler {
     // malicious) input in the error response, which also means we don't include the full exception.
     // Instead, we return a generic error message about input validation.
     String validationErrorMessage =
-        "Request could not be parsed or was invalid: " + ex.getClass().getSimpleName();
+        "Request could not be parsed or was invalid: "
+            + ex.getClass().getSimpleName()
+            + ". Ensure that all types are correct and that enums have valid values.";
     ErrorReport errorReport =
         new ErrorReport()
             .message(validationErrorMessage)

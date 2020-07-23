@@ -6,6 +6,7 @@ import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataReferenceList;
+import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.flight.*;
@@ -46,22 +47,33 @@ public class DataReferenceService {
   }
 
   public DataReferenceDescription getDataReferenceByName(
-      UUID workspaceId, String referenceType, String name, AuthenticatedUserRequest userReq) {
+      UUID workspaceId,
+      ReferenceTypeEnum referenceType,
+      String name,
+      AuthenticatedUserRequest userReq) {
 
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
 
-    return dataReferenceDao.getDataReferenceByName(
-        workspaceId, DataReferenceDescription.ReferenceTypeEnum.fromValue(referenceType), name);
+    return dataReferenceDao.getDataReferenceByName(workspaceId, referenceType, name);
   }
 
   public DataReferenceDescription createDataReference(
       UUID workspaceId, CreateDataReferenceRequestBody body, AuthenticatedUserRequest userReq) {
 
     // validate shape of request as soon as it comes in
-    if ((body.getReferenceType() != null && body.getReference() != null)
-        == (body.getResourceId() != null)) {
+    if (body.getResourceId() != null) {
+      throw new ControlledResourceNotImplementedException(
+          "Unable to create a reference with a resourceId, use a reference type and description"
+              + " instead. This functionality will be implemented in the future.");
+    }
+    if (body.getReferenceType() == null || body.getReference() == null) {
       throw new InvalidDataReferenceException(
-          "Data reference must contain either a resource id or a reference type and a reference description");
+          "Data reference must contain a reference type and a reference description");
+    }
+    // TODO: remove this check when we add support for resource-specific credentials.
+    if (body.getCredentialId() != null) {
+      throw new InvalidDataReferenceException(
+          "Resource-specific credentials are not supported yet.");
     }
 
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
@@ -81,14 +93,10 @@ public class DataReferenceService {
             .addParameter(DataReferenceFlightMapKeys.REFERENCE_ID, referenceId)
             .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, workspaceId);
 
-    if (body.getReferenceType() != null && body.getReference() != null) {
-      String ref =
-          validationUtils.validateReference(
-              DataReferenceDescription.ReferenceTypeEnum.fromValue(body.getReferenceType()),
-              body.getReference(),
-              userReq);
-      createJob.addParameter(DataReferenceFlightMapKeys.REFERENCE, ref);
-    }
+    String ref =
+        validationUtils.validateReference(
+            body.getReferenceType(), body.getReference(), userReq);
+    createJob.addParameter(DataReferenceFlightMapKeys.REFERENCE, ref);
 
     createJob.submitAndWait(String.class);
 

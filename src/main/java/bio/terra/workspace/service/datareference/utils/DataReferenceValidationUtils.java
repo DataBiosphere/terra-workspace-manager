@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.datareference.utils;
 
-import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
+import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -21,16 +21,15 @@ public class DataReferenceValidationUtils {
   }
 
   public String validateReference(
-      DataReferenceDescription.ReferenceTypeEnum referenceType,
-      String reference,
-      AuthenticatedUserRequest userReq) {
+      ReferenceTypeEnum referenceType, String reference, AuthenticatedUserRequest userReq) {
 
-    if (referenceType.equals(DataReferenceDescription.ReferenceTypeEnum.DATAREPOSNAPSHOT)) {
+    if (referenceType != null && referenceType.equals(ReferenceTypeEnum.DATAREPOSNAPSHOT)) {
       validateDataRepoReference(reference, userReq);
       return reference;
     } else {
       throw new InvalidDataReferenceException(
-          "Invalid reference type specified: " + referenceType.toString());
+          "Invalid reference type specified. Valid types include: "
+              + ReferenceTypeEnum.DATAREPOSNAPSHOT.toString());
     }
   }
 
@@ -40,17 +39,14 @@ public class DataReferenceValidationUtils {
       DataRepoSnapshot ref = objectMapper.readValue(reference, DataRepoSnapshot.class);
       if (!dataRepoService.snapshotExists(ref.getInstanceName(), ref.getSnapshot(), userReq)) {
         throw new InvalidDataReferenceException(
-            "Snapshot ["
-                + ref.getSnapshot()
-                + "] could not be found in Data Repo located at ["
-                + ref.getInstanceName()
-                + "]. Verify that your reference was correctly defined: ["
-                + reference
-                + "]");
+            "The given snapshot could not be found in the Data Repo instance provided."
+                + " Verify that your reference was correctly defined and the instance is correct");
       }
       return ref;
     } catch (JsonProcessingException e) {
-      throw new InvalidDataReferenceException("Invalid DataRepoSnapshot specified: " + reference);
+      throw new InvalidDataReferenceException(
+          "Input could not be parsed as a Data Repo snapshot"
+              + " reference. The only valid fields are instanceName and snapshot.");
     }
   }
 }
