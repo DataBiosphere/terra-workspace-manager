@@ -26,6 +26,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         WITH_V: false
+        RELEASE_BRANCHES: dev
     - name: Pull Vault image
       run: docker pull vault:1.1.0
     # Currently, there's no way to add capabilities to Docker actions on Git, and Vault needs IPC_LOCK to run.
