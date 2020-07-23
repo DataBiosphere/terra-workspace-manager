@@ -65,6 +65,11 @@ publishing {
 	publications {
 		workspaceManagerClientLibrary(MavenPublication) {
 			from components.java
+			versionMapping {
+				usage("java-runtime") {
+					fromResolutionResult()
+				}
+			}
 		}
 	}
 }
