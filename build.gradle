@@ -11,10 +11,11 @@ plugins {
 	id "org.springframework.boot" version "2.3.1.RELEASE"
 }
 
+sourceCompatibility = JavaVersion.VERSION_11
+
 allprojects {
 	group = "bio.terra"
 	version = "0.1.0-SNAPSHOT"
-	sourceCompatibility = "1.8"
 	ext {
 		artifactGroup = "${group}.workspace"
 		swaggerOutputDir = "${buildDir}/swagger-code"
@@ -176,6 +177,14 @@ task setGitVersion(type: WriteProperties) {
 	outputFile = file("${generatedResourceDir}/version.properties")
 	property("git.hash", versionDetails().gitHash)
 	property("git.tag", gitVersion())
+}
+
+// Deploy config
+
+jib {
+	from {
+		image = "adoptopenjdk:11-jre-hotspot"
+	}
 }
 
 // Internal dependencies

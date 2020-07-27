@@ -6,6 +6,8 @@ plugins {
 	id "org.hidetake.swagger.generator"
 }
 
+sourceCompatibility = JavaVersion.VERSION_1_8 // Rawls consumes this and is Java 8
+
 repositories {
 	mavenCentral()
 }
