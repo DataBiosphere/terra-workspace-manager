@@ -9,7 +9,8 @@ Note: this document is being written during a time when code is rapidly evolving
 - Install Postgres 9.6: https://www.postgresql.org/download/
   - [The app](https://postgresapp.com/downloads.html) may be easier, just make sure to download the right version. It'll manage things for you and has a useful menulet where the server can be turned on and off. Don't forget to create a server if you go this route.
 - Install AdoptOpenJDK Java 11 (Hotspot). Here's an easy way on Mac, using [jEnv](https://www.jenv.be/) to manage the active version:
-    ```shell script
+
+    ```sh
     brew install jenv
     # follow postinstall instructions to activate jenv...
     
@@ -29,7 +30,7 @@ Workspace Manager relies on two databases: one for the app itself, and one for S
 
 In order to set these up, run the following command, which will create the DB's and users for unit tests, Stairway, and the app itself:
 
-```shell script
+```sh
 psql -f local-dev/local-postgres-init.sql
 ```
 
@@ -44,19 +45,22 @@ At some point, we will connect this to a CloudSQL instance but for local dev pur
 
 ### Running Tests
 
-To run unit tests:  
-```shell script
+To run unit tests:
+
+```sh
 ./gradlew unitTest
-```  
+```
   
 To run integration tests: (see **NOTE** below)
-```shell script
+
+```sh
 ./render_config.sh # First time only
 ./gradlew integrationTest
 ```
  
-To run all tests:  
-```shell script
+To run all tests:
+
+```sh
 ./gradlew test
 ```
 
@@ -69,7 +73,8 @@ To run all tests:
 ### Running Workspace Manager
 
 To run locally, you'll first need to export a few environment variables:
-```shell script
+
+```sh
 export DATABASE_USER=wmuser
 export DATABASE_USER_PASSWORD=wmpwd
 export DATABASE_NAME=wm
@@ -79,7 +84,8 @@ export STAIRWAY_DATABASE_NAME=stairwaylib
 ```
 
 To run the application:
-```shell script
+
+```sh
 ./gradlew bootRun
 ```
 
@@ -90,7 +96,7 @@ http://localhost:8080/swagger-ui.html
 
 You may also want to periodically rebuild and refresh any auto-generated code:
 
-```shell script
+```sh
 ./gradlew clean build -x test
 ```
 
