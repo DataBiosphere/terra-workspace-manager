@@ -97,5 +97,5 @@ You may also want to periodically rebuild and refresh any auto-generated code:
 TODO: It would be nice to have a kickstart script that new devs can run that configures much of this, but for now it will be documented here to help us know what should be scripted/simplified.
 
 ### Tips
-- Check out [GDub](https://github.com/gdubw/gdub), it'll save you typing `./gradlew` over and over, and also takes care of knowing when you're not in the root directory so you don't have to figure out the appropriate number of `../`s.
+- Check out [gdub](https://github.com/gdubw/gdub), it'll save you typing `./gradlew` over and over, and also takes care of knowing when you're not in the root directory so you don't have to figure out the appropriate number of `../`s.
 - To run gradle actions in IntelliJ, edit your run configurations and add all of the exports under **Running Workspace Manager** to the Gradle template.
