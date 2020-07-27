@@ -10,7 +10,6 @@ import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.service.job.JobMapKeys;
 import java.util.UUID;
-import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.http.HttpStatus;
 
 public class CreateDataReferenceStep implements Step {
@@ -43,7 +42,7 @@ public class CreateDataReferenceStep implements Step {
         body.getCredentialId(),
         body.getCloningInstructions(),
         body.getReferenceType(),
-        JsonNullable.of(reference));
+        reference);
     workingMap.put(CREATE_DATA_REFERENCE_COMPLETED_KEY, true);
 
     FlightUtils.setResponse(flightContext, referenceId.toString(), HttpStatus.OK);

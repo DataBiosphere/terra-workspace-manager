@@ -7,7 +7,6 @@ import bio.terra.workspace.generated.model.WorkspaceDescription;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -27,15 +26,15 @@ public class WorkspaceDao {
   }
 
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public String createWorkspace(UUID workspaceId, JsonNullable<UUID> spendProfile) {
+  public String createWorkspace(UUID workspaceId, UUID spendProfile) {
     String sql =
         "INSERT INTO workspace (workspace_id, spend_profile, profile_settable) values "
             + "(:id, :spend_profile, :spend_profile_settable)";
 
     Map<String, Object> paramMap = new HashMap<>();
     paramMap.put("id", workspaceId.toString());
-    paramMap.put("spend_profile", spendProfile.orElse(null));
-    paramMap.put("spend_profile_settable", !spendProfile.isPresent());
+    paramMap.put("spend_profile", spendProfile);
+    paramMap.put("spend_profile_settable", spendProfile == null);
 
     try {
       jdbcTemplate.update(sql, paramMap);
@@ -68,10 +67,9 @@ public class WorkspaceDao {
       desc.setId(UUID.fromString(queryOutput.get("workspace_id").toString()));
 
       if (queryOutput.getOrDefault("spend_profile", null) == null) {
-        desc.setSpendProfile(JsonNullable.undefined());
+        desc.setSpendProfile(null);
       } else {
-        desc.setSpendProfile(
-            JsonNullable.of(UUID.fromString(queryOutput.get("spend_profile").toString())));
+        desc.setSpendProfile(UUID.fromString(queryOutput.get("spend_profile").toString()));
       }
 
       return desc;

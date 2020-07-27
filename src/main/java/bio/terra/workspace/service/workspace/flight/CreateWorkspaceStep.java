@@ -9,7 +9,6 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
 import java.util.UUID;
-import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.http.HttpStatus;
 
 public class CreateWorkspaceStep implements Step {
@@ -30,11 +29,11 @@ public class CreateWorkspaceStep implements Step {
     workingMap.put(CREATE_WORKSPACE_COMPLETED_KEY, false);
 
     // This can be null if no spend profile is specified
-    JsonNullable<UUID> nullableSpendProfileId = JsonNullable.undefined();
+    UUID nullableSpendProfileId = null;
 
     UUID spendProfileId = inputMap.get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, UUID.class);
     if (spendProfileId != null) {
-      nullableSpendProfileId = JsonNullable.of(spendProfileId);
+      nullableSpendProfileId = spendProfileId;
     }
 
     workspaceDao.createWorkspace(workspaceId, nullableSpendProfileId);

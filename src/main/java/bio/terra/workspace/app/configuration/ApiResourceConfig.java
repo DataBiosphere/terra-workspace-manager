@@ -9,6 +9,6 @@ public class ApiResourceConfig implements WebMvcConfigurer {
 
   @Override
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
-    registry.addResourceHandler("/**").addResourceLocations("classpath:/api/");
+    registry.addResourceHandler("/**").addResourceLocations("classpath:/generated/swagger-ui/");
   }
 }

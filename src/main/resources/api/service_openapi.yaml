@@ -187,6 +187,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/Id'
     get:
+      deprecated: true
       summary: Poll the status of an existing async operation via job ID.
       operationId: pollAsyncJob
       tags: [Workspace]
@@ -210,6 +211,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
     delete: ## delete job data
+      deprecated: true
       summary: Delete the job and data associated with it
       operationId: deleteJob
       tags: [Workspace]
@@ -220,6 +222,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/Id'
     get:
+      deprecated: true
       summary: Retrieve the results of a completed async job specified by ID.
       operationId: retrieveJobResult
       tags: [Workspace]
@@ -286,6 +289,7 @@ components:
   schemas:
     ErrorReport:
       type: object
+      required: [message, statusCode, causes]
       properties:
         message:
           type: string
@@ -334,6 +338,7 @@ components:
 
     SystemStatus:
       type: object
+      required: [ok, systems]
       properties:
         ok:
           type: boolean
@@ -352,6 +357,7 @@ components:
 
     SystemVersion:
       type: object
+      required: [tag, hash, github]
       properties:
         tag:
           type: string
@@ -377,18 +383,17 @@ components:
         spendProfile:
           description: UUID of provided spend profile
           type: string
-          nullable: true
           format: uuid
         policies:
           description: Policies provided by the containing folder
           type: array
-          nullable: true
           items:
             type: string
             format: uuid
 
     CreatedWorkspace:
       type: object
+      required: [id]
       properties:
         id:
           description: UUID of a newly-created workspace
@@ -405,6 +410,7 @@ components:
 
     WorkspaceDescription:
       type: object
+      required: [id]
       properties:
         id:
           description: The ID of the workspace
@@ -413,7 +419,6 @@ components:
         spendProfile:
           description: UUID of provided spend profile
           type: string
-          nullable: true
           format: uuid
 
     CreateDataReferenceRequestBody:
@@ -427,25 +432,22 @@ components:
           description: The ID of the resource
           type: string
           format: uuid
-          nullable: true
         referenceType:
           description: The type of the data reference (i.e. TDR snapshot, AWS bucket, etc)
           type: string
-          nullable: true
         reference:
           description: The serialized object containing details specific to the referenceType. For instance, TDR snapshots must be serialized json.
           type: string
-          nullable: true
         cloningInstructions:
           description: The cloning instructions for the reference
           type: string
         credentialId:
           description: The IDs of the credentials to use with this resource
           type: string
-          nullable: true
 
     DataReferenceDescription:
       type: object
+      required: [referenceId, name, workspaceId, cloningInstructions]
       properties:
         referenceId:
           description: The ID of the data reference
@@ -459,15 +461,11 @@ components:
           type: string
           format: uuid
         resourceDescription:
-          description: Description of the workspace resource, if this is a controlled reference.
-          nullable: true
-          allOf:
-            - $ref: '#/components/schemas/ResourceDescription'
+          $ref: '#/components/schemas/ResourceDescription'
         referenceType:
           description: The type of the reference, if an uncontrolled resource
           type: string
           enum: ['DataRepoSnapshot'] #eventually include GCS bucket, etc.
-          nullable: true
         reference:
           # Once https://github.com/OpenAPITools/openapi-generator/issues/5381
           # is resolved, we can use a oneOf field to validate different
@@ -476,18 +474,18 @@ components:
           description: The description of the reference, if an uncontrolled resource
           type: string
           format: json
-          nullable: true
         credentialId:
           description: The ID of the credential to use when accessing the resource
           type: string
-          nullable: true
         cloningInstructions:
           description: Instructions for copying this reference when cloning the workspace
           type: string
           enum: ['COPY_NOTHING', 'COPY_DEFINITION', 'COPY_RESOURCE', 'COPY_REFERENCE']
 
     ResourceDescription:
+      description: Description of the workspace resource, if this is a controlled reference.
       type: object
+      required: [resourceId, workspaceId, isVisible]
       properties:
         resourceId:
           description: The ID of the resource
@@ -500,21 +498,19 @@ components:
         applicationId:
           description: ID of application this resource is associated with, if any
           type: string
-          nullable: true
         isVisible:
           description: Whether this resource is visible or not
           type: boolean
         owner:
           description: ID of owner. null for shared resources
           type: string
-          nullable: true
         attributes:
           description: JSON map of user-provided attributes
           type: string
-          nullable: true
 
     DataReferenceList:
       type: object
+      required: [resources]
       properties:
         resources:
           description: A list of controlled and/or uncontrolled data references
@@ -524,6 +520,7 @@ components:
 
     DataRepoSnapshot:
       type: object
+      required: [instanceName, snapshot]
       properties:
         instanceName:
           description: The name of the Data Repo instance

@@ -59,8 +59,8 @@ public class DataReferenceService {
       String workspaceId, CreateDataReferenceRequestBody body, AuthenticatedUserRequest userReq) {
 
     // validate shape of request as soon as it comes in
-    if ((body.getReferenceType().isPresent() && body.getReference().isPresent())
-        == body.getResourceId().isPresent()) {
+    if ((body.getReferenceType() != null && body.getReference() != null)
+        == (body.getResourceId() != null)) {
       throw new InvalidDataReferenceException(
           "Data reference must contain either a resource id or a reference type and a reference description");
     }
@@ -82,11 +82,11 @@ public class DataReferenceService {
             .addParameter(DataReferenceFlightMapKeys.REFERENCE_ID, referenceId)
             .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.fromString(workspaceId));
 
-    if (body.getReferenceType().isPresent() && body.getReference().isPresent()) {
+    if (body.getReferenceType() != null && body.getReference() != null) {
       String ref =
           validationUtils.validateReference(
-              DataReferenceDescription.ReferenceTypeEnum.fromValue(body.getReferenceType().get()),
-              body.getReference().get(),
+              DataReferenceDescription.ReferenceTypeEnum.fromValue(body.getReferenceType()),
+              body.getReference(),
               userReq);
       createJob.addParameter(DataReferenceFlightMapKeys.REFERENCE, ref);
     }

@@ -41,7 +41,7 @@ public class BaseStatusServiceTest {
 
     BaseStatusServiceTestImpl statusService = new BaseStatusServiceTestImpl(subsystems);
     statusService.checkSubsystems();
-    assertTrue(statusService.getCurrentStatus().getOk());
+    assertTrue(statusService.getCurrentStatus().isOk());
   }
 
   @Test
@@ -52,7 +52,7 @@ public class BaseStatusServiceTest {
 
     BaseStatusServiceTestImpl statusService = new BaseStatusServiceTestImpl(subsystems);
     statusService.checkSubsystems();
-    assertTrue(statusService.getCurrentStatus().getOk());
+    assertTrue(statusService.getCurrentStatus().isOk());
   }
 
   @Test
@@ -63,7 +63,7 @@ public class BaseStatusServiceTest {
 
     BaseStatusServiceTestImpl statusService = new BaseStatusServiceTestImpl(subsystems);
     statusService.checkSubsystems();
-    assertFalse(statusService.getCurrentStatus().getOk());
+    assertFalse(statusService.getCurrentStatus().isOk());
   }
 
   @Test
@@ -77,7 +77,7 @@ public class BaseStatusServiceTest {
 
     BaseStatusServiceTestImpl statusService = new BaseStatusServiceTestImpl(subsystems);
     statusService.checkSubsystems();
-    assertFalse(statusService.getCurrentStatus().getOk());
+    assertFalse(statusService.getCurrentStatus().isOk());
   }
 
   @Test
@@ -91,6 +91,6 @@ public class BaseStatusServiceTest {
 
     BaseStatusServiceTestImpl statusService = new BaseStatusServiceTestImpl(subsystems);
     statusService.checkSubsystems();
-    assertTrue(statusService.getCurrentStatus().getOk());
+    assertTrue(statusService.getCurrentStatus().isOk());
   }
 }

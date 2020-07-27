@@ -4,9 +4,9 @@
   <head>
     <meta charset="UTF-8">
     <title>Swagger UI</title>
-    <link rel="stylesheet" type="text/css" href="/webjars/swagger-ui/swagger-ui.css" >
-    <link rel="icon" type="image/png" href="/webjars/swagger-ui/favicon-32x32.png" sizes="32x32" />
-    <link rel="icon" type="image/png" href="/webjars/swagger-ui/favicon-16x16.png" sizes="16x16" />
+    <link rel="stylesheet" type="text/css" href="./swagger-ui.css" >
+    <link rel="icon" type="image/png" href="./favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="./favicon-16x16.png" sizes="16x16" />
     <style>
       html
       {
@@ -32,37 +32,37 @@
       .swagger-ui .model-example .model-box {
         display: block;
       }
+
+      /* these take a lot of vertical space by default */
+      .swagger-ui div.info {
+        margin: 25px 0;
+      }
+
+      .swagger-ui .opblock .renderedMarkdown p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.2;
+      }
+
+      /* everything's application/json, and links aren't useful */
+      .swagger-ui section.response-controls, .swagger-ui td.response-col_links {
+        display: none;
+      }
     </style>
   </head>
 
   <body>
     <div id="swagger-ui"></div>
 
-    <script src="/webjars/swagger-ui/swagger-ui-bundle.js"> </script>
-    <script src="/webjars/swagger-ui/swagger-ui-standalone-preset.js"> </script>
+    <script src="./swagger-ui-bundle.js"> </script>
+    <script src="./swagger-ui-standalone-preset.js"> </script>
     <script>
-    // since everything's application/json, the content-type dropdown just takes up space
-    // also, links are not useful, and we don't use markdown
     const cleanupPlugin = function(system) {
       return {
-        wrapComponents: {
-          responses: (Original) => {
-            return class extends system.React.Component {
-              render () {
-                return system.React.createElement(Original, this.props)
-              }
-
-              componentDidMount () {
-                document.querySelectorAll('section.response-controls, td.response-col_links')
-                .forEach(node => node.style.display = 'none')
-              }
-            }
-          }
-        },
         components: {
-          Markdown: ({ source }) => {
-            return system.React.createElement('div', null, source);
-          },
+          // we don't need to load different specs here...
+          Topbar: () => null,
+          // since everything's application/json, the content-type dropdown just takes up space
           contentType: ({ value, contentTypes }) => {
             return system.React.createElement('div', null, value || contentTypes.first())
           }
