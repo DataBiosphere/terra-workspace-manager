@@ -276,7 +276,7 @@ components:
       required: true
       schema:
         type: string
-        # format: uuid
+        format: uuid
 
     ReferenceType:
       name: referenceType
@@ -440,6 +440,10 @@ components:
     ReferenceTypeEnum:
       type: string
       description: The type of a reference, if an uncontrolled resource
+      # TODO: swagger-codegen always looks for and removes a common prefix for
+      # enum values, which breaks enums that only have a single value.
+      # PLACEHOLDER_VALUE should be removed when we have an actual second value
+      # to use.
       enum: ['DATA_REPO_SNAPSHOT', 'PLACEHOLDER_VALUE'] #eventually include GCS bucket, etc.
 
     CreateDataReferenceRequestBody:

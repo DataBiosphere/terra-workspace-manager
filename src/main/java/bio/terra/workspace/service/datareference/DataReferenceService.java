@@ -39,11 +39,11 @@ public class DataReferenceService {
   }
 
   public DataReferenceDescription getDataReference(
-      UUID workspaceId, String referenceId, AuthenticatedUserRequest userReq) {
+      UUID workspaceId, UUID referenceId, AuthenticatedUserRequest userReq) {
 
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
 
-    return dataReferenceDao.getDataReference(workspaceId, UUID.fromString(referenceId));
+    return dataReferenceDao.getDataReference(workspaceId, referenceId);
   }
 
   public DataReferenceDescription getDataReferenceByName(
@@ -110,16 +110,16 @@ public class DataReferenceService {
   }
 
   public void deleteDataReference(
-      UUID workspaceId, String referenceId, AuthenticatedUserRequest userReq) {
+      UUID workspaceId, UUID referenceId, AuthenticatedUserRequest userReq) {
 
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
 
-    if (dataReferenceDao.isControlled(UUID.fromString(referenceId))) {
+    if (dataReferenceDao.isControlled(referenceId)) {
       throw new ControlledResourceNotImplementedException(
           "Unable to delete controlled resource. This functionality will be implemented in the future.");
     }
 
-    if (!dataReferenceDao.deleteDataReference(UUID.fromString(referenceId))) {
+    if (!dataReferenceDao.deleteDataReference(referenceId)) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
     }
   }

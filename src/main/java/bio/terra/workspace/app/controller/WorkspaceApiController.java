@@ -86,7 +86,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<DataReferenceDescription> getDataReference(
-      @PathVariable("id") UUID workspaceId, @PathVariable("referenceId") String referenceId) {
+      @PathVariable("id") UUID workspaceId, @PathVariable("referenceId") UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     DataReferenceDescription ref =
         dataReferenceService.getDataReference(workspaceId, referenceId, userReq);
@@ -108,7 +108,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<Void> deleteDataReference(
-      @PathVariable("id") UUID workspaceId, @PathVariable("referenceId") String referenceId) {
+      @PathVariable("id") UUID workspaceId, @PathVariable("referenceId") UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     dataReferenceService.deleteDataReference(workspaceId, referenceId, userReq);
 
