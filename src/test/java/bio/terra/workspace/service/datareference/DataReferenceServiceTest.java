@@ -393,7 +393,7 @@ public class DataReferenceServiceTest {
                 get("/api/workspaces/v1/"
                         + workspaceId
                         + "/datareferences/"
-                        + referenceType.getValue()
+                        + referenceType.toString()
                         + "/"
                         + name)
                     .contentType(MediaType.APPLICATION_JSON))

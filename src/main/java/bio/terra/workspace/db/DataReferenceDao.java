@@ -3,8 +3,8 @@ package bio.terra.workspace.db;
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
+import bio.terra.workspace.generated.model.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
-import bio.terra.workspace.generated.model.DataReferenceDescription.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.DataReferenceList;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.generated.model.ResourceDescription;
@@ -52,10 +52,10 @@ public class DataReferenceDao {
     paramMap.put("workspace_id", workspaceId.toString());
     paramMap.put("reference_id", referenceId.toString());
     paramMap.put("name", name);
-    paramMap.put("cloning_instructions", cloningInstructions);
+    paramMap.put("cloning_instructions", cloningInstructions.toString());
     paramMap.put("credential_id", credentialId);
-    paramMap.put("resource_id", resourceId);
-    paramMap.put("reference_type", referenceType);
+    paramMap.put("resource_id", resourceId == null ? null : resourceId.toString());
+    paramMap.put("reference_type", referenceType == null ? null : referenceType.toString());
     paramMap.put("reference", reference);
 
     try {

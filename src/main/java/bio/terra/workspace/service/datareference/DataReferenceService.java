@@ -94,8 +94,7 @@ public class DataReferenceService {
             .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, workspaceId);
 
     String ref =
-        validationUtils.validateReference(
-            body.getReferenceType(), body.getReference(), userReq);
+        validationUtils.validateReference(body.getReferenceType(), body.getReference(), userReq);
     createJob.addParameter(DataReferenceFlightMapKeys.REFERENCE, ref);
 
     createJob.submitAndWait(String.class);

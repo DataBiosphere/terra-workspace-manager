@@ -12,7 +12,6 @@ import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.generated.model.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
-import bio.terra.workspace.generated.model.DataReferenceDescription.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.DataReferenceList;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
@@ -20,7 +19,6 @@ import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceE
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
-import javax.ws.rs.HEAD;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -62,7 +60,7 @@ public class DataReferenceDaoTest {
     workspaceId = UUID.randomUUID();
     referenceId = UUID.randomUUID();
     name = UUID.randomUUID().toString();
-    referenceType = ReferenceTypeEnum.DATAREPOSNAPSHOT;
+    referenceType = ReferenceTypeEnum.DATA_REPO_SNAPSHOT;
 
     DataRepoSnapshot drs = new DataRepoSnapshot();
     drs.setInstanceName(UUID.randomUUID().toString());
@@ -179,9 +177,7 @@ public class DataReferenceDaoTest {
     assertThat(result.getWorkspaceId(), equalTo(workspaceId));
     assertThat(result.getReferenceId(), equalTo(referenceId));
     assertThat(result.getName(), equalTo(name));
-    assertThat(
-        result.getReferenceType(),
-        equalTo(referenceType));
+    assertThat(result.getReferenceType(), equalTo(referenceType));
     //    assertThat(result.getReference().getSnapshot(), equalTo(reference.getSnapshot()));
     //    assertThat(result.getReference().getInstance(), equalTo(reference.getInstance()));
   }

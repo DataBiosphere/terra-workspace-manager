@@ -437,7 +437,7 @@ components:
     ReferenceTypeEnum:
       type: string
       description: The type of a reference, if an uncontrolled resource
-      enum: ['DATA_REPO_SNAPSHOT'] #eventually include GCS bucket, etc.
+      enum: ['DATA_REPO_SNAPSHOT', 'PLACEHOLDER_VALUE'] #eventually include GCS bucket, etc.
 
     CreateDataReferenceRequestBody:
       type: object

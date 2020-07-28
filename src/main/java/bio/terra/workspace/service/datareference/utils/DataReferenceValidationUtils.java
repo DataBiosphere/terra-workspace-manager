@@ -23,13 +23,13 @@ public class DataReferenceValidationUtils {
   public String validateReference(
       ReferenceTypeEnum referenceType, String reference, AuthenticatedUserRequest userReq) {
 
-    if (referenceType != null && referenceType.equals(ReferenceTypeEnum.DATAREPOSNAPSHOT)) {
+    if (referenceType != null && referenceType.equals(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)) {
       validateDataRepoReference(reference, userReq);
       return reference;
     } else {
       throw new InvalidDataReferenceException(
           "Invalid reference type specified. Valid types include: "
-              + ReferenceTypeEnum.DATAREPOSNAPSHOT.toString());
+              + ReferenceTypeEnum.DATA_REPO_SNAPSHOT.toString());
     }
   }
 
