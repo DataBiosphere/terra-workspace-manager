@@ -19,8 +19,10 @@ Note: this document is being written during a time when code is rapidly evolving
     # and then add them:
     # jenv add /Library/Java/JavaVirtualMachines/<JAVA VERSION HERE>/Contents/Home
 
+    # follow instructions from https://github.com/AdoptOpenJDK/homebrew-openjdk to install adoptopenjdk11:
     brew tap AdoptOpenJDK/openjdk
     brew cask install adoptopenjdk11
+
     jenv add /Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home
     ```
 - Recommended: read the [README](README.md) to understand the general structure of the service
