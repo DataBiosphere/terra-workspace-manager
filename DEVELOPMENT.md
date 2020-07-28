@@ -84,7 +84,9 @@ export DATABASE_NAME=wm
 export STAIRWAY_DATABASE_USER=stairwayuser
 export STAIRWAY_DATABASE_USER_PASSWORD=stairwaypwd
 export STAIRWAY_DATABASE_NAME=stairwaylib
+export SAMPLING_PROBABILITY=1.0
 ```
+Set the SERVICE_GOOGLE_PROJECT, and SAM_ADDRESS environment variable to point to the env of your choice.
 
 To run the application:
 
