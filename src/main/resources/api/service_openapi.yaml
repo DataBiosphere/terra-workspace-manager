@@ -357,17 +357,20 @@ components:
 
     SystemVersion:
       type: object
-      required: [tag, hash, github]
+      required: [gitTag, gitHash, github, build]
       properties:
-        tag:
+        gitTag:
           type: string
           description: Git tag of currently deployed app.
-        hash:
+        gitHash:
           type: string
           description: Git hash of currently deployed app.
         github:
           type: string
           description: Github link to currently deployed commit.
+        build:
+          type: string
+          description: Version of the currently deployed app declared in build.gradle. Client and server versions are linked.
 
     CreateWorkspaceRequestBody:
       type: object

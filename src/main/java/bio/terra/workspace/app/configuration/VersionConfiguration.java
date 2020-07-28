@@ -6,24 +6,33 @@ import org.springframework.context.annotation.PropertySource;
 
 @Configuration
 @PropertySource("classpath:/generated/version.properties")
-@ConfigurationProperties(prefix = "git")
+@ConfigurationProperties(prefix = "version")
 public class VersionConfiguration {
-  private String hash;
-  private String tag;
+  private String gitHash;
+  private String gitTag;
+  private String build;
 
-  public String getHash() {
-    return hash;
+  public String getGitHash() {
+    return gitHash;
   }
 
-  public void setHash(String hash) {
-    this.hash = hash;
+  public void setGitHash(String gitHash) {
+    this.gitHash = gitHash;
   }
 
-  public String getTag() {
-    return tag;
+  public String getGitTag() {
+    return gitTag;
   }
 
-  public void setTag(String tag) {
-    this.tag = tag;
+  public void setGitTag(String gitTag) {
+    this.gitTag = gitTag;
+  }
+
+  public String getBuild() {
+    return build;
+  }
+
+  public void setBuild(String build) {
+    this.build = build;
   }
 }

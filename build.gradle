@@ -175,8 +175,9 @@ spotless {
 
 task setGitVersion(type: WriteProperties) {
 	outputFile = file("${generatedResourceDir}/version.properties")
-	property("git.hash", versionDetails().gitHash)
-	property("git.tag", gitVersion())
+	property("version.gitHash", versionDetails().gitHash)
+	property("version.gitTag", gitVersion())
+	property("version.build", version)
 }
 
 // Deploy config

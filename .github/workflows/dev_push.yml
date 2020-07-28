@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout current code
-      uses: actions/checkout@master
+      uses: actions/checkout@v2
     - name: Bump version and push tag
       id: tag
       uses: broadinstitute/github-tag-action@master
