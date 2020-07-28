@@ -105,3 +105,4 @@ TODO: It would be nice to have a kickstart script that new devs can run that con
 ### Tips
 - Check out [gdub](https://github.com/gdubw/gdub), it'll save you typing `./gradlew` over and over, and also takes care of knowing when you're not in the root directory so you don't have to figure out the appropriate number of `../`s.
 - To run gradle actions in IntelliJ, edit your run configurations and add all of the exports under **Running Workspace Manager** to the Gradle template.
+- You can get live-ish reloading of for the local Swagger UI through Intellij. Instead of running the local server with `bootRun`, use the `Main` Spring Boot configuration that IntelliJ auto-generates. Edit it and add the following override parameter: `spring.resources.static-locations:file:src/main/resources/api` (also add the standard environment variables). It's not true live reloading, you still have to refresh the browser, but at least you don't have to restart the server.

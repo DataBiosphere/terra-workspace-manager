@@ -60,6 +60,7 @@ dependencies {
 	implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.12", version: "0.1-3a0df80"
 
 	// Versioned direct deps
+	compile group: "org.webjars", name: "webjars-locator-core", version: "0.46"
 	implementation group: "org.hashids", name: "hashids", version: "1.0.3"
 	implementation group: "org.liquibase", name: "liquibase-core", version: "4.0.0"
 	runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.2.14"
@@ -73,9 +74,9 @@ dependencies {
 	implementation group: "org.springframework.boot", name: "spring-boot-starter-web"
 
 	// Swagger deps
+	compile group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.30.2"
 	implementation group: "io.swagger.core.v3", name: "swagger-annotations"
 	swaggerCodegen "io.swagger.codegen.v3:swagger-codegen-cli"
-	swaggerUI "org.webjars:swagger-ui:3.30.0"
 
 	// Test deps
 	testImplementation(group: "com.google.auth", name: "google-auth-library-oauth2-http", version: "0.21.1")
@@ -106,7 +107,7 @@ if (hasProperty("buildScan")) {
 def generatedResourceDir = "${resourceDir}/generated"
 def openapiSourceDir = "${resourceDir}/api"
 
-// OpenAPI/Swagger Server & UI Generation
+// OpenAPI/Swagger Server Generation
 
 swaggerSources {
 	server {
@@ -123,17 +124,6 @@ swaggerSources {
 							"useTags=true," +
 							"dateLibrary=java8"
 			]
-		}
-		ui {
-			outputDir = file("${generatedResourceDir}/swagger-ui")
-			doLast {
-				copy {
-					from "${openapiSourceDir}"
-					into "${outputDir}"
-				}
-			}
-
-			outputs.upToDateWhen { false }
 		}
 	}
 }
@@ -193,6 +183,4 @@ jib {
 sourceSets.main.java.srcDir "${swaggerOutputDir}/src/main/java"
 compileJava.dependsOn swaggerSources.server.code, spotlessApply, setGitVersion
 
-processResources.dependsOn swaggerSources.server.ui
-
-clean.dependsOn cleanSetGitVersion, cleanGenerateSwaggerUIServer
+clean.dependsOn cleanSetGitVersion
