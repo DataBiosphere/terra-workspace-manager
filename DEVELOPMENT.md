@@ -18,7 +18,8 @@ Note: this document is being written during a time when code is rapidly evolving
     # /usr/libexec/java_home -V
     # and then add them:
     # jenv add /Library/Java/JavaVirtualMachines/<JAVA VERSION HERE>/Contents/Home
-    
+
+    brew tap AdoptOpenJDK/openjdk
     brew cask install adoptopenjdk11
     jenv add /Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home
     ```
