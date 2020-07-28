@@ -26,7 +26,7 @@ public class WorkspaceService {
   private JobService jobService;
   private final WorkspaceDao workspaceDao;
   private final SamService samService;
-  private final Tracer tracer;
+  @Autowired private final Tracer tracer;
 
   @Autowired
   public WorkspaceService(
@@ -60,6 +60,8 @@ public class WorkspaceService {
   @NewSpan
   public WorkspaceDescription getWorkspace(String id, AuthenticatedUserRequest userReq) {
     Span newSpan = tracer.nextSpan().name("workspaceAuthz");
+    // this try is here to demonstrate one way to create a span. When adding tracing properly,
+    // switch to using @NewSpan on the workspaceAuth method.
     try (Tracer.SpanInScope ws = tracer.withSpanInScope(newSpan.start())) {
       samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_READ_ACTION);
     } finally {
