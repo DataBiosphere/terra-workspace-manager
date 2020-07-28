@@ -23,11 +23,12 @@ public class UnauthenticatedApiController implements UnauthenticatedApi {
 
     this.currentVersion =
         new SystemVersion()
-            .tag(versionConfiguration.getTag())
-            .hash(versionConfiguration.getHash())
+            .gitTag(versionConfiguration.getGitTag())
+            .gitHash(versionConfiguration.getGitHash())
             .github(
                 "https://github.com/DataBiosphere/terra-workspace-manager/commit/"
-                    + versionConfiguration.getHash());
+                    + versionConfiguration.getGitHash())
+            .build(versionConfiguration.getBuild());
   }
 
   @Override
