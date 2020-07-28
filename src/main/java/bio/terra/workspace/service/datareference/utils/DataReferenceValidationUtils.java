@@ -23,7 +23,7 @@ public class DataReferenceValidationUtils {
   public String validateReference(
       ReferenceTypeEnum referenceType, String reference, AuthenticatedUserRequest userReq) {
 
-    if (referenceType != null && referenceType.equals(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)) {
+    if (ReferenceTypeEnum.DATA_REPO_SNAPSHOT.equals(referenceType)) {
       validateDataRepoReference(reference, userReq);
       return reference;
     } else {
