@@ -46,7 +46,6 @@ public class WorkspaceApiController implements WorkspaceApi {
     return authenticatedUserRequestFactory.from(request);
   }
 
-
   @Override
   public ResponseEntity<CreatedWorkspace> createWorkspace(
       @RequestBody CreateWorkspaceRequestBody body) {
