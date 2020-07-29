@@ -16,11 +16,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class ApiResourceConfig implements WebMvcConfigurer {
 
-  @Override
-  public void addResourceHandlers(ResourceHandlerRegistry registry) {
-    registry.addResourceHandler("/**").addResourceLocations("classpath:/api/");
-  }
-
   @Autowired private SpanCustomizer spanCustomizer;
   private String mdcRequestIdKey = "X-Request-ID";
   private String mdcCorrelationIdKey = "X-Correlation-ID";
