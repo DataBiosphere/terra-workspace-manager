@@ -10,9 +10,11 @@ import bio.terra.workspace.app.Main;
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
+import bio.terra.workspace.generated.model.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataReferenceList;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
+import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,18 +49,18 @@ public class DataReferenceDaoTest {
   private UUID workspaceId;
   private UUID referenceId;
   private String name;
-  private String referenceType;
+  private ReferenceTypeEnum referenceType;
   private String reference;
   private String credentialId;
   private UUID resourceId;
-  private String cloningInstructions;
+  private CloningInstructionsEnum cloningInstructions;
 
   @BeforeEach
   public void setup() {
     workspaceId = UUID.randomUUID();
     referenceId = UUID.randomUUID();
     name = UUID.randomUUID().toString();
-    referenceType = DataReferenceDescription.ReferenceTypeEnum.DATAREPOSNAPSHOT.toString();
+    referenceType = ReferenceTypeEnum.DATA_REPO_SNAPSHOT;
 
     DataRepoSnapshot drs = new DataRepoSnapshot();
     drs.setInstanceName(UUID.randomUUID().toString());
@@ -69,7 +71,7 @@ public class DataReferenceDaoTest {
     resourceId =
         null; // eventually we will more thoroughly support controlled resources, so this won't
     // always be null
-    cloningInstructions = "COPY_NOTHING";
+    cloningInstructions = CloningInstructionsEnum.NOTHING;
     jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
   }
 
@@ -153,10 +155,7 @@ public class DataReferenceDaoTest {
         reference);
 
     DataReferenceDescription ref =
-        dataReferenceDao.getDataReferenceByName(
-            workspaceId.toString(),
-            DataReferenceDescription.ReferenceTypeEnum.fromValue(referenceType),
-            name);
+        dataReferenceDao.getDataReferenceByName(workspaceId, referenceType, name);
     assertThat(ref.getReferenceId(), equalTo(referenceId));
   }
 
@@ -172,15 +171,13 @@ public class DataReferenceDaoTest {
         credentialId,
         cloningInstructions,
         referenceType,
-        reference.toString());
+        reference);
     DataReferenceDescription result = dataReferenceDao.getDataReference(workspaceId, referenceId);
 
     assertThat(result.getWorkspaceId(), equalTo(workspaceId));
     assertThat(result.getReferenceId(), equalTo(referenceId));
     assertThat(result.getName(), equalTo(name));
-    assertThat(
-        result.getReferenceType(),
-        equalTo(DataReferenceDescription.ReferenceTypeEnum.fromValue(referenceType)));
+    assertThat(result.getReferenceType(), equalTo(referenceType));
     //    assertThat(result.getReference().getSnapshot(), equalTo(reference.getSnapshot()));
     //    assertThat(result.getReference().getInstance(), equalTo(reference.getInstance()));
   }
@@ -220,7 +217,7 @@ public class DataReferenceDaoTest {
         credentialId,
         cloningInstructions,
         referenceType,
-        reference.toString());
+        reference);
 
     assertTrue(dataReferenceDao.deleteDataReference(referenceId));
 
@@ -264,7 +261,7 @@ public class DataReferenceDaoTest {
 
     // Validate that both DataReferences are enumerated
     DataReferenceList enumerateResult =
-        dataReferenceDao.enumerateDataReferences(workspaceId.toString(), name, 0, 10);
+        dataReferenceDao.enumerateDataReferences(workspaceId, name, 0, 10);
     assertThat(enumerateResult.getResources().size(), equalTo(2));
     assertThat(
         enumerateResult.getResources(),
@@ -275,8 +272,7 @@ public class DataReferenceDaoTest {
   public void enumerateEmptyReferenceList() throws Exception {
     workspaceDao.createWorkspace(workspaceId, null);
 
-    DataReferenceList result =
-        dataReferenceDao.enumerateDataReferences(workspaceId.toString(), name, 0, 10);
+    DataReferenceList result = dataReferenceDao.enumerateDataReferences(workspaceId, name, 0, 10);
     assertThat(result.getResources(), empty());
   }
 

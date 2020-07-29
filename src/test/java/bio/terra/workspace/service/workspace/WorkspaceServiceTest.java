@@ -17,6 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.app.Main;
 import bio.terra.workspace.common.exception.SamApiException;
+import bio.terra.workspace.generated.model.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
@@ -24,6 +25,7 @@ import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.generated.model.DeleteWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ErrorReport;
+import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -84,7 +86,9 @@ public class WorkspaceServiceTest {
   @Test
   public void testGetMissingWorkspace() throws Exception {
     MvcResult callResult =
-        mvc.perform(get("/api/workspaces/v1/" + "fake-id")).andExpect(status().is(404)).andReturn();
+        mvc.perform(get("/api/workspaces/v1/" + UUID.randomUUID().toString()))
+            .andExpect(status().is(404))
+            .andReturn();
 
     ErrorReport error =
         objectMapper.readValue(callResult.getResponse().getContentAsString(), ErrorReport.class);
@@ -244,8 +248,8 @@ public class WorkspaceServiceTest {
     CreateDataReferenceRequestBody referenceRequest =
         new CreateDataReferenceRequestBody()
             .name("fake-data-reference")
-            .cloningInstructions("COPY_NOTHING")
-            .referenceType("DataRepoSnapshot")
+            .cloningInstructions(CloningInstructionsEnum.NOTHING)
+            .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
             .reference(objectMapper.writeValueAsString(reference));
     MvcResult dataReferenceResult =
         mvc.perform(

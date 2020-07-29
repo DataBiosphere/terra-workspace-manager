@@ -185,7 +185,7 @@ paths:
   # Job paths
   /api/jobs/v1/{id}:
     parameters:
-      - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/JobId'
     get:
       deprecated: true
       summary: Poll the status of an existing async operation via job ID.
@@ -220,7 +220,7 @@ paths:
           description: Job was deleted
   /api/jobs/v1/{id}/result:
     parameters:
-      - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/JobId'
     get:
       deprecated: true
       summary: Retrieve the results of a completed async job specified by ID.
@@ -243,7 +243,15 @@ components:
       required: true
       schema:
         type: string
-        # format: uuid
+        format: uuid
+
+    JobId:
+      name: jobId
+      in: path
+      description: A String ID to used to identify a job
+      required: true
+      schema:
+        type: string
 
     Offset:
       name: offset
@@ -268,7 +276,7 @@ components:
       required: true
       schema:
         type: string
-        # format: uuid
+        format: uuid
 
     ReferenceType:
       name: referenceType
@@ -276,7 +284,7 @@ components:
       description: The type of a data reference in a workspace
       required: true
       schema:
-        type: string
+        $ref: '#/components/schemas/ReferenceTypeEnum'
 
     Name:
       name: name
@@ -424,6 +432,20 @@ components:
           type: string
           format: uuid
 
+    CloningInstructionsEnum:
+      type: string
+      description: Instructions for copying this reference when cloning the workspace
+      enum: ['COPY_NOTHING', 'COPY_DEFINITION', 'COPY_RESOURCE', 'COPY_REFERENCE']
+
+    ReferenceTypeEnum:
+      type: string
+      description: The type of a reference, if an uncontrolled resource
+      # TODO: swagger-codegen always looks for and removes a common prefix for
+      # enum values, which breaks enums that only have a single value.
+      # PLACEHOLDER_VALUE should be removed when we have an actual second value
+      # to use.
+      enum: ['DATA_REPO_SNAPSHOT', 'PLACEHOLDER_VALUE'] #eventually include GCS bucket, etc.
+
     CreateDataReferenceRequestBody:
       type: object
       required: [name, cloningInstructions]
@@ -436,14 +458,12 @@ components:
           type: string
           format: uuid
         referenceType:
-          description: The type of the data reference (i.e. TDR snapshot, AWS bucket, etc)
-          type: string
+          $ref: '#/components/schemas/ReferenceTypeEnum'
         reference:
           description: The serialized object containing details specific to the referenceType. For instance, TDR snapshots must be serialized json.
           type: string
         cloningInstructions:
-          description: The cloning instructions for the reference
-          type: string
+          $ref: '#/components/schemas/CloningInstructionsEnum'
         credentialId:
           description: The IDs of the credentials to use with this resource
           type: string
@@ -466,9 +486,7 @@ components:
         resourceDescription:
           $ref: '#/components/schemas/ResourceDescription'
         referenceType:
-          description: The type of the reference, if an uncontrolled resource
-          type: string
-          enum: ['DataRepoSnapshot'] #eventually include GCS bucket, etc.
+          $ref: '#/components/schemas/ReferenceTypeEnum'
         reference:
           # Once https://github.com/OpenAPITools/openapi-generator/issues/5381
           # is resolved, we can use a oneOf field to validate different
@@ -481,10 +499,7 @@ components:
           description: The ID of the credential to use when accessing the resource
           type: string
         cloningInstructions:
-          description: Instructions for copying this reference when cloning the workspace
-          type: string
-          enum: ['COPY_NOTHING', 'COPY_DEFINITION', 'COPY_RESOURCE', 'COPY_REFERENCE']
-
+          $ref: '#/components/schemas/CloningInstructionsEnum'
     ResourceDescription:
       description: Description of the workspace resource, if this is a controlled reference.
       type: object

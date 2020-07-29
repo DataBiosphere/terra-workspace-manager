@@ -10,6 +10,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.JobResultWithStatus;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Optional;
+import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +58,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("id") String id) {
+  public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("id") UUID id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     WorkspaceDescription desc = workspaceService.getWorkspace(id, userReq);
 
@@ -66,7 +67,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<Void> deleteWorkspace(
-      DeleteWorkspaceRequestBody body, @PathVariable("id") String id) {
+      DeleteWorkspaceRequestBody body, @PathVariable("id") UUID id) {
     // Note: we do NOT use getAuthenticatedInfo here, as the request's authentication info comes
     // from the folder manager, not the requesting user.
     String userToken = body.getAuthToken();
@@ -76,7 +77,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<DataReferenceDescription> createDataReference(
-      @RequestBody CreateDataReferenceRequestBody body, @PathVariable("id") String id) {
+      @RequestBody CreateDataReferenceRequestBody body, @PathVariable("id") UUID id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
 
     return new ResponseEntity<DataReferenceDescription>(
@@ -85,7 +86,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<DataReferenceDescription> getDataReference(
-      @PathVariable("id") String workspaceId, @PathVariable("referenceId") String referenceId) {
+      @PathVariable("id") UUID workspaceId, @PathVariable("referenceId") UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     DataReferenceDescription ref =
         dataReferenceService.getDataReference(workspaceId, referenceId, userReq);
@@ -95,8 +96,8 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<DataReferenceDescription> getDataReferenceByName(
-      @PathVariable("id") String workspaceId,
-      @PathVariable("referenceType") String referenceType,
+      @PathVariable("id") UUID workspaceId,
+      @PathVariable("referenceType") ReferenceTypeEnum referenceType,
       @PathVariable("name") String name) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     DataReferenceDescription ref =
@@ -107,7 +108,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<Void> deleteDataReference(
-      @PathVariable("id") String workspaceId, @PathVariable("referenceId") String referenceId) {
+      @PathVariable("id") UUID workspaceId, @PathVariable("referenceId") UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     dataReferenceService.deleteDataReference(workspaceId, referenceId, userReq);
 
@@ -138,7 +139,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<DataReferenceList> enumerateReferences(
-      @PathVariable("id") String id,
+      @PathVariable("id") UUID id,
       @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
       @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
     ControllerValidationUtils.validatePaginationParams(offset, limit);

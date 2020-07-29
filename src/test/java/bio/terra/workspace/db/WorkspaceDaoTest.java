@@ -90,7 +90,7 @@ public class WorkspaceDaoTest {
   public void createAndGetWorkspace() throws Exception {
     workspaceDao.createWorkspace(workspaceId, null);
 
-    WorkspaceDescription workspace = workspaceDao.getWorkspace(workspaceId.toString());
+    WorkspaceDescription workspace = workspaceDao.getWorkspace(workspaceId);
 
     WorkspaceDescription expectedWorkspace = new WorkspaceDescription();
     expectedWorkspace.setId(workspaceId);
@@ -107,7 +107,7 @@ public class WorkspaceDaoTest {
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> {
-          workspaceDao.getWorkspace(workspaceId.toString());
+          workspaceDao.getWorkspace(workspaceId);
         });
   }
 

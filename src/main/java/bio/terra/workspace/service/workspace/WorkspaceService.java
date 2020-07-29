@@ -58,7 +58,7 @@ public class WorkspaceService {
   }
 
   @NewSpan
-  public WorkspaceDescription getWorkspace(String id, AuthenticatedUserRequest userReq) {
+  public WorkspaceDescription getWorkspace(UUID id, AuthenticatedUserRequest userReq) {
     Span newSpan = tracer.nextSpan().name("workspaceAuthz");
     // this try is here to demonstrate one way to create a span. When adding tracing properly,
     // switch to using @NewSpan on the workspaceAuth method.
@@ -71,7 +71,7 @@ public class WorkspaceService {
     return result;
   }
 
-  public void deleteWorkspace(String id, String userToken) {
+  public void deleteWorkspace(UUID id, String userToken) {
 
     AuthenticatedUserRequest userReq = new AuthenticatedUserRequest().token(Optional.of(userToken));
     samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_DELETE_ACTION);
@@ -85,7 +85,7 @@ public class WorkspaceService {
                 WorkspaceDeleteFlight.class,
                 null, // Delete does not have a useful request body
                 userReq)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.fromString(id));
+            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id);
     deleteJob.submitAndWait(null);
   }
 }

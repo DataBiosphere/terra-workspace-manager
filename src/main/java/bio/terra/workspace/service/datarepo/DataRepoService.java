@@ -41,9 +41,7 @@ public class DataRepoService {
       return dataRepoInstances.get(cleanedInstanceName);
     } else {
       throw new ValidationException(
-          "Data repository instance \""
-              + cleanedInstanceName
-              + "\" is not allowed. Valid instances are: \""
+          "Provided Data repository instance is not allowed. Valid instances are: \""
               + String.join("\", \"", dataRepoInstances.keySet())
               + "\"");
     }

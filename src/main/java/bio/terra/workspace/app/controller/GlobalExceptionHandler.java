@@ -7,9 +7,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 // This module provides a top-level exception handler for controllers.
@@ -29,11 +31,25 @@ public class GlobalExceptionHandler {
   // -- validation exceptions - we don't control the exception raised
   @ExceptionHandler({
     MethodArgumentNotValidException.class,
+    MethodArgumentTypeMismatchException.class,
+    HttpMessageNotReadableException.class,
     IllegalArgumentException.class,
     NoHandlerFoundException.class
   })
   public ResponseEntity<ErrorReport> validationExceptionHandler(Exception ex) {
-    return buildErrorReport(ex, HttpStatus.BAD_REQUEST, null);
+    logger.error("Global exception handler: catch stack", ex);
+    // For security reasons, we generally don't want to include the user's invalid (and potentially
+    // malicious) input in the error response, which also means we don't include the full exception.
+    // Instead, we return a generic error message about input validation.
+    String validationErrorMessage =
+        "Request could not be parsed or was invalid: "
+            + ex.getClass().getSimpleName()
+            + ". Ensure that all types are correct and that enums have valid values.";
+    ErrorReport errorReport =
+        new ErrorReport()
+            .message(validationErrorMessage)
+            .statusCode(HttpStatus.BAD_REQUEST.value());
+    return new ResponseEntity<>(errorReport, HttpStatus.BAD_REQUEST);
   }
 
   // -- catchall - log so we can understand what we have missed in the handlers above

@@ -3,8 +3,10 @@ package bio.terra.workspace.db;
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
+import bio.terra.workspace.generated.model.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataReferenceList;
+import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.generated.model.ResourceDescription;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -39,8 +41,8 @@ public class DataReferenceDao {
       String name,
       UUID resourceId,
       String credentialId,
-      String cloningInstructions,
-      String referenceType,
+      CloningInstructionsEnum cloningInstructions,
+      ReferenceTypeEnum referenceType,
       String reference) {
     String sql =
         "INSERT INTO workspace_data_reference (workspace_id, reference_id, name, resource_id, credential_id, cloning_instructions, reference_type, reference) VALUES "
@@ -50,10 +52,10 @@ public class DataReferenceDao {
     paramMap.put("workspace_id", workspaceId.toString());
     paramMap.put("reference_id", referenceId.toString());
     paramMap.put("name", name);
-    paramMap.put("cloning_instructions", cloningInstructions);
+    paramMap.put("cloning_instructions", cloningInstructions.toString());
     paramMap.put("credential_id", credentialId);
-    paramMap.put("resource_id", resourceId);
-    paramMap.put("reference_type", referenceType);
+    paramMap.put("resource_id", resourceId == null ? null : resourceId.toString());
+    paramMap.put("reference_type", referenceType == null ? null : referenceType.toString());
     paramMap.put("reference", reference);
 
     try {
@@ -81,12 +83,12 @@ public class DataReferenceDao {
   }
 
   public DataReferenceDescription getDataReferenceByName(
-      String workspaceId, DataReferenceDescription.ReferenceTypeEnum type, String name) {
+      UUID workspaceId, ReferenceTypeEnum type, String name) {
     String sql =
         "SELECT workspace_id, reference_id, name, resource_id, credential_id, cloning_instructions, reference_type, reference from workspace_data_reference where workspace_id = :id AND reference_type = :type AND name = :name";
 
     Map<String, Object> paramMap = new HashMap();
-    paramMap.put("id", workspaceId);
+    paramMap.put("id", workspaceId.toString());
     paramMap.put("type", type.toString());
     paramMap.put("name", name);
 
@@ -121,7 +123,7 @@ public class DataReferenceDao {
   }
 
   public DataReferenceList enumerateDataReferences(
-      String workspaceId, String owner, int offset, int limit) {
+      UUID workspaceId, String owner, int offset, int limit) {
     List<String> whereClauses = new ArrayList<>();
     whereClauses.add("(ref.workspace_id = :id)");
     whereClauses.add(uncontrolledOrVisibleResourcesClause("resource", "ref"));
@@ -136,7 +138,7 @@ public class DataReferenceDao {
             + " OFFSET :offset"
             + " LIMIT :limit";
     MapSqlParameterSource params = new MapSqlParameterSource();
-    params.addValue("id", workspaceId);
+    params.addValue("id", workspaceId.toString());
     params.addValue("owner", owner);
     params.addValue("offset", offset);
     params.addValue("limit", limit);
@@ -172,10 +174,8 @@ public class DataReferenceDao {
           .resourceDescription(resourceDescriptionMapper.mapRow(rs, rowNum))
           .credentialId(rs.getString("credential_id"))
           .cloningInstructions(
-              DataReferenceDescription.CloningInstructionsEnum.fromValue(
-                  rs.getString("cloning_instructions")))
-          .referenceType(
-              DataReferenceDescription.ReferenceTypeEnum.fromValue(rs.getString("reference_type")))
+              CloningInstructionsEnum.fromValue(rs.getString("cloning_instructions")))
+          .referenceType(ReferenceTypeEnum.fromValue(rs.getString("reference_type")))
           .reference(rs.getString("reference"));
     }
   }

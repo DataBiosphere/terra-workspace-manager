@@ -71,10 +71,13 @@ public class SamService {
     }
   }
 
-  public void workspaceAuthz(AuthenticatedUserRequest userReq, String workspaceId, String action) {
+  public void workspaceAuthz(AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
     boolean isAuthorized =
         isAuthorized(
-            userReq.getRequiredToken(), SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId, action);
+            userReq.getRequiredToken(),
+            SamUtils.SAM_WORKSPACE_RESOURCE,
+            workspaceId.toString(),
+            action);
     if (!isAuthorized)
       throw new SamUnauthorizedException(
           "User "
