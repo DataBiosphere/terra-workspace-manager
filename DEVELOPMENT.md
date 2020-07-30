@@ -91,6 +91,7 @@ export SAM_ADDRESS=https://sam.dsde-dev.broadinstitute.org
 ```
 
 and render configs if you haven't already 
+
 ```sh
 ./render_config.sh # First time only
 ```
