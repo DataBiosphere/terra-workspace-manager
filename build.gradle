@@ -177,6 +177,9 @@ jib {
 	from {
 		image = "adoptopenjdk:11-jre-hotspot"
 	}
+	container {
+		filesModificationTime = java.time.ZonedDateTime.now().toString() // to prevent ui caching
+	}
 }
 
 // Internal dependencies
