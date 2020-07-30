@@ -1,10 +1,9 @@
 HELP.md
-.gradle/
-build/
-local-dev/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**
-!**/src/test/**
+
+### Gradle ###
+.gradle
+**/build/
+!gradle-wrapper.jar
 
 ### STS ###
 .apt_generated
@@ -37,7 +36,3 @@ out/
 
 ### Mac directory metadata
 .DS_Store
-
-### OpenAPI CodeGen detritus
-.openapi-generator/
-pom.xml
