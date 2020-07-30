@@ -3,7 +3,6 @@
 VAULT_TOKEN=${1:-$(cat $HOME/.vault-token)}
 TARGET_ENV=${2:-dev}
 
-mkdir -p "rendered"
 FIRECLOUD_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/${TARGET_ENV}/common/firecloud-account.json
 SERVICE_ACCOUNT_OUTPUT_FILE_PATH="$(dirname $0)"/rendered/service-account.json
 
