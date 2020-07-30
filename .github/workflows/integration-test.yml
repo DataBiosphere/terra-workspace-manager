@@ -59,7 +59,7 @@ jobs:
       - name: Render configuration for tests
         run: ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }} dev
       - name: Ensure read permissions for rendered files
-        run: sudo chmod +r src/test/resources/rendered/wsm-firecloud-account.json
+        run: sudo chmod +r rendered/service-account.json
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Initialize Postgres DB
