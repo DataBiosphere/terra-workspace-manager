@@ -77,17 +77,17 @@ dependencies {
 	// Swagger deps
 	implementation group: "io.swagger.core.v3", name: "swagger-annotations"
 	runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.30.2"
-	swaggerCodegen "io.swagger.codegen.v3:swagger-codegen-cli"
+	swaggerCodegen group: "io.swagger.codegen.v3", name: "swagger-codegen-cli"
 
 	// Test deps
-	testImplementation(group: "com.google.auth", name: "google-auth-library-oauth2-http", version: "0.21.1")
-	testImplementation(group: "io.vavr", name: "vavr", version: "0.10.3")
-	testImplementation("org.springframework.boot:spring-boot-starter-test") {
+	testImplementation group: "com.google.auth", name: "google-auth-library-oauth2-http", version: "0.21.1"
+	testImplementation group: "io.vavr", name: "vavr", version: "0.10.3"
+	testImplementation(group: "org.springframework.boot", name: "spring-boot-starter-test") {
 		exclude group: "org.junit.vintage", module: "junit-vintage-engine"
 	}
 	testImplementation project(":workspace-manager-client")
 
-	annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+	annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor"
 }
 
 // Exclude the Spring logger, so everything will use SLF4J
