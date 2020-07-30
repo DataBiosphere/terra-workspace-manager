@@ -85,8 +85,16 @@ export STAIRWAY_DATABASE_USER=stairwayuser
 export STAIRWAY_DATABASE_USER_PASSWORD=stairwaypwd
 export STAIRWAY_DATABASE_NAME=stairwaylib
 export SAMPLING_PROBABILITY=1.0
+export CLOUD_TRACE_SA_PATH=rendered/service-account.json
+export SERVICE_GOOGLE_PROJECT=broad-dsde-dev
+export SAM_ADDRESS=https://sam.dsde-dev.broadinstitute.org
 ```
-Set the SERVICE_GOOGLE_PROJECT, and SAM_ADDRESS environment variable to point to the env of your choice.
+
+and render configs if you haven't already 
+
+```sh
+./render_config.sh # First time only
+```
 
 To run the application:
 
