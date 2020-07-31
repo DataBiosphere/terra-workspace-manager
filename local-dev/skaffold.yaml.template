@@ -12,7 +12,6 @@ deploy:
       - name: workspacemanager-ENV
         namespace: terra-ENV
         chartPath: terra-helm/charts/workspacemanager
-        skipBuildDependencies: true
         values:
           image: gcr.io/terra-kernel-k8s/terra-workspace-manager
         valuesFiles:
