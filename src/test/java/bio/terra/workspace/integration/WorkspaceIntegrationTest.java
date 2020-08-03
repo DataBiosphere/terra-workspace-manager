@@ -9,6 +9,7 @@ import bio.terra.workspace.integration.common.utils.WorkspaceManagerTestClient;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.DeleteWorkspaceRequestBody;
+import bio.terra.workspace.model.WorkspaceDescription;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -85,6 +86,26 @@ public class WorkspaceIntegrationTest {
     Assertions.assertTrue(workspaceResponse.isResponseObject());
     CreatedWorkspace createdWorkspace = workspaceResponse.getResponseObject();
     Assertions.assertEquals(workspaceId.toString(), createdWorkspace.getId());
+  }
+
+  @Test
+  @Tag(TAG_NEEDS_CLEANUP)
+  public void getWorkspace(TestInfo testInfo) throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
+
+    createDefaultWorkspace(workspaceId);
+
+    String userEmail = testConfig.getServiceAccountEmail();
+    String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId;
+
+    WorkspaceResponse<WorkspaceDescription> getWorkspaceResponse =
+        workspaceManagerTestClient.get(userEmail, path, WorkspaceDescription.class);
+
+    Assertions.assertEquals(HttpStatus.OK, getWorkspaceResponse.getStatusCode());
+    Assertions.assertTrue(getWorkspaceResponse.isResponseObject());
+    WorkspaceDescription workspaceDescription = getWorkspaceResponse.getResponseObject();
+    Assertions.assertEquals(workspaceId, workspaceDescription.getId());
   }
 
   @Test
