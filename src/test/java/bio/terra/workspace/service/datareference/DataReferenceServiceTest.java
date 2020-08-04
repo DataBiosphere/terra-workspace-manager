@@ -78,7 +78,7 @@ public class DataReferenceServiceTest {
 
   @Test
   public void testCreateDataReference() throws Exception {
-    String initialWorkspaceId = createDefaultWorkspace().getId();
+    UUID initialWorkspaceId = createDefaultWorkspace().getId();
 
     DataRepoSnapshot snapshot = new DataRepoSnapshot();
     snapshot.setSnapshot("foo");
@@ -93,13 +93,13 @@ public class DataReferenceServiceTest {
 
     DataReferenceDescription response = runCreateDataReferenceCall(initialWorkspaceId, refBody);
 
-    assertThat(response.getWorkspaceId().toString(), equalTo(initialWorkspaceId));
+    assertThat(response.getWorkspaceId(), equalTo(initialWorkspaceId));
     assertThat(response.getName(), equalTo("name"));
   }
 
   @Test
   public void testGetDataReference() throws Exception {
-    String initialWorkspaceId = createDefaultWorkspace().getId();
+    UUID initialWorkspaceId = createDefaultWorkspace().getId();
 
     DataRepoSnapshot snapshot = new DataRepoSnapshot();
     snapshot.setSnapshot("foo");
@@ -113,19 +113,19 @@ public class DataReferenceServiceTest {
             .reference(objectMapper.writeValueAsString(snapshot));
 
     DataReferenceDescription createResponse =
-        runCreateDataReferenceCall(initialWorkspaceId.toString(), refBody);
+        runCreateDataReferenceCall(initialWorkspaceId, refBody);
 
     String referenceId = createResponse.getReferenceId().toString();
 
     DataReferenceDescription getResponse = runGetDataReferenceCall(initialWorkspaceId, referenceId);
 
-    assertThat(getResponse.getWorkspaceId().toString(), equalTo(initialWorkspaceId));
+    assertThat(getResponse.getWorkspaceId(), equalTo(initialWorkspaceId));
     assertThat(getResponse.getName(), equalTo("name"));
   }
 
   @Test
   public void testGetDataReferenceByName() throws Exception {
-    String initialWorkspaceId = createDefaultWorkspace().getId();
+    UUID initialWorkspaceId = createDefaultWorkspace().getId();
 
     DataRepoSnapshot snapshot = new DataRepoSnapshot();
     snapshot.setSnapshot("foo");
@@ -145,19 +145,19 @@ public class DataReferenceServiceTest {
         runGetDataReferenceByNameCall(
             initialWorkspaceId, ReferenceTypeEnum.DATA_REPO_SNAPSHOT, "name");
 
-    assertThat(getResponse.getWorkspaceId().toString(), equalTo(initialWorkspaceId));
+    assertThat(getResponse.getWorkspaceId(), equalTo(initialWorkspaceId));
     assertThat(getResponse.getName(), equalTo("name"));
   }
 
   @Test
   public void testGetMissingDataReference() throws Exception {
-    String initialWorkspaceId = createDefaultWorkspace().getId();
+    UUID initialWorkspaceId = createDefaultWorkspace().getId();
 
     MvcResult callResult =
         mvc.perform(
                 get(
                     "/api/workspaces/v1/"
-                        + initialWorkspaceId
+                        + initialWorkspaceId.toString()
                         + "/datareferences/"
                         + UUID.randomUUID().toString()))
             .andExpect(status().is(404))
@@ -170,7 +170,7 @@ public class DataReferenceServiceTest {
 
   @Test
   public void testCreateDataSnapshotNotInDataRepo() throws Exception {
-    String initialWorkspaceId = createDefaultWorkspace().getId();
+    UUID initialWorkspaceId = createDefaultWorkspace().getId();
 
     DataRepoSnapshot snapshot = new DataRepoSnapshot();
     snapshot.setSnapshot("fake-id");
@@ -184,7 +184,7 @@ public class DataReferenceServiceTest {
             .reference(objectMapper.writeValueAsString(snapshot));
 
     mvc.perform(
-            post("/api/workspaces/v1/" + initialWorkspaceId + "/datareferences")
+            post("/api/workspaces/v1/" + initialWorkspaceId.toString() + "/datareferences")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(refBody)))
         .andExpect(status().is(400))
@@ -193,7 +193,7 @@ public class DataReferenceServiceTest {
 
   @Test
   public void testCreateInvalidDataReference() throws Exception {
-    String initialWorkspaceId = createDefaultWorkspace().getId();
+    UUID initialWorkspaceId = createDefaultWorkspace().getId();
 
     CreateDataReferenceRequestBody refBody =
         new CreateDataReferenceRequestBody()
@@ -203,7 +203,7 @@ public class DataReferenceServiceTest {
             .reference("bad-reference");
 
     mvc.perform(
-            post("/api/workspaces/v1/" + initialWorkspaceId + "/datareferences")
+            post("/api/workspaces/v1/" + initialWorkspaceId.toString() + "/datareferences")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(refBody)))
         .andExpect(status().is(400))
@@ -212,7 +212,7 @@ public class DataReferenceServiceTest {
 
   @Test
   public void enumerateDataReferences() throws Exception {
-    String initialWorkspaceId = createDefaultWorkspace().getId();
+    UUID initialWorkspaceId = createDefaultWorkspace().getId();
 
     DataRepoSnapshot snapshot = new DataRepoSnapshot();
     snapshot.setSnapshot("foo");
@@ -259,7 +259,7 @@ public class DataReferenceServiceTest {
         .when(mockSamService)
         .workspaceAuthz(any(), any(), any());
     MvcResult failResult =
-        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), 0, 10)))
+        mvc.perform(get(buildEnumerateEndpoint(workspaceId, 0, 10)))
             .andExpect(status().is(401))
             .andReturn();
     ErrorReport validationError =
@@ -270,7 +270,7 @@ public class DataReferenceServiceTest {
   @Test
   public void enumerateFailsWithInvalidOffset() throws Exception {
     MvcResult failResult =
-        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), -1, 10)))
+        mvc.perform(get(buildEnumerateEndpoint(workspaceId, -1, 10)))
             .andExpect(status().is(400))
             .andReturn();
     ErrorReport validationError =
@@ -281,7 +281,7 @@ public class DataReferenceServiceTest {
   @Test
   public void enumerateFailsWithInvalidLimit() throws Exception {
     MvcResult failResult =
-        mvc.perform(get(buildEnumerateEndpoint(workspaceId.toString(), 0, 0)))
+        mvc.perform(get(buildEnumerateEndpoint(workspaceId, 0, 0)))
             .andExpect(status().is(400))
             .andReturn();
     ErrorReport validationError =
@@ -289,9 +289,9 @@ public class DataReferenceServiceTest {
     assertThat(validationError.getCauses().get(0), containsString("limit"));
   }
 
-  private String buildEnumerateEndpoint(String workspaceId, int offset, int limit) {
+  private String buildEnumerateEndpoint(UUID workspaceId, int offset, int limit) {
     return "/api/workspaces/v1/"
-        + workspaceId
+        + workspaceId.toString()
         + "/datareferences?offset="
         + offset
         + "&limit="
@@ -299,7 +299,7 @@ public class DataReferenceServiceTest {
   }
 
   public void testDeleteDataReference() throws Exception {
-    String initialWorkspaceId = createDefaultWorkspace().getId();
+    UUID initialWorkspaceId = createDefaultWorkspace().getId();
 
     DataRepoSnapshot snapshot = new DataRepoSnapshot();
     snapshot.setSnapshot("foo");
@@ -323,7 +323,7 @@ public class DataReferenceServiceTest {
     // assert that reference is now deleted
     mvc.perform(
             get("/api/workspaces/v1/"
-                    + initialWorkspaceId
+                    + initialWorkspaceId.toString()
                     + "/datareferences/"
                     + response.getReferenceId().toString())
                 .contentType(MediaType.APPLICATION_JSON))
@@ -362,10 +362,10 @@ public class DataReferenceServiceTest {
   }
 
   private DataReferenceDescription runCreateDataReferenceCall(
-      String workspaceId, CreateDataReferenceRequestBody request) throws Exception {
+      UUID workspaceId, CreateDataReferenceRequestBody request) throws Exception {
     MvcResult initialResult =
         mvc.perform(
-                post("/api/workspaces/v1/" + workspaceId + "/datareferences")
+                post("/api/workspaces/v1/" + workspaceId.toString() + "/datareferences")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().is(200))
@@ -374,11 +374,14 @@ public class DataReferenceServiceTest {
         initialResult.getResponse().getContentAsString(), DataReferenceDescription.class);
   }
 
-  private DataReferenceDescription runGetDataReferenceCall(String workspaceId, String referenceId)
+  private DataReferenceDescription runGetDataReferenceCall(UUID workspaceId, String referenceId)
       throws Exception {
     MvcResult initialResult =
         mvc.perform(
-                get("/api/workspaces/v1/" + workspaceId + "/datareferences/" + referenceId)
+                get("/api/workspaces/v1/"
+                        + workspaceId.toString()
+                        + "/datareferences/"
+                        + referenceId)
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().is(200))
             .andReturn();
@@ -387,11 +390,11 @@ public class DataReferenceServiceTest {
   }
 
   private DataReferenceDescription runGetDataReferenceByNameCall(
-      String workspaceId, ReferenceTypeEnum referenceType, String name) throws Exception {
+      UUID workspaceId, ReferenceTypeEnum referenceType, String name) throws Exception {
     MvcResult initialResult =
         mvc.perform(
                 get("/api/workspaces/v1/"
-                        + workspaceId
+                        + workspaceId.toString()
                         + "/datareferences/"
                         + referenceType.toString()
                         + "/"
@@ -403,9 +406,13 @@ public class DataReferenceServiceTest {
         initialResult.getResponse().getContentAsString(), DataReferenceDescription.class);
   }
 
-  private void runDeleteDataReferenceCall(String workspaceId, String referenceId) throws Exception {
+  private void runDeleteDataReferenceCall(UUID workspaceId, String referenceId) throws Exception {
     mvc.perform(
-            delete("/api/workspaces/v1/" + workspaceId + "/datareferences/" + referenceId)
+            delete(
+                    "/api/workspaces/v1/"
+                        + workspaceId.toString()
+                        + "/datareferences/"
+                        + referenceId)
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().is(204))
         .andReturn();

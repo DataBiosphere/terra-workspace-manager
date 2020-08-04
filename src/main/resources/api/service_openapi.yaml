@@ -409,7 +409,7 @@ components:
         id:
           description: UUID of a newly-created workspace
           type: string
-          # format: uuid
+          format: uuid
 
     DeleteWorkspaceRequestBody:
       type: object

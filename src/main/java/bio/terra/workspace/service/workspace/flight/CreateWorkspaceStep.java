@@ -40,7 +40,7 @@ public class CreateWorkspaceStep implements Step {
     workingMap.put(CREATE_WORKSPACE_COMPLETED_KEY, true);
 
     CreatedWorkspace response = new CreatedWorkspace();
-    response.setId(workspaceId.toString());
+    response.setId(workspaceId);
     FlightUtils.setResponse(flightContext, response, HttpStatus.OK);
 
     return StepResult.getStepResultSuccess();
