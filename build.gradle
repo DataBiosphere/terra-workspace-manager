@@ -15,7 +15,7 @@ sourceCompatibility = JavaVersion.VERSION_11
 
 allprojects {
 	group = "bio.terra"
-	version = "0.1.0-SNAPSHOT"
+	version = "0.1.1-SNAPSHOT"
 	ext {
 		artifactGroup = "${group}.workspace"
 		swaggerOutputDir = "${buildDir}/swagger-code"

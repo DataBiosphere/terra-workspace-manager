@@ -84,7 +84,7 @@ public class WorkspaceIntegrationTest {
     Assertions.assertEquals(HttpStatus.OK, workspaceResponse.getStatusCode());
     Assertions.assertTrue(workspaceResponse.isResponseObject());
     CreatedWorkspace createdWorkspace = workspaceResponse.getResponseObject();
-    Assertions.assertEquals(workspaceId.toString(), createdWorkspace.getId());
+    Assertions.assertEquals(workspaceId, createdWorkspace.getId());
   }
 
   @Test

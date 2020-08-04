@@ -104,7 +104,7 @@ public class WorkspaceServiceTest {
 
     CreatedWorkspace workspace = runCreateWorkspaceCall(body);
 
-    assertThat(workspace.getId(), not(blankOrNullString()));
+    assertThat(workspace.getId().toString(), not(blankOrNullString()));
 
     MvcResult callResult =
         mvc.perform(get("/api/workspaces/v1/" + workspace.getId()))
@@ -130,7 +130,7 @@ public class WorkspaceServiceTest {
 
     CreatedWorkspace workspace = runCreateWorkspaceCall(body);
 
-    assertThat(workspace.getId(), equalTo(workspaceId.toString()));
+    assertThat(workspace.getId(), equalTo(workspaceId));
   }
 
   @Test
@@ -143,7 +143,7 @@ public class WorkspaceServiceTest {
             .spendProfile(null)
             .policies(null);
     CreatedWorkspace workspace = runCreateWorkspaceCall(body);
-    assertThat(workspace.getId(), equalTo(workspaceId.toString()));
+    assertThat(workspace.getId(), equalTo(workspaceId));
 
     MvcResult failureResult =
         mvc.perform(
@@ -169,7 +169,7 @@ public class WorkspaceServiceTest {
 
     CreatedWorkspace workspace = runCreateWorkspaceCall(body);
 
-    assertThat(workspace.getId(), equalTo(workspaceId.toString()));
+    assertThat(workspace.getId(), equalTo(workspaceId));
   }
 
   @Test
@@ -211,7 +211,7 @@ public class WorkspaceServiceTest {
             .policies(null);
 
     CreatedWorkspace workspace = runCreateWorkspaceCall(body);
-    assertThat(workspace.getId(), equalTo(workspaceId.toString()));
+    assertThat(workspace.getId(), equalTo(workspaceId));
 
     DeleteWorkspaceRequestBody deleteBody =
         new DeleteWorkspaceRequestBody().authToken("fake-user-auth-token");
@@ -240,7 +240,7 @@ public class WorkspaceServiceTest {
             .spendProfile(null)
             .policies(null);
     CreatedWorkspace workspace = runCreateWorkspaceCall(body);
-    assertThat(workspace.getId(), equalTo(workspaceId.toString()));
+    assertThat(workspace.getId(), equalTo(workspaceId));
 
     // Next, add a data reference to that workspace.
     DataRepoSnapshot reference =
