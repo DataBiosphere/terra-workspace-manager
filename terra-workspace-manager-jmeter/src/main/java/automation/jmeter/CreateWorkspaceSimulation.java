@@ -231,7 +231,7 @@ public class CreateWorkspaceSimulation {
         HashTree parametersTree = new HashTree();
         parametersTree.add(headerManager);
         parametersTree.add(userParameters);
-        //parametersTree.add(backendListener);
+        parametersTree.add(backendListener);
 
         HashTree httpSamplerTree = new HashTree();
         httpSamplerTree.add(httpSamplerProxy);
