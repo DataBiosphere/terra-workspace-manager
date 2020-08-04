@@ -1,2 +1,5 @@
 rootProject.name = 'terra-workspace-manager'
 include 'workspace-manager-client'
+include 'automation-jmeter-plugins'
+include 'terra-workspace-manager-jmeter'
+
