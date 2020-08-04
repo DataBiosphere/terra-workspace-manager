@@ -42,7 +42,7 @@ public class WorkspaceManagerTestClient {
 
   public <T> WorkspaceResponse<T> get(String userEmail, String path, Class<T> responseClass)
       throws Exception {
-    HttpEntity<String> entity = new HttpEntity<>(null, getHeaders(userEmail));
+    HttpEntity<String> entity = new HttpEntity<>(getHeaders(userEmail));
     return sendRequest(path, HttpMethod.GET, entity, ErrorReport.class, responseClass);
   }
 
