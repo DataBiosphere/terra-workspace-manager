@@ -8,10 +8,13 @@ import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Stairway;
 import bio.terra.stairway.exception.DatabaseOperationException;
+import bio.terra.stairway.exception.FlightException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
+import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.app.configuration.ApplicationConfiguration;
 import bio.terra.workspace.app.configuration.StairwayJdbcConfiguration;
+import bio.terra.workspace.common.exception.stairway.StairwayInitializationException;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.generated.model.JobModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -27,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +62,16 @@ public class JobService {
     ExecutorService executorService =
         Executors.newFixedThreadPool(appConfig.getMaxStairwayThreads());
     StairwayExceptionSerializer serializer = new StairwayExceptionSerializer(objectMapper);
-    stairway = new Stairway(executorService, applicationContext, serializer);
+    Stairway.Builder builder =
+        Stairway.newBuilder()
+            .applicationContext(applicationContext)
+            .exceptionSerializer(serializer)
+            .enableWorkQueue(false);
+    try {
+      stairway = new Stairway(builder);
+    } catch (StairwayExecutionException e) {
+      throw new StairwayInitializationException("Error starting stairway: ", e);
+    }
   }
 
   public static class JobResultWithStatus<T> {
@@ -100,7 +113,7 @@ public class JobService {
       Class<? extends Flight> flightClass, FlightMap parameterMap, String jobId) {
     try {
       stairway.submit(jobId, flightClass, parameterMap);
-    } catch (StairwayException stairwayEx) {
+    } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
     return jobId;
@@ -123,10 +136,24 @@ public class JobService {
 
   void waitForJob(String jobId) {
     try {
-      stairway.waitForFlight(jobId, 10, appConfig.getStairwayTimeoutSeconds() / 10);
-    } catch (StairwayException stairwayEx) {
+      int pollIntervalSeconds = 10;
+      waitForFlight(
+          jobId, pollIntervalSeconds, appConfig.getStairwayTimeoutSeconds() / pollIntervalSeconds);
+    } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
+  }
+
+  private FlightState waitForFlight(String flightId, int pollSeconds, int pollCycles)
+      throws DatabaseOperationException, FlightException, InterruptedException {
+    for (int pollCount = 0; pollCount < pollCycles; ++pollCount) {
+      TimeUnit.SECONDS.sleep(pollSeconds);
+      FlightState state = stairway.getFlightState(flightId);
+      if (!state.isActive()) {
+        return state;
+      }
+    }
+    throw new FlightException("Flight did not complete in the allowed wait time");
   }
 
   /**
@@ -140,8 +167,9 @@ public class JobService {
           stairwayJdbcConfiguration.getDataSource(),
           stairwayJdbcConfiguration.isForceClean(),
           stairwayJdbcConfiguration.isMigrateUpgrade());
+      stairway.recoverAndStart(null);
 
-    } catch (StairwayException stairwayEx) {
+    } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException("Stairway initialization failed", stairwayEx);
     }
   }
@@ -164,7 +192,7 @@ public class JobService {
         }
       }
       stairway.deleteFlight(jobId, false);
-    } catch (StairwayException stairwayEx) {
+    } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
   }
@@ -224,7 +252,7 @@ public class JobService {
       filter.addFilterInputParameter(
           JobMapKeys.SUBJECT_ID.getKeyName(), FlightFilterOp.EQUAL, userReq.getSubjectId());
       flightStateList = stairway.getFlights(offset, limit, filter);
-    } catch (StairwayException stairwayEx) {
+    } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
 
@@ -242,7 +270,7 @@ public class JobService {
       verifyUserAccess(jobId, userReq); // jobId=flightId
       FlightState flightState = stairway.getFlightState(jobId);
       return mapFlightStateToJobModel(flightState);
-    } catch (StairwayException stairwayEx) {
+    } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
   }
@@ -276,13 +304,13 @@ public class JobService {
     try {
       verifyUserAccess(jobId, userReq); // jobId=flightId
       return retrieveJobResultWorker(jobId, resultClass);
-    } catch (StairwayException stairwayEx) {
+    } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
   }
 
   private <T> JobResultWithStatus<T> retrieveJobResultWorker(String jobId, Class<T> resultClass)
-      throws StairwayException {
+      throws StairwayException, InterruptedException {
     FlightState flightState = stairway.getFlightState(jobId);
     FlightMap resultMap = flightState.getResultMap().orElse(null);
     if (resultMap == null) {
@@ -339,7 +367,7 @@ public class JobService {
       if (!StringUtils.equals(flightSubjectId, userReq.getSubjectId())) {
         throw new JobUnauthorizedException("Unauthorized");
       }
-    } catch (DatabaseOperationException ex) {
+    } catch (DatabaseOperationException | InterruptedException ex) {
       throw new InternalStairwayException("Stairway exception looking up the job", ex);
     } catch (FlightNotFoundException ex) {
       throw new JobNotFoundException("Job not found", ex);
