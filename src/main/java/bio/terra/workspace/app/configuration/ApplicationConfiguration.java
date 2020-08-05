@@ -24,6 +24,7 @@ public class ApplicationConfiguration {
   // Configurable properties
   private int maxStairwayThreads;
   private int stairwayTimeoutSeconds;
+  private int stairwayPollingIntervalSeconds;
   private String resourceId;
 
   // Not a property
@@ -35,6 +36,14 @@ public class ApplicationConfiguration {
 
   public void setStairwayTimeoutSeconds(int stairwayTimeoutSeconds) {
     this.stairwayTimeoutSeconds = stairwayTimeoutSeconds;
+  }
+
+  public int getStairwayPollingIntervalSeconds() {
+    return stairwayPollingIntervalSeconds;
+  }
+
+  public void setStairwayPollingIntervalSeconds(int stairwayPollingIntervalSeconds) {
+    this.stairwayPollingIntervalSeconds = stairwayPollingIntervalSeconds;
   }
 
   public int getMaxStairwayThreads() {
