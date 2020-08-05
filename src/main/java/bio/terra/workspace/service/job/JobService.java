@@ -136,9 +136,10 @@ public class JobService {
 
   void waitForJob(String jobId) {
     try {
-      int pollIntervalSeconds = 1;
       waitForFlight(
-          jobId, pollIntervalSeconds, appConfig.getStairwayTimeoutSeconds() / pollIntervalSeconds);
+          jobId,
+          appConfig.getStairwayPollingIntervalSeconds(),
+          appConfig.getStairwayTimeoutSeconds() / appConfig.getStairwayPollingIntervalSeconds());
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
