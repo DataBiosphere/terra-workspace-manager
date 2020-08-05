@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}-slave-deployment
+  labels:
+    jmeter_mode: {{ .Chart.Name }}-slave
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      jmeter_mode: {{ .Chart.Name }}-slave
+  template:
+    metadata:
+      labels:
+        jmeter_mode: {{ .Chart.Name }}-slave
+    spec:
+      serviceAccountName: {{ .Chart.Name }}-serviceaccount
+      containers:
+        - name: {{ .Chart.Name }}-slave
+          image: {{ .Values.slaveImage }}
+          imagePullPolicy: {{ .Values.imageConfig.imagePullPolicy }}
+          ports:
+            - containerPort: 1099
+            - containerPort: 50000
+          env:
+            - name: FIRECLOUD_SERVICE_ACCOUNT_CREDS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Chart.Name }}-master-slave-secretdefinition
+                  key: firecloud-account.json

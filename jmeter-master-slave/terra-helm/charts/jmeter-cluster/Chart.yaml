@@ -1,0 +1,17 @@
+apiVersion: v2
+name: jmeter
+version: 0.1
+
+description: Chart for JMeter master slave
+type: application
+
+keywords:
+  - dsp
+  - broadinstitute
+  - terra
+  - workspacemanager
+  - jmeter
+
+sources:
+  - https://github.com/broadinstitute/terra-helm/tree/master/charts
+  - https://github.com/DataBiosphere/terra-workspace-manager/terra-jmeter-slave

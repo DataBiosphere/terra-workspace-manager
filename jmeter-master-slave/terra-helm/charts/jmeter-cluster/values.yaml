@@ -1,0 +1,95 @@
+# Global values used by this chart
+global:
+  # global.trustedAddresses -- A map of addresses that will be merged with serviceAllowedAddresses. Example: `{ "nickname": ["x.x.x.x/y", "x.x.x.x/y"] }`
+  trustedAddresses: {}
+  # global.terraEnv -- (string) Terget Terra environment name. Required.
+  # @default -- Is set by Helmfile on deploy
+  terraEnv:
+
+# image -- (string) Used for local Skaffold deploys
+# @default -- Is set by Skaffold on local deploys
+masterImage:
+slaveImage:
+
+# appVersion -- (string) Workspace Manager image version/tag. Required unless using `image`.
+# @default -- Is set by Helmfile on deploy
+appVersion:
+
+imageConfig:
+  # imageConfig.repository -- Image repository
+  masterRepository: gcr.io/terra-kernel-k8s/jmeter-master
+  slaveRepository: gcr.io/terra-kernel-k8s/jmeter-slave
+  # imageConfig.tag -- (string) Image tag.
+  # @default -- The chart's appVersion value will be used
+  tag:
+  imagePullPolicy: Always
+replicas: 1
+vault:
+  # vault.enabled -- When enabled, syncs required secrets from Vault
+  enabled: true
+  # vault.pathPrefix -- (string) Vault path prefix for secrets. Required if vault.enabled.
+  pathPrefix:
+
+# samAddress -- Address of SAM instance this deploy will talk to
+samAddress: https://sam.dsde-dev.broadinstitute.org/
+
+firecloud:
+  vault:
+    pathPrefix: secret/dsde/firecloud/dev/common
+
+# serviceIP -- (string) External IP of the service. Required.
+serviceIP:
+
+# serviceFirewallEnabled -- Whether to restrict access to the service to the IPs supplied via serviceAllowedAddresses
+serviceFirewallEnabled: false
+
+# serviceAllowedAddresses -- A map of addresses in the form `{ "nickname": ["x.x.x.x/y", "x.x.x.x/y"] }`
+serviceAllowedAddresses: {}
+
+# DNS/TLS Values
+domain:
+  # domain.hostname -- Hostname of this deployment
+  hostname: workspace
+  # domain.namespaceEnv -- If true, an extra level of namespacing (`global.terraEnv`) will be added between the hostname and suffix
+  namespaceEnv: true
+  # domain.suffix -- Domain suffix
+  suffix: integ.envs.broadinstitute.org
+# Either certManager or vaultCert must be enabled to ensure a certificate secret exists:
+certManager:
+  # certManager.enabled -- Enable to create certificate secret with cert-manager
+  enabled: false
+  # certManager.duration -- Certificate duration. Defaults to 3 months.
+  duration: 2160h0m0s
+  # certManager.renewBefore -- When to renew the cert. Defaults to 15 days before expiry.
+  renewBefore: 360h0m0s
+  issuerName: cert-manager-letsencrypt-prod
+  issuerKind: ClusterIssuer
+vaultCert:
+  # vaultCert.enabled -- Enable to sync certificate secret from Vault with secrets-manager
+  enabled: false
+  cert:
+    # vaultCert.cert.path -- (string) Path to secret containing .crt
+    path:
+    # vaultCert.cert.secretKey -- (string) Key in secret containing .crt
+    secretKey:
+  key:
+    # vaultCert.key.path -- (string) Path to secret containing .key
+    path:
+    # vaultCert.key.secretKey -- (string) Key in secret containing .key
+    secretKey:
+  chain:
+    # vaultCert.chain.path -- (string) Path to secret containing intermediate .crt
+    path:
+    # vaultCert.chain.secretKey -- (string) Key in secret containing intermediate .crt
+    secretKey:
+
+proxy:
+  # proxy.enable -- Enables OIDC proxy sidecar, used for TLS and TCell. Either `certManager` or `vaultCert` must be enabled if the proxy is enabled.
+  enabled: true
+  # proxy.logLevel -- Proxy log level
+  logLevel: debug
+  image:
+    # proxy.image.repository -- Proxy image repository
+    repository: broadinstitute/openidc-proxy
+    # proxy.image.version -- Proxy image tag
+    version: bernick_tcell

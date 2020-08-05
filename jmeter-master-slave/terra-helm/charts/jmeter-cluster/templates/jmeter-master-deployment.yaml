@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}-master-deployment
+  labels:
+    jmeter_mode: {{ .Chart.Name }}-master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      jmeter_mode: {{ .Chart.Name }}-master
+  template:
+    metadata:
+      labels:
+        jmeter_mode: {{ .Chart.Name }}-master
+    spec:
+      serviceAccountName: {{ .Chart.Name }}-serviceaccount
+      containers:
+        - name: {{ .Chart.Name }}-master
+          image: {{ .Values.masterImage }}
+          imagePullPolicy: {{ .Values.imageConfig.imagePullPolicy }}
+          command: [ "/bin/bash", "-c", "--" ]
+          args: [ "while true; do sleep 30; done;" ]
+          volumeMounts:
+            - name: loadtest
+              mountPath: /load_test
+              subPath: "load_test"
+          ports:
+            - containerPort: 60000
+          env:
+            - name: FIRECLOUD_SERVICE_ACCOUNT_CREDS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Chart.Name }}-master-slave-secretdefinition
+                  key: firecloud-account.json
+      volumes:
+        - name: loadtest
+          configMap:
+            name: {{ .Chart.Name }}-master-config
