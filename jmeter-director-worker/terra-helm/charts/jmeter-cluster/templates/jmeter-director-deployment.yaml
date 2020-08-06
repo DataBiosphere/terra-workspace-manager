@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}-master-deployment
+  name: {{ .Chart.Name }}-director-deployment
   labels:
-    jmeter_mode: {{ .Chart.Name }}-master
+    jmeter_mode: {{ .Chart.Name }}-director
 spec:
   replicas: 1
   selector:
     matchLabels:
-      jmeter_mode: {{ .Chart.Name }}-master
+      jmeter_mode: {{ .Chart.Name }}-director
   template:
     metadata:
       labels:
-        jmeter_mode: {{ .Chart.Name }}-master
+        jmeter_mode: {{ .Chart.Name }}-director
     spec:
       serviceAccountName: {{ .Chart.Name }}-serviceaccount
       containers:
-        - name: {{ .Chart.Name }}-master
-          image: {{ .Values.masterImage }}
+        - name: {{ .Chart.Name }}-director
+          image: {{ .Values.directorImage }}
           imagePullPolicy: {{ .Values.imageConfig.imagePullPolicy }}
           command: [ "/bin/bash", "-c", "--" ]
           args: [ "while true; do sleep 30; done;" ]
@@ -31,9 +31,9 @@ spec:
             - name: FIRECLOUD_SERVICE_ACCOUNT_CREDS
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Chart.Name }}-master-slave-secretdefinition
+                  name: {{ .Chart.Name }}-director-worker-secretdefinition
                   key: firecloud-account.json
       volumes:
         - name: loadtest
           configMap:
-            name: {{ .Chart.Name }}-master-config
+            name: {{ .Chart.Name }}-director-config

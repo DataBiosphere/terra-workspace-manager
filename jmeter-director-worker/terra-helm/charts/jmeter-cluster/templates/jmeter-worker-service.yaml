@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Chart.Name }}-slaves-svc
+  name: {{ .Chart.Name }}-workers-svc
   labels:
-    jmeter_mode: {{ .Chart.Name }}-slave
+    jmeter_mode: {{ .Chart.Name }}-worker
 spec:
   clusterIP: None
   ports:
@@ -14,4 +14,4 @@ spec:
       name: second
       targetPort: 50000
   selector:
-    jmeter_mode: {{ .Chart.Name }}-slave
+    jmeter_mode: {{ .Chart.Name }}-worker
