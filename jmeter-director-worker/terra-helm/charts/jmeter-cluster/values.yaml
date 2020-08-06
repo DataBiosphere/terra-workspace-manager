@@ -8,8 +8,8 @@ global:
 
 # image -- (string) Used for local Skaffold deploys
 # @default -- Is set by Skaffold on local deploys
-masterImage:
-slaveImage:
+directorImage:
+workerImage:
 
 # appVersion -- (string) Workspace Manager image version/tag. Required unless using `image`.
 # @default -- Is set by Helmfile on deploy
@@ -17,8 +17,8 @@ appVersion:
 
 imageConfig:
   # imageConfig.repository -- Image repository
-  masterRepository: gcr.io/terra-kernel-k8s/jmeter-master
-  slaveRepository: gcr.io/terra-kernel-k8s/jmeter-slave
+  directorRepository: gcr.io/terra-kernel-k8s/jmeter-director
+  workerRepository: gcr.io/terra-kernel-k8s/jmeter-worker
   # imageConfig.tag -- (string) Image tag.
   # @default -- The chart's appVersion value will be used
   tag:

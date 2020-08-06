@@ -2,7 +2,7 @@ apiVersion: v2
 name: jmeter
 version: 0.1
 
-description: Chart for JMeter master slave
+description: Chart for JMeter director worker
 type: application
 
 keywords:
@@ -14,4 +14,4 @@ keywords:
 
 sources:
   - https://github.com/broadinstitute/terra-helm/tree/master/charts
-  - https://github.com/DataBiosphere/terra-workspace-manager/terra-jmeter-slave
+  - https://github.com/DataBiosphere/terra-workspace-manager/terra-jmeter-director-worker
