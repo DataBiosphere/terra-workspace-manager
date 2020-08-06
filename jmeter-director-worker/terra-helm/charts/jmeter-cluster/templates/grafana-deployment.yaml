@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}-grafana-deployment
+  labels:
+    app: {{ .Chart.Name }}-grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}-grafana
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}-grafana
+    spec:
+      serviceAccountName: {{ .Chart.Name }}-serviceaccount
+      containers:
+        - name: grafana
+          image: grafana/grafana:5.4.3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+          env:
+            - name: GF_AUTH_BASIC_ENABLED
+              value: "true"
+            - name: GF_USERS_ALLOW_ORG_CREATE
+              value: "true"
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: "true"
+            - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+              value: Admin
+            - name: GF_SERVER_ROOT_URL
+              value: /

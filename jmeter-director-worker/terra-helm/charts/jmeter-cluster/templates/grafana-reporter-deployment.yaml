@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}-grafana-reporter
+  labels:
+    jmeter_mode: {{ .Chart.Name }}-grafana-reporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      jmeter_mode: {{ .Chart.Name }}-grafana-reporter
+  template:
+    metadata:
+      labels:
+        jmeter_mode: {{ .Chart.Name }}-grafana-reporter
+    spec:
+      serviceAccountName: {{ .Chart.Name }}-serviceaccount
+      containers:
+        - name: grafana-reporter
+          image: kubernautslabs/jmeter-reporter:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8686
