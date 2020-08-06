@@ -20,7 +20,13 @@ RUN mkdir /jmeter \
 RUN cd /jmeter/apache-jmeter-$JMETER_VERSION/ && wget -q -O /tmp/jpgc-functions-2.1.zip https://jmeter-plugins.org/files/packages/jpgc-functions-2.1.zip && unzip -n /tmp/jpgc-functions-2.1.zip && rm /tmp/jpgc-functions-2.1.zip
 RUN cd /jmeter/apache-jmeter-$JMETER_VERSION/ && wget -q -O /tmp/bzm-parallel-0.9.zip https://jmeter-plugins.org/files/packages/bzm-parallel-0.9.zip && unzip -n /tmp/bzm-parallel-0.9.zip && rm /tmp/bzm-parallel-0.9.zip
 
-ENV JMETER_HOME /jmeter/apache-jmeter-$JMETER_VERSION/
+RUN cd /jmeter/apache-jmeter-$JMETER_VERSION/ && wget -q -O lib/google-auth-library-oauth2-http-0.20.0.jar https://repo1.maven.org/maven2/com/google/auth/google-auth-library-oauth2-http/0.20.0/google-auth-library-oauth2-http-0.20.0.jar
+RUN cd /jmeter/apache-jmeter-$JMETER_VERSION/ && wget -q -O lib/google-auth-library-credentials-0.20.0.jar https://repo1.maven.org/maven2/com/google/auth/google-auth-library-credentials/0.20.0/google-auth-library-credentials-0.20.0.jar
+RUN cd /jmeter/apache-jmeter-$JMETER_VERSION/ && wget -q -O lib/google-http-client-1.34.0.jar https://repo1.maven.org/maven2/com/google/http-client/google-http-client/1.34.0/google-http-client-1.34.0.jar
+RUN cd /jmeter/apache-jmeter-$JMETER_VERSION/ && wget -q -O lib/google-http-client-jackson2-1.34.0.jar https://repo1.maven.org/maven2/com/google/http-client/google-http-client-jackson2/1.34.0/google-http-client-jackson2-1.34.0.jar
+RUN cd /jmeter/apache-jmeter-$JMETER_VERSION/ && wget -q -O lib/guava-28.2-jre.jar https://repo1.maven.org/maven2/com/google/guava/guava/28.2-jre/guava-28.2-jre.jar
+
+ENV JMETER_HOME /jmeter/apache-jmeter-$JMETER_VERSION
 ENV PATH $JMETER_HOME/bin:$PATH
 
 EXPOSE 1099 50000
