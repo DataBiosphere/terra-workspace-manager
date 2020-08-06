@@ -1,5 +1,5 @@
-# This is the Dockerfile for the JMeter Director
-# TODO: Refactor common code from JMeter Director / Worker into a Base file
+# This is the Dockerfile for the JMeter Director.
+# TODO: Refactor common code from JMeter Director / Worker into a Base file.
 
 FROM openjdk:slim
 MAINTAINER BroadInstitute
