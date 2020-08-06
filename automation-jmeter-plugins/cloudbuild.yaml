@@ -1,0 +1,9 @@
+steps:
+  - name: gradle
+    entrypoint: gradle
+    args: ["test"]
+  - name: gradle
+    entrypoint: gradle
+    args: ["assemble"]
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    args: ["gsutil", "cp", "build/libs/automation-jmeter-plugins-0.1.0.jar", "gs://terra-kernel-k8s_cloudbuild/automation-jmeter-plugins-0.1.0.jar"]
