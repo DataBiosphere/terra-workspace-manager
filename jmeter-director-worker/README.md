@@ -1,4 +1,4 @@
-This directory contains scripts for deploying JMeter master/slave infrastructure for load testing. 
+This directory contains scripts for deploying JMeter director/worker infrastructure for load testing. 
 
 To use this, first ensure [Helm](https://helm.sh/docs/intro/install/#from-homebrew-macos) and [Skaffold](https://skaffold.dev/) are installed on your local machine. 
 

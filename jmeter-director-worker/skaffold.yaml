@@ -3,21 +3,21 @@ apiVersion: skaffold/v2alpha4
 kind: Config
 build:
   artifacts:
-    - image: gcr.io/terra-kernel-k8s/jmeter-master
-      context: jmeter-master
+    - image: gcr.io/terra-kernel-k8s/jmeter-director
+      context: jmeter-director
       docker: {}
-    - image: gcr.io/terra-kernel-k8s/jmeter-slave
-      context: jmeter-slave
+    - image: gcr.io/terra-kernel-k8s/jmeter-worker
+      context: jmeter-worker
       docker: {}
 deploy:
   helm:
     releases:
-      - name: jmeter-master-slave
+      - name: jmeter-director-worker
         namespace: terra-jmeter
         chartPath: terra-helm/charts/jmeter-cluster
         skipBuildDependencies: true
         values:
-          masterImage: gcr.io/terra-kernel-k8s/jmeter-master
-          slaveImage: gcr.io/terra-kernel-k8s/jmeter-slave
+          directorImage: gcr.io/terra-kernel-k8s/jmeter-director
+          workerImage: gcr.io/terra-kernel-k8s/jmeter-worker
         valuesFiles:
           - values.yaml
