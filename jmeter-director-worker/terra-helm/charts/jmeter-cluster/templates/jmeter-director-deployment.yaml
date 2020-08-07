@@ -33,7 +33,37 @@ spec:
                 secretKeyRef:
                   name: {{ .Chart.Name }}-director-worker-secretdefinition
                   key: firecloud-account.json
+            - name: SAM_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Chart.Name }}-{{ .Values.targetEnv }}-configmap
+                  key: sam_user
+            - name: WSM_PROTOCOL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Chart.Name }}-{{ .Values.targetEnv }}-configmap
+                  key: wsm_protocol
+            - name: WSM_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Chart.Name }}-{{ .Values.targetEnv }}-configmap
+                  key: wsm_port
+            - name: WSM_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Chart.Name }}-{{ .Values.targetEnv }}-configmap
+                  key: wsm_server
+            - name: INFLUXDB_WSM_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Chart.Name }}-{{ .Values.targetEnv }}-configmap
+                  key: influxdb_wsm_url
+            - name: INFLUXDB_WSM_MEASUREMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Chart.Name }}-{{ .Values.targetEnv }}-configmap
+                  key: influxdb_wsm_measurement
       volumes:
         - name: loadtest
           configMap:
-            name: {{ .Chart.Name }}-director-config
+            name: {{ .Chart.Name }}-director-configmap

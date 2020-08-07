@@ -20,4 +20,5 @@ deploy:
           directorImage: gcr.io/terra-kernel-k8s/jmeter-director
           workerImage: gcr.io/terra-kernel-k8s/jmeter-worker
         valuesFiles:
+          - terra-helmfile/environments/jmeter/values.yaml
           - values.yaml

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-demo-configmap
+  labels:
+    jmeter_mode: {{ .Chart.Name }}-demo
+data:
+  sam_user: william.thunderlord@test.firecloud.org
+  wsm_protocol: https
+  wsm_port: "443"
+  wsm_server: workspace.ichang.integ.envs.broadinstitute.org
+  influxdb_wsm_url: http://jmeter-influxdb-svc:8086/write?db=wsm
+  influxdb_wsm_measurement: wsm
