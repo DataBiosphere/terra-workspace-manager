@@ -100,7 +100,7 @@ public class CreateWorkspaceSimulation {
         jsr223PreProcessor.setName("JSR223 Pre Processor");
         jsr223PreProcessor.setEnabled(true);
         jsr223PreProcessor.setProperty("cacheKey", "true");
-        jsr223PreProcessor.setProperty("script", "${__setProperty(oauth2Token, ${__OAuth2Token(GCP, FIRECLOUD_SERVICE_ACCT_CREDS, SAM_USER)})}");
+        jsr223PreProcessor.setProperty("script", "${__setProperty(oauth2Token, ${__OAuth2Token(GCP, FIRECLOUD_SERVICE_ACCOUNT_CREDS, SAM_USER)})}");
         jsr223PreProcessor.setProperty("scriptLanguage", "groovy");
         jsr223PreProcessor.setProperty(TestElement.TEST_CLASS, JSR223PreProcessor.class.getName());
         jsr223PreProcessor.setProperty(TestElement.GUI_CLASS, TestBeanGUI.class.getName());
