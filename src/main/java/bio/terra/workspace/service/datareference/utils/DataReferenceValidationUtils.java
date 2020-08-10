@@ -7,6 +7,7 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,10 +15,19 @@ public class DataReferenceValidationUtils {
 
   private ObjectMapper objectMapper;
   private DataRepoService dataRepoService;
+  final Pattern nameValidationPattern = Pattern.compile("^[a-zA-Z0-9][_a-zA-Z0-9]*$");
 
   public DataReferenceValidationUtils(ObjectMapper objectMapper, DataRepoService dataRepoService) {
     this.objectMapper = objectMapper;
     this.dataRepoService = dataRepoService;
+  }
+
+  public void validateReferenceName(String name) {
+    if ((name.length() < 1 || name.length() > 63)
+        || !nameValidationPattern.matcher(name).matches()) {
+      throw new InvalidDataReferenceException(
+          "Invalid reference name specified. Name must be 1 to 63 alphanumeric characters or underscores, and cannot start with an underscore.");
+    }
   }
 
   public String validateReference(

@@ -247,7 +247,7 @@ public class WorkspaceServiceTest {
         new DataRepoSnapshot().instanceName("fake instance").snapshot("fake snapshot");
     CreateDataReferenceRequestBody referenceRequest =
         new CreateDataReferenceRequestBody()
-            .name("fake-data-reference")
+            .name("fake_data_reference")
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
             .reference(objectMapper.writeValueAsString(reference));
