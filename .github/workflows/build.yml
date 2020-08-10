@@ -8,6 +8,12 @@ on:
     - 'README.md'
     - '.github/**'
     - 'local-dev/**'
+  pull_request:
+    branches:
+    - dev
+    paths-ignore:
+    - 'README.md'
+    - 'local-dev/**'
 env:
   SERVICE_NAME: ${{ github.event.repository.name }}
   GOOGLE_PROJECT: terra-kernel-k8s
@@ -72,9 +78,18 @@ jobs:
         java-version: 11
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-    - name: Build and push GCR image using Jib
+    - name: Build and push GCR image using Jib (Official)
+      if: github.event_name == 'push'
       run: "./gradlew jib --image=gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:${{ steps.tag.outputs.tag }}"
+    - name: Get short SHA
+      id: slug
+      if: github.event_name == 'pull_request'
+      run: echo ::set-output name=sha7::$(echo ${{ github.event.head.sha }} | cut -c1-7)"
+    - name: Build and push GCR image using Jib (Pull Request)
+      if: github.event_name == 'pull_request'
+      run: "./gradlew jib --image=gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:pr${{ github.event.number }}-${{ steps.slug.outputs.sha7 }}"
     - name: Update Version Mapping
+      if: github.event_name == 'push'
       uses: broadinstitute/repository-dispatch@master
       with:
         token: ${{ secrets.REPO_ACCESS_TOKEN }}
