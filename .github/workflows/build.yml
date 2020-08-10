@@ -84,7 +84,7 @@ jobs:
     - name: Get short SHA
       id: slug
       if: github.event_name == 'pull_request'
-      run: echo ::set-output name=sha7::$(echo ${{ github.event.head.sha }} | cut -c1-7)"
+      run: echo ::set-output name=sha7::$(echo ${{ github.event.head.sha }} | cut -c1-7)
     - name: Build and push GCR image using Jib (Pull Request)
       if: github.event_name == 'pull_request'
       run: "./gradlew jib --image=gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:pr${{ github.event.number }}-${{ steps.slug.outputs.sha7 }}"
