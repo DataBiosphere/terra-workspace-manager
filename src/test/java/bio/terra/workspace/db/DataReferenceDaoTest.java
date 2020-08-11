@@ -59,7 +59,7 @@ public class DataReferenceDaoTest {
   public void setup() {
     workspaceId = UUID.randomUUID();
     referenceId = UUID.randomUUID();
-    name = UUID.randomUUID().toString();
+    name = "this_is_a_name";
     referenceType = ReferenceTypeEnum.DATA_REPO_SNAPSHOT;
 
     DataRepoSnapshot drs = new DataRepoSnapshot();
