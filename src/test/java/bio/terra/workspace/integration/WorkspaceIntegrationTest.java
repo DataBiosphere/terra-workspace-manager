@@ -6,9 +6,14 @@ import bio.terra.workspace.integration.common.configuration.TestConfiguration;
 import bio.terra.workspace.integration.common.response.WorkspaceResponse;
 import bio.terra.workspace.integration.common.utils.TestUtils;
 import bio.terra.workspace.integration.common.utils.WorkspaceManagerTestClient;
+import bio.terra.workspace.model.CloningInstructionsEnum;
+import bio.terra.workspace.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
+import bio.terra.workspace.model.DataReferenceDescription;
+import bio.terra.workspace.model.DataRepoSnapshot;
 import bio.terra.workspace.model.DeleteWorkspaceRequestBody;
+import bio.terra.workspace.model.ReferenceTypeEnum;
 import bio.terra.workspace.model.WorkspaceDescription;
 import java.util.Collections;
 import java.util.List;
@@ -156,6 +161,35 @@ public class WorkspaceIntegrationTest {
 
     Assertions.assertEquals(HttpStatus.UNAUTHORIZED, deleteWorkspaceResponse.getStatusCode());
     Assertions.assertTrue(deleteWorkspaceResponse.isErrorObject());
+  }
+
+  @Test
+  @Tag(TAG_NEEDS_CLEANUP)
+  public void createDataReference(TestInfo testInfo) throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
+
+    createDefaultWorkspace(workspaceId);
+
+    String userEmail = testConfig.getServiceAccountEmail();
+    String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId + "/datareferences";
+
+    // TODO: this is the part to figure out.
+    DataRepoSnapshot snapshotReference = new DataRepoSnapshot().snapshot("fakeid").instanceName("fakename");
+    String dataReferenceName = "someRandomName";
+    CreateDataReferenceRequestBody request = new CreateDataReferenceRequestBody().name(dataReferenceName).referenceType(
+        ReferenceTypeEnum.DATA_REPO_SNAPSHOT).reference(testUtils.mapToJson(snapshotReference)).cloningInstructions(
+        CloningInstructionsEnum.NOTHING);
+
+    WorkspaceResponse<DataReferenceDescription> postResponse =
+        workspaceManagerTestClient.post(userEmail, path, testUtils.mapToJson(request), DataReferenceDescription.class);
+
+    Assertions.assertEquals(HttpStatus.OK, postResponse.getStatusCode());
+    Assertions.assertTrue(postResponse.isResponseObject());
+    DataReferenceDescription dataReferenceDescription = postResponse.getResponseObject();
+    Assertions.assertEquals(dataReferenceName, dataReferenceDescription.getName());
+    Assertions.assertEquals(workspaceId, dataReferenceDescription.getWorkspaceId());
+    Assertions.assertEquals(CloningInstructionsEnum.NOTHING, dataReferenceDescription.getCloningInstructions());
   }
 
   private WorkspaceResponse<CreatedWorkspace> createDefaultWorkspace(UUID workspaceId)
