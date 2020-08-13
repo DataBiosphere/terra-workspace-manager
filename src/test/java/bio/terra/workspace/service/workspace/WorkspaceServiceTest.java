@@ -250,7 +250,7 @@ public class WorkspaceServiceTest {
             .name("fake_data_reference")
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-            .reference(objectMapper.writeValueAsString(reference));
+            .reference(reference);
     MvcResult dataReferenceResult =
         mvc.perform(
                 post("/api/workspaces/v1/" + workspaceId + "/datareferences")

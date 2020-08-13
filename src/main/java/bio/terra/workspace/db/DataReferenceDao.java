@@ -6,6 +6,7 @@ import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.generated.model.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataReferenceList;
+import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.generated.model.ResourceDescription;
 import java.sql.ResultSet;
@@ -176,7 +177,7 @@ public class DataReferenceDao {
           .cloningInstructions(
               CloningInstructionsEnum.fromValue(rs.getString("cloning_instructions")))
           .referenceType(ReferenceTypeEnum.fromValue(rs.getString("reference_type")))
-          .reference(rs.getString("reference"));
+          .reference(rs.getObject("reference", DataRepoSnapshot.class));
     }
   }
 

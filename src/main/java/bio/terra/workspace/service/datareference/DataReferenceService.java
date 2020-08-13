@@ -6,6 +6,7 @@ import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataReferenceList;
+import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
@@ -95,7 +96,7 @@ public class DataReferenceService {
             .addParameter(DataReferenceFlightMapKeys.REFERENCE_ID, referenceId)
             .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, workspaceId);
 
-    String ref =
+    DataRepoSnapshot ref =
         validationUtils.validateReference(body.getReferenceType(), body.getReference(), userReq);
     createJob.addParameter(DataReferenceFlightMapKeys.REFERENCE, ref);
 

@@ -5,7 +5,6 @@ import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
@@ -30,8 +29,10 @@ public class DataReferenceValidationUtils {
     }
   }
 
-  public String validateReference(
-      ReferenceTypeEnum referenceType, String reference, AuthenticatedUserRequest userReq) {
+  public DataRepoSnapshot validateReference(
+      ReferenceTypeEnum referenceType,
+      DataRepoSnapshot reference,
+      AuthenticatedUserRequest userReq) {
 
     if (ReferenceTypeEnum.DATA_REPO_SNAPSHOT.equals(referenceType)) {
       validateDataRepoReference(reference, userReq);
@@ -44,19 +45,12 @@ public class DataReferenceValidationUtils {
   }
 
   private DataRepoSnapshot validateDataRepoReference(
-      String reference, AuthenticatedUserRequest userReq) {
-    try {
-      DataRepoSnapshot ref = objectMapper.readValue(reference, DataRepoSnapshot.class);
-      if (!dataRepoService.snapshotExists(ref.getInstanceName(), ref.getSnapshot(), userReq)) {
-        throw new InvalidDataReferenceException(
-            "The given snapshot could not be found in the Data Repo instance provided."
-                + " Verify that your reference was correctly defined and the instance is correct");
-      }
-      return ref;
-    } catch (JsonProcessingException e) {
+      DataRepoSnapshot ref, AuthenticatedUserRequest userReq) {
+    if (!dataRepoService.snapshotExists(ref.getInstanceName(), ref.getSnapshot(), userReq)) {
       throw new InvalidDataReferenceException(
-          "Input could not be parsed as a Data Repo snapshot"
-              + " reference. The only valid fields are instanceName and snapshot.");
+          "The given snapshot could not be found in the Data Repo instance provided."
+              + " Verify that your reference was correctly defined and the instance is correct");
     }
+    return ref;
   }
 }
