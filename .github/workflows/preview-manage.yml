@@ -14,19 +14,25 @@ jobs:
     steps:
     - name: Get short SHA
       id: slug
-      run: echo ::set-output name=sha7::$(echo ${{ github.event.issue.pull_request.head.sha }} | cut -c1-7)
+      run: |
+        sha7=$(curl \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.issue.number }} \
+          -u "broadbot:${{ secrets.GITHUB_TOKEN }}" | jq -r '.head.sha' | cut -c1-7)
+        echo "Short SHA: $sha7"
+        echo ::set-output name=sha7::$sha7
     - name: Construct default version JSON
       id: versions-default
-      run: echo ::set-output name=versions::{\"releases\":{\"${HELM_CHART_NAME}\":{\"appVersion\":\"pr${{ github.event.issue.pull_request.number }}-${{ steps.slug.outputs.sha7 }}\"}}}
+      run: echo ::set-output name=versions::{\"releases\":{\"${HELM_CHART_NAME}\":{\"appVersion\":\"pr${{ github.event.issue.number }}-${{ steps.slug.outputs.sha7 }}\"}}}
     - name: Construct version override JSON
       id: versions-override
       run: |
         comment='${{ github.event.comment.body }}'
-        override=${comment#'preview-create'}
-        if [[ $override == '' ]]; then override={}
+        override=${comment#'preview-create'}'{}
+        if [[ $override == '' ]]; then override='; fi
         echo ::set-output name=versions::$override
     - name: Construct merged version JSON
-      id: version-merge
+      id: versions-merge
       run: |
         echo '${{ steps.versions-default.outputs.versions }}' > default.json
         echo '${{ steps.versions-override.outputs.versions }}' > override.json
@@ -54,7 +60,7 @@ jobs:
         PREVIEW_CMD: create
         TERRA_HELMFILE_BRANCH: gm-preview
         ENV_PREFIX: wsm
-        VERSIONS: ${{ steps.versions-merge.outputs.versions }}
+        VERSIONS: '${{ steps.versions-merge.outputs.versions }}'
 
   preview-delete:
     name: Delete Preview Environment
