@@ -40,7 +40,7 @@ jobs:
         echo '${{ steps.versions-override.outputs.versions }}' > override.json
         merge=$(jq -sc '.[0] * .[1]' default.json override.json)
         echo "merge: $merge"
-        merge_b64=$(echo $merge | base64)
+        merge_b64=$(echo $merge | base64 -w)
         echo ::set-output name=versions::$merge_b64
     - name: Get Vault token
       id: vault-token-step
@@ -63,7 +63,7 @@ jobs:
         PREVIEW_CMD: create
         TERRA_HELMFILE_BRANCH: gm-preview
         ENV_ID: wsm${{ github.event.issue.number }}
-        VERSIONS_B64: ${{ steps.versions-merge.outputs.versions }}
+        VERSIONS_B64: '${{ steps.versions-merge.outputs.versions }}'
 
   preview-delete:
     name: Delete Preview Environment
