@@ -31,6 +31,7 @@ jobs:
         comment='${{ github.event.comment.body }}'
         override=${comment#'preview-create'}
         if [[ $override == '' ]]; then override='{}'; fi
+        echo "override: $override"
         echo ::set-output name=versions::$override
     - name: Construct merged version JSON
       id: versions-merge
@@ -39,7 +40,8 @@ jobs:
         echo '${{ steps.versions-override.outputs.versions }}' > override.json
         merge=$(jq -sc '.[0] * .[1]' default.json override.json)
         echo "merge: $merge"
-        echo ::set-output name=versions::$merge
+        merge_b64=$(echo $merge | base64 -w 0)
+        echo ::set-output name=versions::$merge_b64
     - name: Get Vault token
       id: vault-token-step
       run: |
@@ -60,8 +62,8 @@ jobs:
         VAULT_SA_PATH: ${{ secrets.CI_SA_VAULT_PATH }}
         PREVIEW_CMD: create
         TERRA_HELMFILE_BRANCH: gm-preview
-        ENV_PREFIX: wsm
-        VERSIONS: '${{ steps.versions-merge.outputs.versions }}'
+        ENV_ID: wsm${{ github.event.issue.number }}
+        VERSIONS_B64: '${{ steps.versions-merge.outputs.versions }}'
 
   preview-delete:
     name: Delete Preview Environment
@@ -80,11 +82,11 @@ jobs:
         echo ::set-output name=vault-token::$VAULT_TOKEN
         echo ::add-mask::$VAULT_TOKEN
     - name: Delete
-      uses: databiosphere/github-actions/actions/preview@master
+      uses: databiosphere/github-actions/actions/preview@gm-preview
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}
         VAULT_SA_PATH: ${{ secrets.CI_SA_VAULT_PATH }}
         PREVIEW_CMD: delete
         TERRA_HELMFILE_BRANCH: gm-preview
-        ENV_PREFIX: wsm
+        ENV_ID: wsm${{ github.event.issue.number }}
