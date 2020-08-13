@@ -40,7 +40,7 @@ jobs:
         echo '${{ steps.versions-override.outputs.versions }}' > override.json
         merge=$(jq -sc '.[0] * .[1]' default.json override.json)
         echo "merge: $merge"
-        merge_b64=$(echo $merge | base64 -w)
+        merge_b64=$(echo $merge | base64 -w 0)
         echo ::set-output name=versions::$merge_b64
     - name: Get Vault token
       id: vault-token-step
