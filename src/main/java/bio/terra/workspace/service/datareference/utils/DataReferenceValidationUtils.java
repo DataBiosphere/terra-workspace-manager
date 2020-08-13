@@ -1,11 +1,12 @@
 package bio.terra.workspace.service.datareference.utils;
 
+import static bio.terra.workspace.generated.model.ReferenceTypeEnum.DATA_REPO_SNAPSHOT;
+
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -13,12 +14,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class DataReferenceValidationUtils {
 
-  private ObjectMapper objectMapper;
   private DataRepoService dataRepoService;
   final Pattern nameValidationPattern = Pattern.compile("^[a-zA-Z0-9][_a-zA-Z0-9]{0,62}$");
 
-  public DataReferenceValidationUtils(ObjectMapper objectMapper, DataRepoService dataRepoService) {
-    this.objectMapper = objectMapper;
+  public DataReferenceValidationUtils(DataRepoService dataRepoService) {
     this.dataRepoService = dataRepoService;
   }
 
@@ -34,19 +33,19 @@ public class DataReferenceValidationUtils {
       DataRepoSnapshot reference,
       AuthenticatedUserRequest userReq) {
 
-    if (ReferenceTypeEnum.DATA_REPO_SNAPSHOT.equals(referenceType)) {
-      validateDataRepoReference(reference, userReq);
-      return reference;
-    } else {
-      throw new InvalidDataReferenceException(
-          "Invalid reference type specified. Valid types include: "
-              + ReferenceTypeEnum.DATA_REPO_SNAPSHOT.toString());
+    switch (referenceType) {
+      case DATA_REPO_SNAPSHOT:
+        validateDataRepoReference(reference, userReq);
+        return reference;
+      default:
+        throw new InvalidDataReferenceException(
+            "Invalid reference type specified. Valid types include: "
+                + DATA_REPO_SNAPSHOT.toString());
     }
   }
 
-  private DataRepoSnapshot validateDataRepoReference(
-      DataRepoSnapshot ref, AuthenticatedUserRequest userReq) {
-    if (ref.getInstanceName() == null || ref.getSnapshot() == null) {
+  private void validateDataRepoReference(DataRepoSnapshot ref, AuthenticatedUserRequest userReq) {
+    if (StringUtils.isEmpty(ref.getInstanceName()) || StringUtils.isEmpty(ref.getSnapshot())) {
       throw new InvalidDataReferenceException(
           "Invalid Data Repo Snapshot identifier: "
               + "instanceName and snapshot must both be provided.");
@@ -56,6 +55,5 @@ public class DataReferenceValidationUtils {
           "The given snapshot could not be found in the Data Repo instance provided."
               + " Verify that your reference was correctly defined and the instance is correct");
     }
-    return ref;
   }
 }
