@@ -1,0 +1,83 @@
+name: Manage Preview Environment
+
+on:
+  issue_comment:
+    types: [created]
+env:
+  ENV_PREFIX: wsm
+  HELM_CHART_NAME: workspacemanager
+jobs:
+  preview-create:
+    name: Create Preview Environment
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.comment.body, 'preview-create')
+    steps:
+    - name: Get short SHA
+      id: slug
+      run: echo ::set-output name=sha7::$(echo ${{ github.event.issue.pull_request.head.sha }} | cut -c1-7)
+    - name: Construct default version JSON
+      id: versions-default
+      run: echo ::set-output name=versions::{\"releases\":{\"${HELM_CHART_NAME}\":{\"appVersion\":\"pr${{ github.event.issue.pull_request.number }}-${{ steps.slug.outputs.sha7 }}\"}}}
+    - name: Construct version override JSON
+      id: versions-override
+      run: |
+        comment='${{ github.event.comment.body }}'
+        override=${comment#'preview-create'}
+        if [[ $override == '' ]]; then override={}
+        echo ::set-output name=versions::$override
+    - name: Construct merged version JSON
+      id: version-merge
+      run: |
+        echo '${{ steps.versions-default.outputs.versions }}' > default.json
+        echo '${{ steps.versions-override.outputs.versions }}' > override.json
+        merge=$(jq -sc '.[0] * .[1]' default.json override.json)
+        echo "merge: $merge"
+        echo ::set-output name=versions::$merge
+    - name: Get Vault token
+      id: vault-token-step
+      run: |
+        VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
+          -e "VAULT_ADDR=${VAULT_ADDR}" \
+          vault:1.1.0 \
+          vault write -field token \
+            auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+            secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+        echo ::set-output name=vault-token::$VAULT_TOKEN
+        echo ::add-mask::$VAULT_TOKEN
+    - name: Create
+      id: create
+      uses: databiosphere/github-actions/actions/preview@gm-preview
+      env:
+        GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+        VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}
+        VAULT_SA_PATH: ${{ secrets.CI_SA_VAULT_PATH }}
+        PREVIEW_CMD: create
+        TERRA_HELMFILE_BRANCH: gm-preview
+        ENV_PREFIX: wsm
+        VERSIONS: ${{ steps.versions-merge.outputs.versions }}
+
+  preview-delete:
+    name: Delete Preview Environment
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.comment.body, 'preview-delete')
+    steps:
+    - name: Get Vault token
+      id: vault-token-step
+      run: |
+        VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
+          -e "VAULT_ADDR=${VAULT_ADDR}" \
+          vault:1.1.0 \
+          vault write -field token \
+            auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+            secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+        echo ::set-output name=vault-token::$VAULT_TOKEN
+        echo ::add-mask::$VAULT_TOKEN
+    - name: Delete
+      uses: databiosphere/github-actions/actions/preview@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+        VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}
+        VAULT_SA_PATH: ${{ secrets.CI_SA_VAULT_PATH }}
+        PREVIEW_CMD: delete
+        TERRA_HELMFILE_BRANCH: gm-preview
+        ENV_PREFIX: wsm
