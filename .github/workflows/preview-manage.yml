@@ -65,7 +65,7 @@ jobs:
         ENV_ID: wsm${{ github.event.issue.number }}
         VERSIONS_B64: '${{ steps.versions-merge.outputs.versions }}'
     - name: Get output
-      run: echo '{{ steps.create.outputs.output }}'
+      run: echo '${{ steps.create.outputs.output }}'
 
   preview-delete:
     name: Delete Preview Environment
@@ -94,4 +94,4 @@ jobs:
         TERRA_HELMFILE_BRANCH: gm-preview
         ENV_ID: wsm${{ github.event.issue.number }}
     - name: Get output
-      run: echo '{{ steps.delete.outputs.output }}'
+      run: echo '${{ steps.delete.outputs.output }}'
