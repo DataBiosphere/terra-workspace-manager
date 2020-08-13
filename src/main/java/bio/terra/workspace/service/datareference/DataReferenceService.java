@@ -52,6 +52,7 @@ public class DataReferenceService {
       String name,
       AuthenticatedUserRequest userReq) {
 
+    validationUtils.validateReferenceName(name);
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
 
     return dataReferenceDao.getDataReferenceByName(workspaceId, referenceType, name);
@@ -76,6 +77,7 @@ public class DataReferenceService {
           "Resource-specific credentials are not supported yet.");
     }
 
+    validationUtils.validateReferenceName(body.getName());
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
 
     UUID referenceId = UUID.randomUUID();

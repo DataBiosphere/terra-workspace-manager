@@ -98,6 +98,56 @@ public class DataReferenceServiceTest {
   }
 
   @Test
+  public void testCreateInvalidDataReferenceNameFails() throws Exception {
+    DataRepoSnapshot snapshot = new DataRepoSnapshot();
+    snapshot.setSnapshot("foo");
+    snapshot.setInstanceName("bar");
+
+    CreateDataReferenceRequestBody refBody =
+        new CreateDataReferenceRequestBody()
+            .name("!!!!!!!!INVALID NAME!!!!!!!!1")
+            .cloningInstructions(CloningInstructionsEnum.NOTHING)
+            .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
+            .reference(objectMapper.writeValueAsString(snapshot));
+
+    MvcResult failureResult =
+        mvc.perform(
+                post("/api/workspaces/v1/" + workspaceId.toString() + "/datareferences")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(refBody)))
+            .andExpect(status().is(400))
+            .andReturn();
+    ErrorReport error =
+        objectMapper.readValue(failureResult.getResponse().getContentAsString(), ErrorReport.class);
+    assertThat(error.getStatusCode(), equalTo(HttpStatus.BAD_REQUEST.value()));
+  }
+
+  @Test
+  public void testCreateDataReferenceNameTooLongFails() throws Exception {
+    DataRepoSnapshot snapshot = new DataRepoSnapshot();
+    snapshot.setSnapshot("foo");
+    snapshot.setInstanceName("bar");
+
+    CreateDataReferenceRequestBody refBody =
+        new CreateDataReferenceRequestBody()
+            .name("1".repeat(100))
+            .cloningInstructions(CloningInstructionsEnum.NOTHING)
+            .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
+            .reference(objectMapper.writeValueAsString(snapshot));
+
+    MvcResult failureResult =
+        mvc.perform(
+                post("/api/workspaces/v1/" + workspaceId.toString() + "/datareferences")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(refBody)))
+            .andExpect(status().is(400))
+            .andReturn();
+    ErrorReport error =
+        objectMapper.readValue(failureResult.getResponse().getContentAsString(), ErrorReport.class);
+    assertThat(error.getStatusCode(), equalTo(HttpStatus.BAD_REQUEST.value()));
+  }
+
+  @Test
   public void testGetDataReference() throws Exception {
     UUID initialWorkspaceId = createDefaultWorkspace().getId();
 
