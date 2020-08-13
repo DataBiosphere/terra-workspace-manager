@@ -45,7 +45,7 @@ public class DataReferenceValidationUtils {
   }
 
   private void validateDataRepoReference(DataRepoSnapshot ref, AuthenticatedUserRequest userReq) {
-    if (StringUtils.isEmpty(ref.getInstanceName()) || StringUtils.isEmpty(ref.getSnapshot())) {
+    if (StringUtils.isBlank(ref.getInstanceName()) || StringUtils.isBlank(ref.getSnapshot())) {
       throw new InvalidDataReferenceException(
           "Invalid Data Repo Snapshot identifier: "
               + "instanceName and snapshot must both be provided.");
