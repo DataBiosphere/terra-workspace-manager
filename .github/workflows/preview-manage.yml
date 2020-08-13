@@ -6,6 +6,7 @@ on:
 env:
   ENV_PREFIX: wsm
   HELM_CHART_NAME: workspacemanager
+  VAULT_ADDR: https://clotho.broadinstitute.org:8200
 jobs:
   preview-create:
     name: Create Preview Environment
@@ -28,8 +29,8 @@ jobs:
       id: versions-override
       run: |
         comment='${{ github.event.comment.body }}'
-        override=${comment#'preview-create'}'{}
-        if [[ $override == '' ]]; then override='; fi
+        override=${comment#'preview-create'}
+        if [[ $override == '' ]]; then override='{}'; fi
         echo ::set-output name=versions::$override
     - name: Construct merged version JSON
       id: versions-merge
