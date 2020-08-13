@@ -278,8 +278,8 @@ public class DataReferenceServiceTest {
         runCreateDataReferenceCall(initialWorkspaceId, refBody);
 
     DataRepoSnapshot secondSnapshot = new DataRepoSnapshot();
-    snapshot.setSnapshot("foo2");
-    snapshot.setInstanceName("bar2");
+    secondSnapshot.setSnapshot("foo2");
+    secondSnapshot.setInstanceName("bar2");
     CreateDataReferenceRequestBody secondRefBody =
         new CreateDataReferenceRequestBody()
             .name("second_name")

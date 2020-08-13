@@ -9,6 +9,9 @@ import bio.terra.workspace.generated.model.DataReferenceList;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.generated.model.ResourceDescription;
+import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -30,10 +33,13 @@ import org.springframework.stereotype.Component;
 public class DataReferenceDao {
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
+  private ObjectMapper objectMapper;
 
   @Autowired
-  public DataReferenceDao(WorkspaceManagerJdbcConfiguration jdbcConfiguration) {
+  public DataReferenceDao(
+      WorkspaceManagerJdbcConfiguration jdbcConfiguration, ObjectMapper objectMapper) {
     this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
+    this.objectMapper = objectMapper;
   }
 
   public String createDataReference(
@@ -44,7 +50,7 @@ public class DataReferenceDao {
       String credentialId,
       CloningInstructionsEnum cloningInstructions,
       ReferenceTypeEnum referenceType,
-      String reference) {
+      DataRepoSnapshot reference) {
     String sql =
         "INSERT INTO workspace_data_reference (workspace_id, reference_id, name, resource_id, credential_id, cloning_instructions, reference_type, reference) VALUES "
             + "(:workspace_id, :reference_id, :name, :resource_id, :credential_id, :cloning_instructions, :reference_type, cast(:reference AS json))";
@@ -57,7 +63,13 @@ public class DataReferenceDao {
     paramMap.put("credential_id", credentialId);
     paramMap.put("resource_id", resourceId == null ? null : resourceId.toString());
     paramMap.put("reference_type", referenceType == null ? null : referenceType.toString());
-    paramMap.put("reference", reference);
+    try {
+      paramMap.put("reference", objectMapper.writeValueAsString(reference));
+    } catch (JsonProcessingException e) {
+      // TODO: add logger and print out the reference
+      throw new InvalidDataReferenceException(
+          "Couldn't convert reference to JSON. This... shouldn't happen.");
+    }
 
     try {
       jdbcTemplate.update(sql, paramMap);
@@ -165,19 +177,25 @@ public class DataReferenceDao {
     }
   }
 
-  private static class DataReferenceMapper implements RowMapper<DataReferenceDescription> {
+  private class DataReferenceMapper implements RowMapper<DataReferenceDescription> {
     public DataReferenceDescription mapRow(ResultSet rs, int rowNum) throws SQLException {
       ResourceDescriptionMapper resourceDescriptionMapper = new ResourceDescriptionMapper();
-      return new DataReferenceDescription()
-          .workspaceId(UUID.fromString(rs.getString("workspace_id")))
-          .referenceId(maybeParseUUID(rs.getString("reference_id")))
-          .name(rs.getString("name"))
-          .resourceDescription(resourceDescriptionMapper.mapRow(rs, rowNum))
-          .credentialId(rs.getString("credential_id"))
-          .cloningInstructions(
-              CloningInstructionsEnum.fromValue(rs.getString("cloning_instructions")))
-          .referenceType(ReferenceTypeEnum.fromValue(rs.getString("reference_type")))
-          .reference(rs.getObject("reference", DataRepoSnapshot.class));
+      try {
+        return new DataReferenceDescription()
+            .workspaceId(UUID.fromString(rs.getString("workspace_id")))
+            .referenceId(maybeParseUUID(rs.getString("reference_id")))
+            .name(rs.getString("name"))
+            .resourceDescription(resourceDescriptionMapper.mapRow(rs, rowNum))
+            .credentialId(rs.getString("credential_id"))
+            .cloningInstructions(
+                CloningInstructionsEnum.fromValue(rs.getString("cloning_instructions")))
+            .referenceType(ReferenceTypeEnum.fromValue(rs.getString("reference_type")))
+            .reference(objectMapper.readValue(rs.getString("reference"), DataRepoSnapshot.class));
+      } catch (JsonProcessingException e) {
+        // TODO: add logger and print out the json
+        throw new InvalidDataReferenceException(
+            "Couldn't convert JSON to reference. This... shouldn't happen.");
+      }
     }
   }
 

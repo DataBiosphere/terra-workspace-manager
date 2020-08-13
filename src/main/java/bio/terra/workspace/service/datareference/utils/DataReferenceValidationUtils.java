@@ -46,6 +46,11 @@ public class DataReferenceValidationUtils {
 
   private DataRepoSnapshot validateDataRepoReference(
       DataRepoSnapshot ref, AuthenticatedUserRequest userReq) {
+    if (ref.getInstanceName() == null || ref.getSnapshot() == null) {
+      throw new InvalidDataReferenceException(
+          "Invalid Data Repo Snapshot identifier: "
+              + "instanceName and snapshot must both be provided.");
+    }
     if (!dataRepoService.snapshotExists(ref.getInstanceName(), ref.getSnapshot(), userReq)) {
       throw new InvalidDataReferenceException(
           "The given snapshot could not be found in the Data Repo instance provided."
