@@ -4,7 +4,9 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.app.Main;
 import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
@@ -27,7 +29,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -38,13 +39,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @AutoConfigureMockMvc
 public class DataReferenceDaoTest {
 
-  @Autowired WorkspaceManagerJdbcConfiguration jdbcConfiguration;
+  @Autowired private WorkspaceManagerJdbcConfiguration jdbcConfiguration;
 
-  private NamedParameterJdbcTemplate jdbcTemplate;
-
-  @Autowired DataReferenceDao dataReferenceDao;
-  @Autowired WorkspaceDao workspaceDao;
-  @Autowired ObjectMapper objectMapper;
+  @Autowired private DataReferenceDao dataReferenceDao;
+  @Autowired private WorkspaceDao workspaceDao;
+  @Autowired private ObjectMapper objectMapper;
 
   private UUID workspaceId;
   private UUID referenceId;
@@ -71,7 +70,6 @@ public class DataReferenceDaoTest {
         null; // eventually we will more thoroughly support controlled resources, so this won't
     // always be null
     cloningInstructions = CloningInstructionsEnum.NOTHING;
-    jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
   }
 
   @Test

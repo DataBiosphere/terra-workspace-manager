@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class DataReferenceValidationUtils {
 
   private DataRepoService dataRepoService;
-  final Pattern nameValidationPattern = Pattern.compile("^[a-zA-Z0-9][_a-zA-Z0-9]{0,62}$");
+  private final Pattern nameValidationPattern = Pattern.compile("^[a-zA-Z0-9][_a-zA-Z0-9]{0,62}$");
 
   public DataReferenceValidationUtils(DataRepoService dataRepoService) {
     this.dataRepoService = dataRepoService;

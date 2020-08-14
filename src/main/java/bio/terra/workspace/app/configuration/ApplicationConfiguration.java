@@ -6,8 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
-import org.apache.commons.dbcp2.PoolableConnection;
-import org.apache.commons.dbcp2.PoolingDataSource;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -25,9 +23,6 @@ public class ApplicationConfiguration {
   private int maxStairwayThreads;
   private int stairwayTimeoutSeconds;
   private String resourceId;
-
-  // Not a property
-  private PoolingDataSource<PoolableConnection> dataSource;
 
   public int getStairwayTimeoutSeconds() {
     return stairwayTimeoutSeconds;
