@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.broadinstitute.dsde.workbench.client.sam.model.ResourceAndAccessPolicy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -62,11 +61,9 @@ public class JobServiceTest {
 
     List<String> jobIds = new ArrayList<>();
     try {
-      List<ResourceAndAccessPolicy> allowedIds = new ArrayList<>();
       for (int i = 0; i < 7; i++) {
         String jobId = runFlight(makeDescription(i));
         jobIds.add(jobId);
-        allowedIds.add(new ResourceAndAccessPolicy().resourceId(jobId));
       }
 
       // Test single retrieval
@@ -76,16 +73,16 @@ public class JobServiceTest {
       testResultRetrieval(jobIds);
 
       // Retrieve everything
-      testEnumRange(jobIds, 0, 100, allowedIds);
+      testEnumRange(jobIds, 0, 100);
 
       // Retrieve the middle 3; offset means skip 2 rows
-      testEnumRange(jobIds, 2, 3, allowedIds);
+      testEnumRange(jobIds, 2, 3);
 
       // Retrieve from the end; should only get the last one back
-      testEnumCount(1, 6, 3, allowedIds);
+      testEnumCount(1, 6, 3);
 
       // Retrieve past the end; should get nothing
-      testEnumCount(0, 22, 3, allowedIds);
+      testEnumCount(0, 22, 3);
     } finally {
       for (String jobId : jobIds) {
         jobService.releaseJob(jobId, testUser);
@@ -108,8 +105,7 @@ public class JobServiceTest {
   }
 
   // Get some range and compare it with the fids
-  private void testEnumRange(
-      List<String> fids, int offset, int limit, List<ResourceAndAccessPolicy> resourceIds) {
+  private void testEnumRange(List<String> fids, int offset, int limit) {
     List<JobModel> jobList = jobService.enumerateJobs(offset, limit, testUser);
     assertThat(jobList, notNullValue());
     int index = offset;
@@ -120,8 +116,7 @@ public class JobServiceTest {
   }
 
   // Get some range and make sure we got the number we expected
-  private void testEnumCount(
-      int count, int offset, int length, List<ResourceAndAccessPolicy> resourceIds) {
+  private void testEnumCount(int count, int offset, int length) {
     List<JobModel> jobList = jobService.enumerateJobs(offset, length, testUser);
     assertThat(jobList, notNullValue());
     assertThat(jobList.size(), equalTo(count));

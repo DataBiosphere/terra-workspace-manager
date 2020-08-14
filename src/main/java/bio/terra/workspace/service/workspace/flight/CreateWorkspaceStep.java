@@ -49,7 +49,7 @@ public class CreateWorkspaceStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) {
     FlightMap workingMap = flightContext.getWorkingMap();
-    if (workingMap.get(CREATE_WORKSPACE_COMPLETED_KEY, Boolean.class) == true) {
+    if (workingMap.get(CREATE_WORKSPACE_COMPLETED_KEY, Boolean.class)) {
       FlightMap inputMap = flightContext.getInputParameters();
       UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
       workspaceDao.deleteWorkspace(workspaceId);

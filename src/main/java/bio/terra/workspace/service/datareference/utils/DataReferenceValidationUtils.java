@@ -16,7 +16,7 @@ public class DataReferenceValidationUtils {
 
   private ObjectMapper objectMapper;
   private DataRepoService dataRepoService;
-  final Pattern nameValidationPattern = Pattern.compile("^[a-zA-Z0-9][_a-zA-Z0-9]{0,62}$");
+  private final Pattern nameValidationPattern = Pattern.compile("^[a-zA-Z0-9][_a-zA-Z0-9]{0,62}$");
 
   public DataReferenceValidationUtils(ObjectMapper objectMapper, DataRepoService dataRepoService) {
     this.objectMapper = objectMapper;

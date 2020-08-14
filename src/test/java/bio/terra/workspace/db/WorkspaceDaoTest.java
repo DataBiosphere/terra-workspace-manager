@@ -33,11 +33,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @AutoConfigureMockMvc
 public class WorkspaceDaoTest {
 
-  @Autowired WorkspaceManagerJdbcConfiguration jdbcConfiguration;
+  @Autowired private WorkspaceManagerJdbcConfiguration jdbcConfiguration;
 
   private NamedParameterJdbcTemplate jdbcTemplate;
 
-  @Autowired WorkspaceDao workspaceDao;
+  @Autowired private WorkspaceDao workspaceDao;
 
   private UUID workspaceId;
   private UUID spendProfileId;
