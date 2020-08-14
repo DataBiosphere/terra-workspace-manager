@@ -159,20 +159,7 @@ public class JobService {
     throw new InternalStairwayException("Flight did not complete in the allowed wait time");
   }
 
-  // private ScheduledFuture<FlightState> waitForFlight(String flightId, int pollSeconds, int
-  // pollCycles)
-  //   //     throws DatabaseOperationException, FlightException, InterruptedException {
-  //   //   for (int pollCount = 0; pollCount < pollCycles; ++pollCount) {
-  //   //     TimeUnit.SECONDS.sleep(pollSeconds);
-  //   //
-  //   //     if (!state.isActive()) {
-  //   //       return state;
-  //   //     }
-  //   //   }
-  //   //   throw new FlightException("Flight did not complete in the allowed wait time");
-  //   // }
   private class PollFlightTask implements Callable<FlightState> {
-
     private Stairway stairway;
     private String flightId;
 
