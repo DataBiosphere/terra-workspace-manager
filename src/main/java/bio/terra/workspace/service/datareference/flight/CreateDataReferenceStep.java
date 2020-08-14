@@ -53,7 +53,7 @@ public class CreateDataReferenceStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) {
     FlightMap workingMap = flightContext.getWorkingMap();
-    if (workingMap.get(CREATE_DATA_REFERENCE_COMPLETED_KEY, Boolean.class) == true) {
+    if (workingMap.get(CREATE_DATA_REFERENCE_COMPLETED_KEY, Boolean.class)) {
       FlightMap inputMap = flightContext.getInputParameters();
       UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
       dataReferenceDao.deleteDataReference(workspaceId);

@@ -21,10 +21,12 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
   }
 
   @Override
-  public String serialize(Exception exception) {
-    if (exception == null) {
+  public String serialize(Exception rawException) {
+    if (rawException == null) {
       return StringUtils.EMPTY;
     }
+
+    Exception exception = rawException;
 
     // Wrap non-runtime exceptions so they can be rethrown later
     if (!(exception instanceof RuntimeException)) {

@@ -2,13 +2,13 @@ plugins {
 	id "idea"
 	id "java"
 
-	id "com.diffplug.spotless" version "5.1.0"
+	id "com.diffplug.spotless" version "5.1.1"
 	id "com.github.ben-manes.versions" version "0.29.0"
-	id "com.google.cloud.tools.jib" version "2.4.0"
+	id "com.google.cloud.tools.jib" version "2.5.0"
 	id "com.palantir.git-version" version "0.12.3"
-	id "io.spring.dependency-management" version "1.0.9.RELEASE"
+	id "io.spring.dependency-management" version "1.0.10.RELEASE"
 	id "org.hidetake.swagger.generator" version "2.18.2"
-	id "org.springframework.boot" version "2.3.2.RELEASE"
+	id "org.springframework.boot" version "2.3.3.RELEASE"
 }
 
 sourceCompatibility = JavaVersion.VERSION_11
@@ -62,7 +62,7 @@ dependencies {
 	// Versioned direct deps
 	implementation group: "org.hashids", name: "hashids", version: "1.0.3"
 	implementation group: "org.liquibase", name: "liquibase-core", version: "4.0.0"
-	implementation group: "org.springframework.cloud", name: "spring-cloud-gcp-starter-trace", version: "1.2.3.RELEASE"
+	implementation group: "org.springframework.cloud", name: "spring-cloud-gcp-starter-trace", version: "1.2.4.RELEASE"
 	implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
 	runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.2.14"
 
@@ -76,7 +76,7 @@ dependencies {
 
 	// Swagger deps
 	implementation group: "io.swagger.core.v3", name: "swagger-annotations"
-	runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.30.2"
+	runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.31.1"
 	swaggerCodegen group: "io.swagger.codegen.v3", name: "swagger-codegen-cli"
 
 	// Test deps
