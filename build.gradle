@@ -30,7 +30,7 @@ allprojects {
 		}
 		dependencies {
 			dependency group: "io.swagger.core.v3", name: "swagger-annotations", version: "2.1.4"
-			dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.20"
+			dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.21"
 		}
 	}
 
