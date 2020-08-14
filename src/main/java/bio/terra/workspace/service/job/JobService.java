@@ -8,7 +8,6 @@ import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Stairway;
 import bio.terra.stairway.exception.DatabaseOperationException;
-import bio.terra.stairway.exception.FlightException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.stairway.exception.StairwayExecutionException;
@@ -28,8 +27,11 @@ import bio.terra.workspace.service.job.exception.JobUnauthorizedException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -47,6 +49,7 @@ public class JobService {
   private final SamService samService;
   private final ApplicationConfiguration appConfig;
   private final StairwayJdbcConfiguration stairwayJdbcConfiguration;
+  private final ScheduledExecutorService executor;
 
   @Autowired
   public JobService(
@@ -58,9 +61,7 @@ public class JobService {
     this.samService = samService;
     this.appConfig = appConfig;
     this.stairwayJdbcConfiguration = stairwayJdbcConfiguration;
-
-    ExecutorService executorService =
-        Executors.newFixedThreadPool(appConfig.getMaxStairwayThreads());
+    this.executor = Executors.newScheduledThreadPool(appConfig.getMaxStairwayThreads());
     StairwayExceptionSerializer serializer = new StairwayExceptionSerializer(objectMapper);
     Stairway.Builder builder =
         Stairway.newBuilder()
@@ -136,25 +137,59 @@ public class JobService {
 
   void waitForJob(String jobId) {
     try {
-      waitForFlight(
-          jobId,
-          appConfig.getStairwayPollingIntervalSeconds(),
-          appConfig.getStairwayTimeoutSeconds() / appConfig.getStairwayPollingIntervalSeconds());
-    } catch (StairwayException | InterruptedException stairwayEx) {
+      int pollSeconds = appConfig.getStairwayPollingIntervalSeconds();
+      int pollCycles =
+          appConfig.getStairwayTimeoutSeconds() / appConfig.getStairwayPollingIntervalSeconds();
+      for (int i = 0; i < pollCycles; i++) {
+        ScheduledFuture<FlightState> futureState =
+            executor.schedule(new PollFlightTask(stairway, jobId), pollSeconds, TimeUnit.SECONDS);
+        FlightState state = futureState.get();
+        if (state != null) {
+          // Indicates job has completed, though not necessarily successfully.
+          return;
+        } else {
+          // Indicates job has not completed yet, continue polling
+          continue;
+        }
+      }
+    } catch (InterruptedException | ExecutionException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
+    // Indicates we timed out waiting for completion, throw exception
+    throw new InternalStairwayException("Flight did not complete in the allowed wait time");
   }
 
-  private FlightState waitForFlight(String flightId, int pollSeconds, int pollCycles)
-      throws DatabaseOperationException, FlightException, InterruptedException {
-    for (int pollCount = 0; pollCount < pollCycles; ++pollCount) {
-      TimeUnit.SECONDS.sleep(pollSeconds);
+  // private ScheduledFuture<FlightState> waitForFlight(String flightId, int pollSeconds, int
+  // pollCycles)
+  //   //     throws DatabaseOperationException, FlightException, InterruptedException {
+  //   //   for (int pollCount = 0; pollCount < pollCycles; ++pollCount) {
+  //   //     TimeUnit.SECONDS.sleep(pollSeconds);
+  //   //
+  //   //     if (!state.isActive()) {
+  //   //       return state;
+  //   //     }
+  //   //   }
+  //   //   throw new FlightException("Flight did not complete in the allowed wait time");
+  //   // }
+  private class PollFlightTask implements Callable<FlightState> {
+
+    private Stairway stairway;
+    private String flightId;
+
+    public PollFlightTask(Stairway stairway, String flightId) {
+      this.stairway = stairway;
+      this.flightId = flightId;
+    }
+
+    @Override
+    public FlightState call() throws Exception {
       FlightState state = stairway.getFlightState(flightId);
       if (!state.isActive()) {
         return state;
+      } else {
+        return null;
       }
     }
-    throw new FlightException("Flight did not complete in the allowed wait time");
   }
 
   /**
