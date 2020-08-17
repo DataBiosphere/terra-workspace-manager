@@ -169,9 +169,12 @@ public class WorkspaceIntegrationTest {
     // This test relies on a persistent snapshot existing in Data Repo, currently in dev.
     // This snapshot was created using our dev service account, which is a steward in dev Data Repo.
     // First, I created a dataset "wm_integration_test_dataset" using TDR's
-    // snapshot-test-dataset.json. Then, I created the snapshot "workspace_integration_test_snapshot"
-    // using the "byFullView" mode. Finally, I added the integration test user as a reader of this snapshot.
-    // These steps should only need to be repeated if the dev DataRepo data is deleted, or to support
+    // snapshot-test-dataset.json. Then, I created the snapshot
+    // "workspace_integration_test_snapshot"
+    // using the "byFullView" mode. Finally, I added the integration test user as a reader of this
+    // snapshot.
+    // These steps should only need to be repeated if the dev DataRepo data is deleted, or to
+    // support
     // this test in other DataRepo environments.
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
@@ -183,7 +186,7 @@ public class WorkspaceIntegrationTest {
 
     DataRepoSnapshot snapshotReference =
         new DataRepoSnapshot()
-            .snapshot("97b5559a-2f8f-4df3-89ae-5a249173ee0c")
+            .snapshot(testConfig.getDataRepoSnapshotIdFromEnv())
             .instanceName(testConfig.getDataRepoInstanceNameFromEnv());
     String dataReferenceName = "workspace_integration_test_snapshot";
     CreateDataReferenceRequestBody request =
