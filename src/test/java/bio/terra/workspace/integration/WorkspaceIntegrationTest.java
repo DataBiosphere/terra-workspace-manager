@@ -184,7 +184,7 @@ public class WorkspaceIntegrationTest {
     DataRepoSnapshot snapshotReference =
         new DataRepoSnapshot()
             .snapshot("97b5559a-2f8f-4df3-89ae-5a249173ee0c")
-            .instanceName("terra-dev");
+            .instanceName(testConfig.getDataRepoInstanceNameFromEnv());
     String dataReferenceName = "workspace_integration_test_snapshot";
     CreateDataReferenceRequestBody request =
         new CreateDataReferenceRequestBody()

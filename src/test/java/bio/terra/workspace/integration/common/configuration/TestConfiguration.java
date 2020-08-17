@@ -16,6 +16,7 @@ public class TestConfiguration {
 
   private HashMap<String, String> wsmUrls;
   private HashMap<String, String> wsmEndpoints;
+  private HashMap<String, String> dataRepoInstanceNames;
   private String serviceAccountEmail;
   private String serviceAccountFilePath;
 
@@ -45,5 +46,9 @@ public class TestConfiguration {
 
   public void setServiceAccountFilePath(String serviceAccountFilePath) {
     this.serviceAccountFilePath = serviceAccountFilePath;
+  }
+
+  public String getDataRepoInstanceNameFromEnv() {
+    return this.dataRepoInstanceNames.get(testEnv);
   }
 }
