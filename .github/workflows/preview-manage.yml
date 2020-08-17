@@ -101,7 +101,6 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.event.comment.body, 'preview-test')
     steps:
-    steps:
     - name: Get short SHA
       id: slug
       run: |
