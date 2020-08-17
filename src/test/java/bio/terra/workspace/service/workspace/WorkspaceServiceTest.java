@@ -68,8 +68,6 @@ public class WorkspaceServiceTest {
 
   @Autowired private ObjectMapper objectMapper;
 
-  @Autowired private WorkspaceService workspaceService;
-
   @BeforeEach
   public void setup() {
     doNothing().when(mockSamService).createWorkspaceWithDefaults(any(), any());
@@ -215,18 +213,14 @@ public class WorkspaceServiceTest {
 
     DeleteWorkspaceRequestBody deleteBody =
         new DeleteWorkspaceRequestBody().authToken("fake-user-auth-token");
-    MvcResult deleteResult =
-        mvc.perform(
-                delete("/api/workspaces/v1/" + workspaceId)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(deleteBody)))
-            .andExpect(status().is(204))
-            .andReturn();
+    mvc.perform(
+            delete("/api/workspaces/v1/" + workspaceId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(deleteBody)))
+        .andExpect(status().is(204))
+        .andReturn();
     // Finally, assert that a call to the deleted workspace gives a 404
-    MvcResult getResult =
-        mvc.perform(get("/api/workspaces/v1/" + workspaceId))
-            .andExpect(status().is(404))
-            .andReturn();
+    mvc.perform(get("/api/workspaces/v1/" + workspaceId)).andExpect(status().is(404)).andReturn();
   }
 
   @Test
@@ -247,7 +241,7 @@ public class WorkspaceServiceTest {
         new DataRepoSnapshot().instanceName("fake instance").snapshot("fake snapshot");
     CreateDataReferenceRequestBody referenceRequest =
         new CreateDataReferenceRequestBody()
-            .name("fake-data-reference")
+            .name("fake_data_reference")
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
             .reference(objectMapper.writeValueAsString(reference));
@@ -262,37 +256,34 @@ public class WorkspaceServiceTest {
         objectMapper.readValue(
             dataReferenceResult.getResponse().getContentAsString(), DataReferenceDescription.class);
     // Validate that the reference exists.
-    MvcResult getReferenceResult =
-        mvc.perform(
-                get("/api/workspaces/v1/"
-                        + workspaceId
-                        + "/datareferences/"
-                        + dataReferenceResponse.getReferenceId().toString())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(referenceRequest)))
-            .andExpect(status().is(200))
-            .andReturn();
+    mvc.perform(
+            get("/api/workspaces/v1/"
+                    + workspaceId
+                    + "/datareferences/"
+                    + dataReferenceResponse.getReferenceId().toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(referenceRequest)))
+        .andExpect(status().is(200))
+        .andReturn();
     // Delete the workspace.
     DeleteWorkspaceRequestBody deleteRequest =
         new DeleteWorkspaceRequestBody().authToken("fake-user-auth-token");
-    MvcResult deleteResult =
-        mvc.perform(
-                delete("/api/workspaces/v1/" + workspaceId)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(deleteRequest)))
-            .andExpect(status().is(204))
-            .andReturn();
+    mvc.perform(
+            delete("/api/workspaces/v1/" + workspaceId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(deleteRequest)))
+        .andExpect(status().is(204))
+        .andReturn();
     // Verify that the contained data reference is no longer returned.
-    MvcResult getDeletedReferenceResult =
-        mvc.perform(
-                get("/api/workspaces/v1/"
-                        + workspaceId
-                        + "/datareferences/"
-                        + dataReferenceResponse.getReferenceId().toString())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(referenceRequest)))
-            .andExpect(status().is(404))
-            .andReturn();
+    mvc.perform(
+            get("/api/workspaces/v1/"
+                    + workspaceId
+                    + "/datareferences/"
+                    + dataReferenceResponse.getReferenceId().toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(referenceRequest)))
+        .andExpect(status().is(404))
+        .andReturn();
   }
 
   // TODO: blank tests that should be written as more functionality gets added.

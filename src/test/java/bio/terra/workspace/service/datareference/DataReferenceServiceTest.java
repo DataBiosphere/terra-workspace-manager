@@ -5,21 +5,31 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.app.Main;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
-import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.generated.model.CloningInstructionsEnum;
+import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
+import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
+import bio.terra.workspace.generated.model.CreatedWorkspace;
+import bio.terra.workspace.generated.model.DataReferenceDescription;
+import bio.terra.workspace.generated.model.DataReferenceList;
+import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.generated.model.ErrorReport;
+import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import java.util.UUID;
@@ -56,10 +66,6 @@ public class DataReferenceServiceTest {
 
   @Autowired private ObjectMapper objectMapper;
 
-  @Autowired private WorkspaceService workspaceService;
-
-  @Autowired private DataReferenceService dataReferenceService;
-
   private UUID workspaceId;
 
   @BeforeEach
@@ -95,6 +101,56 @@ public class DataReferenceServiceTest {
 
     assertThat(response.getWorkspaceId(), equalTo(initialWorkspaceId));
     assertThat(response.getName(), equalTo("name"));
+  }
+
+  @Test
+  public void testCreateInvalidDataReferenceNameFails() throws Exception {
+    DataRepoSnapshot snapshot = new DataRepoSnapshot();
+    snapshot.setSnapshot("foo");
+    snapshot.setInstanceName("bar");
+
+    CreateDataReferenceRequestBody refBody =
+        new CreateDataReferenceRequestBody()
+            .name("!!!!!!!!INVALID NAME!!!!!!!!1")
+            .cloningInstructions(CloningInstructionsEnum.NOTHING)
+            .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
+            .reference(objectMapper.writeValueAsString(snapshot));
+
+    MvcResult failureResult =
+        mvc.perform(
+                post("/api/workspaces/v1/" + workspaceId.toString() + "/datareferences")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(refBody)))
+            .andExpect(status().is(400))
+            .andReturn();
+    ErrorReport error =
+        objectMapper.readValue(failureResult.getResponse().getContentAsString(), ErrorReport.class);
+    assertThat(error.getStatusCode(), equalTo(HttpStatus.BAD_REQUEST.value()));
+  }
+
+  @Test
+  public void testCreateDataReferenceNameTooLongFails() throws Exception {
+    DataRepoSnapshot snapshot = new DataRepoSnapshot();
+    snapshot.setSnapshot("foo");
+    snapshot.setInstanceName("bar");
+
+    CreateDataReferenceRequestBody refBody =
+        new CreateDataReferenceRequestBody()
+            .name("1".repeat(100))
+            .cloningInstructions(CloningInstructionsEnum.NOTHING)
+            .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
+            .reference(objectMapper.writeValueAsString(snapshot));
+
+    MvcResult failureResult =
+        mvc.perform(
+                post("/api/workspaces/v1/" + workspaceId.toString() + "/datareferences")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(refBody)))
+            .andExpect(status().is(400))
+            .andReturn();
+    ErrorReport error =
+        objectMapper.readValue(failureResult.getResponse().getContentAsString(), ErrorReport.class);
+    assertThat(error.getStatusCode(), equalTo(HttpStatus.BAD_REQUEST.value()));
   }
 
   @Test
@@ -138,8 +194,7 @@ public class DataReferenceServiceTest {
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
             .reference(objectMapper.writeValueAsString(snapshot));
 
-    DataReferenceDescription createResponse =
-        runCreateDataReferenceCall(initialWorkspaceId, refBody);
+    runCreateDataReferenceCall(initialWorkspaceId, refBody);
 
     DataReferenceDescription getResponse =
         runGetDataReferenceByNameCall(
@@ -183,12 +238,17 @@ public class DataReferenceServiceTest {
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
             .reference(objectMapper.writeValueAsString(snapshot));
 
-    mvc.perform(
-            post("/api/workspaces/v1/" + initialWorkspaceId.toString() + "/datareferences")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(refBody)))
-        .andExpect(status().is(400))
-        .andReturn();
+    MvcResult callResult =
+        mvc.perform(
+                post("/api/workspaces/v1/" + initialWorkspaceId.toString() + "/datareferences")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(refBody)))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    ErrorReport error =
+        objectMapper.readValue(callResult.getResponse().getContentAsString(), ErrorReport.class);
+    assertThat(error.getStatusCode(), equalTo(HttpStatus.BAD_REQUEST.value()));
   }
 
   @Test
@@ -202,12 +262,17 @@ public class DataReferenceServiceTest {
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
             .reference("bad-reference");
 
-    mvc.perform(
-            post("/api/workspaces/v1/" + initialWorkspaceId.toString() + "/datareferences")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(refBody)))
-        .andExpect(status().is(400))
-        .andReturn();
+    MvcResult callResult =
+        mvc.perform(
+                post("/api/workspaces/v1/" + initialWorkspaceId.toString() + "/datareferences")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(refBody)))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    ErrorReport error =
+        objectMapper.readValue(callResult.getResponse().getContentAsString(), ErrorReport.class);
+    assertThat(error.getStatusCode(), equalTo(HttpStatus.BAD_REQUEST.value()));
   }
 
   @Test

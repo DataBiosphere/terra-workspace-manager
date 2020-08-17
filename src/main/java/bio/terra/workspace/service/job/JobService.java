@@ -28,8 +28,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
@@ -38,7 +36,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class JobService {
 
-  private static final Logger logger = LoggerFactory.getLogger(JobService.class);
   private final Stairway stairway;
   private final SamService samService;
   private final ApplicationConfiguration appConfig;
@@ -121,7 +118,7 @@ public class JobService {
     return retrieveJobResult(jobId, resultClass, userReq).getResult();
   }
 
-  void waitForJob(String jobId) {
+  protected void waitForJob(String jobId) {
     try {
       stairway.waitForFlight(jobId, 10, appConfig.getStairwayTimeoutSeconds() / 10);
     } catch (StairwayException stairwayEx) {
@@ -205,15 +202,15 @@ public class JobService {
 
   private JobModel.StatusEnum getJobStatus(FlightStatus flightStatus) {
     switch (flightStatus) {
-      case ERROR:
-      case FATAL:
-        return JobModel.StatusEnum.FAILED;
       case RUNNING:
         return JobModel.StatusEnum.RUNNING;
       case SUCCESS:
         return JobModel.StatusEnum.SUCCEEDED;
+      case ERROR:
+      case FATAL:
+      default:
+        return JobModel.StatusEnum.FAILED;
     }
-    return JobModel.StatusEnum.FAILED;
   }
 
   public List<JobModel> enumerateJobs(int offset, int limit, AuthenticatedUserRequest userReq) {

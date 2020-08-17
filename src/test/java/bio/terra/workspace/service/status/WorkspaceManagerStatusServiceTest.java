@@ -33,13 +33,11 @@ public class WorkspaceManagerStatusServiceTest {
   @MockBean private DataRepoConfig mockDataRepoConfig;
   @MockBean private SamService mockSamService;
 
-  @Autowired WorkspaceManagerStatusService statusService;
-
-  private SystemStatusSystems passingStatus;
+  @Autowired private WorkspaceManagerStatusService statusService;
 
   @BeforeEach
   public void setup() {
-    passingStatus = new SystemStatusSystems().ok(true);
+    SystemStatusSystems passingStatus = new SystemStatusSystems().ok(true);
     doReturn(passingStatus).when(mockDataRepoService).status(any());
     doReturn(new SystemStatusSystems().ok(true)).when(mockSamService).status();
     // Although we mock out the DataRepoConfig, it's only used in the StatusService's constructor.

@@ -2,7 +2,15 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
-import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
+import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
+import bio.terra.workspace.generated.model.CreatedWorkspace;
+import bio.terra.workspace.generated.model.DataReferenceDescription;
+import bio.terra.workspace.generated.model.DataReferenceList;
+import bio.terra.workspace.generated.model.DeleteWorkspaceRequestBody;
+import bio.terra.workspace.generated.model.JobModel;
+import bio.terra.workspace.generated.model.ReferenceTypeEnum;
+import bio.terra.workspace.generated.model.WorkspaceDescription;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;

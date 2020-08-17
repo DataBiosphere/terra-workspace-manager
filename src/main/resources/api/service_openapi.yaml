@@ -292,7 +292,7 @@ components:
       description: A name used to identify an object in the workspace manager
       required: true
       schema:
-        type: string
+        $ref: '#/components/schemas/Name'
 
   schemas:
     ErrorReport:
@@ -362,6 +362,13 @@ components:
                 type: array
                 items:
                   type: string
+    Name:
+      # Note: These format restrictions are enforced by WM, not natively by
+      # Swagger.
+      type: string
+      pattern: '^[a-zA-Z0-9][_a-zA-Z0-9]{0,62}$'
+      minLength: 1
+      maxLength: 63
 
     SystemVersion:
       type: object
@@ -451,8 +458,7 @@ components:
       required: [name, cloningInstructions]
       properties:
         name:
-          description: The name of the data reference
-          type: string
+          $ref: "#/components/schemas/Name"
         resourceId:
           description: The ID of the resource
           type: string

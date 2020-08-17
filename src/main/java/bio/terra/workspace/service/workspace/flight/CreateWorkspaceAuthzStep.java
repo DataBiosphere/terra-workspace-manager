@@ -51,7 +51,7 @@ public class CreateWorkspaceAuthzStep implements Step {
   public StepResult undoStep(FlightContext flightContext) {
     // Only delete the Sam resource if we actually created it in the do step.
     FlightMap workingMap = flightContext.getWorkingMap();
-    if (workingMap.get(AUTHZ_COMPLETED_KEY, Boolean.class) == true) {
+    if (workingMap.get(AUTHZ_COMPLETED_KEY, Boolean.class)) {
       FlightMap inputMap = flightContext.getInputParameters();
       UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
       samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);

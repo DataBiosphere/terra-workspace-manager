@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.datareference;
 
-import bio.terra.workspace.common.exception.*;
+import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
@@ -9,7 +9,8 @@ import bio.terra.workspace.generated.model.DataReferenceList;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
-import bio.terra.workspace.service.datareference.flight.*;
+import bio.terra.workspace.service.datareference.flight.CreateDataReferenceFlight;
+import bio.terra.workspace.service.datareference.flight.DataReferenceFlightMapKeys;
 import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -52,6 +53,7 @@ public class DataReferenceService {
       String name,
       AuthenticatedUserRequest userReq) {
 
+    validationUtils.validateReferenceName(name);
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
 
     return dataReferenceDao.getDataReferenceByName(workspaceId, referenceType, name);
@@ -76,6 +78,7 @@ public class DataReferenceService {
           "Resource-specific credentials are not supported yet.");
     }
 
+    validationUtils.validateReferenceName(body.getName());
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
 
     UUID referenceId = UUID.randomUUID();

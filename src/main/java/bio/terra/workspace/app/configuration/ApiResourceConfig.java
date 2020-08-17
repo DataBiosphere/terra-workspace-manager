@@ -18,6 +18,7 @@ public class ApiResourceConfig implements WebMvcConfigurer {
   @Autowired private SpanCustomizer spanCustomizer;
   private String mdcRequestIdKey = "X-Request-ID";
   private String mdcCorrelationIdKey = "X-Correlation-ID";
+  private Hashids hashids = new Hashids("requestIdSalt", 8);
 
   @Override
   public void addInterceptors(InterceptorRegistry registry) {
@@ -41,8 +42,6 @@ public class ApiResourceConfig implements WebMvcConfigurer {
           }
         });
   }
-
-  private Hashids hashids = new Hashids("requestIdSalt", 8);
 
   private String generateRequestId() {
     long generatedLong = ThreadLocalRandom.current().nextLong(0, Integer.MAX_VALUE);
