@@ -64,8 +64,8 @@ jobs:
         TERRA_HELMFILE_BRANCH: gm-preview
         ENV_ID: wsm${{ github.event.issue.number }}
         VERSIONS_B64: '${{ steps.versions-merge.outputs.versions }}'
-    - name: Get output
-      run: echo '${{ steps.create.outputs.output }}'
+    - name: Print create output
+      run: echo '${{ steps.create.outputs.output }}' | base64 -d
 
   preview-delete:
     name: Delete Preview Environment
@@ -93,5 +93,99 @@ jobs:
         PREVIEW_CMD: delete
         TERRA_HELMFILE_BRANCH: gm-preview
         ENV_ID: wsm${{ github.event.issue.number }}
-    - name: Get output
-      run: echo '${{ steps.delete.outputs.output }}'
+    - name: Print delete output
+      run: echo '${{ steps.delete.outputs.output }}' | base64 -d
+
+  preview-test:
+    name: Create and Test Preview Environment
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.comment.body, 'preview-test')
+    steps:
+    steps:
+    - name: Get short SHA
+      id: slug
+      run: |
+        sha7=$(curl \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.issue.number }} \
+          -u "broadbot:${{ secrets.GITHUB_TOKEN }}" | jq -r '.head.sha' | cut -c1-7)
+        echo "Short SHA: $sha7"
+        echo ::set-output name=sha7::$sha7
+    - name: Construct default version JSON
+      id: versions-default
+      run: echo ::set-output name=versions::{\"releases\":{\"${HELM_CHART_NAME}\":{\"appVersion\":\"pr${{ github.event.issue.number }}-${{ steps.slug.outputs.sha7 }}\"}}}
+    - name: Construct version override JSON
+      id: versions-override
+      run: |
+        comment='${{ github.event.comment.body }}'
+        override=${comment#'preview-test'}
+        if [[ $override == '' ]]; then override='{}'; fi
+        echo "override: $override"
+        echo ::set-output name=versions::$override
+    - name: Construct merged version JSON
+      id: versions-merge
+      run: |
+        echo '${{ steps.versions-default.outputs.versions }}' > default.json
+        echo '${{ steps.versions-override.outputs.versions }}' > override.json
+        merge=$(jq -sc '.[0] * .[1]' default.json override.json)
+        echo "merge: $merge"
+        merge_b64=$(echo $merge | base64 -w 0)
+        echo ::set-output name=versions::$merge_b64
+    - name: Get Vault token
+      id: vault-token-step
+      run: |
+        VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
+          -e "VAULT_ADDR=${VAULT_ADDR}" \
+          vault:1.1.0 \
+          vault write -field token \
+            auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+            secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+        echo ::set-output name=vault-token::$VAULT_TOKEN
+        echo ::add-mask::$VAULT_TOKEN
+    - name: Create
+      id: create
+      uses: databiosphere/github-actions/actions/preview@gm-preview
+      env:
+        GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+        VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}
+        VAULT_SA_PATH: ${{ secrets.CI_SA_VAULT_PATH }}
+        PREVIEW_CMD: create
+        TERRA_HELMFILE_BRANCH: gm-preview
+        ENV_ID: wsm${{ github.event.issue.number }}
+        VERSIONS_B64: '${{ steps.versions-merge.outputs.versions }}'
+    - name: Construct action run URL
+      id: run-url
+      run: echo ::set-output name=url::https://github.com/${GITHUB_REPOSITORY}/runs/${GITHUB_RUN_ID}
+    - name: Test
+      id: test
+      uses: databiosphere/github-actions/actions/test-template@gm-preview
+      env:
+        GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+        ENV_DATA_B64: ${{ steps.create.outputs.output }}
+        ACTION_RUN_URL: '${{ steps.run-url.outputs.url }}'
+    - name: Print test output
+      run: echo '${{ steps.test.outputs.testData }}' | base64 -d
+    - name: Report
+      id: report
+      uses: databiosphere/github-actions/actions/preview@gm-preview
+      env:
+        GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+        VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}
+        VAULT_SA_PATH: ${{ secrets.CI_SA_VAULT_PATH }}
+        PREVIEW_CMD: report
+        TERRA_HELMFILE_BRANCH: gm-preview
+        ENV_ID: wsm${{ github.event.issue.number }}
+        VERSIONS_B64: '${{ steps.versions-merge.outputs.versions }}'
+        TEST_DATA_B64: '${{ steps.test.outputs.testData }}'
+        TEST_STATUS: ${{ steps.test.outputs.status }}
+    # - name: Delete
+    #   if: steps.test.outputs.status == 'true'
+    #   id: delete
+    #   uses: databiosphere/github-actions/actions/preview@gm-preview
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+    #     VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}
+    #     VAULT_SA_PATH: ${{ secrets.CI_SA_VAULT_PATH }}
+    #     PREVIEW_CMD: delete
+    #     TERRA_HELMFILE_BRANCH: gm-preview
+    #     ENV_ID: wsm${{ github.event.issue.number }}
