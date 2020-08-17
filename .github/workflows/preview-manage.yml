@@ -154,7 +154,7 @@ jobs:
         VERSIONS_B64: '${{ steps.versions-merge.outputs.versions }}'
     - name: Construct action run URL
       id: run-url
-      run: echo ::set-output name=url::https://github.com/${GITHUB_REPOSITORY}/runs/${GITHUB_RUN_ID}
+      run: echo ::set-output name=url::https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
     - name: Test
       id: test
       uses: databiosphere/github-actions/actions/test-template@gm-preview
