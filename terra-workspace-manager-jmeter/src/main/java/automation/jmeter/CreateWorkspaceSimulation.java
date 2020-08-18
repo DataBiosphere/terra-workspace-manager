@@ -129,6 +129,7 @@ public class CreateWorkspaceSimulation {
         httpSamplerProxy.setProperty("HTTPSampler.protocol", "${__env(WSM_PROTOCOL)}");
         httpSamplerProxy.setPath(setPath);
         httpSamplerProxy.setMethod(requestType);
+        // TODO: Look up request body from Swagger (by providing key of API)
         String body = "{" + "\"id\"" + ":" + " \"" + "${workspaceId}" + "\", " + "\"authToken\"" + ":" + " \""
                 + "${__P(oauth2Token)}" + "\", " + "\"spendProfile\"" + ":" + " \"" + "${workspaceId}" + "\", " + "\"policies\""
                 + ":" + "[ \"" + "${workspaceId}" + "\" ]" + "}";
@@ -279,6 +280,7 @@ public class CreateWorkspaceSimulation {
         setJSR223PreProcessor();
         setLoopController(1);
         setThreadGroup(2, 2);
+        // TODO: Look up API Path from Swagger
         setHttpSampler("POST", "api/workspaces/v1");
         setHeaders();
         setUserParameters();
