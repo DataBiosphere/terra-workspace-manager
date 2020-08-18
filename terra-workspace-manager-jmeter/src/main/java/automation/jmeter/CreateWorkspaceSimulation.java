@@ -260,6 +260,8 @@ public class CreateWorkspaceSimulation {
         // System.setProperty("https.proxyHost", "127.0.0.1");
         // System.setProperty("https.proxyPort", "8888");
 
+        // TODO: Replace hardcoded location of JMeter installation
+        // by JMETER_HOME envvar
         File jmeterHome = new File("/apache-jmeter-5.3");
         String slash = System.getProperty("file.separator");
 
