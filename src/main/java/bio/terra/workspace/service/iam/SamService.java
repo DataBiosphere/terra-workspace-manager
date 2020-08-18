@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.iam;
 
+import bio.terra.workspace.app.configuration.ApiResourceConfig;
 import bio.terra.workspace.app.configuration.SamConfiguration;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
@@ -19,6 +20,7 @@ import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.model.SubsystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -35,6 +37,8 @@ public class SamService {
 
   private ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();
+    client.addDefaultHeader(
+        ApiResourceConfig.MDC_REQUEST_ID_HEADER, MDC.get(ApiResourceConfig.MDC_REQUEST_ID_KEY));
     client.setAccessToken(accessToken);
     return client.setBasePath(samConfig.getBasePath());
   }

@@ -4,11 +4,13 @@ import bio.terra.datarepo.api.RepositoryApi;
 import bio.terra.datarepo.api.UnauthenticatedApi;
 import bio.terra.datarepo.client.ApiClient;
 import bio.terra.datarepo.client.ApiException;
+import bio.terra.workspace.app.configuration.ApiResourceConfig;
 import bio.terra.workspace.app.configuration.DataRepoConfig;
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import java.util.HashMap;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +26,8 @@ public class DataRepoService {
 
   private ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();
+    client.addDefaultHeader(
+        ApiResourceConfig.MDC_REQUEST_ID_HEADER, MDC.get(ApiResourceConfig.MDC_REQUEST_ID_KEY));
     client.setAccessToken(accessToken);
     return client;
   }
