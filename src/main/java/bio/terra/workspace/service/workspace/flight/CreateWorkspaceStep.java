@@ -51,6 +51,7 @@ public class CreateWorkspaceStep implements Step {
     response.setId(workspaceId);
     FlightUtils.setResponse(flightContext, response, HttpStatus.OK);
 
+    MDC.clear();
     return StepResult.getStepResultSuccess();
   }
 

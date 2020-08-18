@@ -36,6 +36,7 @@ public class DeleteWorkspaceStateStep implements Step {
     // not found.
     workspaceDao.deleteWorkspace(workspaceID);
     FlightUtils.setResponse(flightContext, null, HttpStatus.valueOf(204));
+    MDC.clear();
     return StepResult.getStepResultSuccess();
   }
 
