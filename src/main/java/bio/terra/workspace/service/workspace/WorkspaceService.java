@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.workspace.common.utils.MDCUtils;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
@@ -26,15 +27,21 @@ public class WorkspaceService {
   private JobService jobService;
   private final WorkspaceDao workspaceDao;
   private final SamService samService;
+  private final MDCUtils mdcUtils;
   @Autowired private final Tracer tracer;
 
   @Autowired
   public WorkspaceService(
-      JobService jobService, WorkspaceDao workspaceDao, SamService samService, Tracer tracer) {
+      JobService jobService,
+      WorkspaceDao workspaceDao,
+      SamService samService,
+      Tracer tracer,
+      MDCUtils mdcUtils) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
     this.tracer = tracer;
+    this.mdcUtils = mdcUtils;
   }
 
   public CreatedWorkspace createWorkspace(
@@ -50,7 +57,8 @@ public class WorkspaceService {
                 WorkspaceCreateFlight.class,
                 body,
                 userReq)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
+            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
+            .addParameter(WorkspaceFlightMapKeys.MDC_KEY, mdcUtils.serializeCurrentMdc());
     if (body.getSpendProfile() != null) {
       createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, body.getSpendProfile());
     }
@@ -85,7 +93,8 @@ public class WorkspaceService {
                 WorkspaceDeleteFlight.class,
                 null, // Delete does not have a useful request body
                 userReq)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id);
+            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id)
+            .addParameter(WorkspaceFlightMapKeys.MDC_KEY, mdcUtils.serializeCurrentMdc());
     deleteJob.submitAndWait(null);
   }
 }
