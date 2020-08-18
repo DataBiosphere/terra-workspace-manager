@@ -29,7 +29,6 @@ public class MDCUtils {
   }
 
   public Map<String, String> deserializeMdcString(String serializedMdc) {
-    Map<String, String> mdcContextMap = null;
     try {
       return objectMapper.readValue(serializedMdc, mapType);
     } catch (JsonProcessingException e) {
