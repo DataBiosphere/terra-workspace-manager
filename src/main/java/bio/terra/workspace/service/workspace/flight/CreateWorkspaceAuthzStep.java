@@ -51,7 +51,6 @@ public class CreateWorkspaceAuthzStep implements Step {
       samService.createWorkspaceWithDefaults(userReq.getRequiredToken(), workspaceID);
       workingMap.put(AUTHZ_COMPLETED_KEY, true);
     }
-    MDC.clear();
     return StepResult.getStepResultSuccess();
   }
 

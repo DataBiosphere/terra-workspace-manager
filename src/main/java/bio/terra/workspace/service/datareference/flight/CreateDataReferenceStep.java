@@ -52,7 +52,6 @@ public class CreateDataReferenceStep implements Step {
     workingMap.put(CREATE_DATA_REFERENCE_COMPLETED_KEY, true);
 
     FlightUtils.setResponse(flightContext, referenceId.toString(), HttpStatus.OK);
-    MDC.clear();
 
     return StepResult.getStepResultSuccess();
   }
