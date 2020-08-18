@@ -170,12 +170,12 @@ public class WorkspaceIntegrationTest {
     // This snapshot was created using our dev service account, which is a steward in dev Data Repo.
     // First, I created a dataset "wm_integration_test_dataset" using TDR's
     // snapshot-test-dataset.json. Then, I created the snapshot
-    // "workspace_integration_test_snapshot"
-    // using the "byFullView" mode. Finally, I added the integration test user as a reader of this
-    // snapshot.
+    // "workspace_integration_test_snapshot" using the "byFullView" mode. Finally, I added the
+    // integration test user as a reader of this snapshot.
     // These steps should only need to be repeated if the dev DataRepo data is deleted, or to
-    // support
-    // this test in other DataRepo environments.
+    // support this test in other DataRepo environments.
+    // Data Repo makes a reasonable effort to maintain their dev environment, so this should be a
+    // very rare occurrence.
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
