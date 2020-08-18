@@ -61,7 +61,7 @@ public class CreateWorkspaceStep implements Step {
     FlightMap workingMap = flightContext.getWorkingMap();
     String serializedMdc = inputMap.get(WorkspaceFlightMapKeys.MDC_KEY, String.class);
     MDC.setContextMap(mdcUtils.deserializeMdcString(serializedMdc));
-    if (workingMap.get(CREATE_WORKSPACE_COMPLETED_KEY, Boolean.class) == true) {
+    if (workingMap.get(CREATE_WORKSPACE_COMPLETED_KEY, Boolean.class)) {
       UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
       workspaceDao.deleteWorkspace(workspaceId);
     }

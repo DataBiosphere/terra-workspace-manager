@@ -64,7 +64,7 @@ public class CreateDataReferenceStep implements Step {
     String serializedMdc = inputMap.get(DataReferenceFlightMapKeys.MDC_KEY, String.class);
     MDC.setContextMap(mdcUtils.deserializeMdcString(serializedMdc));
 
-    if (workingMap.get(CREATE_DATA_REFERENCE_COMPLETED_KEY, Boolean.class) == true) {
+    if (workingMap.get(CREATE_DATA_REFERENCE_COMPLETED_KEY, Boolean.class)) {
       UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
       dataReferenceDao.deleteDataReference(workspaceId);
     }
