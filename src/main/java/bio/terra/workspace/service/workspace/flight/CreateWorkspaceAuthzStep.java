@@ -51,7 +51,6 @@ public class CreateWorkspaceAuthzStep implements Step {
       samService.createWorkspaceWithDefaults(userReq.getRequiredToken(), workspaceID);
       workingMap.put(AUTHZ_COMPLETED_KEY, true);
     }
-    MDC.clear();
     return StepResult.getStepResultSuccess();
   }
 
@@ -66,7 +65,6 @@ public class CreateWorkspaceAuthzStep implements Step {
       UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
       samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);
     }
-    MDC.clear();
     return StepResult.getStepResultSuccess();
   }
 }

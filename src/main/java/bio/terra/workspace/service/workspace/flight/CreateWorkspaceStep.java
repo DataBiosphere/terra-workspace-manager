@@ -51,7 +51,6 @@ public class CreateWorkspaceStep implements Step {
     response.setId(workspaceId);
     FlightUtils.setResponse(flightContext, response, HttpStatus.OK);
 
-    MDC.clear();
     return StepResult.getStepResultSuccess();
   }
 
@@ -65,7 +64,6 @@ public class CreateWorkspaceStep implements Step {
       UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
       workspaceDao.deleteWorkspace(workspaceId);
     }
-    MDC.clear();
     return StepResult.getStepResultSuccess();
   }
 }
