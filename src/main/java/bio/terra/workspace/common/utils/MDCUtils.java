@@ -13,8 +13,7 @@ import org.springframework.stereotype.Component;
 public class MDCUtils {
 
   @Autowired ObjectMapper objectMapper;
-  private final TypeReference<Map<String, String>> mapType =
-      new TypeReference<Map<String, String>>() {};
+  private final TypeReference<Map<String, String>> mapType = new TypeReference<>() {};
 
   public String serializeMdc(Map<String, String> mdcMap) {
     try {
