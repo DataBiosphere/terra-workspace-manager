@@ -2,7 +2,7 @@
 This module holds the Workspace Manager JMeter Scripts for load testing.
 
 To run test in different environments (including per-developer environments). 
-Please refer to the jmeter-master-slave deployment definitions in this repo].
+Please refer to the jmeter-director-worker deployment definitions in this repo].
 
 ### Env Vars - 
 
@@ -23,11 +23,11 @@ Please refer to the jmeter-master-slave deployment definitions in this repo].
 - jmeter-plugins-functions
 - Custom JMeter plugin functions by us (see module automation-jmeter-plugins)
 
-### Deploying test to JMeter master-slave Kubernetes cluster
-- $namespace is the namespace of JMeter master-slave infrastructure
-- $master_pod is JMeter master pod
+### Deploying test to JMeter director/worker Kubernetes cluster
+- $namespace is the namespace of JMeter director/worker infrastructure
+- $director_pod is JMeter director pod
 - $test_name is name of the test (e.g. CreateworkspaceSimulation)
 
-kubectl -n $namespace exec -ti $master_pod -- /bin/bash /load_test "$test_name"
+kubectl -n $namespace exec -ti $director_pod -- /bin/bash /load_test "$test_name"
 
 NB: Command will eventually be wrapped in a shell script
