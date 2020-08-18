@@ -50,6 +50,9 @@ public class CreateWorkspaceSimulation {
     private static UserParameters userParameters;
     private static BackendListener backendListener;
 
+    // TODO: All JMeter test has a root test plan node
+    // much of this is boilerplate code. Refactoring
+    // will be taken up in a separate Jira ticket.
     private static void initializeTestPlan(String testPlanName) {
         testPlan = new TestPlan(testPlanName);
         testPlan.setComment("");
