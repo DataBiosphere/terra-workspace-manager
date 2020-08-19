@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.datareference;
 
-import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
+import bio.terra.workspace.common.exception.*;
+import bio.terra.workspace.common.utils.MDCUtils;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
@@ -26,17 +27,20 @@ public class DataReferenceService {
   private final SamService samService;
   private final JobService jobService;
   private final DataReferenceValidationUtils validationUtils;
+  private final MDCUtils mdcUtils;
 
   @Autowired
   public DataReferenceService(
       DataReferenceDao dataReferenceDao,
       SamService samService,
       JobService jobService,
-      DataReferenceValidationUtils validationUtils) {
+      DataReferenceValidationUtils validationUtils,
+      MDCUtils mdcUtils) {
     this.dataReferenceDao = dataReferenceDao;
     this.samService = samService;
     this.jobService = jobService;
     this.validationUtils = validationUtils;
+    this.mdcUtils = mdcUtils;
   }
 
   public DataReferenceDescription getDataReference(
@@ -94,7 +98,8 @@ public class DataReferenceService {
                 body,
                 userReq)
             .addParameter(DataReferenceFlightMapKeys.REFERENCE_ID, referenceId)
-            .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, workspaceId);
+            .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, workspaceId)
+            .addParameter(DataReferenceFlightMapKeys.MDC_KEY, mdcUtils.serializeCurrentMdc());
 
     String ref =
         validationUtils.validateReference(body.getReferenceType(), body.getReference(), userReq);
