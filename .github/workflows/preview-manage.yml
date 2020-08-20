@@ -55,13 +55,12 @@ jobs:
         echo ::add-mask::$VAULT_TOKEN
     - name: Create
       id: create
-      uses: databiosphere/github-actions/actions/preview@gm-preview
+      uses: databiosphere/github-actions/actions/preview@master
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}
         VAULT_SA_PATH: ${{ secrets.CI_SA_VAULT_PATH }}
         PREVIEW_CMD: create
-        TERRA_HELMFILE_BRANCH: gm-preview
         ENV_ID: wsm${{ github.event.issue.number }}
         VERSIONS_B64: '${{ steps.versions-merge.outputs.versions }}'
     - name: Print create output
@@ -85,13 +84,12 @@ jobs:
         echo ::add-mask::$VAULT_TOKEN
     - name: Delete
       id: delete
-      uses: databiosphere/github-actions/actions/preview@gm-preview
+      uses: databiosphere/github-actions/actions/preview@master
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}
         VAULT_SA_PATH: ${{ secrets.CI_SA_VAULT_PATH }}
         PREVIEW_CMD: delete
-        TERRA_HELMFILE_BRANCH: gm-preview
         ENV_ID: wsm${{ github.event.issue.number }}
     - name: Print delete output
       run: echo '${{ steps.delete.outputs.output }}' | base64 -d
@@ -143,13 +141,12 @@ jobs:
         echo ::add-mask::$VAULT_TOKEN
     - name: Create
       id: create
-      uses: databiosphere/github-actions/actions/preview@gm-preview
+      uses: databiosphere/github-actions/actions/preview@master
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}
         VAULT_SA_PATH: ${{ secrets.CI_SA_VAULT_PATH }}
         PREVIEW_CMD: create
-        TERRA_HELMFILE_BRANCH: gm-preview
         ENV_ID: wsm${{ github.event.issue.number }}
         VERSIONS_B64: '${{ steps.versions-merge.outputs.versions }}'
     - name: Construct action run URL
@@ -157,7 +154,7 @@ jobs:
       run: echo ::set-output name=url::https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
     - name: Test
       id: test
-      uses: databiosphere/github-actions/actions/test-template@gm-preview
+      uses: databiosphere/github-actions/actions/test-template@master
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         ENV_DATA_B64: ${{ steps.create.outputs.output }}
@@ -166,13 +163,12 @@ jobs:
       run: echo '${{ steps.test.outputs.testData }}' | base64 -d
     - name: Report
       id: report
-      uses: databiosphere/github-actions/actions/preview@gm-preview
+      uses: databiosphere/github-actions/actions/preview@master
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}
         VAULT_SA_PATH: ${{ secrets.CI_SA_VAULT_PATH }}
         PREVIEW_CMD: report
-        TERRA_HELMFILE_BRANCH: gm-preview
         ENV_ID: wsm${{ github.event.issue.number }}
         VERSIONS_B64: '${{ steps.versions-merge.outputs.versions }}'
         TEST_DATA_B64: '${{ steps.test.outputs.testData }}'
