@@ -15,9 +15,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class ApiResourceConfig implements WebMvcConfigurer {
 
+  public static final String MDC_REQUEST_ID_HEADER = "X-Request-ID";
+  public static final String MDC_REQUEST_ID_KEY = "requestId";
+  public static final String MDC_CORRELATION_ID_HEADER = "X-Correlation-ID";
+
   @Autowired private SpanCustomizer spanCustomizer;
-  private String mdcRequestIdKey = "X-Request-ID";
-  private String mdcCorrelationIdKey = "X-Correlation-ID";
   private Hashids hashids = new Hashids("requestIdSalt", 8);
 
   @Override
@@ -32,11 +34,11 @@ public class ApiResourceConfig implements WebMvcConfigurer {
             // get an mdc id from the request (if not found, create one), and pass it along in the
             // response
             String requestId = getMDCRequestId(httpRequest);
-            MDC.put("requestId", requestId);
-            httpResponse.addHeader(mdcRequestIdKey, requestId);
+            MDC.put(MDC_REQUEST_ID_KEY, requestId);
+            httpResponse.addHeader(MDC_REQUEST_ID_HEADER, requestId);
 
             // add tags to Stackdriver traces
-            spanCustomizer.tag("requestId", requestId);
+            spanCustomizer.tag(MDC_REQUEST_ID_KEY, requestId);
 
             return true;
           }
@@ -51,9 +53,9 @@ public class ApiResourceConfig implements WebMvcConfigurer {
 
   private String getMDCRequestId(HttpServletRequest httpRequest) {
     String requestId =
-        ((requestId = httpRequest.getHeader(mdcRequestIdKey)) != null)
+        ((requestId = httpRequest.getHeader(MDC_REQUEST_ID_HEADER)) != null)
             ? requestId
-            : ((requestId = httpRequest.getHeader(mdcCorrelationIdKey)) != null)
+            : ((requestId = httpRequest.getHeader(MDC_CORRELATION_ID_HEADER)) != null)
                 ? requestId
                 : generateRequestId();
     return requestId;
