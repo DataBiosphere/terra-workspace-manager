@@ -7,23 +7,29 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.common.utils.MDCUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import java.util.UUID;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
 public class DeleteWorkspaceStateStep implements Step {
 
   private WorkspaceDao workspaceDao;
+  private MDCUtils mdcUtils;
 
   @Autowired
-  public DeleteWorkspaceStateStep(WorkspaceDao workspaceDao) {
+  public DeleteWorkspaceStateStep(WorkspaceDao workspaceDao, MDCUtils mdcUtils) {
     this.workspaceDao = workspaceDao;
+    this.mdcUtils = mdcUtils;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
+    String serializedMdc = inputMap.get(WorkspaceFlightMapKeys.MDC_KEY, String.class);
+    MDC.setContextMap(mdcUtils.deserializeMdcString(serializedMdc));
     UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     // WorkspaceDao.deleteWorkspace returns true if a delete succeeds or false if the workspace is
     // not found, but the user-facing delete operation should return a 204 even if the workspace is

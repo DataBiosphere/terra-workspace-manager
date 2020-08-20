@@ -7,23 +7,30 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.SamApiException;
+import bio.terra.workspace.common.utils.MDCUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import java.util.UUID;
+import org.slf4j.MDC;
 
 public class DeleteWorkspaceAuthzStep implements Step {
 
   private SamService samService;
   private AuthenticatedUserRequest userReq;
+  private MDCUtils mdcUtils;
 
-  public DeleteWorkspaceAuthzStep(SamService samService, AuthenticatedUserRequest userReq) {
+  public DeleteWorkspaceAuthzStep(
+      SamService samService, AuthenticatedUserRequest userReq, MDCUtils mdcUtils) {
     this.samService = samService;
     this.userReq = userReq;
+    this.mdcUtils = mdcUtils;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
+    String serializedMdc = inputMap.get(WorkspaceFlightMapKeys.MDC_KEY, String.class);
+    MDC.setContextMap(mdcUtils.deserializeMdcString(serializedMdc));
     UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     try {
       samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);

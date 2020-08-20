@@ -10,8 +10,10 @@ import bio.terra.stairway.Stairway;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
+import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.app.configuration.ApplicationConfiguration;
 import bio.terra.workspace.app.configuration.StairwayJdbcConfiguration;
+import bio.terra.workspace.common.exception.stairway.StairwayInitializationException;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.generated.model.JobModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -25,8 +27,12 @@ import bio.terra.workspace.service.job.exception.JobUnauthorizedException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -40,6 +46,7 @@ public class JobService {
   private final SamService samService;
   private final ApplicationConfiguration appConfig;
   private final StairwayJdbcConfiguration stairwayJdbcConfiguration;
+  private final ScheduledExecutorService executor;
 
   @Autowired
   public JobService(
@@ -51,11 +58,18 @@ public class JobService {
     this.samService = samService;
     this.appConfig = appConfig;
     this.stairwayJdbcConfiguration = stairwayJdbcConfiguration;
-
-    ExecutorService executorService =
-        Executors.newFixedThreadPool(appConfig.getMaxStairwayThreads());
+    this.executor = Executors.newScheduledThreadPool(appConfig.getMaxStairwayThreads());
     StairwayExceptionSerializer serializer = new StairwayExceptionSerializer(objectMapper);
-    stairway = new Stairway(executorService, applicationContext, serializer);
+    Stairway.Builder builder =
+        Stairway.newBuilder()
+            .applicationContext(applicationContext)
+            .exceptionSerializer(serializer)
+            .enableWorkQueue(false);
+    try {
+      stairway = new Stairway(builder);
+    } catch (StairwayExecutionException e) {
+      throw new StairwayInitializationException("Error starting stairway: ", e);
+    }
   }
 
   public static class JobResultWithStatus<T> {
@@ -97,7 +111,7 @@ public class JobService {
       Class<? extends Flight> flightClass, FlightMap parameterMap, String jobId) {
     try {
       stairway.submit(jobId, flightClass, parameterMap);
-    } catch (StairwayException stairwayEx) {
+    } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
     return jobId;
@@ -120,9 +134,45 @@ public class JobService {
 
   protected void waitForJob(String jobId) {
     try {
-      stairway.waitForFlight(jobId, 10, appConfig.getStairwayTimeoutSeconds() / 10);
-    } catch (StairwayException stairwayEx) {
+      int pollSeconds = appConfig.getStairwayPollingIntervalSeconds();
+      int pollCycles =
+          appConfig.getStairwayTimeoutSeconds() / appConfig.getStairwayPollingIntervalSeconds();
+      for (int i = 0; i < pollCycles; i++) {
+        ScheduledFuture<FlightState> futureState =
+            executor.schedule(new PollFlightTask(stairway, jobId), pollSeconds, TimeUnit.SECONDS);
+        FlightState state = futureState.get();
+        if (state != null) {
+          // Indicates job has completed, though not necessarily successfully.
+          return;
+        } else {
+          // Indicates job has not completed yet, continue polling
+          continue;
+        }
+      }
+    } catch (InterruptedException | ExecutionException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
+    }
+    // Indicates we timed out waiting for completion, throw exception
+    throw new InternalStairwayException("Flight did not complete in the allowed wait time");
+  }
+
+  private class PollFlightTask implements Callable<FlightState> {
+    private Stairway stairway;
+    private String flightId;
+
+    public PollFlightTask(Stairway stairway, String flightId) {
+      this.stairway = stairway;
+      this.flightId = flightId;
+    }
+
+    @Override
+    public FlightState call() throws Exception {
+      FlightState state = stairway.getFlightState(flightId);
+      if (!state.isActive()) {
+        return state;
+      } else {
+        return null;
+      }
     }
   }
 
@@ -137,8 +187,9 @@ public class JobService {
           stairwayJdbcConfiguration.getDataSource(),
           stairwayJdbcConfiguration.isForceClean(),
           stairwayJdbcConfiguration.isMigrateUpgrade());
+      stairway.recoverAndStart(null);
 
-    } catch (StairwayException stairwayEx) {
+    } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException("Stairway initialization failed", stairwayEx);
     }
   }
@@ -161,7 +212,7 @@ public class JobService {
         }
       }
       stairway.deleteFlight(jobId, false);
-    } catch (StairwayException stairwayEx) {
+    } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
   }
@@ -221,7 +272,7 @@ public class JobService {
       filter.addFilterInputParameter(
           JobMapKeys.SUBJECT_ID.getKeyName(), FlightFilterOp.EQUAL, userReq.getSubjectId());
       flightStateList = stairway.getFlights(offset, limit, filter);
-    } catch (StairwayException stairwayEx) {
+    } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
 
@@ -239,7 +290,7 @@ public class JobService {
       verifyUserAccess(jobId, userReq); // jobId=flightId
       FlightState flightState = stairway.getFlightState(jobId);
       return mapFlightStateToJobModel(flightState);
-    } catch (StairwayException stairwayEx) {
+    } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
   }
@@ -273,13 +324,13 @@ public class JobService {
     try {
       verifyUserAccess(jobId, userReq); // jobId=flightId
       return retrieveJobResultWorker(jobId, resultClass);
-    } catch (StairwayException stairwayEx) {
+    } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
   }
 
   private <T> JobResultWithStatus<T> retrieveJobResultWorker(String jobId, Class<T> resultClass)
-      throws StairwayException {
+      throws StairwayException, InterruptedException {
     FlightState flightState = stairway.getFlightState(jobId);
     FlightMap resultMap = flightState.getResultMap().orElse(null);
     if (resultMap == null) {
@@ -336,7 +387,7 @@ public class JobService {
       if (!StringUtils.equals(flightSubjectId, userReq.getSubjectId())) {
         throw new JobUnauthorizedException("Unauthorized");
       }
-    } catch (DatabaseOperationException ex) {
+    } catch (DatabaseOperationException | InterruptedException ex) {
       throw new InternalStairwayException("Stairway exception looking up the job", ex);
     } catch (FlightNotFoundException ex) {
       throw new JobNotFoundException("Job not found", ex);

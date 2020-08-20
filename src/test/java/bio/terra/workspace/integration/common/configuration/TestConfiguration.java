@@ -16,6 +16,8 @@ public class TestConfiguration {
 
   private HashMap<String, String> wsmUrls;
   private HashMap<String, String> wsmEndpoints;
+  private HashMap<String, String> dataRepoInstanceNames;
+  private HashMap<String, String> dataRepoSnapshotId;
   private String serviceAccountEmail;
   private String serviceAccountFilePath;
 
@@ -45,5 +47,21 @@ public class TestConfiguration {
 
   public void setServiceAccountFilePath(String serviceAccountFilePath) {
     this.serviceAccountFilePath = serviceAccountFilePath;
+  }
+
+  public String getDataRepoInstanceNameFromEnv() {
+    return this.dataRepoInstanceNames.get(testEnv);
+  }
+
+  public void setDataRepoInstanceNames(HashMap<String, String> instanceNames) {
+    this.dataRepoInstanceNames = instanceNames;
+  }
+
+  public String getDataRepoSnapshotIdFromEnv() {
+    return this.dataRepoSnapshotId.get(testEnv);
+  }
+
+  public void setDataRepoSnapshotId(HashMap<String, String> snapshotIds) {
+    this.dataRepoSnapshotId = snapshotIds;
   }
 }
