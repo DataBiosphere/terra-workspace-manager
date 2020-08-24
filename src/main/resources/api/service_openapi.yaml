@@ -466,8 +466,7 @@ components:
         referenceType:
           $ref: '#/components/schemas/ReferenceTypeEnum'
         reference:
-          description: The serialized object containing details specific to the referenceType. For instance, TDR snapshots must be serialized json.
-          type: string
+          $ref: '#/components/schemas/DataRepoSnapshot'
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
         credentialId:
@@ -494,13 +493,7 @@ components:
         referenceType:
           $ref: '#/components/schemas/ReferenceTypeEnum'
         reference:
-          # Once https://github.com/OpenAPITools/openapi-generator/issues/5381
-          # is resolved, we can use a oneOf field to validate different
-          # reference schemas. Until then, I don't have a better solution
-          # than accepting a JSON string and validating in the service instead.
-          description: The description of the reference, if an uncontrolled resource
-          type: string
-          format: json
+          $ref: '#/components/schemas/DataRepoSnapshot'
         credentialId:
           description: The ID of the credential to use when accessing the resource
           type: string
@@ -543,6 +536,7 @@ components:
             $ref: '#/components/schemas/DataReferenceDescription'
 
     DataRepoSnapshot:
+      description: Currently, the only supported uncontrolled reference type.
       type: object
       required: [instanceName, snapshot]
       properties:

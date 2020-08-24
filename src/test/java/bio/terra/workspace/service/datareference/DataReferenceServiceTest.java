@@ -95,7 +95,7 @@ public class DataReferenceServiceTest {
             .name("name")
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-            .reference(objectMapper.writeValueAsString(snapshot));
+            .reference(snapshot);
 
     DataReferenceDescription response = runCreateDataReferenceCall(initialWorkspaceId, refBody);
 
@@ -114,7 +114,7 @@ public class DataReferenceServiceTest {
             .name("!!!!!!!!INVALID NAME!!!!!!!!1")
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-            .reference(objectMapper.writeValueAsString(snapshot));
+            .reference(snapshot);
 
     MvcResult failureResult =
         mvc.perform(
@@ -139,7 +139,7 @@ public class DataReferenceServiceTest {
             .name("1".repeat(100))
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-            .reference(objectMapper.writeValueAsString(snapshot));
+            .reference(snapshot);
 
     MvcResult failureResult =
         mvc.perform(
@@ -166,7 +166,7 @@ public class DataReferenceServiceTest {
             .name("name")
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-            .reference(objectMapper.writeValueAsString(snapshot));
+            .reference(snapshot);
 
     DataReferenceDescription createResponse =
         runCreateDataReferenceCall(initialWorkspaceId, refBody);
@@ -192,7 +192,7 @@ public class DataReferenceServiceTest {
             .name("name")
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-            .reference(objectMapper.writeValueAsString(snapshot));
+            .reference(snapshot);
 
     runCreateDataReferenceCall(initialWorkspaceId, refBody);
 
@@ -236,7 +236,7 @@ public class DataReferenceServiceTest {
             .name("name")
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-            .reference(objectMapper.writeValueAsString(snapshot));
+            .reference(snapshot);
 
     MvcResult callResult =
         mvc.perform(
@@ -260,7 +260,7 @@ public class DataReferenceServiceTest {
             .name("name")
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-            .reference("bad-reference");
+            .reference(new DataRepoSnapshot());
 
     MvcResult callResult =
         mvc.perform(
@@ -288,19 +288,19 @@ public class DataReferenceServiceTest {
             .name("name")
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-            .reference(objectMapper.writeValueAsString(snapshot));
+            .reference(snapshot);
     DataReferenceDescription firstReference =
         runCreateDataReferenceCall(initialWorkspaceId, refBody);
 
     DataRepoSnapshot secondSnapshot = new DataRepoSnapshot();
-    snapshot.setSnapshot("foo2");
-    snapshot.setInstanceName("bar2");
+    secondSnapshot.setSnapshot("foo2");
+    secondSnapshot.setInstanceName("bar2");
     CreateDataReferenceRequestBody secondRefBody =
         new CreateDataReferenceRequestBody()
             .name("second_name")
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-            .reference(objectMapper.writeValueAsString(secondSnapshot));
+            .reference(secondSnapshot);
     DataReferenceDescription secondReference =
         runCreateDataReferenceCall(initialWorkspaceId, secondRefBody);
 
@@ -375,7 +375,7 @@ public class DataReferenceServiceTest {
             .name("name")
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-            .reference(objectMapper.writeValueAsString(snapshot));
+            .reference(snapshot);
 
     DataReferenceDescription response = runCreateDataReferenceCall(initialWorkspaceId, refBody);
     DataReferenceDescription getResponse =

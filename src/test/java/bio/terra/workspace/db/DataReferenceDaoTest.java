@@ -49,7 +49,7 @@ public class DataReferenceDaoTest {
   private UUID referenceId;
   private String name;
   private ReferenceTypeEnum referenceType;
-  private String reference;
+  private DataRepoSnapshot reference;
   private String credentialId;
   private UUID resourceId;
   private CloningInstructionsEnum cloningInstructions;
@@ -61,10 +61,9 @@ public class DataReferenceDaoTest {
     name = "this_is_a_name";
     referenceType = ReferenceTypeEnum.DATA_REPO_SNAPSHOT;
 
-    DataRepoSnapshot drs = new DataRepoSnapshot();
-    drs.setInstanceName(UUID.randomUUID().toString());
-    drs.setSnapshot(UUID.randomUUID().toString());
-    reference = objectToString(drs);
+    reference = new DataRepoSnapshot();
+    reference.setInstanceName(UUID.randomUUID().toString());
+    reference.setSnapshot(UUID.randomUUID().toString());
 
     credentialId = UUID.randomUUID().toString();
     resourceId =
@@ -105,7 +104,7 @@ public class DataReferenceDaoTest {
               credentialId,
               cloningInstructions,
               referenceType,
-              reference.toString());
+              reference);
         });
   }
 

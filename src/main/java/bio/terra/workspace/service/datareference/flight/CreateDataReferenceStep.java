@@ -9,6 +9,7 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.MDCUtils;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
+import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.service.job.JobMapKeys;
 import java.util.UUID;
 import org.slf4j.MDC;
@@ -36,7 +37,8 @@ public class CreateDataReferenceStep implements Step {
     workingMap.put(CREATE_DATA_REFERENCE_COMPLETED_KEY, false);
     UUID referenceId = inputMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
     UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    String reference = inputMap.get(DataReferenceFlightMapKeys.REFERENCE, String.class);
+    DataRepoSnapshot reference =
+        inputMap.get(DataReferenceFlightMapKeys.REFERENCE, DataRepoSnapshot.class);
     CreateDataReferenceRequestBody body =
         inputMap.get(JobMapKeys.REQUEST.getKeyName(), CreateDataReferenceRequestBody.class);
 
