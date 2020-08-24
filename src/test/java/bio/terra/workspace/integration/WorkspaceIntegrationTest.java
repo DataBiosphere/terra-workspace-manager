@@ -193,7 +193,7 @@ public class WorkspaceIntegrationTest {
         new CreateDataReferenceRequestBody()
             .name(dataReferenceName)
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-            .reference(testUtils.mapToJson(snapshotReference))
+            .reference(snapshotReference)
             .cloningInstructions(CloningInstructionsEnum.NOTHING);
 
     WorkspaceResponse<DataReferenceDescription> postResponse =
