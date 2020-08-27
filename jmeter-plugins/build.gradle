@@ -1,0 +1,54 @@
+plugins {
+    id 'idea'
+    id 'java-library'
+}
+
+repositories {
+    maven {
+        url 'https://repo.maven.apache.org/maven2'
+        metadataSources {
+            mavenPom()
+            ignoreGradleMetadataRedirection()
+        }
+    }
+}
+
+version = '0.1.0'
+
+dependencies {
+    // This dependency is exported to consumers, that is to say found on their compile classpath.
+    api 'org.apache.commons:commons-math3:3.6.1'
+
+    // This dependency is used internally, and not exposed to consumers on their own compile classpath.
+    implementation 'com.google.guava:guava:26.0-jre'
+
+    // Use JUnit test framework
+    testImplementation 'junit:junit:4.12'
+
+    // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.10'
+
+    implementation group: 'com.google.auth', name: 'google-auth-library-oauth2-http', version: '0.20.0'
+    implementation group: "org.hashids", name: "hashids", version: "1.0.3"
+
+    // https://mvnrepository.com/artifact/org.apache.jmeter/ApacheJMeter
+    implementation group: 'org.apache.jmeter', name: 'ApacheJMeter', version: '5.3'
+
+    // https://mvnrepository.com/artifact/org.apache.jmeter/jorphan
+    implementation group: 'org.apache.jmeter', name: 'jorphan', version: '5.3'
+
+    // https://mvnrepository.com/artifact/org.apache.jmeter/ApacheJMeter_core
+    implementation group: 'org.apache.jmeter', name: 'ApacheJMeter_core', version: '5.3'
+}
+
+jar {
+    from('src/main/resources') {
+        include  '**/*.properties'
+        include  '**/*.xml'
+        include  '**/*.css'
+    }
+    manifest {
+        attributes('Implementation-Title': project.name,
+                'Implementation-Version': project.version)
+    }
+}
