@@ -29,6 +29,7 @@ public class XCorrelationIDHeader extends AbstractFunction {
     private static final int MAX_PARAMETER_COUNT = 2;
 
     static {
+        desc.add(getResString("x_correlation_id_prefix")); //$NON-NLS-1$
         desc.add(getResString("function_name_paropt")); //$NON-NLS-1$
     }
 
