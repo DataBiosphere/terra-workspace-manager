@@ -5,7 +5,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
@@ -71,7 +70,6 @@ public class DataReferenceServiceTest {
   @BeforeEach
   public void setup() {
     workspaceId = UUID.randomUUID();
-    doNothing().when(mockSamService).workspaceAuthz(any(), any(), any());
     doReturn(true).when(mockDataRepoService).snapshotExists(any(), any(), any());
     doReturn(false).when(mockDataRepoService).snapshotExists(any(), eq("fake-id"), any());
     AuthenticatedUserRequest fakeAuthentication = new AuthenticatedUserRequest();
