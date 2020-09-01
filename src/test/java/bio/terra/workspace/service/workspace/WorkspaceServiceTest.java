@@ -6,7 +6,6 @@ import static org.hamcrest.Matchers.blankOrNullString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
@@ -70,8 +69,6 @@ public class WorkspaceServiceTest {
 
   @BeforeEach
   public void setup() {
-    doNothing().when(mockSamService).createWorkspaceWithDefaults(any(), any());
-    doNothing().when(mockSamService).workspaceAuthz(any(), any(), any());
     doReturn(true).when(dataRepoService).snapshotExists(any(), any(), any());
     AuthenticatedUserRequest fakeAuthentication = new AuthenticatedUserRequest();
     fakeAuthentication
