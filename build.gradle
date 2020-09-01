@@ -44,6 +44,10 @@ allprojects {
 }
 
 repositories {
+	maven {
+		// Terra proxy for maven central
+		url "https://broadinstitute.jfrog.io/broadinstitute/maven-central/"
+	}
 	mavenCentral()
 	maven {
 		url "https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/"
