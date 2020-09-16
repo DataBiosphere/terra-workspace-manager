@@ -1,7 +1,7 @@
 # jmeter-plugins
 This module holds the following Custom JMeter Functions developed by Broad Institute.
 
-### `XCorrelationIDHeader` -
+### `XCorrelationID` -
 
 ### Dependencies (see build.gradle)
 
@@ -22,7 +22,8 @@ Substitute the project (`terra-kernel-k8s`) and bucket (`terra-kernel-k8s_cloudb
 Download the `jmeter-plugins-${version}.jar` from the bucket (`terra-kernel-k8s_cloudbuild`) into the ${JMETER_HOME}/`lib/ext` directory of any worker machine.
 
 ### Usage
-#### `XCorrelationIDHeader` -
+#### `XCorrelationID` -
 Use this function in any JMeter HTTP Header Manager to generate a unique Correlation ID for MDC log tracing.
+Recommended use is to employ a consistent way of naming the prefixes to facilitate tracing. For example, WorkspaceManager:CreateWorkspace for WSM CreateWorkspace tests.
 
-- `${__XCorrelationIDHeader('WorkspaceManager:CreateWorkspace')`
+- `${__XCorrelationID('WorkspaceManager:CreateWorkspace')`
