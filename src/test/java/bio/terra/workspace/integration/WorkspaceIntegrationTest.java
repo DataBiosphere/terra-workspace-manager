@@ -209,6 +209,43 @@ public class WorkspaceIntegrationTest {
         CloningInstructionsEnum.NOTHING, dataReferenceDescription.getCloningInstructions());
   }
 
+  @Test
+  @Tag(TAG_NEEDS_CLEANUP)
+  public void deleteDataReference(TestInfo testInfo) throws Exception {
+    // See note in createDataReference about this test's snapshot dependency in Data Repo.
+    UUID workspaceId = UUID.randomUUID();
+    testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
+
+    createDefaultWorkspace(workspaceId);
+
+    String userEmail = testConfig.getServiceAccountEmail();
+    String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId + "/datareferences";
+
+    DataRepoSnapshot snapshotReference =
+        new DataRepoSnapshot()
+            .snapshot(testConfig.getDataRepoSnapshotIdFromEnv())
+            .instanceName(testConfig.getDataRepoInstanceNameFromEnv());
+    String dataReferenceName = "workspace_integration_test_snapshot";
+    CreateDataReferenceRequestBody request =
+        new CreateDataReferenceRequestBody()
+            .name(dataReferenceName)
+            .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
+            .reference(snapshotReference)
+            .cloningInstructions(CloningInstructionsEnum.NOTHING);
+
+    WorkspaceResponse<DataReferenceDescription> postResponse =
+        workspaceManagerTestClient.post(
+            userEmail, path, testUtils.mapToJson(request), DataReferenceDescription.class);
+
+    Assertions.assertEquals(HttpStatus.OK, postResponse.getStatusCode());
+    UUID referenceId = postResponse.getResponseObject().getReferenceId();
+    String deletePath = path + "/" + referenceId;
+
+    WorkspaceResponse<?> deleteResponse =
+        workspaceManagerTestClient.delete(userEmail, deletePath, "");
+    Assertions.assertEquals(HttpStatus.valueOf(204), deleteResponse.getStatusCode());
+  }
+
   private WorkspaceResponse<CreatedWorkspace> createDefaultWorkspace(UUID workspaceId)
       throws Exception {
     String path = testConfig.getWsmWorkspacesBaseUrl();
