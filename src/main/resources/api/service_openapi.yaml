@@ -358,6 +358,8 @@ components:
             properties:
               ok:
                 type: boolean
+              critical:
+                type: boolean
               messages:
                 type: array
                 items:

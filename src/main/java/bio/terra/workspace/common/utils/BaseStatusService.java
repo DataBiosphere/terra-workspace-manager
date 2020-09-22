@@ -49,10 +49,12 @@ public class BaseStatusService {
           SystemStatusSystems subsystemStatus = null;
           try {
             subsystemStatus = subsystem.getStatusCheckFn().get();
+            subsystemStatus.critical(subsystem.isCritical());
           } catch (Exception e) {
             subsystemStatus =
                 new SystemStatusSystems()
                     .ok(false)
+                    .critical(subsystem.isCritical())
                     .addMessagesItem("Error checking status: " + e.getLocalizedMessage());
           }
           tmpSubsystemStatusMap.put(name, subsystemStatus);
