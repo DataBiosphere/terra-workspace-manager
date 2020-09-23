@@ -26,7 +26,7 @@ spring:
   cloud.gcp:
     credentials.location: file:${env.gcp-sa-path}
     trace.enabled: true
-  profiles.active: ${TERRA_ENV:dev} # This is evaluated before the "app" section above
+  profiles.active: ${TERRA_ENV:dev} # This is evaluated before the "env" section above
   resources:
     cache:
       cachecontrol:
