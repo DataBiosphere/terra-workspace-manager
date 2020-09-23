@@ -8,5 +8,5 @@ workspace.integration-test:
   wsmEndpoints:
     workspaces: api/workspaces/v1
   wsmUrls:
-#    dev: https://workspace.dsde-dev.broadinstitute.org/
-    dev: http://localhost:8080/
+    dev: https://workspace.dsde-dev.broadinstitute.org/
+#    dev: http://localhost:8080/
