@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "datarepo")
+@ConfigurationProperties(prefix = "workspace.datarepo")
 public class DataRepoConfig {
   private HashMap<String, String> instances;
 

@@ -1,0 +1,8 @@
+spring:
+  cloud.gcp.trace.project-id: broad-dsde-perf
+
+workspace:
+  datarepo.instances:
+    terra: https://jade-perf.datarepo-perf.broadinstitute.org/
+
+  sam.basePath: https://sam.dsde-perf.broadinstitute.org/

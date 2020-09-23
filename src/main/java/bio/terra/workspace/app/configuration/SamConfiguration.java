@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "sam")
+@ConfigurationProperties(prefix = "workspace.sam")
 public class SamConfiguration {
   private String basePath;
 

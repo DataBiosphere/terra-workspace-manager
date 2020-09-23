@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "db.stairway")
+@ConfigurationProperties(prefix = "workspace.db.stairway")
 public class StairwayJdbcConfiguration extends JdbcConfiguration {
   private String migrateUpgrade;
   private String forceClean;

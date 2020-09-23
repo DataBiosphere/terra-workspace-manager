@@ -32,15 +32,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @Tag("integration")
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = Main.class)
 @SpringBootTest
-@TestPropertySource("classpath:application-integration-test.properties")
+@ActiveProfiles(
+    profiles = "integration-test") // causes application-integration-test.yml to be loaded
 public class WorkspaceIntegrationTest {
 
   // TODO: As this class grows, consider if it's worth breaking down these workspace tests into

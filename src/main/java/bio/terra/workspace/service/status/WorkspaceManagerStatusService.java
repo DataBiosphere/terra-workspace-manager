@@ -27,7 +27,8 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
       DataRepoConfig dataRepoConfig,
       WorkspaceManagerJdbcConfiguration jdbcConfiguration,
       SamService samService,
-      @Value("${status-check-staleness-threshold.in.milliseconds}") long staleThresholdMillis) {
+      @Value("${workspace.status-check-staleness-threshold.in.milliseconds}")
+          long staleThresholdMillis) {
     super(staleThresholdMillis);
     this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
     Supplier<SystemStatusSystems> dbHealthFn =

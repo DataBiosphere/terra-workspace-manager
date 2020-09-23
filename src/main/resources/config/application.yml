@@ -1,0 +1,67 @@
+# All env variables that are used in one place
+# Exception: TERRA_ENV (which sets the active profile), which is parsed before this is.
+env:
+  db:
+    host: jdbc:postgresql://${DATABASE_HOSTNAME:127.0.0.1}:5432
+    init: ${INIT_DB:false}
+    stairway:
+      name: ${STAIRWAY_DATABASE_NAME:stairwaylib}
+      pass: ${STAIRWAY_DATABASE_USER_PASSWORD:stairwaypwd}
+      user: ${STAIRWAY_DATABASE_USER:stairwayuser}
+    ws:
+      name: ${STAIRWAY_DATABASE_NAME:wm}
+      pass: ${STAIRWAY_DATABASE_USER_PASSWORD:wmpwd}
+      user: ${STAIRWAY_DATABASE_USER:wmuser}
+  gcp-sa-path: ${CLOUD_TRACE_SA_PATH:rendered/service-account.json}
+
+logging.pattern.level: '%X{requestId} %5p'
+
+server:
+  compression:
+    enabled: true
+    mime-types: text/css,application/javascript
+  port: 8080
+
+spring:
+  cloud.gcp:
+    credentials.location: file:${env.gcp-sa-path}
+    trace.enabled: true
+  profiles.active: ${TERRA_ENV:dev} # This is evaluated before the "app" section above
+  resources:
+    cache:
+      cachecontrol:
+        max-age: 0
+        must-revalidate: true
+    static-locations: classpath:/api/
+  sleuth.sampler.probability: 0.1
+
+workspace:
+  datarepo.instances:
+    terra-alpha: https://data.alpha.envs-terra.bio
+    terra-dev: https://jade.datarepo-dev.broadinstitute.org
+    terra-prod: https://jade-terra.datarepo-prod.broadinstitute.org
+    terra-staging: https://data.staging.envs-terra.bio
+
+  db:
+    stairway:
+      forceClean: true
+      migrateUpgrade: ${env.db.init}
+      password: ${env.db.stairway.pass}
+      uri: ${env.db.host}/${env.db.stairway.name}
+      username: ${env.db.stairway.user}
+    workspace:
+      initializeOnStart: ${env.db.init}
+      password: ${env.db.ws.pass}
+      upgradeOnStart: true
+      uri: ${env.db.host}/${env.db.ws.name}
+      username: ${env.db.ws.user}
+
+  maxStairwayThreads: 4
+  resourceId: mc-terra-workspace-manager
+  stairwayPollingIntervalSeconds: 1
+  stairwayTimeoutSeconds: 1800
+
+  # Cache sub-system status results for 1m by default
+  status-check-frequency.in.milliseconds: 60000
+  # Failure to update subsystem status results for 10m indicates non-ok status
+  status-check-staleness-threshold.in.milliseconds: 600000

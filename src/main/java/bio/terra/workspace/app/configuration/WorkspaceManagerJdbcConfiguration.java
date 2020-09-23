@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Component
 @EnableConfigurationProperties
 @EnableTransactionManagement
-@ConfigurationProperties(prefix = "db.workspace")
+@ConfigurationProperties(prefix = "workspace.db.workspace")
 public class WorkspaceManagerJdbcConfiguration extends JdbcConfiguration {
   // These properties control code in the StartupInitializer. We would not use these in production,
   // but they
