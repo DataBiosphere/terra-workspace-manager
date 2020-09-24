@@ -13,8 +13,11 @@ import org.apache.commons.pool2.impl.GenericObjectPool;
 
 /** Base class for accessing JDBC configuration properties. */
 public class JdbcConfiguration {
+  /** URI of the database */
   private String uri;
+  /** Username for the database */
   private String username;
+  /** Password for the database */
   private String password;
 
   // Not a property

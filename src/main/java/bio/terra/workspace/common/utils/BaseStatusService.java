@@ -35,7 +35,7 @@ public class BaseStatusService {
     subsystems.put(name, subsystem);
   }
 
-  @Scheduled(fixedDelayString = "${workspace.status-check-frequency.in.milliseconds}")
+  @Scheduled(fixedDelayString = "${workspace.status-check.frequency-ms}")
   public void checkSubsystems() {
     // SystemStatus uses the thread-unsafe HashMap to hold SystemStatusSystems objects by default.
     // Instead of calling putSystemsItems from multiple threads, we safely construct a subsystem

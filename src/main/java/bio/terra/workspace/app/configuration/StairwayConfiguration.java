@@ -16,13 +16,15 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "workspace")
-public class ApplicationConfiguration {
-
-  // Configurable properties
+@ConfigurationProperties(prefix = "workspace.stairway")
+public class StairwayConfiguration {
+  /** Number of threads to keep available */
   private int maxStairwayThreads;
+  /** Timeout in seconds */
   private int stairwayTimeoutSeconds;
+  /** Polling interval in seconds */
   private int stairwayPollingIntervalSeconds;
+  /** For identifying the application in stairway */
   private String resourceId;
 
   public int getStairwayTimeoutSeconds() {
@@ -59,7 +61,7 @@ public class ApplicationConfiguration {
 
   @Bean("jdbcTemplate")
   public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate(
-      WorkspaceManagerJdbcConfiguration config) {
+      WorkspaceJdbcConfiguration config) {
     return new NamedParameterJdbcTemplate(config.getDataSource());
   }
 

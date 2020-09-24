@@ -4,6 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
+/** Read from the version.properties file auto-generated at build time */
 @Configuration
 @PropertySource("classpath:/generated/version.properties")
 @ConfigurationProperties(prefix = "version")

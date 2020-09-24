@@ -5,4 +5,4 @@ workspace:
   datarepo.instances:
     terra: https://data.staging.envs-terra.bio
 
-  sam.basePath: https://sam.dsde-staging.broadinstitute.org/
+  sam.base-path: https://sam.dsde-staging.broadinstitute.org/

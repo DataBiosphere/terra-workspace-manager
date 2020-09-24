@@ -1,6 +1,6 @@
 package bio.terra.workspace.integration.common.auth;
 
-import bio.terra.workspace.integration.common.configuration.TestConfiguration;
+import bio.terra.workspace.integration.common.configuration.IntegrationTestConfiguration;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import java.io.*;
@@ -12,12 +12,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuthService {
 
-  private final TestConfiguration testConfig;
+  private final IntegrationTestConfiguration testConfig;
   private File serviceAccountFile;
   private final List<String> userLoginScopes = Arrays.asList("openid", "email", "profile");
 
   @Autowired
-  public AuthService(TestConfiguration testConfig) {
+  public AuthService(IntegrationTestConfiguration testConfig) {
     this.testConfig = testConfig;
     Optional<String> serviceAccountFilePath =
         Optional.ofNullable(this.testConfig.getServiceAccountFilePath());

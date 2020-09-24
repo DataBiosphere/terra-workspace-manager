@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "workspace.datarepo")
 public class DataRepoConfig {
+  /** A map of valid names for data repo instances to their urls */
   private HashMap<String, String> instances;
 
   public HashMap<String, String> getInstances() {

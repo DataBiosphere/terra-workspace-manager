@@ -5,4 +5,4 @@ workspace:
   datarepo.instances:
     terra: https://data.alpha.envs-terra.bio
 
-  sam.basePath: https://sam.dsde-alpha.broadinstitute.org/
+  sam.base-path: https://sam.dsde-alpha.broadinstitute.org/

@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.status;
 
 import bio.terra.workspace.app.configuration.DataRepoConfig;
-import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
+import bio.terra.workspace.app.configuration.WorkspaceJdbcConfiguration;
 import bio.terra.workspace.common.utils.BaseStatusService;
 import bio.terra.workspace.common.utils.StatusSubsystem;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
@@ -25,10 +25,9 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
   public WorkspaceManagerStatusService(
       DataRepoService dataRepoService,
       DataRepoConfig dataRepoConfig,
-      WorkspaceManagerJdbcConfiguration jdbcConfiguration,
+      WorkspaceJdbcConfiguration jdbcConfiguration,
       SamService samService,
-      @Value("${workspace.status-check-staleness-threshold.in.milliseconds}")
-          long staleThresholdMillis) {
+      @Value("${workspace.status-check.staleness-threshold-ms}") long staleThresholdMillis) {
     super(staleThresholdMillis);
     this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
     Supplier<SystemStatusSystems> dbHealthFn =

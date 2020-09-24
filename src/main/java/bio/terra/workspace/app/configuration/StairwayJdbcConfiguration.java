@@ -6,9 +6,14 @@ import org.springframework.stereotype.Component;
 
 @Component
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "workspace.db.stairway")
+@ConfigurationProperties(prefix = "workspace.stairway.jdbc")
 public class StairwayJdbcConfiguration extends JdbcConfiguration {
+  /** Passed to Stairway, true will run the migrate to upgrade the database */
   private String migrateUpgrade;
+  /**
+   * Passed to Stairway, true will drop any existing stairway data and purge the work queue.
+   * Otherwise existing flights are recovered.
+   */
   private String forceClean;
 
   public String getMigrateUpgrade() {

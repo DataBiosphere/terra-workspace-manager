@@ -11,7 +11,7 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.stairway.exception.StairwayExecutionException;
-import bio.terra.workspace.app.configuration.ApplicationConfiguration;
+import bio.terra.workspace.app.configuration.StairwayConfiguration;
 import bio.terra.workspace.app.configuration.StairwayJdbcConfiguration;
 import bio.terra.workspace.common.exception.stairway.StairwayInitializationException;
 import bio.terra.workspace.common.utils.SamUtils;
@@ -44,14 +44,14 @@ public class JobService {
 
   private final Stairway stairway;
   private final SamService samService;
-  private final ApplicationConfiguration appConfig;
+  private final StairwayConfiguration appConfig;
   private final StairwayJdbcConfiguration stairwayJdbcConfiguration;
   private final ScheduledExecutorService executor;
 
   @Autowired
   public JobService(
       SamService samService,
-      ApplicationConfiguration appConfig,
+      StairwayConfiguration appConfig,
       StairwayJdbcConfiguration stairwayJdbcConfiguration,
       ApplicationContext applicationContext,
       ObjectMapper objectMapper) {

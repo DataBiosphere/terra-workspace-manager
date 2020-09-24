@@ -2,7 +2,7 @@ package bio.terra.workspace.integration;
 
 import bio.terra.workspace.app.Main;
 import bio.terra.workspace.integration.common.auth.AuthService;
-import bio.terra.workspace.integration.common.configuration.TestConfiguration;
+import bio.terra.workspace.integration.common.configuration.IntegrationTestConfiguration;
 import bio.terra.workspace.integration.common.response.WorkspaceResponse;
 import bio.terra.workspace.integration.common.utils.TestUtils;
 import bio.terra.workspace.integration.common.utils.WorkspaceManagerTestClient;
@@ -40,8 +40,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = Main.class)
 @SpringBootTest
-@ActiveProfiles(
-    profiles = "integration-test") // causes application-integration-test.yml to be loaded
+@ActiveProfiles(profiles = {"test", "integration-test"})
 public class WorkspaceIntegrationTest {
 
   // TODO: As this class grows, consider if it's worth breaking down these workspace tests into
@@ -49,7 +48,7 @@ public class WorkspaceIntegrationTest {
 
   @Autowired private WorkspaceManagerTestClient workspaceManagerTestClient;
   @Autowired private TestUtils testUtils;
-  @Autowired private TestConfiguration testConfig;
+  @Autowired private IntegrationTestConfiguration testConfig;
   @Autowired private AuthService authService;
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceIntegrationTest.class);
   private final ConcurrentHashMap<String, List<UUID>> testToWorkspaceIdsMap =

@@ -6,4 +6,4 @@ workspace:
   datarepo.instances:
     terra: https://jade.datarepo-dev.broadinstitute.org
 
-  sam.basePath: https://sam.dsde-dev.broadinstitute.org/
+  sam.base-path: https://sam.dsde-dev.broadinstitute.org/

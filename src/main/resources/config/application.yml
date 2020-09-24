@@ -23,6 +23,7 @@ server:
   port: 8080
 
 spring:
+  application.name: workspace
   cloud.gcp:
     credentials.location: file:${env.gcp-sa-path}
     trace.enabled: true
@@ -42,26 +43,25 @@ workspace:
     terra-prod: https://jade-terra.datarepo-prod.broadinstitute.org
     terra-staging: https://data.staging.envs-terra.bio
 
-  db:
-    stairway:
-      forceClean: true
-      migrateUpgrade: ${env.db.init}
+  jdbc:
+    initialize-on-start: ${env.db.init}
+    password: ${env.db.ws.pass}
+    upgrade-on-start: true
+    uri: ${env.db.host}/${env.db.ws.name}
+    username: ${env.db.ws.user}
+
+  stairway:
+    jdbc:
+      force-clean: true
+      migrate-upgrade: ${env.db.init}
       password: ${env.db.stairway.pass}
       uri: ${env.db.host}/${env.db.stairway.name}
       username: ${env.db.stairway.user}
-    workspace:
-      initializeOnStart: ${env.db.init}
-      password: ${env.db.ws.pass}
-      upgradeOnStart: true
-      uri: ${env.db.host}/${env.db.ws.name}
-      username: ${env.db.ws.user}
+    max-threads: 4
+    resource-id: mc-terra-workspace-manager
+    stairway-polling-interval-seconds: 1
+    stairway-timeout-seconds: 1800
 
-  maxStairwayThreads: 4
-  resourceId: mc-terra-workspace-manager
-  stairwayPollingIntervalSeconds: 1
-  stairwayTimeoutSeconds: 1800
-
-  # Cache sub-system status results for 1m by default
-  status-check-frequency.in.milliseconds: 60000
-  # Failure to update subsystem status results for 10m indicates non-ok status
-  status-check-staleness-threshold.in.milliseconds: 600000
+  status-check:
+    frequency-ms: 60000
+    staleness-threshold-ms: 600000

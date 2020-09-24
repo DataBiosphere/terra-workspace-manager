@@ -5,4 +5,4 @@ workspace:
   datarepo.instances:
     terra: https://jade-perf.datarepo-perf.broadinstitute.org/
 
-  sam.basePath: https://sam.dsde-perf.broadinstitute.org/
+  sam.base-path: https://sam.dsde-perf.broadinstitute.org/
