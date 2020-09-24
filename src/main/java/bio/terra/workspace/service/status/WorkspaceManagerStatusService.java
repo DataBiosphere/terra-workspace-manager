@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.status;
 
-import bio.terra.workspace.app.configuration.DataRepoConfig;
-import bio.terra.workspace.app.configuration.WorkspaceJdbcConfiguration;
+import bio.terra.workspace.app.configuration.DataRepoConfiguration;
+import bio.terra.workspace.app.configuration.JdbcConfiguration;
 import bio.terra.workspace.common.utils.BaseStatusService;
 import bio.terra.workspace.common.utils.StatusSubsystem;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
@@ -24,8 +24,8 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
   @Autowired
   public WorkspaceManagerStatusService(
       DataRepoService dataRepoService,
-      DataRepoConfig dataRepoConfig,
-      WorkspaceJdbcConfiguration jdbcConfiguration,
+      DataRepoConfiguration dataRepoConfiguration,
+      JdbcConfiguration jdbcConfiguration,
       SamService samService,
       @Value("${workspace.status-check.staleness-threshold-ms}") long staleThresholdMillis) {
     super(staleThresholdMillis);
@@ -36,7 +36,7 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
                 .ok(jdbcTemplate.getJdbcTemplate().execute(this::isConnectionValid));
     registerSubsystem("Postgres", new StatusSubsystem(dbHealthFn, /*isCritical=*/ true));
 
-    for (Map.Entry<String, String> instanceEntry : dataRepoConfig.getInstances().entrySet()) {
+    for (Map.Entry<String, String> instanceEntry : dataRepoConfiguration.getInstances().entrySet()) {
       Supplier<SystemStatusSystems> checkDataRepoInstanceFn =
           () -> dataRepoService.status(instanceEntry.getValue());
       registerSubsystem(

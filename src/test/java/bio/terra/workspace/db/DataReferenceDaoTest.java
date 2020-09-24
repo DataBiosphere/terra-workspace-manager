@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.app.Main;
-import bio.terra.workspace.app.configuration.WorkspaceJdbcConfiguration;
+import bio.terra.workspace.app.configuration.JdbcConfiguration;
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.generated.model.CloningInstructionsEnum;
@@ -39,7 +39,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @AutoConfigureMockMvc
 public class DataReferenceDaoTest {
 
-  @Autowired private WorkspaceJdbcConfiguration jdbcConfiguration;
+  @Autowired private JdbcConfiguration jdbcConfiguration;
 
   @Autowired private DataReferenceDao dataReferenceDao;
   @Autowired private WorkspaceDao workspaceDao;

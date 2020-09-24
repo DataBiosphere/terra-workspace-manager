@@ -50,6 +50,12 @@ workspace:
     uri: ${env.db.host}/${env.db.ws.name}
     username: ${env.db.ws.user}
 
+  job:
+    max-threads: 4
+    polling-interval-seconds: 1
+    resource-id: mc-terra-workspace-manager
+    timeout-seconds: 1800
+
   stairway:
     jdbc:
       force-clean: true
@@ -57,10 +63,6 @@ workspace:
       password: ${env.db.stairway.pass}
       uri: ${env.db.host}/${env.db.stairway.name}
       username: ${env.db.stairway.user}
-    max-threads: 4
-    resource-id: mc-terra-workspace-manager
-    stairway-polling-interval-seconds: 1
-    stairway-timeout-seconds: 1800
 
   status-check:
     frequency-ms: 60000

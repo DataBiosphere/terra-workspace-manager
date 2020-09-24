@@ -6,7 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 import bio.terra.workspace.app.Main;
-import bio.terra.workspace.app.configuration.DataRepoConfig;
+import bio.terra.workspace.app.configuration.DataRepoConfiguration;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.SamService;
@@ -32,7 +32,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class WorkspaceManagerStatusServiceTest {
 
   @MockBean private DataRepoService mockDataRepoService;
-  @MockBean private DataRepoConfig mockDataRepoConfig;
+  @MockBean private DataRepoConfiguration mockDataRepoConfiguration;
   @MockBean private SamService mockSamService;
 
   @Autowired private WorkspaceManagerStatusService statusService;

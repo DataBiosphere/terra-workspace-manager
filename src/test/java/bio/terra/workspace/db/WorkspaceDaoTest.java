@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.app.Main;
-import bio.terra.workspace.app.configuration.WorkspaceJdbcConfiguration;
+import bio.terra.workspace.app.configuration.JdbcConfiguration;
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
@@ -33,7 +33,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @AutoConfigureMockMvc
 public class WorkspaceDaoTest {
 
-  @Autowired private WorkspaceJdbcConfiguration jdbcConfiguration;
+  @Autowired private JdbcConfiguration jdbcConfiguration;
 
   private NamedParameterJdbcTemplate jdbcTemplate;
 

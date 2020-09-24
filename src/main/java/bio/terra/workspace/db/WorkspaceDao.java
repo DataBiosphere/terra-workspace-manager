@@ -1,6 +1,6 @@
 package bio.terra.workspace.db;
 
-import bio.terra.workspace.app.configuration.WorkspaceJdbcConfiguration;
+import bio.terra.workspace.app.configuration.JdbcConfiguration;
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
@@ -21,7 +21,7 @@ public class WorkspaceDao {
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   @Autowired
-  public WorkspaceDao(WorkspaceJdbcConfiguration jdbcConfiguration) {
+  public WorkspaceDao(JdbcConfiguration jdbcConfiguration) {
     jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
   }
 

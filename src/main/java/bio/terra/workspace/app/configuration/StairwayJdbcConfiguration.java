@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "workspace.stairway.jdbc")
-public class StairwayJdbcConfiguration extends JdbcConfiguration {
+public class StairwayJdbcConfiguration extends BaseJdbcConfiguration {
   /** Passed to Stairway, true will run the migrate to upgrade the database */
   private String migrateUpgrade;
   /**
