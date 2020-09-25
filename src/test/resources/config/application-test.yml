@@ -1,4 +1,5 @@
-spring.cloud.gcp.trace.enabled: false
+spring.profiles.include:
+  - no-trace
 
 workspace:
   datarepo.instances:
