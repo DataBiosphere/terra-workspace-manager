@@ -1,5 +1,6 @@
-package bio.terra.workspace.app.configuration;
+package bio.terra.workspace.app.configuration.external;
 
+import bio.terra.workspace.app.configuration.BaseDatabaseConfiguration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -11,8 +12,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Component
 @EnableConfigurationProperties
 @EnableTransactionManagement
-@ConfigurationProperties(prefix = "workspace.jdbc")
-public class JdbcConfiguration extends BaseJdbcConfiguration {
+@ConfigurationProperties(prefix = "workspace.workspace-database")
+public class WorkspaceDatabaseConfiguration extends BaseDatabaseConfiguration {
   // These properties control code in the StartupInitializer. We would not use these in production,
   // but they
   // are handy to set for development and testing. There are only three interesting states:

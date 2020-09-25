@@ -11,8 +11,8 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.stairway.exception.StairwayExecutionException;
-import bio.terra.workspace.app.configuration.JobConfiguration;
-import bio.terra.workspace.app.configuration.StairwayJdbcConfiguration;
+import bio.terra.workspace.app.configuration.external.JobConfiguration;
+import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
 import bio.terra.workspace.common.exception.stairway.StairwayInitializationException;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.generated.model.JobModel;
@@ -45,19 +45,19 @@ public class JobService {
   private final Stairway stairway;
   private final SamService samService;
   private final JobConfiguration jobConfig;
-  private final StairwayJdbcConfiguration stairwayJdbcConfiguration;
+  private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
   private final ScheduledExecutorService executor;
 
   @Autowired
   public JobService(
       SamService samService,
       JobConfiguration jobConfig,
-      StairwayJdbcConfiguration stairwayJdbcConfiguration,
+      StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
       ApplicationContext applicationContext,
       ObjectMapper objectMapper) {
     this.samService = samService;
     this.jobConfig = jobConfig;
-    this.stairwayJdbcConfiguration = stairwayJdbcConfiguration;
+    this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
     this.executor = Executors.newScheduledThreadPool(jobConfig.getMaxThreads());
     StairwayExceptionSerializer serializer = new StairwayExceptionSerializer(objectMapper);
     Stairway.Builder builder =
@@ -183,9 +183,9 @@ public class JobService {
   public void initialize() {
     try {
       stairway.initialize(
-          stairwayJdbcConfiguration.getDataSource(),
-          stairwayJdbcConfiguration.isForceClean(),
-          stairwayJdbcConfiguration.isMigrateUpgrade());
+          stairwayDatabaseConfiguration.getDataSource(),
+          stairwayDatabaseConfiguration.isForceClean(),
+          stairwayDatabaseConfiguration.isMigrateUpgrade());
       stairway.recoverAndStart(null);
 
     } catch (StairwayException | InterruptedException stairwayEx) {

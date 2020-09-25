@@ -1,13 +1,14 @@
-package bio.terra.workspace.app.configuration;
+package bio.terra.workspace.app.configuration.external;
 
+import bio.terra.workspace.app.configuration.BaseDatabaseConfiguration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "workspace.stairway.jdbc")
-public class StairwayJdbcConfiguration extends BaseJdbcConfiguration {
+@ConfigurationProperties(prefix = "workspace.stairway-database")
+public class StairwayDatabaseConfiguration extends BaseDatabaseConfiguration {
   /** Passed to Stairway, true will run the migrate to upgrade the database */
   private String migrateUpgrade;
   /**

@@ -1,4 +1,4 @@
-package bio.terra.workspace.app.configuration;
+package bio.terra.workspace.app.configuration.external;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

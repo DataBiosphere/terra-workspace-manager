@@ -1,7 +1,7 @@
 package bio.terra.workspace.app.configuration.spring;
 
 import bio.terra.workspace.app.StartupInitializer;
-import bio.terra.workspace.app.configuration.JdbcConfiguration;
+import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -17,7 +17,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 public class BeanConfig {
   @Bean("jdbcTemplate")
   public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate(
-      JdbcConfiguration config) {
+      WorkspaceDatabaseConfiguration config) {
     return new NamedParameterJdbcTemplate(config.getDataSource());
   }
 

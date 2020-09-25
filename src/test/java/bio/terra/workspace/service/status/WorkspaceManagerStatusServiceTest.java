@@ -6,7 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 import bio.terra.workspace.app.Main;
-import bio.terra.workspace.app.configuration.DataRepoConfiguration;
+import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.SamService;

@@ -4,7 +4,7 @@ import bio.terra.datarepo.api.RepositoryApi;
 import bio.terra.datarepo.api.UnauthenticatedApi;
 import bio.terra.datarepo.client.ApiClient;
 import bio.terra.datarepo.client.ApiException;
-import bio.terra.workspace.app.configuration.DataRepoConfiguration;
+import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
 import bio.terra.workspace.app.configuration.spring.ApiResourceConfig;
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.SystemStatusSystems;

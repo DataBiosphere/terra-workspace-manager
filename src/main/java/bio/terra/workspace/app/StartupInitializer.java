@@ -1,6 +1,6 @@
 package bio.terra.workspace.app;
 
-import bio.terra.workspace.app.configuration.JdbcConfiguration;
+import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.migrate.MigrateService;
 import org.springframework.context.ApplicationContext;
@@ -11,14 +11,15 @@ public final class StartupInitializer {
   public static void initialize(ApplicationContext applicationContext) {
     // Initialize or upgrade the database depending on the configuration
     MigrateService migrateService = (MigrateService) applicationContext.getBean("migrateService");
-    JdbcConfiguration jdbcConfiguration =
-        (JdbcConfiguration) applicationContext.getBean("jdbcConfiguration");
+    WorkspaceDatabaseConfiguration workspaceDatabaseConfiguration =
+        (WorkspaceDatabaseConfiguration)
+            applicationContext.getBean("workspaceDatabaseConfiguration");
     JobService jobService = (JobService) applicationContext.getBean("jobService");
 
-    if (jdbcConfiguration.isInitializeOnStart()) {
-      migrateService.initialize(changelogPath, jdbcConfiguration.getDataSource());
-    } else if (jdbcConfiguration.isUpgradeOnStart()) {
-      migrateService.upgrade(changelogPath, jdbcConfiguration.getDataSource());
+    if (workspaceDatabaseConfiguration.isInitializeOnStart()) {
+      migrateService.initialize(changelogPath, workspaceDatabaseConfiguration.getDataSource());
+    } else if (workspaceDatabaseConfiguration.isUpgradeOnStart()) {
+      migrateService.upgrade(changelogPath, workspaceDatabaseConfiguration.getDataSource());
     }
 
     // The JobService initialization also handles Stairway initialization.

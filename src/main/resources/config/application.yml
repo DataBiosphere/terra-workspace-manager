@@ -29,10 +29,9 @@ spring:
     trace.enabled: true
   profiles.active: ${TERRA_ENV:dev} # This is evaluated before the "env" section above
   resources:
-    cache:
-      cachecontrol:
-        max-age: 0
-        must-revalidate: true
+    cache.cachecontrol:
+      max-age: 0
+      must-revalidate: true
     static-locations: classpath:/api/
   sleuth.sampler.probability: 0.1
 
@@ -43,27 +42,26 @@ workspace:
     terra-prod: https://jade-terra.datarepo-prod.broadinstitute.org
     terra-staging: https://data.staging.envs-terra.bio
 
-  jdbc:
-    initialize-on-start: ${env.db.init}
-    password: ${env.db.ws.pass}
-    upgrade-on-start: true
-    uri: ${env.db.host}/${env.db.ws.name}
-    username: ${env.db.ws.user}
-
   job:
     max-threads: 4
     polling-interval-seconds: 1
     resource-id: mc-terra-workspace-manager
     timeout-seconds: 1800
 
-  stairway:
-    jdbc:
-      force-clean: true
-      migrate-upgrade: ${env.db.init}
-      password: ${env.db.stairway.pass}
-      uri: ${env.db.host}/${env.db.stairway.name}
-      username: ${env.db.stairway.user}
+  stairway-database:
+    force-clean: true
+    migrate-upgrade: ${env.db.init}
+    password: ${env.db.stairway.pass}
+    uri: ${env.db.host}/${env.db.stairway.name}
+    username: ${env.db.stairway.user}
 
   status-check:
     frequency-ms: 60000
     staleness-threshold-ms: 600000
+
+  workspace-database:
+    initialize-on-start: ${env.db.init}
+    password: ${env.db.ws.pass}
+    upgrade-on-start: true
+    uri: ${env.db.host}/${env.db.ws.name}
+    username: ${env.db.ws.user}
