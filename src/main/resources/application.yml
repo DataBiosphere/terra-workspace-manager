@@ -44,7 +44,7 @@ spring:
       max-age: 0
       must-revalidate: true
     static-locations: classpath:/api/
-  sleuth.sampler.probability: ${env.sampling-probability}
+  sleuth.sampler.probability: ${env.logging.sampling-probability}
 
 workspace:
   datarepo.instances:
