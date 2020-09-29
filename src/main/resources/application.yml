@@ -22,7 +22,6 @@ env:
     terra-datarepo: ${TERRA_DATAREPO_URL:https://jade.datarepo-dev.broadinstitute.org}
 
 # Below here is non-deployment-specific
-# Anything environment-specific goes in an application-[profile].yaml
 
 logging.pattern.level: '%X{requestId} %5p'
 
@@ -44,7 +43,9 @@ spring:
       max-age: 0
       must-revalidate: true
     static-locations: classpath:/api/
-  sleuth.sampler.probability: ${env.logging.sampling-probability}
+  sleuth:
+    enabled: ${env.logging.trace-enabled}
+    sampler.probability: ${env.logging.sampling-probability}
 
 workspace:
   datarepo.instances:
