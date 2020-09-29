@@ -8,5 +8,6 @@ workspace.integration-test:
   wsm-endpoints:
     workspaces: api/workspaces/v1
   wsm-urls:
+# swap the commented line to run integration tests against local
     dev: https://workspace.dsde-dev.broadinstitute.org/
 #    dev: http://localhost:8080/

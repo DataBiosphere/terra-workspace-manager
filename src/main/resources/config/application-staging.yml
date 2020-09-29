@@ -1,8 +1,0 @@
-spring:
-  cloud.gcp.trace.project-id: broad-dsde-staging
-
-workspace:
-  datarepo.instances:
-    terra: https://data.staging.envs-terra.bio
-
-  sam.base-path: https://sam.dsde-staging.broadinstitute.org/

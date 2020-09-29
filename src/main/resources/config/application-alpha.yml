@@ -1,8 +1,0 @@
-spring:
-  cloud.gcp.trace.project-id: broad-dsde-alpha
-
-workspace:
-  datarepo.instances:
-    terra: https://data.alpha.envs-terra.bio
-
-  sam.base-path: https://sam.dsde-alpha.broadinstitute.org/

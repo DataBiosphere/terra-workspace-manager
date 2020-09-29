@@ -1,5 +1,5 @@
 # All env variables that are used in one place
-# Exception: TERRA_ENV (which sets the active profile), which is parsed before this is.
+# This is for deployment-specific values, which may be managed by other teams
 env:
   db:
     host: jdbc:postgresql://${DATABASE_HOSTNAME:127.0.0.1}:5432
@@ -12,7 +12,17 @@ env:
       name: ${STAIRWAY_DATABASE_NAME:wm}
       pass: ${STAIRWAY_DATABASE_USER_PASSWORD:wmpwd}
       user: ${STAIRWAY_DATABASE_USER:wmuser}
-  gcp-sa-path: ${CLOUD_TRACE_SA_PATH:rendered/service-account.json}
+  logging:
+    project-id: ${SERVICE_GOOGLE_PROJECT:broad-dsde-dev}
+    sa-path: ${CLOUD_TRACE_SA_PATH:rendered/service-account.json}
+    sampling-probability: ${SAMPLING_PROBABILITY:1.0}
+    trace-enabled: ${CLOUD_TRACE_ENABLED:false}
+  urls: # While we've traditionally thought of these as env specific and ok to hardcode, with kubernetes they may change
+    sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org/}
+    terra-datarepo: ${TERRA_DATAREPO_URL:https://jade.datarepo-dev.broadinstitute.org}
+
+# Below here is non-deployment-specific
+# Anything environment-specific goes in an application-[profile].yaml
 
 logging.pattern.level: '%X{requestId} %5p'
 
@@ -25,18 +35,20 @@ server:
 spring:
   application.name: workspace
   cloud.gcp:
-    credentials.location: file:${env.gcp-sa-path}
-    trace.enabled: true
-  profiles.active: ${TERRA_ENV:dev,no-trace} # This is evaluated before the "env" section above
+    credentials.location: file:${env.logging.sa-path}
+    trace:
+      enabled: ${env.logging.trace-enabled}
+      project-id: ${env.logging.project-id}
   resources:
     cache.cachecontrol:
       max-age: 0
       must-revalidate: true
     static-locations: classpath:/api/
-  sleuth.sampler.probability: 0.1
+  sleuth.sampler.probability: ${env.sampling-probability}
 
 workspace:
   datarepo.instances:
+    terra: ${env.urls.terra-datarepo}
     terra-alpha: https://data.alpha.envs-terra.bio
     terra-dev: https://jade.datarepo-dev.broadinstitute.org
     terra-prod: https://jade-terra.datarepo-prod.broadinstitute.org
@@ -47,6 +59,8 @@ workspace:
     polling-interval-seconds: 1
     resource-id: mc-terra-workspace-manager
     timeout-seconds: 1800
+
+  sam.base-path: ${env.urls.sam}
 
   stairway-database:
     force-clean: true

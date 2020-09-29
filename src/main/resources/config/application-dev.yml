@@ -1,9 +1,0 @@
-spring:
-  cloud.gcp.trace.project-id: broad-dsde-dev
-  sleuth.sampler.probability: 1.0
-
-workspace:
-  datarepo.instances:
-    terra: https://jade.datarepo-dev.broadinstitute.org
-
-  sam.base-path: https://sam.dsde-dev.broadinstitute.org/
