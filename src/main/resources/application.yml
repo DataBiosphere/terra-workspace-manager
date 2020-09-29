@@ -15,7 +15,7 @@ env:
   logging:
     project-id: ${SERVICE_GOOGLE_PROJECT:broad-dsde-dev}
     sa-path: ${CLOUD_TRACE_SA_PATH:rendered/service-account.json}
-    sampling-probability: ${SAMPLING_PROBABILITY:1.0}
+    sampling-probability: ${SAMPLING_PROBABILITY:0}
     trace-enabled: ${CLOUD_TRACE_ENABLED:false}
   urls: # While we've traditionally thought of these as env specific and ok to hardcode, with kubernetes they may change
     sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org/}
@@ -43,9 +43,7 @@ spring:
       max-age: 0
       must-revalidate: true
     static-locations: classpath:/api/
-  sleuth:
-    enabled: ${env.logging.trace-enabled}
-    sampler.probability: ${env.logging.sampling-probability}
+  sleuth.sampler.probability: ${env.logging.sampling-probability}
 
 workspace:
   datarepo.instances:
