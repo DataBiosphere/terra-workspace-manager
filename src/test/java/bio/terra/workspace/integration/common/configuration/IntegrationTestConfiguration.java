@@ -8,8 +8,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "it")
-public class TestConfiguration {
+@ConfigurationProperties(prefix = "workspace.integration-test")
+public class IntegrationTestConfiguration {
 
   @Value("${TEST_ENV:dev}")
   private String testEnv;

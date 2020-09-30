@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.status;
 
-import bio.terra.workspace.app.configuration.DataRepoConfig;
-import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
+import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
+import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.common.utils.BaseStatusService;
 import bio.terra.workspace.common.utils.StatusSubsystem;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
@@ -24,19 +24,21 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
   @Autowired
   public WorkspaceManagerStatusService(
       DataRepoService dataRepoService,
-      DataRepoConfig dataRepoConfig,
-      WorkspaceManagerJdbcConfiguration jdbcConfiguration,
+      DataRepoConfiguration dataRepoConfiguration,
+      WorkspaceDatabaseConfiguration workspaceDatabaseConfiguration,
       SamService samService,
-      @Value("${status-check-staleness-threshold.in.milliseconds}") long staleThresholdMillis) {
+      @Value("${workspace.status-check.staleness-threshold-ms}") long staleThresholdMillis) {
     super(staleThresholdMillis);
-    this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
+    this.jdbcTemplate =
+        new NamedParameterJdbcTemplate(workspaceDatabaseConfiguration.getDataSource());
     Supplier<SystemStatusSystems> dbHealthFn =
         () ->
             new SystemStatusSystems()
                 .ok(jdbcTemplate.getJdbcTemplate().execute(this::isConnectionValid));
     registerSubsystem("Postgres", new StatusSubsystem(dbHealthFn, /*isCritical=*/ true));
 
-    for (Map.Entry<String, String> instanceEntry : dataRepoConfig.getInstances().entrySet()) {
+    for (Map.Entry<String, String> instanceEntry :
+        dataRepoConfiguration.getInstances().entrySet()) {
       Supplier<SystemStatusSystems> checkDataRepoInstanceFn =
           () -> dataRepoService.status(instanceEntry.getValue());
       registerSubsystem(

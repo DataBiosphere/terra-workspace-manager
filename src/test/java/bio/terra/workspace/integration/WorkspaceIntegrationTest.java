@@ -5,9 +5,9 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.workspace.app.Main;
+import bio.terra.workspace.common.BaseIntegrationTest;
 import bio.terra.workspace.integration.common.auth.AuthService;
-import bio.terra.workspace.integration.common.configuration.TestConfiguration;
+import bio.terra.workspace.integration.common.configuration.IntegrationTestConfiguration;
 import bio.terra.workspace.integration.common.response.WorkspaceResponse;
 import bio.terra.workspace.integration.common.utils.TestUtils;
 import bio.terra.workspace.integration.common.utils.WorkspaceManagerTestClient;
@@ -31,29 +31,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@Tag("integration")
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = Main.class)
-@SpringBootTest
-@TestPropertySource("classpath:application-integration-test.properties")
-public class WorkspaceIntegrationTest {
+public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   // TODO: As this class grows, consider if it's worth breaking down these workspace tests into
   //  different class files based on the the type of workspace action (Create, Get, Delete, etc).
 
   @Autowired private WorkspaceManagerTestClient workspaceManagerTestClient;
   @Autowired private TestUtils testUtils;
-  @Autowired private TestConfiguration testConfig;
+  @Autowired private IntegrationTestConfiguration testConfig;
   @Autowired private AuthService authService;
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceIntegrationTest.class);
   private final ConcurrentHashMap<String, List<UUID>> testToWorkspaceIdsMap =

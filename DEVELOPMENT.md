@@ -75,22 +75,7 @@ To run all tests:
 
 ### Running Workspace Manager
 
-To run locally, you'll first need to export a few environment variables:
-
-```sh
-export DATABASE_USER=wmuser
-export DATABASE_USER_PASSWORD=wmpwd
-export DATABASE_NAME=wm
-export STAIRWAY_DATABASE_USER=stairwayuser
-export STAIRWAY_DATABASE_USER_PASSWORD=stairwaypwd
-export STAIRWAY_DATABASE_NAME=stairwaylib
-export SAMPLING_PROBABILITY=1.0
-export CLOUD_TRACE_SA_PATH=rendered/service-account.json
-export SERVICE_GOOGLE_PROJECT=broad-dsde-dev
-export SAM_ADDRESS=https://sam.dsde-dev.broadinstitute.org
-```
-
-and render configs if you haven't already 
+To run locally, you'll first need to render configs (if you haven't already): 
 
 ```sh
 ./render_config.sh # First time only

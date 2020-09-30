@@ -1,0 +1,17 @@
+workspace:
+  datarepo.instances:
+    fake-valid-test: https://fake-valid-data-repo-url.broadinstitute.org
+
+  sam.base-path: https://sam.dsde-dev.broadinstitute.org
+
+  stairway-database:
+    migrate-upgrade: true
+    password: stairwaypwd
+    uri: jdbc:postgresql://127.0.0.1:5432/stairwaylib
+    username: stairwayuser
+
+  workspace-database:
+    initialize-on-start: true
+    password: dbpwd
+    uri: jdbc:postgresql://127.0.0.1:5432/testdb
+    username: dbuser

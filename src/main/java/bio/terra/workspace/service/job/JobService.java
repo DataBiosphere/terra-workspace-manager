@@ -11,8 +11,8 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.stairway.exception.StairwayExecutionException;
-import bio.terra.workspace.app.configuration.ApplicationConfiguration;
-import bio.terra.workspace.app.configuration.StairwayJdbcConfiguration;
+import bio.terra.workspace.app.configuration.external.JobConfiguration;
+import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
 import bio.terra.workspace.common.exception.stairway.StairwayInitializationException;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.generated.model.JobModel;
@@ -44,21 +44,21 @@ public class JobService {
 
   private final Stairway stairway;
   private final SamService samService;
-  private final ApplicationConfiguration appConfig;
-  private final StairwayJdbcConfiguration stairwayJdbcConfiguration;
+  private final JobConfiguration jobConfig;
+  private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
   private final ScheduledExecutorService executor;
 
   @Autowired
   public JobService(
       SamService samService,
-      ApplicationConfiguration appConfig,
-      StairwayJdbcConfiguration stairwayJdbcConfiguration,
+      JobConfiguration jobConfig,
+      StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
       ApplicationContext applicationContext,
       ObjectMapper objectMapper) {
     this.samService = samService;
-    this.appConfig = appConfig;
-    this.stairwayJdbcConfiguration = stairwayJdbcConfiguration;
-    this.executor = Executors.newScheduledThreadPool(appConfig.getMaxStairwayThreads());
+    this.jobConfig = jobConfig;
+    this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
+    this.executor = Executors.newScheduledThreadPool(jobConfig.getMaxThreads());
     StairwayExceptionSerializer serializer = new StairwayExceptionSerializer(objectMapper);
     Stairway.Builder builder =
         Stairway.newBuilder()
@@ -134,9 +134,8 @@ public class JobService {
 
   protected void waitForJob(String jobId) {
     try {
-      int pollSeconds = appConfig.getStairwayPollingIntervalSeconds();
-      int pollCycles =
-          appConfig.getStairwayTimeoutSeconds() / appConfig.getStairwayPollingIntervalSeconds();
+      int pollSeconds = jobConfig.getPollingIntervalSeconds();
+      int pollCycles = jobConfig.getTimeoutSeconds() / jobConfig.getPollingIntervalSeconds();
       for (int i = 0; i < pollCycles; i++) {
         ScheduledFuture<FlightState> futureState =
             executor.schedule(new PollFlightTask(stairway, jobId), pollSeconds, TimeUnit.SECONDS);
@@ -184,9 +183,9 @@ public class JobService {
   public void initialize() {
     try {
       stairway.initialize(
-          stairwayJdbcConfiguration.getDataSource(),
-          stairwayJdbcConfiguration.isForceClean(),
-          stairwayJdbcConfiguration.isMigrateUpgrade());
+          stairwayDatabaseConfiguration.getDataSource(),
+          stairwayDatabaseConfiguration.isForceClean(),
+          stairwayDatabaseConfiguration.isMigrateUpgrade());
       stairway.recoverAndStart(null);
 
     } catch (StairwayException | InterruptedException stairwayEx) {
@@ -202,7 +201,7 @@ public class JobService {
             samService.isAuthorized(
                 userReq.getRequiredToken(),
                 SamUtils.SAM_WORKSPACE_MANAGER_RESOURCE,
-                appConfig.getResourceId(),
+                jobConfig.getResourceId(),
                 SamUtils.SAM_WORKSPACE_MANAGER_DELETE_JOBS_ACTION);
 
         // if the user has access to all jobs, no need to check for this one individually

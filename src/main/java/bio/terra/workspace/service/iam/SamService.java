@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.iam;
 
-import bio.terra.workspace.app.configuration.ApiResourceConfig;
-import bio.terra.workspace.app.configuration.SamConfiguration;
+import bio.terra.workspace.app.configuration.external.SamConfiguration;
+import bio.terra.workspace.app.configuration.spring.ApiResourceConfig;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.common.utils.SamUtils;

@@ -11,10 +11,13 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 
-/** Base class for accessing JDBC configuration properties. */
-public class JdbcConfiguration {
+/** Base class for accessing database connection configuration properties. */
+public class BaseDatabaseConfiguration {
+  /** URI of the database */
   private String uri;
+  /** Username for the database */
   private String username;
+  /** Password for the database */
   private String password;
 
   // Not a property
