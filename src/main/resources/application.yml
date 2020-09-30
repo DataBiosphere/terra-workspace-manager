@@ -9,9 +9,9 @@ env:
       pass: ${STAIRWAY_DATABASE_USER_PASSWORD:stairwaypwd}
       user: ${STAIRWAY_DATABASE_USER:stairwayuser}
     ws:
-      name: ${STAIRWAY_DATABASE_NAME:wm}
-      pass: ${STAIRWAY_DATABASE_USER_PASSWORD:wmpwd}
-      user: ${STAIRWAY_DATABASE_USER:wmuser}
+      name: ${DATABASE_NAME:wm}
+      pass: ${DATABASE_USER_PASSWORD:wmpwd}
+      user: ${DATABASE_USER:wmuser}
   logging:
     project-id: ${SERVICE_GOOGLE_PROJECT:broad-dsde-dev}
     sa-path: ${CLOUD_TRACE_SA_PATH:rendered/service-account.json}
