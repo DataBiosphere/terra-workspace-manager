@@ -3,41 +3,41 @@ package bio.terra.workspace.app.configuration.external;
 import bio.terra.workspace.app.configuration.BaseDatabaseConfiguration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Configuration;
 
-@Component
+@Configuration
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "workspace.stairway-database")
 public class StairwayDatabaseConfiguration extends BaseDatabaseConfiguration {
   /** Passed to Stairway, true will run the migrate to upgrade the database */
-  private String migrateUpgrade;
+  private boolean migrateUpgrade;
   /**
    * Passed to Stairway, true will drop any existing stairway data and purge the work queue.
    * Otherwise existing flights are recovered.
    */
-  private String forceClean;
+  private boolean forceClean;
 
-  public String getMigrateUpgrade() {
+  public boolean getMigrateUpgrade() {
     return migrateUpgrade;
   }
 
-  public void setMigrateUpgrade(String migrateUpgrade) {
+  public void setMigrateUpgrade(boolean migrateUpgrade) {
     this.migrateUpgrade = migrateUpgrade;
   }
 
-  public String getForceClean() {
+  public boolean getForceClean() {
     return forceClean;
   }
 
-  public void setForceClean(String forceClean) {
+  public void setForceClean(boolean forceClean) {
     this.forceClean = forceClean;
   }
 
   public boolean isMigrateUpgrade() {
-    return Boolean.parseBoolean(migrateUpgrade);
+    return migrateUpgrade;
   }
 
   public boolean isForceClean() {
-    return Boolean.parseBoolean(forceClean);
+    return forceClean;
   }
 }
