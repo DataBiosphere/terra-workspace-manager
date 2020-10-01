@@ -26,11 +26,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -158,6 +154,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     assertTrue(deleteWorkspaceResponse.isErrorObject());
   }
 
+  @Disabled("Disable temporarily due to Jade dev maintenance. AS-506 to re-enable")
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
   public void createDataReference(TestInfo testInfo) throws Exception {
@@ -178,6 +175,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
         CloningInstructionsEnum.NOTHING, dataReferenceDescription.getCloningInstructions());
   }
 
+  @Disabled("Disable temporarily due to Jade dev maintenance. AS-506 to re-enable")
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
   public void deleteDataReference(TestInfo testInfo) throws Exception {
@@ -198,6 +196,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     assertEquals(HttpStatus.valueOf(204), deleteResponse.getStatusCode());
   }
 
+  @Disabled("Disable temporarily due to Jade dev maintenance. AS-506 to re-enable")
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
   public void listDataReference(TestInfo testInfo) throws Exception {
