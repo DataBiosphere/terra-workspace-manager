@@ -158,8 +158,11 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     assertTrue(deleteWorkspaceResponse.isErrorObject());
   }
 
-  @Test
-  @Tag(TAG_NEEDS_CLEANUP)
+  /*
+   Disable temporarily due to Jade dev maintenance. AS-506 to re-enable
+   @Test
+   @Tag(TAG_NEEDS_CLEANUP)
+  */
   public void createDataReference(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
@@ -178,8 +181,11 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
         CloningInstructionsEnum.NOTHING, dataReferenceDescription.getCloningInstructions());
   }
 
-  @Test
-  @Tag(TAG_NEEDS_CLEANUP)
+  /*
+   Disable temporarily due to Jade dev maintenance. AS-506 to re-enable
+   @Test
+   @Tag(TAG_NEEDS_CLEANUP)
+  */
   public void deleteDataReference(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
@@ -198,8 +204,11 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     assertEquals(HttpStatus.valueOf(204), deleteResponse.getStatusCode());
   }
 
-  @Test
-  @Tag(TAG_NEEDS_CLEANUP)
+  /*
+   Disable temporarily due to Jade dev maintenance. AS-506 to re-enable
+   @Test
+   @Tag(TAG_NEEDS_CLEANUP)
+  */
   public void listDataReference(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
