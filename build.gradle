@@ -4,7 +4,7 @@ plugins {
 
 	id "com.diffplug.spotless" version "5.6.1"
 	id "com.github.ben-manes.versions" version "0.33.0"
-	id "com.google.cloud.tools.jib" version "2.5.0"
+	id "com.google.cloud.tools.jib" version "2.5.1"
 	id "com.palantir.git-version" version "0.12.3"
 	id "io.spring.dependency-management" version "1.0.10.RELEASE"
 	id "org.hidetake.swagger.generator" version "2.18.2"
@@ -29,7 +29,7 @@ allprojects {
 			mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
 		}
 		dependencies {
-			dependency group: "io.swagger.core.v3", name: "swagger-annotations", version: "2.1.4"
+			dependency group: "io.swagger.core.v3", name: "swagger-annotations", version: "2.1.5"
 			dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.21"
 		}
 	}
@@ -80,7 +80,7 @@ dependencies {
 
 	// Swagger deps
 	implementation group: "io.swagger.core.v3", name: "swagger-annotations"
-	runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.34.0"
+	runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.35.0"
 	swaggerCodegen group: "io.swagger.codegen.v3", name: "swagger-codegen-cli"
 
 	// Test deps
