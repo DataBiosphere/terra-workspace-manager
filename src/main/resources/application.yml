@@ -78,3 +78,4 @@ workspace:
     upgrade-on-start: true
     uri: ${env.db.host}/${env.db.ws.name}
     username: ${env.db.ws.user}
+
