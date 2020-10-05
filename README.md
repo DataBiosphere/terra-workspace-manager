@@ -165,3 +165,4 @@ To publish, you will need to export the `ARTIFACTORY_USERNAME` and `ARTIFACTORY_
 ```sh
 ./gradlew terra-workspace-manager-client:artifactoryPublish
 ```
+
