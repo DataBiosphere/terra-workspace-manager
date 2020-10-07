@@ -182,57 +182,57 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  # Job paths
-  /api/jobs/v1/{id}:
-    parameters:
-      - $ref: '#/components/parameters/JobId'
-    get:
-      deprecated: true
-      summary: Poll the status of an existing async operation via job ID.
-      operationId: pollAsyncJob
-      tags: [Workspace]
-      responses:
-        '202':
-          description: Async job is incomplete
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JobModel'
-        '200':
-          description: Async job is complete
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JobModel'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    delete: ## delete job data
-      deprecated: true
-      summary: Delete the job and data associated with it
-      operationId: deleteJob
-      tags: [Workspace]
-      responses:
-        '204':
-          description: Job was deleted
-  /api/jobs/v1/{id}/result:
-    parameters:
-      - $ref: '#/components/parameters/JobId'
-    get:
-      deprecated: true
-      summary: Retrieve the results of a completed async job specified by ID.
-      operationId: retrieveJobResult
-      tags: [Workspace]
-      responses:
-        default:
-          description: Successful responses return the type of object specified by the job; otherwise, ErrorModel
-          content:
-            application/json:
-              schema:
-                type: object
+  # Job paths, all disabled for now
+#  /api/jobs/v1/{id}:
+#    parameters:
+#      - $ref: '#/components/parameters/JobId'
+#    get:
+#      deprecated: true
+#      summary: Poll the status of an existing async operation via job ID.
+#      operationId: pollAsyncJob
+#      tags: [Workspace]
+#      responses:
+#        '202':
+#          description: Async job is incomplete
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/JobModel'
+#        '200':
+#          description: Async job is complete
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/JobModel'
+#        '400':
+#          $ref: '#/components/responses/BadRequest'
+#        '403':
+#          $ref: '#/components/responses/PermissionDenied'
+#        '404':
+#          $ref: '#/components/responses/NotFound'
+#    delete: ## delete job data
+#      deprecated: true
+#      summary: Delete the job and data associated with it
+#      operationId: deleteJob
+#      tags: [Workspace]
+#      responses:
+#        '204':
+#          description: Job was deleted
+#  /api/jobs/v1/{id}/result:
+#    parameters:
+#      - $ref: '#/components/parameters/JobId'
+#    get:
+#      deprecated: true
+#      summary: Retrieve the results of a completed async job specified by ID.
+#      operationId: retrieveJobResult
+#      tags: [Workspace]
+#      responses:
+#        default:
+#          description: Successful responses return the type of object specified by the job; otherwise, ErrorModel
+#          content:
+#            application/json:
+#              schema:
+#                type: object
 
 components:
   parameters:
