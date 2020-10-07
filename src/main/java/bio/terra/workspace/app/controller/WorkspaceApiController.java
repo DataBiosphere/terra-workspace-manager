@@ -8,14 +8,12 @@ import bio.terra.workspace.generated.model.CreatedWorkspace;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataReferenceList;
 import bio.terra.workspace.generated.model.DeleteWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.JobModel;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.job.JobService.JobResultWithStatus;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Optional;
 import java.util.UUID;
@@ -123,6 +121,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
   }
 
+  /* Job endpoints disabled for now
   @Override
   public ResponseEntity<Void> deleteJob(@PathVariable("id") String id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
@@ -144,6 +143,7 @@ public class WorkspaceApiController implements WorkspaceApi {
         jobService.retrieveJobResult(id, Object.class, userReq);
     return new ResponseEntity<>(jobResultHolder.getResult(), jobResultHolder.getStatusCode());
   }
+  */
 
   @Override
   public ResponseEntity<DataReferenceList> enumerateReferences(
