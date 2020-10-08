@@ -14,7 +14,6 @@ import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.app.configuration.external.JobConfiguration;
 import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
 import bio.terra.workspace.common.exception.stairway.StairwayInitializationException;
-import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.generated.model.JobModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -195,21 +194,7 @@ public class JobService {
 
   public void releaseJob(String jobId, AuthenticatedUserRequest userReq) {
     try {
-      if (userReq != null) {
-        // currently, this check will be true for stewards only
-        boolean canDeleteAnyJob =
-            samService.isAuthorized(
-                userReq.getRequiredToken(),
-                SamUtils.SAM_WORKSPACE_MANAGER_RESOURCE,
-                jobConfig.getResourceId(),
-                SamUtils.SAM_WORKSPACE_MANAGER_DELETE_JOBS_ACTION);
-
-        // if the user has access to all jobs, no need to check for this one individually
-        // otherwise, check that the user has access to this job before deleting
-        if (!canDeleteAnyJob) {
-          verifyUserAccess(jobId, userReq); // jobId=flightId
-        }
-      }
+      verifyUserAccess(jobId, userReq); // jobId=flightId
       stairway.deleteFlight(jobId, false);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
