@@ -3,7 +3,6 @@ package bio.terra.workspace.common.utils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.stairway.*;
-import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.job.JobService;
 import com.google.common.collect.ImmutableMap;
