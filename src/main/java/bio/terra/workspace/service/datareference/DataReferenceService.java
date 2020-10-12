@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.datareference;
 
 import bio.terra.workspace.common.exception.*;
-import bio.terra.workspace.common.utils.MDCUtils;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
@@ -28,20 +27,17 @@ public class DataReferenceService {
   private final SamService samService;
   private final JobService jobService;
   private final DataReferenceValidationUtils validationUtils;
-  private final MDCUtils mdcUtils;
 
   @Autowired
   public DataReferenceService(
       DataReferenceDao dataReferenceDao,
       SamService samService,
       JobService jobService,
-      DataReferenceValidationUtils validationUtils,
-      MDCUtils mdcUtils) {
+      DataReferenceValidationUtils validationUtils) {
     this.dataReferenceDao = dataReferenceDao;
     this.samService = samService;
     this.jobService = jobService;
     this.validationUtils = validationUtils;
-    this.mdcUtils = mdcUtils;
   }
 
   public DataReferenceDescription getDataReference(

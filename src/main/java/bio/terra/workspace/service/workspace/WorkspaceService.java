@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.workspace;
 
-import bio.terra.workspace.common.utils.MDCUtils;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
@@ -27,21 +26,15 @@ public class WorkspaceService {
   private JobService jobService;
   private final WorkspaceDao workspaceDao;
   private final SamService samService;
-  private final MDCUtils mdcUtils;
   @Autowired private final Tracer tracer;
 
   @Autowired
   public WorkspaceService(
-      JobService jobService,
-      WorkspaceDao workspaceDao,
-      SamService samService,
-      Tracer tracer,
-      MDCUtils mdcUtils) {
+      JobService jobService, WorkspaceDao workspaceDao, SamService samService, Tracer tracer) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
     this.tracer = tracer;
-    this.mdcUtils = mdcUtils;
   }
 
   public CreatedWorkspace createWorkspace(

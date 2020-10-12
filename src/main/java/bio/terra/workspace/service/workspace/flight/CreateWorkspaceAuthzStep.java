@@ -5,7 +5,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.utils.MDCUtils;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -15,15 +14,12 @@ public class CreateWorkspaceAuthzStep implements Step {
 
   private SamService samService;
   private AuthenticatedUserRequest userReq;
-  private MDCUtils mdcUtils;
 
   private static final String AUTHZ_COMPLETED_KEY = "createWorkspaceAuthzStepCompleted";
 
-  public CreateWorkspaceAuthzStep(
-      SamService samService, AuthenticatedUserRequest userReq, MDCUtils mdcUtils) {
+  public CreateWorkspaceAuthzStep(SamService samService, AuthenticatedUserRequest userReq) {
     this.samService = samService;
     this.userReq = userReq;
-    this.mdcUtils = mdcUtils;
   }
 
   @Override

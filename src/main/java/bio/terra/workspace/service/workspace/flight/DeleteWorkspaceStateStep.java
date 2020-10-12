@@ -7,7 +7,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.common.utils.MDCUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,12 +15,10 @@ import org.springframework.http.HttpStatus;
 public class DeleteWorkspaceStateStep implements Step {
 
   private WorkspaceDao workspaceDao;
-  private MDCUtils mdcUtils;
 
   @Autowired
-  public DeleteWorkspaceStateStep(WorkspaceDao workspaceDao, MDCUtils mdcUtils) {
+  public DeleteWorkspaceStateStep(WorkspaceDao workspaceDao) {
     this.workspaceDao = workspaceDao;
-    this.mdcUtils = mdcUtils;
   }
 
   @Override

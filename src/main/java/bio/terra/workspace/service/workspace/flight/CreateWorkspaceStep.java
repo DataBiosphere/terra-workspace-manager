@@ -6,7 +6,6 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.common.utils.MDCUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
 import java.util.UUID;
@@ -15,13 +14,11 @@ import org.springframework.http.HttpStatus;
 public class CreateWorkspaceStep implements Step {
 
   private WorkspaceDao workspaceDao;
-  private MDCUtils mdcUtils;
 
   private static final String CREATE_WORKSPACE_COMPLETED_KEY = "createWorkspaceStepCompleted";
 
-  public CreateWorkspaceStep(WorkspaceDao workspaceDao, MDCUtils mdcUtils) {
+  public CreateWorkspaceStep(WorkspaceDao workspaceDao) {
     this.workspaceDao = workspaceDao;
-    this.mdcUtils = mdcUtils;
   }
 
   @Override

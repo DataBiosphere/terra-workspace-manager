@@ -6,7 +6,6 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.common.utils.MDCUtils;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
@@ -17,14 +16,12 @@ import org.springframework.http.HttpStatus;
 public class CreateDataReferenceStep implements Step {
 
   private DataReferenceDao dataReferenceDao;
-  private MDCUtils mdcUtils;
 
   private static final String CREATE_DATA_REFERENCE_COMPLETED_KEY =
       "createDataReferenceStepCompleted";
 
-  public CreateDataReferenceStep(DataReferenceDao dataReferenceDao, MDCUtils mdcUtils) {
+  public CreateDataReferenceStep(DataReferenceDao dataReferenceDao) {
     this.dataReferenceDao = dataReferenceDao;
-    this.mdcUtils = mdcUtils;
   }
 
   @Override
