@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public class MdcHookTest extends BaseUnitTest {
   @Autowired private MdcHook mdcHook;
   @Autowired private JobService jobService;
@@ -22,6 +24,7 @@ public class MdcHookTest extends BaseUnitTest {
     Stairway stairway = jobService.getStairway();
 
     MDC.put("foo", "bar");
+    assertEquals("bar", MDC.get("foo"));
     FlightMap flightMap = new FlightMap();
     flightMap.put(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext());
 
@@ -29,7 +32,7 @@ public class MdcHookTest extends BaseUnitTest {
     stairway.submit(flightId, MdcFooBarTestFlight.class, flightMap);
     Thread.sleep(3000);
 
-    Assertions.assertEquals(
+    assertEquals(
         FlightStatus.SUCCESS, stairway.getFlightState(flightId).getFlightStatus());
   }
 
@@ -48,7 +51,7 @@ public class MdcHookTest extends BaseUnitTest {
 
     // CheckMDC passes on do & undo, otherwise the flight would end with FlightStatus.FATAL. The
     // ErrorStep causes the undo to happen and the flight to end as ERROR.
-    Assertions.assertEquals(
+    assertEquals(
         FlightStatus.ERROR, stairway.getFlightState(flightId).getFlightStatus());
   }
 
@@ -64,7 +67,7 @@ public class MdcHookTest extends BaseUnitTest {
     stairway.submit(flightId, MdcNoContextTestFlight.class, flightMap);
     Thread.sleep(3000);
 
-    Assertions.assertEquals(
+    assertEquals(
         FlightStatus.SUCCESS, stairway.getFlightState(flightId).getFlightStatus());
   }
 
@@ -77,7 +80,7 @@ public class MdcHookTest extends BaseUnitTest {
     stairway.submit(flightId, MdcNoContextTestFlight.class, new FlightMap());
     Thread.sleep(3000);
 
-    Assertions.assertEquals(
+    assertEquals(
         FlightStatus.SUCCESS, stairway.getFlightState(flightId).getFlightStatus());
   }
 
@@ -92,7 +95,7 @@ public class MdcHookTest extends BaseUnitTest {
     Thread.sleep(3000);
 
     // The CheckMdc step will fail during do & undo, causing a FATAL flight failure.
-    Assertions.assertEquals(
+    assertEquals(
         FlightStatus.FATAL, stairway.getFlightState(flightId).getFlightStatus());
   }
 
@@ -147,7 +150,7 @@ public class MdcHookTest extends BaseUnitTest {
         if (mdcContext == null) {
           mdcContext = ImmutableMap.of();
         }
-        Assertions.assertEquals(expectedContext, MDC.getCopyOfContextMap());
+        assertEquals(expectedContext, MDC.getCopyOfContextMap());
       } catch (AssertionError error) {
         // Rethrow an AssertionError as an Exception so that Stairway can handle it
         throw new RuntimeException(error);
