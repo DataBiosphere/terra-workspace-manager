@@ -22,8 +22,8 @@ public class MdcHookTest extends BaseUnitTest {
   public void initialContextPropagated_Do() throws Exception {
     Stairway stairway = jobService.getStairway();
 
+    MDC.clear();
     MDC.put("foo", "bar");
-    assertEquals(ImmutableMap.of("foo", "bar"), ImmutableMap.of("foo", "bar"));
     FlightMap flightMap = new FlightMap();
     flightMap.put(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext());
 
@@ -38,6 +38,7 @@ public class MdcHookTest extends BaseUnitTest {
   public void initialContextPropagated_Undo() throws Exception {
     Stairway stairway = jobService.getStairway();
 
+    MDC.clear();
     MDC.put("foo", "bar");
     FlightMap flightMap = new FlightMap();
     flightMap.put(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext());
@@ -155,13 +156,12 @@ public class MdcHookTest extends BaseUnitTest {
   /** A {@link Step} that always fails in a non-retryable way. */
   public static class ErrorStep implements Step {
     @Override
-    public StepResult doStep(FlightContext flightContext)
-        throws InterruptedException, RetryException {
+    public StepResult doStep(FlightContext flightContext) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
     }
 
     @Override
-    public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    public StepResult undoStep(FlightContext flightContext) {
       return StepResult.getStepResultSuccess();
     }
   }
