@@ -4,6 +4,7 @@ import bio.terra.stairway.ExceptionSerializer;
 import bio.terra.workspace.common.exception.ErrorReportException;
 import bio.terra.workspace.service.job.exception.ExceptionSerializerException;
 import bio.terra.workspace.service.job.exception.JobResponseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -51,10 +52,10 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
 
     try {
       return objectMapper.writeValueAsString(fields);
-    } catch (Exception ex) {
-      logger.error(
-          String.format("Error serializing exception. Original exception: {}", rawException), ex);
-      return null;
+    } catch (JsonProcessingException ex) {
+      // The StairwayExceptionFields object is a very simple POJO and should never cause
+      // JSON processing to fail.
+      throw new ExceptionSerializerException("This should never happen", ex);
     }
   }
 

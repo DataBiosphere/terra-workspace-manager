@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
  * FlightMap}.
  *
  * <p>This allows steps to have the same MDC context as when their flight was created. Note that any
- * modifications to the MDC context within a step are not propagated to other stes.
+ * modifications to the MDC context within a step are not propagated to other steps.
  */
 @Component
 public class MdcHook implements StairwayHook {
