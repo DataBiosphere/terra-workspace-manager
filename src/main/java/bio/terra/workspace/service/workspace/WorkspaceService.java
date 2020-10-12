@@ -57,8 +57,7 @@ public class WorkspaceService {
                 WorkspaceCreateFlight.class,
                 body,
                 userReq)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
-            .addParameter(WorkspaceFlightMapKeys.MDC_KEY, mdcUtils.serializeCurrentMdc());
+            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
     if (body.getSpendProfile() != null) {
       createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, body.getSpendProfile());
     }
@@ -93,8 +92,7 @@ public class WorkspaceService {
                 WorkspaceDeleteFlight.class,
                 null, // Delete does not have a useful request body
                 userReq)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id)
-            .addParameter(WorkspaceFlightMapKeys.MDC_KEY, mdcUtils.serializeCurrentMdc());
+            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id);
     deleteJob.submitAndWait(null);
   }
 }

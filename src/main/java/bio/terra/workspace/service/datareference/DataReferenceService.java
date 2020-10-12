@@ -99,8 +99,7 @@ public class DataReferenceService {
                 body,
                 userReq)
             .addParameter(DataReferenceFlightMapKeys.REFERENCE_ID, referenceId)
-            .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, workspaceId)
-            .addParameter(DataReferenceFlightMapKeys.MDC_KEY, mdcUtils.serializeCurrentMdc());
+            .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, workspaceId);
 
     DataRepoSnapshot ref =
         validationUtils.validateReference(body.getReferenceType(), body.getReference(), userReq);

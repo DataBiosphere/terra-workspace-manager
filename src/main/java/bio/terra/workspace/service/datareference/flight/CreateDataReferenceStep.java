@@ -12,7 +12,6 @@ import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.service.job.JobMapKeys;
 import java.util.UUID;
-import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 
 public class CreateDataReferenceStep implements Step {
@@ -31,8 +30,6 @@ public class CreateDataReferenceStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
-    String serializedMdc = inputMap.get(DataReferenceFlightMapKeys.MDC_KEY, String.class);
-    MDC.setContextMap(mdcUtils.deserializeMdcString(serializedMdc));
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(CREATE_DATA_REFERENCE_COMPLETED_KEY, false);
     UUID referenceId = inputMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
@@ -62,8 +59,6 @@ public class CreateDataReferenceStep implements Step {
   public StepResult undoStep(FlightContext flightContext) {
     FlightMap inputMap = flightContext.getInputParameters();
     FlightMap workingMap = flightContext.getWorkingMap();
-    String serializedMdc = inputMap.get(DataReferenceFlightMapKeys.MDC_KEY, String.class);
-    MDC.setContextMap(mdcUtils.deserializeMdcString(serializedMdc));
 
     if (workingMap.get(CREATE_DATA_REFERENCE_COMPLETED_KEY, Boolean.class)) {
       UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);

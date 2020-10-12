@@ -11,7 +11,6 @@ import bio.terra.workspace.common.utils.MDCUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import java.util.UUID;
-import org.slf4j.MDC;
 
 public class DeleteWorkspaceAuthzStep implements Step {
 
@@ -29,8 +28,6 @@ public class DeleteWorkspaceAuthzStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
-    String serializedMdc = inputMap.get(WorkspaceFlightMapKeys.MDC_KEY, String.class);
-    MDC.setContextMap(mdcUtils.deserializeMdcString(serializedMdc));
     UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     try {
       samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);

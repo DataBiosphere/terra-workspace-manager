@@ -4,16 +4,18 @@ import bio.terra.stairway.ExceptionSerializer;
 import bio.terra.workspace.common.exception.ErrorReportException;
 import bio.terra.workspace.service.job.exception.ExceptionSerializerException;
 import bio.terra.workspace.service.job.exception.JobResponseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 public class StairwayExceptionSerializer implements ExceptionSerializer {
+  private final Logger logger = LoggerFactory.getLogger(StairwayExceptionSerializer.class);
   private ObjectMapper objectMapper;
 
   public StairwayExceptionSerializer(ObjectMapper objectMapper) {
@@ -49,10 +51,10 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
 
     try {
       return objectMapper.writeValueAsString(fields);
-    } catch (JsonProcessingException ex) {
-      // The StairwayExceptionFields object is a very simple POJO and should never cause
-      // JSON processing to fail.
-      throw new ExceptionSerializerException("This should never happen", ex);
+    } catch (Exception ex) {
+      logger.error(
+          String.format("Error serializing exception. Original exception: {}", rawException), ex);
+      return null;
     }
   }
 
