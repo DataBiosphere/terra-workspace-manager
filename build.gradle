@@ -64,6 +64,7 @@ dependencies {
 	implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.12", version: "0.1-3a0df80"
 
 	// Versioned direct deps
+	implementation group: "com.google", name:"guava", version: "29.0"
 	implementation group: "org.hashids", name: "hashids", version: "1.0.3"
 	implementation group: "org.liquibase", name: "liquibase-core", version: "4.1.0"
 	implementation group: "org.springframework.cloud", name: "spring-cloud-gcp-starter-trace", version: "1.2.5.RELEASE"
