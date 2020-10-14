@@ -30,7 +30,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @ConditionalOnProperty("workspace.tracing.enabled")
-public class ApiResourceConfig implements WebMvcConfigurer {
+public class TraceInterceptorConfig implements WebMvcConfigurer {
 
   public static final String MDC_REQUEST_ID_HEADER = "X-Request-ID";
   public static final String MDC_REQUEST_ID_KEY = "requestId";
@@ -39,7 +39,8 @@ public class ApiResourceConfig implements WebMvcConfigurer {
   private final Hashids hashids = new Hashids("requestIdSalt", 8);
 
   @Autowired
-  public ApiResourceConfig(TracingConfiguration tracingConfiguration, Environment environment) {
+  public TraceInterceptorConfig(
+      TracingConfiguration tracingConfiguration, Environment environment) {
     try {
       StackdriverTraceExporter.createAndRegister(
           StackdriverTraceConfiguration.builder()

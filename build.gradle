@@ -29,14 +29,14 @@ allprojects {
 			mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
 		}
 		dependencies {
-			dependency group: "com.google.api", name: "gax-grpc", version: "1.56.0"
-
 			dependencySet(group: "io.opencensus", version: "0.27.1") {
 				entry "opencensus-exporter-trace-stackdriver"
 				entry "opencensus-api"
 				entry "opencensus-contrib-spring"
 				entry "opencensus-impl"
 			}
+			// gax-grpc is an opencensus stackdriver sub-dependency, but the default version doesn't work
+			dependency group: "com.google.api", name: "gax-grpc", version: "1.59.1"
 
 			dependency group: "io.swagger.core.v3", name: "swagger-annotations", version: "2.1.5"
 			dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.21"

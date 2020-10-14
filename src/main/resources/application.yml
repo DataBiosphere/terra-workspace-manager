@@ -13,8 +13,8 @@ env:
       pass: ${DATABASE_USER_PASSWORD:wmpwd}
       user: ${DATABASE_USER:wmuser}
   tracing:
-    enabled: ${CLOUD_TRACE_ENABLED:true}
-    probability: ${SAMPLING_PROBABILITY:1.0}
+    enabled: ${CLOUD_TRACE_ENABLED:false}
+    probability: ${SAMPLING_PROBABILITY:0}
     project-id: ${SERVICE_GOOGLE_PROJECT:broad-dsde-dev}
     sa-path: ${CLOUD_TRACE_SA_PATH:rendered/service-account.json}
   urls: # While we've traditionally thought of these as env specific and ok to hardcode, with kubernetes they may change
