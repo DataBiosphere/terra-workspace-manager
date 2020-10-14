@@ -8,6 +8,7 @@ import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -91,7 +92,7 @@ public class WorkspaceDao {
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public WorkspaceCloudContext getCloudContext(UUID workspaceId) {
     String sql =
-        "SELECT cloud_type, content FROM workspace_cloud_context "
+        "SELECT cloud_type, context FROM workspace_cloud_context "
             + "WHERE workspace_id = :workspace_id;";
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
@@ -103,13 +104,13 @@ public class WorkspaceDao {
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public void insertCloudContext(UUID workspaceId, WorkspaceCloudContext cloudContext) {
     String sql =
-        "INSERT INTO workspace_cloud_content (workspace_id, cloud_type, content) "
-            + "VALUES (:workspace_id, :cloud_type, :content::json)";
+        "INSERT INTO workspace_cloud_context (workspace_id, cloud_type, context) "
+            + "VALUES (:workspace_id, :cloud_type, :context::json)";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("cloud_type", cloudContext.cloudType().toString())
-            .addValue("content", CloudContextV1.from(cloudContext).serialize());
+            .addValue("context", CloudContextV1.from(cloudContext).serialize());
     jdbcTemplate.update(sql, params);
   }
 
@@ -122,12 +123,7 @@ public class WorkspaceDao {
             result = WorkspaceCloudContext.none();
             break;
           case GOOGLE:
-            CloudContextV1 cloudContext;
-            try {
-              cloudContext = objectMapper.readValue(rs.getString("content"), CloudContextV1.class);
-            } catch (JsonProcessingException e) {
-              throw new SQLException("Unable to deserialize workspace_cloud_context.content", e);
-            }
+            CloudContextV1 cloudContext = CloudContextV1.deserialize(rs.getString("context"));
             result = WorkspaceCloudContext.createGoogleContext(cloudContext.googleProjectId);
             break;
         }
@@ -135,7 +131,8 @@ public class WorkspaceDao {
       };
 
   /** JSON serialization class for the workspace_cloud_context.context column. */
-  private static class CloudContextV1 {
+  @VisibleForTesting
+  static class CloudContextV1 {
     /** Version marker to store in the db so that we can update the format later if we need to. */
     @JsonProperty long version = 1;
 
@@ -152,7 +149,7 @@ public class WorkspaceDao {
       try {
         return objectMapper.writeValueAsString(this);
       } catch (JsonProcessingException e) {
-        throw new RuntimeException("Unable to serialize workspace_cloud_context.content", e);
+        throw new RuntimeException("Unable to serialize workspace_cloud_context.context", e);
       }
     }
 
@@ -161,7 +158,7 @@ public class WorkspaceDao {
       try {
         return objectMapper.readValue(serialized, CloudContextV1.class);
       } catch (JsonProcessingException e) {
-        throw new SQLException("Unable to deserialize workspace_cloud_context.content", e);
+        throw new SQLException("Unable to deserialize workspace_cloud_context.context", e);
       }
     }
   }

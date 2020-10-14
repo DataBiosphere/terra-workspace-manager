@@ -136,4 +136,21 @@ public class WorkspaceDaoTest extends BaseUnitTest {
     workspaceDao.createWorkspace(workspaceId, null);
     assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
   }
+
+  /**
+   * Hard code serialized values to check that code changes do not break backwards compatibility of
+   * stored JSON values. If this test fails, your change may not work with existing databases.
+   */
+  @Test
+  public void cloudContextBackwardsCompatibility() throws Exception {
+    WorkspaceDao.CloudContextV1 googleDeserialized =
+        WorkspaceDao.CloudContextV1.deserialize("{\"version\":1,\"googleProjectId\":\"foo\"}");
+    assertEquals(1, googleDeserialized.version);
+    assertEquals("foo", googleDeserialized.googleProjectId);
+
+    WorkspaceDao.CloudContextV1 noneDeserialized =
+        WorkspaceDao.CloudContextV1.deserialize("{\"version\":1,\"googleProjectId\":null}");
+    assertEquals(1, noneDeserialized.version);
+    assertNull(noneDeserialized.googleProjectId);
+  }
 }
