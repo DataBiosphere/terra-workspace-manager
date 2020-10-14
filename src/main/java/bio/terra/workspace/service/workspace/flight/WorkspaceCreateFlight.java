@@ -2,7 +2,6 @@ package bio.terra.workspace.service.workspace.flight;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
-import bio.terra.workspace.common.utils.MDCUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -17,13 +16,12 @@ public class WorkspaceCreateFlight extends Flight {
     ApplicationContext appContext = (ApplicationContext) applicationContext;
     WorkspaceDao workspaceDao = (WorkspaceDao) appContext.getBean("workspaceDao");
     SamService iamClient = (SamService) appContext.getBean("samService");
-    MDCUtils mdcUtils = (MDCUtils) appContext.getBean("mdcUtils");
 
     // get data from inputs that steps need
     AuthenticatedUserRequest userReq =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    addStep(new CreateWorkspaceAuthzStep(iamClient, userReq, mdcUtils));
-    addStep(new CreateWorkspaceStep(workspaceDao, mdcUtils));
+    addStep(new CreateWorkspaceAuthzStep(iamClient, userReq));
+    addStep(new CreateWorkspaceStep(workspaceDao));
   }
 }
