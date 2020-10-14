@@ -9,17 +9,17 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "workspace.tracing")
 public class TracingConfiguration {
   /** Rate of sampling, 0.0 - 1.0 */
-  Float probability = null;
+  Double probability = null;
   /** GCP project id for trace */
   String projectId = null;
   /** Path to SA json credentials for uploading traces to GCP */
   String saPath = null;
 
-  public Float getProbability() {
+  public Double getProbability() {
     return probability;
   }
 
-  public void setProbability(Float probability) {
+  public void setProbability(Double probability) {
     this.probability = probability;
   }
 
