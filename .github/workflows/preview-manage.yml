@@ -55,7 +55,7 @@ jobs:
         echo ::add-mask::$VAULT_TOKEN
     - name: Create
       id: create
-      uses: databiosphere/github-actions/actions/preview@master
+      uses: docker://us-central1-docker.pkg.dev/dsp-artifact-registry/github-actions-public/preview:latest
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}
@@ -84,7 +84,7 @@ jobs:
         echo ::add-mask::$VAULT_TOKEN
     - name: Delete
       id: delete
-      uses: databiosphere/github-actions/actions/preview@master
+      uses: docker://us-central1-docker.pkg.dev/dsp-artifact-registry/github-actions-public/preview:latest
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}
@@ -141,7 +141,7 @@ jobs:
         echo ::add-mask::$VAULT_TOKEN
     - name: Create
       id: create
-      uses: databiosphere/github-actions/actions/preview@master
+      uses: docker://us-central1-docker.pkg.dev/dsp-artifact-registry/github-actions-public/preview:latest
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}
@@ -163,7 +163,7 @@ jobs:
       run: echo '${{ steps.test.outputs.testData }}' | base64 -d
     - name: Report
       id: report
-      uses: databiosphere/github-actions/actions/preview@master
+      uses: docker://us-central1-docker.pkg.dev/dsp-artifact-registry/github-actions-public/preview:latest
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}

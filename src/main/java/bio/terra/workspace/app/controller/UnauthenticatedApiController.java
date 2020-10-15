@@ -1,6 +1,6 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.workspace.app.configuration.VersionConfiguration;
+import bio.terra.workspace.app.configuration.external.VersionConfiguration;
 import bio.terra.workspace.generated.controller.UnauthenticatedApi;
 import bio.terra.workspace.generated.model.SystemStatus;
 import bio.terra.workspace.generated.model.SystemVersion;

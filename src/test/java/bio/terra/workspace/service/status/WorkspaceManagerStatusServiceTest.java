@@ -5,32 +5,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
-import bio.terra.workspace.app.Main;
-import bio.terra.workspace.app.configuration.DataRepoConfig;
+import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.SamService;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@Tag("unit")
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = Main.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-public class WorkspaceManagerStatusServiceTest {
+public class WorkspaceManagerStatusServiceTest extends BaseUnitTest {
 
   @MockBean private DataRepoService mockDataRepoService;
-  @MockBean private DataRepoConfig mockDataRepoConfig;
+  @MockBean private DataRepoConfiguration mockDataRepoConfiguration;
   @MockBean private SamService mockSamService;
 
   @Autowired private WorkspaceManagerStatusService statusService;

@@ -1,8 +1,13 @@
 package bio.terra.workspace.integration;
 
-import bio.terra.workspace.app.Main;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import bio.terra.workspace.common.BaseIntegrationTest;
 import bio.terra.workspace.integration.common.auth.AuthService;
-import bio.terra.workspace.integration.common.configuration.TestConfiguration;
+import bio.terra.workspace.integration.common.configuration.IntegrationTestConfiguration;
 import bio.terra.workspace.integration.common.response.WorkspaceResponse;
 import bio.terra.workspace.integration.common.utils.TestUtils;
 import bio.terra.workspace.integration.common.utils.WorkspaceManagerTestClient;
@@ -11,6 +16,7 @@ import bio.terra.workspace.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.DataReferenceDescription;
+import bio.terra.workspace.model.DataReferenceList;
 import bio.terra.workspace.model.DataRepoSnapshot;
 import bio.terra.workspace.model.DeleteWorkspaceRequestBody;
 import bio.terra.workspace.model.ReferenceTypeEnum;
@@ -20,35 +26,20 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@Tag("integration")
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = Main.class)
-@SpringBootTest
-@TestPropertySource("classpath:application-integration-test.properties")
-public class WorkspaceIntegrationTest {
+public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   // TODO: As this class grows, consider if it's worth breaking down these workspace tests into
   //  different class files based on the the type of workspace action (Create, Get, Delete, etc).
 
   @Autowired private WorkspaceManagerTestClient workspaceManagerTestClient;
   @Autowired private TestUtils testUtils;
-  @Autowired private TestConfiguration testConfig;
+  @Autowired private IntegrationTestConfiguration testConfig;
   @Autowired private AuthService authService;
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceIntegrationTest.class);
   private final ConcurrentHashMap<String, List<UUID>> testToWorkspaceIdsMap =
@@ -87,10 +78,10 @@ public class WorkspaceIntegrationTest {
 
     WorkspaceResponse<CreatedWorkspace> workspaceResponse = createDefaultWorkspace(workspaceId);
 
-    Assertions.assertEquals(HttpStatus.OK, workspaceResponse.getStatusCode());
-    Assertions.assertTrue(workspaceResponse.isResponseObject());
+    assertEquals(HttpStatus.OK, workspaceResponse.getStatusCode());
+    assertTrue(workspaceResponse.isResponseObject());
     CreatedWorkspace createdWorkspace = workspaceResponse.getResponseObject();
-    Assertions.assertEquals(workspaceId, createdWorkspace.getId());
+    assertEquals(workspaceId, createdWorkspace.getId());
   }
 
   @Test
@@ -107,10 +98,10 @@ public class WorkspaceIntegrationTest {
     WorkspaceResponse<WorkspaceDescription> getWorkspaceResponse =
         workspaceManagerTestClient.get(userEmail, path, WorkspaceDescription.class);
 
-    Assertions.assertEquals(HttpStatus.OK, getWorkspaceResponse.getStatusCode());
-    Assertions.assertTrue(getWorkspaceResponse.isResponseObject());
+    assertEquals(HttpStatus.OK, getWorkspaceResponse.getStatusCode());
+    assertTrue(getWorkspaceResponse.isResponseObject());
     WorkspaceDescription workspaceDescription = getWorkspaceResponse.getResponseObject();
-    Assertions.assertEquals(workspaceId, workspaceDescription.getId());
+    assertEquals(workspaceId, workspaceDescription.getId());
   }
 
   @Test
@@ -129,7 +120,7 @@ public class WorkspaceIntegrationTest {
     WorkspaceResponse<?> deleteWorkspaceResponse =
         workspaceManagerTestClient.delete(userEmail, path, jsonBody);
 
-    Assertions.assertEquals(HttpStatus.NO_CONTENT, deleteWorkspaceResponse.getStatusCode());
+    assertEquals(HttpStatus.NO_CONTENT, deleteWorkspaceResponse.getStatusCode());
 
     /*
      Remove the workspace id from the map, so cleanup process won't try to delete an already-deleted workspace.
@@ -159,91 +150,82 @@ public class WorkspaceIntegrationTest {
     WorkspaceResponse<?> deleteWorkspaceResponse =
         workspaceManagerTestClient.delete(userEmail, path, jsonBody);
 
-    Assertions.assertEquals(HttpStatus.UNAUTHORIZED, deleteWorkspaceResponse.getStatusCode());
-    Assertions.assertTrue(deleteWorkspaceResponse.isErrorObject());
+    assertEquals(HttpStatus.UNAUTHORIZED, deleteWorkspaceResponse.getStatusCode());
+    assertTrue(deleteWorkspaceResponse.isErrorObject());
   }
 
+  @Disabled("Disable temporarily due to Jade dev maintenance. AS-506 to re-enable")
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
   public void createDataReference(TestInfo testInfo) throws Exception {
-    // This test relies on a persistent snapshot existing in Data Repo, currently in dev.
-    // This snapshot was created using our dev service account, which is a steward in dev Data Repo.
-    // First, I created a dataset "wm_integration_test_dataset" using TDR's
-    // snapshot-test-dataset.json. Then, I created the snapshot
-    // "workspace_integration_test_snapshot" using the "byFullView" mode. Finally, I added the
-    // integration test user as a reader of this snapshot.
-    // These steps should only need to be repeated if the dev DataRepo data is deleted, or to
-    // support this test in other DataRepo environments.
-    // Data Repo makes a reasonable effort to maintain their dev environment, so this should be a
-    // very rare occurrence.
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
     createDefaultWorkspace(workspaceId);
-
-    String userEmail = testConfig.getServiceAccountEmail();
-    String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId + "/datareferences";
-
-    DataRepoSnapshot snapshotReference =
-        new DataRepoSnapshot()
-            .snapshot(testConfig.getDataRepoSnapshotIdFromEnv())
-            .instanceName(testConfig.getDataRepoInstanceNameFromEnv());
     String dataReferenceName = "workspace_integration_test_snapshot";
-    CreateDataReferenceRequestBody request =
-        new CreateDataReferenceRequestBody()
-            .name(dataReferenceName)
-            .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-            .reference(snapshotReference)
-            .cloningInstructions(CloningInstructionsEnum.NOTHING);
-
     WorkspaceResponse<DataReferenceDescription> postResponse =
-        workspaceManagerTestClient.post(
-            userEmail, path, testUtils.mapToJson(request), DataReferenceDescription.class);
+        createDefaultDataReference(workspaceId, dataReferenceName);
 
-    Assertions.assertEquals(HttpStatus.OK, postResponse.getStatusCode());
-    Assertions.assertTrue(postResponse.isResponseObject());
+    assertEquals(HttpStatus.OK, postResponse.getStatusCode());
+    assertTrue(postResponse.isResponseObject());
     DataReferenceDescription dataReferenceDescription = postResponse.getResponseObject();
-    Assertions.assertEquals(dataReferenceName, dataReferenceDescription.getName());
-    Assertions.assertEquals(workspaceId, dataReferenceDescription.getWorkspaceId());
-    Assertions.assertEquals(
+    assertEquals(dataReferenceName, dataReferenceDescription.getName());
+    assertEquals(workspaceId, dataReferenceDescription.getWorkspaceId());
+    assertEquals(
         CloningInstructionsEnum.NOTHING, dataReferenceDescription.getCloningInstructions());
   }
 
+  @Disabled("Disable temporarily due to Jade dev maintenance. AS-506 to re-enable")
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
   public void deleteDataReference(TestInfo testInfo) throws Exception {
-    // See note in createDataReference about this test's snapshot dependency in Data Repo.
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
     createDefaultWorkspace(workspaceId);
-
-    String userEmail = testConfig.getServiceAccountEmail();
-    String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId + "/datareferences";
-
-    DataRepoSnapshot snapshotReference =
-        new DataRepoSnapshot()
-            .snapshot(testConfig.getDataRepoSnapshotIdFromEnv())
-            .instanceName(testConfig.getDataRepoInstanceNameFromEnv());
-    String dataReferenceName = "workspace_integration_test_snapshot";
-    CreateDataReferenceRequestBody request =
-        new CreateDataReferenceRequestBody()
-            .name(dataReferenceName)
-            .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-            .reference(snapshotReference)
-            .cloningInstructions(CloningInstructionsEnum.NOTHING);
-
     WorkspaceResponse<DataReferenceDescription> postResponse =
-        workspaceManagerTestClient.post(
-            userEmail, path, testUtils.mapToJson(request), DataReferenceDescription.class);
+        createDefaultDataReference(workspaceId, "workspace_integration_test_snapshot");
+    assertEquals(HttpStatus.OK, postResponse.getStatusCode());
 
-    Assertions.assertEquals(HttpStatus.OK, postResponse.getStatusCode());
     UUID referenceId = postResponse.getResponseObject().getReferenceId();
-    String deletePath = path + "/" + referenceId;
+    String deletePath =
+        testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId + "/datareferences/" + referenceId;
 
     WorkspaceResponse<?> deleteResponse =
-        workspaceManagerTestClient.delete(userEmail, deletePath, "");
-    Assertions.assertEquals(HttpStatus.valueOf(204), deleteResponse.getStatusCode());
+        workspaceManagerTestClient.delete(testConfig.getServiceAccountEmail(), deletePath, "");
+    assertEquals(HttpStatus.valueOf(204), deleteResponse.getStatusCode());
+  }
+
+  @Disabled("Disable temporarily due to Jade dev maintenance. AS-506 to re-enable")
+  @Test
+  @Tag(TAG_NEEDS_CLEANUP)
+  public void listDataReference(TestInfo testInfo) throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
+
+    createDefaultWorkspace(workspaceId);
+    // This creates two separate references to the same underlying snapshot, which is valid
+    // in real workspaces.
+    WorkspaceResponse<DataReferenceDescription> firstPostResponse =
+        createDefaultDataReference(workspaceId, "workspace_integration_test_snapshot");
+    WorkspaceResponse<DataReferenceDescription> secondPostResponse =
+        createDefaultDataReference(workspaceId, "second_workspace_integration_test_snapshot");
+
+    assertEquals(HttpStatus.OK, firstPostResponse.getStatusCode());
+    assertEquals(HttpStatus.OK, secondPostResponse.getStatusCode());
+    String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId + "/datareferences";
+    WorkspaceResponse<DataReferenceList> listResponse =
+        workspaceManagerTestClient.get(
+            testConfig.getServiceAccountEmail(), path, DataReferenceList.class);
+    assertEquals(HttpStatus.OK, listResponse.getStatusCode());
+    assertTrue(listResponse.isResponseObject());
+    DataReferenceList referenceList = listResponse.getResponseObject();
+    assertEquals(referenceList.getResources().size(), 2);
+
+    DataReferenceDescription[] expectedResults = {
+      firstPostResponse.getResponseObject(), secondPostResponse.getResponseObject()
+    };
+    assertThat(referenceList.getResources(), containsInAnyOrder(expectedResults));
   }
 
   private WorkspaceResponse<CreatedWorkspace> createDefaultWorkspace(UUID workspaceId)
@@ -256,6 +238,36 @@ public class WorkspaceIntegrationTest {
     String jsonBody = testUtils.mapToJson(body);
 
     return workspaceManagerTestClient.post(userEmail, path, jsonBody, CreatedWorkspace.class);
+  }
+
+  private WorkspaceResponse<DataReferenceDescription> createDefaultDataReference(
+      UUID workspaceId, String dataReferenceName) throws Exception {
+    // This method relies on a persistent snapshot existing in Data Repo, currently in dev.
+    // This snapshot was created using our dev service account, which is a steward in dev Data Repo.
+    // First, I created a dataset "wm_integration_test_dataset" using TDR's
+    // snapshot-test-dataset.json. Then, I created the snapshot
+    // "workspace_integration_test_snapshot" using the "byFullView" mode. Finally, I added the
+    // integration test user as a reader of this snapshot.
+    // These steps should only need to be repeated if the dev DataRepo data is deleted, or to
+    // support this test in other DataRepo environments.
+    // Data Repo makes a reasonable effort to maintain their dev environment, so this should be a
+    // very rare occurrence.
+    String userEmail = testConfig.getServiceAccountEmail();
+    String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId + "/datareferences";
+
+    DataRepoSnapshot snapshotReference =
+        new DataRepoSnapshot()
+            .snapshot(testConfig.getDataRepoSnapshotIdFromEnv())
+            .instanceName(testConfig.getDataRepoInstanceNameFromEnv());
+    CreateDataReferenceRequestBody request =
+        new CreateDataReferenceRequestBody()
+            .name(dataReferenceName)
+            .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
+            .reference(snapshotReference)
+            .cloningInstructions(CloningInstructionsEnum.NOTHING);
+
+    return workspaceManagerTestClient.post(
+        userEmail, path, testUtils.mapToJson(request), DataReferenceDescription.class);
   }
 
   private void cleanUpWorkspaces(List<UUID> workspaceIds) throws Exception {

@@ -1,4 +1,4 @@
-package bio.terra.workspace.app.configuration;
+package bio.terra.workspace.app.configuration.spring;
 
 import brave.SpanCustomizer;
 import java.util.concurrent.ThreadLocalRandom;

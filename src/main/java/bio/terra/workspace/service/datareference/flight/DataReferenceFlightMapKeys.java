@@ -4,7 +4,6 @@ public final class DataReferenceFlightMapKeys {
   public static final String REFERENCE_ID = "referenceId";
   public static final String WORKSPACE_ID = "workspaceId";
   public static final String REFERENCE = "reference";
-  public static final String MDC_KEY = "mdcKey";
 
   private DataReferenceFlightMapKeys() {}
 }

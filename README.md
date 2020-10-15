@@ -21,7 +21,7 @@ of Spring features; there are many ways to do the same thing and we would like t
 to a common set of techniques.
 
 ### Configuration
-We only use Java configuration. We never use XML files.
+We only use YAML configuration. We never use XML or .properties files.
 
 In general, we use type-safe configuration parameters as shown here: 
 [Type-safe Configuration Properties](https://docs.spring.io/spring-boot/docs/current/reference/html/spring-boot-features.html#boot-features-external-config-typesafe-configuration-properties).

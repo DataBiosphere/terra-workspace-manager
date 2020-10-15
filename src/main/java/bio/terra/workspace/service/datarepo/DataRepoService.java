@@ -4,8 +4,8 @@ import bio.terra.datarepo.api.RepositoryApi;
 import bio.terra.datarepo.api.UnauthenticatedApi;
 import bio.terra.datarepo.client.ApiClient;
 import bio.terra.datarepo.client.ApiException;
-import bio.terra.workspace.app.configuration.ApiResourceConfig;
-import bio.terra.workspace.app.configuration.DataRepoConfig;
+import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
+import bio.terra.workspace.app.configuration.spring.ApiResourceConfig;
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -17,11 +17,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class DataRepoService {
 
-  private final DataRepoConfig dataRepoConfig;
+  private final DataRepoConfiguration dataRepoConfiguration;
 
   @Autowired
-  public DataRepoService(DataRepoConfig dataRepoConfig) {
-    this.dataRepoConfig = dataRepoConfig;
+  public DataRepoService(DataRepoConfiguration dataRepoConfiguration) {
+    this.dataRepoConfiguration = dataRepoConfiguration;
   }
 
   private ApiClient getApiClient(String accessToken) {
@@ -38,7 +38,7 @@ public class DataRepoService {
   }
 
   public String getInstanceUrl(String instanceName) {
-    HashMap<String, String> dataRepoInstances = dataRepoConfig.getInstances();
+    HashMap<String, String> dataRepoInstances = dataRepoConfiguration.getInstances();
     String cleanedInstanceName = instanceName.toLowerCase().trim();
 
     if (dataRepoInstances.containsKey(cleanedInstanceName)) {

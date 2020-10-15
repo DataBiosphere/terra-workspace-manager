@@ -1,6 +1,5 @@
 package bio.terra.workspace.db;
 
-import bio.terra.workspace.app.configuration.WorkspaceManagerJdbcConfiguration;
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.generated.model.CloningInstructionsEnum;
@@ -36,9 +35,8 @@ public class DataReferenceDao {
   private ObjectMapper objectMapper;
 
   @Autowired
-  public DataReferenceDao(
-      WorkspaceManagerJdbcConfiguration jdbcConfiguration, ObjectMapper objectMapper) {
-    this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcConfiguration.getDataSource());
+  public DataReferenceDao(NamedParameterJdbcTemplate jdbcTemplate, ObjectMapper objectMapper) {
+    this.jdbcTemplate = jdbcTemplate;
     this.objectMapper = objectMapper;
   }
 
