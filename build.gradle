@@ -66,7 +66,6 @@ dependencies {
 	// Versioned direct deps
 	implementation group: "com.google.guava", name:"guava", version: "29.0-jre"
 	implementation group: "org.hashids", name: "hashids", version: "1.0.3"
-
 	implementation group: "org.liquibase", name: "liquibase-core", version: "4.1.0"
 	implementation group: "org.springframework.cloud", name: "spring-cloud-gcp-starter-trace", version: "1.2.5.RELEASE"
   implementation group: "org.springframework.cloud", name: "spring-cloud-gcp-starter-logging", version: "1.2.5.RELEASE"
