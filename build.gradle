@@ -71,6 +71,8 @@ dependencies {
 	implementation group: "org.springframework.cloud", name: "spring-cloud-gcp-starter-trace", version: "1.2.5.RELEASE"
 	implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
 	runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.2.16"
+	// Used only for logback configuration file.
+	runtime group: 'org.codehaus.groovy', name: 'groovy', version: '2.5.7'
 
 	// Deps whose versions are controlled by Spring
 	implementation group: "javax.validation", name: "validation-api"
@@ -94,8 +96,6 @@ dependencies {
 	testImplementation project(":workspace-manager-client")
 
 	annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor"
-	// Used only for logback configuration file.
-	runtime group: 'org.codehaus.groovy', name: 'groovy', version: '2.5.7'
 }
 
 // Exclude the Spring logger, so everything will use SLF4J
