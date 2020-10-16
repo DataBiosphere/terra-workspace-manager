@@ -30,7 +30,7 @@ Workspace Manager relies on two databases: one for the app itself, and one for S
 
 #### Option A: Docker Postgres
 ##### Running the Postgres Container
-To start the a postgres container configured with the necessary databases:
+To start a postgres container configured with the necessary databases:
 ```sh
 ./local-dev/run_postgres.sh start
 ```
