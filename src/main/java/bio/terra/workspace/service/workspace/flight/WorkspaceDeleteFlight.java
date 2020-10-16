@@ -25,5 +25,6 @@ public class WorkspaceDeleteFlight extends Flight {
     // 3. Delete policy objects in Policy Manager, once it exists.
     addStep(new DeleteWorkspaceAuthzStep(iamClient, userReq));
     addStep(new DeleteWorkspaceStateStep(workspaceDao));
+    // TODO(PF-152): Delete project/cloud context on delete.
   }
 }

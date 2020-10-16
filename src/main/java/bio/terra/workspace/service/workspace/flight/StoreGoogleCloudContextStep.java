@@ -34,7 +34,8 @@ public class StoreGoogleCloudContextStep implements Step {
 
     @Override
     public StepResult undoStep(FlightContext flightContext) {
-        // TODO delete cloud context.
-        return null;
+        UUID workspaceId = flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+        workspaceDao.deleteCloudContext(workspaceId);
+        return StepResult.getStepResultSuccess();
     }
 }
