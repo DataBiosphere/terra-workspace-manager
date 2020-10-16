@@ -35,8 +35,8 @@ allprojects {
 				entry "opencensus-contrib-spring"
 				entry "opencensus-impl"
 			}
-			// gax-grpc is an opencensus stackdriver sub-dependency, but the default version doesn't work
-			dependency group: "com.google.api", name: "gax-grpc", version: "1.59.1"
+			// grpc is an stackdriver exporter sub-dependency, but the default version doesn't work
+			dependency group: "io.grpc", name: "grpc-core", version: "1.32.2"
 
 			dependency group: "io.swagger.core.v3", name: "swagger-annotations", version: "2.1.5"
 			dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.21"

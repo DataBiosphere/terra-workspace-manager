@@ -1,6 +1,6 @@
 package bio.terra.workspace.app.configuration.spring;
 
-import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
+import static org.apache.commons.lang3.ObjectUtils.getFirstNonNull;
 
 import bio.terra.workspace.app.configuration.external.TracingConfiguration;
 import com.google.auth.oauth2.ServiceAccountCredentials;
@@ -12,6 +12,7 @@ import io.opencensus.trace.config.TraceConfig;
 import io.opencensus.trace.samplers.Samplers;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.servlet.http.HttpServletRequest;
@@ -71,27 +72,32 @@ public class TraceInterceptorConfig implements WebMvcConfigurer {
         new HandlerInterceptor() {
           @Override
           public boolean preHandle(
-              HttpServletRequest httpRequest, HttpServletResponse httpResponse, Object handler)
-              throws Exception {
+              HttpServletRequest httpRequest, HttpServletResponse httpResponse, Object handler) {
 
-            // get an mdc id from the request (if not found, create one), and pass it along in the
-            // response
-            String requestId = getMDCRequestId(httpRequest);
-            MDC.put(MDC_REQUEST_ID_KEY, requestId);
-            httpResponse.addHeader(MDC_REQUEST_ID_HEADER, requestId);
+            // We don't need to do this for resources (swagger ui)
+            if (handler instanceof HandlerMethod) {
+              // get an mdc id from the request (if not found, create one), and pass it along in the
+              // response
+              String requestId = getMDCRequestId(httpRequest);
+              MDC.put(MDC_REQUEST_ID_KEY, requestId);
+              httpResponse.addHeader(MDC_REQUEST_ID_HEADER, requestId);
 
-            // add tags to Stackdriver traces
-            Tracing.getTracer()
-                .getCurrentSpan()
-                .putAttributes(
-                    Map.of(
-                        MDC_REQUEST_ID_KEY,
-                        AttributeValue.stringAttributeValue(requestId),
-                        "route",
-                        AttributeValue.stringAttributeValue(
-                            ((HandlerMethod) handler)
-                                .getMethodAnnotation(RequestMapping.class)
-                                .path()[0])));
+              // add tags to Stackdriver traces
+              Tracing.getTracer()
+                  .getCurrentSpan()
+                  .putAttributes(
+                      Map.of(
+                          MDC_REQUEST_ID_KEY,
+                          AttributeValue.stringAttributeValue(requestId),
+                          "route",
+                          AttributeValue.stringAttributeValue(
+                              Arrays.stream(
+                                      ((HandlerMethod) handler)
+                                          .getMethodAnnotation(RequestMapping.class)
+                                          .path())
+                                  .findFirst()
+                                  .orElse("unknown"))));
+            }
 
             return true;
           }
@@ -105,9 +111,9 @@ public class TraceInterceptorConfig implements WebMvcConfigurer {
   }
 
   private String getMDCRequestId(HttpServletRequest httpRequest) {
-    return firstNonNull(
-        httpRequest.getHeader(MDC_REQUEST_ID_HEADER),
-        httpRequest.getHeader(MDC_CORRELATION_ID_HEADER),
-        generateRequestId());
+    return getFirstNonNull(
+        () -> httpRequest.getHeader(MDC_REQUEST_ID_HEADER),
+        () -> httpRequest.getHeader(MDC_CORRELATION_ID_HEADER),
+        this::generateRequestId);
   }
 }
