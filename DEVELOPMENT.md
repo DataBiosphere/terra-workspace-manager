@@ -3,7 +3,6 @@
 Note: this document is being written during a time when code is rapidly evolving. It's possible that this will be out of date regularly but we should maintain it as best we can until development stabilizes.
 
 ## Setup
-Workspace Manager relies on two databases: one for the app itself, and one for Stairway. We will also need a DB for the unit tests.
 
 ### Prerequisites:
 
@@ -27,6 +26,9 @@ Workspace Manager relies on two databases: one for the app itself, and one for S
     jenv add /Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home
     ```
 - Recommended: read the [README](README.md) to understand the general structure of the service
+
+### Database Configuration
+Workspace Manager relies on two databases: one for the app itself, and one for Stairway. We will also need a DB for the unit tests.
 
 #### Option A: Docker Postgres
 ##### Running the Postgres Container
