@@ -50,3 +50,9 @@ jobs:
       run: chmod +x gradlew
     - name: Run unit tests
       run: ./gradlew unitTest --scan
+    - name: Upload Test Reports
+      if: always()
+      uses: actions/upload-artifact@v1
+      with:
+        name: Test Reports
+        path: build/reports/tests

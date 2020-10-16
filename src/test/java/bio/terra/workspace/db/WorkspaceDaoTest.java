@@ -2,15 +2,14 @@ package bio.terra.workspace.db;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
+import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -112,5 +111,46 @@ public class WorkspaceDaoTest extends BaseUnitTest {
         () -> {
           workspaceDao.createWorkspace(workspaceId, null);
         });
+  }
+
+  @Test
+  public void insertAndGetCloudContext_Google() {
+    workspaceDao.createWorkspace(workspaceId, null);
+    WorkspaceCloudContext googleContext = WorkspaceCloudContext.createGoogleContext("my-project");
+    workspaceDao.insertCloudContext(workspaceId, googleContext);
+
+    assertEquals(googleContext, workspaceDao.getCloudContext(workspaceId));
+  }
+
+  @Test
+  public void insertAndGetCloudContext_None() {
+    workspaceDao.createWorkspace(workspaceId, null);
+    WorkspaceCloudContext noneContext = WorkspaceCloudContext.none();
+    workspaceDao.insertCloudContext(workspaceId, noneContext);
+
+    assertEquals(noneContext, workspaceDao.getCloudContext(workspaceId));
+  }
+
+  @Test
+  public void noSetCloudContextIsNone() {
+    workspaceDao.createWorkspace(workspaceId, null);
+    assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
+  }
+
+  /**
+   * Hard code serialized values to check that code changes do not break backwards compatibility of
+   * stored JSON values. If this test fails, your change may not work with existing databases.
+   */
+  @Test
+  public void cloudContextBackwardsCompatibility() throws Exception {
+    WorkspaceDao.CloudContextV1 googleDeserialized =
+        WorkspaceDao.CloudContextV1.deserialize("{\"version\":1,\"googleProjectId\":\"foo\"}");
+    assertEquals(1, googleDeserialized.version);
+    assertEquals("foo", googleDeserialized.googleProjectId);
+
+    WorkspaceDao.CloudContextV1 noneDeserialized =
+        WorkspaceDao.CloudContextV1.deserialize("{\"version\":1,\"googleProjectId\":null}");
+    assertEquals(1, noneDeserialized.version);
+    assertNull(noneDeserialized.googleProjectId);
   }
 }
