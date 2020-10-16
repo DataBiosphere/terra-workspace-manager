@@ -97,7 +97,7 @@ public class WorkspaceDao {
         new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
     WorkspaceCloudContext context =
         DataAccessUtils.singleResult(jdbcTemplate.query(sql, params, GOOGLE_CONTEXT_ROW_MAPPER));
-    return (context != null) ? context : WorkspaceCloudContext.none();
+    return (context == null) ? WorkspaceCloudContext.none() : context;
   }
 
   /** Update the cloud context of the workspace, replacing the previous cloud context. */
