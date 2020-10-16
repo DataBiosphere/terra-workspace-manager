@@ -1,0 +1,40 @@
+package bio.terra.workspace.service.workspace.flight;
+
+import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.Step;
+import bio.terra.stairway.StepResult;
+import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.workspace.CloudType;
+import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
+
+import java.util.UUID;
+
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID;
+
+/** Stores the Google Project Id in the {@link WorkspaceDao}.*/
+public class StoreGoogleCloudContextStep implements Step {
+    private final WorkspaceDao workspaceDao;
+
+    public StoreGoogleCloudContextStep(WorkspaceDao workspaceDao) {
+        this.workspaceDao = workspaceDao;
+    }
+
+    @Override
+    public StepResult doStep(FlightContext flightContext) {
+        UUID workspaceId = flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+        if (workspaceDao.getCloudContext(workspaceId).cloudType().equals(CloudType.GOOGLE)) {
+            // Already stored.
+            return StepResult.getStepResultSuccess();
+        }
+        String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
+        workspaceDao.insertCloudContext(workspaceId, WorkspaceCloudContext.createGoogleContext(projectId));
+        return StepResult.getStepResultSuccess();
+    }
+
+    @Override
+    public StepResult undoStep(FlightContext flightContext) {
+        // TODO delete cloud context.
+        return null;
+    }
+}

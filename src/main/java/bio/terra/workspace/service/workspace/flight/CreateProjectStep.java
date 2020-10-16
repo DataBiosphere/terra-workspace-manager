@@ -17,6 +17,8 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID;
+
 /** A {@link Step} for creating a GCP Project for a workspace. */
 public class CreateProjectStep implements Step {
   private static final String PROJECT_ID_KEY = "CreateProjectStep.projectId";
@@ -38,12 +40,10 @@ public class CreateProjectStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws RetryException {
-    // TODO, I think this needs its own step and store it in the db. Could retrieve from there or
-    // working map.
-    String projectId = getOrGenerateProjectId(flightContext.getWorkingMap());
+    String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
     createProject(projectId);
     enableServices(projectId);
-    // TODO setup billing.
+    // TODO(PF-186): setup billing.
     return StepResult.getStepResultSuccess();
   }
 
@@ -76,7 +76,8 @@ public class CreateProjectStep implements Step {
     } catch (GoogleJsonResponseException e) {
       if (e.getStatusCode() == 403) {
         // Google returns 403 for projects we don't have access to and projects that don't exist.
-        // We assume in this case that the project does not exist, not that somebody else has created a project with the same random id.
+        // We assume in this case that the project does not exist, not that somebody else has
+        // created a project with the same random id.
         return Optional.empty();
       }
       throw e;
@@ -119,7 +120,7 @@ public class CreateProjectStep implements Step {
         return StepResult.getStepResultSuccess();
       }
       if (project.get().getLifecycleState().equals("DELETE_REQUESTED")
-              || project.get().getLifecycleState().equals("DELETE_IN_PROGRESS")) {
+          || project.get().getLifecycleState().equals("DELETE_IN_PROGRESS")) {
         // The project is already being deleted.
         return StepResult.getStepResultSuccess();
       }
@@ -128,24 +129,6 @@ public class CreateProjectStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     return StepResult.getStepResultSuccess();
-  }
-
-  /**
-   * Gets the a project id to use from the working map, or generates and stores the project id
-   * there.
-   *
-   * <p>No matter how many times this step is restarted, we want it to always use the same project
-   * id so that at most 1 project is created.
-   */
-  private static String getOrGenerateProjectId(FlightMap workingMap) {
-    String projectId = workingMap.get(PROJECT_ID_KEY, String.class);
-    if (projectId != null) {
-      return projectId;
-    }
-    // Generate a pseudo-random project id.
-    projectId = "wm-" + Long.valueOf(UUID.randomUUID().getMostSignificantBits()).toString();
-    workingMap.put(PROJECT_ID_KEY, projectId);
-    return projectId;
   }
 
   /**
