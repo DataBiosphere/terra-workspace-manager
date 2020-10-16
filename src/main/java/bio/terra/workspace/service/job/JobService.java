@@ -14,7 +14,7 @@ import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.app.configuration.external.JobConfiguration;
 import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
 import bio.terra.workspace.common.exception.stairway.StairwayInitializationException;
-import bio.terra.workspace.common.utils.SamUtils;
+import bio.terra.workspace.common.utils.MdcHook;
 import bio.terra.workspace.generated.model.JobModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -25,6 +25,7 @@ import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import bio.terra.workspace.service.job.exception.JobResponseException;
 import bio.terra.workspace.service.job.exception.JobUnauthorizedException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -47,6 +48,7 @@ public class JobService {
   private final JobConfiguration jobConfig;
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
   private final ScheduledExecutorService executor;
+  private final MdcHook mdcHook;
 
   @Autowired
   public JobService(
@@ -54,17 +56,20 @@ public class JobService {
       JobConfiguration jobConfig,
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
       ApplicationContext applicationContext,
+      MdcHook mdcHook,
       ObjectMapper objectMapper) {
     this.samService = samService;
     this.jobConfig = jobConfig;
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
     this.executor = Executors.newScheduledThreadPool(jobConfig.getMaxThreads());
+    this.mdcHook = mdcHook;
     StairwayExceptionSerializer serializer = new StairwayExceptionSerializer(objectMapper);
     Stairway.Builder builder =
         Stairway.newBuilder()
             .applicationContext(applicationContext)
             .exceptionSerializer(serializer)
-            .enableWorkQueue(false);
+            .enableWorkQueue(false)
+            .stairwayHook(mdcHook);
     try {
       stairway = new Stairway(builder);
     } catch (StairwayExecutionException e) {
@@ -102,7 +107,8 @@ public class JobService {
       Class<? extends Flight> flightClass,
       Object request,
       AuthenticatedUserRequest userReq) {
-    return new JobBuilder(description, jobId, flightClass, request, userReq, this);
+    return new JobBuilder(description, jobId, flightClass, request, userReq, this)
+        .addParameter(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext());
   }
 
   // submit a new job to stairway
@@ -195,21 +201,7 @@ public class JobService {
 
   public void releaseJob(String jobId, AuthenticatedUserRequest userReq) {
     try {
-      if (userReq != null) {
-        // currently, this check will be true for stewards only
-        boolean canDeleteAnyJob =
-            samService.isAuthorized(
-                userReq.getRequiredToken(),
-                SamUtils.SAM_WORKSPACE_MANAGER_RESOURCE,
-                jobConfig.getResourceId(),
-                SamUtils.SAM_WORKSPACE_MANAGER_DELETE_JOBS_ACTION);
-
-        // if the user has access to all jobs, no need to check for this one individually
-        // otherwise, check that the user has access to this job before deleting
-        if (!canDeleteAnyJob) {
-          verifyUserAccess(jobId, userReq); // jobId=flightId
-        }
-      }
+      verifyUserAccess(jobId, userReq); // jobId=flightId
       stairway.deleteFlight(jobId, false);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
@@ -391,5 +383,10 @@ public class JobService {
     } catch (FlightNotFoundException ex) {
       throw new JobNotFoundException("Job not found", ex);
     }
+  }
+
+  @VisibleForTesting
+  public Stairway getStairway() {
+    return stairway;
   }
 }

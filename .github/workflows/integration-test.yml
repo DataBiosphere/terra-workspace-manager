@@ -73,3 +73,9 @@ jobs:
         env:
           TEST_ENV: dev
         run: ./gradlew integrationTest --scan
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v1
+        with:
+          name: Test Reports
+          path: build/reports/tests

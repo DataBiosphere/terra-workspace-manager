@@ -48,10 +48,6 @@ spring:
 workspace:
   datarepo.instances:
     terra: ${env.urls.terra-datarepo}
-    terra-alpha: https://data.alpha.envs-terra.bio
-    terra-dev: https://jade.datarepo-dev.broadinstitute.org
-    terra-prod: https://jade-terra.datarepo-prod.broadinstitute.org
-    terra-staging: https://data.staging.envs-terra.bio
 
   job:
     max-threads: 4

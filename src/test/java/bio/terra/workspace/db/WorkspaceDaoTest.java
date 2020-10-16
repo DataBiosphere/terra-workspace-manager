@@ -24,7 +24,7 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
   @Autowired private WorkspaceDatabaseConfiguration workspaceDatabaseConfiguration;
 
-  private NamedParameterJdbcTemplate jdbcTemplate;
+  @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
 
   @Autowired private WorkspaceDao workspaceDao;
 
@@ -37,7 +37,6 @@ public class WorkspaceDaoTest extends BaseUnitTest {
   public void setup() {
     workspaceId = UUID.randomUUID();
     spendProfileId = UUID.randomUUID();
-    jdbcTemplate = new NamedParameterJdbcTemplate(workspaceDatabaseConfiguration.getDataSource());
   }
 
   @Test
