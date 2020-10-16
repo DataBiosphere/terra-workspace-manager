@@ -132,6 +132,18 @@ public class WorkspaceDaoTest extends BaseUnitTest {
   }
 
   @Test
+  public void insertAndDeleteCloudContext() {
+    workspaceDao.createWorkspace(workspaceId, null);
+    assertFalse(workspaceDao.deleteCloudContext(workspaceId));
+    assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
+
+    workspaceDao.insertCloudContext(
+        workspaceId, WorkspaceCloudContext.createGoogleContext("my-project"));
+    assertTrue(workspaceDao.deleteCloudContext(workspaceId));
+    assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
+  }
+
+  @Test
   public void noSetCloudContextIsNone() {
     workspaceDao.createWorkspace(workspaceId, null);
     assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
