@@ -10,7 +10,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,14 +40,13 @@ public class WorkspaceDao {
     String sql =
         "INSERT INTO workspace (workspace_id, spend_profile, profile_settable) values "
             + "(:id, :spend_profile, :spend_profile_settable)";
-
-    Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put("id", workspaceId.toString());
-    paramMap.put("spend_profile", spendProfile);
-    paramMap.put("spend_profile_settable", spendProfile == null);
-
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("id", workspaceId.toString())
+            .addValue("spend_profile", spendProfile)
+            .addValue("spend_profile_settable", spendProfile == null);
     try {
-      jdbcTemplate.update(sql, paramMap);
+      jdbcTemplate.update(sql, params);
     } catch (DuplicateKeyException e) {
       throw new DuplicateWorkspaceException(
           "Workspace " + workspaceId.toString() + " already exists.", e);
@@ -58,21 +56,18 @@ public class WorkspaceDao {
 
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public boolean deleteWorkspace(UUID workspaceId) {
-    Map<String, Object> paramMap = new HashMap<String, Object>();
-    paramMap.put("id", workspaceId.toString());
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("id", workspaceId.toString());
     int rowsAffected =
-        jdbcTemplate.update("DELETE FROM workspace WHERE workspace_id = :id", paramMap);
+        jdbcTemplate.update("DELETE FROM workspace WHERE workspace_id = :id", params);
     return rowsAffected > 0;
   }
 
   public WorkspaceDescription getWorkspace(UUID id) {
     String sql = "SELECT * FROM workspace where workspace_id = (:id)";
-
-    Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put("id", id.toString());
-
+    MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id.toString());
     try {
-      Map<String, Object> queryOutput = jdbcTemplate.queryForMap(sql, paramMap);
+      Map<String, Object> queryOutput = jdbcTemplate.queryForMap(sql, params);
 
       WorkspaceDescription desc = new WorkspaceDescription();
       desc.setId(UUID.fromString(queryOutput.get("workspace_id").toString()));
@@ -112,6 +107,14 @@ public class WorkspaceDao {
             .addValue("cloud_type", cloudContext.cloudType().toString())
             .addValue("context", CloudContextV1.from(cloudContext).serialize());
     jdbcTemplate.update(sql, params);
+  }
+
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
+  public boolean deleteCloudContext(UUID workspaceId) {
+    String sql = "DELETE FROM workspace_cloud_context WHERE workspace_id = :workspace_id";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
+    return jdbcTemplate.update(sql, params) > 0;
   }
 
   private static final RowMapper<WorkspaceCloudContext> CLOUD_CONTEXT_ROW_MAPPER =
