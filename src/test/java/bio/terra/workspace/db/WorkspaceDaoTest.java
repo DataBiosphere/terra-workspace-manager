@@ -114,33 +114,25 @@ public class WorkspaceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void insertAndGetCloudContext_Google() {
+  public void updateCloudContext_Google() {
     workspaceDao.createWorkspace(workspaceId, null);
-    WorkspaceCloudContext googleContext = WorkspaceCloudContext.createGoogleContext("my-project");
-    workspaceDao.insertCloudContext(workspaceId, googleContext);
 
-    assertEquals(googleContext, workspaceDao.getCloudContext(workspaceId));
+    WorkspaceCloudContext googleContext1 = WorkspaceCloudContext.createGoogleContext("my-project1");
+    workspaceDao.updateCloudContext(workspaceId, googleContext1);
+    assertEquals(googleContext1, workspaceDao.getCloudContext(workspaceId));
+
+    WorkspaceCloudContext googleContext2 = WorkspaceCloudContext.createGoogleContext("my-project2");
+    workspaceDao.updateCloudContext(workspaceId, googleContext2);
+    assertEquals(googleContext2, workspaceDao.getCloudContext(workspaceId));
   }
 
   @Test
-  public void insertAndGetCloudContext_None() {
+  public void updateCloudContext_None() {
     workspaceDao.createWorkspace(workspaceId, null);
+
     WorkspaceCloudContext noneContext = WorkspaceCloudContext.none();
-    workspaceDao.insertCloudContext(workspaceId, noneContext);
-
+    workspaceDao.updateCloudContext(workspaceId, noneContext);
     assertEquals(noneContext, workspaceDao.getCloudContext(workspaceId));
-  }
-
-  @Test
-  public void insertAndDeleteCloudContext() {
-    workspaceDao.createWorkspace(workspaceId, null);
-    assertFalse(workspaceDao.deleteCloudContext(workspaceId));
-    assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
-
-    workspaceDao.insertCloudContext(
-        workspaceId, WorkspaceCloudContext.createGoogleContext("my-project"));
-    assertTrue(workspaceDao.deleteCloudContext(workspaceId));
-    assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
   }
 
   @Test
@@ -149,20 +141,44 @@ public class WorkspaceDaoTest extends BaseUnitTest {
     assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
   }
 
+  @Test
+  public void updateAndNoneCloudContext() {
+    workspaceDao.createWorkspace(workspaceId, null);
+
+    workspaceDao.updateCloudContext(
+        workspaceId, WorkspaceCloudContext.createGoogleContext("my-project"));
+    workspaceDao.updateCloudContext(workspaceId, WorkspaceCloudContext.none());
+    assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
+  }
+
+  @Test
+  public void deleteWorkspaceWithCloudContext() {
+    workspaceDao.createWorkspace(workspaceId, null);
+    workspaceDao.updateCloudContext(
+        workspaceId, WorkspaceCloudContext.createGoogleContext("my-project"));
+
+    assertTrue(workspaceDao.deleteWorkspace(workspaceId));
+    assertThrows(WorkspaceNotFoundException.class, () -> workspaceDao.getWorkspace(workspaceId));
+    assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
+  }
+
   /**
    * Hard code serialized values to check that code changes do not break backwards compatibility of
    * stored JSON values. If this test fails, your change may not work with existing databases.
    */
   @Test
-  public void cloudContextBackwardsCompatibility() throws Exception {
-    WorkspaceDao.CloudContextV1 googleDeserialized =
-        WorkspaceDao.CloudContextV1.deserialize("{\"version\":1,\"googleProjectId\":\"foo\"}");
+  public void googleCloudContextBackwardsCompatibility() throws Exception {
+    WorkspaceDao.GoogleCloudContextV1 googleDeserialized =
+        WorkspaceDao.GoogleCloudContextV1.deserialize(
+            "{\"version\":1,\"googleProjectId\":\"foo\"}");
     assertEquals(1, googleDeserialized.version);
     assertEquals("foo", googleDeserialized.googleProjectId);
+  }
 
-    WorkspaceDao.CloudContextV1 noneDeserialized =
-        WorkspaceDao.CloudContextV1.deserialize("{\"version\":1,\"googleProjectId\":null}");
-    assertEquals(1, noneDeserialized.version);
-    assertNull(noneDeserialized.googleProjectId);
+  @Test
+  public void cloudTypeBackwardsCompatibility() {
+    assertEquals(WorkspaceDao.CloudType.GOOGLE, WorkspaceDao.CloudType.valueOf("GOOGLE"));
+    assertEquals("GOOGLE", WorkspaceDao.CloudType.GOOGLE.toString());
+    assertEquals(1, WorkspaceDao.CloudType.values().length);
   }
 }
