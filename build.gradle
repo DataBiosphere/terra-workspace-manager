@@ -65,14 +65,14 @@ dependencies {
 
 	// Versioned direct deps
 	implementation group: "com.google.auto.value", name: "auto-value-annotations", version: "1.7.4"
-	implementation group: "com.google.guava", name:"guava", version: "29.0-jre"
+	implementation group: "com.google.guava", name:"guava", version: "30.0-jre"
 	implementation group: "org.hashids", name: "hashids", version: "1.0.3"
 	implementation group: "org.liquibase", name: "liquibase-core", version: "4.1.1"
 	implementation group: "org.springframework.cloud", name: "spring-cloud-gcp-starter-logging", version: "1.2.5.RELEASE"
 	implementation group: "org.springframework.cloud", name: "spring-cloud-gcp-starter-trace", version: "1.2.5.RELEASE"
 	implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
 	runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.2.18"
-	runtimeOnly group: "org.codehaus.groovy", name: "groovy", version: "2.5.7" // Used only for logback configuration file.
+	runtimeOnly group: "org.codehaus.groovy", name: "groovy", version: "3.0.6" // Used only for logback configuration file.
 
 	// Deps whose versions are controlled by Spring
 	implementation group: "javax.validation", name: "validation-api"
@@ -84,7 +84,7 @@ dependencies {
 
 	// Swagger deps
 	implementation group: "io.swagger.core.v3", name: "swagger-annotations"
-	runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.35.1"
+	runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.35.2"
 	swaggerCodegen group: "io.swagger.codegen.v3", name: "swagger-codegen-cli"
 
 	// Test deps
@@ -101,7 +101,6 @@ dependencies {
 
 dependencyLocking {
 	lockAllConfigurations()
-	lockMode = LockMode.STRICT
 }
 
 // Exclude the Spring logger, so everything will use SLF4J
