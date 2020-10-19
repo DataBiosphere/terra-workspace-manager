@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
 # Start up a postgres container with initial user/database setup.
 POSTGRES_VERSION=9.6
+
+set -ex
+
 start() {
     echo "attempting to remove old $CONTAINER container..."
     docker rm -f $CONTAINER || echo "docker rm failed. nothing to rm."
 
     # start up postgres
     echo "starting up postgres container..."
-    docker run --rm  --name $CONTAINER -e POSTGRES_PASSWORD=password -p "$POSTGRES_PORT:5432" \
-      -v $PWD/local-dev/local-postgres-init.sql:/docker-entrypoint-initdb.d/docker_postgres_init.sql \
-      -d postgres:$POSTGRES_VERSION postgres
-
+    docker create --name $CONTAINER --rm -e POSTGRES_PASSWORD=password -p "$POSTGRES_PORT:5432" postgres:$POSTGRES_VERSION
+    docker cp $PWD/local-dev/local-postgres-init.sql $CONTAINER:/docker-entrypoint-initdb.d/docker_postgres_init.sql
+    docker start $CONTAINER
 
     # validate postgres
     echo "running postgres validation..."
