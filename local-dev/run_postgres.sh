@@ -10,12 +10,12 @@ start() {
     echo "starting up postgres container..."
     BASEDIR=$(dirname "$0")
     docker create --name $CONTAINER --rm -e POSTGRES_PASSWORD=password -p "$POSTGRES_PORT:5432" postgres:$POSTGRES_VERSION
-    docker cp $BASEDIR/local-dev/local-postgres-init.sql $CONTAINER:/docker-entrypoint-initdb.d/docker_postgres_init.sql
+    docker cp $BASEDIR/local-postgres-init.sql $CONTAINER:/docker-entrypoint-initdb.d/docker_postgres_init.sql
     docker start $CONTAINER
 
     # validate postgres
     echo "running postgres validation..."
-    docker exec $CONTAINER sh -c "$(cat $BASEDIR/local-dev/sql_validate.sh)"
+    docker exec $CONTAINER sh -c "$(cat $BASEDIR/sql_validate.sh)"
     if [ 0 -eq $? ]; then
         echo "postgres validation succeeded."
     else
