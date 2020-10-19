@@ -67,7 +67,7 @@ To run all tests:
 ./gradlew test
 ```
 
-**Integration Tests Notes** (Some of this will likely change as we grow integration tests). Integration test assumes that:
+**Integration Test Notes** (Some of this will likely change as we grow integration tests). Integration test assumes that:
 1. You have generated an access token from GitHub and saved the token in your home directory with the filename `.vault-token`
 2. Default environment for rendering configs is `dev`. You can pass arguments to the script to target different environments.
 3. Test user has been registered in an existing WSM environment. Currently, the test user is registered in `dev` environment where WSM is currently deployed. You don't need to take any action in this step, unless the dev environment changes for some reason and the user no longer exists there. 
