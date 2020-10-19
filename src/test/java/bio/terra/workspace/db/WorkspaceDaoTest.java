@@ -10,13 +10,13 @@ import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 public class WorkspaceDaoTest extends BaseUnitTest {
@@ -41,9 +41,9 @@ public class WorkspaceDaoTest extends BaseUnitTest {
   @Test
   public void verifyCreatedWorkspaceExists() throws Exception {
     workspaceDao.createWorkspace(workspaceId, spendProfileId);
-    Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put("id", workspaceId.toString());
-    Map<String, Object> queryOutput = jdbcTemplate.queryForMap(readSql, paramMap);
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("id", workspaceId.toString());
+    Map<String, Object> queryOutput = jdbcTemplate.queryForMap(readSql, params);
 
     assertThat(queryOutput.get("workspace_id"), equalTo(workspaceId.toString()));
     assertThat(queryOutput.get("spend_profile"), equalTo(spendProfileId.toString()));
@@ -56,9 +56,9 @@ public class WorkspaceDaoTest extends BaseUnitTest {
   @Test
   public void createAndDeleteWorkspace() throws Exception {
     workspaceDao.createWorkspace(workspaceId, null);
-    Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put("id", workspaceId.toString());
-    Map<String, Object> queryOutput = jdbcTemplate.queryForMap(readSql, paramMap);
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("id", workspaceId.toString());
+    Map<String, Object> queryOutput = jdbcTemplate.queryForMap(readSql, params);
 
     assertThat(queryOutput.get("workspace_id"), equalTo(workspaceId.toString()));
     assertThat(queryOutput.get("profile_settable"), equalTo(true));
@@ -69,7 +69,7 @@ public class WorkspaceDaoTest extends BaseUnitTest {
     assertThrows(
         EmptyResultDataAccessException.class,
         () -> {
-          jdbcTemplate.queryForMap(readSql, paramMap);
+          jdbcTemplate.queryForMap(readSql, params);
         });
   }
 
