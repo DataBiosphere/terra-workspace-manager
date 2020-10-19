@@ -19,17 +19,17 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 @Configuration
 public class BeanConfig {
-  @Bean
+  @Bean // for logging stack traces, making the global tracer available as a bean
   public Tracer tracer() {
     return Tracing.getTracer();
   }
 
-  @Bean
+  @Bean // required for opencensus spring contrib, although not mentioned by any documentation
   public TracingAsyncClientHttpRequestInterceptor requestInterceptor() {
     return TracingAsyncClientHttpRequestInterceptor.create(null, null);
   }
 
-  @Bean
+  @Bean // enables the @Traced annotation
   public CensusSpringAspect censusAspect() {
     return new CensusSpringAspect(tracer());
   }
