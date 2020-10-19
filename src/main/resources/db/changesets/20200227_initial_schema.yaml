@@ -85,6 +85,7 @@ databaseChangeLog:
           - column:
               name: workspace_id
               type: text
+              # This constraint is ill formatted and doesn't work.
               constraints:
                 primaryKey: true
                 nullable: false
