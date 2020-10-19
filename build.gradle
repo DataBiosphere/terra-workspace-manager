@@ -64,6 +64,8 @@ dependencies {
 	implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.12", version: "0.1-3a0df80"
 
 	// Versioned direct deps
+	implementation group: "com.google.auto.value", name: "auto-value-annotations", version: "1.7.4"
+	annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
 	implementation group: "com.google.guava", name:"guava", version: "29.0-jre"
 	implementation group: "org.hashids", name: "hashids", version: "1.0.3"
 	implementation group: "org.liquibase", name: "liquibase-core", version: "4.1.0"
