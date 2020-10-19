@@ -3,15 +3,10 @@ package bio.terra.workspace.app.configuration.spring;
 import static org.apache.commons.lang3.ObjectUtils.getFirstNonNull;
 
 import bio.terra.workspace.app.configuration.external.TracingConfiguration;
-import com.google.auth.oauth2.ServiceAccountCredentials;
-import io.opencensus.exporter.trace.stackdriver.StackdriverTraceConfiguration;
-import io.opencensus.exporter.trace.stackdriver.StackdriverTraceExporter;
 import io.opencensus.trace.AttributeValue;
 import io.opencensus.trace.Tracing;
 import io.opencensus.trace.config.TraceConfig;
 import io.opencensus.trace.samplers.Samplers;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -22,7 +17,6 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -40,24 +34,7 @@ public class TraceInterceptorConfig implements WebMvcConfigurer {
   private final Hashids hashids = new Hashids("requestIdSalt", 8);
 
   @Autowired
-  public TraceInterceptorConfig(
-      TracingConfiguration tracingConfiguration, Environment environment) {
-    try {
-      StackdriverTraceExporter.createAndRegister(
-          StackdriverTraceConfiguration.builder()
-              .setProjectId(tracingConfiguration.getProjectId())
-              .setCredentials(
-                  ServiceAccountCredentials.fromStream(
-                      new FileInputStream(tracingConfiguration.getSaPath())))
-              .setFixedAttributes(
-                  Map.of(
-                      "/component",
-                      AttributeValue.stringAttributeValue(
-                          environment.getRequiredProperty("spring.application.name"))))
-              .build());
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+  public TraceInterceptorConfig(TracingConfiguration tracingConfiguration) {
 
     TraceConfig globalTraceConfig = Tracing.getTraceConfig();
     globalTraceConfig.updateActiveTraceParams(
