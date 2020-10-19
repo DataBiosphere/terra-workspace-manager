@@ -14,9 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
@@ -53,16 +51,17 @@ public class DataReferenceDao {
         "INSERT INTO workspace_data_reference (workspace_id, reference_id, name, resource_id, credential_id, cloning_instructions, reference_type, reference) VALUES "
             + "(:workspace_id, :reference_id, :name, :resource_id, :credential_id, :cloning_instructions, :reference_type, cast(:reference AS json))";
 
-    Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put("workspace_id", workspaceId.toString());
-    paramMap.put("reference_id", referenceId.toString());
-    paramMap.put("name", name);
-    paramMap.put("cloning_instructions", cloningInstructions.toString());
-    paramMap.put("credential_id", credentialId);
-    paramMap.put("resource_id", resourceId == null ? null : resourceId.toString());
-    paramMap.put("reference_type", referenceType == null ? null : referenceType.toString());
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("reference_id", referenceId.toString())
+            .addValue("name", name)
+            .addValue("cloning_instructions", cloningInstructions.toString())
+            .addValue("credential_id", credentialId)
+            .addValue("resource_id", resourceId == null ? null : resourceId.toString())
+            .addValue("reference_type", referenceType == null ? null : referenceType.toString());
     try {
-      paramMap.put("reference", objectMapper.writeValueAsString(reference));
+      params.addValue("reference", objectMapper.writeValueAsString(reference));
     } catch (JsonProcessingException e) {
       // TODO: add logger and print out the reference
       throw new InvalidDataReferenceException(
@@ -70,7 +69,7 @@ public class DataReferenceDao {
     }
 
     try {
-      jdbcTemplate.update(sql, paramMap);
+      jdbcTemplate.update(sql, params);
       return referenceId.toString();
     } catch (DuplicateKeyException e) {
       throw new DuplicateDataReferenceException(
@@ -82,12 +81,13 @@ public class DataReferenceDao {
     String sql =
         "SELECT workspace_id, reference_id, name, resource_id, credential_id, cloning_instructions, reference_type, reference from workspace_data_reference where workspace_id = :workspace_id AND reference_id = :reference_id";
 
-    Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put("workspace_id", workspaceId.toString());
-    paramMap.put("reference_id", referenceId.toString());
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("reference_id", referenceId.toString());
 
     try {
-      return jdbcTemplate.queryForObject(sql, paramMap, new DataReferenceMapper());
+      return jdbcTemplate.queryForObject(sql, params, new DataReferenceMapper());
     } catch (EmptyResultDataAccessException e) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
     }
@@ -98,13 +98,14 @@ public class DataReferenceDao {
     String sql =
         "SELECT workspace_id, reference_id, name, resource_id, credential_id, cloning_instructions, reference_type, reference from workspace_data_reference where workspace_id = :id AND reference_type = :type AND name = :name";
 
-    Map<String, Object> paramMap = new HashMap();
-    paramMap.put("id", workspaceId.toString());
-    paramMap.put("type", type.toString());
-    paramMap.put("name", name);
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("id", workspaceId.toString())
+            .addValue("type", type.toString())
+            .addValue("name", name);
 
     try {
-      return jdbcTemplate.queryForObject(sql, paramMap, new DataReferenceMapper());
+      return jdbcTemplate.queryForObject(sql, params, new DataReferenceMapper());
     } catch (EmptyResultDataAccessException e) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
     }
@@ -114,22 +115,22 @@ public class DataReferenceDao {
     String sql =
         "SELECT CASE WHEN resource_id IS NULL THEN 'false' ELSE 'true' END FROM workspace_data_reference where reference_id = :id";
 
-    Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put("id", referenceId.toString());
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("id", referenceId.toString());
 
     try {
-      return jdbcTemplate.queryForObject(sql, paramMap, Boolean.class).booleanValue();
+      return jdbcTemplate.queryForObject(sql, params, Boolean.class).booleanValue();
     } catch (EmptyResultDataAccessException e) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
     }
   }
 
   public boolean deleteDataReference(UUID referenceId) {
-    Map<String, Object> paramMap = new HashMap<String, Object>();
-    paramMap.put("id", referenceId.toString());
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("id", referenceId.toString());
     int rowsAffected =
         jdbcTemplate.update(
-            "DELETE FROM workspace_data_reference WHERE reference_id = :id", paramMap);
+            "DELETE FROM workspace_data_reference WHERE reference_id = :id", params);
     return rowsAffected > 0;
   }
 
@@ -148,11 +149,12 @@ public class DataReferenceDao {
             + " ORDER BY ref.reference_id"
             + " OFFSET :offset"
             + " LIMIT :limit";
-    MapSqlParameterSource params = new MapSqlParameterSource();
-    params.addValue("id", workspaceId.toString());
-    params.addValue("owner", owner);
-    params.addValue("offset", offset);
-    params.addValue("limit", limit);
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("id", workspaceId.toString())
+            .addValue("owner", owner)
+            .addValue("offset", offset)
+            .addValue("limit", limit);
     List<DataReferenceDescription> resultList =
         jdbcTemplate.query(sql, params, new DataReferenceMapper());
     return new DataReferenceList().resources(resultList);

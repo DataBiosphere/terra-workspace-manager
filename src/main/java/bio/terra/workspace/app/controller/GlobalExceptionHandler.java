@@ -61,10 +61,12 @@ public class GlobalExceptionHandler {
 
   private ResponseEntity<ErrorReport> buildErrorReport(
       Throwable ex, HttpStatus statusCode, List<String> causes) {
-    logger.error("Global exception handler: catch stack", ex);
+    StringBuilder combinedCauseString = new StringBuilder();
     for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
-      logger.error("   cause: " + cause.toString());
+      combinedCauseString.append("cause: " + cause.toString() + ", ");
     }
+    logger.error("Global exception handler: " + combinedCauseString.toString(), ex);
+
     ErrorReport errorReport =
         new ErrorReport().message(ex.getMessage()).statusCode(statusCode.value()).causes(causes);
     return new ResponseEntity<>(errorReport, statusCode);
