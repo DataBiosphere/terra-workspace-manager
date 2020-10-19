@@ -10,7 +10,6 @@ import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +41,8 @@ public class WorkspaceDaoTest extends BaseUnitTest {
   @Test
   public void verifyCreatedWorkspaceExists() throws Exception {
     workspaceDao.createWorkspace(workspaceId, spendProfileId);
-    MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", workspaceId.toString());
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("id", workspaceId.toString());
     Map<String, Object> queryOutput = jdbcTemplate.queryForMap(readSql, params);
 
     assertThat(queryOutput.get("workspace_id"), equalTo(workspaceId.toString()));
@@ -56,7 +56,8 @@ public class WorkspaceDaoTest extends BaseUnitTest {
   @Test
   public void createAndDeleteWorkspace() throws Exception {
     workspaceDao.createWorkspace(workspaceId, null);
-    MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", workspaceId.toString());
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("id", workspaceId.toString());
     Map<String, Object> queryOutput = jdbcTemplate.queryForMap(readSql, params);
 
     assertThat(queryOutput.get("workspace_id"), equalTo(workspaceId.toString()));
