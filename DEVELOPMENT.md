@@ -54,7 +54,7 @@ To run unit tests:
 ./gradlew unitTest
 ```
   
-To run integration tests: (see **Integration Tests Notes** below)
+To run integration tests: (see **NOTE** below)
 
 ```sh
 ./render_config.sh # First time only
@@ -67,13 +67,10 @@ To run all tests:
 ./gradlew test
 ```
 
-**Integration Test Notes** (Some of this will likely change as we grow integration tests). Integration test assumes that:
+**NOTE** (Some of this will likely change as we grow integration tests). Integration test assumes that:
 1. You have generated an access token from GitHub and saved the token in your home directory with the filename `.vault-token`
 2. Default environment for rendering configs is `dev`. You can pass arguments to the script to target different environments.
 3. Test user has been registered in an existing WSM environment. Currently, the test user is registered in `dev` environment where WSM is currently deployed. You don't need to take any action in this step, unless the dev environment changes for some reason and the user no longer exists there. 
-
-**Config Notes**
-1. Unit and Integration tests are known to fail if you are running `OpenJDK 14.0.1`. Make sure you are running `AdoptOpenJDK Java 11 (Hotspot)` as required in the `Prerequisites` section of this README.     
 
 
 ### Running Workspace Manager
@@ -109,3 +106,7 @@ TODO: It would be nice to have a kickstart script that new devs can run that con
   
   **ALTERNATIVELY**, if you've exported the environment variables in a `.profile` or similar, just re-launch IntelliJ and it should pick them up. 
 - You can get live-ish reloading of for the local Swagger UI through Intellij. Instead of running the local server with `bootRun`, use the `Main` Spring Boot configuration that IntelliJ auto-generates. Edit it and add the following override parameter: `spring.resources.static-locations:file:src/main/resources/api`. It's not true live reloading, you still have to refresh the browser, but at least you don't have to restart the server.
+
+
+### Config Notes
+1. You may encounter issues with the application when running an unexpected version of Java. So make sure you are running `AdoptOpenJDK Java 11 (Hotspot)` as required in the `Prerequisites` section of this README.     
