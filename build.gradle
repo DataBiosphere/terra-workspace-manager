@@ -100,7 +100,7 @@ dependencies {
 }
 
 dependencyLocking {
-	lockAllConfigurations()
+	lockAllConfigurations() // see https://docs.gradle.org/current/userguide/dependency_locking.html
 }
 
 // Exclude the Spring logger, so everything will use SLF4J
