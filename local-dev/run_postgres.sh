@@ -2,22 +2,20 @@
 # Start up a postgres container with initial user/database setup.
 POSTGRES_VERSION=9.6
 
-set -ex
-
 start() {
     echo "attempting to remove old $CONTAINER container..."
-    docker rm -f $CONTAINER || echo "docker rm failed. nothing to rm."
+    docker rm -f $CONTAINER
 
     # start up postgres
     echo "starting up postgres container..."
+    BASEDIR=$(dirname "$0")
     docker create --name $CONTAINER --rm -e POSTGRES_PASSWORD=password -p "$POSTGRES_PORT:5432" postgres:$POSTGRES_VERSION
-    docker cp $PWD/local-dev/local-postgres-init.sql $CONTAINER:/docker-entrypoint-initdb.d/docker_postgres_init.sql
+    docker cp $BASEDIR/local-dev/local-postgres-init.sql $CONTAINER:/docker-entrypoint-initdb.d/docker_postgres_init.sql
     docker start $CONTAINER
 
     # validate postgres
     echo "running postgres validation..."
-    docker run --rm --link $CONTAINER:postgres \
-      -v $PWD/local-dev/sql_validate.sh:/working/sql_validate.sh postgres:$POSTGRES_VERSION /working/sql_validate.sh
+    docker exec $CONTAINER sh -c "$(cat $BASEDIR/local-dev/sql_validate.sh)"
     if [ 0 -eq $? ]; then
         echo "postgres validation succeeded."
     else
@@ -30,7 +28,8 @@ start() {
 stop() {
     echo "Stopping docker $CONTAINER container..."
     docker stop $CONTAINER || echo "postgres stop failed. container already stopped."
-    docker rm -v $CONTAINER || echo "postgres rm -v failed.  container already destroyed."
+    docker rm -v $CONTAINER
+    exit 0
 }
 
 CONTAINER=postgres
