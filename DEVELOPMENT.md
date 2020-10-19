@@ -54,7 +54,7 @@ To run unit tests:
 ./gradlew unitTest
 ```
   
-To run integration tests: (see **NOTE** below)
+To run integration tests: (see **Integration Tests Notes** below)
 
 ```sh
 ./render_config.sh # First time only
@@ -67,10 +67,13 @@ To run all tests:
 ./gradlew test
 ```
 
-**NOTE** (Some of this will likely change as we grow integration tests). Integration test assumes that:
+**Integration Tests Notes** (Some of this will likely change as we grow integration tests). Integration test assumes that:
 1. You have generated an access token from GitHub and saved the token in your home directory with the filename `.vault-token`
 2. Default environment for rendering configs is `dev`. You can pass arguments to the script to target different environments.
 3. Test user has been registered in an existing WSM environment. Currently, the test user is registered in `dev` environment where WSM is currently deployed. You don't need to take any action in this step, unless the dev environment changes for some reason and the user no longer exists there. 
+
+**Config Notes**
+1. Unit and Integration tests are known to fail if you are running `OpenJDK 14.0.1`. Make sure you are running `AdoptOpenJDK Java 11 (Hotspot)` as required in the `Prerequisites` section of this README.     
 
 
 ### Running Workspace Manager
