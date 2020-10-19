@@ -27,6 +27,9 @@ Note: this document is being written during a time when code is rapidly evolving
     ```
 - Recommended: read the [README](README.md) to understand the general structure of the service
 
+**NOTE**: You may encounter issues with the application when running an unexpected version of Java. So make sure you are running `AdoptOpenJDK Java 11 (Hotspot)` as specified above.     
+
+
 ### Database Configuration
 
 Workspace Manager relies on two databases: one for the app itself, and one for Stairway. We will also need a DB for the unit tests.
@@ -106,7 +109,3 @@ TODO: It would be nice to have a kickstart script that new devs can run that con
   
   **ALTERNATIVELY**, if you've exported the environment variables in a `.profile` or similar, just re-launch IntelliJ and it should pick them up. 
 - You can get live-ish reloading of for the local Swagger UI through Intellij. Instead of running the local server with `bootRun`, use the `Main` Spring Boot configuration that IntelliJ auto-generates. Edit it and add the following override parameter: `spring.resources.static-locations:file:src/main/resources/api`. It's not true live reloading, you still have to refresh the browser, but at least you don't have to restart the server.
-
-
-### Config Notes
-1. You may encounter issues with the application when running an unexpected version of Java. So make sure you are running `AdoptOpenJDK Java 11 (Hotspot)` as required in the `Prerequisites` section of this README.     
