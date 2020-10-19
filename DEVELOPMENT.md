@@ -27,6 +27,9 @@ Note: this document is being written during a time when code is rapidly evolving
     ```
 - Recommended: read the [README](README.md) to understand the general structure of the service
 
+**NOTE**: You may encounter issues with the application when running an unexpected version of Java. So make sure you are running `AdoptOpenJDK Java 11 (Hotspot)` as specified above.     
+
+
 ### Database Configuration
 
 Workspace Manager relies on two databases: one for the app itself, and one for Stairway. We will also need a DB for the unit tests.
