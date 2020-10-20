@@ -12,11 +12,11 @@ env:
       name: ${DATABASE_NAME:wm}
       pass: ${DATABASE_USER_PASSWORD:wmpwd}
       user: ${DATABASE_USER:wmuser}
-  logging:
+  tracing:
+    enabled: ${CLOUD_TRACE_ENABLED:false}
+    probability: ${SAMPLING_PROBABILITY:0}
     project-id: ${SERVICE_GOOGLE_PROJECT:broad-dsde-dev}
     sa-path: ${CLOUD_TRACE_SA_PATH:rendered/service-account.json}
-    sampling-probability: ${SAMPLING_PROBABILITY:0}
-    trace-enabled: ${CLOUD_TRACE_ENABLED:false}
   urls: # While we've traditionally thought of these as env specific and ok to hardcode, with kubernetes they may change
     sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org/}
     terra-datarepo: ${TERRA_DATAREPO_URL:https://jade.datarepo-dev.broadinstitute.org}
@@ -33,17 +33,11 @@ server:
 
 spring:
   application.name: workspace
-  cloud.gcp:
-    credentials.location: file:${env.logging.sa-path}
-    trace:
-      enabled: ${env.logging.trace-enabled}
-      project-id: ${env.logging.project-id}
   resources:
     cache.cachecontrol:
       max-age: 0
       must-revalidate: true
     static-locations: classpath:/api/
-  sleuth.sampler.probability: ${env.logging.sampling-probability}
 
 workspace:
   datarepo.instances:
@@ -67,6 +61,12 @@ workspace:
   status-check:
     frequency-ms: 60000
     staleness-threshold-ms: 600000
+
+  tracing:
+    enabled: ${env.tracing.enabled}
+    probability: ${env.tracing.probability}
+    project-id: ${env.tracing.project-id}
+    sa-path: ${env.tracing.sa-path}
 
   workspace-database:
     initialize-on-start: ${env.db.init}

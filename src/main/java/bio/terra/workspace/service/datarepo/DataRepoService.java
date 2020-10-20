@@ -5,7 +5,7 @@ import bio.terra.datarepo.api.UnauthenticatedApi;
 import bio.terra.datarepo.client.ApiClient;
 import bio.terra.datarepo.client.ApiException;
 import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
-import bio.terra.workspace.app.configuration.spring.ApiResourceConfig;
+import bio.terra.workspace.app.configuration.spring.TraceInterceptorConfig;
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -27,7 +27,8 @@ public class DataRepoService {
   private ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();
     client.addDefaultHeader(
-        ApiResourceConfig.MDC_REQUEST_ID_HEADER, MDC.get(ApiResourceConfig.MDC_REQUEST_ID_KEY));
+        TraceInterceptorConfig.MDC_REQUEST_ID_HEADER,
+        MDC.get(TraceInterceptorConfig.MDC_REQUEST_ID_KEY));
     client.setAccessToken(accessToken);
     return client;
   }

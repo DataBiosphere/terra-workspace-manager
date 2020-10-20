@@ -12,12 +12,12 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import brave.Span;
-import brave.Tracer;
+import io.opencensus.contrib.spring.aop.Traced;
+import io.opencensus.trace.Span;
+import io.opencensus.trace.Tracer;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -26,7 +26,7 @@ public class WorkspaceService {
   private JobService jobService;
   private final WorkspaceDao workspaceDao;
   private final SamService samService;
-  @Autowired private final Tracer tracer;
+  private final Tracer tracer;
 
   @Autowired
   public WorkspaceService(
@@ -57,18 +57,17 @@ public class WorkspaceService {
     return createJob.submitAndWait(CreatedWorkspace.class);
   }
 
-  @NewSpan
+  @Traced
   public WorkspaceDescription getWorkspace(UUID id, AuthenticatedUserRequest userReq) {
-    Span newSpan = tracer.nextSpan().name("workspaceAuthz");
+    Span span = tracer.spanBuilder("workspaceAuthz").startSpan();
     // this try is here to demonstrate one way to create a span. When adding tracing properly,
-    // switch to using @NewSpan on the workspaceAuth method.
-    try (Tracer.SpanInScope ws = tracer.withSpanInScope(newSpan.start())) {
+    // switch to using @Traced on the workspaceAuth method.
+    try {
       samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_READ_ACTION);
     } finally {
-      newSpan.finish();
+      span.end();
     }
-    WorkspaceDescription result = workspaceDao.getWorkspace(id);
-    return result;
+    return workspaceDao.getWorkspace(id);
   }
 
   public void deleteWorkspace(UUID id, String userToken) {
