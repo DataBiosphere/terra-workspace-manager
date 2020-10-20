@@ -31,10 +31,30 @@ Note: this document is being written during a time when code is rapidly evolving
 
 
 ### Database Configuration
-
 Workspace Manager relies on two databases: one for the app itself, and one for Stairway. We will also need a DB for the unit tests.
 
-In order to set these up, run the following command, which will create the DB's and users for unit tests, Stairway, and the app itself:
+#### Option A: Docker Postgres
+##### Running the Postgres Container
+To start a postgres container configured with the necessary databases:
+```sh
+./local-dev/run_postgres.sh start
+```
+To stop the container:
+```sh
+./local-dev/run_postgres.sh start
+```
+Note that the contents of the database is not saved between container runs.
+
+##### Connecting to the Postgres Container
+Use `psql` to connect to databases within the started database container, e.g. for database `wm` users `wmuser` with password `wmpwd`:
+```sh
+PGPASSWORD=wmpwd psql postgresql://127.0.0.1:5432/wm -U wmuser
+```
+
+#### Option B: Local Postgres 
+##### Database Configuration
+
+To set up Workspace Manager's required database, run the following command, which will create the DB's and users for unit tests, Stairway, and the app itself:
 
 ```sh
 psql -f local-dev/local-postgres-init.sql
