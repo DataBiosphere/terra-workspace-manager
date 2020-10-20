@@ -1,2 +1,4 @@
 rootProject.name = 'terra-workspace-manager'
 include 'workspace-manager-client'
+
+enableFeaturePreview('ONE_LOCKFILE_PER_PROJECT')
