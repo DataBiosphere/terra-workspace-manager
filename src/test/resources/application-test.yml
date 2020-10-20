@@ -1,3 +1,5 @@
+spring.profiles.include: human-readable-logging
+
 workspace:
   datarepo.instances:
     fake-valid-test: https://fake-valid-data-repo-url.broadinstitute.org

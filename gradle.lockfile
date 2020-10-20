@@ -159,7 +159,6 @@ org.bouncycastle:bcprov-jdk15on:1.64=compileClasspath,productionRuntimeClasspath
 org.broadinstitute.dsde.workbench:sam-client_2.12:0.1-3a0df80=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.checkerframework:checker-compat-qual:2.5.5=compileClasspath,testCompileClasspath
 org.checkerframework:checker-qual:3.5.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-org.codehaus.groovy:groovy:3.0.6=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
 org.codehaus.mojo:animal-sniffer-annotations:1.18=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
 org.conscrypt:conscrypt-openjdk-uber:2.2.1=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.glassfish.hk2.external:aopalliance-repackaged:2.6.1=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
