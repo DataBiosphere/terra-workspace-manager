@@ -1,4 +1,9 @@
+env:
+  preview-url: ${PREVIEW_WM_URL:https://workspace.dsde-dev.broadinstitute.org/}
+  test-env: ${TEST_ENV:dev}
+
 workspace.integration-test:
+  test-env: ${env.test-env}
   data-repo-instance-names:
     dev: terra
   data-repo-snapshot-id:
@@ -10,4 +15,5 @@ workspace.integration-test:
   wsm-urls:
 # swap the commented line to run integration tests against local
     dev: https://workspace.dsde-dev.broadinstitute.org/
+    preview: ${env.preview-url}
 #    dev: http://localhost:8080/
