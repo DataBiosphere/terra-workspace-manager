@@ -16,7 +16,6 @@ env:
     enabled: ${CLOUD_TRACE_ENABLED:false}
     probability: ${SAMPLING_PROBABILITY:0}
     project-id: ${SERVICE_GOOGLE_PROJECT:broad-dsde-dev}
-    sa-path: ${CLOUD_TRACE_SA_PATH:rendered/service-account.json}
   urls: # While we've traditionally thought of these as env specific and ok to hardcode, with kubernetes they may change
     sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org/}
     terra-datarepo: ${TERRA_DATAREPO_URL:https://jade.datarepo-dev.broadinstitute.org}
@@ -66,7 +65,6 @@ workspace:
     enabled: ${env.tracing.enabled}
     probability: ${env.tracing.probability}
     project-id: ${env.tracing.project-id}
-    sa-path: ${env.tracing.sa-path}
 
   workspace-database:
     initialize-on-start: ${env.db.init}
