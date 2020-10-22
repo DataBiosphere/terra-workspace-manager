@@ -4,19 +4,18 @@
 name: Run Integration Tests
 
 on:
-  push:
-    paths-ignore:
-      - 'README.md'
-      - '.github/**'
-      - 'local-dev/**'
+  issue_comment:
+    types: [created]
 env:
   ENV_PREFIX: wsm
   HELM_CHART_NAME: workspacemanager
   VAULT_ADDR: https://clotho.broadinstitute.org:8200
+
 jobs:
   preview-test:
     name: Create and Test Preview Environment
     runs-on: ubuntu-latest
+    if: startsWith(github.event.comment.body, 'preview-test')
     steps:
     - name: Get short SHA
       id: slug
