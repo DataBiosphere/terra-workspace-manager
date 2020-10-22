@@ -70,6 +70,9 @@ dependencies {
 	// Terra deps
 	implementation group: "bio.terra", name: "datarepo-client", version: "1.0.1-SNAPSHOT"
 	implementation group: "bio.terra", name: "stairway", version: "0.0.20"
+	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-billing', version: '0.0.4-SNAPSHOT'
+	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager', version: '0.0.8-SNAPSHOT'
+	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-serviceusage', version: '0.0.4-SNAPSHOT'
 	implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.12", version: "0.1-3a0df80"
 
 	// Versioned direct deps
