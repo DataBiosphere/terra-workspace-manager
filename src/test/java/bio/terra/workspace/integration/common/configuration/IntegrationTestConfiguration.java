@@ -1,7 +1,6 @@
 package bio.terra.workspace.integration.common.configuration;
 
 import java.util.HashMap;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +17,10 @@ public class IntegrationTestConfiguration {
   private HashMap<String, String> dataRepoSnapshotId;
   private String serviceAccountEmail;
   private String serviceAccountFilePath;
+
+  public void setTestEnv(String testEnv) {
+    this.testEnv = testEnv;
+  }
 
   public void setWsmEndpoints(HashMap<String, String> wsmEndpoints) {
     this.wsmEndpoints = wsmEndpoints;
