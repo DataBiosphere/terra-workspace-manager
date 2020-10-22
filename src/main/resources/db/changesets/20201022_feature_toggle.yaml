@@ -1,0 +1,14 @@
+# Adds an enum column for tracking Rawls migration state
+databaseChangeLog:
+- changeSet:
+    id: addWorkspaceFeatureToggle
+    author: zloery
+    changes:
+#    - sql: CREATE TYPE stages_enum AS ENUM ('RAWLS_WORKSPACE', 'MC_WORKSPACE')
+    - addColumn:
+        tableName: workspace
+        columns:
+        - column:
+            name: workspace_stage
+            type: stages_enum
+            defaultValue: 'RAWLS_WORKSPACE'
