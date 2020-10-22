@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 public class IntegrationTestConfiguration {
 
   private String testEnv;
+  // TODO: fake change to trigger github action
   private HashMap<String, String> wsmUrls;
   private HashMap<String, String> wsmEndpoints;
   private HashMap<String, String> dataRepoInstanceNames;
