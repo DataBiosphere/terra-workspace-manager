@@ -9,6 +9,10 @@ on:
       - 'README.md'
       - '.github/**'
       - 'local-dev/**'
+env:
+  ENV_PREFIX: wsm
+  HELM_CHART_NAME: workspacemanager
+  VAULT_ADDR: https://clotho.broadinstitute.org:8200
 jobs:
   preview-test:
     name: Create and Test Preview Environment
