@@ -66,6 +66,7 @@ At some point, we will connect this to a CloudSQL instance but for local dev pur
 
 1. Open the repo normally (File -> Open)
 2. In project structure (the folder icon with a little tetromino over it in the upper right corner), make sure the project SDK is set to Java 11. If not, IntelliJ should detect it on your system in the dropdown, otherwise click "Add JDK..." and navigate to the folder from the last step.
+3. See some optional tips below in the ["Tips"](#tips) section.
 
 ## Running
 
@@ -125,7 +126,6 @@ TODO: It would be nice to have a kickstart script that new devs can run that con
 
 ### Tips
 - Check out [gdub](https://github.com/gdubw/gdub), it'll save you typing `./gradlew` over and over, and also takes care of knowing when you're not in the root directory so you don't have to figure out the appropriate number of `../`s.
-- To run gradle actions in IntelliJ, edit your run configurations and add all of the exports under *Running Workspace Manager* to the Gradle template.
-  
-  **ALTERNATIVELY**, if you've exported the environment variables in a `.profile` or similar, just re-launch IntelliJ and it should pick them up. 
-- You can get live-ish reloading of for the local Swagger UI through Intellij. Instead of running the local server with `bootRun`, use the `Main` Spring Boot configuration that IntelliJ auto-generates. Edit it and add the following override parameter: `spring.resources.static-locations:file:src/main/resources/api`. It's not true live reloading, you still have to refresh the browser, but at least you don't have to restart the server.
+- In IntelliJ, instead of running the local server with `bootRun`, use the `Main` Spring Boot configuration that IntelliJ auto-generates. To edit it, click on it (in the upper right of the window), and click `Edit Configurations`.
+    - For readable logs, put `human-readable-logging` in the `Active Profiles` field. 
+    - You can get live-ish reloading of for the local Swagger UI by adding the following override parameter: `spring.resources.static-locations:file:src/main/resources/api`. It's not true live reloading, you still have to refresh the browser, but at least you don't have to restart the server.
