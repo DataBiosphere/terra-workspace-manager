@@ -160,7 +160,7 @@ bootRun {
 }
 tasks.withType(Test) {
 	environment = [
-	        'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
+			'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
 	]
 }
 
