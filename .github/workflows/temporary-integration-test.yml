@@ -68,10 +68,6 @@ jobs:
     - name: Construct action run URL
       id: run-url
       run: echo ::set-output name=url::https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
-    - name: Set up AdoptOpenJDK 11
-      uses: joschi/setup-jdk@v2
-      with:
-        java-version: 11
     - name: Cache Gradle packages
       uses: actions/cache@v2
       with:
