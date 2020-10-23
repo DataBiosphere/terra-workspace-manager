@@ -13,7 +13,6 @@ jobs:
   preview-test:
     name: Create and Test Preview Environment
     runs-on: ubuntu-latest
-    if: startsWith(github.event.comment.body, 'preview-test')
     steps:
     - name: Get short SHA
       id: slug
