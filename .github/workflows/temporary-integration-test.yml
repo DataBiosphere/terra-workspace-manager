@@ -1,7 +1,9 @@
 name: Temporary Action for triggering preview env integration tests
 #todo: I've hardcoded the pull request number as 119 to get around Github's rules on which actions can run on branches. this file should never be submitted.
 on:
-  workflow_dispatch
+  push:
+    branches:
+    - zl-integration-preview
 
 env:
   ENV_PREFIX: wsm
