@@ -7,6 +7,7 @@ import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
@@ -82,6 +83,7 @@ public class CrlConfiguration {
 
   /** The CRL {@link CloudResourceManagerCow} which wrappers Google Cloud Resource Manager API. */
   @Bean
+  @Lazy
   public CloudResourceManagerCow cloudResourceManagerCow()
       throws IOException, GeneralSecurityException {
     return CloudResourceManagerCow.create(
@@ -90,23 +92,24 @@ public class CrlConfiguration {
 
   /** The CRL {@link CloudBillingClientCow} which wrappers Google Billing API. */
   @Bean
+  @Lazy
   public CloudBillingClientCow cloudBillingClientCow() throws IOException {
     return new CloudBillingClientCow(clientConfig(), GoogleCredentials.getApplicationDefault());
   }
 
   /** The CRL {@link ServiceUsageCow} which wrappers Google Cloud ServiceUsage API. */
   @Bean
+  @Lazy
   public ServiceUsageCow serviceUsageCow() throws GeneralSecurityException, IOException {
     return ServiceUsageCow.create(clientConfig(), GoogleCredentials.getApplicationDefault());
   }
 
   private static ServiceAccountCredentials getGoogleCredentialsOrDie(String serviceAccountPath) {
     try {
-      return ServiceAccountCredentials.fromStream(
-          Thread.currentThread().getContextClassLoader().getResourceAsStream(serviceAccountPath));
+      return ServiceAccountCredentials.fromStream(new FileInputStream(serviceAccountPath));
     } catch (Exception e) {
       throw new RuntimeException(
-          "Unable to load GoogleCredentials from configuration" + serviceAccountPath, e);
+          "Unable to load GoogleCredentials from configuration: " + serviceAccountPath, e);
     }
   }
 }
