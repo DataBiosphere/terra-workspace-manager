@@ -9,6 +9,7 @@ import bio.terra.workspace.app.configuration.spring.TraceInterceptorConfig;
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.HashMap;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +53,7 @@ public class DataRepoService {
     }
   }
 
+  @Traced
   public boolean snapshotExists(
       String instanceName, String snapshotId, AuthenticatedUserRequest userReq) {
     RepositoryApi repositoryApi = repositoryApi(instanceName, userReq);
