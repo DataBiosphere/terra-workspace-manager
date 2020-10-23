@@ -1,11 +1,10 @@
 package bio.terra.workspace.app.configuration.spring;
 
 import bio.terra.workspace.app.configuration.external.TracingConfiguration;
-import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.auth.oauth2.GoogleCredentials;
 import io.opencensus.exporter.trace.stackdriver.StackdriverTraceConfiguration;
 import io.opencensus.exporter.trace.stackdriver.StackdriverTraceExporter;
 import io.opencensus.trace.AttributeValue;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,9 +23,7 @@ public class StackdriverTraceExporterConfig {
       StackdriverTraceExporter.createAndRegister(
           StackdriverTraceConfiguration.builder()
               .setProjectId(tracingConfiguration.getProjectId())
-              .setCredentials(
-                  ServiceAccountCredentials.fromStream(
-                      new FileInputStream(tracingConfiguration.getSaPath())))
+              .setCredentials(GoogleCredentials.getApplicationDefault())
               .setFixedAttributes(
                   Map.of(
                       "/component",

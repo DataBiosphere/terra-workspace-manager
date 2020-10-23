@@ -35,8 +35,6 @@ allprojects {
 				entry "opencensus-contrib-spring"
 				entry "opencensus-impl"
 			}
-			// grpc is an stackdriver exporter sub-dependency, but the default version doesn't work
-			dependency group: "io.grpc", name: "grpc-core", version: "1.32.2"
 
 			dependency group: "io.swagger.core.v3", name: "swagger-annotations", version: "2.1.5"
 			dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.22"
@@ -83,7 +81,6 @@ dependencies {
 	implementation group: "org.springframework.cloud", name: "spring-cloud-gcp-starter-logging", version: "1.2.5.RELEASE"
 	implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
 	runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.2.18"
-	runtimeOnly group: "org.codehaus.groovy", name: "groovy", version: "3.0.6" // Used only for logback configuration file.
 
 	// Tracing deps
 	implementation group: "io.opencensus", name: "opencensus-api"
@@ -118,11 +115,6 @@ dependencies {
 
 dependencyLocking {
 	lockAllConfigurations() // see https://docs.gradle.org/current/userguide/dependency_locking.html
-}
-
-// Exclude the Spring logger, so everything will use SLF4J
-configurations.all {
-	exclude group: "commons-logging", module: "commons-logging"
 }
 
 // for scans
@@ -160,6 +152,20 @@ swaggerSources {
 }
 
 // Testing config
+
+// The path to the default Google service account for the Workspace Manager to run as.
+// Created by render_config.sh
+def googleCredentialsFile = "${projectDir}/rendered/service-account.json"
+bootRun {
+	environment = [
+			'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
+	]
+}
+tasks.withType(Test) {
+	environment = [
+			'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
+	]
+}
 
 test {
 	useJUnitPlatform()
