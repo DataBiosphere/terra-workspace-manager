@@ -14,6 +14,7 @@ jobs:
     name: Create and Test Preview Environment
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v2
     - name: Get short SHA
       id: slug
       run: |
