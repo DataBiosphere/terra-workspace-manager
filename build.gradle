@@ -150,6 +150,20 @@ swaggerSources {
 
 // Testing config
 
+// The path to the default Google service account for the Workspace Manager to run as.
+// Created by render_config.sh
+def googleCredentialsFile = "${projectDir}/rendered/service-account.json"
+bootRun {
+	environment = [
+			'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
+	]
+}
+tasks.withType(Test) {
+	environment = [
+			'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
+	]
+}
+
 test {
 	useJUnitPlatform()
 }

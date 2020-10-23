@@ -12,8 +12,6 @@ public class TracingConfiguration {
   Double probability = null;
   /** GCP project id for trace */
   String projectId = null;
-  /** Path to SA json credentials for uploading traces to GCP */
-  String saPath = null;
 
   public Double getProbability() {
     return probability;
@@ -29,13 +27,5 @@ public class TracingConfiguration {
 
   public void setProjectId(String projectId) {
     this.projectId = projectId;
-  }
-
-  public String getSaPath() {
-    return saPath;
-  }
-
-  public void setSaPath(String saPath) {
-    this.saPath = saPath;
   }
 }
