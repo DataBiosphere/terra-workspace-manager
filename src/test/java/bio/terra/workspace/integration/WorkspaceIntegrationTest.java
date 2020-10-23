@@ -225,6 +225,35 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     assertThat(referenceList.getResources(), containsInAnyOrder(expectedResults));
   }
 
+  @Test
+  @Tag(TAG_NEEDS_CLEANUP)
+  public void getDataReference(TestInfo testInfo) throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
+
+    createDefaultWorkspace(workspaceId);
+    String dataReferenceName = "workspace_integration_test_snapshot";
+    WorkspaceResponse<DataReferenceDescription> postResponse =
+        createDefaultDataReference(workspaceId, dataReferenceName);
+    assertEquals(HttpStatus.OK, postResponse.getStatusCode());
+    assertTrue(postResponse.isResponseObject());
+
+    UUID referenceId = postResponse.getResponseObject().getReferenceId();
+    String path =
+        testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId + "/datareferences/" + referenceId;
+
+    WorkspaceResponse<DataReferenceDescription> getResponse =
+        workspaceManagerTestClient.get(
+            testConfig.getServiceAccountEmail(), path, DataReferenceDescription.class);
+
+    assertEquals(HttpStatus.OK, getResponse.getStatusCode());
+    assertTrue(getResponse.isResponseObject());
+    DataReferenceDescription dataReferenceDescription = getResponse.getResponseObject();
+
+    assertEquals(dataReferenceName, dataReferenceDescription.getName());
+    assertEquals(workspaceId, dataReferenceDescription.getWorkspaceId());
+  }
+
   private WorkspaceResponse<CreatedWorkspace> createDefaultWorkspace(UUID workspaceId)
       throws Exception {
     String path = testConfig.getWsmWorkspacesBaseUrl();
