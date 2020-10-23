@@ -227,14 +227,14 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void getDataReference(TestInfo testInfo) throws Exception {
+  public void getDataReferenceById(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
     createDefaultWorkspace(workspaceId);
-    String dataReferenceName = "workspace_integration_test_snapshot";
+    String referenceName = "workspace_integration_test_snapshot";
     WorkspaceResponse<DataReferenceDescription> postResponse =
-        createDefaultDataReference(workspaceId, dataReferenceName);
+        createDefaultDataReference(workspaceId, referenceName);
     assertEquals(HttpStatus.OK, postResponse.getStatusCode());
     assertTrue(postResponse.isResponseObject());
 
@@ -250,7 +250,40 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     assertTrue(getResponse.isResponseObject());
     DataReferenceDescription dataReferenceDescription = getResponse.getResponseObject();
 
-    assertEquals(dataReferenceName, dataReferenceDescription.getName());
+    assertEquals(referenceName, dataReferenceDescription.getName());
+    assertEquals(workspaceId, dataReferenceDescription.getWorkspaceId());
+  }
+
+  @Test
+  @Tag(TAG_NEEDS_CLEANUP)
+  public void getDataReferenceByNameAndType(TestInfo testInfo) throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
+
+    createDefaultWorkspace(workspaceId);
+    String referenceName = "workspace_integration_test_snapshot";
+    String referenceType = ReferenceTypeEnum.DATA_REPO_SNAPSHOT.toString();
+    WorkspaceResponse<DataReferenceDescription> postResponse =
+        createDefaultDataReference(workspaceId, referenceName);
+    assertEquals(HttpStatus.OK, postResponse.getStatusCode());
+    assertTrue(postResponse.isResponseObject());
+
+    UUID referenceId = postResponse.getResponseObject().getReferenceId();
+
+    String path =
+        String.format(
+            "%s/%s/datareferences/%s/%s",
+            testConfig.getWsmWorkspacesBaseUrl(), workspaceId, referenceType, referenceName);
+
+    WorkspaceResponse<DataReferenceDescription> getResponse =
+        workspaceManagerTestClient.get(
+            testConfig.getServiceAccountEmail(), path, DataReferenceDescription.class);
+
+    assertEquals(HttpStatus.OK, getResponse.getStatusCode());
+    assertTrue(getResponse.isResponseObject());
+    DataReferenceDescription dataReferenceDescription = getResponse.getResponseObject();
+
+    assertEquals(referenceId, dataReferenceDescription.getReferenceId());
     assertEquals(workspaceId, dataReferenceDescription.getWorkspaceId());
   }
 
