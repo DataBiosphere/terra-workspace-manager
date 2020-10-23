@@ -92,7 +92,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
     createDefaultWorkspace(workspaceId);
 
-    String userEmail = testConfig.getServiceAccountEmail();
+    String userEmail = testConfig.getUserEmail();
     String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId;
 
     WorkspaceResponse<WorkspaceDescription> getWorkspaceResponse =
@@ -111,7 +111,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
     WorkspaceResponse<CreatedWorkspace> workspaceResponse = createDefaultWorkspace(workspaceId);
 
-    String userEmail = testConfig.getServiceAccountEmail();
+    String userEmail = testConfig.getUserEmail();
     String token = authService.getAuthToken(userEmail);
     String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId;
     DeleteWorkspaceRequestBody body = new DeleteWorkspaceRequestBody().authToken(token);
@@ -141,7 +141,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
     WorkspaceResponse<CreatedWorkspace> workspaceResponse = createDefaultWorkspace(workspaceId);
 
-    String userEmail = testConfig.getServiceAccountEmail();
+    String userEmail = testConfig.getUserEmail();
     String token = "invalidToken";
     String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId;
     DeleteWorkspaceRequestBody body = new DeleteWorkspaceRequestBody().authToken(token);
@@ -190,7 +190,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
         testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId + "/datareferences/" + referenceId;
 
     WorkspaceResponse<?> deleteResponse =
-        workspaceManagerTestClient.delete(testConfig.getServiceAccountEmail(), deletePath, "");
+        workspaceManagerTestClient.delete(testConfig.getUserEmail(), deletePath, "");
     assertEquals(HttpStatus.valueOf(204), deleteResponse.getStatusCode());
   }
 
@@ -212,8 +212,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     assertEquals(HttpStatus.OK, secondPostResponse.getStatusCode());
     String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId + "/datareferences";
     WorkspaceResponse<DataReferenceList> listResponse =
-        workspaceManagerTestClient.get(
-            testConfig.getServiceAccountEmail(), path, DataReferenceList.class);
+        workspaceManagerTestClient.get(testConfig.getUserEmail(), path, DataReferenceList.class);
     assertEquals(HttpStatus.OK, listResponse.getStatusCode());
     assertTrue(listResponse.isResponseObject());
     DataReferenceList referenceList = listResponse.getResponseObject();
@@ -228,7 +227,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
   private WorkspaceResponse<CreatedWorkspace> createDefaultWorkspace(UUID workspaceId)
       throws Exception {
     String path = testConfig.getWsmWorkspacesBaseUrl();
-    String userEmail = testConfig.getServiceAccountEmail();
+    String userEmail = testConfig.getUserEmail();
     String token = authService.getAuthToken(userEmail);
     CreateWorkspaceRequestBody body =
         new CreateWorkspaceRequestBody().id(workspaceId).authToken(token);
@@ -249,7 +248,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     // support this test in other DataRepo environments.
     // Data Repo makes a reasonable effort to maintain their dev environment, so this should be a
     // very rare occurrence.
-    String userEmail = testConfig.getServiceAccountEmail();
+    String userEmail = testConfig.getUserEmail();
     String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId + "/datareferences";
 
     DataRepoSnapshot snapshotReference =
@@ -273,7 +272,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
         the next one)? In any case, caching the auth token will enable us to efficiently auth before EACH delete request.
         This ticket will implement caching for auth token using Caffeine AS-428
     */
-    String userEmail = testConfig.getServiceAccountEmail();
+    String userEmail = testConfig.getUserEmail();
     String token = authService.getAuthToken(userEmail);
     String workspaceBaseUrl = testConfig.getWsmWorkspacesBaseUrl();
     DeleteWorkspaceRequestBody body = new DeleteWorkspaceRequestBody().authToken(token);
