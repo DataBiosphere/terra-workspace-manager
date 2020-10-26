@@ -243,7 +243,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
     WorkspaceResponse<DataReferenceDescription> getResponse =
         workspaceManagerTestClient.get(
-            testConfig.getServiceAccountEmail(), path, DataReferenceDescription.class);
+            testConfig.getUserEmail(), path, DataReferenceDescription.class);
 
     assertEquals(HttpStatus.OK, getResponse.getStatusCode());
     assertTrue(getResponse.isResponseObject());
@@ -276,7 +276,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
     WorkspaceResponse<DataReferenceDescription> getResponse =
         workspaceManagerTestClient.get(
-            testConfig.getServiceAccountEmail(), path, DataReferenceDescription.class);
+            testConfig.getUserEmail(), path, DataReferenceDescription.class);
 
     assertEquals(HttpStatus.OK, getResponse.getStatusCode());
     assertTrue(getResponse.isResponseObject());
