@@ -104,7 +104,7 @@ jobs:
     - name: Get preview WM url
       id: get-wm-url
       run: |
-        WM_URL=$(echo ${{ steps.create.outputs.output }} | base64 -d | jq -r '.services.workspacemanager.url')
+        WM_URL=$(echo ${{ steps.create.outputs.output }} | base64 -d | jq -r '.services.workspacemanager.url')/
         echo ::set-output name=wm-url::$WM_URL
     - name: Run Tests
       id: test
