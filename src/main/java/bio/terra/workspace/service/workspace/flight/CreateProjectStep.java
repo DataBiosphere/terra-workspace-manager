@@ -18,7 +18,11 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Optional;
 
-/** A {@link Step} for creating a GCP Project for a workspace. */
+/**
+ * A {@link Step} for creating a Google Project for a workspace.
+ *
+ * <p>TODO(PF-156): Use RBS for project creation instead.
+ */
 public class CreateProjectStep implements Step {
   private static final String PROJECT_ID_KEY = "CreateProjectStep.projectId";
   private static final ImmutableList<String> ENABLED_SERVICES =
