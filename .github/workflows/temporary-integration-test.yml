@@ -13,6 +13,19 @@ jobs:
   preview-test:
     name: Create and Test Preview Environment
     runs-on: ubuntu-latest
+    # TODO: WM can't start without an successful postgres connection, even if it's only using the client to run integration tests. This needs rethinking.
+    services:
+      postgres:
+        image: postgres:9.6
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+        - 5432:5432
     steps:
     - uses: actions/checkout@v2
     - name: Get short SHA
@@ -68,6 +81,10 @@ jobs:
     - name: Construct action run URL
       id: run-url
       run: echo ::set-output name=url::https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+    - name: Set up AdoptOpenJDK 11
+      uses: joschi/setup-jdk@v2
+      with:
+        java-version: 11
     - name: Cache Gradle packages
       uses: actions/cache@v2
       with:
@@ -84,6 +101,10 @@ jobs:
       run: sudo chmod +r rendered/service-account.json
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
+    - name: Initialize Postgres DB
+      env:
+        PGPASSWORD: postgres
+      run: psql -h 127.0.0.1 -U postgres -f ./local-dev/local-postgres-init.sql
     - name: Test
       id: test
       uses: databiosphere/github-actions/actions/wm-integration-test@zl-wm-integration
