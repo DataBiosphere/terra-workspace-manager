@@ -5,8 +5,6 @@ name: Run Integration Tests
 
 on:
   push:
-    branches:
-      - dev
     paths-ignore:
       - 'README.md'
       - '.github/**'
@@ -62,13 +60,17 @@ jobs:
       - name: Render configuration for tests
         run: ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }} dev
       - name: Ensure read permissions for rendered files
-        run: sudo chmod +r rendered/service-account.json
+        run: sudo chmod +r rendered
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Initialize Postgres DB
         env:
           PGPASSWORD: postgres
         run: psql -h 127.0.0.1 -U postgres -f ./local-dev/local-postgres-init.sql
+      - name: Run local server (in background)
+        run: ./gradlew bootRun &
+      - name: Wait for local server to start
+        run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 0.5; done'
       - name: Run integration tests
         env:
           TEST_ENV: dev
