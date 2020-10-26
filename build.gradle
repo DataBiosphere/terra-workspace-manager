@@ -4,7 +4,7 @@ plugins {
 
 	id "com.diffplug.spotless" version "5.6.1"
 	id "com.github.ben-manes.versions" version "0.33.0"
-	id "com.google.cloud.tools.jib" version "2.5.1"
+	id "com.google.cloud.tools.jib" version "2.6.0"
 	id "com.palantir.git-version" version "0.12.3"
 	id "io.spring.dependency-management" version "1.0.10.RELEASE"
 	id "org.hidetake.swagger.generator" version "2.18.2"
@@ -29,8 +29,15 @@ allprojects {
 			mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
 		}
 		dependencies {
+			dependencySet(group: "io.opencensus", version: "0.27.1") {
+				entry "opencensus-exporter-trace-stackdriver"
+				entry "opencensus-api"
+				entry "opencensus-contrib-spring"
+				entry "opencensus-impl"
+			}
+
 			dependency group: "io.swagger.core.v3", name: "swagger-annotations", version: "2.1.5"
-			dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.21"
+			dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.22"
 		}
 	}
 
@@ -61,22 +68,25 @@ dependencies {
 	// Terra deps
 	implementation group: "bio.terra", name: "datarepo-client", version: "1.0.1-SNAPSHOT"
 	implementation group: "bio.terra", name: "stairway", version: "0.0.20"
+	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-billing', version: '0.0.4-SNAPSHOT'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager', version: '0.0.8-SNAPSHOT'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-serviceusage', version: '0.0.4-SNAPSHOT'
 	implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.12", version: "0.1-3a0df80"
 
 	// Versioned direct deps
 	implementation group: "com.google.auto.value", name: "auto-value-annotations", version: "1.7.4"
-	annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
-	implementation group: "com.google.guava", name:"guava", version: "29.0-jre"
+	implementation group: "com.google.guava", name:"guava", version: "30.0-jre"
 	implementation group: "org.hashids", name: "hashids", version: "1.0.3"
-	implementation group: "org.liquibase", name: "liquibase-core", version: "4.1.0"
+	implementation group: "org.liquibase", name: "liquibase-core", version: "4.1.1"
 	implementation group: "org.springframework.cloud", name: "spring-cloud-gcp-starter-logging", version: "1.2.5.RELEASE"
-	implementation group: "org.springframework.cloud", name: "spring-cloud-gcp-starter-trace", version: "1.2.5.RELEASE"
 	implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
-	runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.2.16"
-	// Used only for logback configuration file.
-	runtime group: 'org.codehaus.groovy', name: 'groovy', version: '2.5.7'
+	runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.2.18"
+
+	// Tracing deps
+	implementation group: "io.opencensus", name: "opencensus-api"
+	implementation group: "io.opencensus", name: "opencensus-contrib-spring"
+	implementation group: "io.opencensus", name: "opencensus-exporter-trace-stackdriver"
+	runtimeOnly group: "io.opencensus", name: "opencensus-impl"
 
 	// Deps whose versions are controlled by Spring
 	implementation group: "javax.validation", name: "validation-api"
@@ -88,23 +98,23 @@ dependencies {
 
 	// Swagger deps
 	implementation group: "io.swagger.core.v3", name: "swagger-annotations"
-	runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.35.0"
+	runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.35.2"
 	swaggerCodegen group: "io.swagger.codegen.v3", name: "swagger-codegen-cli"
 
 	// Test deps
-	testImplementation group: "com.google.auth", name: "google-auth-library-oauth2-http", version: "0.21.1"
+	testImplementation group: "com.google.auth", name: "google-auth-library-oauth2-http", version: "0.22.0"
 	testImplementation group: "io.vavr", name: "vavr", version: "0.10.3"
 	testImplementation(group: "org.springframework.boot", name: "spring-boot-starter-test") {
 		exclude group: "org.junit.vintage", module: "junit-vintage-engine"
 	}
 	testImplementation project(":workspace-manager-client")
 
+	annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
 	annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor"
 }
 
-// Exclude the Spring logger, so everything will use SLF4J
-configurations.all {
-	exclude group: "commons-logging", module: "commons-logging"
+dependencyLocking {
+	lockAllConfigurations() // see https://docs.gradle.org/current/userguide/dependency_locking.html
 }
 
 // for scans
@@ -142,6 +152,20 @@ swaggerSources {
 }
 
 // Testing config
+
+// The path to the default Google service account for the Workspace Manager to run as.
+// Created by render_config.sh
+def googleCredentialsFile = "${projectDir}/rendered/service-account.json"
+bootRun {
+	environment = [
+			'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
+	]
+}
+tasks.withType(Test) {
+	environment = [
+			'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
+	]
+}
 
 test {
 	useJUnitPlatform()
