@@ -17,5 +17,5 @@ workspace.integration-test:
   wsm-urls:
 # swap the commented line to run integration tests against local
     dev: https://workspace.dsde-dev.broadinstitute.org/
-    preview: ${env.preview-url}
 #    dev: http://localhost:8080/
+    preview: ${env.preview-url}

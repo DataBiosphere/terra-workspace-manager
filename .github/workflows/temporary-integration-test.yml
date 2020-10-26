@@ -13,7 +13,6 @@ jobs:
   preview-test:
     name: Create and Test Preview Environment
     runs-on: ubuntu-latest
-    # TODO: WM can't start without an successful postgres connection, even if it's only using the client to run integration tests. This needs rethinking.
     services:
       postgres:
         image: postgres:9.6
@@ -81,6 +80,10 @@ jobs:
     - name: Construct action run URL
       id: run-url
       run: echo ::set-output name=url::https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+    - name: Set up AdoptOpenJDK 11
+      uses: joschi/setup-jdk@v2
+      with:
+        java-version: 11
     - name: Cache Gradle packages
       uses: actions/cache@v2
       with:
@@ -101,30 +104,21 @@ jobs:
       env:
         PGPASSWORD: postgres
       run: psql -h 127.0.0.1 -U postgres -f ./local-dev/local-postgres-init.sql
-    - name: Test
+    - name: Get preview WM url
+      id: get-wm-url
+      run: |
+        wm-url=$(echo "${{ steps.create.outputs.output }}" | jq '.services.workspacemanager.url')
+        echo ::set-output name=wm-url::$wm-url
+    - name: Run Tests
       id: test
-      uses: databiosphere/github-actions/actions/wm-integration-test@zl-wm-integration
       env:
-        GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
-        ENV_DATA_B64: ${{ steps.create.outputs.output }}
-        ACTION_RUN_URL: '${{ steps.run-url.outputs.url }}'
+        PREVIEW_WM_URL: ${{ steps.get-wm-url.outputs.wm-url }}
+        TEST_ENV: "preview"
+      run: |
+        ./gradlew integrationTest --scan
     - name: Upload Test Reports
       if: always()
       uses: actions/upload-artifact@v1
       with:
         name: Test Reports
         path: build/reports/tests
-    - name: Print test output
-      run: echo '${{ steps.test.outputs.testData }}' | base64 -d
-    - name: Report
-      id: report
-      uses: docker://us-central1-docker.pkg.dev/dsp-artifact-registry/github-actions-public/preview:latest
-      env:
-        GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
-        VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}
-        VAULT_SA_PATH: ${{ secrets.CI_SA_VAULT_PATH }}
-        PREVIEW_CMD: report
-        ENV_ID: wsm119
-        VERSIONS_B64: '${{ steps.versions-merge.outputs.versions }}'
-        TEST_DATA_B64: '${{ steps.test.outputs.testData }}'
-        TEST_STATUS: ${{ steps.test.outputs.status }}
