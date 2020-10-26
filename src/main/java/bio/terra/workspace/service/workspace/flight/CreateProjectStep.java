@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.workspace.flight;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID;
+
 import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.cloudres.google.api.services.common.OperationUtils;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
@@ -15,9 +17,6 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Optional;
-import java.util.UUID;
-
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID;
 
 /** A {@link Step} for creating a GCP Project for a workspace. */
 public class CreateProjectStep implements Step {

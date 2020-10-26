@@ -1,19 +1,19 @@
 package bio.terra.workspace.service.workspace.flight;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID;
+
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import java.util.UUID;
-
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID;
 
 /**
  * Generates Project Id and put it in working map.
  *
  * <p>This is important to do as a separate step from the project creation so that we always create
  * at most one project id, and always know which project id to try to delete.
- * <p> TODO(PF-156): Use RBS for project creation instead.
+ *
+ * <p>TODO(PF-156): Use RBS for project creation instead.
  */
 public class GenerateProjectIdStep implements Step {
   public GenerateProjectIdStep() {}

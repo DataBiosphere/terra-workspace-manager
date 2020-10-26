@@ -20,7 +20,7 @@ public class WorkspaceCreateFlight extends Flight {
     WorkspaceDao workspaceDao = (WorkspaceDao) appContext.getBean("workspaceDao");
     SamService iamClient = (SamService) appContext.getBean("samService");
     WorkspaceProjectConfiguration workspaceProjectConfiguration =
-            appContext.getBean(WorkspaceProjectConfiguration.class);
+        appContext.getBean(WorkspaceProjectConfiguration.class);
 
     // get data from inputs that steps need
     AuthenticatedUserRequest userReq =
