@@ -5,10 +5,9 @@ name: Run Integration Tests
 
 on:
   push:
-    paths-ignore:
-      - 'README.md'
-      - '.github/**'
-      - 'local-dev/**'
+    branches: [ dev ]
+  pull_request:
+    branches: [ '**' ]
 jobs:
   integration-test:
 
@@ -70,7 +69,8 @@ jobs:
       - name: Run local server (in background)
         run: ./gradlew bootRun &
       - name: Wait for local server to start
-        run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 0.5; done'
+        # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
+        run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
       - name: Run integration tests
         env:
           TEST_ENV: dev
