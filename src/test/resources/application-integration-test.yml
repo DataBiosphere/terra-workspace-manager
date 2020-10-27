@@ -15,7 +15,7 @@ workspace.integration-test:
   wsm-endpoints:
     workspaces: api/workspaces/v1
   wsm-urls:
-# swap the commented line to run integration tests against dev
-#    dev: https://workspace.dsde-dev.broadinstitute.org/
+    # swap the commented line to run integration tests against dev
+    #    dev: https://workspace.dsde-dev.broadinstitute.org/
     dev: http://localhost:8080/
     preview: ${env.preview-url}
