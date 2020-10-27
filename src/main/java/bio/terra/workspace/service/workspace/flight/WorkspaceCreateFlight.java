@@ -9,6 +9,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import org.springframework.context.ApplicationContext;
 
 public class WorkspaceCreateFlight extends Flight {
+
   public WorkspaceCreateFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
 

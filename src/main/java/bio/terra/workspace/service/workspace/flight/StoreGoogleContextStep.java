@@ -31,6 +31,8 @@ public class StoreGoogleContextStep implements Step {
         flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
 
+    // Update the cloud context within a transaction so that we don't clobber a concurrent cloud
+    // context change.
     return transactionTemplate.execute(
         (status -> {
           WorkspaceCloudContext cloudContext = workspaceDao.getCloudContext(workspaceId);
@@ -58,13 +60,14 @@ public class StoreGoogleContextStep implements Step {
         flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
 
+    // Update the cloud context within a transaction so that we don't clobber a concurrent cloud
+    // context change.
     transactionTemplate.execute(
         status -> {
           WorkspaceCloudContext cloudContext = workspaceDao.getCloudContext(workspaceId);
           if (cloudContext.googleProjectId().get().equals(projectId)) {
             // TODO: once multiple clouds are supported, we need to only clear the google context if
-            // it
-            // exists.
+            // it exists.
             workspaceDao.updateCloudContext(workspaceId, WorkspaceCloudContext.none());
           }
           return null;
