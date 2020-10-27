@@ -35,9 +35,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       # See dev_push.yml
-      - name: Get branch name
+      - name: Get truncated branch name
         id: get-branch
-        run: echo ::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})
+        # Truncate name to 16 chars due to usage in dns name later
+        run: |
+          fullname=$(echo ${GITHUB_REF#refs/heads/})
+          echo ::set-output name=branch::${fullname:0:16}
       - name: Get short SHA
         id: slug
         run: |
