@@ -15,7 +15,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import io.opencensus.contrib.spring.aop.Traced;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Tracer;
-import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -70,9 +69,8 @@ public class WorkspaceService {
     return workspaceDao.getWorkspace(id);
   }
 
-  public void deleteWorkspace(UUID id, String userToken) {
+  public void deleteWorkspace(UUID id, AuthenticatedUserRequest userReq) {
 
-    AuthenticatedUserRequest userReq = new AuthenticatedUserRequest().token(Optional.of(userToken));
     samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_DELETE_ACTION);
 
     String description = "Delete workspace " + id;

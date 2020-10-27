@@ -15,7 +15,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -56,10 +55,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<CreatedWorkspace> createWorkspace(
       @RequestBody CreateWorkspaceRequestBody body) {
-    // Note: we do NOT use getAuthenticatedInfo here, as the request's authentication info comes
-    // from the folder manager, not the requesting user.
-    String userToken = body.getAuthToken();
-    AuthenticatedUserRequest userReq = new AuthenticatedUserRequest().token(Optional.of(userToken));
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     return new ResponseEntity<>(workspaceService.createWorkspace(body, userReq), HttpStatus.OK);
   }
 
@@ -74,10 +70,8 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<Void> deleteWorkspace(
       @PathVariable("id") UUID id, DeleteWorkspaceRequestBody body) {
-    // Note: we do NOT use getAuthenticatedInfo here, as the request's authentication info comes
-    // from the folder manager, not the requesting user.
-    String userToken = body.getAuthToken();
-    workspaceService.deleteWorkspace(id, userToken);
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    workspaceService.deleteWorkspace(id, userReq);
     return new ResponseEntity<>(HttpStatus.valueOf(204));
   }
 
