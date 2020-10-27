@@ -20,7 +20,7 @@ public class AuthService {
   public AuthService(IntegrationTestConfiguration testConfig) {
     this.testConfig = testConfig;
     Optional<String> serviceAccountFilePath =
-        Optional.ofNullable(this.testConfig.getServiceAccountFilePath());
+        Optional.ofNullable(this.testConfig.getUserDelegatedServiceAccountPath());
     serviceAccountFilePath.ifPresent(s -> serviceAccountFile = new File(s));
   }
 
@@ -33,7 +33,8 @@ public class AuthService {
     if (!Optional.ofNullable(serviceAccountFile).isPresent()) {
       throw new IllegalStateException(
           String.format(
-              "Service account file not found: %s", testConfig.getServiceAccountFilePath()));
+              "Service account file not found: %s",
+              testConfig.getUserDelegatedServiceAccountPath()));
     }
     GoogleCredentials credentials =
         GoogleCredentials.fromStream(

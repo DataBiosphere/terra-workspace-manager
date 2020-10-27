@@ -1,25 +1,22 @@
 #!/bin/bash
 
 VAULT_TOKEN=${1:-$(cat "$HOME"/.vault-token)}
-TARGET_ENV=${2:-dev}
-
-FIRECLOUD_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/$TARGET_ENV/common/firecloud-account.json
-SERVICE_ACCOUNT_OUTPUT_FILE_PATH=$(dirname "$0")/rendered/service-account.json
-
-if [[ ! "$TARGET_ENV" =~ ^(dev|alpha|perf|staging|prod)$ ]]; then
-    printf "\033[0;31m Unknown environment: $TARGET_ENV \n Must be one of [dev, alpha, perf, staging, prod] \n\033[0m"
-    exit 1
-fi
+WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/dev/dev/workspace/app-sa
+WM_APP_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/rendered/service-account.json
+USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/dev/common/firecloud-account.json
+USER_DELEGATED_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/rendered/user-delegated-service-account.json
+JANITOR_CLIENT_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/integration/tools/crl_janitor/client-sa
+JANITOR_CLIENT_SERVICE_ACCOUNT_OUTPUT_PATH="$(dirname $0)"/rendered/janitor-client-sa-account.json
 
 DSDE_TOOLBOX_DOCKER_IMAGE=broadinstitute/dsde-toolbox:consul-0.20.0
 
-SERVICE_ACCOUNT_CREDS=$(docker run --rm -e VAULT_TOKEN="$VAULT_TOKEN" $DSDE_TOOLBOX_DOCKER_IMAGE \
-    vault read -format=json "$FIRECLOUD_ACCOUNT_VAULT_PATH" | \
-    jq .data)
-
-if [[ -z "$SERVICE_ACCOUNT_CREDS" ]]; then
-    printf "\033[0;31m Could not fetch service account creds. Check your vault token. \n\033[0m"
-    exit 1
-fi
-
-echo "$SERVICE_ACCOUNT_CREDS" > "$SERVICE_ACCOUNT_OUTPUT_FILE_PATH"
+docker run --rm -e VAULT_TOKEN="$VAULT_TOKEN" $DSDE_TOOLBOX_DOCKER_IMAGE \
+    vault read -format=json ${WM_APP_SERVICE_ACCOUNT_VAULT_PATH} | \
+    jq -r .data.key | base64 -d > ${WM_APP_SERVICE_ACCOUNT_OUTPUT_PATH}
+docker run --rm -e VAULT_TOKEN="$VAULT_TOKEN" $DSDE_TOOLBOX_DOCKER_IMAGE \
+    vault read -format=json ${USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH} | \
+    # Not base64 encoded or stored under 'key'
+    jq -r .data > ${USER_DELEGATED_SERVICE_ACCOUNT_OUTPUT_PATH}
+docker run --rm -e VAULT_TOKEN="$VAULT_TOKEN" $DSDE_TOOLBOX_DOCKER_IMAGE \
+    vault read -format=json ${JANITOR_CLIENT_SERVICE_ACCOUNT_VAULT_PATH} | \
+    jq -r .data.key | base64 -d > ${JANITOR_CLIENT_SERVICE_ACCOUNT_OUTPUT_PATH}

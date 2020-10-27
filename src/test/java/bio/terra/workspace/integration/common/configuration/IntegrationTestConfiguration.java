@@ -15,8 +15,13 @@ public class IntegrationTestConfiguration {
   private HashMap<String, String> wsmEndpoints;
   private HashMap<String, String> dataRepoInstanceNames;
   private HashMap<String, String> dataRepoSnapshotId;
-  private String serviceAccountEmail;
-  private String serviceAccountFilePath;
+  /** What user to impersonate to run the integration tests. */
+  private String userEmail;
+  /**
+   * The path to the service account to use. This service account should be delegated to impersonate
+   * users. https://developers.google.com/admin-sdk/directory/v1/guides/delegation
+   */
+  private String userDelegatedServiceAccountPath;
 
   public void setTestEnv(String testEnv) {
     this.testEnv = testEnv;
@@ -34,20 +39,20 @@ public class IntegrationTestConfiguration {
     return this.wsmUrls.get(testEnv) + this.wsmEndpoints.get("workspaces");
   }
 
-  public String getServiceAccountEmail() {
-    return serviceAccountEmail;
+  public String getUserEmail() {
+    return userEmail;
   }
 
-  public void setServiceAccountEmail(String serviceAccountEmail) {
-    this.serviceAccountEmail = serviceAccountEmail;
+  public void setUserEmail(String userEmail) {
+    this.userEmail = userEmail;
   }
 
-  public String getServiceAccountFilePath() {
-    return serviceAccountFilePath;
+  public String getUserDelegatedServiceAccountPath() {
+    return userDelegatedServiceAccountPath;
   }
 
-  public void setServiceAccountFilePath(String serviceAccountFilePath) {
-    this.serviceAccountFilePath = serviceAccountFilePath;
+  public void setUserDelegatedServiceAccountPath(String userDelegatedServiceAccountPath) {
+    this.userDelegatedServiceAccountPath = userDelegatedServiceAccountPath;
   }
 
   public String getDataRepoInstanceNameFromEnv() {

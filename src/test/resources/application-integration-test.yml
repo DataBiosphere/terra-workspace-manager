@@ -10,12 +10,12 @@ workspace.integration-test:
   data-repo-snapshot-id:
     dev: 97b5559a-2f8f-4df3-89ae-5a249173ee0c
     preview: 97b5559a-2f8f-4df3-89ae-5a249173ee0c
-  service-account-email: william.thunderlord@test.firecloud.org
-  service-account-file-path: rendered/service-account.json
+  user-email: william.thunderlord@test.firecloud.org
+  user-delegated-service-account-path: rendered/user-delegated-service-account.json
   wsm-endpoints:
     workspaces: api/workspaces/v1
   wsm-urls:
 # swap the commented line to run integration tests against local
-    dev: https://workspace.dsde-dev.broadinstitute.org/
-#    dev: http://localhost:8080/
+#    dev: https://workspace.dsde-dev.broadinstitute.org/
+    dev: http://localhost:8080/
     preview: ${env.preview-url}
