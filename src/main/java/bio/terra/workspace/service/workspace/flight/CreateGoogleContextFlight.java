@@ -8,6 +8,7 @@ import bio.terra.workspace.db.WorkspaceDao;
 import org.springframework.context.ApplicationContext;
 import org.springframework.transaction.support.TransactionTemplate;
 
+/** A {@link Flight} for creating a Google cloud context for a workspace. */
 public class CreateGoogleContextFlight extends Flight {
 
   public CreateGoogleContextFlight(FlightMap inputParameters, Object applicationContext) {
