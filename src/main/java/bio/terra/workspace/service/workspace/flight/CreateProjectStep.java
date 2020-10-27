@@ -13,6 +13,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.cloudresourcemanager.model.ResourceId;
 import com.google.api.services.serviceusage.v1.model.BatchEnableServicesRequest;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.time.Duration;
@@ -24,7 +25,8 @@ import java.util.Optional;
  * <p>TODO(PF-156): Use RBS for project creation instead.
  */
 public class CreateProjectStep implements Step {
-  private static final ImmutableList<String> ENABLED_SERVICES =
+  @VisibleForTesting
+  static final ImmutableList<String> ENABLED_SERVICES =
       ImmutableList.of("storage-api.googleapis.com");
 
   private final CloudResourceManagerCow resourceManager;

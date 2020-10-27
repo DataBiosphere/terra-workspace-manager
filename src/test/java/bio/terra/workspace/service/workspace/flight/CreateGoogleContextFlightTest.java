@@ -1,8 +1,10 @@
-package bio.terra.workspace.service.workspace;
+package bio.terra.workspace.service.workspace.flight;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
+import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
@@ -10,13 +12,16 @@ import bio.terra.stairway.Stairway;
 import bio.terra.workspace.common.BaseIntegrationTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.integration.common.auth.AuthService;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.workspace.flight.CreateGoogleContextFlight;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import com.google.api.services.cloudresourcemanager.model.Project;
+import com.google.api.services.serviceusage.v1.model.GoogleApiServiceusageV1Service;
+import com.google.api.services.serviceusage.v1.model.ListServicesResponse;
 import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -28,9 +33,8 @@ public class CreateGoogleContextFlightTest extends BaseIntegrationTest {
 
   @Autowired WorkspaceDao workspaceDao;
   @Autowired CloudResourceManagerCow resourceManager;
+  @Autowired ServiceUsageCow serviceUsage;
   @Autowired private JobService jobService;
-  @Autowired private WorkspaceService workspaceService;
-  @Autowired private AuthService authService;
 
   @Test
   public void successCreatesProjectAndContext() throws Exception {
@@ -58,6 +62,7 @@ public class CreateGoogleContextFlightTest extends BaseIntegrationTest {
         workspaceDao.getCloudContext(workspaceId));
     Project project = resourceManager.projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());
+    assertServiceApisEnabled(project, CreateProjectStep.ENABLED_SERVICES);
   }
 
   @Test
@@ -95,6 +100,27 @@ public class CreateGoogleContextFlightTest extends BaseIntegrationTest {
     UUID workspaceId = UUID.randomUUID();
     workspaceDao.createWorkspace(workspaceId, /* spendProfile= */ null);
     return workspaceId;
+  }
+
+  private void assertServiceApisEnabled(Project project, List<String> enabledApis)
+      throws Exception {
+    List<String> serviceNames =
+        enabledApis.stream()
+            .map(
+                apiName ->
+                    String.format("projects/%d/services/%s", project.getProjectNumber(), apiName))
+            .collect(Collectors.toList());
+    ListServicesResponse servicesList =
+        serviceUsage
+            .services()
+            .list("projects/" + project.getProjectId())
+            .setFilter("state:ENABLED")
+            .execute();
+    assertThat(
+        servicesList.getServices().stream()
+            .map(GoogleApiServiceusageV1Service::getName)
+            .collect(Collectors.toList()),
+        Matchers.hasItems(serviceNames.toArray()));
   }
 
   /**
