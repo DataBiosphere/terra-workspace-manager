@@ -7,7 +7,6 @@ import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataReferenceList;
-import bio.terra.workspace.generated.model.DeleteWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
 import bio.terra.workspace.service.datareference.DataReferenceService;
@@ -68,8 +67,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<Void> deleteWorkspace(
-      @PathVariable("id") UUID id, DeleteWorkspaceRequestBody body) {
+  public ResponseEntity<Void> deleteWorkspace(@PathVariable("id") UUID id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     workspaceService.deleteWorkspace(id, userReq);
     return new ResponseEntity<>(HttpStatus.valueOf(204));
