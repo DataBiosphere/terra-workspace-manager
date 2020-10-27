@@ -8,7 +8,7 @@ import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.app.configuration.external.WorkspaceProjectConfiguration;
+import bio.terra.workspace.app.configuration.external.GoogleWorkspaceConfiguration;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.cloudresourcemanager.model.ResourceId;
@@ -24,21 +24,20 @@ import java.util.Optional;
  * <p>TODO(PF-156): Use RBS for project creation instead.
  */
 public class CreateProjectStep implements Step {
-  private static final String PROJECT_ID_KEY = "CreateProjectStep.projectId";
   private static final ImmutableList<String> ENABLED_SERVICES =
       ImmutableList.of("storage-api.googleapis.com");
 
   private final CloudResourceManagerCow resourceManager;
   private final ServiceUsageCow serviceUsage;
-  private final WorkspaceProjectConfiguration workspaceProjectConfiguration;
+  private final GoogleWorkspaceConfiguration googleWorkspaceConfiguration;
 
   public CreateProjectStep(
       CloudResourceManagerCow resourceManager,
       ServiceUsageCow serviceUsage,
-      WorkspaceProjectConfiguration workspaceProjectConfiguration) {
+      GoogleWorkspaceConfiguration googleWorkspaceConfiguration) {
     this.resourceManager = resourceManager;
     this.serviceUsage = serviceUsage;
-    this.workspaceProjectConfiguration = workspaceProjectConfiguration;
+    this.googleWorkspaceConfiguration = googleWorkspaceConfiguration;
   }
 
   @Override
@@ -62,7 +61,7 @@ public class CreateProjectStep implements Step {
               .setParent(
                   new ResourceId()
                       .setType("folder")
-                      .setId(workspaceProjectConfiguration.getFolderId()));
+                      .setId(googleWorkspaceConfiguration.getFolderId()));
       OperationCow<?> operation =
           resourceManager
               .operations()
@@ -91,13 +90,6 @@ public class CreateProjectStep implements Step {
     try {
       Project project = resourceManager.projects().get(projectId).execute();
       String projectName = "projects/" + projectId;
-      ImmutableList<String> serviceIds =
-          ENABLED_SERVICES.stream()
-              .map(
-                  service ->
-                      String.format("projects/%d/services/%s", project.getProjectNumber(), service))
-              .collect(ImmutableList.toImmutableList());
-
       OperationCow<?> operation =
           serviceUsage
               .operations()
@@ -105,7 +97,8 @@ public class CreateProjectStep implements Step {
                   serviceUsage
                       .services()
                       .batchEnable(
-                          projectName, new BatchEnableServicesRequest().setServiceIds(serviceIds))
+                          projectName,
+                          new BatchEnableServicesRequest().setServiceIds(ENABLED_SERVICES))
                       .execute());
       pollUntilSuccess(operation, Duration.ofSeconds(30), Duration.ofMinutes(5));
     } catch (IOException e) {
@@ -115,7 +108,7 @@ public class CreateProjectStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    String projectId = flightContext.getWorkingMap().get(PROJECT_ID_KEY, String.class);
+    String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
     try {
       Optional<Project> project = retrieveProject(projectId);
       if (project.isEmpty()) {
@@ -141,9 +134,7 @@ public class CreateProjectStep implements Step {
   private static void pollUntilSuccess(
       OperationCow<?> operation, Duration pollingInterval, Duration timeout) throws RetryException {
     try {
-      operation =
-          OperationUtils.pollUntilComplete(
-              operation, Duration.ofSeconds(20), Duration.ofMinutes(5));
+      operation = OperationUtils.pollUntilComplete(operation, pollingInterval, timeout);
       if (operation.getOperationAdapter().getError() != null) {
         throw new RetryException(
             String.format(

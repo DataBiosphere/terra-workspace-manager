@@ -4,12 +4,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-/** Configuration for managing how to create GCP projects for workspaces. */
+/** Configuration for managing how to set up Google cloud context for workspaces. */
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "workspace.project")
-public class WorkspaceProjectConfiguration {
-  /** What folder id to create workspace projects within, e.g. "866104354540". */
+@ConfigurationProperties(prefix = "workspace.google")
+public class GoogleWorkspaceConfiguration {
+  /** The id of the folder to create workspace projects within, e.g. "866104354540". */
   private String folderId;
 
   public String getFolderId() {
