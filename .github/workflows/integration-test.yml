@@ -38,11 +38,9 @@ jobs:
       - name: Get truncated branch name
         id: get-branch
         # Truncate name to 16 chars due to usage in dns name later
-        # TODO: reverting trunaction to fix malformed state
-        #          fullname=$(echo ${GITHUB_REF#refs/heads/})
-        #          echo ::set-output name=branch::${fullname:0:16}
         run: |
-          echo ::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})
+          fullname=$(echo ${GITHUB_REF#refs/heads/})
+          echo ::set-output name=branch::${fullname:0:16}
       - name: Get short SHA
         id: slug
         run: |
@@ -92,8 +90,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
           VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}
           VAULT_SA_PATH: ${{ secrets.CI_SA_VAULT_PATH }}
-          # TODO: deleting malformed workspace
-          PREVIEW_CMD: delete
+          PREVIEW_CMD: create
           ENV_ID: wsm${{ steps.get-branch.outputs.branch }}
           VERSIONS_B64: '${{ steps.versions-merge.outputs.versions }}'
       - name: Set up AdoptOpenJDK 11
