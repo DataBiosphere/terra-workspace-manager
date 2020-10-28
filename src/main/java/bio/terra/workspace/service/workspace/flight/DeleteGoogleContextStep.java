@@ -8,6 +8,8 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
+
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -26,23 +28,12 @@ public class DeleteGoogleContextStep implements Step {
   public StepResult doStep(FlightContext flightContext) {
     UUID workspaceId =
         flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    String projectId = flightContext.getInputParameters().get(GOOGLE_PROJECT_ID, String.class);
-
     // Update the cloud context within a transaction so that we don't clobber a concurrent cloud
     // context change.
     transactionTemplate.execute(
         status -> {
-          WorkspaceCloudContext existingContext = workspaceDao.getCloudContext(workspaceId);
-          if (existingContext.googleProjectId().isPresent()) {
-            String existingProjectId = existingContext.googleProjectId().get();
-            if (!existingProjectId.equals(projectId)) {
-              return new StepResult(
-                  StepStatus.STEP_RESULT_FAILURE_FATAL,
-                  new IllegalStateException(
-                      String.format(
-                          "Project id to delete [%s] does not match existing project id [%s]",
-                          projectId, existingProjectId)));
-            }
+          Optional<String> projectId = workspaceDao.getCloudContext(workspaceId).googleProjectId();
+          if (projectId.isPresent()) {
             workspaceDao.updateCloudContext(workspaceId, WorkspaceCloudContext.none());
           }
           return null;
@@ -54,7 +45,7 @@ public class DeleteGoogleContextStep implements Step {
   public StepResult undoStep(FlightContext flightContext) {
     UUID workspaceId =
         flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    String projectId = flightContext.getInputParameters().get(GOOGLE_PROJECT_ID, String.class);
+    String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
 
     // Update the cloud context within a transaction so that we don't clobber a concurrent cloud
     // context change.

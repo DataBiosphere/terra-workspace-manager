@@ -3,7 +3,6 @@ package bio.terra.workspace.service.workspace.flight;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import java.io.IOException;
@@ -15,23 +14,22 @@ public class GoogleUtils {
   private GoogleUtils() {}
 
   /**
-   * Try to delete the Project associated with {@code projectId}. Returns a {@link StepResult} for
-   * how this went.
+   * Try to delete the Project associated with {@code projectId}.
    */
   @CheckReturnValue
-  public static void deleteProject(
-      String projectId, CloudResourceManagerCow resourceManager) throws IOException {
-      Optional<Project> project = retrieveProject(projectId, resourceManager);
-      if (project.isEmpty()) {
-        // The project does not exist.
-        return;
-      }
-      if (project.get().getLifecycleState().equals("DELETE_REQUESTED")
-          || project.get().getLifecycleState().equals("DELETE_IN_PROGRESS")) {
-        // The project is already being deleted.
-        return;
-      }
-      resourceManager.projects().delete(projectId).execute();
+  public static void deleteProject(String projectId, CloudResourceManagerCow resourceManager)
+      throws IOException {
+    Optional<Project> project = retrieveProject(projectId, resourceManager);
+    if (project.isEmpty()) {
+      // The project does not exist.
+      return;
+    }
+    if (project.get().getLifecycleState().equals("DELETE_REQUESTED")
+        || project.get().getLifecycleState().equals("DELETE_IN_PROGRESS")) {
+      // The project is already being deleted.
+      return;
+    }
+    resourceManager.projects().delete(projectId).execute();
   }
 
   /**

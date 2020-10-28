@@ -9,7 +9,6 @@ import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.GoogleWorkspaceConfiguration;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.cloudresourcemanager.model.ResourceId;
 import com.google.api.services.serviceusage.v1.model.BatchEnableServicesRequest;
@@ -53,7 +52,8 @@ public class CreateProjectStep implements Step {
 
   private void createProject(String projectId) throws RetryException {
     try {
-      Optional<Project> alreadyCreatedProject = GoogleUtils.retrieveProject(projectId, resourceManager);
+      Optional<Project> alreadyCreatedProject =
+          GoogleUtils.retrieveProject(projectId, resourceManager);
       if (alreadyCreatedProject.isPresent()) {
         return;
       }
