@@ -85,7 +85,7 @@ jobs:
           echo ::add-mask::$VAULT_TOKEN
       - name: Create
         id: create
-        uses: docker://us-central1-docker.pkg.dev/dsp-artifact-registry/github-actions-public/preview:latest
+        uses: databiosphere/github-actions/actions/preview@zl-wm-integration
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
           VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}
