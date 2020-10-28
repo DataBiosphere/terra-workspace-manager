@@ -29,7 +29,7 @@ allprojects {
 			mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
 		}
 		dependencies {
-			dependencySet(group: "io.opencensus", version: "0.27.1") {
+			dependencySet(group: "io.opencensus", version: "0.28.2") {
 				entry "opencensus-exporter-trace-stackdriver"
 				entry "opencensus-api"
 				entry "opencensus-contrib-spring"

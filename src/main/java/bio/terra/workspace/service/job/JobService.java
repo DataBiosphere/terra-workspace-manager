@@ -26,6 +26,7 @@ import bio.terra.workspace.service.job.exception.JobResponseException;
 import bio.terra.workspace.service.job.exception.JobUnauthorizedException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -199,6 +200,7 @@ public class JobService {
     }
   }
 
+  @Traced
   public void releaseJob(String jobId, AuthenticatedUserRequest userReq) {
     try {
       verifyUserAccess(jobId, userReq); // jobId=flightId
@@ -275,6 +277,7 @@ public class JobService {
     return jobModelList;
   }
 
+  @Traced
   public JobModel retrieveJob(String jobId, AuthenticatedUserRequest userReq) {
 
     try {
@@ -309,6 +312,7 @@ public class JobService {
    * @param jobId to process
    * @return object of the result class pulled from the result map
    */
+  @Traced
   public <T> JobResultWithStatus<T> retrieveJobResult(
       String jobId, Class<T> resultClass, AuthenticatedUserRequest userReq) {
 

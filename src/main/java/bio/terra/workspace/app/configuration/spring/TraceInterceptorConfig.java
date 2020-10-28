@@ -51,8 +51,10 @@ public class TraceInterceptorConfig implements WebMvcConfigurer {
           public boolean preHandle(
               HttpServletRequest httpRequest, HttpServletResponse httpResponse, Object handler) {
 
-            // We don't need to do this for resources (swagger ui)
-            if (handler instanceof HandlerMethod) {
+            // We don't need to trace resources (swagger ui) or unauthenticated endpoints,
+            // but there isn't a good way with opencensus to filter what's captured, so we just
+            // don't bother to annotate them
+            if (handler instanceof HandlerMethod && httpRequest.getAuthType() != null) {
               // get an mdc id from the request (if not found, create one), and pass it along in the
               // response
               String requestId = getMDCRequestId(httpRequest);
