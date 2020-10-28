@@ -8,10 +8,13 @@ import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
 import bio.terra.workspace.app.configuration.spring.TraceInterceptorConfig;
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
+import bio.terra.workspace.service.datareference.exception.DataRepoAuthorizationException;
+import bio.terra.workspace.service.datareference.exception.DataRepoInternalServerErrorException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import java.util.HashMap;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -60,7 +63,15 @@ public class DataRepoService {
       repositoryApi.retrieveSnapshot(snapshotId);
       return true;
     } catch (ApiException e) {
-      return false;
+      if (e.getCode() == HttpStatus.NOT_FOUND.value()) {
+        return false;
+      } else if (e.getCode() == HttpStatus.UNAUTHORIZED.value()) {
+        throw new DataRepoAuthorizationException(
+            "Not authorized to access Data Repo", e.getCause());
+      } else {
+        throw new DataRepoInternalServerErrorException(
+            "Data Repo returned the following error: " + e.getMessage(), e.getCause());
+      }
     }
   }
 
