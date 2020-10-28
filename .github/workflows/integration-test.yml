@@ -4,12 +4,12 @@
 name: Run Integration Tests via Preview Environment
 
 on:
-  push:
+  pull_request:
+    branches:
+    - dev
     paths-ignore:
-      - 'README.md'
-      # TODO: temporarily disabling this so it runs for this PR.
-#      - '.github/**'
-      - 'local-dev/**'
+    - 'README.md'
+    - 'local-dev/**'
 env:
   ENV_PREFIX: wsm
   HELM_CHART_NAME: workspacemanager
@@ -35,24 +35,18 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       # See dev_push.yml
-      - name: Get truncated branch name
-        id: get-branch
-        # Truncate name to 16 chars due to usage in dns name later
-        run: |
-          fullname=$(echo ${GITHUB_REF#refs/heads/})
-          echo ::set-output name=branch::${fullname:0:16}
       - name: Get short SHA
         id: slug
         run: |
           sha7=$(curl \
           -H "Accept: application/vnd.github.v3+json" \
-          https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${{ steps.get-branch.outputs.branch }} \
+          https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.number }} \
           -u "broadbot:${{ secrets.GITHUB_TOKEN }}" | jq -r '.head.sha' | cut -c1-7)
           echo "Short SHA: $sha7"
           echo ::set-output name=sha7::$sha7
       - name: Construct default version JSON
         id: versions-default
-        run: echo ::set-output name=versions::{\"releases\":{\"${HELM_CHART_NAME}\":{\"appVersion\":\"pr${{ steps.get-branch.outputs.branch }}-${{ steps.slug.outputs.sha7 }}\"}}}
+        run: echo ::set-output name=versions::{\"releases\":{\"${HELM_CHART_NAME}\":{\"appVersion\":\"pr${{ github.event.number }}-${{ steps.slug.outputs.sha7 }}\"}}}
       - name: Construct version override JSON
         id: versions-override
         run: |
@@ -91,7 +85,7 @@ jobs:
           VAULT_TOKEN: ${{ steps.vault-token-step.outputs.vault-token }}
           VAULT_SA_PATH: ${{ secrets.CI_SA_VAULT_PATH }}
           PREVIEW_CMD: create
-          ENV_ID: wsm${{ steps.get-branch.outputs.branch }}
+          ENV_ID: wsm${{ github.event.number }}
           VERSIONS_B64: '${{ steps.versions-merge.outputs.versions }}'
       - name: Set up AdoptOpenJDK 11
         uses: joschi/setup-jdk@v2
