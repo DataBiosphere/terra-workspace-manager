@@ -154,7 +154,7 @@ jobs:
       run: echo ::set-output name=url::https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
     - name: Test
       id: test
-      uses: databiosphere/github-actions/actions/wm-integration-test@zl-wm-integration
+      uses: databiosphere/github-actions/actions/wm-integration-test@wc-fork-integration-preview
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         ENV_DATA_B64: ${{ steps.create.outputs.output }}
