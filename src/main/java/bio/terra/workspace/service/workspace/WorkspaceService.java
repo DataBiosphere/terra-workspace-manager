@@ -5,6 +5,7 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
+import bio.terra.workspace.generated.model.WorkspaceStageEnum;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
@@ -49,6 +50,14 @@ public class WorkspaceService {
     if (body.getSpendProfile() != null) {
       createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, body.getSpendProfile());
     }
+
+    if (body.getStage() != null) {
+      createJob.addParameter(WorkspaceFlightMapKeys.WORKSPACE_STAGE, body.getStage());
+    } else {
+      createJob.addParameter(
+          WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStageEnum.RAWLS_WORKSPACE);
+    }
+
     return createJob.submitAndWait(CreatedWorkspace.class);
   }
 

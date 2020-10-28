@@ -25,6 +25,7 @@ import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.generated.model.ErrorReport;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
+import bio.terra.workspace.generated.model.WorkspaceStageEnum;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -98,6 +99,52 @@ public class WorkspaceServiceTest extends BaseUnitTest {
             callResult.getResponse().getContentAsString(), WorkspaceDescription.class);
 
     assertThat(desc.getId(), equalTo(workspaceId));
+  }
+
+  @Test
+  public void testDefaultWorkspaceStage() throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(null).policies(null);
+
+    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
+
+    MvcResult callResult =
+        mvc.perform(get("/api/workspaces/v1/" + workspace.getId()))
+            .andExpect(status().is(200))
+            .andReturn();
+
+    WorkspaceDescription desc =
+        objectMapper.readValue(
+            callResult.getResponse().getContentAsString(), WorkspaceDescription.class);
+
+    assertThat(desc.getId(), equalTo(workspaceId));
+    assertThat(desc.getStage(), equalTo(WorkspaceStageEnum.RAWLS_WORKSPACE));
+  }
+
+  @Test
+  public void testWorkspaceStagePersists() throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .spendProfile(null)
+            .policies(null)
+            .stage(WorkspaceStageEnum.MC_WORKSPACE);
+
+    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
+
+    MvcResult callResult =
+        mvc.perform(get("/api/workspaces/v1/" + workspace.getId()))
+            .andExpect(status().is(200))
+            .andReturn();
+
+    WorkspaceDescription desc =
+        objectMapper.readValue(
+            callResult.getResponse().getContentAsString(), WorkspaceDescription.class);
+
+    assertThat(desc.getId(), equalTo(workspaceId));
+    assertThat(desc.getStage(), equalTo(WorkspaceStageEnum.MC_WORKSPACE));
   }
 
   @Test

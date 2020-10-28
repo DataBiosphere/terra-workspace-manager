@@ -17,6 +17,7 @@ import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataReferenceList;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
+import bio.terra.workspace.generated.model.WorkspaceStageEnum;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -63,7 +64,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
   @Test
   public void verifyCreatedDataReferenceExists() {
-    workspaceDao.createWorkspace(workspaceId, null);
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnum.RAWLS_WORKSPACE);
 
     dataReferenceDao.createDataReference(
         referenceId,
@@ -99,7 +100,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
   @Test
   public void verifyCreateDuplicateNameFails() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, null);
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnum.RAWLS_WORKSPACE);
 
     dataReferenceDao.createDataReference(
         referenceId,
@@ -128,7 +129,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
   @Test
   public void verifyGetDataReferenceByName() {
-    workspaceDao.createWorkspace(workspaceId, null);
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnum.RAWLS_WORKSPACE);
 
     dataReferenceDao.createDataReference(
         referenceId,
@@ -147,7 +148,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
   @Test
   public void verifyGetDataReference() {
-    workspaceDao.createWorkspace(workspaceId, null);
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnum.RAWLS_WORKSPACE);
 
     dataReferenceDao.createDataReference(
         referenceId,
@@ -171,8 +172,8 @@ public class DataReferenceDaoTest extends BaseUnitTest {
   @Test
   public void verifyGetDataReferenceNotInWorkspaceNotFound() {
     UUID decoyWorkspaceId = UUID.randomUUID();
-    workspaceDao.createWorkspace(workspaceId, null);
-    workspaceDao.createWorkspace(decoyWorkspaceId, null);
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnum.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(decoyWorkspaceId, null, WorkspaceStageEnum.RAWLS_WORKSPACE);
 
     dataReferenceDao.createDataReference(
         referenceId,
@@ -193,7 +194,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
   @Test
   public void verifyDeleteDataReference() {
-    workspaceDao.createWorkspace(workspaceId, null);
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnum.RAWLS_WORKSPACE);
 
     dataReferenceDao.createDataReference(
         referenceId,
@@ -218,7 +219,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
   @Test
   public void enumerateWorkspaceReferences() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, null);
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnum.RAWLS_WORKSPACE);
     // Create two references in the same workspace.
     dataReferenceDao.createDataReference(
         referenceId,
@@ -256,7 +257,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
   @Test
   public void enumerateEmptyReferenceList() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, null);
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnum.RAWLS_WORKSPACE);
 
     DataReferenceList result = dataReferenceDao.enumerateDataReferences(workspaceId, name, 0, 10);
     assertThat(result.getResources(), empty());

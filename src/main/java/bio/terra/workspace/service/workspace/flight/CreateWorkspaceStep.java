@@ -8,6 +8,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
+import bio.terra.workspace.generated.model.WorkspaceStageEnum;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
@@ -37,7 +38,10 @@ public class CreateWorkspaceStep implements Step {
       nullableSpendProfileId = spendProfileId;
     }
 
-    workspaceDao.createWorkspace(workspaceId, nullableSpendProfileId);
+    WorkspaceStageEnum workspaceStage =
+        inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStageEnum.class);
+
+    workspaceDao.createWorkspace(workspaceId, nullableSpendProfileId, workspaceStage);
     workingMap.put(CREATE_WORKSPACE_COMPLETED_KEY, true);
 
     CreatedWorkspace response = new CreatedWorkspace();
