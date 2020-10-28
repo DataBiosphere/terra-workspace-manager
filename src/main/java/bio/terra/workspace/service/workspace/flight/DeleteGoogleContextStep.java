@@ -11,6 +11,7 @@ import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import java.util.UUID;
 import org.springframework.transaction.support.TransactionTemplate;
 
+/** Deletes a workspace's Google cloud context. */
 public class DeleteGoogleContextStep implements Step {
   private final WorkspaceDao workspaceDao;
   private final TransactionTemplate transactionTemplate;
