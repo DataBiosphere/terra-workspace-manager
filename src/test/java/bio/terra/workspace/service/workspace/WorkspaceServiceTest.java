@@ -22,7 +22,6 @@ import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
-import bio.terra.workspace.generated.model.DeleteWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ErrorReport;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
@@ -84,7 +83,6 @@ public class WorkspaceServiceTest extends BaseUnitTest {
     CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody();
     UUID workspaceId = UUID.randomUUID();
     body.setId(workspaceId);
-    body.setAuthToken("fake-user-auth-token");
 
     CreatedWorkspace workspace = runCreateWorkspaceCall(body);
 
@@ -106,11 +104,7 @@ public class WorkspaceServiceTest extends BaseUnitTest {
   public void workspaceCreatedFromJobRequest() throws Exception {
     UUID workspaceId = UUID.randomUUID();
     CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody()
-            .id(workspaceId)
-            .authToken("fake-user-auth-token")
-            .spendProfile(null)
-            .policies(null);
+        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(null).policies(null);
 
     CreatedWorkspace workspace = runCreateWorkspaceCall(body);
 
@@ -121,11 +115,7 @@ public class WorkspaceServiceTest extends BaseUnitTest {
   public void duplicateWorkspaceRejected() throws Exception {
     UUID workspaceId = UUID.randomUUID();
     CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody()
-            .id(workspaceId)
-            .authToken("fake-user-auth-token")
-            .spendProfile(null)
-            .policies(null);
+        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(null).policies(null);
     CreatedWorkspace workspace = runCreateWorkspaceCall(body);
     assertThat(workspace.getId(), equalTo(workspaceId));
 
@@ -147,7 +137,6 @@ public class WorkspaceServiceTest extends BaseUnitTest {
     CreateWorkspaceRequestBody body =
         new CreateWorkspaceRequestBody()
             .id(workspaceId)
-            .authToken("fake-user-auth-token")
             .spendProfile(UUID.randomUUID())
             .policies(Collections.singletonList(UUID.randomUUID()));
 
@@ -165,11 +154,7 @@ public class WorkspaceServiceTest extends BaseUnitTest {
         .createWorkspaceWithDefaults(any(), any());
 
     CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody()
-            .id(UUID.randomUUID())
-            .authToken("todo: add token")
-            .spendProfile(null)
-            .policies(null);
+        new CreateWorkspaceRequestBody().id(UUID.randomUUID()).spendProfile(null).policies(null);
 
     MvcResult callResult =
         mvc.perform(
@@ -188,21 +173,12 @@ public class WorkspaceServiceTest extends BaseUnitTest {
   public void createAndDeleteWorkspace() throws Exception {
     UUID workspaceId = UUID.randomUUID();
     CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody()
-            .id(workspaceId)
-            .authToken("fake-user-auth-token")
-            .spendProfile(null)
-            .policies(null);
+        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(null).policies(null);
 
     CreatedWorkspace workspace = runCreateWorkspaceCall(body);
     assertThat(workspace.getId(), equalTo(workspaceId));
 
-    DeleteWorkspaceRequestBody deleteBody =
-        new DeleteWorkspaceRequestBody().authToken("fake-user-auth-token");
-    mvc.perform(
-            delete("/api/workspaces/v1/" + workspaceId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(deleteBody)))
+    mvc.perform(delete("/api/workspaces/v1/" + workspaceId).contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().is(204))
         .andReturn();
     // Finally, assert that a call to the deleted workspace gives a 404
@@ -214,11 +190,7 @@ public class WorkspaceServiceTest extends BaseUnitTest {
     // First, create a workspace.
     UUID workspaceId = UUID.randomUUID();
     CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody()
-            .id(workspaceId)
-            .authToken("fake-user-auth-token")
-            .spendProfile(null)
-            .policies(null);
+        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(null).policies(null);
     CreatedWorkspace workspace = runCreateWorkspaceCall(body);
     assertThat(workspace.getId(), equalTo(workspaceId));
 
@@ -252,12 +224,7 @@ public class WorkspaceServiceTest extends BaseUnitTest {
         .andExpect(status().is(200))
         .andReturn();
     // Delete the workspace.
-    DeleteWorkspaceRequestBody deleteRequest =
-        new DeleteWorkspaceRequestBody().authToken("fake-user-auth-token");
-    mvc.perform(
-            delete("/api/workspaces/v1/" + workspaceId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(deleteRequest)))
+    mvc.perform(delete("/api/workspaces/v1/" + workspaceId).contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().is(204))
         .andReturn();
     // Verify that the contained data reference is no longer returned.
