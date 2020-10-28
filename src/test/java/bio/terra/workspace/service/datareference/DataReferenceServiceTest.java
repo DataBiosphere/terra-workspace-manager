@@ -472,11 +472,7 @@ public class DataReferenceServiceTest extends BaseUnitTest {
 
   private CreatedWorkspace createDefaultWorkspace() throws Exception {
     CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody()
-            .id(workspaceId)
-            .authToken("fake-user-auth-token")
-            .spendProfile(null)
-            .policies(null);
+        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(null).policies(null);
 
     return runCreateWorkspaceCall(body);
   }
