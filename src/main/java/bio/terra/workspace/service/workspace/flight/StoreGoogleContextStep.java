@@ -19,7 +19,7 @@ public class StoreGoogleContextStep implements Step {
   private final WorkspaceDao workspaceDao;
   private final TransactionTemplate transactionTemplate;
 
-  protected StoreGoogleContextStep(
+  public StoreGoogleContextStep(
       WorkspaceDao workspaceDao, TransactionTemplate transactionTemplate) {
     this.workspaceDao = workspaceDao;
     this.transactionTemplate = transactionTemplate;
