@@ -11,6 +11,7 @@ import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.datareference.exception.DataRepoAuthorizationException;
 import bio.terra.workspace.service.datareference.exception.DataRepoInternalServerErrorException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.HashMap;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +56,7 @@ public class DataRepoService {
     }
   }
 
+  @Traced
   public boolean snapshotExists(
       String instanceName, String snapshotId, AuthenticatedUserRequest userReq) {
     RepositoryApi repositoryApi = repositoryApi(instanceName, userReq);

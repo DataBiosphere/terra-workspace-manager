@@ -17,6 +17,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,7 @@ public class DataReferenceService {
     this.validationUtils = validationUtils;
   }
 
+  @Traced
   public DataReferenceDescription getDataReference(
       UUID workspaceId, UUID referenceId, AuthenticatedUserRequest userReq) {
 
@@ -48,6 +50,7 @@ public class DataReferenceService {
     return dataReferenceDao.getDataReference(workspaceId, referenceId);
   }
 
+  @Traced
   public DataReferenceDescription getDataReferenceByName(
       UUID workspaceId,
       ReferenceTypeEnum referenceType,
@@ -60,6 +63,7 @@ public class DataReferenceService {
     return dataReferenceDao.getDataReferenceByName(workspaceId, referenceType, name);
   }
 
+  @Traced
   public DataReferenceDescription createDataReference(
       UUID workspaceId, CreateDataReferenceRequestBody body, AuthenticatedUserRequest userReq) {
 
@@ -106,6 +110,7 @@ public class DataReferenceService {
     return dataReferenceDao.getDataReference(workspaceId, referenceId);
   }
 
+  @Traced
   public DataReferenceList enumerateDataReferences(
       UUID workspaceId, int offset, int limit, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
@@ -113,6 +118,7 @@ public class DataReferenceService {
         workspaceId, userReq.getReqId().toString(), offset, limit);
   }
 
+  @Traced
   public void deleteDataReference(
       UUID workspaceId, UUID referenceId, AuthenticatedUserRequest userReq) {
 
