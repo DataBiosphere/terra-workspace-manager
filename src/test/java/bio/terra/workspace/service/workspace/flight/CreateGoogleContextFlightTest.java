@@ -9,7 +9,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Stairway;
-import bio.terra.workspace.common.BaseIntegrationTest;
+import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.job.JobService;
@@ -25,7 +25,7 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class CreateGoogleContextFlightTest extends BaseIntegrationTest {
+public class CreateGoogleContextFlightTest extends BaseConnectedTest {
   /** How often to poll Stairway for flight completion. */
   private static final Duration STAIRWAY_POLL_INTERVAL = Duration.ofSeconds(5);
   /** How long to wait for a Stairway flight to complete before timing out the test. */

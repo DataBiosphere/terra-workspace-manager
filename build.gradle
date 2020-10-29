@@ -181,6 +181,16 @@ task unitTest(type: Test) {
 	outputs.upToDateWhen { false }
 }
 
+task connectedTest(type: Test) {
+	useJUnitPlatform {
+		includeTags "connected"
+	}
+	testLogging {
+		events = ["passed", "failed", "skipped", "started"]
+	}
+	outputs.upToDateWhen { false }
+}
+
 task integrationTest(type: Test) {
 	useJUnitPlatform {
 		includeTags "integration"
