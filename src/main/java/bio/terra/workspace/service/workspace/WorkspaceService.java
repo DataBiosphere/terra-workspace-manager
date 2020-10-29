@@ -1,11 +1,11 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
-import bio.terra.workspace.generated.model.WorkspaceStageEnumModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
@@ -34,7 +34,9 @@ public class WorkspaceService {
 
   @Traced
   public CreatedWorkspace createWorkspace(
-      CreateWorkspaceRequestBody body, AuthenticatedUserRequest userReq) {
+      CreateWorkspaceRequestBody body,
+      WorkspaceStage workspaceStage,
+      AuthenticatedUserRequest userReq) {
 
     UUID workspaceId = body.getId();
     String description = "Create workspace " + workspaceId.toString();
@@ -51,12 +53,7 @@ public class WorkspaceService {
       createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, body.getSpendProfile());
     }
 
-    if (body.getStage() != null) {
-      createJob.addParameter(WorkspaceFlightMapKeys.WORKSPACE_STAGE, body.getStage());
-    } else {
-      createJob.addParameter(
-          WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStageEnumModel.RAWLS_WORKSPACE);
-    }
+    createJob.addParameter(WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceStage);
 
     return createJob.submitAndWait(CreatedWorkspace.class);
   }

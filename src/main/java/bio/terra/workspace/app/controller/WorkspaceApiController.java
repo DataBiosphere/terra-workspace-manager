@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
@@ -55,7 +56,9 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<CreatedWorkspace> createWorkspace(
       @RequestBody CreateWorkspaceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    return new ResponseEntity<>(workspaceService.createWorkspace(body, userReq), HttpStatus.OK);
+    WorkspaceStage workspaceStage = WorkspaceStage.fromApiModel(body.getStage());
+    return new ResponseEntity<>(
+        workspaceService.createWorkspace(body, workspaceStage, userReq), HttpStatus.OK);
   }
 
   @Override

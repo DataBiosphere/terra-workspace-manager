@@ -8,8 +8,9 @@ import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfigura
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
-import bio.terra.workspace.generated.model.WorkspaceStageEnumModel;
+import bio.terra.workspace.generated.model.WorkspaceStageModel;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import java.util.Map;
 import java.util.UUID;
@@ -41,8 +42,7 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   public void verifyCreatedWorkspaceExists() throws Exception {
-    workspaceDao.createWorkspace(
-        workspaceId, spendProfileId, WorkspaceStageEnumModel.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(workspaceId, spendProfileId, WorkspaceStage.RAWLS_WORKSPACE);
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceId.toString());
     Map<String, Object> queryOutput = jdbcTemplate.queryForMap(readSql, params);
@@ -57,7 +57,7 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   public void createAndDeleteWorkspace() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnumModel.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStage.RAWLS_WORKSPACE);
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceId.toString());
     Map<String, Object> queryOutput = jdbcTemplate.queryForMap(readSql, params);
@@ -77,14 +77,14 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   public void createAndGetWorkspace() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnumModel.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStage.RAWLS_WORKSPACE);
 
     WorkspaceDescription workspace = workspaceDao.getWorkspace(workspaceId);
 
     WorkspaceDescription expectedWorkspace = new WorkspaceDescription();
     expectedWorkspace.setId(workspaceId);
     expectedWorkspace.setSpendProfile(null);
-    expectedWorkspace.setStage(WorkspaceStageEnumModel.RAWLS_WORKSPACE);
+    expectedWorkspace.setStage(WorkspaceStageModel.RAWLS_WORKSPACE);
 
     assertThat(workspace, equalTo(expectedWorkspace));
 
@@ -93,14 +93,14 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   public void createAndGetMcWorkspace() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnumModel.MC_WORKSPACE);
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStage.MC_WORKSPACE);
 
     WorkspaceDescription workspace = workspaceDao.getWorkspace(workspaceId);
 
     WorkspaceDescription expectedWorkspace = new WorkspaceDescription();
     expectedWorkspace.setId(workspaceId);
     expectedWorkspace.setSpendProfile(null);
-    expectedWorkspace.setStage(WorkspaceStageEnumModel.MC_WORKSPACE);
+    expectedWorkspace.setStage(WorkspaceStageModel.MC_WORKSPACE);
 
     assertThat(workspace, equalTo(expectedWorkspace));
 
@@ -124,17 +124,17 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   public void duplicateWorkspaceFails() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnumModel.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStage.RAWLS_WORKSPACE);
     assertThrows(
         DuplicateWorkspaceException.class,
         () -> {
-          workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnumModel.RAWLS_WORKSPACE);
+          workspaceDao.createWorkspace(workspaceId, null, WorkspaceStage.RAWLS_WORKSPACE);
         });
   }
 
   @Test
   public void updateCloudContext_Google() {
-    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnumModel.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStage.RAWLS_WORKSPACE);
 
     WorkspaceCloudContext googleContext1 = WorkspaceCloudContext.createGoogleContext("my-project1");
     workspaceDao.updateCloudContext(workspaceId, googleContext1);
@@ -147,7 +147,7 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   public void updateCloudContext_None() {
-    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnumModel.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStage.RAWLS_WORKSPACE);
 
     WorkspaceCloudContext noneContext = WorkspaceCloudContext.none();
     workspaceDao.updateCloudContext(workspaceId, noneContext);
@@ -156,13 +156,13 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   public void noSetCloudContextIsNone() {
-    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnumModel.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStage.RAWLS_WORKSPACE);
     assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
   }
 
   @Test
   public void updateAndNoneCloudContext() {
-    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnumModel.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStage.RAWLS_WORKSPACE);
 
     workspaceDao.updateCloudContext(
         workspaceId, WorkspaceCloudContext.createGoogleContext("my-project"));
@@ -172,7 +172,7 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   public void deleteWorkspaceWithCloudContext() {
-    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStageEnumModel.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStage.RAWLS_WORKSPACE);
     workspaceDao.updateCloudContext(
         workspaceId, WorkspaceCloudContext.createGoogleContext("my-project"));
 

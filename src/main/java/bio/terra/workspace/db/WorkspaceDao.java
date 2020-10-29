@@ -2,8 +2,8 @@ package bio.terra.workspace.db;
 
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
-import bio.terra.workspace.generated.model.WorkspaceStageEnumModel;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -41,17 +41,16 @@ public class WorkspaceDao {
 
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public String createWorkspace(
-      UUID workspaceId, UUID spendProfile, WorkspaceStageEnumModel workspaceStage) {
+      UUID workspaceId, UUID spendProfile, WorkspaceStage workspaceStage) {
     String sql =
         "INSERT INTO workspace (workspace_id, spend_profile, profile_settable, workspace_stage) values "
             + "(:id, :spend_profile, :spend_profile_settable, :workspace_stage)";
-    WorkspaceStageEnum internalStageEnum = WorkspaceStageEnum.fromApiModel(workspaceStage);
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("id", workspaceId.toString())
             .addValue("spend_profile", spendProfile)
             .addValue("spend_profile_settable", spendProfile == null)
-            .addValue("workspace_stage", internalStageEnum.toString());
+            .addValue("workspace_stage", workspaceStage.toString());
     try {
       jdbcTemplate.update(sql, params);
     } catch (DuplicateKeyException e) {
@@ -86,8 +85,7 @@ public class WorkspaceDao {
       }
 
       desc.setStage(
-          WorkspaceStageEnum.toApiModel(
-              WorkspaceStageEnum.fromValue(queryOutput.get("workspace_stage").toString())));
+          WorkspaceStage.valueOf(queryOutput.get("workspace_stage").toString()).toApiModel());
 
       return desc;
     } catch (EmptyResultDataAccessException e) {

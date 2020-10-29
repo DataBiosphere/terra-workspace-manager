@@ -25,7 +25,7 @@ import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.generated.model.ErrorReport;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
-import bio.terra.workspace.generated.model.WorkspaceStageEnumModel;
+import bio.terra.workspace.generated.model.WorkspaceStageModel;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -119,7 +119,7 @@ public class WorkspaceServiceTest extends BaseUnitTest {
             callResult.getResponse().getContentAsString(), WorkspaceDescription.class);
 
     assertThat(desc.getId(), equalTo(workspaceId));
-    assertThat(desc.getStage(), equalTo(WorkspaceStageEnumModel.RAWLS_WORKSPACE));
+    assertThat(desc.getStage(), equalTo(WorkspaceStageModel.RAWLS_WORKSPACE));
   }
 
   @Test
@@ -130,7 +130,7 @@ public class WorkspaceServiceTest extends BaseUnitTest {
             .id(workspaceId)
             .spendProfile(null)
             .policies(null)
-            .stage(WorkspaceStageEnumModel.MC_WORKSPACE);
+            .stage(WorkspaceStageModel.MC_WORKSPACE);
 
     CreatedWorkspace workspace = runCreateWorkspaceCall(body);
 
@@ -144,7 +144,7 @@ public class WorkspaceServiceTest extends BaseUnitTest {
             callResult.getResponse().getContentAsString(), WorkspaceDescription.class);
 
     assertThat(desc.getId(), equalTo(workspaceId));
-    assertThat(desc.getStage(), equalTo(WorkspaceStageEnumModel.MC_WORKSPACE));
+    assertThat(desc.getStage(), equalTo(WorkspaceStageModel.MC_WORKSPACE));
   }
 
   @Test
