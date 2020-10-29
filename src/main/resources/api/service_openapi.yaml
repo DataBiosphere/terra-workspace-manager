@@ -401,7 +401,7 @@ components:
             type: string
             format: uuid
         stage:
-          $ref: '#/components/schemas/WorkspaceStageEnum'
+          $ref: '#/components/schemas/WorkspaceStageEnumModel'
 
     CreatedWorkspace:
       type: object
@@ -425,7 +425,7 @@ components:
           type: string
           format: uuid
         stage:
-          $ref: '#/components/schemas/WorkspaceStageEnum'
+          $ref: '#/components/schemas/WorkspaceStageEnumModel'
 
     CloningInstructionsEnum:
       type: string
@@ -535,7 +535,7 @@ components:
           description: The ID of the Data Repo snapshot
           type: string
 
-    WorkspaceStageEnum:
+    WorkspaceStageEnumModel:
       description: Enum for possible stages of a workspace along the Rawls migration path
       type: string
       enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']

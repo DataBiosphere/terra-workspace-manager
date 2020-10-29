@@ -3,7 +3,7 @@ package bio.terra.workspace.db;
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
-import bio.terra.workspace.generated.model.WorkspaceStageEnum;
+import bio.terra.workspace.generated.model.WorkspaceStageEnumModel;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -41,16 +41,17 @@ public class WorkspaceDao {
 
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public String createWorkspace(
-      UUID workspaceId, UUID spendProfile, WorkspaceStageEnum workspaceStage) {
+      UUID workspaceId, UUID spendProfile, WorkspaceStageEnumModel workspaceStage) {
     String sql =
         "INSERT INTO workspace (workspace_id, spend_profile, profile_settable, workspace_stage) values "
             + "(:id, :spend_profile, :spend_profile_settable, :workspace_stage)";
+    WorkspaceStageEnum internalStageEnum = WorkspaceStageEnum.fromApiModel(workspaceStage);
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("id", workspaceId.toString())
             .addValue("spend_profile", spendProfile)
             .addValue("spend_profile_settable", spendProfile == null)
-            .addValue("workspace_stage", workspaceStage.toString());
+            .addValue("workspace_stage", internalStageEnum.toString());
     try {
       jdbcTemplate.update(sql, params);
     } catch (DuplicateKeyException e) {
@@ -84,7 +85,9 @@ public class WorkspaceDao {
         desc.setSpendProfile(UUID.fromString(queryOutput.get("spend_profile").toString()));
       }
 
-      desc.setStage(WorkspaceStageEnum.fromValue(queryOutput.get("workspace_stage").toString()));
+      desc.setStage(
+          WorkspaceStageEnum.toApiModel(
+              WorkspaceStageEnum.fromValue(queryOutput.get("workspace_stage").toString())));
 
       return desc;
     } catch (EmptyResultDataAccessException e) {
