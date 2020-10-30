@@ -176,7 +176,7 @@ paths:
           $ref: '#/components/responses/ServerError'
 
   # Enumerate users
-  /api/workspaces/v1/{id}/roleBinding:
+  /api/workspaces/v1/{id}/roleBindings:
     parameters:
     - $ref: '#/components/parameters/Id'
     - $ref: '#/components/parameters/User'
@@ -197,12 +197,11 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  # Add or remove role bindings to the workspace
-  /api/workspaces/v1/{id}/roleBinding/{user}:
+  # Add role bindings to the workspace
+  /api/workspaces/v1/{id}/roleBindings:add:
     parameters:
     - $ref: '#/components/parameters/Id'
-    - $ref: '#/components/parameters/User'
-    put:
+    post:
       summary: Grant roles to users in a workspace
       operationId: addRoles
       tags: [Workspace]
@@ -224,6 +223,11 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+
+  # Remove role bindings to the workspace
+  /api/workspaces/v1/{id}/roleBindings:remove:
+    parameters:
+    - $ref: '#/components/parameters/Id'
     delete:
       summary: Remove roles from users in a workspace
       operationId: removeRoles
