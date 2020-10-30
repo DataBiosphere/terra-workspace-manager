@@ -9,6 +9,8 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 public class CreateWorkspaceStep implements Step {
@@ -16,6 +18,8 @@ public class CreateWorkspaceStep implements Step {
   private WorkspaceDao workspaceDao;
 
   private static final String CREATE_WORKSPACE_COMPLETED_KEY = "createWorkspaceStepCompleted";
+
+  private static Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
 
   public CreateWorkspaceStep(WorkspaceDao workspaceDao) {
     this.workspaceDao = workspaceDao;
@@ -27,7 +31,6 @@ public class CreateWorkspaceStep implements Step {
 
     UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     FlightMap workingMap = flightContext.getWorkingMap();
-    workingMap.put(CREATE_WORKSPACE_COMPLETED_KEY, false);
 
     // This can be null if no spend profile is specified
     UUID nullableSpendProfileId = null;
@@ -51,9 +54,14 @@ public class CreateWorkspaceStep implements Step {
   public StepResult undoStep(FlightContext flightContext) {
     FlightMap inputMap = flightContext.getInputParameters();
     FlightMap workingMap = flightContext.getWorkingMap();
-    if (workingMap.get(CREATE_WORKSPACE_COMPLETED_KEY, Boolean.class)) {
-      UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    if (workingMap.get(CREATE_WORKSPACE_COMPLETED_KEY, Boolean.class) != null) {
       workspaceDao.deleteWorkspace(workspaceId);
+    } else {
+      logger.warn(
+          "Undoing a CreateWorkspaceStep that was not fully completed. This may have created an orphaned workspace "
+              + workspaceId.toString()
+              + " in WM's database.");
     }
     return StepResult.getStepResultSuccess();
   }
