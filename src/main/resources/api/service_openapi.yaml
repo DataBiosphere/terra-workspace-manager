@@ -183,82 +183,70 @@ paths:
           $ref: '#/components/responses/ServerError'
 
   # Enumerate users
-  /api/workspaces/v1/{id}/users:
-    parameters:
-    - $ref: '#/components/parameters/Id'
-    - $ref: '#/components/parameters/RoleFilter'
-    get:
-      summary: |
-        Enumerate users in a workspace, optionally filtering by role.
-      operationId: enumerateUsers
-      tags: [Workspace]
-      response:
-        '200':
-          $ref: '#/components/responses/EnumerateUsersResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/PermissionDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/ServerError'
-
-  # Add or list roles for a user
-  /api/workspaces/v1/{id}/users/{user}:
+  /api/workspaces/v1/{id}/roleBinding:
     parameters:
     - $ref: '#/components/parameters/Id'
     - $ref: '#/components/parameters/User'
-    post:
-      summary: Grant a role to a user in a workspace
-      operationId: addRole
-      tags: [Workspace]
-      requestBody:
-        required: true
-        description: The role to grant a user
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AddRoleRequest'
-      response:
-        '200':
-          description: Success
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/PermissionDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/ServerError'
     get:
-      summary: Enumerate roles for a user or group in a workspace
+      summary: |
+        Enumerate roles in a workspace, optionally filtering by user.
       operationId: enumerateRoles
       tags: [Workspace]
       response:
         '200':
-          $ref: '#/components/responses/EnumerateRolesResponse'
+          $ref: '#/components/responses/RoleBindingListResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/PermissionDenied'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
 
-
-  # Delete a role for a user
-  /api/workspaces/v1/{id}/users/{user}/{role}:
+  # Add or remove role bindings to the workspace
+  /api/workspaces/v1/{id}/roleBinding/{user}:
     parameters:
     - $ref: '#/components/parameters/Id'
     - $ref: '#/components/parameters/User'
-    - $ref: '#/components/parameters/Role'
-    delete:
-      summary: Remove a role from a user or group in a workspace
-      operationId: removeRole
+    put:
+      summary: Grant roles to users in a workspace
+      operationId: addRoles
       tags: [Workspace]
+      requestBody:
+        required: true
+        description: List of bindings to add to this workspace
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleBindingList'
       response:
-        '204':
-          description: OK
+        '200':
+          $ref: '#/components/responses/RoleBindingListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Remove roles from users in a workspace
+      operationId: removeRoles
+      tags: [Workspace]
+      requestBody:
+        required: true
+        description: List of bindings to remove from this workspace
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleBindingList'
+      response:
+        '200':
+          $ref: '#/components/responses/RoleBindingListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -381,28 +369,10 @@ components:
     User:
       name: user
       in: path
-      description: A user or group with permissions in workspace manager
-      required: true
-      schema:
-        $ref: '#/components/schemas/User'
-
-    Role:
-      name: role
-      in: path
-      description: A role that can be granted to a user or group in a workspace.
-      required: true
-      schema:
-        $ref: '#/components/schemas/RoleEnum'
-
-    RoleFilter:
-      name: roleFilter
-      in: query
-      description: Parameter for filtering requests by role.
+      description: A user in a workspace
       required: false
       schema:
-        type: array
-        items:
-          $ref: '#/components/schemas/RoleEnum'
+        $ref: '#/components/schemas/User'
 
   schemas:
     ErrorReport:
@@ -486,14 +456,26 @@ components:
       # TODO: what format are  user/group names?
       type: string
 
-    UserList:
-      type: array
-      items:
-        $ref: '#/components/schemas/User'
-
-    RoleEnum:
+    Role:
       type: string
       enum: [OWNER, RESOURCE_MANAGER, WRITER, READER, CLONER, RESOURCE_MANAGER_SHARE, WRITER_SHARE, READER_SHARE, CLONER_SHARE]
+
+    RoleBinding:
+      type: object
+      description: A collection of users with a single role
+      properties:
+        role:
+          $ref: '#/components/schemas/Role'
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+
+    RoleBindingList:
+      type: array
+      description: A list of RoleBindings
+      items:
+        $ref: '#/components/schemas/Role'
 
     SystemVersion:
       type: object
@@ -672,13 +654,6 @@ components:
           description: The ID of the Data Repo snapshot
           type: string
 
-    AddRoleRequest:
-      description: Request body for adding a role to a user
-      type: object
-      properties:
-        role:
-          $ref: '#/components/schemas/RoleEnum'
-
   responses:
     CreatedWorkspaceResponse:
       description: Response to createWorkspace calls
@@ -701,13 +676,12 @@ components:
           schema:
             $ref: '#/components/schemas/DataReferenceList'
 
-    EnumerateUsersResponse:
-      description: Response to enumerate user calls
+    RoleBindingListResponse:
+      description: Response containing a RoleBindingList
       content:
         application/json:
           schema:
-            # TODO: This lumps all roles together. Rethink this?
-            $ref: '#/components/schemas/UserList'
+            $ref: '#/components/schemas/RoleBindingList'
 
     # Error Responses
     BadRequest:
