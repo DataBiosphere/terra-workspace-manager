@@ -12,12 +12,9 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import brave.Span;
-import brave.Tracer;
-import java.util.Optional;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -26,17 +23,15 @@ public class WorkspaceService {
   private JobService jobService;
   private final WorkspaceDao workspaceDao;
   private final SamService samService;
-  @Autowired private final Tracer tracer;
 
   @Autowired
-  public WorkspaceService(
-      JobService jobService, WorkspaceDao workspaceDao, SamService samService, Tracer tracer) {
+  public WorkspaceService(JobService jobService, WorkspaceDao workspaceDao, SamService samService) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
-    this.tracer = tracer;
   }
 
+  @Traced
   public CreatedWorkspace createWorkspace(
       CreateWorkspaceRequestBody body, AuthenticatedUserRequest userReq) {
 
@@ -57,23 +52,15 @@ public class WorkspaceService {
     return createJob.submitAndWait(CreatedWorkspace.class);
   }
 
-  @NewSpan
+  @Traced
   public WorkspaceDescription getWorkspace(UUID id, AuthenticatedUserRequest userReq) {
-    Span newSpan = tracer.nextSpan().name("workspaceAuthz");
-    // this try is here to demonstrate one way to create a span. When adding tracing properly,
-    // switch to using @NewSpan on the workspaceAuth method.
-    try (Tracer.SpanInScope ws = tracer.withSpanInScope(newSpan.start())) {
-      samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_READ_ACTION);
-    } finally {
-      newSpan.finish();
-    }
-    WorkspaceDescription result = workspaceDao.getWorkspace(id);
-    return result;
+    samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_READ_ACTION);
+    return workspaceDao.getWorkspace(id);
   }
 
-  public void deleteWorkspace(UUID id, String userToken) {
+  @Traced
+  public void deleteWorkspace(UUID id, AuthenticatedUserRequest userReq) {
 
-    AuthenticatedUserRequest userReq = new AuthenticatedUserRequest().token(Optional.of(userToken));
     samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_DELETE_ACTION);
 
     String description = "Delete workspace " + id;

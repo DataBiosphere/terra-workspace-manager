@@ -18,7 +18,6 @@ import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.DataReferenceDescription;
 import bio.terra.workspace.model.DataReferenceList;
 import bio.terra.workspace.model.DataRepoSnapshot;
-import bio.terra.workspace.model.DeleteWorkspaceRequestBody;
 import bio.terra.workspace.model.ReferenceTypeEnum;
 import bio.terra.workspace.model.WorkspaceDescription;
 import java.util.Collections;
@@ -92,7 +91,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
     createDefaultWorkspace(workspaceId);
 
-    String userEmail = testConfig.getServiceAccountEmail();
+    String userEmail = testConfig.getUserEmail();
     String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId;
 
     WorkspaceResponse<WorkspaceDescription> getWorkspaceResponse =
@@ -111,14 +110,12 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
     WorkspaceResponse<CreatedWorkspace> workspaceResponse = createDefaultWorkspace(workspaceId);
 
-    String userEmail = testConfig.getServiceAccountEmail();
+    String userEmail = testConfig.getUserEmail();
     String token = authService.getAuthToken(userEmail);
     String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId;
-    DeleteWorkspaceRequestBody body = new DeleteWorkspaceRequestBody().authToken(token);
-    String jsonBody = testUtils.mapToJson(body);
 
     WorkspaceResponse<?> deleteWorkspaceResponse =
-        workspaceManagerTestClient.delete(userEmail, path, jsonBody);
+        workspaceManagerTestClient.delete(userEmail, path);
 
     assertEquals(HttpStatus.NO_CONTENT, deleteWorkspaceResponse.getStatusCode());
 
@@ -134,27 +131,6 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     testToWorkspaceIdsMap.remove(testInfo.getDisplayName());
   }
 
-  @Test
-  @Tag(TAG_NEEDS_CLEANUP)
-  public void deleteWorkspaceWithInvalidToken(TestInfo testInfo) throws Exception {
-    UUID workspaceId = UUID.randomUUID();
-    testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
-    WorkspaceResponse<CreatedWorkspace> workspaceResponse = createDefaultWorkspace(workspaceId);
-
-    String userEmail = testConfig.getServiceAccountEmail();
-    String token = "invalidToken";
-    String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId;
-    DeleteWorkspaceRequestBody body = new DeleteWorkspaceRequestBody().authToken(token);
-    String jsonBody = testUtils.mapToJson(body);
-
-    WorkspaceResponse<?> deleteWorkspaceResponse =
-        workspaceManagerTestClient.delete(userEmail, path, jsonBody);
-
-    assertEquals(HttpStatus.UNAUTHORIZED, deleteWorkspaceResponse.getStatusCode());
-    assertTrue(deleteWorkspaceResponse.isErrorObject());
-  }
-
-  @Disabled("Disable temporarily due to Jade dev maintenance. AS-506 to re-enable")
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
   public void createDataReference(TestInfo testInfo) throws Exception {
@@ -175,7 +151,6 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
         CloningInstructionsEnum.NOTHING, dataReferenceDescription.getCloningInstructions());
   }
 
-  @Disabled("Disable temporarily due to Jade dev maintenance. AS-506 to re-enable")
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
   public void deleteDataReference(TestInfo testInfo) throws Exception {
@@ -192,11 +167,10 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
         testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId + "/datareferences/" + referenceId;
 
     WorkspaceResponse<?> deleteResponse =
-        workspaceManagerTestClient.delete(testConfig.getServiceAccountEmail(), deletePath, "");
+        workspaceManagerTestClient.delete(testConfig.getUserEmail(), deletePath);
     assertEquals(HttpStatus.valueOf(204), deleteResponse.getStatusCode());
   }
 
-  @Disabled("Disable temporarily due to Jade dev maintenance. AS-506 to re-enable")
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
   public void listDataReference(TestInfo testInfo) throws Exception {
@@ -215,8 +189,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     assertEquals(HttpStatus.OK, secondPostResponse.getStatusCode());
     String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId + "/datareferences";
     WorkspaceResponse<DataReferenceList> listResponse =
-        workspaceManagerTestClient.get(
-            testConfig.getServiceAccountEmail(), path, DataReferenceList.class);
+        workspaceManagerTestClient.get(testConfig.getUserEmail(), path, DataReferenceList.class);
     assertEquals(HttpStatus.OK, listResponse.getStatusCode());
     assertTrue(listResponse.isResponseObject());
     DataReferenceList referenceList = listResponse.getResponseObject();
@@ -228,13 +201,73 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     assertThat(referenceList.getResources(), containsInAnyOrder(expectedResults));
   }
 
+  @Test
+  @Tag(TAG_NEEDS_CLEANUP)
+  public void getDataReferenceById(TestInfo testInfo) throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
+
+    createDefaultWorkspace(workspaceId);
+    String referenceName = "workspace_integration_test_snapshot";
+    WorkspaceResponse<DataReferenceDescription> postResponse =
+        createDefaultDataReference(workspaceId, referenceName);
+    assertEquals(HttpStatus.OK, postResponse.getStatusCode());
+    assertTrue(postResponse.isResponseObject());
+
+    UUID referenceId = postResponse.getResponseObject().getReferenceId();
+    String path =
+        testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId + "/datareferences/" + referenceId;
+
+    WorkspaceResponse<DataReferenceDescription> getResponse =
+        workspaceManagerTestClient.get(
+            testConfig.getUserEmail(), path, DataReferenceDescription.class);
+
+    assertEquals(HttpStatus.OK, getResponse.getStatusCode());
+    assertTrue(getResponse.isResponseObject());
+    DataReferenceDescription dataReferenceDescription = getResponse.getResponseObject();
+
+    assertEquals(referenceName, dataReferenceDescription.getName());
+    assertEquals(workspaceId, dataReferenceDescription.getWorkspaceId());
+  }
+
+  @Test
+  @Tag(TAG_NEEDS_CLEANUP)
+  public void getDataReferenceByNameAndType(TestInfo testInfo) throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
+
+    createDefaultWorkspace(workspaceId);
+    String referenceName = "workspace_integration_test_snapshot";
+    String referenceType = ReferenceTypeEnum.DATA_REPO_SNAPSHOT.toString();
+    WorkspaceResponse<DataReferenceDescription> postResponse =
+        createDefaultDataReference(workspaceId, referenceName);
+    assertEquals(HttpStatus.OK, postResponse.getStatusCode());
+    assertTrue(postResponse.isResponseObject());
+
+    UUID referenceId = postResponse.getResponseObject().getReferenceId();
+
+    String path =
+        String.format(
+            "%s/%s/datareferences/%s/%s",
+            testConfig.getWsmWorkspacesBaseUrl(), workspaceId, referenceType, referenceName);
+
+    WorkspaceResponse<DataReferenceDescription> getResponse =
+        workspaceManagerTestClient.get(
+            testConfig.getUserEmail(), path, DataReferenceDescription.class);
+
+    assertEquals(HttpStatus.OK, getResponse.getStatusCode());
+    assertTrue(getResponse.isResponseObject());
+    DataReferenceDescription dataReferenceDescription = getResponse.getResponseObject();
+
+    assertEquals(referenceId, dataReferenceDescription.getReferenceId());
+    assertEquals(workspaceId, dataReferenceDescription.getWorkspaceId());
+  }
+
   private WorkspaceResponse<CreatedWorkspace> createDefaultWorkspace(UUID workspaceId)
       throws Exception {
     String path = testConfig.getWsmWorkspacesBaseUrl();
-    String userEmail = testConfig.getServiceAccountEmail();
-    String token = authService.getAuthToken(userEmail);
-    CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody().id(workspaceId).authToken(token);
+    String userEmail = testConfig.getUserEmail();
+    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(workspaceId);
     String jsonBody = testUtils.mapToJson(body);
 
     return workspaceManagerTestClient.post(userEmail, path, jsonBody, CreatedWorkspace.class);
@@ -252,7 +285,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     // support this test in other DataRepo environments.
     // Data Repo makes a reasonable effort to maintain their dev environment, so this should be a
     // very rare occurrence.
-    String userEmail = testConfig.getServiceAccountEmail();
+    String userEmail = testConfig.getUserEmail();
     String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId + "/datareferences";
 
     DataRepoSnapshot snapshotReference =
@@ -276,17 +309,15 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
         the next one)? In any case, caching the auth token will enable us to efficiently auth before EACH delete request.
         This ticket will implement caching for auth token using Caffeine AS-428
     */
-    String userEmail = testConfig.getServiceAccountEmail();
+    String userEmail = testConfig.getUserEmail();
     String token = authService.getAuthToken(userEmail);
     String workspaceBaseUrl = testConfig.getWsmWorkspacesBaseUrl();
-    DeleteWorkspaceRequestBody body = new DeleteWorkspaceRequestBody().authToken(token);
-    String jsonBody = testUtils.mapToJson(body);
 
     for (UUID uuid : workspaceIds) {
       String path = workspaceBaseUrl + "/" + uuid;
 
       WorkspaceResponse<?> deleteWorkspaceResponse =
-          workspaceManagerTestClient.delete(userEmail, path, jsonBody);
+          workspaceManagerTestClient.delete(userEmail, path);
 
       /*
         TODO: If the delete call fails for some reason, we won't 'assert' as this is not a test. We

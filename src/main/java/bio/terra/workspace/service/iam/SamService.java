@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.iam;
 
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
-import bio.terra.workspace.app.configuration.spring.ApiResourceConfig;
+import bio.terra.workspace.app.configuration.spring.TraceInterceptorConfig;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.common.utils.SamUtils;
@@ -9,6 +9,7 @@ import bio.terra.workspace.generated.model.SystemStatusSystems;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -38,7 +39,8 @@ public class SamService {
   private ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();
     client.addDefaultHeader(
-        ApiResourceConfig.MDC_REQUEST_ID_HEADER, MDC.get(ApiResourceConfig.MDC_REQUEST_ID_KEY));
+        TraceInterceptorConfig.MDC_REQUEST_ID_HEADER,
+        MDC.get(TraceInterceptorConfig.MDC_REQUEST_ID_KEY));
     client.setAccessToken(accessToken);
     return client.setBasePath(samConfig.getBasePath());
   }
@@ -75,6 +77,7 @@ public class SamService {
     }
   }
 
+  @Traced
   public void workspaceAuthz(AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
     boolean isAuthorized =
         isAuthorized(
