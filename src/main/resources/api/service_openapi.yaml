@@ -228,7 +228,7 @@ paths:
   /api/workspaces/v1/{id}/roleBindings:remove:
     parameters:
     - $ref: '#/components/parameters/Id'
-    delete:
+    post:
       summary: Remove roles from users in a workspace
       operationId: removeRoles
       tags: [Workspace]
