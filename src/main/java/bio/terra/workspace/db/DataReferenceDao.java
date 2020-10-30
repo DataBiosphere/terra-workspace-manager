@@ -111,12 +111,14 @@ public class DataReferenceDao {
     }
   }
 
-  public boolean isControlled(UUID referenceId) {
+  public boolean isControlled(UUID workspaceId, UUID referenceId) {
     String sql =
-        "SELECT CASE WHEN resource_id IS NULL THEN 'false' ELSE 'true' END FROM workspace_data_reference where reference_id = :id";
+        "SELECT CASE WHEN resource_id IS NULL THEN 'false' ELSE 'true' END FROM workspace_data_reference where reference_id = :id AND workspace_id = :workspace_id";
 
     MapSqlParameterSource params =
-        new MapSqlParameterSource().addValue("id", referenceId.toString());
+        new MapSqlParameterSource()
+            .addValue("id", referenceId.toString())
+            .addValue("workspace_id", workspaceId.toString());
 
     try {
       return jdbcTemplate.queryForObject(sql, params, Boolean.class).booleanValue();
@@ -125,12 +127,15 @@ public class DataReferenceDao {
     }
   }
 
-  public boolean deleteDataReference(UUID referenceId) {
+  public boolean deleteDataReference(UUID workspaceId, UUID referenceId) {
     MapSqlParameterSource params =
-        new MapSqlParameterSource().addValue("id", referenceId.toString());
+        new MapSqlParameterSource()
+            .addValue("id", referenceId.toString())
+            .addValue("workspace_id", workspaceId.toString());
     int rowsAffected =
         jdbcTemplate.update(
-            "DELETE FROM workspace_data_reference WHERE reference_id = :id", params);
+            "DELETE FROM workspace_data_reference WHERE reference_id = :id AND workspace_id = :workspace_id",
+            params);
     return rowsAffected > 0;
   }
 

@@ -1,0 +1,41 @@
+# Add joint pk constraints on workspace ID to resource, reference, and application tables
+databaseChangeLog:
+- changeSet:
+    id:  addWorkspacePKConstraints
+    author:  zloery
+    changes:
+    -  dropForeignKeyConstraint:
+         baseTableName: workspace_resource
+         constraintName: fk_associated_app
+    -  dropPrimaryKey:
+         tableName: workspace_application
+    -  addPrimaryKey:
+         tableName:  workspace_application
+         columnNames:  workspace_id, application_id
+    - addForeignKeyConstraint:
+         baseTableName: workspace_resource
+         baseColumnNames: workspace_id, associated_app
+         constraintName: fk_associated_app
+         referencedTableName: workspace_application
+         referencedColumnNames: workspace_id, application_id
+
+    -  dropForeignKeyConstraint:
+         baseTableName: workspace_data_reference
+         constraintName: fk_resource_id
+    - dropPrimaryKey:
+        tableName: workspace_resource
+    - addPrimaryKey:
+        tableName:  workspace_resource
+        columnNames:  workspace_id, resource_id
+    - addForeignKeyConstraint:
+        baseTableName: workspace_data_reference
+        baseColumnNames: workspace_id, resource_id
+        constraintName: fk_resource_id
+        referencedTableName: workspace_resource
+        referencedColumnNames: workspace_id, resource_id
+
+    - dropPrimaryKey:
+        tableName: workspace_data_reference
+    - addPrimaryKey:
+        tableName:  workspace_data_reference
+        columnNames:  workspace_id, reference_id

@@ -24,6 +24,9 @@ env:
 
 logging.pattern.level: '%X{requestId} %5p'
 
+# TODO: remove this
+spring.profiles.include: human-readable-logging
+
 server:
   compression:
     enabled: true
