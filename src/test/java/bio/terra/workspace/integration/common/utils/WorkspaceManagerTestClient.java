@@ -50,9 +50,8 @@ public class WorkspaceManagerTestClient {
     return sendRequest(path, HttpMethod.GET, entity, ErrorReport.class, responseClass);
   }
 
-  public <T> WorkspaceResponse<T> delete(String userEmail, String path, String json)
-      throws Exception {
-    HttpEntity<String> entity = new HttpEntity<>(json, getHeaders(userEmail));
+  public <T> WorkspaceResponse<T> delete(String userEmail, String path) throws Exception {
+    HttpEntity<String> entity = new HttpEntity<>(getHeaders(userEmail));
     return sendRequest(path, HttpMethod.DELETE, entity, ErrorReport.class, null);
   }
 
