@@ -1,6 +1,7 @@
 package bio.terra.workspace.common;
 
 import org.junit.jupiter.api.Tag;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.test.context.ActiveProfiles;
 
 /**
@@ -11,4 +12,5 @@ import org.springframework.test.context.ActiveProfiles;
  */
 @Tag("connected")
 @ActiveProfiles("connected-test")
+@AutoConfigureMockMvc
 public class BaseConnectedTest extends BaseTest {}
