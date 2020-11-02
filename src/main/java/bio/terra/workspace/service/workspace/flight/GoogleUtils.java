@@ -2,7 +2,6 @@ package bio.terra.workspace.service.workspace.flight;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.stairway.Step;
-import bio.terra.stairway.StepResult;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import java.io.IOException;
@@ -13,9 +12,7 @@ import javax.annotation.CheckReturnValue;
 public class GoogleUtils {
   private GoogleUtils() {}
 
-  /**
-   * Try to delete the Project associated with {@code projectId}.
-   */
+  /** Try to delete the Project associated with {@code projectId}. */
   @CheckReturnValue
   public static void deleteProject(String projectId, CloudResourceManagerCow resourceManager)
       throws IOException {
