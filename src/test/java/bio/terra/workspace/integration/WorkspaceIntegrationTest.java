@@ -18,7 +18,6 @@ import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.DataReferenceDescription;
 import bio.terra.workspace.model.DataReferenceList;
 import bio.terra.workspace.model.DataRepoSnapshot;
-import bio.terra.workspace.model.DeleteWorkspaceRequestBody;
 import bio.terra.workspace.model.ReferenceTypeEnum;
 import bio.terra.workspace.model.WorkspaceDescription;
 import java.util.Collections;
@@ -114,11 +113,9 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     String userEmail = testConfig.getUserEmail();
     String token = authService.getAuthToken(userEmail);
     String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId;
-    DeleteWorkspaceRequestBody body = new DeleteWorkspaceRequestBody().authToken(token);
-    String jsonBody = testUtils.mapToJson(body);
 
     WorkspaceResponse<?> deleteWorkspaceResponse =
-        workspaceManagerTestClient.delete(userEmail, path, jsonBody);
+        workspaceManagerTestClient.delete(userEmail, path);
 
     assertEquals(HttpStatus.NO_CONTENT, deleteWorkspaceResponse.getStatusCode());
 
@@ -132,26 +129,6 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
      timeout, etc.
     */
     testToWorkspaceIdsMap.remove(testInfo.getDisplayName());
-  }
-
-  @Test
-  @Tag(TAG_NEEDS_CLEANUP)
-  public void deleteWorkspaceWithInvalidToken(TestInfo testInfo) throws Exception {
-    UUID workspaceId = UUID.randomUUID();
-    testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
-    WorkspaceResponse<CreatedWorkspace> workspaceResponse = createDefaultWorkspace(workspaceId);
-
-    String userEmail = testConfig.getUserEmail();
-    String token = "invalidToken";
-    String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId;
-    DeleteWorkspaceRequestBody body = new DeleteWorkspaceRequestBody().authToken(token);
-    String jsonBody = testUtils.mapToJson(body);
-
-    WorkspaceResponse<?> deleteWorkspaceResponse =
-        workspaceManagerTestClient.delete(userEmail, path, jsonBody);
-
-    assertEquals(HttpStatus.UNAUTHORIZED, deleteWorkspaceResponse.getStatusCode());
-    assertTrue(deleteWorkspaceResponse.isErrorObject());
   }
 
   @Test
@@ -190,7 +167,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
         testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId + "/datareferences/" + referenceId;
 
     WorkspaceResponse<?> deleteResponse =
-        workspaceManagerTestClient.delete(testConfig.getUserEmail(), deletePath, "");
+        workspaceManagerTestClient.delete(testConfig.getUserEmail(), deletePath);
     assertEquals(HttpStatus.valueOf(204), deleteResponse.getStatusCode());
   }
 
@@ -290,9 +267,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
       throws Exception {
     String path = testConfig.getWsmWorkspacesBaseUrl();
     String userEmail = testConfig.getUserEmail();
-    String token = authService.getAuthToken(userEmail);
-    CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody().id(workspaceId).authToken(token);
+    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(workspaceId);
     String jsonBody = testUtils.mapToJson(body);
 
     return workspaceManagerTestClient.post(userEmail, path, jsonBody, CreatedWorkspace.class);
@@ -337,14 +312,12 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     String userEmail = testConfig.getUserEmail();
     String token = authService.getAuthToken(userEmail);
     String workspaceBaseUrl = testConfig.getWsmWorkspacesBaseUrl();
-    DeleteWorkspaceRequestBody body = new DeleteWorkspaceRequestBody().authToken(token);
-    String jsonBody = testUtils.mapToJson(body);
 
     for (UUID uuid : workspaceIds) {
       String path = workspaceBaseUrl + "/" + uuid;
 
       WorkspaceResponse<?> deleteWorkspaceResponse =
-          workspaceManagerTestClient.delete(userEmail, path, jsonBody);
+          workspaceManagerTestClient.delete(userEmail, path);
 
       /*
         TODO: If the delete call fails for some reason, we won't 'assert' as this is not a test. We
