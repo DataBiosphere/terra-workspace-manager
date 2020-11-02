@@ -22,17 +22,11 @@ public enum WorkspaceStage {
 
   public static WorkspaceStage fromApiModel(WorkspaceStageModel modelEnum) {
     WorkspaceStage stage = stageMap.inverse().get(modelEnum);
-    if (modelEnum == null) {
-      return WorkspaceStage.RAWLS_WORKSPACE;
-    }
     return stage;
   }
 
   public WorkspaceStageModel toApiModel() {
     WorkspaceStageModel stage = stageMap.get(this);
-    if (stage == null) {
-      return WorkspaceStageModel.RAWLS_WORKSPACE;
-    }
     return stage;
   }
 }

@@ -11,4 +11,5 @@ databaseChangeLog:
             name: workspace_stage
             # Liquibase does not support enum types. As with other enum columns, we use text instead.
             type: text
-            defaultValue: 'RAWLS_WORKSPACE'
+            # value is what existing rows are set to when this addColumn change is applied.
+            value: 'RAWLS_WORKSPACE'
