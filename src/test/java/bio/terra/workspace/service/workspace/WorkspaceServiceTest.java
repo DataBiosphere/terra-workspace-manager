@@ -237,7 +237,23 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void createAndGetGoogleContext() {
+  public void deleteWorkspaceWithGoogleContext() {
+    UUID workspaceId = UUID.randomUUID();
+    workspaceService.createWorkspace(new CreateWorkspaceRequestBody().id(workspaceId), userReq);
+
+    String jobId = workspaceService.createGoogleContext(workspaceId, userReq);
+    jobService.waitForJob(jobId);
+    assertEquals(
+            HttpStatus.OK, jobService.retrieveJobResult(jobId, Object.class, userReq).getStatusCode());
+    String projectId = workspaceService.getCloudContext(workspaceId, userReq).googleProjectId().get();
+    // get project todo
+
+    workspaceService.deleteWorkspace(workspaceId, userReq);
+    // get project is deleting todo.
+  }
+
+  @Test
+  public void createGetDeleteGoogleContext() {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(new CreateWorkspaceRequestBody().id(workspaceId), userReq);
 
@@ -245,9 +261,11 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     jobService.waitForJob(jobId);
     assertEquals(
         HttpStatus.OK, jobService.retrieveJobResult(jobId, Object.class, userReq).getStatusCode());
-
     assertTrue(
         workspaceService.getCloudContext(workspaceId, userReq).googleProjectId().isPresent());
+
+    workspaceService.deleteGoogleContext(workspaceId, userReq);
+    assertEquals(WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
   }
 
   // TODO: blank tests that should be written as more functionality gets added.

@@ -9,10 +9,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.workspace.flight.CreateGoogleContextFlight;
-import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
-import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.*;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,5 +96,20 @@ public class WorkspaceService {
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
         .submit();
     return jobId;
+  }
+
+  /** Delete the Google cloud context for the workspace. */
+  @Traced
+  public void deleteGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
+    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+    jobService
+            .newJob(
+                    "Delete Google Context " + workspaceId,
+                    UUID.randomUUID().toString(),
+                    DeleteGoogleContextFlight.class,
+                    /* request= */ null,
+                    userReq)
+            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
+            .submitAndWait(null);
   }
 }
