@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.workspace.flight;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID;
-
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -12,7 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.transaction.support.TransactionTemplate;
 
-/** Deletes a workspace's Google cloud context. */
+/** Deletes a workspace's Google cloud context from the DAO. */
 public class DeleteGoogleContextStep implements Step {
   private final WorkspaceDao workspaceDao;
   private final TransactionTemplate transactionTemplate;
@@ -42,33 +40,8 @@ public class DeleteGoogleContextStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    UUID workspaceId =
-        flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
-
-    // Update the cloud context within a transaction so that we don't clobber a concurrent cloud
-    // context change.
-    return transactionTemplate.execute(
-        status -> {
-          WorkspaceCloudContext existingContext = workspaceDao.getCloudContext(workspaceId);
-          if (existingContext.googleProjectId().isEmpty()) {
-            // Restore the google cloud context if there's nothing there now.
-            workspaceDao.updateCloudContext(
-                workspaceId, WorkspaceCloudContext.createGoogleContext(projectId));
-            return StepResult.getStepResultSuccess();
-          } else if (existingContext.googleProjectId().get().equals(projectId)) {
-            // If the project id is still there, there's nothing to undo.
-            return StepResult.getStepResultSuccess();
-          } else {
-            // If a different project id is now in the cloud context, panic. We can no longer undo
-            // deletion.
-            return new StepResult(
-                StepStatus.STEP_RESULT_FAILURE_FATAL,
-                new IllegalStateException(
-                    String.format(
-                        "Project id to undo delete [%s] does not match existing project id [%s]",
-                        projectId, existingContext.googleProjectId().get())));
-          }
-        });
+    // Right now, we don't attempt to undo DAO deletion. This is expected to happen infrequently and
+    // not before steps that are likely to fail.
+    return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
   }
 }

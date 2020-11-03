@@ -39,7 +39,6 @@ public class DeleteProjectStep implements Step {
       // Nothing to delete.
       return StepResult.getStepResultSuccess();
     }
-    flightContext.getWorkingMap().put(WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID, projectId.get());
     try {
       GoogleUtils.deleteProject(projectId.get(), resourceManager);
     } catch (IOException e) {
