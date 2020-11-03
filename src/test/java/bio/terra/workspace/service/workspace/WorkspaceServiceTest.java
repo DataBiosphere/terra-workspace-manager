@@ -111,49 +111,17 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void testDefaultWorkspaceStageIsRawls() throws Exception {
-    UUID workspaceId = UUID.randomUUID();
-    CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(null).policies(null);
-
-    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
-
-    MvcResult callResult =
-        mvc.perform(get("/api/workspaces/v1/" + workspace.getId()))
-            .andExpect(status().is(200))
-            .andReturn();
-
-    WorkspaceDescription desc =
-        objectMapper.readValue(
-            callResult.getResponse().getContentAsString(), WorkspaceDescription.class);
-
-    assertThat(desc.getId(), equalTo(workspaceId));
-    assertThat(desc.getStage(), equalTo(WorkspaceStageModel.RAWLS_WORKSPACE));
-  }
-
-  @Test
   public void testWorkspaceStagePersists() throws Exception {
     UUID workspaceId = UUID.randomUUID();
     CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody()
-            .id(workspaceId)
-            .spendProfile(null)
-            .policies(null)
-            .stage(WorkspaceStageModel.MC_WORKSPACE);
+        new CreateWorkspaceRequestBody().id(workspaceId).stage(WorkspaceStageModel.MC_WORKSPACE);
 
-    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
-
-    MvcResult callResult =
-        mvc.perform(get("/api/workspaces/v1/" + workspace.getId()))
-            .andExpect(status().is(200))
-            .andReturn();
-
-    WorkspaceDescription desc =
-        objectMapper.readValue(
-            callResult.getResponse().getContentAsString(), WorkspaceDescription.class);
-
-    assertThat(desc.getId(), equalTo(workspaceId));
-    assertThat(desc.getStage(), equalTo(WorkspaceStageModel.MC_WORKSPACE));
+    CreatedWorkspace workspace =
+        workspaceService.createWorkspace(body, WorkspaceStage.MC_WORKSPACE, userReq);
+    assertEquals(workspaceId, workspace.getId());
+    WorkspaceDescription description = workspaceService.getWorkspace(workspaceId, userReq);
+    assertEquals(workspaceId, description.getId());
+    assertEquals(WorkspaceStageModel.MC_WORKSPACE, description.getStage());
   }
 
   @Test
