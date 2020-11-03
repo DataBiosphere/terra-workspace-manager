@@ -1,68 +1,44 @@
 package bio.terra.workspace.service.workspace;
 
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.blankOrNullString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.not;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.exception.SamApiException;
+import bio.terra.workspace.common.exception.*;
 import bio.terra.workspace.generated.model.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
-import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
-import bio.terra.workspace.generated.model.ErrorReport;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
-import bio.terra.workspace.generated.model.WorkspaceDescription;
+import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
-@AutoConfigureMockMvc
 public class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private WorkspaceService workspaceService;
+  @Autowired private DataReferenceService dataReferenceService;
   @Autowired private JobService jobService;
-  @Autowired private MockMvc mvc;
-
-  @MockBean private SamService mockSamService;
-
-  // Mock MVC doesn't populate the fields used to build this.
-  @MockBean private AuthenticatedUserRequestFactory mockAuthenticatedUserRequestFactory;
 
   @MockBean private DataRepoService dataRepoService;
 
-  @Autowired private ObjectMapper objectMapper;
+  /** Mock SamService returns true for all calls to {@link SamService#isAuthorized}. */
+  @MockBean private SamService mockSamService;
 
   /** A fake authenticated user request. */
-  private static final AuthenticatedUserRequest userReq =
+  private static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest()
           .token(Optional.of("fake-token"))
           .email("fake@email.com")
@@ -71,65 +47,41 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   @BeforeEach
   public void setup() {
     doReturn(true).when(dataRepoService).snapshotExists(any(), any(), any());
-    when(mockAuthenticatedUserRequestFactory.from(any())).thenReturn(userReq);
   }
 
   @Test
-  public void testGetMissingWorkspace() throws Exception {
-    MvcResult callResult =
-        mvc.perform(get("/api/workspaces/v1/" + UUID.randomUUID().toString()))
-            .andExpect(status().is(404))
-            .andReturn();
-
-    ErrorReport error =
-        objectMapper.readValue(callResult.getResponse().getContentAsString(), ErrorReport.class);
-    assertThat(error.getStatusCode(), equalTo(HttpStatus.NOT_FOUND.value()));
+  public void testGetMissingWorkspace() {
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () -> workspaceService.getWorkspace(UUID.randomUUID(), USER_REQUEST));
   }
 
   @Test
-  public void testGetExistingWorkspace() throws Exception {
-    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody();
+  public void testGetExistingWorkspace() {
     UUID workspaceId = UUID.randomUUID();
-    body.setId(workspaceId);
+    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(workspaceId);
 
-    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
+    CreatedWorkspace workspace = workspaceService.createWorkspace(body, USER_REQUEST);
+    assertEquals(workspaceId, workspace.getId());
 
-    assertThat(workspace.getId().toString(), not(blankOrNullString()));
-
-    MvcResult callResult =
-        mvc.perform(get("/api/workspaces/v1/" + workspace.getId()))
-            .andExpect(status().is(200))
-            .andReturn();
-
-    WorkspaceDescription desc =
-        objectMapper.readValue(
-            callResult.getResponse().getContentAsString(), WorkspaceDescription.class);
-
-    assertThat(desc.getId(), equalTo(workspaceId));
+    assertEquals(workspaceId, workspaceService.getWorkspace(workspaceId, USER_REQUEST).getId());
   }
 
   @Test
-  public void duplicateWorkspaceRejected() throws Exception {
+  public void duplicateWorkspaceRejected() {
     UUID workspaceId = UUID.randomUUID();
     CreateWorkspaceRequestBody body =
         new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(null).policies(null);
-    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
-    assertThat(workspace.getId(), equalTo(workspaceId));
+    CreatedWorkspace workspace = workspaceService.createWorkspace(body, USER_REQUEST);
+    assertEquals(workspaceId, workspace.getId());
 
-    MvcResult failureResult =
-        mvc.perform(
-                post("/api/workspaces/v1")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(body)))
-            .andExpect(status().is(400))
-            .andReturn();
-    ErrorReport error =
-        objectMapper.readValue(failureResult.getResponse().getContentAsString(), ErrorReport.class);
-    assertThat(error.getMessage(), containsString("already exists"));
+    assertThrows(
+        DuplicateWorkspaceException.class,
+        () -> workspaceService.createWorkspace(body, USER_REQUEST));
   }
 
   @Test
-  public void testWithSpendProfileAndPolicies() throws Exception {
+  public void testWithSpendProfileAndPolicies() {
     UUID workspaceId = UUID.randomUUID();
     CreateWorkspaceRequestBody body =
         new CreateWorkspaceRequestBody()
@@ -137,59 +89,46 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
             .spendProfile(UUID.randomUUID())
             .policies(Collections.singletonList(UUID.randomUUID()));
 
-    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
-
-    assertThat(workspace.getId(), equalTo(workspaceId));
+    CreatedWorkspace workspace = workspaceService.createWorkspace(body, USER_REQUEST);
+    assertEquals(workspaceId, workspace.getId());
   }
 
   @Test
-  public void testHandlesSamError() throws Exception {
+  public void testHandlesSamError() {
     String errorMsg = "fake SAM error message";
 
     doThrow(new SamApiException(errorMsg))
         .when(mockSamService)
         .createWorkspaceWithDefaults(any(), any());
 
-    CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody().id(UUID.randomUUID()).spendProfile(null).policies(null);
-
-    MvcResult callResult =
-        mvc.perform(
-                post("/api/workspaces/v1")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(body)))
-            .andExpect(status().is(500))
-            .andReturn();
-
-    ErrorReport samError =
-        objectMapper.readValue(callResult.getResponse().getContentAsString(), ErrorReport.class);
-    assertThat(samError.getMessage(), equalTo(errorMsg));
+    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(UUID.randomUUID());
+    SamApiException exception =
+        assertThrows(
+            SamApiException.class, () -> workspaceService.createWorkspace(body, USER_REQUEST));
+    assertEquals(errorMsg, exception.getMessage());
   }
 
   @Test
-  public void createAndDeleteWorkspace() throws Exception {
+  public void createAndDeleteWorkspace() {
     UUID workspaceId = UUID.randomUUID();
-    CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(null).policies(null);
+    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(workspaceId);
 
-    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
-    assertThat(workspace.getId(), equalTo(workspaceId));
+    CreatedWorkspace workspace = workspaceService.createWorkspace(body, USER_REQUEST);
+    assertEquals(workspaceId, workspace.getId());
 
-    mvc.perform(delete("/api/workspaces/v1/" + workspaceId).contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().is(204))
-        .andReturn();
-    // Finally, assert that a call to the deleted workspace gives a 404
-    mvc.perform(get("/api/workspaces/v1/" + workspaceId)).andExpect(status().is(404)).andReturn();
+    workspaceService.deleteWorkspace(workspaceId, USER_REQUEST);
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () -> workspaceService.getWorkspace(workspaceId, USER_REQUEST));
   }
 
   @Test
-  public void deleteWorkspaceWithDataReference() throws Exception {
+  public void deleteWorkspaceWithDataReference() {
     // First, create a workspace.
     UUID workspaceId = UUID.randomUUID();
-    CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(null).policies(null);
-    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
-    assertThat(workspace.getId(), equalTo(workspaceId));
+    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(workspaceId);
+    CreatedWorkspace workspace = workspaceService.createWorkspace(body, USER_REQUEST);
+    assertEquals(workspaceId, workspace.getId());
 
     // Next, add a data reference to that workspace.
     DataRepoSnapshot reference =
@@ -200,77 +139,33 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
             .reference(reference);
-    MvcResult dataReferenceResult =
-        mvc.perform(
-                post("/api/workspaces/v1/" + workspaceId + "/datareferences")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(referenceRequest)))
-            .andExpect(status().is(200))
-            .andReturn();
-    DataReferenceDescription dataReferenceResponse =
-        objectMapper.readValue(
-            dataReferenceResult.getResponse().getContentAsString(), DataReferenceDescription.class);
+    UUID referenceId =
+        dataReferenceService
+            .createDataReference(workspaceId, referenceRequest, USER_REQUEST)
+            .getReferenceId();
     // Validate that the reference exists.
-    mvc.perform(
-            get("/api/workspaces/v1/"
-                    + workspaceId
-                    + "/datareferences/"
-                    + dataReferenceResponse.getReferenceId().toString())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(referenceRequest)))
-        .andExpect(status().is(200))
-        .andReturn();
+    dataReferenceService.getDataReference(workspaceId, referenceId, USER_REQUEST);
     // Delete the workspace.
-    mvc.perform(delete("/api/workspaces/v1/" + workspaceId).contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().is(204))
-        .andReturn();
+    workspaceService.deleteWorkspace(workspaceId, USER_REQUEST);
     // Verify that the contained data reference is no longer returned.
-    mvc.perform(
-            get("/api/workspaces/v1/"
-                    + workspaceId
-                    + "/datareferences/"
-                    + dataReferenceResponse.getReferenceId().toString())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(referenceRequest)))
-        .andExpect(status().is(404))
-        .andReturn();
+    assertThrows(
+        DataReferenceNotFoundException.class,
+        () -> dataReferenceService.getDataReference(workspaceId, referenceId, USER_REQUEST));
   }
 
   @Test
   public void createAndGetGoogleContext() {
     UUID workspaceId = UUID.randomUUID();
-    workspaceService.createWorkspace(new CreateWorkspaceRequestBody().id(workspaceId), userReq);
+    workspaceService.createWorkspace(
+        new CreateWorkspaceRequestBody().id(workspaceId), USER_REQUEST);
 
-    String jobId = workspaceService.createGoogleContext(workspaceId, userReq);
+    String jobId = workspaceService.createGoogleContext(workspaceId, USER_REQUEST);
     jobService.waitForJob(jobId);
     assertEquals(
-        HttpStatus.OK, jobService.retrieveJobResult(jobId, Object.class, userReq).getStatusCode());
+        HttpStatus.OK,
+        jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getStatusCode());
 
     assertTrue(
-        workspaceService.getCloudContext(workspaceId, userReq).googleProjectId().isPresent());
-  }
-
-  // TODO: blank tests that should be written as more functionality gets added.
-  // @Test
-  // public void testLockedWorkspaceIsInaccessible() {
-  // }
-  // @Test
-  // public void testCreateFromNonFolderManagerIsRejected() {
-  // }
-  // @Test
-  // public void testPolicy() {
-  // }
-
-  private CreatedWorkspace runCreateWorkspaceCall(CreateWorkspaceRequestBody request)
-      throws Exception {
-    MvcResult initialResult =
-        mvc.perform(
-                post("/api/workspaces/v1")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().is(200))
-            .andReturn();
-    return objectMapper.readValue(
-        initialResult.getResponse().getContentAsString(), CreatedWorkspace.class);
+        workspaceService.getCloudContext(workspaceId, USER_REQUEST).googleProjectId().isPresent());
   }
 }
