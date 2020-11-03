@@ -139,7 +139,8 @@ public class JobService {
     return retrieveJobResult(jobId, resultClass, userReq).getResult();
   }
 
-  protected void waitForJob(String jobId) {
+  @VisibleForTesting
+  public void waitForJob(String jobId) {
     try {
       int pollSeconds = jobConfig.getPollingIntervalSeconds();
       int pollCycles = jobConfig.getTimeoutSeconds() / jobConfig.getPollingIntervalSeconds();

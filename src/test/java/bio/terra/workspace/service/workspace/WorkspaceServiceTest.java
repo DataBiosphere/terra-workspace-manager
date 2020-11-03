@@ -5,6 +5,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.blankOrNullString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -29,6 +31,7 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.job.JobService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.Optional;
@@ -36,14 +39,17 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+@AutoConfigureMockMvc
 public class WorkspaceServiceTest extends BaseConnectedTest {
-
+  @Autowired private WorkspaceService workspaceService;
+  @Autowired private JobService jobService;
   @Autowired private MockMvc mvc;
 
   @MockBean private SamService mockSamService;
@@ -55,15 +61,17 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Autowired private ObjectMapper objectMapper;
 
+  /** A fake authenticated user request. */
+  private static final AuthenticatedUserRequest userReq =
+      new AuthenticatedUserRequest()
+          .token(Optional.of("fake-token"))
+          .email("fake@email.com")
+          .subjectId("fakeID123");
+
   @BeforeEach
   public void setup() {
     doReturn(true).when(dataRepoService).snapshotExists(any(), any(), any());
-    AuthenticatedUserRequest fakeAuthentication = new AuthenticatedUserRequest();
-    fakeAuthentication
-        .token(Optional.of("fake-token"))
-        .email("fake@email.com")
-        .subjectId("fakeID123");
-    when(mockAuthenticatedUserRequestFactory.from(any())).thenReturn(fakeAuthentication);
+    when(mockAuthenticatedUserRequestFactory.from(any())).thenReturn(userReq);
   }
 
   @Test
@@ -98,17 +106,6 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
             callResult.getResponse().getContentAsString(), WorkspaceDescription.class);
 
     assertThat(desc.getId(), equalTo(workspaceId));
-  }
-
-  @Test
-  public void workspaceCreatedFromJobRequest() throws Exception {
-    UUID workspaceId = UUID.randomUUID();
-    CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(null).policies(null);
-
-    CreatedWorkspace workspace = runCreateWorkspaceCall(body);
-
-    assertThat(workspace.getId(), equalTo(workspaceId));
   }
 
   @Test
@@ -237,6 +234,20 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
                 .content(objectMapper.writeValueAsString(referenceRequest)))
         .andExpect(status().is(404))
         .andReturn();
+  }
+
+  @Test
+  public void createAndGetGoogleContext() {
+    UUID workspaceId = UUID.randomUUID();
+    workspaceService.createWorkspace(new CreateWorkspaceRequestBody().id(workspaceId), userReq);
+
+    String jobId = workspaceService.createGoogleContext(workspaceId, userReq);
+    jobService.waitForJob(jobId);
+    assertEquals(
+        HttpStatus.OK, jobService.retrieveJobResult(jobId, Object.class, userReq).getStatusCode());
+
+    assertTrue(
+        workspaceService.getCloudContext(workspaceId, userReq).googleProjectId().isPresent());
   }
 
   // TODO: blank tests that should be written as more functionality gets added.

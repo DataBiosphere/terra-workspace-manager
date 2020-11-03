@@ -9,6 +9,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.workspace.flight.CreateGoogleContextFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -74,5 +75,29 @@ public class WorkspaceService {
                 userReq)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id);
     deleteJob.submitAndWait(null);
+  }
+
+  /** Retrieves the cloud context of a workspace. */
+  @Traced
+  public WorkspaceCloudContext getCloudContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
+    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
+    return workspaceDao.getCloudContext(workspaceId);
+  }
+
+  /** Start a job to create a Google cloud context for the workspace. Returns the job id. */
+  @Traced
+  public String createGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
+    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+    String jobId = UUID.randomUUID().toString();
+    jobService
+        .newJob(
+            "Create Google Context " + workspaceId,
+            jobId,
+            CreateGoogleContextFlight.class,
+            /* request= */ null,
+            userReq)
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
+        .submit();
+    return jobId;
   }
 }
