@@ -108,6 +108,15 @@ public class WorkspaceDaoTest extends BaseUnitTest {
   }
 
   @Test
+  public void getStageMatchesWorkspace() throws Exception {
+    workspaceDao.createWorkspace(workspaceId, null, WorkspaceStage.MC_WORKSPACE);
+    WorkspaceDescription workspace = workspaceDao.getWorkspace(workspaceId);
+    WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
+    assertThat(stage, equalTo(WorkspaceStage.MC_WORKSPACE));
+    assertThat(stage, equalTo(WorkspaceStage.fromApiModel(workspace.getStage())));
+  }
+
+  @Test
   public void getNonExistingWorkspace() throws Exception {
 
     assertThrows(

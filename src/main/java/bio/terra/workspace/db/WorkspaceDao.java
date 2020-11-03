@@ -93,6 +93,14 @@ public class WorkspaceDao {
     }
   }
 
+  // TODO: Unclear what level (if any) of @Transactional this requires.
+  public WorkspaceStage getWorkspaceStage(UUID workspaceId) {
+    String sql = "SELECT workspace_stage FROM workspace WHERE workspace_id = :id";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("id", workspaceId.toString());
+    return WorkspaceStage.valueOf(jdbcTemplate.queryForObject(sql, params, String.class));
+  }
+
   /** Retrieves the cloud context of the workspace. */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public WorkspaceCloudContext getCloudContext(UUID workspaceId) {
