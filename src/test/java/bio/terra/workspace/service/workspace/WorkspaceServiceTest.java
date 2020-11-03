@@ -62,7 +62,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(workspaceId);
 
     CreatedWorkspace workspace = workspaceService.createWorkspace(body, USER_REQUEST);
-    assertEquals(workspace.getId().toString(), workspaceId.toString());
+    assertEquals(workspaceId, workspace.getId());
 
     assertEquals(workspaceId, workspaceService.getWorkspace(workspaceId, USER_REQUEST).getId());
   }
