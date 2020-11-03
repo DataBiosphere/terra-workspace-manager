@@ -8,7 +8,6 @@ import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
-import bio.terra.stairway.Stairway;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -31,9 +30,9 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
   /** How long to wait for a Stairway flight to complete before timing out the test. */
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(5);
 
-  @Autowired WorkspaceDao workspaceDao;
-  @Autowired CloudResourceManagerCow resourceManager;
-  @Autowired ServiceUsageCow serviceUsage;
+  @Autowired private WorkspaceDao workspaceDao;
+  @Autowired private CloudResourceManagerCow resourceManager;
+  @Autowired private ServiceUsageCow serviceUsage;
   @Autowired private JobService jobService;
 
   @Test
@@ -44,12 +43,12 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
     FlightMap inputParameters = new FlightMap();
     inputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
 
-    Stairway stairway = jobService.getStairway();
-    String flightId = stairway.createFlightId();
-    stairway.submit(flightId, CreateGoogleContextFlight.class, inputParameters);
     FlightState flightState =
-        StairwayTestUtils.pollUntilComplete(
-            flightId, stairway, STAIRWAY_POLL_INTERVAL, STAIRWAY_FLIGHT_TIMEOUT);
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateGoogleContextFlight.class,
+            inputParameters,
+            STAIRWAY_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
     String projectId =
@@ -73,13 +72,13 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
     FlightMap inputParameters = new FlightMap();
     inputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
 
-    Stairway stairway = jobService.getStairway();
-    String flightId = stairway.createFlightId();
     // Submit a flight class that always errors.
-    stairway.submit(flightId, ErrorCreateGoogleContextFlight.class, inputParameters);
     FlightState flightState =
-        StairwayTestUtils.pollUntilComplete(
-            flightId, stairway, STAIRWAY_POLL_INTERVAL, STAIRWAY_FLIGHT_TIMEOUT);
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            ErrorCreateGoogleContextFlight.class,
+            inputParameters,
+            STAIRWAY_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
 
     assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
@@ -94,7 +93,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
     assertEquals("DELETE_REQUESTED", project.getLifecycleState());
   }
 
-  /** Creates a workspace, returnint its workspaceId. */
+  /** Creates a workspace, returning its workspaceId. */
   // TODO make it easier for tests to create workspaces using WorkspaceService.
   private UUID createWorkspace() {
     UUID workspaceId = UUID.randomUUID();
