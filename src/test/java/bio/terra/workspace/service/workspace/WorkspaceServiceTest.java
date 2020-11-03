@@ -1,18 +1,12 @@
 package bio.terra.workspace.service.workspace;
 
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
-import bio.terra.workspace.common.exception.ErrorReportException;
-import bio.terra.workspace.common.exception.SamApiException;
-import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.common.exception.*;
 import bio.terra.workspace.generated.model.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
@@ -63,7 +57,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void testGetExistingWorkspace() throws Exception {
+  public void testGetExistingWorkspace() {
     UUID workspaceId = UUID.randomUUID();
     CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(workspaceId);
 
@@ -74,21 +68,20 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void duplicateWorkspaceRejected() throws Exception {
+  public void duplicateWorkspaceRejected() {
     UUID workspaceId = UUID.randomUUID();
     CreateWorkspaceRequestBody body =
         new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(null).policies(null);
     CreatedWorkspace workspace = workspaceService.createWorkspace(body, USER_REQUEST);
-    assertThat(workspace.getId(), equalTo(workspaceId));
+    assertEquals(workspaceId, workspace.getId());
 
-    ErrorReportException exception =
-        assertThrows(
-            ErrorReportException.class, () -> workspaceService.createWorkspace(body, USER_REQUEST));
-    assertThat(exception.getMessage(), containsString("already exists"));
+    assertThrows(
+        DuplicateWorkspaceException.class,
+        () -> workspaceService.createWorkspace(body, USER_REQUEST));
   }
 
   @Test
-  public void testWithSpendProfileAndPolicies() throws Exception {
+  public void testWithSpendProfileAndPolicies() {
     UUID workspaceId = UUID.randomUUID();
     CreateWorkspaceRequestBody body =
         new CreateWorkspaceRequestBody()
@@ -101,7 +94,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void testHandlesSamError() throws Exception {
+  public void testHandlesSamError() {
     String errorMsg = "fake SAM error message";
 
     doThrow(new SamApiException(errorMsg))
@@ -112,17 +105,16 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     SamApiException exception =
         assertThrows(
             SamApiException.class, () -> workspaceService.createWorkspace(body, USER_REQUEST));
-    assertThat(exception.getMessage(), equalTo(errorMsg));
+    assertEquals(errorMsg, exception.getMessage());
   }
 
   @Test
-  public void createAndDeleteWorkspace() throws Exception {
+  public void createAndDeleteWorkspace() {
     UUID workspaceId = UUID.randomUUID();
     CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(workspaceId);
 
     CreatedWorkspace workspace = workspaceService.createWorkspace(body, USER_REQUEST);
-    ;
-    assertThat(workspace.getId(), equalTo(workspaceId));
+    assertEquals(workspaceId, workspace.getId());
 
     workspaceService.deleteWorkspace(workspaceId, USER_REQUEST);
     assertThrows(
@@ -131,12 +123,12 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void deleteWorkspaceWithDataReference() throws Exception {
+  public void deleteWorkspaceWithDataReference() {
     // First, create a workspace.
     UUID workspaceId = UUID.randomUUID();
     CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(workspaceId);
     CreatedWorkspace workspace = workspaceService.createWorkspace(body, USER_REQUEST);
-    assertThat(workspace.getId(), equalTo(workspaceId));
+    assertEquals(workspaceId, workspace.getId());
 
     // Next, add a data reference to that workspace.
     DataRepoSnapshot reference =
