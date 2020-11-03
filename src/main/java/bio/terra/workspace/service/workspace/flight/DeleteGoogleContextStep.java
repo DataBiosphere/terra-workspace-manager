@@ -8,10 +8,13 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /** Deletes a workspace's Google cloud context from the DAO. */
 public class DeleteGoogleContextStep implements Step {
+  private final Logger logger = LoggerFactory.getLogger(DeleteGoogleContextStep.class);
   private final WorkspaceDao workspaceDao;
   private final TransactionTemplate transactionTemplate;
 
@@ -42,6 +45,9 @@ public class DeleteGoogleContextStep implements Step {
   public StepResult undoStep(FlightContext flightContext) {
     // Right now, we don't attempt to undo DAO deletion. This is expected to happen infrequently and
     // not before steps that are likely to fail.
+    UUID workspaceId =
+        flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    logger.error("Unable to undo DAO deletion of google context [{}]", workspaceId);
     return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
   }
 }
