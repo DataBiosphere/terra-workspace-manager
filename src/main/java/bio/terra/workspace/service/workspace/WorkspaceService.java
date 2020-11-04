@@ -103,13 +103,13 @@ public class WorkspaceService {
   public void deleteGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
     jobService
-            .newJob(
-                    "Delete Google Context " + workspaceId,
-                    UUID.randomUUID().toString(),
-                    DeleteGoogleContextFlight.class,
-                    /* request= */ null,
-                    userReq)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
-            .submitAndWait(null);
+        .newJob(
+            "Delete Google Context " + workspaceId,
+            UUID.randomUUID().toString(),
+            DeleteGoogleContextFlight.class,
+            /* request= */ null,
+            userReq)
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
+        .submitAndWait(null);
   }
 }

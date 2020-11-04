@@ -156,16 +156,19 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   public void deleteWorkspaceWithGoogleContext() {
     UUID workspaceId = UUID.randomUUID();
-    workspaceService.createWorkspace(new CreateWorkspaceRequestBody().id(workspaceId), userReq);
+    workspaceService.createWorkspace(
+        new CreateWorkspaceRequestBody().id(workspaceId), USER_REQUEST);
 
-    String jobId = workspaceService.createGoogleContext(workspaceId, userReq);
+    String jobId = workspaceService.createGoogleContext(workspaceId, USER_REQUEST);
     jobService.waitForJob(jobId);
     assertEquals(
-            HttpStatus.OK, jobService.retrieveJobResult(jobId, Object.class, userReq).getStatusCode());
-    String projectId = workspaceService.getCloudContext(workspaceId, userReq).googleProjectId().get();
+        HttpStatus.OK,
+        jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getStatusCode());
+    String projectId =
+        workspaceService.getCloudContext(workspaceId, USER_REQUEST).googleProjectId().get();
     // get project todo
 
-    workspaceService.deleteWorkspace(workspaceId, userReq);
+    workspaceService.deleteWorkspace(workspaceId, USER_REQUEST);
     // get project is deleting todo.
   }
 
@@ -178,11 +181,13 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     String jobId = workspaceService.createGoogleContext(workspaceId, USER_REQUEST);
     jobService.waitForJob(jobId);
     assertEquals(
-        HttpStatus.OK, jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getStatusCode());
+        HttpStatus.OK,
+        jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getStatusCode());
     assertTrue(
         workspaceService.getCloudContext(workspaceId, USER_REQUEST).googleProjectId().isPresent());
 
     workspaceService.deleteGoogleContext(workspaceId, USER_REQUEST);
-    assertEquals(WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, USER_REQUEST));
+    assertEquals(
+        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, USER_REQUEST));
   }
 }
