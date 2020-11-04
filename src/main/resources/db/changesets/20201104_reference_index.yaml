@@ -1,0 +1,14 @@
+# Add joint pk constraints on workspace ID to resource, reference, and application tables
+databaseChangeLog:
+- changeSet:
+    id:  addWorkspaceReferenceIndex
+    author:  zloery
+    changes:
+      - createIndex:
+          columns:
+          - column:
+              name: workspace_id
+          - column:
+              name: reference_id
+          tableName: workspace_data_reference
+          indexName: idx_workspace_data_reference
