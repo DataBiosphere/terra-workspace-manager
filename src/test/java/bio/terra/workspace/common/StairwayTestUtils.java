@@ -2,12 +2,28 @@ package bio.terra.workspace.common;
 
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
+import bio.terra.stairway.exception.StairwayExecutionException;
 import java.time.Duration;
 import java.time.Instant;
 
 /** Test utilities for working with Stairway. */
 public class StairwayTestUtils {
   private StairwayTestUtils() {}
+
+  /**
+   * Submits the flight and block until Stairway completes it by polling regularly until the timeout
+   * is reached.
+   */
+  public static FlightState blockUntilFlightCompletes(
+      Stairway stairway,
+      Class<? extends Flight> flightClass,
+      FlightMap inputParameters,
+      Duration timeout)
+      throws DatabaseOperationException, StairwayExecutionException, InterruptedException {
+    String flightId = stairway.createFlightId();
+    stairway.submit(flightId, flightClass, inputParameters);
+    return pollUntilComplete(flightId, stairway, timeout.dividedBy(20), timeout);
+  }
 
   /**
    * Polls stairway until the flight for {@code flightId} completes, or this has polled {@code
