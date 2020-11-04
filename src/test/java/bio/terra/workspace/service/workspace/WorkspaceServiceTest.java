@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
+import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.*;
 import bio.terra.workspace.generated.model.CloningInstructionsEnum;
@@ -21,6 +22,8 @@ import bio.terra.workspace.service.job.JobService;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
+
+import com.google.api.services.cloudresourcemanager.model.Project;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +34,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private DataReferenceService dataReferenceService;
   @Autowired private JobService jobService;
+  @Autowired private CloudResourceManagerCow resourceManager;
 
   @MockBean private DataRepoService dataRepoService;
 
@@ -154,7 +158,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void createAndGetGoogleContext() {
+  public void deleteWorkspaceWithGoogleContext() throws Exception {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
         new CreateWorkspaceRequestBody().id(workspaceId), USER_REQUEST);
@@ -164,8 +168,33 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     assertEquals(
         HttpStatus.OK,
         jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getStatusCode());
+    String projectId =
+        workspaceService.getCloudContext(workspaceId, USER_REQUEST).googleProjectId().get();
+    // Verify project exists by retrieving it.
+    Project project = resourceManager.projects().get(projectId).execute();
 
+    workspaceService.deleteWorkspace(workspaceId, USER_REQUEST);
+    // Check that project is now being deleted.
+    project = resourceManager.projects().get(projectId).execute();
+    assertEquals("DELETE_REQUESTED", project.getLifecycleState());
+  }
+
+  @Test
+  public void createGetDeleteGoogleContext() {
+    UUID workspaceId = UUID.randomUUID();
+    workspaceService.createWorkspace(
+        new CreateWorkspaceRequestBody().id(workspaceId), USER_REQUEST);
+
+    String jobId = workspaceService.createGoogleContext(workspaceId, USER_REQUEST);
+    jobService.waitForJob(jobId);
+    assertEquals(
+        HttpStatus.OK,
+        jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getStatusCode());
     assertTrue(
         workspaceService.getCloudContext(workspaceId, USER_REQUEST).googleProjectId().isPresent());
+
+    workspaceService.deleteGoogleContext(workspaceId, USER_REQUEST);
+    assertEquals(
+        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, USER_REQUEST));
   }
 }
