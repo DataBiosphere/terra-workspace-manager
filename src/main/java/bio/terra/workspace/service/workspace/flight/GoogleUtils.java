@@ -6,14 +6,12 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import java.io.IOException;
 import java.util.Optional;
-import javax.annotation.CheckReturnValue;
 
 /** Utilities for interacting with Google Cloud APIs within {@link Step}s. */
 public class GoogleUtils {
   private GoogleUtils() {}
 
   /** Try to delete the Project associated with {@code projectId}. */
-  @CheckReturnValue
   public static void deleteProject(String projectId, CloudResourceManagerCow resourceManager)
       throws IOException {
     Optional<Project> project = retrieveProject(projectId, resourceManager);

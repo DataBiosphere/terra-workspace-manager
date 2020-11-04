@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Start up a postgres container with initial user/database setup.
-POSTGRES_VERSION=9.6
+POSTGRES_VERSION=12.3
 
 start() {
     echo "attempting to remove old $CONTAINER container..."
