@@ -9,7 +9,6 @@ import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.GoogleWorkspaceConfiguration;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.cloudresourcemanager.model.ResourceId;
 import com.google.api.services.serviceusage.v1.model.BatchEnableServicesRequest;
@@ -53,7 +52,8 @@ public class CreateProjectStep implements Step {
 
   private void createProject(String projectId) throws RetryException {
     try {
-      Optional<Project> alreadyCreatedProject = retrieveProject(projectId);
+      Optional<Project> alreadyCreatedProject =
+          GoogleUtils.retrieveProject(projectId, resourceManager);
       if (alreadyCreatedProject.isPresent()) {
         return;
       }
@@ -71,20 +71,6 @@ public class CreateProjectStep implements Step {
       pollUntilSuccess(operation, Duration.ofSeconds(30), Duration.ofMinutes(5));
     } catch (IOException e) {
       throw new RetryException("Error creating project.", e);
-    }
-  }
-
-  private Optional<Project> retrieveProject(String projectId) throws IOException {
-    try {
-      return Optional.of(resourceManager.projects().get(projectId).execute());
-    } catch (GoogleJsonResponseException e) {
-      if (e.getStatusCode() == 403) {
-        // Google returns 403 for projects we don't have access to and projects that don't exist.
-        // We assume in this case that the project does not exist, not that somebody else has
-        // created a project with the same random id.
-        return Optional.empty();
-      }
-      throw e;
     }
   }
 
@@ -112,17 +98,7 @@ public class CreateProjectStep implements Step {
   public StepResult undoStep(FlightContext flightContext) {
     String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
     try {
-      Optional<Project> project = retrieveProject(projectId);
-      if (project.isEmpty()) {
-        // The project does not exist.
-        return StepResult.getStepResultSuccess();
-      }
-      if (project.get().getLifecycleState().equals("DELETE_REQUESTED")
-          || project.get().getLifecycleState().equals("DELETE_IN_PROGRESS")) {
-        // The project is already being deleted.
-        return StepResult.getStepResultSuccess();
-      }
-      resourceManager.projects().delete(projectId).execute();
+      GoogleUtils.deleteProject(projectId, resourceManager);
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
