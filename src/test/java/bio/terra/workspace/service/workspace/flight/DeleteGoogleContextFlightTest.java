@@ -6,6 +6,7 @@ import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.stairway.*;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
@@ -86,7 +87,8 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
   // TODO make it easier for tests to create workspaces using WorkspaceService.
   private UUID createWorkspace() {
     UUID workspaceId = UUID.randomUUID();
-    workspaceDao.createWorkspace(workspaceId, /* spendProfile= */ null);
+    workspaceDao.createWorkspace(
+        workspaceId, /* spendProfile= */ null, WorkspaceStage.RAWLS_WORKSPACE);
     return workspaceId;
   }
 }
