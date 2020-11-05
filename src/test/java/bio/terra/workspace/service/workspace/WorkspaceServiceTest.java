@@ -22,11 +22,10 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
+import com.google.api.services.cloudresourcemanager.model.Project;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
-
-import com.google.api.services.cloudresourcemanager.model.Project;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -210,7 +209,9 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void createGetDeleteGoogleContext() {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        new CreateWorkspaceRequestBody().id(workspaceId), USER_REQUEST);
+        new CreateWorkspaceRequestBody().id(workspaceId),
+        WorkspaceStage.RAWLS_WORKSPACE,
+        USER_REQUEST);
 
     String jobId = workspaceService.createGoogleContext(workspaceId, USER_REQUEST);
     jobService.waitForJob(jobId);
