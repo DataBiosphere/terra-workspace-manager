@@ -13,6 +13,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/**
+ * A service for retrieving and authorizing the use of {@link SpendProfile}s.
+ *
+ * <p>TODO: Integrate with the Spend Profile Manager component instead of doing our own in-memory
+ * configuration of spend profiles.
+ */
 @Component
 public class SpendProfileService {
   private final Logger logger = LoggerFactory.getLogger(SpendProfileService.class);
