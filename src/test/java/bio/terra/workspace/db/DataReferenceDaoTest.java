@@ -206,15 +206,15 @@ public class DataReferenceDaoTest extends BaseUnitTest {
         referenceType,
         reference);
 
-    assertTrue(dataReferenceDao.deleteDataReference(referenceId));
+    assertTrue(dataReferenceDao.deleteDataReference(workspaceId, referenceId));
 
     // try to delete again to make sure it's not there
-    assertFalse(dataReferenceDao.deleteDataReference(referenceId));
+    assertFalse(dataReferenceDao.deleteDataReference(workspaceId, referenceId));
   }
 
   @Test
   public void deleteNonExistentWorkspaceFails() throws Exception {
-    assertFalse(dataReferenceDao.deleteDataReference(referenceId));
+    assertFalse(dataReferenceDao.deleteDataReference(workspaceId, referenceId));
   }
 
   @Test
