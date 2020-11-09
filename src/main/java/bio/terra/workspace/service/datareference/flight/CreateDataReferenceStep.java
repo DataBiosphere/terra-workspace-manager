@@ -25,7 +25,8 @@ public class CreateDataReferenceStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
-    UUID referenceId = inputMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
+    FlightMap workingMap = flightContext.getWorkingMap();
+    UUID referenceId = workingMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
     UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.class);
     DataRepoSnapshot reference =
         inputMap.get(DataReferenceFlightMapKeys.REFERENCE, DataRepoSnapshot.class);
@@ -42,7 +43,7 @@ public class CreateDataReferenceStep implements Step {
         body.getReferenceType(),
         reference);
 
-    FlightUtils.setResponse(flightContext, referenceId.toString(), HttpStatus.OK);
+    FlightUtils.setResponse(flightContext, referenceId, HttpStatus.OK);
 
     return StepResult.getStepResultSuccess();
   }

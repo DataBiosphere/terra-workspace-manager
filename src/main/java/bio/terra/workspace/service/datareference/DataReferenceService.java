@@ -86,8 +86,7 @@ public class DataReferenceService {
     validationUtils.validateReferenceName(body.getName());
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
 
-    String description =
-        "Create data reference in workspace " + workspaceId;
+    String description = "Create data reference in workspace " + workspaceId;
 
     JobBuilder createJob =
         jobService
@@ -103,9 +102,9 @@ public class DataReferenceService {
         validationUtils.validateReference(body.getReferenceType(), body.getReference(), userReq);
     createJob.addParameter(DataReferenceFlightMapKeys.REFERENCE, ref);
 
-    String referenceIdResult = createJob.submitAndWait(String.class);
+    UUID referenceIdResult = createJob.submitAndWait(UUID.class);
 
-    return dataReferenceDao.getDataReference(workspaceId, UUID.fromString(referenceIdResult));
+    return dataReferenceDao.getDataReference(workspaceId, referenceIdResult);
   }
 
   @Traced
