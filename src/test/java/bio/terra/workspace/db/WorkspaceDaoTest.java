@@ -8,9 +8,8 @@ import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfigura
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.common.model.Workspace;
 import bio.terra.workspace.common.model.WorkspaceStage;
-import bio.terra.workspace.generated.model.WorkspaceDescription;
-import bio.terra.workspace.generated.model.WorkspaceStageModel;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import java.util.Map;
 import java.util.UUID;
@@ -30,14 +29,14 @@ public class WorkspaceDaoTest extends BaseUnitTest {
   @Autowired private WorkspaceDao workspaceDao;
 
   private UUID workspaceId;
-  private UUID spendProfileId;
+  private String spendProfileId;
   private String readSql =
       "SELECT workspace_id, spend_profile, profile_settable FROM workspace WHERE workspace_id = :id";
 
   @BeforeEach
   public void setup() {
     workspaceId = UUID.randomUUID();
-    spendProfileId = UUID.randomUUID();
+    spendProfileId = UUID.randomUUID().toString();
   }
 
   @Test
@@ -79,12 +78,14 @@ public class WorkspaceDaoTest extends BaseUnitTest {
   public void createAndGetWorkspace() throws Exception {
     workspaceDao.createWorkspace(workspaceId, null, WorkspaceStage.RAWLS_WORKSPACE);
 
-    WorkspaceDescription workspace = workspaceDao.getWorkspace(workspaceId);
+    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
 
-    WorkspaceDescription expectedWorkspace = new WorkspaceDescription();
-    expectedWorkspace.setId(workspaceId);
-    expectedWorkspace.setSpendProfile(null);
-    expectedWorkspace.setStage(WorkspaceStageModel.RAWLS_WORKSPACE);
+    Workspace expectedWorkspace =
+        Workspace.builder()
+            .workspaceId(workspaceId)
+            .spendProfileId(null)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
 
     assertThat(workspace, equalTo(expectedWorkspace));
 
@@ -95,13 +96,14 @@ public class WorkspaceDaoTest extends BaseUnitTest {
   public void createAndGetMcWorkspace() throws Exception {
     workspaceDao.createWorkspace(workspaceId, null, WorkspaceStage.MC_WORKSPACE);
 
-    WorkspaceDescription workspace = workspaceDao.getWorkspace(workspaceId);
+    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
 
-    WorkspaceDescription expectedWorkspace = new WorkspaceDescription();
-    expectedWorkspace.setId(workspaceId);
-    expectedWorkspace.setSpendProfile(null);
-    expectedWorkspace.setStage(WorkspaceStageModel.MC_WORKSPACE);
-
+    Workspace expectedWorkspace =
+        Workspace.builder()
+            .workspaceId(workspaceId)
+            .spendProfileId(null)
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
     assertThat(workspace, equalTo(expectedWorkspace));
 
     assertTrue(workspaceDao.deleteWorkspace(workspaceId));
@@ -110,10 +112,10 @@ public class WorkspaceDaoTest extends BaseUnitTest {
   @Test
   public void getStageMatchesWorkspace() throws Exception {
     workspaceDao.createWorkspace(workspaceId, null, WorkspaceStage.MC_WORKSPACE);
-    WorkspaceDescription workspace = workspaceDao.getWorkspace(workspaceId);
+    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
     WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
     assertThat(stage, equalTo(WorkspaceStage.MC_WORKSPACE));
-    assertThat(stage, equalTo(WorkspaceStage.fromApiModel(workspace.getStage())));
+    assertThat(stage, equalTo(workspace.workspaceStage()));
   }
 
   @Test

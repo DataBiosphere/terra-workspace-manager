@@ -2,8 +2,8 @@ package bio.terra.workspace.db;
 
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.common.model.Workspace;
 import bio.terra.workspace.common.model.WorkspaceStage;
-import bio.terra.workspace.generated.model.WorkspaceDescription;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -40,8 +40,8 @@ public class WorkspaceDao {
   }
 
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public String createWorkspace(
-      UUID workspaceId, UUID spendProfile, WorkspaceStage workspaceStage) {
+  public Workspace createWorkspace(
+      UUID workspaceId, String spendProfile, WorkspaceStage workspaceStage) {
     String sql =
         "INSERT INTO workspace (workspace_id, spend_profile, profile_settable, workspace_stage) values "
             + "(:id, :spend_profile, :spend_profile_settable, :workspace_stage)";
@@ -57,7 +57,12 @@ public class WorkspaceDao {
       throw new DuplicateWorkspaceException(
           "Workspace " + workspaceId.toString() + " already exists.", e);
     }
-    return workspaceId.toString();
+
+    return Workspace.builder()
+        .workspaceId(workspaceId)
+        .spendProfileId(spendProfile)
+        .workspaceStage(workspaceStage)
+        .build();
   }
 
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
@@ -69,25 +74,22 @@ public class WorkspaceDao {
     return rowsAffected > 0;
   }
 
-  public WorkspaceDescription getWorkspace(UUID id) {
+  public Workspace getWorkspace(UUID id) {
     String sql = "SELECT * FROM workspace where workspace_id = (:id)";
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id.toString());
     try {
       Map<String, Object> queryOutput = jdbcTemplate.queryForMap(sql, params);
 
-      WorkspaceDescription desc = new WorkspaceDescription();
-      desc.setId(UUID.fromString(queryOutput.get("workspace_id").toString()));
-
-      if (queryOutput.getOrDefault("spend_profile", null) == null) {
-        desc.setSpendProfile(null);
-      } else {
-        desc.setSpendProfile(UUID.fromString(queryOutput.get("spend_profile").toString()));
+      String spendProfileId = null;
+      if (queryOutput.getOrDefault("spend_profile", null) != null) {
+        spendProfileId = queryOutput.get("spend_profile").toString();
       }
 
-      desc.setStage(
-          WorkspaceStage.valueOf(queryOutput.get("workspace_stage").toString()).toApiModel());
-
-      return desc;
+      return Workspace.builder()
+          .workspaceId(UUID.fromString(queryOutput.get("workspace_id").toString()))
+          .spendProfileId(spendProfileId)
+          .workspaceStage(WorkspaceStage.valueOf(queryOutput.get("workspace_stage").toString()))
+          .build();
     } catch (EmptyResultDataAccessException e) {
       throw new WorkspaceNotFoundException("Workspace not found.");
     }

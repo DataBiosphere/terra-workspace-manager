@@ -391,15 +391,8 @@ components:
           type: string
           format: uuid
         spendProfile:
-          description: UUID of provided spend profile
+          description: ID of provided spend profile
           type: string
-          format: uuid
-        policies:
-          description: Policies provided by the containing folder
-          type: array
-          items:
-            type: string
-            format: uuid
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
 
@@ -421,9 +414,8 @@ components:
           type: string
           format: uuid
         spendProfile:
-          description: UUID of provided spend profile
+          description: ID of provided spend profile
           type: string
-          format: uuid
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
 

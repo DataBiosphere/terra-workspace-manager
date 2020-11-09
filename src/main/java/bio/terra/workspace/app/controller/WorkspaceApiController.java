@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.common.model.Workspace;
 import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
@@ -63,16 +64,26 @@ public class WorkspaceApiController implements WorkspaceApi {
     WorkspaceStageModel requestStage = body.getStage();
     requestStage = (requestStage == null ? requestStage.RAWLS_WORKSPACE : requestStage);
     WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
-    return new ResponseEntity<>(
-        workspaceService.createWorkspace(body, internalStage, userReq), HttpStatus.OK);
+
+    Workspace createdWorkspace =
+        workspaceService.createWorkspace(
+            body.getId(), body.getSpendProfile(), internalStage, userReq);
+    CreatedWorkspace responseWorkspace = new CreatedWorkspace().id(createdWorkspace.workspaceId());
+    return new ResponseEntity<>(responseWorkspace, HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("id") UUID id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    WorkspaceDescription desc = workspaceService.getWorkspace(id, userReq);
+    Workspace workspace = workspaceService.getWorkspace(id, userReq);
 
-    return new ResponseEntity<WorkspaceDescription>(desc, HttpStatus.OK);
+    WorkspaceDescription desc =
+        new WorkspaceDescription()
+            .id(workspace.workspaceId())
+            .spendProfile(workspace.spendProfileId())
+            .stage(workspace.workspaceStage().toApiModel());
+
+    return new ResponseEntity<>(desc, HttpStatus.OK);
   }
 
   @Override

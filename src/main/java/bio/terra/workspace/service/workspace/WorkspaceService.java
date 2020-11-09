@@ -1,11 +1,9 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.workspace.common.model.Workspace;
 import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.CreatedWorkspace;
-import bio.terra.workspace.generated.model.WorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
@@ -31,12 +29,12 @@ public class WorkspaceService {
   }
 
   @Traced
-  public CreatedWorkspace createWorkspace(
-      CreateWorkspaceRequestBody body,
+  public Workspace createWorkspace(
+      UUID workspaceId,
+      String spendProfileId,
       WorkspaceStage workspaceStage,
       AuthenticatedUserRequest userReq) {
 
-    UUID workspaceId = body.getId();
     String description = "Create workspace " + workspaceId.toString();
     JobBuilder createJob =
         jobService
@@ -44,20 +42,20 @@ public class WorkspaceService {
                 description,
                 UUID.randomUUID().toString(), // JobId does not need persistence for sync calls.
                 WorkspaceCreateFlight.class,
-                body,
+                null,
                 userReq)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
-    if (body.getSpendProfile() != null) {
-      createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, body.getSpendProfile());
+    if (spendProfileId != null) {
+      createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfileId);
     }
 
     createJob.addParameter(WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceStage);
 
-    return createJob.submitAndWait(CreatedWorkspace.class);
+    return createJob.submitAndWait(Workspace.class);
   }
 
   @Traced
-  public WorkspaceDescription getWorkspace(UUID id, AuthenticatedUserRequest userReq) {
+  public Workspace getWorkspace(UUID id, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_READ_ACTION);
     return workspaceDao.getWorkspace(id);
   }
