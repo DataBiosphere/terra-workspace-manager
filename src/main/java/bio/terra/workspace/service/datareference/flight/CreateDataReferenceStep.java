@@ -58,8 +58,9 @@ public class CreateDataReferenceStep implements Step {
     FlightMap workingMap = flightContext.getWorkingMap();
 
     if (workingMap.get(CREATE_DATA_REFERENCE_COMPLETED_KEY, Boolean.class)) {
-      UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
-      dataReferenceDao.deleteDataReference(workspaceId);
+      UUID referenceId = inputMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
+      UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.class);
+      dataReferenceDao.deleteDataReference(workspaceId, referenceId);
     }
     return StepResult.getStepResultSuccess();
   }
