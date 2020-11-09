@@ -2,6 +2,7 @@ package bio.terra.workspace.service.spendprofile;
 
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.common.utils.SamUtils;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import com.google.common.collect.Maps;
@@ -41,9 +42,9 @@ public class SpendProfileService {
    * the id if there is one and the user is authorized to link it. Otherwise, throws a {@link
    * SpendUnauthorizedException}.
    */
-  public SpendProfile authorizeLinking(SpendProfileId spendProfileId, String userAccessToken) {
+  public SpendProfile authorizeLinking(SpendProfileId spendProfileId, AuthenticatedUserRequest userRequest) {
     if (!samService.isAuthorized(
-        userAccessToken,
+        userRequest.getRequiredToken(),
         SamUtils.SPEND_PROFILE_RESOURCE,
         spendProfileId.id(),
         SamUtils.SPEND_PROFILE_LINK_ACTION)) {
