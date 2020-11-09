@@ -19,6 +19,7 @@ import com.google.api.services.serviceusage.v1.model.GoogleApiServiceusageV1Serv
 import com.google.api.services.serviceusage.v1.model.ListServicesResponse;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.hamcrest.Matchers;
@@ -97,7 +98,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
   private UUID createWorkspace() {
     UUID workspaceId = UUID.randomUUID();
     workspaceDao.createWorkspace(
-        workspaceId, /* spendProfile= */ null, WorkspaceStage.RAWLS_WORKSPACE);
+        workspaceId, /* spendProfile= */ Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
     return workspaceId;
   }
 

@@ -42,7 +42,8 @@ public class SpendProfileService {
    * the id if there is one and the user is authorized to link it. Otherwise, throws a {@link
    * SpendUnauthorizedException}.
    */
-  public SpendProfile authorizeLinking(SpendProfileId spendProfileId, AuthenticatedUserRequest userRequest) {
+  public SpendProfile authorizeLinking(
+      SpendProfileId spendProfileId, AuthenticatedUserRequest userRequest) {
     if (!samService.isAuthorized(
         userRequest.getRequiredToken(),
         SamUtils.SPEND_PROFILE_RESOURCE,
