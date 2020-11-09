@@ -66,14 +66,12 @@ public class WorkspaceApiController implements WorkspaceApi {
     WorkspaceStageModel requestStage = body.getStage();
     requestStage = (requestStage == null ? requestStage.RAWLS_WORKSPACE : requestStage);
     WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
-    Optional<SpendProfileId> spendProfile =
-        body.getSpendProfile() == null
-            ? Optional.empty()
-            : Optional.of(SpendProfileId.create(body.getSpendProfile()));
+    Optional<SpendProfileId> spendProfileId =
+        Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::create);
 
-    Workspace createdWorkspace =
-        workspaceService.createWorkspace(body.getId(), spendProfile, internalStage, userReq);
-    CreatedWorkspace responseWorkspace = new CreatedWorkspace().id(createdWorkspace.workspaceId());
+    UUID createdId =
+        workspaceService.createWorkspace(body.getId(), spendProfileId, internalStage, userReq);
+    CreatedWorkspace responseWorkspace = new CreatedWorkspace().id(createdId);
     return new ResponseEntity<>(responseWorkspace, HttpStatus.OK);
   }
 

@@ -5,7 +5,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.model.Workspace;
 import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -33,15 +32,15 @@ public class CreateWorkspaceStep implements Step {
     workingMap.put(CREATE_WORKSPACE_COMPLETED_KEY, false);
 
     Optional<SpendProfileId> spendProfileId =
-        inputMap.get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, Optional.class);
+        Optional.ofNullable(inputMap.get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, String.class))
+            .map(SpendProfileId::create);
     WorkspaceStage workspaceStage =
         inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStage.class);
 
-    Workspace createdWorkspace =
-        workspaceDao.createWorkspace(workspaceId, spendProfileId, workspaceStage);
+    workspaceDao.createWorkspace(workspaceId, spendProfileId, workspaceStage);
     workingMap.put(CREATE_WORKSPACE_COMPLETED_KEY, true);
 
-    FlightUtils.setResponse(flightContext, createdWorkspace, HttpStatus.OK);
+    FlightUtils.setResponse(flightContext, workspaceId, HttpStatus.OK);
 
     return StepResult.getStepResultSuccess();
   }

@@ -31,7 +31,7 @@ public class WorkspaceService {
   }
 
   @Traced
-  public Workspace createWorkspace(
+  public UUID createWorkspace(
       UUID workspaceId,
       Optional<SpendProfileId> spendProfileId,
       WorkspaceStage workspaceStage,
@@ -47,11 +47,13 @@ public class WorkspaceService {
                 null,
                 userReq)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
-    createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfileId);
+    if (spendProfileId.isPresent()) {
+      createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfileId.get().id());
+    }
 
     createJob.addParameter(WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceStage);
 
-    return createJob.submitAndWait(Workspace.class);
+    return createJob.submitAndWait(UUID.class);
   }
 
   @Traced

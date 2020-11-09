@@ -41,7 +41,7 @@ public class WorkspaceDao {
   }
 
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public Workspace createWorkspace(
+  public UUID createWorkspace(
       UUID workspaceId, Optional<SpendProfileId> spendProfileId, WorkspaceStage workspaceStage) {
     String sql =
         "INSERT INTO workspace (workspace_id, spend_profile, profile_settable, workspace_stage) values "
@@ -59,11 +59,7 @@ public class WorkspaceDao {
           "Workspace " + workspaceId.toString() + " already exists.", e);
     }
 
-    return Workspace.builder()
-        .workspaceId(workspaceId)
-        .spendProfileId(spendProfileId)
-        .workspaceStage(workspaceStage)
-        .build();
+    return workspaceId;
   }
 
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
