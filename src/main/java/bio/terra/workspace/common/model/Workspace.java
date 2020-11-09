@@ -1,8 +1,9 @@
 package bio.terra.workspace.common.model;
 
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import com.google.auto.value.AutoValue;
+import java.util.Optional;
 import java.util.UUID;
-import javax.annotation.Nullable;
 
 /** Internal representation of a Workspace. */
 @AutoValue
@@ -10,8 +11,7 @@ public abstract class Workspace {
 
   public abstract UUID workspaceId();
 
-  @Nullable
-  public abstract String spendProfileId();
+  public abstract Optional<SpendProfileId> spendProfileId();
 
   public abstract WorkspaceStage workspaceStage();
 
@@ -23,7 +23,7 @@ public abstract class Workspace {
   public abstract static class Builder {
     public abstract Builder workspaceId(UUID value);
 
-    public abstract Builder spendProfileId(String value);
+    public abstract Builder spendProfileId(Optional<SpendProfileId> value);
 
     public abstract Builder workspaceStage(WorkspaceStage value);
 

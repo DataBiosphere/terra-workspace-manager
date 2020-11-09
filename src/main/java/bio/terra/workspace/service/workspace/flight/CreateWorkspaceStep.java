@@ -9,6 +9,8 @@ import bio.terra.workspace.common.model.Workspace;
 import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
@@ -30,19 +32,13 @@ public class CreateWorkspaceStep implements Step {
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(CREATE_WORKSPACE_COMPLETED_KEY, false);
 
-    // This can be null if no spend profile is specified
-    String nullableSpendProfileId = null;
-
-    String spendProfileId = inputMap.get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, String.class);
-    if (spendProfileId != null) {
-      nullableSpendProfileId = spendProfileId;
-    }
-
+    Optional<SpendProfileId> spendProfileId =
+        inputMap.get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, Optional.class);
     WorkspaceStage workspaceStage =
         inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStage.class);
 
     Workspace createdWorkspace =
-        workspaceDao.createWorkspace(workspaceId, nullableSpendProfileId, workspaceStage);
+        workspaceDao.createWorkspace(workspaceId, spendProfileId, workspaceStage);
     workingMap.put(CREATE_WORKSPACE_COMPLETED_KEY, true);
 
     FlightUtils.setResponse(flightContext, createdWorkspace, HttpStatus.OK);

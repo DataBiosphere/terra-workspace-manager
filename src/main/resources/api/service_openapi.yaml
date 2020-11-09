@@ -393,6 +393,12 @@ components:
         spendProfile:
           description: ID of provided spend profile
           type: string
+        policies:
+          description: Policies provided by the containing folder
+          type: array
+          items:
+            type: string
+            format: uuid
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
 

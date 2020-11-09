@@ -16,7 +16,9 @@ import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -64,10 +66,13 @@ public class WorkspaceApiController implements WorkspaceApi {
     WorkspaceStageModel requestStage = body.getStage();
     requestStage = (requestStage == null ? requestStage.RAWLS_WORKSPACE : requestStage);
     WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
+    Optional<SpendProfileId> spendProfile =
+        body.getSpendProfile() == null
+            ? Optional.empty()
+            : Optional.of(SpendProfileId.create(body.getSpendProfile()));
 
     Workspace createdWorkspace =
-        workspaceService.createWorkspace(
-            body.getId(), body.getSpendProfile(), internalStage, userReq);
+        workspaceService.createWorkspace(body.getId(), spendProfile, internalStage, userReq);
     CreatedWorkspace responseWorkspace = new CreatedWorkspace().id(createdWorkspace.workspaceId());
     return new ResponseEntity<>(responseWorkspace, HttpStatus.OK);
   }
@@ -76,11 +81,13 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("id") UUID id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     Workspace workspace = workspaceService.getWorkspace(id, userReq);
+    String spendProfileStringId =
+        workspace.spendProfileId().isPresent() ? workspace.spendProfileId().get().id() : null;
 
     WorkspaceDescription desc =
         new WorkspaceDescription()
             .id(workspace.workspaceId())
-            .spendProfile(workspace.spendProfileId())
+            .spendProfile(spendProfileStringId)
             .stage(workspace.workspaceStage().toApiModel());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);

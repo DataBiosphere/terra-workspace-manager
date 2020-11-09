@@ -20,6 +20,7 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import java.util.Optional;
 import java.util.UUID;
@@ -95,7 +96,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   public void testWithSpendProfile() {
     UUID workspaceId = UUID.randomUUID();
-    String spendProfileId = UUID.randomUUID().toString();
+    Optional<SpendProfileId> spendProfileId = Optional.of(SpendProfileId.create("foo"));
     workspaceService.createWorkspace(
         workspaceId, spendProfileId, WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
 

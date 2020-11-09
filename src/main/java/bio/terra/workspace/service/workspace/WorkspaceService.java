@@ -8,8 +8,10 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.flight.*;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -31,7 +33,7 @@ public class WorkspaceService {
   @Traced
   public Workspace createWorkspace(
       UUID workspaceId,
-      String spendProfileId,
+      Optional<SpendProfileId> spendProfileId,
       WorkspaceStage workspaceStage,
       AuthenticatedUserRequest userReq) {
 
@@ -45,9 +47,7 @@ public class WorkspaceService {
                 null,
                 userReq)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
-    if (spendProfileId != null) {
-      createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfileId);
-    }
+    createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfileId);
 
     createJob.addParameter(WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceStage);
 
