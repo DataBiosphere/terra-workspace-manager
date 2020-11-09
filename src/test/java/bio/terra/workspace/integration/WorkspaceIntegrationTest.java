@@ -20,6 +20,7 @@ import bio.terra.workspace.model.DataReferenceList;
 import bio.terra.workspace.model.DataRepoSnapshot;
 import bio.terra.workspace.model.ReferenceTypeEnum;
 import bio.terra.workspace.model.WorkspaceDescription;
+import bio.terra.workspace.model.WorkspaceStageModel;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -261,6 +262,25 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
     assertEquals(referenceId, dataReferenceDescription.getReferenceId());
     assertEquals(workspaceId, dataReferenceDescription.getWorkspaceId());
+  }
+
+  @Test
+  @Tag(TAG_NEEDS_CLEANUP)
+  public void testDefaultWorkspaceStageIsRawls() throws Exception {
+    UUID workspaceId = UUID.randomUUID();
+    createDefaultWorkspace(workspaceId);
+
+    String userEmail = testConfig.getUserEmail();
+    String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId;
+
+    WorkspaceResponse<WorkspaceDescription> getWorkspaceResponse =
+        workspaceManagerTestClient.get(userEmail, path, WorkspaceDescription.class);
+
+    assertEquals(HttpStatus.OK, getWorkspaceResponse.getStatusCode());
+    assertTrue(getWorkspaceResponse.isResponseObject());
+    WorkspaceDescription workspaceDescription = getWorkspaceResponse.getResponseObject();
+    assertEquals(workspaceId, workspaceDescription.getId());
+    assertEquals(WorkspaceStageModel.RAWLS_WORKSPACE, workspaceDescription.getStage());
   }
 
   private WorkspaceResponse<CreatedWorkspace> createDefaultWorkspace(UUID workspaceId)

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
@@ -9,9 +10,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
-import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.*;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +32,9 @@ public class WorkspaceService {
 
   @Traced
   public CreatedWorkspace createWorkspace(
-      CreateWorkspaceRequestBody body, AuthenticatedUserRequest userReq) {
+      CreateWorkspaceRequestBody body,
+      WorkspaceStage workspaceStage,
+      AuthenticatedUserRequest userReq) {
 
     UUID workspaceId = body.getId();
     String description = "Create workspace " + workspaceId.toString();
@@ -49,6 +50,9 @@ public class WorkspaceService {
     if (body.getSpendProfile() != null) {
       createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, body.getSpendProfile());
     }
+
+    createJob.addParameter(WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceStage);
+
     return createJob.submitAndWait(CreatedWorkspace.class);
   }
 
@@ -74,5 +78,44 @@ public class WorkspaceService {
                 userReq)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id);
     deleteJob.submitAndWait(null);
+  }
+
+  /** Retrieves the cloud context of a workspace. */
+  @Traced
+  public WorkspaceCloudContext getCloudContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
+    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
+    return workspaceDao.getCloudContext(workspaceId);
+  }
+
+  /** Start a job to create a Google cloud context for the workspace. Returns the job id. */
+  @Traced
+  public String createGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
+    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+    String jobId = UUID.randomUUID().toString();
+    jobService
+        .newJob(
+            "Create Google Context " + workspaceId,
+            jobId,
+            CreateGoogleContextFlight.class,
+            /* request= */ null,
+            userReq)
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
+        .submit();
+    return jobId;
+  }
+
+  /** Delete the Google cloud context for the workspace. */
+  @Traced
+  public void deleteGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
+    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+    jobService
+        .newJob(
+            "Delete Google Context " + workspaceId,
+            UUID.randomUUID().toString(),
+            DeleteGoogleContextFlight.class,
+            /* request= */ null,
+            userReq)
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
+        .submitAndWait(null);
   }
 }
