@@ -10,19 +10,19 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import com.google.common.collect.ImmutableList;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
-
-import java.util.Optional;
 
 // TODO(PF-186): Consider if this should be a connected test that talks to Sam.
 public class SpendProfileServiceTest extends BaseUnitTest {
   @MockBean SamService mockSamService;
 
   /** Fake user request with access token. */
-  private static final AuthenticatedUserRequest USER_REQUEST = new AuthenticatedUserRequest().token(Optional.of("fake-token"));
+  private static final AuthenticatedUserRequest USER_REQUEST =
+      new AuthenticatedUserRequest().token(Optional.of("fake-token"));
 
   @BeforeEach
   public void setUp() {
@@ -84,8 +84,7 @@ public class SpendProfileServiceTest extends BaseUnitTest {
 
     SpendProfileId fooId = SpendProfileId.create("foo");
     assertEquals(
-        SpendProfile.builder().id(fooId).build(),
-        service.authorizeLinking(fooId, USER_REQUEST));
+        SpendProfile.builder().id(fooId).build(), service.authorizeLinking(fooId, USER_REQUEST));
     SpendProfileId barId = SpendProfileId.create("bar");
     assertEquals(
         SpendProfile.builder().id(barId).billingAccountId("fake-billing-account").build(),

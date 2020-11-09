@@ -4,13 +4,14 @@ import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.sql.SQLException;
-import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
@@ -41,15 +42,15 @@ public class WorkspaceDao {
 
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public String createWorkspace(
-      UUID workspaceId, UUID spendProfile, WorkspaceStage workspaceStage) {
+      UUID workspaceId, Optional<SpendProfileId> spendProfileId, WorkspaceStage workspaceStage) {
     String sql =
         "INSERT INTO workspace (workspace_id, spend_profile, profile_settable, workspace_stage) values "
             + "(:id, :spend_profile, :spend_profile_settable, :workspace_stage)";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("id", workspaceId.toString())
-            .addValue("spend_profile", spendProfile)
-            .addValue("spend_profile_settable", spendProfile == null)
+            .addValue("spend_profile", spendProfileId.map(SpendProfileId::id).orElse(null))
+            .addValue("spend_profile_settable", spendProfileId.isEmpty())
             .addValue("workspace_stage", workspaceStage.toString());
     try {
       jdbcTemplate.update(sql, params);
@@ -73,21 +74,17 @@ public class WorkspaceDao {
     String sql = "SELECT * FROM workspace where workspace_id = (:id)";
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id.toString());
     try {
-      Map<String, Object> queryOutput = jdbcTemplate.queryForMap(sql, params);
-
-      WorkspaceDescription desc = new WorkspaceDescription();
-      desc.setId(UUID.fromString(queryOutput.get("workspace_id").toString()));
-
-      if (queryOutput.getOrDefault("spend_profile", null) == null) {
-        desc.setSpendProfile(null);
-      } else {
-        desc.setSpendProfile(UUID.fromString(queryOutput.get("spend_profile").toString()));
-      }
-
-      desc.setStage(
-          WorkspaceStage.valueOf(queryOutput.get("workspace_stage").toString()).toApiModel());
-
-      return desc;
+      return DataAccessUtils.requiredSingleResult(
+          jdbcTemplate.query(
+              sql,
+              params,
+              (rs, rowNum) -> {
+                WorkspaceDescription desc = new WorkspaceDescription();
+                desc.setId(UUID.fromString(rs.getString("workspace_id")));
+                desc.setSpendProfile(rs.getString("spend_profile"));
+                desc.setStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")).toApiModel());
+                return desc;
+              }));
     } catch (EmptyResultDataAccessException e) {
       throw new WorkspaceNotFoundException("Workspace not found.");
     }

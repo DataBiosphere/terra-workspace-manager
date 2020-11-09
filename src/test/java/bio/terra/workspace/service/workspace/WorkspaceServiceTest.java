@@ -108,7 +108,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     CreateWorkspaceRequestBody body =
         new CreateWorkspaceRequestBody()
             .id(workspaceId)
-            .spendProfile(UUID.randomUUID())
+            .spendProfile("foo")
             .policies(Collections.singletonList(UUID.randomUUID()));
 
     CreatedWorkspace workspace =
