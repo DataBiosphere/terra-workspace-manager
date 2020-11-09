@@ -122,12 +122,12 @@ public class DataReferenceService {
 
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
 
-    if (dataReferenceDao.isControlled(referenceId)) {
+    if (dataReferenceDao.isControlled(workspaceId, referenceId)) {
       throw new ControlledResourceNotImplementedException(
           "Unable to delete controlled resource. This functionality will be implemented in the future.");
     }
 
-    if (!dataReferenceDao.deleteDataReference(referenceId)) {
+    if (!dataReferenceDao.deleteDataReference(workspaceId, referenceId)) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
     }
   }

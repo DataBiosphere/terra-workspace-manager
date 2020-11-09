@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
@@ -9,6 +10,7 @@ import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataReferenceList;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
+import bio.terra.workspace.generated.model.WorkspaceStageModel;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -55,7 +57,14 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<CreatedWorkspace> createWorkspace(
       @RequestBody CreateWorkspaceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    return new ResponseEntity<>(workspaceService.createWorkspace(body, userReq), HttpStatus.OK);
+    // Existing client libraries should not need to know about the stage, as they won't use any of
+    // the features it gates. If stage isn't specified in a create request, we default to
+    // RAWLS_WORKSPACE.
+    WorkspaceStageModel requestStage = body.getStage();
+    requestStage = (requestStage == null ? requestStage.RAWLS_WORKSPACE : requestStage);
+    WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
+    return new ResponseEntity<>(
+        workspaceService.createWorkspace(body, internalStage, userReq), HttpStatus.OK);
   }
 
   @Override

@@ -1,0 +1,14 @@
+# Add an index on workspace_id and reference_id as they're frequently looked up together
+databaseChangeLog:
+- changeSet:
+    id:  addWorkspaceReferenceIndex
+    author:  zloery
+    changes:
+      - createIndex:
+          columns:
+          - column:
+              name: workspace_id
+          - column:
+              name: reference_id
+          tableName: workspace_data_reference
+          indexName: idx_workspace_data_reference

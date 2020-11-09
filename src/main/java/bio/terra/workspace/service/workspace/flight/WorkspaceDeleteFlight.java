@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace.flight;
 
+import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -14,8 +15,9 @@ public class WorkspaceDeleteFlight extends Flight {
     super(inputParameters, applicationContext);
 
     ApplicationContext appContext = (ApplicationContext) applicationContext;
-    WorkspaceDao workspaceDao = (WorkspaceDao) appContext.getBean("workspaceDao");
-    SamService iamClient = (SamService) appContext.getBean("samService");
+    WorkspaceDao workspaceDao = appContext.getBean(WorkspaceDao.class);
+    SamService iamClient = appContext.getBean(SamService.class);
+    CloudResourceManagerCow resourceManager = appContext.getBean(CloudResourceManagerCow.class);
 
     AuthenticatedUserRequest userReq =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
@@ -23,6 +25,7 @@ public class WorkspaceDeleteFlight extends Flight {
     // 1. delete controlled resources using the Cloud Resource Manager library
     // 2. Notify all registered applications of deletion, once applications are supported
     // 3. Delete policy objects in Policy Manager, once it exists.
+    addStep(new DeleteProjectStep(resourceManager, workspaceDao));
     addStep(new DeleteWorkspaceAuthzStep(iamClient, userReq));
     addStep(new DeleteWorkspaceStateStep(workspaceDao));
   }

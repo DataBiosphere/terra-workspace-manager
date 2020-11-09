@@ -52,9 +52,10 @@ public class CreateDataReferenceStep implements Step {
     FlightMap inputMap = flightContext.getInputParameters();
 
     UUID referenceId = inputMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
+    UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.class);
 
     try {
-      dataReferenceDao.deleteDataReference(referenceId);
+      dataReferenceDao.deleteDataReference(workspaceId, referenceId);
     } catch (DataAccessException notFoundEx) {
       // Do nothing. Because the referenceID was generated in a previous step, we can assume this is
       // the only flight working on this reference. If it does not exist, the doStep failed to

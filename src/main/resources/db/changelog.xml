@@ -3,4 +3,6 @@
     <include file="changesets/20200227_initial_schema.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20200512_reference_unique_index.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20201016_fk_cloud_context.yaml" relativeToChangelogFile="true"/>
+    <include file="changesets/20201028_feature_toggle.yaml" relativeToChangelogFile="true"/>
+    <include file="changesets/20201104_reference_index.yaml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
