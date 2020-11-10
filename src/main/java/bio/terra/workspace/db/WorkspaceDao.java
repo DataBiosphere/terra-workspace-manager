@@ -40,6 +40,7 @@ public class WorkspaceDao {
     this.jdbcTemplate = jdbcTemplate;
   }
 
+  /** Persists a workspace to DB. Returns ID of persisted workspace on success. */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public UUID createWorkspace(Workspace workspace) {
     String sql =
@@ -62,6 +63,7 @@ public class WorkspaceDao {
     return workspace.workspaceId();
   }
 
+  /** Deletes a workspace. Returns true on successful delete, false if there's nothing to delete. */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public boolean deleteWorkspace(UUID workspaceId) {
     MapSqlParameterSource params =
@@ -71,6 +73,7 @@ public class WorkspaceDao {
     return rowsAffected > 0;
   }
 
+  /** Retrieves a workspace from database by ID. */
   public Workspace getWorkspace(UUID id) {
     String sql = "SELECT * FROM workspace where workspace_id = (:id)";
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id.toString());
@@ -94,6 +97,7 @@ public class WorkspaceDao {
   }
 
   // TODO: Unclear what level (if any) of @Transactional this requires.
+  /** Retrieves the MC Terra migration stage of a workspace from database by ID. */
   public WorkspaceStage getWorkspaceStage(UUID workspaceId) {
     String sql = "SELECT workspace_stage FROM workspace WHERE workspace_id = :id";
     MapSqlParameterSource params =
