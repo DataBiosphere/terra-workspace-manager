@@ -80,12 +80,11 @@ public class WorkspaceDao {
               sql,
               params,
               (rs, rowNum) -> {
-                String rawSpendProfileId = rs.getString("spend_profile");
-                SpendProfileId spendProfileId =
-                    rawSpendProfileId == null ? null : SpendProfileId.create(rawSpendProfileId);
                 return Workspace.builder()
                     .workspaceId(UUID.fromString(rs.getString("workspace_id")))
-                    .spendProfileId(Optional.ofNullable(spendProfileId))
+                    .spendProfileId(
+                        Optional.ofNullable(rs.getString("spend_profile"))
+                            .map(SpendProfileId::create))
                     .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
                     .build();
               }));

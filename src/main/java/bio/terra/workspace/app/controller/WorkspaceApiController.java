@@ -79,8 +79,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("id") UUID id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     Workspace workspace = workspaceService.getWorkspace(id, userReq);
-    String spendProfileStringId =
-        workspace.spendProfileId().isPresent() ? workspace.spendProfileId().get().id() : null;
+    String spendProfileStringId = workspace.spendProfileId().map(SpendProfileId::id).orElse(null);
 
     WorkspaceDescription desc =
         new WorkspaceDescription()
