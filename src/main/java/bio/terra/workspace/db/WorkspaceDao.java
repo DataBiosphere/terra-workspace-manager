@@ -41,25 +41,25 @@ public class WorkspaceDao {
   }
 
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public UUID createWorkspace(
-      UUID workspaceId, Optional<SpendProfileId> spendProfileId, WorkspaceStage workspaceStage) {
+  public UUID createWorkspace(Workspace workspace) {
     String sql =
         "INSERT INTO workspace (workspace_id, spend_profile, profile_settable, workspace_stage) values "
             + "(:id, :spend_profile, :spend_profile_settable, :workspace_stage)";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("id", workspaceId.toString())
-            .addValue("spend_profile", spendProfileId.map(SpendProfileId::id).orElse(null))
-            .addValue("spend_profile_settable", spendProfileId.isEmpty())
-            .addValue("workspace_stage", workspaceStage.toString());
+            .addValue("id", workspace.workspaceId().toString())
+            .addValue(
+                "spend_profile", workspace.spendProfileId().map(SpendProfileId::id).orElse(null))
+            .addValue("spend_profile_settable", workspace.spendProfileId().isEmpty())
+            .addValue("workspace_stage", workspace.workspaceStage().toString());
     try {
       jdbcTemplate.update(sql, params);
     } catch (DuplicateKeyException e) {
       throw new DuplicateWorkspaceException(
-          "Workspace " + workspaceId.toString() + " already exists.", e);
+          "Workspace " + workspace.workspaceId().toString() + " already exists.", e);
     }
 
-    return workspaceId;
+    return workspace.workspaceId();
   }
 
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)

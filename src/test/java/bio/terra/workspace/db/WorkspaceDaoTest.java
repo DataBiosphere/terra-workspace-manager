@@ -43,7 +43,14 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   public void verifyCreatedWorkspaceExists() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, spendProfileId, WorkspaceStage.RAWLS_WORKSPACE);
+    Workspace workspace =
+        Workspace.builder()
+            .workspaceId(workspaceId)
+            .spendProfileId(spendProfileId)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
+    workspaceDao.createWorkspace(workspace);
+
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceId.toString());
     Map<String, Object> queryOutput = jdbcTemplate.queryForMap(readSql, params);
@@ -58,7 +65,12 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   public void createAndDeleteWorkspace() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
+    Workspace workspace =
+        Workspace.builder()
+            .workspaceId(workspaceId)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
+    workspaceDao.createWorkspace(workspace);
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceId.toString());
     Map<String, Object> queryOutput = jdbcTemplate.queryForMap(readSql, params);
@@ -78,42 +90,45 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   public void createAndGetWorkspace() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
+    Workspace createdWorkspace =
+        Workspace.builder()
+            .workspaceId(workspaceId)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
+    workspaceDao.createWorkspace(createdWorkspace);
 
     Workspace workspace = workspaceDao.getWorkspace(workspaceId);
 
-    Workspace expectedWorkspace =
-        Workspace.builder()
-            .workspaceId(workspaceId)
-            .spendProfileId(Optional.empty())
-            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
-            .build();
-
-    assertThat(workspace, equalTo(expectedWorkspace));
+    assertEquals(workspace, createdWorkspace);
 
     assertTrue(workspaceDao.deleteWorkspace(workspaceId));
   }
 
   @Test
   public void createAndGetMcWorkspace() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.MC_WORKSPACE);
+    Workspace createdWorkspace =
+        Workspace.builder()
+            .workspaceId(workspaceId)
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
+    workspaceDao.createWorkspace(createdWorkspace);
 
     Workspace workspace = workspaceDao.getWorkspace(workspaceId);
 
-    Workspace expectedWorkspace =
-        Workspace.builder()
-            .workspaceId(workspaceId)
-            .spendProfileId(Optional.empty())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
-    assertThat(workspace, equalTo(expectedWorkspace));
+    assertEquals(workspace, createdWorkspace);
 
     assertTrue(workspaceDao.deleteWorkspace(workspaceId));
   }
 
   @Test
   public void getStageMatchesWorkspace() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.MC_WORKSPACE);
+    Workspace createdWorkspace =
+        Workspace.builder()
+            .workspaceId(workspaceId)
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
+    workspaceDao.createWorkspace(createdWorkspace);
+
     Workspace workspace = workspaceDao.getWorkspace(workspaceId);
     WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
     assertThat(stage, equalTo(WorkspaceStage.MC_WORKSPACE));
@@ -137,18 +152,27 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   public void duplicateWorkspaceFails() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
+    Workspace workspace =
+        Workspace.builder()
+            .workspaceId(workspaceId)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
+    workspaceDao.createWorkspace(workspace);
     assertThrows(
         DuplicateWorkspaceException.class,
         () -> {
-          workspaceDao.createWorkspace(
-              workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
+          workspaceDao.createWorkspace(workspace);
         });
   }
 
   @Test
   public void updateCloudContext_Google() {
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
+    Workspace workspace =
+        Workspace.builder()
+            .workspaceId(workspaceId)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
+    workspaceDao.createWorkspace(workspace);
 
     WorkspaceCloudContext googleContext1 = WorkspaceCloudContext.createGoogleContext("my-project1");
     workspaceDao.updateCloudContext(workspaceId, googleContext1);
@@ -161,7 +185,12 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   public void updateCloudContext_None() {
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
+    Workspace workspace =
+        Workspace.builder()
+            .workspaceId(workspaceId)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
+    workspaceDao.createWorkspace(workspace);
 
     WorkspaceCloudContext noneContext = WorkspaceCloudContext.none();
     workspaceDao.updateCloudContext(workspaceId, noneContext);
@@ -170,13 +199,24 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   public void noSetCloudContextIsNone() {
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
+    Workspace workspace =
+        Workspace.builder()
+            .workspaceId(workspaceId)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
+    workspaceDao.createWorkspace(workspace);
+
     assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
   }
 
   @Test
   public void updateAndNoneCloudContext() {
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
+    Workspace workspace =
+        Workspace.builder()
+            .workspaceId(workspaceId)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
+    workspaceDao.createWorkspace(workspace);
 
     workspaceDao.updateCloudContext(
         workspaceId, WorkspaceCloudContext.createGoogleContext("my-project"));
@@ -186,7 +226,13 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   public void deleteWorkspaceWithCloudContext() {
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
+    Workspace workspace =
+        Workspace.builder()
+            .workspaceId(workspaceId)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
+    workspaceDao.createWorkspace(workspace);
+
     workspaceDao.updateCloudContext(
         workspaceId, WorkspaceCloudContext.createGoogleContext("my-project"));
 

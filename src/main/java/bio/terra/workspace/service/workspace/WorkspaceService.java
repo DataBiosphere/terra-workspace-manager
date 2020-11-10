@@ -16,6 +16,12 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/**
+ * Service for workspace lifecycle operations.
+ *
+ * <p>This service holds core workspace management operations like creating, reading, and deleting
+ * workspaces as well as their cloud contexts. New methods generally should go in new services.
+ */
 @Component
 public class WorkspaceService {
 
@@ -30,6 +36,7 @@ public class WorkspaceService {
     this.samService = samService;
   }
 
+  /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
   public UUID createWorkspace(
       UUID workspaceId,
@@ -56,12 +63,14 @@ public class WorkspaceService {
     return createJob.submitAndWait(UUID.class);
   }
 
+  /** Retrieves an existing workspace by ID */
   @Traced
   public Workspace getWorkspace(UUID id, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_READ_ACTION);
     return workspaceDao.getWorkspace(id);
   }
 
+  /** Delete an existing workspace by ID. Does not delete underlying cloud context. */
   @Traced
   public void deleteWorkspace(UUID id, AuthenticatedUserRequest userReq) {
 

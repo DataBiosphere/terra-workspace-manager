@@ -8,7 +8,7 @@ import java.util.UUID;
 /**
  * Internal representation of a Workspace.
  *
- * A workspace is a collection of resources, data references, and applications with some shared
+ * <p>A workspace is a collection of resources, data references, and applications with some shared
  * context. In general, a workspace is the fundamental unit of analysis in Terra. Workspaces may
  * have an associated billing account and may have zero or one associated GCP projects.
  */
@@ -21,9 +21,9 @@ public abstract class Workspace {
   /**
    * The spend profile ID associated with this project, if one exists.
    *
-   * In the future, this will correlate to a spend profile in the Spend Profile Manager. For now,
-   * it's just a unique identifier. Accounts with an associated GCP project must have a spend
-   * profile, while Rawls workspaces do not need one.
+   * <p>In the future, this will correlate to a spend profile in the Spend Profile Manager. For now,
+   * it's just a unique identifier. To associate a GCP project with a workspace, the workspace must
+   * have a spend profile. They are not needed otherwise.
    */
   public abstract Optional<SpendProfileId> spendProfileId();
 
