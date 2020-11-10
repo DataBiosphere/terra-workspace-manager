@@ -11,12 +11,8 @@ import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.datareference.exception.DataRepoAuthorizationException;
 import bio.terra.workspace.service.datareference.exception.DataRepoInternalServerErrorException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.HashMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -31,8 +27,6 @@ public class DataRepoService {
   public DataRepoService(DataRepoConfiguration dataRepoConfiguration) {
     this.dataRepoConfiguration = dataRepoConfiguration;
   }
-
-  private Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
 
   private ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();
@@ -69,7 +63,6 @@ public class DataRepoService {
 
     try {
       repositoryApi.retrieveSnapshot(snapshotId);
-      logger.info(String.format("Retrieved snapshot %s on Data Repo instance %s", snapshotId, instanceName));
       return true;
     } catch (ApiException e) {
       if (e.getCode() == HttpStatus.NOT_FOUND.value()) {

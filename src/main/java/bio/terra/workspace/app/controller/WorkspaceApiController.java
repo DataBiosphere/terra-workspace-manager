@@ -19,10 +19,6 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-
-import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -53,8 +49,6 @@ public class WorkspaceApiController implements WorkspaceApi {
     this.request = request;
   }
 
-  private Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
-
   private AuthenticatedUserRequest getAuthenticatedInfo() {
     return authenticatedUserRequestFactory.from(request);
   }
@@ -63,26 +57,20 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<CreatedWorkspace> createWorkspace(
       @RequestBody CreateWorkspaceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info(String.format("Creating workspace %s for %s", body.getId().toString(), userReq.getEmail()));
-
     // Existing client libraries should not need to know about the stage, as they won't use any of
     // the features it gates. If stage isn't specified in a create request, we default to
     // RAWLS_WORKSPACE.
     WorkspaceStageModel requestStage = body.getStage();
     requestStage = (requestStage == null ? requestStage.RAWLS_WORKSPACE : requestStage);
     WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
-    CreatedWorkspace createdWorkspace = workspaceService.createWorkspace(body, internalStage, userReq);
-    logger.info(String.format("Created workspace %s for %s", createdWorkspace.toString(), userReq.getEmail()));
-
-    return new ResponseEntity<>(createdWorkspace, HttpStatus.OK);
+    return new ResponseEntity<>(
+        workspaceService.createWorkspace(body, internalStage, userReq), HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("id") UUID id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info(String.format("Getting workspace %s for %s", id.toString(), userReq.getEmail()));
     WorkspaceDescription desc = workspaceService.getWorkspace(id, userReq);
-    logger.info(String.format("Got workspace %s for %s", desc.toString(), userReq.getEmail()));
 
     return new ResponseEntity<WorkspaceDescription>(desc, HttpStatus.OK);
   }
@@ -90,10 +78,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<Void> deleteWorkspace(@PathVariable("id") UUID id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info(String.format("Deleting workspace %s for %s", id.toString(), userReq.getEmail()));
     workspaceService.deleteWorkspace(id, userReq);
-    logger.info(String.format("Deleted workspace %s for %s", id.toString(), userReq.getEmail()));
-
     return new ResponseEntity<>(HttpStatus.valueOf(204));
   }
 
@@ -101,25 +86,17 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<DataReferenceDescription> createDataReference(
       @PathVariable("id") UUID id, @RequestBody CreateDataReferenceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info(String.format("Creating data reference in workspace %s for %s with body %s",
-            id.toString(), userReq.getEmail(), body.toString()));
-    DataReferenceDescription desc = dataReferenceService.createDataReference(id, body, userReq);
-    logger.info(String.format("Created data reference %s in workspace %s for %s ",
-            desc.toString(), id.toString(), userReq.getEmail()));
 
-    return new ResponseEntity<DataReferenceDescription>(desc, HttpStatus.OK);
+    return new ResponseEntity<DataReferenceDescription>(
+        dataReferenceService.createDataReference(id, body, userReq), HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<DataReferenceDescription> getDataReference(
       @PathVariable("id") UUID workspaceId, @PathVariable("referenceId") UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info(String.format("Getting data reference by id %s in workspace %s for %s",
-            referenceId.toString(), workspaceId.toString(), userReq.getEmail()));
     DataReferenceDescription ref =
         dataReferenceService.getDataReference(workspaceId, referenceId, userReq);
-    logger.info(String.format("Got data reference %s in workspace %s for %s",
-            ref.toString(), workspaceId.toString(), userReq.getEmail()));
 
     return new ResponseEntity<DataReferenceDescription>(ref, HttpStatus.OK);
   }
@@ -130,12 +107,8 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("referenceType") ReferenceTypeEnum referenceType,
       @PathVariable("name") String name) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info(String.format("Getting data reference by name %s and reference type %s in workspace %s for %s",
-            name, referenceType, workspaceId.toString(), userReq.getEmail()));
     DataReferenceDescription ref =
         dataReferenceService.getDataReferenceByName(workspaceId, referenceType, name, userReq);
-    logger.info(String.format("Got data reference %s in workspace %s for %s",
-            ref.toString(), referenceType, workspaceId.toString(), userReq.getEmail()));
 
     return new ResponseEntity<DataReferenceDescription>(ref, HttpStatus.OK);
   }
@@ -144,11 +117,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<Void> deleteDataReference(
       @PathVariable("id") UUID workspaceId, @PathVariable("referenceId") UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info(String.format("Deleting data reference by id %s in workspace %s for %s",
-            referenceId.toString(), workspaceId.toString(), userReq.getEmail()));
     dataReferenceService.deleteDataReference(workspaceId, referenceId, userReq);
-    logger.info(String.format("Deleted data reference by id %s in workspace %s for %s",
-            referenceId.toString(), workspaceId.toString(), userReq.getEmail()));
 
     return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
   }
@@ -182,14 +151,9 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("id") UUID id,
       @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
       @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info(String.format("Getting data references in workspace %s for %s",
-            id.toString(), userReq.getEmail()));
     ControllerValidationUtils.validatePaginationParams(offset, limit);
     DataReferenceList enumerateResult =
-        dataReferenceService.enumerateDataReferences(id, offset, limit, userReq);
-    logger.info(String.format("Getting data references in workspace %s for %s",
-            enumerateResult.toString(), userReq.getEmail()));
+        dataReferenceService.enumerateDataReferences(id, offset, limit, getAuthenticatedInfo());
     return ResponseEntity.ok(enumerateResult);
   }
 }

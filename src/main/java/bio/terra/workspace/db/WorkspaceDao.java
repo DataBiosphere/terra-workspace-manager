@@ -6,7 +6,6 @@ import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
-import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,9 +13,6 @@ import com.google.common.annotations.VisibleForTesting;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.UUID;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -44,8 +40,6 @@ public class WorkspaceDao {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  private Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
-
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public String createWorkspace(
       UUID workspaceId, Optional<SpendProfileId> spendProfileId, WorkspaceStage workspaceStage) {
@@ -60,7 +54,6 @@ public class WorkspaceDao {
             .addValue("workspace_stage", workspaceStage.toString());
     try {
       jdbcTemplate.update(sql, params);
-      logger.info(String.format("Inserted record for workspace %s", workspaceId.toString()));
     } catch (DuplicateKeyException e) {
       throw new DuplicateWorkspaceException(
           "Workspace " + workspaceId.toString() + " already exists.", e);
@@ -74,15 +67,7 @@ public class WorkspaceDao {
         new MapSqlParameterSource().addValue("id", workspaceId.toString());
     int rowsAffected =
         jdbcTemplate.update("DELETE FROM workspace WHERE workspace_id = :id", params);
-
-    Boolean deleted = rowsAffected > 0;
-
-    if (deleted)
-      logger.info(String.format("Deleted record for workspace %s", workspaceId.toString()));
-    else
-      logger.info(String.format("Failed to delete record for workspace %s", workspaceId.toString()));
-
-    return deleted;
+    return rowsAffected > 0;
   }
 
   public WorkspaceDescription getWorkspace(UUID id) {
@@ -100,7 +85,6 @@ public class WorkspaceDao {
                 desc.setStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")).toApiModel());
                 return desc;
               }));
-      logger.info(String.format("Retrieved record for workspace %s", id.toString()));
     } catch (EmptyResultDataAccessException e) {
       throw new WorkspaceNotFoundException("Workspace not found.");
     }

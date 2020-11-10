@@ -9,7 +9,6 @@ import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.generated.model.ResourceDescription;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
-import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.ResultSet;
@@ -19,8 +18,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -40,9 +37,6 @@ public class DataReferenceDao {
     this.jdbcTemplate = jdbcTemplate;
     this.objectMapper = objectMapper;
   }
-
-  private Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
-
 
   public String createDataReference(
       UUID referenceId,
@@ -76,7 +70,6 @@ public class DataReferenceDao {
 
     try {
       jdbcTemplate.update(sql, params);
-      logger.info(String.format("Inserted record for data reference %s for workspace %s", referenceId, workspaceId))
       return referenceId.toString();
     } catch (DuplicateKeyException e) {
       throw new DuplicateDataReferenceException(
@@ -94,9 +87,7 @@ public class DataReferenceDao {
             .addValue("reference_id", referenceId.toString());
 
     try {
-      DataReferenceDescription ref = jdbcTemplate.queryForObject(sql, params, new DataReferenceMapper())
-      logger.info(String.format("Retrieved record for data reference by id %s for workspace %s", referenceId, workspaceId))
-      return ref;
+      return jdbcTemplate.queryForObject(sql, params, new DataReferenceMapper());
     } catch (EmptyResultDataAccessException e) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
     }
@@ -114,9 +105,7 @@ public class DataReferenceDao {
             .addValue("name", name);
 
     try {
-      DataReferenceDescription ref = jdbcTemplate.queryForObject(sql, params, new DataReferenceMapper());
-      logger.info(String.format("Retrieved record for data reference by name %s and reference type %s for workspace %s", name, type, workspaceId));
-      return ref;
+      return jdbcTemplate.queryForObject(sql, params, new DataReferenceMapper());
     } catch (EmptyResultDataAccessException e) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
     }
@@ -147,14 +136,7 @@ public class DataReferenceDao {
         jdbcTemplate.update(
             "DELETE FROM workspace_data_reference WHERE reference_id = :id AND workspace_id = :workspace_id",
             params);
-    Boolean deleted = rowsAffected > 0;
-
-    if (deleted)
-      logger.info(String.format("Deleted record for data reference %s in workspace %s", referenceId.toString(), workspaceId.toString()));
-    else
-      logger.info(String.format("Failed to delete record for data reference %s in workspace %s", referenceId.toString(), workspaceId.toString()));
-
-    return deleted;
+    return rowsAffected > 0;
   }
 
   public DataReferenceList enumerateDataReferences(
@@ -180,7 +162,6 @@ public class DataReferenceDao {
             .addValue("limit", limit);
     List<DataReferenceDescription> resultList =
         jdbcTemplate.query(sql, params, new DataReferenceMapper());
-    logger.info(String.format("Retrieved data references in workspace %s", workspaceId.toString()));
     return new DataReferenceList().resources(resultList);
   }
 

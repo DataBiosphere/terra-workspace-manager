@@ -9,13 +9,9 @@ import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
-import bio.terra.workspace.service.migrate.MigrateService;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import java.util.Optional;
 import java.util.UUID;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 public class CreateWorkspaceStep implements Step {
@@ -23,8 +19,6 @@ public class CreateWorkspaceStep implements Step {
   private WorkspaceDao workspaceDao;
 
   private static final String CREATE_WORKSPACE_COMPLETED_KEY = "createWorkspaceStepCompleted";
-
-  private Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
 
   public CreateWorkspaceStep(WorkspaceDao workspaceDao) {
     this.workspaceDao = workspaceDao;
@@ -50,7 +44,6 @@ public class CreateWorkspaceStep implements Step {
     CreatedWorkspace response = new CreatedWorkspace();
     response.setId(workspaceId);
     FlightUtils.setResponse(flightContext, response, HttpStatus.OK);
-    logger.info(String.format("Workspace created with id %s", workspaceId));
 
     return StepResult.getStepResultSuccess();
   }
