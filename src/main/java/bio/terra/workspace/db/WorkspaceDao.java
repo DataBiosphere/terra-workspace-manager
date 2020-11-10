@@ -92,7 +92,7 @@ public class WorkspaceDao {
     String sql = "SELECT * FROM workspace where workspace_id = (:id)";
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id.toString());
     try {
-      result = DataAccessUtils.requiredSingleResult(
+      WorkspaceDescription desc = DataAccessUtils.requiredSingleResult(
           jdbcTemplate.query(
               sql,
               params,
@@ -105,7 +105,8 @@ public class WorkspaceDao {
                     .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
                     .build();
               }));
-      logger.info(String.format("Retrieved record for workspace %s", id.toString()));
+      logger.info(String.format("Retrieved workspace record %s", desc.toString()));
+      return desc;
     } catch (EmptyResultDataAccessException e) {
       throw new WorkspaceNotFoundException("Workspace not found.");
     }
