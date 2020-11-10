@@ -79,12 +79,11 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("id") UUID id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     Workspace workspace = workspaceService.getWorkspace(id, userReq);
-    String spendProfileStringId = workspace.spendProfileId().map(SpendProfileId::id).orElse(null);
 
     WorkspaceDescription desc =
         new WorkspaceDescription()
             .id(workspace.workspaceId())
-            .spendProfile(spendProfileStringId)
+            .spendProfile(workspace.spendProfileId().map(SpendProfileId::id).orElse(null))
             .stage(workspace.workspaceStage().toApiModel());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
