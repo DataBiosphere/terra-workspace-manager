@@ -39,7 +39,7 @@ public class SamService {
     this.objectMapper = objectMapper;
   }
 
-  private Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
+  private Logger logger = LoggerFactory.getLogger(SamService.class);
 
   private ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();

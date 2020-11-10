@@ -41,7 +41,7 @@ public class DataReferenceDao {
     this.objectMapper = objectMapper;
   }
 
-  private Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
+  private Logger logger = LoggerFactory.getLogger(DataReferenceDao.class);
 
 
   public String createDataReference(

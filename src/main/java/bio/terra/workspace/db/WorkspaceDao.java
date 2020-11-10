@@ -6,7 +6,6 @@ import bio.terra.workspace.common.model.Workspace;
 import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
-import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,7 +43,7 @@ public class WorkspaceDao {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  private Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
+  private Logger logger = LoggerFactory.getLogger(WorkspaceDao.class);
 
   /** Persists a workspace to DB. Returns ID of persisted workspace on success. */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)

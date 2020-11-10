@@ -56,7 +56,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     this.request = request;
   }
 
-  private Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
+  private Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
     return authenticatedUserRequestFactory.from(request);
