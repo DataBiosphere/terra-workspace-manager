@@ -11,9 +11,9 @@ import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.service.job.JobMapKeys;
 import java.util.UUID;
-import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 
+/** Stairway step to persist a data reference in WM's database. */
 public class CreateDataReferenceStep implements Step {
 
   private DataReferenceDao dataReferenceDao;
@@ -56,13 +56,9 @@ public class CreateDataReferenceStep implements Step {
     UUID referenceId = workingMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
     UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.class);
 
-    try {
-      dataReferenceDao.deleteDataReference(workspaceId, referenceId);
-    } catch (DataAccessException notFoundEx) {
-      // Do nothing. Because the referenceID was generated in a previous step, we can assume this is
-      // the only flight working on this reference. If it does not exist, the doStep failed to
-      // create it, so there's nothing to undo.
-    }
+    // Ignore return value, as we don't care whether a reference was deleted or just not found.
+    dataReferenceDao.deleteDataReference(workspaceId, referenceId);
+
     return StepResult.getStepResultSuccess();
   }
 }
