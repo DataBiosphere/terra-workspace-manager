@@ -94,7 +94,7 @@ public class DataReferenceDao {
             .addValue("reference_id", referenceId.toString());
 
     try {
-      DataReferenceDescription ref = jdbcTemplate.queryForObject(sql, params, new DataReferenceMapper())
+      DataReferenceDescription ref = jdbcTemplate.queryForObject(sql, params, new DataReferenceMapper());
       logger.info(String.format("Retrieved record for data reference by id %s for workspace %s", referenceId, workspaceId));
       return ref;
     } catch (EmptyResultDataAccessException e) {
