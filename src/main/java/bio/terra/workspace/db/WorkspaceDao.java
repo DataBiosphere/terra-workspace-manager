@@ -6,6 +6,7 @@ import bio.terra.workspace.common.model.Workspace;
 import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
+import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,6 +14,9 @@ import com.google.common.annotations.VisibleForTesting;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -40,6 +44,8 @@ public class WorkspaceDao {
     this.jdbcTemplate = jdbcTemplate;
   }
 
+  private Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
+
   /** Persists a workspace to DB. Returns ID of persisted workspace on success. */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public UUID createWorkspace(Workspace workspace) {
@@ -55,6 +61,7 @@ public class WorkspaceDao {
             .addValue("workspace_stage", workspace.workspaceStage().toString());
     try {
       jdbcTemplate.update(sql, params);
+      logger.info(String.format("Inserted record for workspace %s", workspaceId.toString()));
     } catch (DuplicateKeyException e) {
       throw new DuplicateWorkspaceException(
           "Workspace " + workspace.workspaceId().toString() + " already exists.", e);
@@ -70,7 +77,15 @@ public class WorkspaceDao {
         new MapSqlParameterSource().addValue("id", workspaceId.toString());
     int rowsAffected =
         jdbcTemplate.update("DELETE FROM workspace WHERE workspace_id = :id", params);
-    return rowsAffected > 0;
+
+    Boolean deleted = rowsAffected > 0;
+
+    if (deleted)
+      logger.info(String.format("Deleted record for workspace %s", workspaceId.toString()));
+    else
+      logger.info(String.format("Failed to delete record for workspace %s", workspaceId.toString()));
+
+    return deleted;
   }
 
   /** Retrieves a workspace from database by ID. */
@@ -78,7 +93,7 @@ public class WorkspaceDao {
     String sql = "SELECT * FROM workspace where workspace_id = (:id)";
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id.toString());
     try {
-      return DataAccessUtils.requiredSingleResult(
+      result = DataAccessUtils.requiredSingleResult(
           jdbcTemplate.query(
               sql,
               params,
@@ -91,6 +106,7 @@ public class WorkspaceDao {
                     .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
                     .build();
               }));
+      logger.info(String.format("Retrieved record for workspace %s", id.toString()));
     } catch (EmptyResultDataAccessException e) {
       throw new WorkspaceNotFoundException("Workspace not found.");
     }
