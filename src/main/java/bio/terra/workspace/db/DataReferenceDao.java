@@ -76,7 +76,7 @@ public class DataReferenceDao {
 
     try {
       jdbcTemplate.update(sql, params);
-      logger.info(String.format("Inserted record for data reference %s for workspace %s", referenceId, workspaceId))
+      logger.info(String.format("Inserted record for data reference %s for workspace %s", referenceId, workspaceId));
       return referenceId.toString();
     } catch (DuplicateKeyException e) {
       throw new DuplicateDataReferenceException(
@@ -95,7 +95,7 @@ public class DataReferenceDao {
 
     try {
       DataReferenceDescription ref = jdbcTemplate.queryForObject(sql, params, new DataReferenceMapper())
-      logger.info(String.format("Retrieved record for data reference by id %s for workspace %s", referenceId, workspaceId))
+      logger.info(String.format("Retrieved record for data reference by id %s for workspace %s", referenceId, workspaceId));
       return ref;
     } catch (EmptyResultDataAccessException e) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
@@ -216,7 +216,7 @@ public class DataReferenceDao {
             .referenceType(ReferenceTypeEnum.fromValue(rs.getString("reference_type")))
             .reference(objectMapper.readValue(rs.getString("reference"), DataRepoSnapshot.class));
       } catch (JsonProcessingException e) {
-        // TODO: add logger and print out the json
+        logger.info(String.format("Failed to convert JSON %s to reference, with error %s", rs.toString(), e.getMessage()));
         throw new InvalidDataReferenceException(
             "Couldn't convert JSON to reference. This... shouldn't happen.");
       }
