@@ -6,7 +6,6 @@ import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
-import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

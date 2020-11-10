@@ -11,7 +11,6 @@ import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.datareference.exception.DataRepoAuthorizationException;
 import bio.terra.workspace.service.datareference.exception.DataRepoInternalServerErrorException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.HashMap;
 
