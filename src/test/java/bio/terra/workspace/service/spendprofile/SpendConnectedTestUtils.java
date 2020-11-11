@@ -4,7 +4,7 @@ import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-/** Utiliteis for working with spend profiles in connected tests. */
+/** Utilities for working with spend profiles in connected tests. */
 @Component
 public class SpendConnectedTestUtils {
 

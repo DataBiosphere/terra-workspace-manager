@@ -36,8 +36,6 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
   @Test
   public void deleteContext() throws Exception {
     UUID workspaceId = createWorkspace();
-
-    // Both creating and deleting the google context happen to only need the workspace id as input.
     FlightMap createParameters = new FlightMap();
     createParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
     createParameters.put(
