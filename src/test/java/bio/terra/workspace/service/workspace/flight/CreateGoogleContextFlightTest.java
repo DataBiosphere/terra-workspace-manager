@@ -3,11 +3,13 @@ package bio.terra.workspace.service.workspace.flight;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import bio.terra.cloudres.google.billing.CloudBillingClientCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
+import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.model.WorkspaceStage;
@@ -23,6 +25,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -33,21 +36,27 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
   @Autowired private WorkspaceDao workspaceDao;
   @Autowired private CloudResourceManagerCow resourceManager;
   @Autowired private ServiceUsageCow serviceUsage;
+  @Autowired private CloudBillingClientCow billingClient;
   @Autowired private JobService jobService;
+  @Autowired private SpendProfileConfiguration spendConfiguration;
+  private String defaultBillingAccountId;
+
+  @BeforeEach
+  public void setUp() {
+    // Grab a billing account to use for this test from the spend profile configuration.
+    defaultBillingAccountId = spendConfiguration.getSpendProfiles().get(0).getBillingAccountId();
+  }
 
   @Test
   public void successCreatesProjectAndContext() throws Exception {
     UUID workspaceId = createWorkspace();
     assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
 
-    FlightMap inputParameters = new FlightMap();
-    inputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
-
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateGoogleContextFlight.class,
-            inputParameters,
+            createInputParameters(workspaceId, defaultBillingAccountId),
             STAIRWAY_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
@@ -62,6 +71,9 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
     Project project = resourceManager.projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());
     assertServiceApisEnabled(project, CreateProjectStep.ENABLED_SERVICES);
+    assertEquals(
+        "billingAccounts/" + defaultBillingAccountId,
+        billingClient.getProjectBillingInfo("projects/" + projectId).getBillingAccountName());
   }
 
   @Test
@@ -69,15 +81,12 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
     UUID workspaceId = createWorkspace();
     assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
 
-    FlightMap inputParameters = new FlightMap();
-    inputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
-
     // Submit a flight class that always errors.
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             ErrorCreateGoogleContextFlight.class,
-            inputParameters,
+            createInputParameters(workspaceId, defaultBillingAccountId),
             STAIRWAY_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
 
@@ -100,6 +109,14 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
     workspaceDao.createWorkspace(
         workspaceId, /* spendProfile= */ Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
     return workspaceId;
+  }
+
+  /** Create the FlightMap input parameters required for the {@link CreateGoogleContextFlight}. */
+  private static FlightMap createInputParameters(UUID workspaceId, String billingAccountId) {
+    FlightMap inputs = new FlightMap();
+    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
+    inputs.put(WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, billingAccountId);
+    return inputs;
   }
 
   private void assertServiceApisEnabled(Project project, List<String> enabledApis)

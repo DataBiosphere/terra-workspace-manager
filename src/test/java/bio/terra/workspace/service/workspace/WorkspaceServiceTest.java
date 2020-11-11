@@ -6,9 +6,11 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
+import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.*;
 import bio.terra.workspace.common.model.WorkspaceStage;
+import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.generated.model.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
@@ -22,12 +24,17 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
+import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
+import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
@@ -37,10 +44,11 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private DataReferenceService dataReferenceService;
   @Autowired private JobService jobService;
   @Autowired private CloudResourceManagerCow resourceManager;
+  @Autowired private SpendProfileConfiguration spendConfig;
 
   @MockBean private DataRepoService dataRepoService;
 
-  /** Mock SamService returns true for all calls to {@link SamService#isAuthorized}. */
+  /** Mock SamService does nothing for all calls that would throw if unauthorized. */
   @MockBean private SamService mockSamService;
 
   /** A fake authenticated user request. */
@@ -50,9 +58,22 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
           .email("fake@email.com")
           .subjectId("fakeID123");
 
+  /** A SpendProfileId in the spend profile service with no billing account associated. */
+  private static final SpendProfileId NO_BILLING_ACCOUNT =
+      SpendProfileId.create("no-billing-account");
+
   @BeforeEach
   public void setup() {
     doReturn(true).when(dataRepoService).snapshotExists(any(), any(), any());
+    // By default, allow all calls as authorized.
+    Mockito.when(
+            mockSamService.isAuthorized(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+        .thenReturn(true);
+  }
+
+  /** Retrieve a {@link SpendProfileId} that can be used on workspaces. */
+  private SpendProfileId defaultSpendId() {
+    return SpendProfileId.create(spendConfig.getSpendProfiles().get(0).getId());
   }
 
   @Test
@@ -185,7 +206,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void deleteWorkspaceWithGoogleContext() throws Exception {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        new CreateWorkspaceRequestBody().id(workspaceId),
+        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(defaultSpendId().id()),
         WorkspaceStage.RAWLS_WORKSPACE,
         USER_REQUEST);
 
@@ -209,7 +230,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void createGetDeleteGoogleContext() {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        new CreateWorkspaceRequestBody().id(workspaceId),
+        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(defaultSpendId().id()),
         WorkspaceStage.RAWLS_WORKSPACE,
         USER_REQUEST);
 
@@ -224,5 +245,52 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.deleteGoogleContext(workspaceId, USER_REQUEST);
     assertEquals(
         WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, USER_REQUEST));
+  }
+
+  @Test
+  public void createGoogleContextNoSpendProfileIdThrows() {
+    UUID workspaceId = UUID.randomUUID();
+    workspaceService.createWorkspace(
+        // Don't specify a spend profile on the created worksapce.
+        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(null),
+        WorkspaceStage.RAWLS_WORKSPACE,
+        USER_REQUEST);
+
+    assertThrows(
+        MissingSpendProfileException.class,
+        () -> workspaceService.createGoogleContext(workspaceId, USER_REQUEST));
+  }
+
+  @Test
+  public void createGoogleContextSpendLinkingUnauthorizedThrows() {
+    UUID workspaceId = UUID.randomUUID();
+    workspaceService.createWorkspace(
+        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(defaultSpendId().id()),
+        WorkspaceStage.RAWLS_WORKSPACE,
+        USER_REQUEST);
+
+    Mockito.when(
+            mockSamService.isAuthorized(
+                Mockito.eq(USER_REQUEST.getRequiredToken()),
+                Mockito.eq(SamUtils.SPEND_PROFILE_RESOURCE),
+                Mockito.any(),
+                Mockito.eq(SamUtils.SPEND_PROFILE_LINK_ACTION)))
+        .thenReturn(false);
+    assertThrows(
+        SpendUnauthorizedException.class,
+        () -> workspaceService.createGoogleContext(workspaceId, USER_REQUEST));
+  }
+
+  @Test
+  public void createGoogleContextSpendWithoutBillingAccountThrows() {
+    UUID workspaceId = UUID.randomUUID();
+    workspaceService.createWorkspace(
+        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(NO_BILLING_ACCOUNT.id()),
+        WorkspaceStage.RAWLS_WORKSPACE,
+        USER_REQUEST);
+
+    assertThrows(
+        NoBillingAccountException.class,
+        () -> workspaceService.createGoogleContext(workspaceId, USER_REQUEST));
   }
 }

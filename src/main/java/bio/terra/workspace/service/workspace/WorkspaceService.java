@@ -10,6 +10,11 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.SpendProfileService;
+import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
+import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.flight.*;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.UUID;
@@ -19,15 +24,21 @@ import org.springframework.stereotype.Component;
 @Component
 public class WorkspaceService {
 
-  private JobService jobService;
+  private final JobService jobService;
   private final WorkspaceDao workspaceDao;
   private final SamService samService;
+  private final SpendProfileService spendProfileService;
 
   @Autowired
-  public WorkspaceService(JobService jobService, WorkspaceDao workspaceDao, SamService samService) {
+  public WorkspaceService(
+      JobService jobService,
+      WorkspaceDao workspaceDao,
+      SamService samService,
+      SpendProfileService spendProfileService) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
+    this.spendProfileService = spendProfileService;
   }
 
   @Traced
@@ -91,6 +102,16 @@ public class WorkspaceService {
   @Traced
   public String createGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+    String rawSpendProfileId = workspaceDao.getWorkspace(workspaceId).getSpendProfile();
+    if (rawSpendProfileId == null) {
+      throw new MissingSpendProfileException(workspaceId);
+    }
+    SpendProfileId spendProfileId = SpendProfileId.create(rawSpendProfileId);
+    SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId, userReq);
+    if (spendProfile.billingAccountId().isEmpty()) {
+      throw new NoBillingAccountException(spendProfileId);
+    }
+
     String jobId = UUID.randomUUID().toString();
     jobService
         .newJob(
@@ -100,6 +121,8 @@ public class WorkspaceService {
             /* request= */ null,
             userReq)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
+        .addParameter(
+            WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendProfile.billingAccountId().get())
         .submit();
     return jobId;
   }
