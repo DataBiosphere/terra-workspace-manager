@@ -39,12 +39,10 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
   @Autowired private CloudBillingClientCow billingClient;
   @Autowired private JobService jobService;
   @Autowired private SpendProfileConfiguration spendConfiguration;
-  private String defaultBillingAccountId;
 
-  @BeforeEach
-  public void setUp() {
-    // Grab a billing account to use for this test from the spend profile configuration.
-    defaultBillingAccountId = spendConfiguration.getSpendProfiles().get(0).getBillingAccountId();
+  /** Return a billing account id to use for this test from the spend profile configuration.*/
+  private String defaultBillingAccountId() {
+    return spendConfiguration.getSpendProfiles().get(0).getBillingAccountId();
   }
 
   @Test
@@ -56,7 +54,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateGoogleContextFlight.class,
-            createInputParameters(workspaceId, defaultBillingAccountId),
+            createInputParameters(workspaceId, defaultBillingAccountId()),
             STAIRWAY_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
@@ -72,7 +70,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
     assertEquals(projectId, project.getProjectId());
     assertServiceApisEnabled(project, CreateProjectStep.ENABLED_SERVICES);
     assertEquals(
-        "billingAccounts/" + defaultBillingAccountId,
+        "billingAccounts/" + defaultBillingAccountId(),
         billingClient.getProjectBillingInfo("projects/" + projectId).getBillingAccountName());
   }
 
@@ -86,7 +84,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             ErrorCreateGoogleContextFlight.class,
-            createInputParameters(workspaceId, defaultBillingAccountId),
+            createInputParameters(workspaceId, defaultBillingAccountId()),
             STAIRWAY_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
 
