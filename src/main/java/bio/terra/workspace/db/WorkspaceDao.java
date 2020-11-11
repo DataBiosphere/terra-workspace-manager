@@ -2,15 +2,16 @@ package bio.terra.workspace.db;
 
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.common.model.Workspace;
 import bio.terra.workspace.common.model.WorkspaceStage;
-import bio.terra.workspace.generated.model.WorkspaceDescription;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.sql.SQLException;
-import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
@@ -39,27 +40,30 @@ public class WorkspaceDao {
     this.jdbcTemplate = jdbcTemplate;
   }
 
+  /** Persists a workspace to DB. Returns ID of persisted workspace on success. */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public String createWorkspace(
-      UUID workspaceId, UUID spendProfile, WorkspaceStage workspaceStage) {
+  public UUID createWorkspace(Workspace workspace) {
     String sql =
         "INSERT INTO workspace (workspace_id, spend_profile, profile_settable, workspace_stage) values "
             + "(:id, :spend_profile, :spend_profile_settable, :workspace_stage)";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("id", workspaceId.toString())
-            .addValue("spend_profile", spendProfile)
-            .addValue("spend_profile_settable", spendProfile == null)
-            .addValue("workspace_stage", workspaceStage.toString());
+            .addValue("id", workspace.workspaceId().toString())
+            .addValue(
+                "spend_profile", workspace.spendProfileId().map(SpendProfileId::id).orElse(null))
+            .addValue("spend_profile_settable", workspace.spendProfileId().isEmpty())
+            .addValue("workspace_stage", workspace.workspaceStage().toString());
     try {
       jdbcTemplate.update(sql, params);
     } catch (DuplicateKeyException e) {
       throw new DuplicateWorkspaceException(
-          "Workspace " + workspaceId.toString() + " already exists.", e);
+          "Workspace " + workspace.workspaceId().toString() + " already exists.", e);
     }
-    return workspaceId.toString();
+
+    return workspace.workspaceId();
   }
 
+  /** Deletes a workspace. Returns true on successful delete, false if there's nothing to delete. */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public boolean deleteWorkspace(UUID workspaceId) {
     MapSqlParameterSource params =
@@ -69,31 +73,31 @@ public class WorkspaceDao {
     return rowsAffected > 0;
   }
 
-  public WorkspaceDescription getWorkspace(UUID id) {
+  /** Retrieves a workspace from database by ID. */
+  public Workspace getWorkspace(UUID id) {
     String sql = "SELECT * FROM workspace where workspace_id = (:id)";
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id.toString());
     try {
-      Map<String, Object> queryOutput = jdbcTemplate.queryForMap(sql, params);
-
-      WorkspaceDescription desc = new WorkspaceDescription();
-      desc.setId(UUID.fromString(queryOutput.get("workspace_id").toString()));
-
-      if (queryOutput.getOrDefault("spend_profile", null) == null) {
-        desc.setSpendProfile(null);
-      } else {
-        desc.setSpendProfile(UUID.fromString(queryOutput.get("spend_profile").toString()));
-      }
-
-      desc.setStage(
-          WorkspaceStage.valueOf(queryOutput.get("workspace_stage").toString()).toApiModel());
-
-      return desc;
+      return DataAccessUtils.requiredSingleResult(
+          jdbcTemplate.query(
+              sql,
+              params,
+              (rs, rowNum) -> {
+                return Workspace.builder()
+                    .workspaceId(UUID.fromString(rs.getString("workspace_id")))
+                    .spendProfileId(
+                        Optional.ofNullable(rs.getString("spend_profile"))
+                            .map(SpendProfileId::create))
+                    .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
+                    .build();
+              }));
     } catch (EmptyResultDataAccessException e) {
       throw new WorkspaceNotFoundException("Workspace not found.");
     }
   }
 
   // TODO: Unclear what level (if any) of @Transactional this requires.
+  /** Retrieves the MC Terra migration stage of a workspace from database by ID. */
   public WorkspaceStage getWorkspaceStage(UUID workspaceId) {
     String sql = "SELECT workspace_stage FROM workspace WHERE workspace_id = :id";
     MapSqlParameterSource params =
