@@ -8,22 +8,19 @@ import static org.mockito.Mockito.doThrow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.*;
+import bio.terra.workspace.common.model.Workspace;
 import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.generated.model.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
-import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.CreatedWorkspace;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
-import bio.terra.workspace.generated.model.WorkspaceDescription;
-import bio.terra.workspace.generated.model.WorkspaceStageModel;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import com.google.api.services.cloudresourcemanager.model.Project;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,55 +62,47 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   public void testGetExistingWorkspace() {
     UUID workspaceId = UUID.randomUUID();
-    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(workspaceId);
+    workspaceService.createWorkspace(
+        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
 
-    CreatedWorkspace workspace =
-        workspaceService.createWorkspace(body, WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
-    assertEquals(workspaceId, workspace.getId());
-
-    assertEquals(workspaceId, workspaceService.getWorkspace(workspaceId, USER_REQUEST).getId());
+    assertEquals(
+        workspaceId, workspaceService.getWorkspace(workspaceId, USER_REQUEST).workspaceId());
   }
 
   @Test
   public void testWorkspaceStagePersists() {
     UUID workspaceId = UUID.randomUUID();
-    CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody().id(workspaceId).stage(WorkspaceStageModel.MC_WORKSPACE);
+    workspaceService.createWorkspace(
+        workspaceId, Optional.empty(), WorkspaceStage.MC_WORKSPACE, USER_REQUEST);
 
-    CreatedWorkspace workspace =
-        workspaceService.createWorkspace(body, WorkspaceStage.MC_WORKSPACE, USER_REQUEST);
-    assertEquals(workspaceId, workspace.getId());
-    WorkspaceDescription description = workspaceService.getWorkspace(workspaceId, USER_REQUEST);
-    assertEquals(workspaceId, description.getId());
-    assertEquals(WorkspaceStageModel.MC_WORKSPACE, description.getStage());
+    Workspace createdWorkspace = workspaceService.getWorkspace(workspaceId, USER_REQUEST);
+    assertEquals(workspaceId, createdWorkspace.workspaceId());
+    assertEquals(WorkspaceStage.MC_WORKSPACE, createdWorkspace.workspaceStage());
   }
 
   @Test
   public void duplicateWorkspaceRejected() {
     UUID workspaceId = UUID.randomUUID();
-    CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(null).policies(null);
-    CreatedWorkspace workspace =
-        workspaceService.createWorkspace(body, WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
-    assertEquals(workspaceId, workspace.getId());
+    workspaceService.createWorkspace(
+        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
 
     assertThrows(
         DuplicateWorkspaceException.class,
-        () -> workspaceService.createWorkspace(body, WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST));
+        () ->
+            workspaceService.createWorkspace(
+                workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST));
   }
 
   @Test
-  public void testWithSpendProfileAndPolicies() {
+  public void testWithSpendProfile() {
     UUID workspaceId = UUID.randomUUID();
-    CreateWorkspaceRequestBody body =
-        new CreateWorkspaceRequestBody()
-            .id(workspaceId)
-            .spendProfile("foo")
-            .policies(Collections.singletonList(UUID.randomUUID()));
+    Optional<SpendProfileId> spendProfileId = Optional.of(SpendProfileId.create("foo"));
+    workspaceService.createWorkspace(
+        workspaceId, spendProfileId, WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
 
-    CreatedWorkspace workspace =
-        workspaceService.createWorkspace(body, WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
-    assertEquals(workspaceId, workspace.getId());
+    Workspace createdWorkspace = workspaceService.getWorkspace(workspaceId, USER_REQUEST);
+    assertEquals(workspaceId, createdWorkspace.workspaceId());
+    assertEquals(spendProfileId, createdWorkspace.spendProfileId());
   }
 
   @Test
@@ -124,24 +113,21 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
         .when(mockSamService)
         .createWorkspaceWithDefaults(any(), any());
 
-    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(UUID.randomUUID());
+    UUID workspaceId = UUID.randomUUID();
     SamApiException exception =
         assertThrows(
             SamApiException.class,
             () ->
                 workspaceService.createWorkspace(
-                    body, WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST));
+                    workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST));
     assertEquals(errorMsg, exception.getMessage());
   }
 
   @Test
   public void createAndDeleteWorkspace() {
     UUID workspaceId = UUID.randomUUID();
-    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(workspaceId);
-
-    CreatedWorkspace workspace =
-        workspaceService.createWorkspace(body, WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
-    assertEquals(workspaceId, workspace.getId());
+    workspaceService.createWorkspace(
+        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
 
     workspaceService.deleteWorkspace(workspaceId, USER_REQUEST);
     assertThrows(
@@ -153,10 +139,8 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void deleteWorkspaceWithDataReference() {
     // First, create a workspace.
     UUID workspaceId = UUID.randomUUID();
-    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(workspaceId);
-    CreatedWorkspace workspace =
-        workspaceService.createWorkspace(body, WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
-    assertEquals(workspaceId, workspace.getId());
+    workspaceService.createWorkspace(
+        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
 
     // Next, add a data reference to that workspace.
     DataRepoSnapshot reference =
@@ -185,9 +169,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void deleteWorkspaceWithGoogleContext() throws Exception {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        new CreateWorkspaceRequestBody().id(workspaceId),
-        WorkspaceStage.RAWLS_WORKSPACE,
-        USER_REQUEST);
+        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
 
     String jobId = workspaceService.createGoogleContext(workspaceId, USER_REQUEST);
     jobService.waitForJob(jobId);
@@ -209,9 +191,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void createGetDeleteGoogleContext() {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        new CreateWorkspaceRequestBody().id(workspaceId),
-        WorkspaceStage.RAWLS_WORKSPACE,
-        USER_REQUEST);
+        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
 
     String jobId = workspaceService.createGoogleContext(workspaceId, USER_REQUEST);
     jobService.waitForJob(jobId);

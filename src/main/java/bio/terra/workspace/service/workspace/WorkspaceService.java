@@ -1,21 +1,27 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.workspace.common.model.Workspace;
 import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.CreatedWorkspace;
-import bio.terra.workspace.generated.model.WorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.flight.*;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/**
+ * Service for workspace lifecycle operations.
+ *
+ * <p>This service holds core workspace management operations like creating, reading, and deleting
+ * workspaces as well as their cloud contexts. New methods generally should go in new services.
+ */
 @Component
 public class WorkspaceService {
 
@@ -30,13 +36,14 @@ public class WorkspaceService {
     this.samService = samService;
   }
 
+  /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
-  public CreatedWorkspace createWorkspace(
-      CreateWorkspaceRequestBody body,
+  public UUID createWorkspace(
+      UUID workspaceId,
+      Optional<SpendProfileId> spendProfileId,
       WorkspaceStage workspaceStage,
       AuthenticatedUserRequest userReq) {
 
-    UUID workspaceId = body.getId();
     String description = "Create workspace " + workspaceId.toString();
     JobBuilder createJob =
         jobService
@@ -44,24 +51,26 @@ public class WorkspaceService {
                 description,
                 UUID.randomUUID().toString(), // JobId does not need persistence for sync calls.
                 WorkspaceCreateFlight.class,
-                body,
+                null,
                 userReq)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
-    if (body.getSpendProfile() != null) {
-      createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, body.getSpendProfile());
+    if (spendProfileId.isPresent()) {
+      createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfileId.get().id());
     }
 
     createJob.addParameter(WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceStage);
 
-    return createJob.submitAndWait(CreatedWorkspace.class);
+    return createJob.submitAndWait(UUID.class);
   }
 
+  /** Retrieves an existing workspace by ID */
   @Traced
-  public WorkspaceDescription getWorkspace(UUID id, AuthenticatedUserRequest userReq) {
+  public Workspace getWorkspace(UUID id, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_READ_ACTION);
     return workspaceDao.getWorkspace(id);
   }
 
+  /** Delete an existing workspace by ID. Does not delete underlying cloud context. */
   @Traced
   public void deleteWorkspace(UUID id, AuthenticatedUserRequest userReq) {
 
