@@ -9,12 +9,12 @@ import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
-import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.serviceusage.v1.model.GoogleApiServiceusageV1Service;
@@ -25,7 +25,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -38,12 +37,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
   @Autowired private ServiceUsageCow serviceUsage;
   @Autowired private CloudBillingClientCow billingClient;
   @Autowired private JobService jobService;
-  @Autowired private SpendProfileConfiguration spendConfiguration;
-
-  /** Return a billing account id to use for this test from the spend profile configuration.*/
-  private String defaultBillingAccountId() {
-    return spendConfiguration.getSpendProfiles().get(0).getBillingAccountId();
-  }
+  @Autowired private SpendConnectedTestUtils spendUtils;
 
   @Test
   public void successCreatesProjectAndContext() throws Exception {
@@ -54,7 +48,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateGoogleContextFlight.class,
-            createInputParameters(workspaceId, defaultBillingAccountId()),
+            createInputParameters(workspaceId, spendUtils.defaultBillingAccountId()),
             STAIRWAY_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
@@ -70,7 +64,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
     assertEquals(projectId, project.getProjectId());
     assertServiceApisEnabled(project, CreateProjectStep.ENABLED_SERVICES);
     assertEquals(
-        "billingAccounts/" + defaultBillingAccountId(),
+        "billingAccounts/" + spendUtils.defaultBillingAccountId(),
         billingClient.getProjectBillingInfo("projects/" + projectId).getBillingAccountName());
   }
 
@@ -84,7 +78,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             ErrorCreateGoogleContextFlight.class,
-            createInputParameters(workspaceId, defaultBillingAccountId()),
+            createInputParameters(workspaceId, spendUtils.defaultBillingAccountId()),
             STAIRWAY_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
 

@@ -6,7 +6,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
-import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.*;
 import bio.terra.workspace.common.model.WorkspaceStage;
@@ -24,7 +23,7 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
@@ -44,7 +43,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private DataReferenceService dataReferenceService;
   @Autowired private JobService jobService;
   @Autowired private CloudResourceManagerCow resourceManager;
-  @Autowired private SpendProfileConfiguration spendConfig;
+  @Autowired private SpendConnectedTestUtils spendUtils;
 
   @MockBean private DataRepoService dataRepoService;
 
@@ -58,10 +57,6 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
           .email("fake@email.com")
           .subjectId("fakeID123");
 
-  /** A SpendProfileId in the spend profile service with no billing account associated. */
-  private static final SpendProfileId NO_BILLING_ACCOUNT =
-      SpendProfileId.create("no-billing-account");
-
   @BeforeEach
   public void setup() {
     doReturn(true).when(dataRepoService).snapshotExists(any(), any(), any());
@@ -69,11 +64,6 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     Mockito.when(
             mockSamService.isAuthorized(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
         .thenReturn(true);
-  }
-
-  /** Retrieve a {@link SpendProfileId} that can be used on workspaces. */
-  private SpendProfileId defaultSpendId() {
-    return SpendProfileId.create(spendConfig.getSpendProfiles().get(0).getId());
   }
 
   @Test
@@ -141,6 +131,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void testHandlesSamError() {
     String errorMsg = "fake SAM error message";
 
+    Mockito.reset(mockSamService);
     doThrow(new SamApiException(errorMsg))
         .when(mockSamService)
         .createWorkspaceWithDefaults(any(), any());
@@ -206,7 +197,9 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void deleteWorkspaceWithGoogleContext() throws Exception {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(defaultSpendId().id()),
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .spendProfile(spendUtils.defaultSpendId().id()),
         WorkspaceStage.RAWLS_WORKSPACE,
         USER_REQUEST);
 
@@ -230,7 +223,9 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void createGetDeleteGoogleContext() {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(defaultSpendId().id()),
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .spendProfile(spendUtils.defaultSpendId().id()),
         WorkspaceStage.RAWLS_WORKSPACE,
         USER_REQUEST);
 
@@ -265,7 +260,9 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void createGoogleContextSpendLinkingUnauthorizedThrows() {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(defaultSpendId().id()),
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .spendProfile(spendUtils.defaultSpendId().id()),
         WorkspaceStage.RAWLS_WORKSPACE,
         USER_REQUEST);
 
@@ -285,7 +282,9 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void createGoogleContextSpendWithoutBillingAccountThrows() {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(NO_BILLING_ACCOUNT.id()),
+        new CreateWorkspaceRequestBody()
+            .id(workspaceId)
+            .spendProfile(spendUtils.noBillingAccount().id()),
         WorkspaceStage.RAWLS_WORKSPACE,
         USER_REQUEST);
 
