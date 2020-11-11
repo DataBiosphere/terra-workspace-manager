@@ -110,14 +110,14 @@ public class WorkspaceService {
   @Traced
   public String createGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
-    String rawSpendProfileId = workspaceDao.getWorkspace(workspaceId).getSpendProfile();
-    if (rawSpendProfileId == null) {
+    Optional<SpendProfileId> spendProfileId =
+        workspaceDao.getWorkspace(workspaceId).spendProfileId();
+    if (spendProfileId.isEmpty()) {
       throw new MissingSpendProfileException(workspaceId);
     }
-    SpendProfileId spendProfileId = SpendProfileId.create(rawSpendProfileId);
-    SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId, userReq);
+    SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId.get(), userReq);
     if (spendProfile.billingAccountId().isEmpty()) {
-      throw new NoBillingAccountException(spendProfileId);
+      throw new NoBillingAccountException(spendProfileId.get());
     }
 
     String jobId = UUID.randomUUID().toString();

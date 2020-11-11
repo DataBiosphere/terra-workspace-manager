@@ -21,10 +21,10 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import java.util.Optional;
 import java.util.UUID;
@@ -181,9 +181,8 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void deleteWorkspaceWithGoogleContext() throws Exception {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        new CreateWorkspaceRequestBody()
-            .id(workspaceId)
-            .spendProfile(spendUtils.defaultSpendId().id()),
+        workspaceId,
+        Optional.of(spendUtils.defaultSpendId()),
         WorkspaceStage.RAWLS_WORKSPACE,
         USER_REQUEST);
 
@@ -207,9 +206,8 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void createGetDeleteGoogleContext() {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        new CreateWorkspaceRequestBody()
-            .id(workspaceId)
-            .spendProfile(spendUtils.defaultSpendId().id()),
+        workspaceId,
+        Optional.of(spendUtils.defaultSpendId()),
         WorkspaceStage.RAWLS_WORKSPACE,
         USER_REQUEST);
 
@@ -230,8 +228,10 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void createGoogleContextNoSpendProfileIdThrows() {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
+        workspaceId,
+
         // Don't specify a spend profile on the created worksapce.
-        new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(null),
+        Optional.empty(),
         WorkspaceStage.RAWLS_WORKSPACE,
         USER_REQUEST);
 
@@ -244,9 +244,8 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void createGoogleContextSpendLinkingUnauthorizedThrows() {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        new CreateWorkspaceRequestBody()
-            .id(workspaceId)
-            .spendProfile(spendUtils.defaultSpendId().id()),
+        workspaceId,
+        Optional.of(spendUtils.defaultSpendId()),
         WorkspaceStage.RAWLS_WORKSPACE,
         USER_REQUEST);
 
@@ -266,9 +265,8 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void createGoogleContextSpendWithoutBillingAccountThrows() {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        new CreateWorkspaceRequestBody()
-            .id(workspaceId)
-            .spendProfile(spendUtils.noBillingAccount().id()),
+        workspaceId,
+        Optional.of(spendUtils.noBillingAccount()),
         WorkspaceStage.RAWLS_WORKSPACE,
         USER_REQUEST);
 
