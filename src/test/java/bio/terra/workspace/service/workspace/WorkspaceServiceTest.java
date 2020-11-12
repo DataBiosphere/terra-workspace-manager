@@ -47,9 +47,13 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
           .email("fake@email.com")
           .subjectId("fakeID123");
 
+  /** A unique ID generated for each test to manage concurrent flights. */
+  private String operationId;
+
   @BeforeEach
   public void setup() {
     doReturn(true).when(dataRepoService).snapshotExists(any(), any(), any());
+    operationId = UUID.randomUUID().toString();
   }
 
   @Test
@@ -63,7 +67,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void testGetExistingWorkspace() {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
+        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, operationId, USER_REQUEST);
 
     assertEquals(
         workspaceId, workspaceService.getWorkspace(workspaceId, USER_REQUEST).workspaceId());
@@ -73,7 +77,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void testWorkspaceStagePersists() {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        workspaceId, Optional.empty(), WorkspaceStage.MC_WORKSPACE, USER_REQUEST);
+        workspaceId, Optional.empty(), WorkspaceStage.MC_WORKSPACE, operationId, USER_REQUEST);
 
     Workspace createdWorkspace = workspaceService.getWorkspace(workspaceId, USER_REQUEST);
     assertEquals(workspaceId, createdWorkspace.workspaceId());
@@ -84,13 +88,70 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void duplicateWorkspaceRejected() {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
+        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, operationId, USER_REQUEST);
 
+    // Note that the two calls use different operationIDs, making them logically distinct
+    // operations.
     assertThrows(
         DuplicateWorkspaceException.class,
         () ->
             workspaceService.createWorkspace(
-                workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST));
+                workspaceId,
+                Optional.empty(),
+                WorkspaceStage.RAWLS_WORKSPACE,
+                UUID.randomUUID().toString(),
+                USER_REQUEST));
+  }
+
+  @Test
+  public void duplicateWorkspaceRequestOk() {
+    UUID workspaceId = UUID.randomUUID();
+    UUID returnedId =
+        workspaceService.createWorkspace(
+            workspaceId,
+            Optional.empty(),
+            WorkspaceStage.RAWLS_WORKSPACE,
+            operationId,
+            USER_REQUEST);
+    UUID duplicateReturnedId =
+        workspaceService.createWorkspace(
+            workspaceId,
+            Optional.empty(),
+            WorkspaceStage.RAWLS_WORKSPACE,
+            operationId,
+            USER_REQUEST);
+    assertEquals(returnedId, duplicateReturnedId);
+    assertEquals(returnedId, workspaceId);
+  }
+
+  @Test
+  public void duplicateOperationSharesFailureResponse() {
+    String errorMsg = "fake SAM error message";
+    doThrow(new SamApiException(errorMsg))
+        .when(mockSamService)
+        .createWorkspaceWithDefaults(any(), any());
+
+    UUID workspaceId = UUID.randomUUID();
+    assertThrows(
+        SamApiException.class,
+        () ->
+            workspaceService.createWorkspace(
+                workspaceId,
+                Optional.empty(),
+                WorkspaceStage.RAWLS_WORKSPACE,
+                operationId,
+                USER_REQUEST));
+    // This call shares the above operation ID, and so should return the same SamApiException
+    // instead of a more generic internal Stairway exception.
+    assertThrows(
+        SamApiException.class,
+        () ->
+            workspaceService.createWorkspace(
+                workspaceId,
+                Optional.empty(),
+                WorkspaceStage.RAWLS_WORKSPACE,
+                operationId,
+                USER_REQUEST));
   }
 
   @Test
@@ -98,7 +159,11 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     UUID workspaceId = UUID.randomUUID();
     Optional<SpendProfileId> spendProfileId = Optional.of(SpendProfileId.create("foo"));
     workspaceService.createWorkspace(
-        workspaceId, spendProfileId, WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
+        workspaceId,
+        spendProfileId,
+        WorkspaceStage.RAWLS_WORKSPACE,
+        UUID.randomUUID().toString(),
+        USER_REQUEST);
 
     Workspace createdWorkspace = workspaceService.getWorkspace(workspaceId, USER_REQUEST);
     assertEquals(workspaceId, createdWorkspace.workspaceId());
@@ -119,7 +184,11 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
             SamApiException.class,
             () ->
                 workspaceService.createWorkspace(
-                    workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST));
+                    workspaceId,
+                    Optional.empty(),
+                    WorkspaceStage.RAWLS_WORKSPACE,
+                    UUID.randomUUID().toString(),
+                    USER_REQUEST));
     assertEquals(errorMsg, exception.getMessage());
   }
 
@@ -127,7 +196,11 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void createAndDeleteWorkspace() {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
+        workspaceId,
+        Optional.empty(),
+        WorkspaceStage.RAWLS_WORKSPACE,
+        UUID.randomUUID().toString(),
+        USER_REQUEST);
 
     workspaceService.deleteWorkspace(workspaceId, USER_REQUEST);
     assertThrows(
@@ -140,7 +213,11 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     // First, create a workspace.
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
+        workspaceId,
+        Optional.empty(),
+        WorkspaceStage.RAWLS_WORKSPACE,
+        UUID.randomUUID().toString(),
+        USER_REQUEST);
 
     // Next, add a data reference to that workspace.
     DataRepoSnapshot reference =
@@ -169,7 +246,11 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void deleteWorkspaceWithGoogleContext() throws Exception {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
+        workspaceId,
+        Optional.empty(),
+        WorkspaceStage.RAWLS_WORKSPACE,
+        UUID.randomUUID().toString(),
+        USER_REQUEST);
 
     String jobId = workspaceService.createGoogleContext(workspaceId, USER_REQUEST);
     jobService.waitForJob(jobId);
@@ -191,7 +272,11 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void createGetDeleteGoogleContext() {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
-        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
+        workspaceId,
+        Optional.empty(),
+        WorkspaceStage.RAWLS_WORKSPACE,
+        UUID.randomUUID().toString(),
+        USER_REQUEST);
 
     String jobId = workspaceService.createGoogleContext(workspaceId, USER_REQUEST);
     jobService.waitForJob(jobId);

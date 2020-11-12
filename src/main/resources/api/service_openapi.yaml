@@ -399,6 +399,9 @@ components:
           items:
             type: string
             format: uuid
+        operationId:
+          description: Optional ID uniquely identifying this operation for concurrency control.
+          type: string
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
 

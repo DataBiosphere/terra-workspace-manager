@@ -8,6 +8,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.job.exception.DuplicateFlightIdException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.flight.*;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -42,17 +43,13 @@ public class WorkspaceService {
       UUID workspaceId,
       Optional<SpendProfileId> spendProfileId,
       WorkspaceStage workspaceStage,
+      String operationId,
       AuthenticatedUserRequest userReq) {
 
     String description = "Create workspace " + workspaceId.toString();
     JobBuilder createJob =
         jobService
-            .newJob(
-                description,
-                UUID.randomUUID().toString(), // JobId does not need persistence for sync calls.
-                WorkspaceCreateFlight.class,
-                null,
-                userReq)
+            .newJob(description, operationId, WorkspaceCreateFlight.class, null, userReq)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
     if (spendProfileId.isPresent()) {
       createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfileId.get().id());
@@ -60,7 +57,15 @@ public class WorkspaceService {
 
     createJob.addParameter(WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceStage);
 
-    return createJob.submitAndWait(UUID.class);
+    try {
+      return createJob.submitAndWait(UUID.class);
+    } catch (DuplicateFlightIdException e) {
+      // Indicates another request with the same operation ID already exists. Rather than running
+      // multiple concurrent create flights, all flights after the first will wait for and return
+      // the same result.
+      jobService.waitForJob(operationId);
+      return jobService.retrieveJobResult(operationId, UUID.class, userReq).getResult();
+    }
   }
 
   /** Retrieves an existing workspace by ID */

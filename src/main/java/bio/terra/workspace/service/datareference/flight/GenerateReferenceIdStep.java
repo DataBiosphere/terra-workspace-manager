@@ -10,9 +10,9 @@ import java.util.UUID;
 /**
  * Stairway step to generate a unique id for a data reference.
  *
- * Stairway's working map is only persisted at step boundaries. By generating an ID in its own step,
- * we ensure that both do and undo methods of future steps will always have access to the same ID.
- * In general, generating and storing IDs this way is a best practice in Stairway flights.
+ * <p>Stairway's working map is only persisted at step boundaries. By generating an ID in its own
+ * step, we ensure that both do and undo methods of future steps will always have access to the same
+ * ID. In general, generating and storing IDs this way is a best practice in Stairway flights.
  */
 public class GenerateReferenceIdStep implements Step {
 

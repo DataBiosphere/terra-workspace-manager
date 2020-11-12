@@ -18,6 +18,7 @@ import bio.terra.workspace.common.utils.MdcHook;
 import bio.terra.workspace.generated.model.JobModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.job.exception.DuplicateFlightIdException;
 import bio.terra.workspace.service.job.exception.InternalStairwayException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.job.exception.JobNotCompleteException;
@@ -27,6 +28,7 @@ import bio.terra.workspace.service.job.exception.JobUnauthorizedException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -118,6 +120,16 @@ public class JobService {
       Class<? extends Flight> flightClass, FlightMap parameterMap, String jobId) {
     try {
       stairway.submit(jobId, flightClass, parameterMap);
+    } catch (DatabaseOperationException dbEx) {
+      String sqlState = (((SQLException) dbEx.getCause()).getSQLState());
+      // sqlState 23505 indicates a unique key violation, which in this case indicates a duplicate
+      // flightId. See https://www.postgresql.org/docs/10/errcodes-appendix.html for postgres
+      // error codes.
+      if (sqlState.equals("23505")) {
+        throw new DuplicateFlightIdException("Flight ID already exists in Stairway: " + jobId);
+      } else {
+        throw new InternalStairwayException(dbEx);
+      }
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
