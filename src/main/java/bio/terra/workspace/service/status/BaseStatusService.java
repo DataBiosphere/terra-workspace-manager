@@ -1,5 +1,6 @@
-package bio.terra.workspace.common.utils;
+package bio.terra.workspace.service.status;
 
+import bio.terra.workspace.common.utils.StatusSubsystem;
 import bio.terra.workspace.generated.model.SystemStatus;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import java.util.Date;
@@ -17,7 +18,7 @@ import org.springframework.scheduling.annotation.Scheduled;
  Specific services should extend this class with Component objects that register the appropriate
  subsystems.
 */
-public class BaseStatusService {
+public class BaseStatusService implements StatusService {
 
   private ConcurrentHashMap<String, StatusSubsystem> subsystems;
   private long lastUpdatedTimestampMillis;
@@ -72,6 +73,7 @@ public class BaseStatusService {
     currentStatus.ok(systemOk.get()).setSystems(tmpSubsystemStatusMap);
   }
 
+  @Override
   public SystemStatus getCurrentStatus() {
     if (System.currentTimeMillis() - lastUpdatedTimestampMillis > staleThresholdMillis) {
       Date lastCheckDate = new Date(lastUpdatedTimestampMillis);

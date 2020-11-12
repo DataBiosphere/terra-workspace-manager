@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.status;
 
 import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
-import bio.terra.workspace.common.utils.BaseStatusService;
 import bio.terra.workspace.common.utils.StatusSubsystem;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.datarepo.DataRepoService;
@@ -12,16 +11,18 @@ import java.util.Map;
 import java.util.function.Supplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-public class WorkspaceManagerStatusService extends BaseStatusService {
+@Profile("!test")
+public class ScheduledStatusService extends BaseStatusService {
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   @Autowired
-  public WorkspaceManagerStatusService(
+  public ScheduledStatusService(
       DataRepoService dataRepoService,
       DataRepoConfiguration dataRepoConfiguration,
       NamedParameterJdbcTemplate jdbcTemplate,

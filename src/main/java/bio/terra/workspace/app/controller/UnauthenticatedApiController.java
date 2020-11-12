@@ -4,7 +4,7 @@ import bio.terra.workspace.app.configuration.external.VersionConfiguration;
 import bio.terra.workspace.generated.controller.UnauthenticatedApi;
 import bio.terra.workspace.generated.model.SystemStatus;
 import bio.terra.workspace.generated.model.SystemVersion;
-import bio.terra.workspace.service.status.WorkspaceManagerStatusService;
+import bio.terra.workspace.service.status.StatusService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,12 +13,12 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class UnauthenticatedApiController implements UnauthenticatedApi {
 
-  private WorkspaceManagerStatusService statusService;
+  private StatusService statusService;
   private SystemVersion currentVersion;
 
   @Autowired
   public UnauthenticatedApiController(
-      WorkspaceManagerStatusService statusService, VersionConfiguration versionConfiguration) {
+      StatusService statusService, VersionConfiguration versionConfiguration) {
     this.statusService = statusService;
 
     this.currentVersion =

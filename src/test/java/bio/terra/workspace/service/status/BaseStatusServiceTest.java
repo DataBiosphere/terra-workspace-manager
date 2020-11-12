@@ -1,9 +1,9 @@
-package bio.terra.workspace.common;
+package bio.terra.workspace.service.status;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.workspace.common.utils.BaseStatusService;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.utils.StatusSubsystem;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import java.util.ArrayList;
