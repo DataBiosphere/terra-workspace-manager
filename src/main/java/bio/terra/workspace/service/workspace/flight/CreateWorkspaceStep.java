@@ -12,17 +12,11 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import java.util.Optional;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 public class CreateWorkspaceStep implements Step {
 
   private WorkspaceDao workspaceDao;
-
-  private static final String CREATE_WORKSPACE_COMPLETED_KEY = "createWorkspaceStepCompleted";
-
-  private static Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
 
   public CreateWorkspaceStep(WorkspaceDao workspaceDao) {
     this.workspaceDao = workspaceDao;
@@ -33,7 +27,6 @@ public class CreateWorkspaceStep implements Step {
     FlightMap inputMap = flightContext.getInputParameters();
 
     UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    FlightMap workingMap = flightContext.getWorkingMap();
 
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(inputMap.get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, String.class))
@@ -48,7 +41,6 @@ public class CreateWorkspaceStep implements Step {
             .build();
 
     workspaceDao.createWorkspace(workspaceToCreate);
-    workingMap.put(CREATE_WORKSPACE_COMPLETED_KEY, true);
 
     FlightUtils.setResponse(flightContext, workspaceId, HttpStatus.OK);
 
@@ -58,16 +50,9 @@ public class CreateWorkspaceStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) {
     FlightMap inputMap = flightContext.getInputParameters();
-    FlightMap workingMap = flightContext.getWorkingMap();
     UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    if (workingMap.get(CREATE_WORKSPACE_COMPLETED_KEY, Boolean.class) != null) {
-      workspaceDao.deleteWorkspace(workspaceId);
-    } else {
-      logger.warn(
-          "Undoing a CreateWorkspaceStep that was not fully completed. This may have created an orphaned workspace "
-              + workspaceId.toString()
-              + " in WM's database.");
-    }
+    // Ignore return value, as we don't care whether a workspace was deleted or just not found.
+    workspaceDao.deleteWorkspace(workspaceId);
     return StepResult.getStepResultSuccess();
   }
 }
