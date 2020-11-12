@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
+/** WorkspaceManager specific implementation of BaseStatusService for scheduled status checking. */
 @Component
 @Profile("!test")
 public class ScheduledStatusService extends BaseStatusService {
