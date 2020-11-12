@@ -6,6 +6,7 @@ import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
+import bio.terra.workspace.service.iam.exception.SamResourceNotFoundException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -63,6 +64,11 @@ public class SamService {
     try {
       resourceApi.deleteResource(SamUtils.SAM_WORKSPACE_RESOURCE, id.toString());
     } catch (ApiException apiException) {
+      // Throw a different exception for 404 responses, as stairway steps will often ignore this but
+      // still care about other exceptions.
+      if (apiException.getCode() == 404) {
+        throw new SamResourceNotFoundException(apiException);
+      }
       throw new SamApiException(apiException);
     }
   }
