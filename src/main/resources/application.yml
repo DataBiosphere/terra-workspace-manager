@@ -58,7 +58,7 @@ workspace:
     username: ${env.db.stairway.user}
 
   status-check:
-    frequency-ms: 60000
+    cron: "0 * * * * *" # Every minute.
     staleness-threshold-ms: 600000
 
   tracing:

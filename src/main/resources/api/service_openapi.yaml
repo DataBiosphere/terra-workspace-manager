@@ -252,6 +252,7 @@ components:
       description: The number of items to skip before starting to collect the result set.
       schema:
         type: integer
+        minimum: 0
         default: 0
 
     Limit:
@@ -260,6 +261,7 @@ components:
       description: The numbers of items to return. Default 10
       schema:
         type: integer
+        minimum: 1
         default: 10
 
     ReferenceId:
