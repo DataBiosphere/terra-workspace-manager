@@ -5,6 +5,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
@@ -33,15 +34,20 @@ public class CreateDataReferenceStep implements Step {
     CreateDataReferenceRequestBody body =
         inputMap.get(JobMapKeys.REQUEST.getKeyName(), CreateDataReferenceRequestBody.class);
 
-    dataReferenceDao.createDataReference(
-        referenceId,
-        workspaceId,
-        body.getName(),
-        body.getResourceId(),
-        body.getCredentialId(),
-        body.getCloningInstructions(),
-        body.getReferenceType(),
-        reference);
+    try {
+      dataReferenceDao.createDataReference(
+          referenceId,
+          workspaceId,
+          body.getName(),
+          body.getResourceId(),
+          body.getCredentialId(),
+          body.getCloningInstructions(),
+          body.getReferenceType(),
+          reference);
+    } catch (DuplicateDataReferenceException e) {
+      // Stairway can call the same step multiple times as part of a flight, so finding a duplicate
+      // reference here is fine.
+    }
 
     FlightUtils.setResponse(flightContext, referenceId, HttpStatus.OK);
 
