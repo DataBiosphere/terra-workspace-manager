@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
-import bio.terra.workspace.common.model.Workspace;
-import bio.terra.workspace.common.model.WorkspaceStage;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;

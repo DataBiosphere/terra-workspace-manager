@@ -8,8 +8,8 @@ import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfigura
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
-import bio.terra.workspace.common.model.Workspace;
-import bio.terra.workspace.common.model.WorkspaceStage;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import java.util.Map;
