@@ -13,7 +13,6 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
-/** Stairway step to persist a data reference in WM's database. */
 public class CreateDataReferenceStep implements Step {
 
   private DataReferenceDao dataReferenceDao;
@@ -63,7 +62,6 @@ public class CreateDataReferenceStep implements Step {
       UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.class);
       dataReferenceDao.deleteDataReference(workspaceId, referenceId);
     }
-
     return StepResult.getStepResultSuccess();
   }
 }
