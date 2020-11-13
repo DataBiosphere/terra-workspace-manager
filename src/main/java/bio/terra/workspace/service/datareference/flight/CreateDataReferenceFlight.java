@@ -13,7 +13,6 @@ public class CreateDataReferenceFlight extends Flight {
     ApplicationContext appContext = (ApplicationContext) applicationContext;
     DataReferenceDao dataReferenceDao = (DataReferenceDao) appContext.getBean("dataReferenceDao");
 
-    addStep(new GenerateReferenceIdStep());
     addStep(new CreateDataReferenceStep(dataReferenceDao));
   }
 }
