@@ -1,13 +1,12 @@
 package bio.terra.workspace.service.datareference.model;
 
-import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import com.google.auto.value.AutoValue;
 import java.util.UUID;
 
 /**
  * Internal representation of an uncontrolled data reference.
  *
- * "Uncontrolled" here means that WM does not own the lifecycle of the underlying data.
+ * <p>"Uncontrolled" here means that WM does not own the lifecycle of the underlying data.
  */
 @AutoValue
 public abstract class DataReference {
@@ -18,8 +17,8 @@ public abstract class DataReference {
   /** ID of the reference itself. */
   public abstract UUID referenceId();
 
-  /** Name of the reference. Names are unique per workspace, per reference type. */
-  public abstract  String name();
+  /** Name of the reference. Names are unique per workspace, per reference type and user-provided */
+  public abstract String name();
 
   /** Type of this data reference. */
   public abstract DataReferenceType referenceType();
@@ -30,4 +29,24 @@ public abstract class DataReference {
   /** The actual object being referenced. */
   public abstract ReferenceObject referenceObject();
 
+  public static Builder builder() {
+    return new AutoValue_DataReference.Builder();
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder {
+    public abstract DataReference.Builder workspaceId(UUID value);
+
+    public abstract DataReference.Builder referenceId(UUID value);
+
+    public abstract DataReference.Builder name(String value);
+
+    public abstract DataReference.Builder referenceType(DataReferenceType value);
+
+    public abstract DataReference.Builder cloningInstructions(CloningInstructions value);
+
+    public abstract DataReference.Builder referenceObject(ReferenceObject value);
+
+    public abstract DataReference build();
+  }
 }

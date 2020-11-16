@@ -6,10 +6,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Representation of a reference to a Data Repo snapshot.
+/**
+ * Representation of a reference to a Data Repo snapshot.
  *
- * A snapshot is uniquely identified by two fields:
- * instanceName (the name of the data repo instance this reference is stored in. The list of allowed names is a configuration property)
+ * <p>A snapshot is uniquely identified by two fields: instanceName (the name of the data repo
+ * instance this reference is stored in. The list of allowed names is a configuration property)
  * snapshot (the ID of the snapshot inside Data Repo)
  */
 public class SnapshotReference implements ReferenceObject {
@@ -44,7 +45,8 @@ public class SnapshotReference implements ReferenceObject {
   @Override
   public void setProperty(String key, String value) {
     if (!getPropertyKeys().contains(key)) {
-      throw new InvalidDataReferenceException("Invalid field specified for SnapshotReference: " + key);
+      throw new InvalidDataReferenceException(
+          "Invalid field specified for SnapshotReference: " + key);
     }
     propertyMap.put(key, value);
   }

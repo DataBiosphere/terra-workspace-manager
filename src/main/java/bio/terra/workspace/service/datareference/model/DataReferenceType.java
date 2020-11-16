@@ -1,12 +1,10 @@
 package bio.terra.workspace.service.datareference.model;
 
-import bio.terra.workspace.generated.model.WorkspaceStageModel;
+import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.EnumBiMap;
 
-/**
- * Internal representation of data reference types.
- */
+/** Internal representation of data reference types. */
 public enum DataReferenceType {
   DATA_REPO_SNAPSHOT;
 

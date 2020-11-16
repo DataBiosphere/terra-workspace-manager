@@ -1,11 +1,10 @@
 package bio.terra.workspace.service.datareference.model;
 
+import bio.terra.workspace.generated.model.CloningInstructionsEnum;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.EnumBiMap;
 
-/**
- * Internal representation of data reference types.
- */
+/** Internal representation of data reference types. */
 public enum CloningInstructions {
   COPY_NOTHING,
   COPY_DEFINITION,
@@ -16,10 +15,10 @@ public enum CloningInstructions {
       EnumBiMap.create(CloningInstructions.class, CloningInstructionsEnum.class);
 
   static {
-    instructionMap.put(CloningInstructions.COPY_NOTHING, CloningInstructionsEnum.COPY_NOTHING);
-    instructionMap.put(CloningInstructions.COPY_DEFINITION, CloningInstructionsEnum.COPY_DEFINITION);
-    instructionMap.put(CloningInstructions.COPY_RESOURCE, CloningInstructionsEnum.COPY_RESOURCE);
-    instructionMap.put(CloningInstructions.COPY_REFERENCE, CloningInstructionsEnum.COPY_REFERENCE);
+    instructionMap.put(CloningInstructions.COPY_NOTHING, CloningInstructionsEnum.NOTHING);
+    instructionMap.put(CloningInstructions.COPY_DEFINITION, CloningInstructionsEnum.DEFINITION);
+    instructionMap.put(CloningInstructions.COPY_RESOURCE, CloningInstructionsEnum.RESOURCE);
+    instructionMap.put(CloningInstructions.COPY_REFERENCE, CloningInstructionsEnum.REFERENCE);
   }
 
   public static CloningInstructions fromApiModel(CloningInstructionsEnum modelEnum) {
