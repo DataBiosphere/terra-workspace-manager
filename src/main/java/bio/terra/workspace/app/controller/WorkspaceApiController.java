@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.common.model.Workspace;
 import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
@@ -15,7 +16,9 @@ import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -63,16 +66,27 @@ public class WorkspaceApiController implements WorkspaceApi {
     WorkspaceStageModel requestStage = body.getStage();
     requestStage = (requestStage == null ? requestStage.RAWLS_WORKSPACE : requestStage);
     WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
-    return new ResponseEntity<>(
-        workspaceService.createWorkspace(body, internalStage, userReq), HttpStatus.OK);
+    Optional<SpendProfileId> spendProfileId =
+        Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::create);
+
+    UUID createdId =
+        workspaceService.createWorkspace(body.getId(), spendProfileId, internalStage, userReq);
+    CreatedWorkspace responseWorkspace = new CreatedWorkspace().id(createdId);
+    return new ResponseEntity<>(responseWorkspace, HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("id") UUID id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    WorkspaceDescription desc = workspaceService.getWorkspace(id, userReq);
+    Workspace workspace = workspaceService.getWorkspace(id, userReq);
 
-    return new ResponseEntity<WorkspaceDescription>(desc, HttpStatus.OK);
+    WorkspaceDescription desc =
+        new WorkspaceDescription()
+            .id(workspace.workspaceId())
+            .spendProfile(workspace.spendProfileId().map(SpendProfileId::id).orElse(null))
+            .stage(workspace.workspaceStage().toApiModel());
+
+    return new ResponseEntity<>(desc, HttpStatus.OK);
   }
 
   @Override

@@ -1,3 +1,13 @@
 workspace:
   # workspace-dev folder id to match dev service account used in testing.
   google.folder-id: 7275817190
+  spend:
+    spend-profiles:
+      -
+        # TODO(PF-186): Create a meaningful spend profile id with a resource in Sam.
+        id: foo
+        # The billing account workspace-dev has access to.
+        billing-account-id: 01A82E-CA8A14-367457
+      -
+        # A special spend profile with no billing account associated with it.
+        id: no-billing-account

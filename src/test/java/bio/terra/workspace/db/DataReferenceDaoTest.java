@@ -12,6 +12,7 @@ import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfigura
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
+import bio.terra.workspace.common.model.Workspace;
 import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.generated.model.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
@@ -21,7 +22,6 @@ import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,7 +65,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
   @Test
   public void verifyCreatedDataReferenceExists() {
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(defaultWorkspace());
 
     dataReferenceDao.createDataReference(
         referenceId,
@@ -101,7 +101,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
   @Test
   public void verifyCreateDuplicateNameFails() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(defaultWorkspace());
 
     dataReferenceDao.createDataReference(
         referenceId,
@@ -130,7 +130,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
   @Test
   public void verifyGetDataReferenceByName() {
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(defaultWorkspace());
 
     dataReferenceDao.createDataReference(
         referenceId,
@@ -149,7 +149,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
   @Test
   public void verifyGetDataReference() {
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(defaultWorkspace());
 
     dataReferenceDao.createDataReference(
         referenceId,
@@ -172,14 +172,18 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
   @Test
   public void verifyGetDataReferenceNotInWorkspaceNotFound() {
-    UUID decoyWorkspaceId = UUID.randomUUID();
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
-    workspaceDao.createWorkspace(
-        decoyWorkspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(defaultWorkspace());
+
+    Workspace decoyWorkspace =
+        Workspace.builder()
+            .workspaceId(UUID.randomUUID())
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
+    workspaceDao.createWorkspace(decoyWorkspace);
 
     dataReferenceDao.createDataReference(
         referenceId,
-        decoyWorkspaceId,
+        decoyWorkspace.workspaceId(),
         name,
         null,
         credentialId,
@@ -196,7 +200,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
   @Test
   public void verifyDeleteDataReference() {
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(defaultWorkspace());
 
     dataReferenceDao.createDataReference(
         referenceId,
@@ -221,7 +225,8 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
   @Test
   public void enumerateWorkspaceReferences() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(defaultWorkspace());
+
     // Create two references in the same workspace.
     dataReferenceDao.createDataReference(
         referenceId,
@@ -259,7 +264,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
   @Test
   public void enumerateEmptyReferenceList() throws Exception {
-    workspaceDao.createWorkspace(workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE);
+    workspaceDao.createWorkspace(defaultWorkspace());
 
     DataReferenceList result = dataReferenceDao.enumerateDataReferences(workspaceId, name, 0, 10);
     assertThat(result.getResources(), empty());
@@ -271,6 +276,13 @@ public class DataReferenceDaoTest extends BaseUnitTest {
     } catch (JsonProcessingException e) {
       throw new InvalidDataReferenceException("Invalid data reference");
     }
+  }
+
+  private Workspace defaultWorkspace() {
+    return Workspace.builder()
+        .workspaceId(workspaceId)
+        .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+        .build();
   }
 
   // TODO: currently no tests enumerating controlled data resources, as we have no way to create

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace.flight;
 
+import bio.terra.cloudres.google.billing.CloudBillingClientCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.stairway.*;
@@ -19,6 +20,7 @@ public class CreateGoogleContextFlight extends Flight {
         appContext.getBean(GoogleWorkspaceConfiguration.class);
     CloudResourceManagerCow resourceManager = appContext.getBean(CloudResourceManagerCow.class);
     ServiceUsageCow serviceUsage = appContext.getBean(ServiceUsageCow.class);
+    CloudBillingClientCow billingClient = appContext.getBean(CloudBillingClientCow.class);
     WorkspaceDao workspaceDao = appContext.getBean(WorkspaceDao.class);
     TransactionTemplate transactionTemplate = appContext.getBean(TransactionTemplate.class);
 
@@ -31,6 +33,7 @@ public class CreateGoogleContextFlight extends Flight {
     addStep(
         new CreateProjectStep(resourceManager, serviceUsage, googleWorkspaceConfiguration),
         retryRule);
+    addStep(new SetProjectBillingStep(billingClient));
     addStep(new StoreGoogleContextStep(workspaceDao, transactionTemplate), retryRule);
   }
 }
