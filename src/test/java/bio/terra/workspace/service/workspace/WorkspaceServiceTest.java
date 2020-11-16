@@ -296,7 +296,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void createGoogleContextSpendWithoutBillingAccountThrows() {
     WorkspaceRequest request =
         WorkspaceRequest.defaultRequestBuilder(UUID.randomUUID())
-            .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
+            .spendProfileId(Optional.of(spendUtils.noBillingAccount()))
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
