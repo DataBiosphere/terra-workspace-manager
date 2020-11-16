@@ -23,7 +23,7 @@ public abstract class Workspace {
    *
    * <p>In the future, this will correlate to a spend profile in the Spend Profile Manager. For now,
    * it's just a unique identifier. To associate a GCP project with a workspace, the workspace must
-   * have a spend profil@e. They are not needed otherwise.
+   * have a spend profile. They are not needed otherwise.
    */
   public abstract Optional<SpendProfileId> spendProfileId();
 
