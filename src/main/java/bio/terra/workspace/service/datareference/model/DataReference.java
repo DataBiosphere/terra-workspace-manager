@@ -27,7 +27,7 @@ public abstract class DataReference {
   /** Instructions for how to clone this reference (if at all). */
   public abstract CloningInstructions cloningInstructions();
 
-  /** The actual object being referenced. TODO: this type should be revisited in the future. */
-  public abstract SnapshotReference snapshotReference();
+  /** The actual object being referenced. */
+  public abstract ReferenceObject referenceObject();
 
 }
