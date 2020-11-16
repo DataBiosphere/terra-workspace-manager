@@ -5,7 +5,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -54,9 +53,6 @@ public class CreateWorkspaceAuthzStep implements Step {
     } catch (SamResourceNotFoundException ex) {
       // Do nothing if the resource to delete is not found, this may not be the first time undo is
       // called.
-    } catch (SamApiException ex) {
-      // In all other cases, continue raising the exception.
-      throw ex;
     }
     return StepResult.getStepResultSuccess();
   }

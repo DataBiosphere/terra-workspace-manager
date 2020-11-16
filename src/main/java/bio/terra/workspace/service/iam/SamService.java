@@ -59,7 +59,7 @@ public class SamService {
     }
   }
 
-  public void deleteWorkspace(String authToken, UUID id) {
+  public void deleteWorkspace(String authToken, UUID id) throws SamResourceNotFoundException {
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
       resourceApi.deleteResource(SamUtils.SAM_WORKSPACE_RESOURCE, id.toString());

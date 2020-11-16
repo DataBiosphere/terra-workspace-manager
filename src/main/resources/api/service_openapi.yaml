@@ -402,7 +402,12 @@ components:
             type: string
             format: uuid
         operationId:
-          description: Optional ID uniquely identifying this operation for concurrency control.
+          description: |
+            Optional ID used for idempotency. If multiple requests use the same
+            operationId, they will be considered logical duplicates rather than
+            unique requests. Sending different requests with the same operation
+            ID will lead to all but one of the request bodies being ignored.
+            This will be randomly generated if not provided in a request.
           type: string
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'

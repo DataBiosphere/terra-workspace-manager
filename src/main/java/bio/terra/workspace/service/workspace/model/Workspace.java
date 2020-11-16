@@ -1,4 +1,4 @@
-package bio.terra.workspace.common.model;
+package bio.terra.workspace.service.workspace.model;
 
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import com.google.auto.value.AutoValue;
@@ -23,7 +23,7 @@ public abstract class Workspace {
    *
    * <p>In the future, this will correlate to a spend profile in the Spend Profile Manager. For now,
    * it's just a unique identifier. To associate a GCP project with a workspace, the workspace must
-   * have a spend profile. They are not needed otherwise.
+   * have a spend profil@e. They are not needed otherwise.
    */
   public abstract Optional<SpendProfileId> spendProfileId();
 

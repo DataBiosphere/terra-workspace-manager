@@ -1,7 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.workspace.common.model.Workspace;
-import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
@@ -18,6 +16,9 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -72,9 +73,15 @@ public class WorkspaceApiController implements WorkspaceApi {
     String operationId =
         body.getOperationId() != null ? body.getOperationId() : UUID.randomUUID().toString();
 
-    UUID createdId =
-        workspaceService.createWorkspace(
-            body.getId(), spendProfileId, internalStage, operationId, userReq);
+    WorkspaceRequest internalRequest =
+        WorkspaceRequest.builder()
+            .workspaceId(body.getId())
+            .operationId(operationId)
+            .spendProfileId(spendProfileId)
+            .workspaceStage(internalStage)
+            .build();
+    UUID createdId = workspaceService.createWorkspace(internalRequest, userReq);
+
     CreatedWorkspace responseWorkspace = new CreatedWorkspace().id(createdId);
     return new ResponseEntity<>(responseWorkspace, HttpStatus.OK);
   }

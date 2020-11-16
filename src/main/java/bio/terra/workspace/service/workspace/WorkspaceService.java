@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.workspace;
 
-import bio.terra.workspace.common.model.Workspace;
-import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -15,6 +13,8 @@ import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.flight.*;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,23 +49,25 @@ public class WorkspaceService {
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
-  public UUID createWorkspace(
-      UUID workspaceId,
-      Optional<SpendProfileId> spendProfileId,
-      WorkspaceStage workspaceStage,
-      String operationId,
-      AuthenticatedUserRequest userReq) {
+  public UUID createWorkspace(WorkspaceRequest internalRequest, AuthenticatedUserRequest userReq) {
 
-    String description = "Create workspace " + workspaceId.toString();
+    String description = "Create workspace " + internalRequest.workspaceId().toString();
     JobBuilder createJob =
         jobService
-            .newJob(description, operationId, WorkspaceCreateFlight.class, null, userReq)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
-    if (spendProfileId.isPresent()) {
-      createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfileId.get().id());
+            .newJob(
+                description,
+                internalRequest.operationId(),
+                WorkspaceCreateFlight.class,
+                null,
+                userReq)
+            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, internalRequest.workspaceId());
+    if (internalRequest.spendProfileId().isPresent()) {
+      createJob.addParameter(
+          WorkspaceFlightMapKeys.SPEND_PROFILE_ID, internalRequest.spendProfileId().get().id());
     }
 
-    createJob.addParameter(WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceStage);
+    createJob.addParameter(
+        WorkspaceFlightMapKeys.WORKSPACE_STAGE, internalRequest.workspaceStage());
 
     try {
       return createJob.submitAndWait(UUID.class);
@@ -73,8 +75,10 @@ public class WorkspaceService {
       // Indicates another request with the same operation ID already exists. Rather than running
       // multiple concurrent create flights, all flights after the first will wait for and return
       // the same result.
-      jobService.waitForJob(operationId);
-      return jobService.retrieveJobResult(operationId, UUID.class, userReq).getResult();
+      jobService.waitForJob(internalRequest.operationId());
+      return jobService
+          .retrieveJobResult(internalRequest.operationId(), UUID.class, userReq)
+          .getResult();
     }
   }
 
