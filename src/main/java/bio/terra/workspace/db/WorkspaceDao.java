@@ -13,7 +13,6 @@ import com.google.common.annotations.VisibleForTesting;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +59,8 @@ public class WorkspaceDao {
             .addValue("workspace_stage", workspace.workspaceStage().toString());
     try {
       jdbcTemplate.update(sql, params);
-      logger.info(String.format("Inserted record for workspace %s", workspaceId.toString()));
+      logger.info(
+          String.format("Inserted record for workspace %s", workspace.workspaceId().toString()));
     } catch (DuplicateKeyException e) {
       throw new DuplicateWorkspaceException(
           "Workspace " + workspace.workspaceId().toString() + " already exists.", e);
@@ -82,7 +82,8 @@ public class WorkspaceDao {
     if (deleted)
       logger.info(String.format("Deleted record for workspace %s", workspaceId.toString()));
     else
-      logger.info(String.format("Failed to delete record for workspace %s", workspaceId.toString()));
+      logger.info(
+          String.format("Failed to delete record for workspace %s", workspaceId.toString()));
 
     return deleted;
   }
@@ -92,19 +93,20 @@ public class WorkspaceDao {
     String sql = "SELECT * FROM workspace where workspace_id = (:id)";
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id.toString());
     try {
-      WorkspaceDescription result = DataAccessUtils.requiredSingleResult(
-          jdbcTemplate.query(
-              sql,
-              params,
-              (rs, rowNum) -> {
-                return Workspace.builder()
-                    .workspaceId(UUID.fromString(rs.getString("workspace_id")))
-                    .spendProfileId(
-                        Optional.ofNullable(rs.getString("spend_profile"))
-                            .map(SpendProfileId::create))
-                    .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
-                    .build();
-              }));
+      Workspace result =
+          DataAccessUtils.requiredSingleResult(
+              jdbcTemplate.query(
+                  sql,
+                  params,
+                  (rs, rowNum) -> {
+                    return Workspace.builder()
+                        .workspaceId(UUID.fromString(rs.getString("workspace_id")))
+                        .spendProfileId(
+                            Optional.ofNullable(rs.getString("spend_profile"))
+                                .map(SpendProfileId::create))
+                        .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
+                        .build();
+                  }));
       logger.info(String.format("Retrieved workspace record %s", result.toString()));
       return result;
     } catch (EmptyResultDataAccessException e) {

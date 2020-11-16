@@ -93,9 +93,14 @@ public class SamService {
             action);
     if (!isAuthorized)
       throw new SamUnauthorizedException(
-              String.format("User %s is not authorized to %s workspace %s or it does not exist",
-                      userReq.getEmail(), action, workspaceId));
-    else logger.info(String.format("User %s is authorized to %s workspace %s", userReq.getEmail(), action, workspaceId.toString()));
+          String.format(
+              "User %s is not authorized to %s workspace %s or it does not exist",
+              userReq.getEmail(), action, workspaceId));
+    else
+      logger.info(
+          String.format(
+              "User %s is authorized to %s workspace %s",
+              userReq.getEmail(), action, workspaceId.toString()));
   }
 
   public SystemStatusSystems status() {

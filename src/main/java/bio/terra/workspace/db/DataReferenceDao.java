@@ -42,7 +42,6 @@ public class DataReferenceDao {
 
   private Logger logger = LoggerFactory.getLogger(DataReferenceDao.class);
 
-
   public String createDataReference(
       UUID referenceId,
       UUID workspaceId,
@@ -75,7 +74,9 @@ public class DataReferenceDao {
 
     try {
       jdbcTemplate.update(sql, params);
-      logger.info(String.format("Inserted record for data reference %s for workspace %s", referenceId, workspaceId));
+      logger.info(
+          String.format(
+              "Inserted record for data reference %s for workspace %s", referenceId, workspaceId));
       return referenceId.toString();
     } catch (DuplicateKeyException e) {
       throw new DuplicateDataReferenceException(
@@ -93,8 +94,12 @@ public class DataReferenceDao {
             .addValue("reference_id", referenceId.toString());
 
     try {
-      DataReferenceDescription ref = jdbcTemplate.queryForObject(sql, params, new DataReferenceMapper());
-      logger.info(String.format("Retrieved record for data reference by id %s for workspace %s", referenceId, workspaceId));
+      DataReferenceDescription ref =
+          jdbcTemplate.queryForObject(sql, params, new DataReferenceMapper());
+      logger.info(
+          String.format(
+              "Retrieved record for data reference by id %s for workspace %s",
+              referenceId, workspaceId));
       return ref;
     } catch (EmptyResultDataAccessException e) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
@@ -113,8 +118,12 @@ public class DataReferenceDao {
             .addValue("name", name);
 
     try {
-      DataReferenceDescription ref = jdbcTemplate.queryForObject(sql, params, new DataReferenceMapper());
-      logger.info(String.format("Retrieved record for data reference by name %s and reference type %s for workspace %s", name, type, workspaceId));
+      DataReferenceDescription ref =
+          jdbcTemplate.queryForObject(sql, params, new DataReferenceMapper());
+      logger.info(
+          String.format(
+              "Retrieved record for data reference by name %s and reference type %s for workspace %s",
+              name, type, workspaceId));
       return ref;
     } catch (EmptyResultDataAccessException e) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
@@ -149,9 +158,15 @@ public class DataReferenceDao {
     Boolean deleted = rowsAffected > 0;
 
     if (deleted)
-      logger.info(String.format("Deleted record for data reference %s in workspace %s", referenceId.toString(), workspaceId.toString()));
+      logger.info(
+          String.format(
+              "Deleted record for data reference %s in workspace %s",
+              referenceId.toString(), workspaceId.toString()));
     else
-      logger.info(String.format("Failed to delete record for data reference %s in workspace %s", referenceId.toString(), workspaceId.toString()));
+      logger.info(
+          String.format(
+              "Failed to delete record for data reference %s in workspace %s",
+              referenceId.toString(), workspaceId.toString()));
 
     return deleted;
   }
@@ -215,7 +230,10 @@ public class DataReferenceDao {
             .referenceType(ReferenceTypeEnum.fromValue(rs.getString("reference_type")))
             .reference(objectMapper.readValue(rs.getString("reference"), DataRepoSnapshot.class));
       } catch (JsonProcessingException e) {
-        logger.info(String.format("Failed to convert JSON %s to reference, with error %s", rs.toString(), e.getMessage()));
+        logger.info(
+            String.format(
+                "Failed to convert JSON %s to reference, with error %s",
+                rs.toString(), e.getMessage()));
         throw new InvalidDataReferenceException(
             "Couldn't convert JSON to reference. This... shouldn't happen.");
       }
