@@ -200,7 +200,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     ControllerValidationUtils.validatePaginationParams(offset, limit);
     DataReferenceList enumerateResult =
         dataReferenceService.enumerateDataReferences(id, offset, limit, userReq);
-    logger.info(String.format("Getting data references in workspace %s for %s",
+    logger.info(String.format("Got data references in workspace %s for %s",
             enumerateResult.toString(), userReq.getEmail()));
     return ResponseEntity.ok(enumerateResult);
   }
