@@ -13,6 +13,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
+import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.flight.*;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
@@ -110,6 +111,10 @@ public class WorkspaceService {
   @Traced
   public String createGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
+    if (!WorkspaceStage.MC_WORKSPACE.equals(workspace.workspaceStage())) {
+      throw new StageDisabledException(workspace, "createGoogleContext");
+    }
     Optional<SpendProfileId> spendProfileId =
         workspaceDao.getWorkspace(workspaceId).spendProfileId();
     if (spendProfileId.isEmpty()) {

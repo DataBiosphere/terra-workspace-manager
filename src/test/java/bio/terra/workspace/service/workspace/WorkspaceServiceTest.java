@@ -24,6 +24,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
+import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import java.util.Optional;
 import java.util.UUID;
@@ -186,7 +187,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(
         workspaceId,
         Optional.of(spendUtils.defaultSpendId()),
-        WorkspaceStage.RAWLS_WORKSPACE,
+        WorkspaceStage.MC_WORKSPACE,
         USER_REQUEST);
 
     String jobId = workspaceService.createGoogleContext(workspaceId, USER_REQUEST);
@@ -211,7 +212,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(
         workspaceId,
         Optional.of(spendUtils.defaultSpendId()),
-        WorkspaceStage.RAWLS_WORKSPACE,
+        WorkspaceStage.MC_WORKSPACE,
         USER_REQUEST);
 
     String jobId = workspaceService.createGoogleContext(workspaceId, USER_REQUEST);
@@ -228,14 +229,28 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  public void createGoogleContextRawlsStageThrows() {
+    UUID workspaceId = UUID.randomUUID();
+    workspaceService.createWorkspace(
+        workspaceId,
+        Optional.empty(),
+        // RAWLS stage instead of MC.
+        WorkspaceStage.RAWLS_WORKSPACE,
+        USER_REQUEST);
+
+    assertThrows(
+        StageDisabledException.class,
+        () -> workspaceService.createGoogleContext(workspaceId, USER_REQUEST));
+  }
+
+  @Test
   public void createGoogleContextNoSpendProfileIdThrows() {
     UUID workspaceId = UUID.randomUUID();
     workspaceService.createWorkspace(
         workspaceId,
-
         // Don't specify a spend profile on the created worksapce.
         Optional.empty(),
-        WorkspaceStage.RAWLS_WORKSPACE,
+        WorkspaceStage.MC_WORKSPACE,
         USER_REQUEST);
 
     assertThrows(
@@ -249,7 +264,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(
         workspaceId,
         Optional.of(spendUtils.defaultSpendId()),
-        WorkspaceStage.RAWLS_WORKSPACE,
+        WorkspaceStage.MC_WORKSPACE,
         USER_REQUEST);
 
     Mockito.when(
@@ -270,7 +285,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(
         workspaceId,
         Optional.of(spendUtils.noBillingAccount()),
-        WorkspaceStage.RAWLS_WORKSPACE,
+        WorkspaceStage.MC_WORKSPACE,
         USER_REQUEST);
 
     assertThrows(
