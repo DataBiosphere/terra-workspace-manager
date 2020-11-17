@@ -8,6 +8,7 @@ import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Stairway;
 import bio.terra.stairway.exception.DatabaseOperationException;
+import bio.terra.stairway.exception.DuplicateFlightIdSubmittedException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.stairway.exception.StairwayExecutionException;
@@ -18,7 +19,6 @@ import bio.terra.workspace.common.utils.MdcHook;
 import bio.terra.workspace.generated.model.JobModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.job.exception.DuplicateFlightIdException;
 import bio.terra.workspace.service.job.exception.InternalStairwayException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.job.exception.JobNotCompleteException;
@@ -28,7 +28,6 @@ import bio.terra.workspace.service.job.exception.JobUnauthorizedException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -116,20 +115,13 @@ public class JobService {
 
   // submit a new job to stairway
   // protected method intended to be called only from JobBuilder
-  protected String submit(
-      Class<? extends Flight> flightClass, FlightMap parameterMap, String jobId) {
+  protected String submit(Class<? extends Flight> flightClass, FlightMap parameterMap, String jobId)
+      throws DuplicateFlightIdSubmittedException {
     try {
       stairway.submit(jobId, flightClass, parameterMap);
-    } catch (DatabaseOperationException dbEx) {
-      String sqlState = (((SQLException) dbEx.getCause()).getSQLState());
-      // sqlState 23505 indicates a unique key violation, which in this case indicates a duplicate
-      // flightId. See https://www.postgresql.org/docs/10/errcodes-appendix.html for postgres
-      // error codes.
-      if (sqlState.equals("23505")) {
-        throw new DuplicateFlightIdException("Flight ID already exists in Stairway: " + jobId);
-      } else {
-        throw new InternalStairwayException(dbEx);
-      }
+    } catch (DuplicateFlightIdSubmittedException ex) {
+      // This needs to be thrown separately as it extends the more general StairwayException
+      throw ex;
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
@@ -142,7 +134,8 @@ public class JobService {
       Class<? extends Flight> flightClass,
       FlightMap parameterMap,
       Class<T> resultClass,
-      String jobId) {
+      String jobId)
+      throws DuplicateFlightIdSubmittedException {
     submit(flightClass, parameterMap, jobId);
     waitForJob(jobId);
     AuthenticatedUserRequest userReq =

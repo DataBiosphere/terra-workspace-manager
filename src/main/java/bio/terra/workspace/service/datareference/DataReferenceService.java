@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.datareference;
 
+import bio.terra.stairway.exception.DuplicateFlightIdSubmittedException;
 import bio.terra.workspace.common.exception.*;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.DataReferenceDao;
@@ -17,6 +18,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.job.exception.InternalStairwayException;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,7 +107,12 @@ public class DataReferenceService {
         validationUtils.validateReference(body.getReferenceType(), body.getReference(), userReq);
     createJob.addParameter(DataReferenceFlightMapKeys.REFERENCE, ref);
 
-    createJob.submitAndWait(String.class);
+    try {
+      createJob.submitAndWait(String.class);
+    } catch (DuplicateFlightIdSubmittedException ex) {
+      // FlightIDs used here are random UUIDs, so a collision is purely bad luck.
+      throw new InternalStairwayException(ex);
+    }
 
     return dataReferenceDao.getDataReference(workspaceId, referenceId);
   }

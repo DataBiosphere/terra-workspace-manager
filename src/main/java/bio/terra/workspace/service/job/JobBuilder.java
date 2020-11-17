@@ -2,6 +2,7 @@ package bio.terra.workspace.service.job;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.exception.DuplicateFlightIdSubmittedException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.exception.InvalidJobParameterException;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -54,14 +55,14 @@ public class JobBuilder {
   }
 
   // submits this job to stairway and returns the jobId immediately
-  public String submit() {
+  public String submit() throws DuplicateFlightIdSubmittedException {
     return jobServiceRef.submit(flightClass, jobParameterMap, jobId);
   }
 
   // submits this job to stairway, waits until it finishes, then returns an instance of the result
   // class
   @Traced
-  public <T> T submitAndWait(Class<T> resultClass) {
+  public <T> T submitAndWait(Class<T> resultClass) throws DuplicateFlightIdSubmittedException {
     return jobServiceRef.submitAndWait(flightClass, jobParameterMap, resultClass, jobId);
   }
 }
