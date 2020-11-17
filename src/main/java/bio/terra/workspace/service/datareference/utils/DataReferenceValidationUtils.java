@@ -15,17 +15,17 @@ import org.springframework.stereotype.Component;
 public class DataReferenceValidationUtils {
 
   private DataRepoService dataRepoService;
-  private final Pattern nameValidationPattern = Pattern.compile("^[a-zA-Z0-9][_a-zA-Z0-9]{0,62}$");
+  public static final Pattern NAME_VALIDATION_PATTERN = Pattern.compile("^[a-zA-Z0-9][_a-zA-Z0-9]{0,62}$");
 
-  public DataReferenceValidationUtils(DataRepoService dataRepoService) {
-    this.dataRepoService = dataRepoService;
-  }
-
-  public void validateReferenceName(String name) {
-    if (StringUtils.isEmpty(name) || !nameValidationPattern.matcher(name).matches()) {
+  public static void validateReferenceName(String name) {
+    if (StringUtils.isEmpty(name) || !NAME_VALIDATION_PATTERN.matcher(name).matches()) {
       throw new InvalidDataReferenceException(
           "Invalid reference name specified. Name must be 1 to 63 alphanumeric characters or underscores, and cannot start with an underscore.");
     }
+  }
+
+  public DataReferenceValidationUtils(DataRepoService dataRepoService) {
+    this.dataRepoService = dataRepoService;
   }
 
   public DataRepoSnapshot validateReference(

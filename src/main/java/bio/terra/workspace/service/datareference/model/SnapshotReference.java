@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.datareference.model;
 
+import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +26,16 @@ public class SnapshotReference implements ReferenceObject {
     this.propertyMap = new HashMap<>();
     propertyMap.put(SNAPSHOT_REFERENCE_INSTANCE_NAME_KEY, instanceName);
     propertyMap.put(SNAPSHOT_REFERENCE_SNAPSHOT_KEY, snapshot);
+  }
+
+  public static SnapshotReference fromApiModel(DataRepoSnapshot model) {
+    return new SnapshotReference(model.getInstanceName(), model.getSnapshot());
+  }
+
+  public DataRepoSnapshot toApiModel() {
+    return new DataRepoSnapshot()
+        .instanceName(propertyMap.get(SNAPSHOT_REFERENCE_INSTANCE_NAME_KEY))
+        .snapshot(propertyMap.get(SNAPSHOT_REFERENCE_SNAPSHOT_KEY));
   }
 
   @Override

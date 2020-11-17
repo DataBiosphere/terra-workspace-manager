@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.datareference.model;
 
+import bio.terra.workspace.generated.model.DataReferenceDescription;
 import com.google.auto.value.AutoValue;
 import java.util.UUID;
 
@@ -28,6 +29,17 @@ public abstract class DataReference {
 
   /** The actual object being referenced. */
   public abstract ReferenceObject referenceObject();
+
+  /** Convenience method for translating to a API model DataReferenceDescription object. */
+  public DataReferenceDescription toApiModel() {
+    return new DataReferenceDescription()
+        .referenceId(referenceId())
+        .name(name())
+        .workspaceId(workspaceId())
+        .referenceType(referenceType().toApiModel())
+        .reference(((SnapshotReference)referenceObject()).toApiModel())
+        .cloningInstructions(cloningInstructions().toApiModel());
+  }
 
   public static Builder builder() {
     return new AutoValue_DataReference.Builder();

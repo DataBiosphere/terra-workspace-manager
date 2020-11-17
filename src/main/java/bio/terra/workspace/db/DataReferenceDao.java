@@ -9,6 +9,8 @@ import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.generated.model.ResourceDescription;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
+import bio.terra.workspace.service.datareference.model.DataReference;
+import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.ResultSet;
@@ -32,38 +34,31 @@ import org.springframework.stereotype.Component;
 public class DataReferenceDao {
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
-  private ObjectMapper objectMapper;
-
+  /**
+   * Database JSON ObjectMapper. Should not be shared with request/response serialization. We do not
+   * want necessary changes to request/response serialization to change what's stored in the
+   * database and possibly break backwards compatibility.
+   */
+  private static final ObjectMapper objectMapper = new ObjectMapper();
   @Autowired
-  public DataReferenceDao(NamedParameterJdbcTemplate jdbcTemplate, ObjectMapper objectMapper) {
+  public DataReferenceDao(NamedParameterJdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
-    this.objectMapper = objectMapper;
   }
 
   private Logger logger = LoggerFactory.getLogger(DataReferenceDao.class);
 
-  public String createDataReference(
-      UUID referenceId,
-      UUID workspaceId,
-      String name,
-      UUID resourceId,
-      String credentialId,
-      CloningInstructionsEnum cloningInstructions,
-      ReferenceTypeEnum referenceType,
-      DataRepoSnapshot reference) {
+  public String createDataReference(DataReferenceRequest request, UUID referenceId) {
     String sql =
-        "INSERT INTO workspace_data_reference (workspace_id, reference_id, name, resource_id, credential_id, cloning_instructions, reference_type, reference) VALUES "
-            + "(:workspace_id, :reference_id, :name, :resource_id, :credential_id, :cloning_instructions, :reference_type, cast(:reference AS json))";
+        "INSERT INTO workspace_data_reference (workspace_id, reference_id, name, cloning_instructions, reference_type, reference) VALUES "
+            + "(:workspace_id, :reference_id, :name, :cloning_instructions, :reference_type, cast(:reference AS json))";
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
+            .addValue("workspace_id", request.workspaceId().toString())
             .addValue("reference_id", referenceId.toString())
-            .addValue("name", name)
-            .addValue("cloning_instructions", cloningInstructions.toString())
-            .addValue("credential_id", credentialId)
-            .addValue("resource_id", resourceId == null ? null : resourceId.toString())
-            .addValue("reference_type", referenceType == null ? null : referenceType.toString());
+            .addValue("name", request.name())
+            .addValue("cloning_instructions", request.cloningInstructions().toString())
+            .addValue("reference_type", request.referenceType().toString());
     try {
       params.addValue("reference", objectMapper.writeValueAsString(reference));
     } catch (JsonProcessingException e) {
@@ -84,7 +79,7 @@ public class DataReferenceDao {
     }
   }
 
-  public DataReferenceDescription getDataReference(UUID workspaceId, UUID referenceId) {
+  public DataReference getDataReference(UUID workspaceId, UUID referenceId) {
     String sql =
         "SELECT workspace_id, reference_id, name, resource_id, credential_id, cloning_instructions, reference_type, reference from workspace_data_reference where workspace_id = :workspace_id AND reference_id = :reference_id";
 
@@ -94,7 +89,7 @@ public class DataReferenceDao {
             .addValue("reference_id", referenceId.toString());
 
     try {
-      DataReferenceDescription ref =
+      DataReference ref =
           jdbcTemplate.queryForObject(sql, params, new DataReferenceMapper());
       logger.info(
           String.format(
@@ -215,13 +210,13 @@ public class DataReferenceDao {
     }
   }
 
-  private class DataReferenceMapper implements RowMapper<DataReferenceDescription> {
-    public DataReferenceDescription mapRow(ResultSet rs, int rowNum) throws SQLException {
+  private class DataReferenceMapper implements RowMapper<DataReference> {
+    public DataReference mapRow(ResultSet rs, int rowNum) throws SQLException {
       ResourceDescriptionMapper resourceDescriptionMapper = new ResourceDescriptionMapper();
       try {
-        return new DataReferenceDescription()
+        return DataReference.builder()
             .workspaceId(UUID.fromString(rs.getString("workspace_id")))
-            .referenceId(maybeParseUUID(rs.getString("reference_id")))
+            .referenceId(UUID.fromString(rs.getString("reference_id")))
             .name(rs.getString("name"))
             .resourceDescription(resourceDescriptionMapper.mapRow(rs, rowNum))
             .credentialId(rs.getString("credential_id"))
@@ -240,9 +235,6 @@ public class DataReferenceDao {
     }
   }
 
-  public static UUID maybeParseUUID(String stringOrNull) {
-    return stringOrNull == null ? null : UUID.fromString(stringOrNull);
-  }
 
   // Returns a SQL condition as a string accepts both uncontrolled data references and visible
   // controlled references. Uncontrolled references are not tracked as resources, and their

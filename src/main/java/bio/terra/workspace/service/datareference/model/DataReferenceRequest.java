@@ -28,7 +28,7 @@ public abstract class DataReferenceRequest {
   /** The actual object being referenced. */
   public abstract ReferenceObject referenceObject();
 
-  public static DataReference.Builder builder() {
+  public static DataReferenceRequest.Builder builder() {
     return new AutoValue_DataReferenceRequest.Builder();
   }
 
@@ -44,6 +44,6 @@ public abstract class DataReferenceRequest {
 
     public abstract DataReferenceRequest.Builder referenceObject(ReferenceObject value);
 
-    public abstract DataReference build();
+    public abstract DataReferenceRequest build();
   }
 }

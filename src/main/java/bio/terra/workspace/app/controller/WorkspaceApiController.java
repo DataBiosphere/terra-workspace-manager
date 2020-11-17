@@ -7,10 +7,19 @@ import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataReferenceList;
+import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
 import bio.terra.workspace.generated.model.WorkspaceStageModel;
 import bio.terra.workspace.service.datareference.DataReferenceService;
+import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
+import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
+import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import bio.terra.workspace.service.datareference.model.DataReference;
+import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
+import bio.terra.workspace.service.datareference.model.DataReferenceType;
+import bio.terra.workspace.service.datareference.model.SnapshotReference;
+import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
@@ -18,6 +27,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -28,6 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.ValidationUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -119,13 +130,23 @@ public class WorkspaceApiController implements WorkspaceApi {
         String.format(
             "Creating data reference in workspace %s for %s with body %s",
             id.toString(), userReq.getEmail(), body.toString()));
-    DataReferenceDescription desc = dataReferenceService.createDataReference(id, body, userReq);
+    validateCreateDataReferenceRequestBody(body);
+
+    // TODO: this will require more translation when we add additional reference types.
+    DataReferenceRequest referenceRequest = DataReferenceRequest.builder()
+        .workspaceId(id)
+        .name(body.getName())
+        .referenceType(DataReferenceType.fromApiModel(body.getReferenceType()))
+        .cloningInstructions(CloningInstructions.fromApiModel(body.getCloningInstructions()))
+        .referenceObject(SnapshotReference.fromApiModel(body.getReference()))
+        .build();
+    DataReference reference = dataReferenceService.createDataReference(referenceRequest, userReq);
     logger.info(
         String.format(
             "Created data reference %s in workspace %s for %s ",
-            desc.toString(), id.toString(), userReq.getEmail()));
+            reference.toString(), id.toString(), userReq.getEmail()));
 
-    return new ResponseEntity<DataReferenceDescription>(desc, HttpStatus.OK);
+    return new ResponseEntity<>(reference.toApiModel(), HttpStatus.OK);
   }
 
   @Override
@@ -136,14 +157,14 @@ public class WorkspaceApiController implements WorkspaceApi {
         String.format(
             "Getting data reference by id %s in workspace %s for %s",
             referenceId.toString(), workspaceId.toString(), userReq.getEmail()));
-    DataReferenceDescription ref =
+    DataReference ref =
         dataReferenceService.getDataReference(workspaceId, referenceId, userReq);
     logger.info(
         String.format(
             "Got data reference %s in workspace %s for %s",
             ref.toString(), workspaceId.toString(), userReq.getEmail()));
 
-    return new ResponseEntity<DataReferenceDescription>(ref, HttpStatus.OK);
+    return new ResponseEntity<>(ref.toApiModel(), HttpStatus.OK);
   }
 
   @Override
@@ -156,14 +177,14 @@ public class WorkspaceApiController implements WorkspaceApi {
         String.format(
             "Getting data reference by name %s and reference type %s in workspace %s for %s",
             name, referenceType, workspaceId.toString(), userReq.getEmail()));
-    DataReferenceDescription ref =
-        dataReferenceService.getDataReferenceByName(workspaceId, referenceType, name, userReq);
+    DataReference ref =
+        dataReferenceService.getDataReferenceByName(workspaceId, DataReferenceType.fromApiModel(referenceType), name, userReq);
     logger.info(
         String.format(
             "Got data reference %s in workspace %s for %s",
             ref.toString(), referenceType, workspaceId.toString(), userReq.getEmail()));
 
-    return new ResponseEntity<DataReferenceDescription>(ref, HttpStatus.OK);
+    return new ResponseEntity<>(ref.toApiModel(), HttpStatus.OK);
   }
 
   @Override
@@ -181,6 +202,29 @@ public class WorkspaceApiController implements WorkspaceApi {
             referenceId.toString(), workspaceId.toString(), userReq.getEmail()));
 
     return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
+  public ResponseEntity<DataReferenceList> enumerateReferences(
+      @PathVariable("id") UUID id,
+      @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
+      @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    logger.info(
+        String.format(
+            "Getting data references in workspace %s for %s", id.toString(), userReq.getEmail()));
+    ControllerValidationUtils.validatePaginationParams(offset, limit);
+    List<DataReference> enumerateResult =
+        dataReferenceService.enumerateDataReferences(id, offset, limit, userReq);
+    logger.info(
+        String.format(
+            "Got data references in workspace %s for %s",
+            id.toString(), userReq.getEmail()));
+    DataReferenceList responseList = new DataReferenceList();
+    for (DataReference ref : enumerateResult) {
+      responseList.addResourcesItem(ref.toApiModel());
+    }
+    return ResponseEntity.ok(responseList);
   }
 
   /* Job endpoints disabled for now
@@ -207,22 +251,21 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
   */
 
-  @Override
-  public ResponseEntity<DataReferenceList> enumerateReferences(
-      @PathVariable("id") UUID id,
-      @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
-      @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info(
-        String.format(
-            "Getting data references in workspace %s for %s", id.toString(), userReq.getEmail()));
-    ControllerValidationUtils.validatePaginationParams(offset, limit);
-    DataReferenceList enumerateResult =
-        dataReferenceService.enumerateDataReferences(id, offset, limit, userReq);
-    logger.info(
-        String.format(
-            "Got data references in workspace %s for %s",
-            enumerateResult.toString(), userReq.getEmail()));
-    return ResponseEntity.ok(enumerateResult);
+  private void validateCreateDataReferenceRequestBody(CreateDataReferenceRequestBody body) {
+    if (body.getResourceId() != null) {
+      throw new ControlledResourceNotImplementedException(
+          "Unable to create a reference with a resourceId, use a reference type and description"
+              + " instead. This functionality will be implemented in the future.");
+    }
+    if (body.getReferenceType() == null || body.getReference() == null) {
+      throw new InvalidDataReferenceException(
+          "Data reference must contain a reference type and a reference description");
+    }
+    // TODO: remove this check when we add support for resource-specific credentials.
+    if (body.getCredentialId() != null) {
+      throw new InvalidDataReferenceException(
+          "Resource-specific credentials are not supported yet.");
+    }
+    DataReferenceValidationUtils.validateReferenceName(body.getName());
   }
 }
