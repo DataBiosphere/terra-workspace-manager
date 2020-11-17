@@ -4,10 +4,35 @@ workspace:
   spend:
     spend-profiles:
       -
-        # TODO(PF-186): Create a meaningful spend profile id with a resource in Sam.
-        id: foo
+        # This is the id of a 'spend-profile' resource on dev Sam. The resource was created manually
+        # such that the test user (william.thunderlord@test.firecloud.org) has access to spend with
+        # it. For other connected test environments, a similar resource should be created.
+        #
+        # https://sam.dsde-dev.broadinstitute.org/#/Resources/createResource
+        # body:
+        # { "resourceId":"wm-connected-spend-profile",
+        #   "policies": {
+        #     "owner": {
+        #       "memberEmails":["william.thunderlord@test.firecloud.org"],
+        #       "actions":[],
+        #       "roles":["owner"]
+        #     },
+        #     "user" : {
+        #       "memberEmails":["william.thunderlord@test.firecloud.org"],
+        #       "actions":[],
+        #       "roles":["user"]
+        #     }
+        #   },
+        #   "authDomain":[]
+        #  }
+        id: wm-connected-spend-profile
         # The billing account workspace-dev has access to.
         billing-account-id: 01A82E-CA8A14-367457
       -
         # A special spend profile with no billing account associated with it.
         id: no-billing-account
+
+  connected-test:
+    user-delegated-service-account-path: rendered/user-delegated-service-account.json
+    default-user-email: william.thunderlord@test.firecloud.org
+    second-user-email: harry.potter@test.firecloud.org
