@@ -88,7 +88,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   public void testWorkspaceStagePersists() {
     WorkspaceRequest mcWorkspaceRequest =
-        WorkspaceRequest.defaultRequestBuilder(UUID.randomUUID())
+        defaultRequestBuilder(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceService.createWorkspace(mcWorkspaceRequest, USER_REQUEST);
@@ -104,8 +104,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
     // Note that the two calls use different operationIDs for the same Workspace ID, making them
     // logically distinct requests to create the same workspace.
-    WorkspaceRequest duplicateWorkspace =
-        WorkspaceRequest.defaultRequestBuilder(request.workspaceId()).build();
+    WorkspaceRequest duplicateWorkspace = defaultRequestBuilder(request.workspaceId()).build();
     assertThrows(
         DuplicateWorkspaceException.class,
         () -> workspaceService.createWorkspace(duplicateWorkspace, USER_REQUEST));
@@ -143,9 +142,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void testWithSpendProfile() {
     Optional<SpendProfileId> spendProfileId = Optional.of(SpendProfileId.create("foo"));
     WorkspaceRequest request =
-        WorkspaceRequest.defaultRequestBuilder(UUID.randomUUID())
-            .spendProfileId(spendProfileId)
-            .build();
+        defaultRequestBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     Workspace createdWorkspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
@@ -213,7 +210,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   public void deleteWorkspaceWithGoogleContext() throws Exception {
     WorkspaceRequest request =
-        WorkspaceRequest.defaultRequestBuilder(UUID.randomUUID())
+        defaultRequestBuilder(UUID.randomUUID())
             .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
@@ -240,7 +237,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   public void createGetDeleteGoogleContext() {
     WorkspaceRequest request =
-        WorkspaceRequest.defaultRequestBuilder(UUID.randomUUID())
+        defaultRequestBuilder(UUID.randomUUID())
             .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
@@ -275,7 +272,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   public void createGoogleContextSpendLinkingUnauthorizedThrows() {
     WorkspaceRequest request =
-        WorkspaceRequest.defaultRequestBuilder(UUID.randomUUID())
+        defaultRequestBuilder(UUID.randomUUID())
             .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
@@ -295,7 +292,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   public void createGoogleContextSpendWithoutBillingAccountThrows() {
     WorkspaceRequest request =
-        WorkspaceRequest.defaultRequestBuilder(UUID.randomUUID())
+        defaultRequestBuilder(UUID.randomUUID())
             .spendProfileId(Optional.of(spendUtils.noBillingAccount()))
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
@@ -306,11 +303,25 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   /**
-   * Generate a Workspace object with a random ID and default values in all fields.
+   * Convenience method for getting a WorkspaceRequest builder with some pre-filled default values.
    *
-   * <p>See {@code WorkspaceRequest.defaultRequestBuilder} for default values of each field.
+   * <p>This provides default values for operationID (random UUID), spend profile
+   * (Optional.empty()), and workspace stage (RAWLS_WORKSPACE).
+   */
+  private WorkspaceRequest.Builder defaultRequestBuilder(UUID workspaceId) {
+    return WorkspaceRequest.builder()
+        .workspaceId(workspaceId)
+        .jobId(UUID.randomUUID().toString())
+        .spendProfileId(Optional.empty())
+        .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE);
+  }
+
+  /**
+   * Generate a fully built Workspace object with a random ID and default values in all fields.
+   *
+   * <p>See {@code defaultRequestBuilder} for default values of each field.
    */
   private WorkspaceRequest defaultWorkspaceRequest() {
-    return WorkspaceRequest.defaultRequestBuilder(UUID.randomUUID()).build();
+    return defaultRequestBuilder(UUID.randomUUID()).build();
   }
 }

@@ -10,8 +10,7 @@ import java.util.UUID;
  *
  * <p>While this object is nearly identical to the {@code Workspace} object, there is a semantic
  * difference: a {@code Workspace} is a fully formed workspace, while a {@code WorkspaceRequest}
- * only contains fields specified by clients. These objects may diverge in the future if properties
- * of a Workspace are generated internally.
+ * only contains fields specified by clients.
  */
 @AutoValue
 public abstract class WorkspaceRequest {
@@ -20,10 +19,10 @@ public abstract class WorkspaceRequest {
   public abstract UUID workspaceId();
 
   /**
-   * An ID used for idempotency. WorkspaceRequests with matching operationIds are considered
-   * duplicate requests.
+   * An ID used for idempotency. WorkspaceRequests with matching jobIds are considered duplicate
+   * requests.
    */
-  public abstract String operationId();
+  public abstract String jobId();
 
   /**
    * The spend profile ID associated with this project, if one exists.
@@ -45,26 +44,12 @@ public abstract class WorkspaceRequest {
   public abstract static class Builder {
     public abstract WorkspaceRequest.Builder workspaceId(UUID value);
 
-    public abstract WorkspaceRequest.Builder operationId(String value);
+    public abstract WorkspaceRequest.Builder jobId(String value);
 
     public abstract WorkspaceRequest.Builder spendProfileId(Optional<SpendProfileId> value);
 
     public abstract WorkspaceRequest.Builder workspaceStage(WorkspaceStage value);
 
     public abstract WorkspaceRequest build();
-  }
-
-  /**
-   * Convenience method for getting a WorkspaceRequest builder with pre-filled default values.
-   *
-   * <p>This provides default values for operationID (random UUID), spend profile
-   * (Optional.empty()), and workspace stage (RAWLS_WORKSPACE).
-   */
-  public static WorkspaceRequest.Builder defaultRequestBuilder(UUID workspaceId) {
-    return builder()
-        .workspaceId(workspaceId)
-        .operationId(UUID.randomUUID().toString())
-        .spendProfileId(Optional.empty())
-        .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE);
   }
 }

@@ -7,12 +7,15 @@ import org.springframework.http.HttpStatus;
 
 public class SamApiException extends ErrorReportException {
 
+  private ApiException apiException;
+
   public SamApiException(ApiException samException) {
     super(
         "Error from SAM: ",
         samException,
         Collections.singletonList(samException.getResponseBody()),
         HttpStatus.resolve(samException.getCode()));
+    this.apiException = samException;
   }
 
   public SamApiException(String message) {
@@ -34,5 +37,9 @@ public class SamApiException extends ErrorReportException {
   public SamApiException(
       String message, Throwable cause, List<String> causes, HttpStatus statusCode) {
     super(message, cause, causes, statusCode);
+  }
+
+  public int getApiExceptionStatus() {
+    return apiException.getCode();
   }
 }

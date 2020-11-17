@@ -1,13 +1,11 @@
 package bio.terra.workspace.service.workspace;
 
-import bio.terra.stairway.exception.DuplicateFlightIdSubmittedException;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.job.exception.InternalStairwayException;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
@@ -50,37 +48,23 @@ public class WorkspaceService {
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
-  public UUID createWorkspace(WorkspaceRequest internalRequest, AuthenticatedUserRequest userReq) {
+  public UUID createWorkspace(WorkspaceRequest workspaceRequest, AuthenticatedUserRequest userReq) {
 
-    String description = "Create workspace " + internalRequest.workspaceId().toString();
+    String description = "Create workspace " + workspaceRequest.workspaceId().toString();
     JobBuilder createJob =
         jobService
             .newJob(
-                description,
-                internalRequest.operationId(),
-                WorkspaceCreateFlight.class,
-                null,
-                userReq)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, internalRequest.workspaceId());
-    if (internalRequest.spendProfileId().isPresent()) {
+                description, workspaceRequest.jobId(), WorkspaceCreateFlight.class, null, userReq)
+            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceRequest.workspaceId());
+    if (workspaceRequest.spendProfileId().isPresent()) {
       createJob.addParameter(
-          WorkspaceFlightMapKeys.SPEND_PROFILE_ID, internalRequest.spendProfileId().get().id());
+          WorkspaceFlightMapKeys.SPEND_PROFILE_ID, workspaceRequest.spendProfileId().get().id());
     }
 
     createJob.addParameter(
-        WorkspaceFlightMapKeys.WORKSPACE_STAGE, internalRequest.workspaceStage());
+        WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceRequest.workspaceStage());
 
-    try {
-      return createJob.submitAndWait(UUID.class);
-    } catch (DuplicateFlightIdSubmittedException ex) {
-      // Indicates another request with the same operation ID already exists. Rather than running
-      // multiple concurrent create flights, all flights after the first will wait for and return
-      // the same result.
-      jobService.waitForJob(internalRequest.operationId());
-      return jobService
-          .retrieveJobResult(internalRequest.operationId(), UUID.class, userReq)
-          .getResult();
-    }
+    return createJob.submitAndWait(UUID.class, true);
   }
 
   /** Retrieves an existing workspace by ID */
@@ -106,12 +90,7 @@ public class WorkspaceService {
                 null, // Delete does not have a useful request body
                 userReq)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id);
-    try {
-      deleteJob.submitAndWait(null);
-    } catch (DuplicateFlightIdSubmittedException ex) {
-      // FlightIDs used here are random UUIDs, so a collision is purely bad luck.
-      throw new InternalStairwayException(ex);
-    }
+    deleteJob.submitAndWait(null, false);
   }
 
   /** Retrieves the cloud context of a workspace. */
@@ -136,23 +115,17 @@ public class WorkspaceService {
     }
 
     String jobId = UUID.randomUUID().toString();
-    JobBuilder job =
-        jobService
-            .newJob(
-                "Create Google Context " + workspaceId,
-                jobId,
-                CreateGoogleContextFlight.class,
-                /* request= */ null,
-                userReq)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
-            .addParameter(
-                WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendProfile.billingAccountId().get());
-    try {
-      job.submit();
-    } catch (DuplicateFlightIdSubmittedException ex) {
-      // FlightIDs used here are random UUIDs, so a collision is purely bad luck.
-      throw new InternalStairwayException(ex);
-    }
+    jobService
+        .newJob(
+            "Create Google Context " + workspaceId,
+            jobId,
+            CreateGoogleContextFlight.class,
+            /* request= */ null,
+            userReq)
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
+        .addParameter(
+            WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendProfile.billingAccountId().get())
+        .submit(false);
     return jobId;
   }
 
@@ -160,20 +133,14 @@ public class WorkspaceService {
   @Traced
   public void deleteGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
-    JobBuilder job =
-        jobService
-            .newJob(
-                "Delete Google Context " + workspaceId,
-                UUID.randomUUID().toString(),
-                DeleteGoogleContextFlight.class,
-                /* request= */ null,
-                userReq)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
-    try {
-      job.submitAndWait(null);
-    } catch (DuplicateFlightIdSubmittedException ex) {
-      // FlightIDs used here are random UUIDs, so a collision is purely bad luck.
-      throw new InternalStairwayException(ex);
-    }
+    jobService
+        .newJob(
+            "Delete Google Context " + workspaceId,
+            UUID.randomUUID().toString(),
+            DeleteGoogleContextFlight.class,
+            /* request= */ null,
+            userReq)
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
+        .submitAndWait(null, false);
   }
 }

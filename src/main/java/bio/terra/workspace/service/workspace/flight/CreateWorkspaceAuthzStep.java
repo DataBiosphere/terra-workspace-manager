@@ -5,10 +5,10 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.exception.SamResourceNotFoundException;
 import java.util.UUID;
 
 public class CreateWorkspaceAuthzStep implements Step {
@@ -50,9 +50,12 @@ public class CreateWorkspaceAuthzStep implements Step {
     UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     try {
       samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);
-    } catch (SamResourceNotFoundException ex) {
+    } catch (SamApiException ex) {
       // Do nothing if the resource to delete is not found, this may not be the first time undo is
-      // called.
+      // called. Other exceptions still need to be surfaced.
+      if (ex.getApiExceptionStatus() != 404) {
+        throw ex;
+      }
     }
     return StepResult.getStepResultSuccess();
   }
