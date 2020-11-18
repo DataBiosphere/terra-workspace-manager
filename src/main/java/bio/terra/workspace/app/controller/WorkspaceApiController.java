@@ -2,14 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
-import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
-import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.CreatedWorkspace;
-import bio.terra.workspace.generated.model.DataReferenceDescription;
-import bio.terra.workspace.generated.model.DataReferenceList;
-import bio.terra.workspace.generated.model.ReferenceTypeEnum;
-import bio.terra.workspace.generated.model.WorkspaceDescription;
-import bio.terra.workspace.generated.model.WorkspaceStageModel;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
@@ -23,10 +16,12 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.List;
+import java.net.URI;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -100,11 +95,16 @@ public class WorkspaceApiController implements WorkspaceApi {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info(String.format("Getting workspace %s for %s", id.toString(), userReq.getEmail()));
     Workspace workspace = workspaceService.getWorkspace(id, userReq);
+    WorkspaceCloudContext cloudContext = workspaceService.getCloudContext(id, userReq);
+
+    Optional<GoogleContext> googleContext =
+        cloudContext.googleProjectId().map(projectId -> new GoogleContext().projectId(projectId));
     WorkspaceDescription desc =
         new WorkspaceDescription()
             .id(workspace.workspaceId())
             .spendProfile(workspace.spendProfileId().map(SpendProfileId::id).orElse(null))
-            .stage(workspace.workspaceStage().toApiModel());
+            .stage(workspace.workspaceStage().toApiModel())
+            .googleContext(googleContext.orElse(null));
     logger.info(String.format("Got workspace %s for %s", desc.toString(), userReq.getEmail()));
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
@@ -265,5 +265,26 @@ public class WorkspaceApiController implements WorkspaceApi {
           "Resource-specific credentials are not supported yet.");
     }
     DataReferenceValidationUtils.validateReferenceName(body.getName());
+  }
+
+  @Override
+  public ResponseEntity<JobModel> createGoogleContext(
+      UUID id, @Valid CreateGoogleContextRequestBody body) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    // TODO(PF-153): Use the optional jobId from the body for idempotency instead of always creating
+    // a new job id.
+    String jobId = workspaceService.createGoogleContext(id, userReq);
+    JobModel jobModel = jobService.retrieveJob(jobId, userReq);
+    // TODO(PF-221): Fix the jobs polling location once it exists.
+    return ResponseEntity.status(HttpStatus.ACCEPTED)
+        .location(URI.create(String.format("/api/jobs/v1/%s", jobId)))
+        .body(jobModel);
+  }
+
+  @Override
+  public ResponseEntity<Void> deleteGoogleContext(UUID id) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    workspaceService.deleteGoogleContext(id, userReq);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 }
