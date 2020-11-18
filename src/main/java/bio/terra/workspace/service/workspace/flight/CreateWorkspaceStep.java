@@ -12,6 +12,8 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 public class CreateWorkspaceStep implements Step {
@@ -19,6 +21,8 @@ public class CreateWorkspaceStep implements Step {
   private WorkspaceDao workspaceDao;
 
   private static final String CREATE_WORKSPACE_COMPLETED_KEY = "createWorkspaceStepCompleted";
+
+  private Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
 
   public CreateWorkspaceStep(WorkspaceDao workspaceDao) {
     this.workspaceDao = workspaceDao;
@@ -48,6 +52,7 @@ public class CreateWorkspaceStep implements Step {
     workingMap.put(CREATE_WORKSPACE_COMPLETED_KEY, true);
 
     FlightUtils.setResponse(flightContext, workspaceId, HttpStatus.OK);
+    logger.info(String.format("Workspace created with id %s", workspaceId));
 
     return StepResult.getStepResultSuccess();
   }
