@@ -111,9 +111,9 @@ public class WorkspaceService {
   @Traced
   public String createGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
-    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
-    if (!WorkspaceStage.MC_WORKSPACE.equals(workspace.workspaceStage())) {
-      throw new StageDisabledException(workspace, "createGoogleContext");
+    WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
+    if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
+      throw new StageDisabledException(workspaceId, stage, "createGoogleContext");
     }
     Optional<SpendProfileId> spendProfileId =
         workspaceDao.getWorkspace(workspaceId).spendProfileId();
@@ -144,6 +144,10 @@ public class WorkspaceService {
   @Traced
   public void deleteGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+    WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
+    if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
+      throw new StageDisabledException(workspaceId, stage, "deleteGoogleContext");
+    }
     jobService
         .newJob(
             "Delete Google Context " + workspaceId,
