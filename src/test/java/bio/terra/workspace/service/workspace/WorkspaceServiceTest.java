@@ -270,10 +270,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   public void createGoogleContextRawlsStageThrows() {
-    WorkspaceRequest request =
-        defaultRequestBuilder(UUID.randomUUID())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     assertThrows(
