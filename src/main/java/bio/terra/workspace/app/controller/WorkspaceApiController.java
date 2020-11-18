@@ -7,7 +7,6 @@ import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.CreatedWorkspace;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
 import bio.terra.workspace.generated.model.DataReferenceList;
-import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
 import bio.terra.workspace.generated.model.WorkspaceStageModel;
@@ -38,7 +37,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.validation.ValidationUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -133,13 +131,14 @@ public class WorkspaceApiController implements WorkspaceApi {
     validateCreateDataReferenceRequestBody(body);
 
     // TODO: this will require more translation when we add additional reference types.
-    DataReferenceRequest referenceRequest = DataReferenceRequest.builder()
-        .workspaceId(id)
-        .name(body.getName())
-        .referenceType(DataReferenceType.fromApiModel(body.getReferenceType()))
-        .cloningInstructions(CloningInstructions.fromApiModel(body.getCloningInstructions()))
-        .referenceObject(SnapshotReference.fromApiModel(body.getReference()))
-        .build();
+    DataReferenceRequest referenceRequest =
+        DataReferenceRequest.builder()
+            .workspaceId(id)
+            .name(body.getName())
+            .referenceType(DataReferenceType.fromApiModel(body.getReferenceType()))
+            .cloningInstructions(CloningInstructions.fromApiModel(body.getCloningInstructions()))
+            .referenceObject(SnapshotReference.fromApiModel(body.getReference()))
+            .build();
     DataReference reference = dataReferenceService.createDataReference(referenceRequest, userReq);
     logger.info(
         String.format(
@@ -157,8 +156,7 @@ public class WorkspaceApiController implements WorkspaceApi {
         String.format(
             "Getting data reference by id %s in workspace %s for %s",
             referenceId.toString(), workspaceId.toString(), userReq.getEmail()));
-    DataReference ref =
-        dataReferenceService.getDataReference(workspaceId, referenceId, userReq);
+    DataReference ref = dataReferenceService.getDataReference(workspaceId, referenceId, userReq);
     logger.info(
         String.format(
             "Got data reference %s in workspace %s for %s",
@@ -178,7 +176,8 @@ public class WorkspaceApiController implements WorkspaceApi {
             "Getting data reference by name %s and reference type %s in workspace %s for %s",
             name, referenceType, workspaceId.toString(), userReq.getEmail()));
     DataReference ref =
-        dataReferenceService.getDataReferenceByName(workspaceId, DataReferenceType.fromApiModel(referenceType), name, userReq);
+        dataReferenceService.getDataReferenceByName(
+            workspaceId, DataReferenceType.fromApiModel(referenceType), name, userReq);
     logger.info(
         String.format(
             "Got data reference %s in workspace %s for %s",
@@ -218,8 +217,7 @@ public class WorkspaceApiController implements WorkspaceApi {
         dataReferenceService.enumerateDataReferences(id, offset, limit, userReq);
     logger.info(
         String.format(
-            "Got data references in workspace %s for %s",
-            id.toString(), userReq.getEmail()));
+            "Got data references in workspace %s for %s", id.toString(), userReq.getEmail()));
     DataReferenceList responseList = new DataReferenceList();
     for (DataReference ref : enumerateResult) {
       responseList.addResourcesItem(ref.toApiModel());

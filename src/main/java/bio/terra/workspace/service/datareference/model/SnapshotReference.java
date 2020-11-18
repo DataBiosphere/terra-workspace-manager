@@ -3,10 +3,9 @@ package bio.terra.workspace.service.datareference.model;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Representation of a reference to a Data Repo snapshot.
@@ -20,7 +19,16 @@ public class SnapshotReference implements ReferenceObject {
   public static String SNAPSHOT_REFERENCE_INSTANCE_NAME_KEY = "instanceName";
   public static String SNAPSHOT_REFERENCE_SNAPSHOT_KEY = "snapshot";
 
-  private Map<String, String> propertyMap;
+  @JsonProperty private Map<String, String> propertyMap;
+
+  public SnapshotReference(Map<String, String> propertyMap) {
+    if (!getPropertyKeys().equals(propertyMap.keySet())) {
+      throw new InvalidDataReferenceException(
+          "Attempting to create SnapshotReference with invalid values (only instanceName and snapshot should be defined): "
+              + propertyMap.toString());
+    }
+    this.propertyMap = propertyMap;
+  }
 
   public SnapshotReference(String instanceName, String snapshot) {
     this.propertyMap = new HashMap<>();
@@ -38,6 +46,14 @@ public class SnapshotReference implements ReferenceObject {
         .snapshot(propertyMap.get(SNAPSHOT_REFERENCE_SNAPSHOT_KEY));
   }
 
+  public String getInstanceName() {
+    return getProperty(SNAPSHOT_REFERENCE_INSTANCE_NAME_KEY);
+  }
+
+  public String getSnapshot() {
+    return getProperty(SNAPSHOT_REFERENCE_SNAPSHOT_KEY);
+  }
+
   @Override
   public Map<String, String> getProperties() {
     return propertyMap;
@@ -49,8 +65,8 @@ public class SnapshotReference implements ReferenceObject {
   }
 
   @Override
-  public List<String> getPropertyKeys() {
-    return Arrays.asList(SNAPSHOT_REFERENCE_INSTANCE_NAME_KEY, SNAPSHOT_REFERENCE_SNAPSHOT_KEY);
+  public Set<String> getPropertyKeys() {
+    return Set.of(SNAPSHOT_REFERENCE_INSTANCE_NAME_KEY, SNAPSHOT_REFERENCE_SNAPSHOT_KEY);
   }
 
   // TODO: snapshot validation stuff should go here.

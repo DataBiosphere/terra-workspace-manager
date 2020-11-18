@@ -37,7 +37,7 @@ public abstract class DataReference {
         .name(name())
         .workspaceId(workspaceId())
         .referenceType(referenceType().toApiModel())
-        .reference(((SnapshotReference)referenceObject()).toApiModel())
+        .reference(((SnapshotReference) referenceObject()).toApiModel())
         .cloningInstructions(cloningInstructions().toApiModel());
   }
 

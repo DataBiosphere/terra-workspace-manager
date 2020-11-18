@@ -4,13 +4,11 @@ import bio.terra.workspace.common.exception.*;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
-import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.flight.CreateDataReferenceFlight;
 import bio.terra.workspace.service.datareference.flight.DataReferenceFlightMapKeys;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.DataReferenceType;
-import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -67,7 +65,8 @@ public class DataReferenceService {
   public DataReference createDataReference(
       DataReferenceRequest referenceRequest, AuthenticatedUserRequest userReq) {
 
-    samService.workspaceAuthz(userReq, referenceRequest.workspaceId(), SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+    samService.workspaceAuthz(
+        userReq, referenceRequest.workspaceId(), SamUtils.SAM_WORKSPACE_WRITE_ACTION);
 
     String description = "Create data reference in workspace " + referenceRequest.workspaceId();
 
@@ -81,10 +80,9 @@ public class DataReferenceService {
                 userReq)
             .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, referenceRequest.workspaceId());
 
-    ReferenceObject ref =
-        validationUtils.validateReference(referenceRequest.referenceType(), referenceRequest.referenceObject(), userReq);
-    // TODO: currently not serializable. Maybe it should be?
-    createJob.addParameter(DataReferenceFlightMapKeys.REFERENCE, ref);
+    validationUtils.validateReferenceObject(
+        referenceRequest.referenceType(), referenceRequest.referenceObject(), userReq);
+    createJob.addParameter(DataReferenceFlightMapKeys.REFERENCE, referenceRequest);
 
     UUID referenceIdResult = createJob.submitAndWait(UUID.class);
 

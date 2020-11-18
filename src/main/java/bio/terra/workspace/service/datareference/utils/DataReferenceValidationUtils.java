@@ -2,9 +2,10 @@ package bio.terra.workspace.service.datareference.utils;
 
 import static bio.terra.workspace.generated.model.ReferenceTypeEnum.DATA_REPO_SNAPSHOT;
 
-import bio.terra.workspace.generated.model.DataRepoSnapshot;
-import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
+import bio.terra.workspace.service.datareference.model.DataReferenceType;
+import bio.terra.workspace.service.datareference.model.ReferenceObject;
+import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import java.util.regex.Pattern;
@@ -15,7 +16,8 @@ import org.springframework.stereotype.Component;
 public class DataReferenceValidationUtils {
 
   private DataRepoService dataRepoService;
-  public static final Pattern NAME_VALIDATION_PATTERN = Pattern.compile("^[a-zA-Z0-9][_a-zA-Z0-9]{0,62}$");
+  public static final Pattern NAME_VALIDATION_PATTERN =
+      Pattern.compile("^[a-zA-Z0-9][_a-zA-Z0-9]{0,62}$");
 
   public static void validateReferenceName(String name) {
     if (StringUtils.isEmpty(name) || !NAME_VALIDATION_PATTERN.matcher(name).matches()) {
@@ -28,15 +30,14 @@ public class DataReferenceValidationUtils {
     this.dataRepoService = dataRepoService;
   }
 
-  public DataRepoSnapshot validateReference(
-      ReferenceTypeEnum referenceType,
-      DataRepoSnapshot reference,
+  public void validateReferenceObject(
+      DataReferenceType referenceType,
+      ReferenceObject reference,
       AuthenticatedUserRequest userReq) {
 
     switch (referenceType) {
       case DATA_REPO_SNAPSHOT:
-        validateDataRepoReference(reference, userReq);
-        return reference;
+        validateSnapshotReference((SnapshotReference) reference, userReq);
       default:
         throw new InvalidDataReferenceException(
             "Invalid reference type specified. Valid types include: "
@@ -44,7 +45,7 @@ public class DataReferenceValidationUtils {
     }
   }
 
-  private void validateDataRepoReference(DataRepoSnapshot ref, AuthenticatedUserRequest userReq) {
+  private void validateSnapshotReference(SnapshotReference ref, AuthenticatedUserRequest userReq) {
     if (StringUtils.isBlank(ref.getInstanceName()) || StringUtils.isBlank(ref.getSnapshot())) {
       throw new InvalidDataReferenceException(
           "Invalid Data Repo Snapshot identifier: "

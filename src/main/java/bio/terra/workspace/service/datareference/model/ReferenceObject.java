@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.datareference.model;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * An interface representing the subject of a data reference.
@@ -15,7 +15,7 @@ public interface ReferenceObject {
 
   String getProperty(String key);
 
-  List<String> getPropertyKeys();
+  Set<String> getPropertyKeys();
 
   void setProperty(String key, String value);
 }

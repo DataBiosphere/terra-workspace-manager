@@ -1,31 +1,46 @@
 package bio.terra.workspace.service.datareference.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.auto.value.AutoValue;
 import java.util.UUID;
 
-/** This is an internal representation of a request to create a data reference.
+/**
+ * This is an internal representation of a request to create a data reference.
  *
- * While this object is similar to the {@code DataReference} object, there is a semantic
- * difference: a {@code DataReference} is a fully formed data reference, while a
- * {@code DataReferenceRequest} only contains fields specified by clients. Notably, a DataReferenceRequest does not have a
- * referenceId, which is generated as part of creating a data reference.
+ * <p>While this object is similar to the {@code DataReference} object, there is a semantic
+ * difference: a {@code DataReference} is a fully formed data reference, while a {@code
+ * DataReferenceRequest} only contains fields specified by clients. Notably, a DataReferenceRequest
+ * does not have a referenceId, which is generated as part of creating a data reference.
+ *
+ * <p>This class is Jackson serializable, and so can be stored in Stairway maps.
  */
 @AutoValue
+@JsonSerialize(as = DataReferenceRequest.class)
+@JsonDeserialize(builder = AutoValue_DataReferenceRequest.Builder.class)
 public abstract class DataReferenceRequest {
 
   /** ID of the workspace this reference belongs to. */
+  @JsonProperty
   public abstract UUID workspaceId();
 
-  /** Name of the reference. Names are unique per workspace, per reference type and user-provided. */
+  /**
+   * Name of the reference. Names are unique per workspace, per reference type and user-provided.
+   */
+  @JsonProperty
   public abstract String name();
 
   /** Type of this data reference. */
+  @JsonProperty
   public abstract DataReferenceType referenceType();
 
   /** Instructions for how to clone this reference (if at all). */
+  @JsonProperty
   public abstract CloningInstructions cloningInstructions();
 
   /** The actual object being referenced. */
+  @JsonProperty
   public abstract ReferenceObject referenceObject();
 
   public static DataReferenceRequest.Builder builder() {
