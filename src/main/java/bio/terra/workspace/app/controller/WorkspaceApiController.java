@@ -76,7 +76,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::create);
-    // If clients do not provide an operation ID, we generate one instead.
+    // If clients do not provide a job ID, we generate one instead.
     String jobId = body.getJobId() != null ? body.getJobId() : UUID.randomUUID().toString();
 
     WorkspaceRequest internalRequest =

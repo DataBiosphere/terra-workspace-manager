@@ -102,7 +102,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void duplicateWorkspaceIdRequestsRejected() {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
-    // Note that the two calls use different operationIDs for the same Workspace ID, making them
+    // Note that the two calls use different jobIds for the same Workspace ID, making them
     // logically distinct requests to create the same workspace.
     WorkspaceRequest duplicateWorkspace = defaultRequestBuilder(request.workspaceId()).build();
     assertThrows(
@@ -111,10 +111,10 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void duplicateOperationRequestOk() {
+  public void duplicateJobIdRequestOk() {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     UUID returnedId = workspaceService.createWorkspace(request, USER_REQUEST);
-    // Because these calls share the same operationID they're treated as duplicate requests, rather
+    // Because these calls share the same jobId they're treated as duplicate requests, rather
     // than separate attempts to create the same workspace.
     UUID duplicateReturnedId = workspaceService.createWorkspace(request, USER_REQUEST);
     assertEquals(returnedId, duplicateReturnedId);
@@ -311,7 +311,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   /**
    * Convenience method for getting a WorkspaceRequest builder with some pre-filled default values.
    *
-   * <p>This provides default values for operationID (random UUID), spend profile
+   * <p>This provides default values for jobId (random UUID), spend profile
    * (Optional.empty()), and workspace stage (RAWLS_WORKSPACE).
    */
   private WorkspaceRequest.Builder defaultRequestBuilder(UUID workspaceId) {
