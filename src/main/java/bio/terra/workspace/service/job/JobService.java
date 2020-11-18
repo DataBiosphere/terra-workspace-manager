@@ -30,7 +30,6 @@ import com.google.common.annotations.VisibleForTesting;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -124,6 +123,9 @@ public class JobService {
     try {
       stairway.submit(jobId, flightClass, parameterMap);
     } catch (DuplicateFlightIdSubmittedException ex) {
+      // DuplicateFlightIdSubmittedException is a more specific StairwayException, and so needs to
+      // be checked separately. Allowing duplicate FlightIds is useful for ensuring idempotent
+      // behavior of flights.
       if (duplicateFlightOk) {
         return jobId;
       } else {

@@ -12,11 +12,15 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 public class CreateWorkspaceStep implements Step {
 
   private WorkspaceDao workspaceDao;
+
+  private Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
 
   public CreateWorkspaceStep(WorkspaceDao workspaceDao) {
     this.workspaceDao = workspaceDao;
@@ -43,6 +47,7 @@ public class CreateWorkspaceStep implements Step {
     workspaceDao.createWorkspace(workspaceToCreate);
 
     FlightUtils.setResponse(flightContext, workspaceId, HttpStatus.OK);
+    logger.info(String.format("Workspace created with id %s", workspaceId));
 
     return StepResult.getStepResultSuccess();
   }

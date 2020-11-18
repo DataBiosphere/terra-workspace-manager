@@ -5,6 +5,7 @@ import java.util.List;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.springframework.http.HttpStatus;
 
+/** Wrapper exception for non-200 responses from calls to Sam. */
 public class SamApiException extends ErrorReportException {
 
   private ApiException apiException;
@@ -39,6 +40,7 @@ public class SamApiException extends ErrorReportException {
     super(message, cause, causes, statusCode);
   }
 
+  /** Get the HTTP status code of the underlying response from Sam. */
   public int getApiExceptionStatus() {
     return apiException.getCode();
   }

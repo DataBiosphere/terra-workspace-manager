@@ -77,7 +77,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   public void testGetExistingWorkspace() {
-    WorkspaceRequest request = defaultWorkspaceRequest();
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     assertEquals(
@@ -100,7 +100,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   public void duplicateWorkspaceIdRequestsRejected() {
-    WorkspaceRequest request = defaultWorkspaceRequest();
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     // Note that the two calls use different operationIDs for the same Workspace ID, making them
     // logically distinct requests to create the same workspace.
@@ -112,7 +112,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   public void duplicateOperationRequestOk() {
-    WorkspaceRequest request = defaultWorkspaceRequest();
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     UUID returnedId = workspaceService.createWorkspace(request, USER_REQUEST);
     // Because these calls share the same operationID they're treated as duplicate requests, rather
     // than separate attempts to create the same workspace.
@@ -130,12 +130,16 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
 
     assertThrows(
         SamApiException.class,
-        () -> workspaceService.createWorkspace(defaultWorkspaceRequest(), USER_REQUEST));
+        () ->
+            workspaceService.createWorkspace(
+                defaultRequestBuilder(UUID.randomUUID()).build(), USER_REQUEST));
     // This second call shares the above operation ID, and so should return the same SamApiException
     // instead of a more generic internal Stairway exception.
     assertThrows(
         SamApiException.class,
-        () -> workspaceService.createWorkspace(defaultWorkspaceRequest(), USER_REQUEST));
+        () ->
+            workspaceService.createWorkspace(
+                defaultRequestBuilder(UUID.randomUUID()).build(), USER_REQUEST));
   }
 
   @Test
@@ -161,13 +165,15 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     SamApiException exception =
         assertThrows(
             SamApiException.class,
-            () -> workspaceService.createWorkspace(defaultWorkspaceRequest(), USER_REQUEST));
+            () ->
+                workspaceService.createWorkspace(
+                    defaultRequestBuilder(UUID.randomUUID()).build(), USER_REQUEST));
     assertEquals(errorMsg, exception.getMessage());
   }
 
   @Test
   public void createAndDeleteWorkspace() {
-    WorkspaceRequest request = defaultWorkspaceRequest();
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
@@ -179,7 +185,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   public void deleteWorkspaceWithDataReference() {
     // First, create a workspace.
-    WorkspaceRequest request = defaultWorkspaceRequest();
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     // Next, add a data reference to that workspace.
@@ -261,7 +267,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   public void createGoogleContextNoSpendProfileIdThrows() {
-    WorkspaceRequest request = defaultWorkspaceRequest();
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     assertThrows(
@@ -314,14 +320,5 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
         .jobId(UUID.randomUUID().toString())
         .spendProfileId(Optional.empty())
         .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE);
-  }
-
-  /**
-   * Generate a fully built Workspace object with a random ID and default values in all fields.
-   *
-   * <p>See {@code defaultRequestBuilder} for default values of each field.
-   */
-  private WorkspaceRequest defaultWorkspaceRequest() {
-    return defaultRequestBuilder(UUID.randomUUID()).build();
   }
 }

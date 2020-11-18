@@ -6,7 +6,6 @@ import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
-import bio.terra.workspace.service.iam.exception.SamResourceNotFoundException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,6 +21,8 @@ import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.model.SubsystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -36,6 +37,8 @@ public class SamService {
     this.samConfig = samConfig;
     this.objectMapper = objectMapper;
   }
+
+  private Logger logger = LoggerFactory.getLogger(SamService.class);
 
   private ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();
@@ -54,15 +57,17 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
       resourceApi.createResourceWithDefaults(SamUtils.SAM_WORKSPACE_RESOURCE, id.toString());
+      logger.info(String.format("Created Sam resource for workspace %s", id.toString()));
     } catch (ApiException apiException) {
       throw new SamApiException(apiException);
     }
   }
 
-  public void deleteWorkspace(String authToken, UUID id) throws SamResourceNotFoundException {
+  public void deleteWorkspace(String authToken, UUID id) {
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
       resourceApi.deleteResource(SamUtils.SAM_WORKSPACE_RESOURCE, id.toString());
+      logger.info(String.format("Deleted Sam resource for workspace %s", id.toString()));
     } catch (ApiException apiException) {
       throw new SamApiException(apiException);
     }
@@ -88,13 +93,14 @@ public class SamService {
             action);
     if (!isAuthorized)
       throw new SamUnauthorizedException(
-          "User "
-              + userReq.getEmail()
-              + " is not authorized to "
-              + action
-              + " workspace "
-              + workspaceId
-              + " or it doesn't exist.");
+          String.format(
+              "User %s is not authorized to %s workspace %s or it does not exist",
+              userReq.getEmail(), action, workspaceId));
+    else
+      logger.info(
+          String.format(
+              "User %s is authorized to %s workspace %s",
+              userReq.getEmail(), action, workspaceId.toString()));
   }
 
   public SystemStatusSystems status() {
