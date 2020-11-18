@@ -11,9 +11,11 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
+import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.flight.*;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
 import java.util.UUID;
@@ -104,6 +106,10 @@ public class WorkspaceService {
   @Traced
   public String createGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+    WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
+    if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
+      throw new StageDisabledException(workspaceId, stage, "createGoogleContext");
+    }
     Optional<SpendProfileId> spendProfileId =
         workspaceDao.getWorkspace(workspaceId).spendProfileId();
     if (spendProfileId.isEmpty()) {
@@ -133,6 +139,10 @@ public class WorkspaceService {
   @Traced
   public void deleteGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+    WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
+    if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
+      throw new StageDisabledException(workspaceId, stage, "deleteGoogleContext");
+    }
     jobService
         .newJob(
             "Delete Google Context " + workspaceId,

@@ -175,6 +175,53 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{id}/google:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      summary: Create a google context for the workspace.
+      operationId: createGoogleContext
+      tags: [Workspace]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGoogleContextRequestBody'
+      responses:
+        '202':
+          description: Redirect for profile successful creation
+          headers:
+            location:
+              description: url for the job result
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobModel'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Deletes the google context and all of its data from a workspace.
+      operationId: deleteGoogleContext
+      tags: [Workspace]
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   # Job paths, all disabled for now
 #  /api/jobs/v1/{id}:
 #    parameters:
@@ -434,6 +481,8 @@ components:
           type: string
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
+        googleContext:
+          $ref: '#/components/schemas/GoogleContext'
 
     CloningInstructionsEnum:
       type: string
@@ -448,6 +497,14 @@ components:
       # PLACEHOLDER_VALUE should be removed when we have an actual second value
       # to use.
       enum: ['DATA_REPO_SNAPSHOT', 'PLACEHOLDER_VALUE'] #eventually include GCS bucket, etc.
+
+    GoogleContext:
+      type: object
+      description: The Google cloud space associated with a workspace.
+      properties:
+        projectId:
+          description: The ID of Google Project associated with the workspace.
+          type: string
 
     CreateDataReferenceRequestBody:
       type: object
@@ -547,6 +604,17 @@ components:
       description: Enum for possible stages of a workspace along the Rawls migration path
       type: string
       enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']
+
+    CreateGoogleContextRequestBody:
+      description: Request body object for creating the Google context.
+      type: object
+      properties:
+        jobId:
+          description: |
+            The ID to use for the job of creating the google context. If not specified, a job id
+            will be randomly generated. If specified, the create Google context endpoint can be
+            called idempotently.
+          type: string
 
   responses:
     CreatedWorkspaceResponse:

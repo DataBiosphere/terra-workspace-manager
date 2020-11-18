@@ -22,6 +22,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
+import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -218,6 +219,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())
             .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
@@ -245,6 +247,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())
             .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
@@ -266,8 +269,24 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  public void createGoogleContextRawlsStageThrows() {
+    WorkspaceRequest request =
+        defaultRequestBuilder(UUID.randomUUID())
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+
+    assertThrows(
+        StageDisabledException.class,
+        () -> workspaceService.createGoogleContext(request.workspaceId(), USER_REQUEST));
+  }
+
+  @Test
   public void createGoogleContextNoSpendProfileIdThrows() {
-    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    WorkspaceRequest request =
+        defaultRequestBuilder(UUID.randomUUID())
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     assertThrows(
@@ -280,6 +299,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())
             .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
@@ -300,6 +320,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())
             .spendProfileId(Optional.of(spendUtils.noBillingAccount()))
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
@@ -311,8 +332,8 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   /**
    * Convenience method for getting a WorkspaceRequest builder with some pre-filled default values.
    *
-   * <p>This provides default values for jobId (random UUID), spend profile
-   * (Optional.empty()), and workspace stage (RAWLS_WORKSPACE).
+   * <p>This provides default values for jobId (random UUID), spend profile (Optional.empty()), and
+   * workspace stage (RAWLS_WORKSPACE).
    */
   private WorkspaceRequest.Builder defaultRequestBuilder(UUID workspaceId) {
     return WorkspaceRequest.builder()
