@@ -14,7 +14,6 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-// TODO(PF-186): Consider if this should be a connected test that talks to Sam.
 public class SpendProfileServiceTest extends BaseConnectedTest {
   @Autowired SamService samService;
   @Autowired SpendProfileConfiguration spendProfileConfiguration;

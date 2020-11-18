@@ -46,7 +46,7 @@ public class UserAccessUtils {
       return credentials.getAccessToken();
     } catch (IOException e) {
       throw new RuntimeException(
-              "Error creating  user access token for user " + userEmail, e);
+              "Error creating user access token for user " + userEmail, e);
     }
   }
 
