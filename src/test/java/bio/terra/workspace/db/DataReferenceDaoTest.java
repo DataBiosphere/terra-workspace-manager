@@ -3,7 +3,6 @@ package bio.terra.workspace.db;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.empty;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -12,11 +11,6 @@ import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfigura
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
-import bio.terra.workspace.generated.model.CloningInstructionsEnum;
-import bio.terra.workspace.generated.model.DataReferenceDescription;
-import bio.terra.workspace.generated.model.DataReferenceList;
-import bio.terra.workspace.generated.model.DataRepoSnapshot;
-import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
@@ -27,8 +21,8 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -41,23 +35,14 @@ public class DataReferenceDaoTest extends BaseUnitTest {
   @Autowired private WorkspaceDao workspaceDao;
   @Autowired private ObjectMapper objectMapper;
 
-  private UUID referenceId;
-
-  @BeforeEach
-  public void setup() {
-    referenceId = UUID.randomUUID();
-  }
-
   @Test
   public void verifyCreatedDataReferenceExists() {
-    workspaceDao.createWorkspace(defaultWorkspace());
-    DataReferenceRequest referenceRequest = defaultReference();
-
-    dataReferenceDao.createDataReference(
-        referenceRequest,
-        referenceId);
-    DataReference reference =
-        dataReferenceDao.getDataReference(referenceRequest.workspaceId(), referenceId);
+    UUID workspaceId = workspaceDao.createWorkspace(defaultWorkspace());
+    UUID referenceId = UUID.randomUUID();
+    DataReferenceRequest referenceRequest =
+        defaultReferenceBuilder().workspaceId(workspaceId).build();
+    dataReferenceDao.createDataReference(referenceRequest, referenceId);
+    DataReference reference = dataReferenceDao.getDataReference(workspaceId, referenceId);
 
     assertThat(reference.referenceId(), equalTo(referenceId));
   }
@@ -68,103 +53,86 @@ public class DataReferenceDaoTest extends BaseUnitTest {
         DataIntegrityViolationException.class,
         () -> {
           dataReferenceDao.createDataReference(
-              defaultReference(),
-              referenceId);
+              defaultReferenceBuilder().build(), UUID.randomUUID());
         });
   }
 
   @Test
   public void verifyCreateDuplicateNameFails() {
-    workspaceDao.createWorkspace(defaultWorkspace());
-    DataReferenceRequest referenceRequest = defaultReference();
-
-    dataReferenceDao.createDataReference(
-        referenceRequest,
-        referenceId);
+    UUID workspaceId = workspaceDao.createWorkspace(defaultWorkspace());
+    UUID referenceId = UUID.randomUUID();
+    DataReferenceRequest referenceRequest =
+        defaultReferenceBuilder().workspaceId(workspaceId).build();
+    dataReferenceDao.createDataReference(referenceRequest, referenceId);
 
     assertThrows(
         DuplicateDataReferenceException.class,
         () -> {
-          dataReferenceDao.createDataReference(
-              referenceRequest,
-              referenceId);
+          dataReferenceDao.createDataReference(referenceRequest, referenceId);
         });
   }
 
   @Test
   public void verifyGetDataReferenceByName() {
-    workspaceDao.createWorkspace(defaultWorkspace());
-    DataReferenceRequest referenceRequest = defaultReference();
-
-    dataReferenceDao.createDataReference(
-        referenceRequest,
-        referenceId);
+    UUID workspaceId = workspaceDao.createWorkspace(defaultWorkspace());
+    UUID referenceId = UUID.randomUUID();
+    DataReferenceRequest referenceRequest =
+        defaultReferenceBuilder().workspaceId(workspaceId).build();
+    dataReferenceDao.createDataReference(referenceRequest, referenceId);
 
     DataReference ref =
-        dataReferenceDao.getDataReferenceByName(referenceRequest.workspaceId(), referenceRequest.referenceType(), referenceRequest.name());
+        dataReferenceDao.getDataReferenceByName(
+            workspaceId, referenceRequest.referenceType(), referenceRequest.name());
     assertThat(ref.referenceId(), equalTo(referenceId));
   }
 
   @Test
   public void verifyGetDataReference() {
-    workspaceDao.createWorkspace(defaultWorkspace());
+    UUID workspaceId = workspaceDao.createWorkspace(defaultWorkspace());
+    UUID referenceId = UUID.randomUUID();
+    DataReferenceRequest referenceRequest =
+        defaultReferenceBuilder().workspaceId(workspaceId).build();
+    dataReferenceDao.createDataReference(referenceRequest, referenceId);
 
-    dataReferenceDao.createDataReference(
-        referenceRequest,
-        referenceId);
+    DataReference result = dataReferenceDao.getDataReference(workspaceId, referenceId);
 
-    DataReference result = dataReferenceDao.getDataReference(referenceRequest.workspaceId(), referenceId);
-
-    assertThat(result.workspaceId(), equalTo(referenceRequest.workspaceId()));
+    assertThat(result.workspaceId(), equalTo(workspaceId));
     assertThat(result.referenceId(), equalTo(referenceId));
     assertThat(result.name(), equalTo(referenceRequest.name()));
     assertThat(result.referenceType(), equalTo(referenceRequest.referenceType()));
-    assertThat(result.referenceObject(), equalTo(referenceRequest.referenceObject()));
-    //    assertThat(result.getReference().getInstance(), equalTo(reference.getInstance()));
+    // Compare properties rather than the referenceObjects themselves, as the interface does not require
+    // a reasonable equals() method.
+    assertThat(result.referenceObject().getProperties(), equalTo(referenceRequest.referenceObject().getProperties()));
   }
 
   @Test
   public void verifyGetDataReferenceNotInWorkspaceNotFound() {
-    workspaceDao.createWorkspace(defaultWorkspace());
+    UUID workspaceId = workspaceDao.createWorkspace(defaultWorkspace());
+    UUID referenceId = UUID.randomUUID();
+    DataReferenceRequest referenceRequest =
+        defaultReferenceBuilder().workspaceId(workspaceId).build();
+    dataReferenceDao.createDataReference(referenceRequest, referenceId);
 
     Workspace decoyWorkspace =
         Workspace.builder()
             .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
-    workspaceDao.createWorkspace(decoyWorkspace);
-    referenceRequest.set
-
-    dataReferenceDao.createDataReference(
-        referenceId,
-        decoyWorkspace.workspaceId(),
-        name,
-        null,
-        credentialId,
-        cloningInstructions,
-        referenceType,
-        reference);
-
+    UUID decoyId = workspaceDao.createWorkspace(decoyWorkspace);
     assertThrows(
         DataReferenceNotFoundException.class,
         () -> {
-          dataReferenceDao.getDataReference(workspaceId, referenceId);
+          dataReferenceDao.getDataReference(decoyId, referenceId);
         });
   }
 
   @Test
   public void verifyDeleteDataReference() {
-    workspaceDao.createWorkspace(defaultWorkspace());
-
-    dataReferenceDao.createDataReference(
-        referenceId,
-        workspaceId,
-        name,
-        null,
-        credentialId,
-        cloningInstructions,
-        referenceType,
-        reference);
+    UUID workspaceId = workspaceDao.createWorkspace(defaultWorkspace());
+    UUID referenceId = UUID.randomUUID();
+    DataReferenceRequest referenceRequest =
+        defaultReferenceBuilder().workspaceId(workspaceId).build();
+    dataReferenceDao.createDataReference(referenceRequest, referenceId);
 
     assertTrue(dataReferenceDao.deleteDataReference(workspaceId, referenceId));
 
@@ -174,54 +142,40 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
   @Test
   public void deleteNonExistentWorkspaceFails() throws Exception {
-    assertFalse(dataReferenceDao.deleteDataReference(workspaceId, referenceId));
+    assertFalse(dataReferenceDao.deleteDataReference(UUID.randomUUID(), UUID.randomUUID()));
   }
 
   @Test
   public void enumerateWorkspaceReferences() throws Exception {
-    workspaceDao.createWorkspace(defaultWorkspace());
+    UUID workspaceId = workspaceDao.createWorkspace(defaultWorkspace());
+    UUID firstReferenceId = UUID.randomUUID();
+    DataReferenceRequest firstRequest = defaultReferenceBuilder().workspaceId(workspaceId).build();
 
     // Create two references in the same workspace.
-    dataReferenceDao.createDataReference(
-        referenceId,
-        workspaceId,
-        name,
-        null,
-        credentialId,
-        cloningInstructions,
-        referenceType,
-        reference);
-    DataReferenceDescription firstReference =
-        dataReferenceDao.getDataReference(workspaceId, referenceId);
+    dataReferenceDao.createDataReference(firstRequest, firstReferenceId);
+    DataReference firstReference = dataReferenceDao.getDataReference(workspaceId, firstReferenceId);
 
+    // This needs a non-default name as we enforce name uniqueness per type per workspace.
+    DataReferenceRequest secondRequest = defaultReferenceBuilder().workspaceId(workspaceId).name("bar").build();
     UUID secondReferenceId = UUID.randomUUID();
-    dataReferenceDao.createDataReference(
-        secondReferenceId,
-        workspaceId,
-        name + "2",
-        null,
-        credentialId,
-        cloningInstructions,
-        referenceType,
-        reference);
-    DataReferenceDescription secondReference =
+    dataReferenceDao.createDataReference(secondRequest, secondReferenceId);
+    DataReference secondReference =
         dataReferenceDao.getDataReference(workspaceId, secondReferenceId);
 
     // Validate that both DataReferences are enumerated
-    DataReferenceList enumerateResult =
-        dataReferenceDao.enumerateDataReferences(workspaceId, name, 0, 10);
-    assertThat(enumerateResult.getResources().size(), equalTo(2));
+    List<DataReference> enumerateResult =
+        dataReferenceDao.enumerateDataReferences(workspaceId, 0, 10);
+    assertThat(enumerateResult.size(), equalTo(2));
     assertThat(
-        enumerateResult.getResources(),
-        containsInAnyOrder(equalTo(firstReference), equalTo(secondReference)));
+        enumerateResult, containsInAnyOrder(equalTo(firstReference), equalTo(secondReference)));
   }
 
   @Test
   public void enumerateEmptyReferenceList() throws Exception {
-    workspaceDao.createWorkspace(defaultWorkspace());
+    UUID workspaceId = workspaceDao.createWorkspace(defaultWorkspace());
 
-    DataReferenceList result = dataReferenceDao.enumerateDataReferences(workspaceId, name, 0, 10);
-    assertThat(result.getResources(), empty());
+    List<DataReference> result = dataReferenceDao.enumerateDataReferences(workspaceId, 0, 10);
+    assertTrue(result.isEmpty());
   }
 
   private String objectToString(Object obj) {
@@ -232,19 +186,16 @@ public class DataReferenceDaoTest extends BaseUnitTest {
     }
   }
 
-  private Workspace defaultWorkspace() {
+  private static Workspace defaultWorkspace() {
     return Workspace.builder()
-        .workspaceId(workspaceId)
+        .workspaceId(UUID.randomUUID())
         .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
         .build();
   }
 
-  private DataReferenceRequest defaultReference() {
-    return defaultReferenceBuilder().build();
-  }
-
-  private DataReferenceRequest.Builder defaultReferenceBuilder() {
-    SnapshotReference snapshot = new SnapshotReference(UUID.randomUUID().toString(), UUID.randomUUID().toString());
+  private static DataReferenceRequest.Builder defaultReferenceBuilder() {
+    SnapshotReference snapshot =
+        new SnapshotReference(UUID.randomUUID().toString(), UUID.randomUUID().toString());
     return DataReferenceRequest.builder()
         .workspaceId(UUID.randomUUID())
         .name("this_is_a_name")

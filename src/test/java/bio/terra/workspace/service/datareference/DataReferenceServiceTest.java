@@ -14,7 +14,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.generated.model.CloningInstructionsEnum;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
@@ -29,6 +29,8 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,32 +43,24 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-public class DataReferenceServiceTest extends BaseUnitTest {
+public class DataReferenceServiceTest extends BaseConnectedTest {
 
   @Autowired private MockMvc mvc;
-
+  @Autowired private WorkspaceService workspaceService;
+  @Autowired private DataReferenceService dataReferenceService;
   @MockBean private SamService mockSamService;
-
-  // Mock MVC doesn't populate the fields used to build this.
-  @MockBean private AuthenticatedUserRequestFactory mockAuthenticatedUserRequestFactory;
-
   @MockBean private DataRepoService mockDataRepoService;
 
-  @Autowired private ObjectMapper objectMapper;
-
-  private UUID workspaceId;
+  /** A fake authenticated user request. */
+  private static final AuthenticatedUserRequest USER_REQUEST =
+      new AuthenticatedUserRequest()
+          .token(Optional.of("fake-token"))
+          .email("fake@email.com")
+          .subjectId("fakeID123");
 
   @BeforeEach
   public void setup() {
-    workspaceId = UUID.randomUUID();
     doReturn(true).when(mockDataRepoService).snapshotExists(any(), any(), any());
-    doReturn(false).when(mockDataRepoService).snapshotExists(any(), eq("fake-id"), any());
-    AuthenticatedUserRequest fakeAuthentication = new AuthenticatedUserRequest();
-    fakeAuthentication
-        .token(Optional.of("fake-token"))
-        .email("fake@email.com")
-        .subjectId("fakeID123");
-    when(mockAuthenticatedUserRequestFactory.from(any())).thenReturn(fakeAuthentication);
   }
 
   @Test
@@ -212,6 +206,8 @@ public class DataReferenceServiceTest extends BaseUnitTest {
 
   @Test
   public void testCreateDataSnapshotNotInDataRepo() throws Exception {
+    doReturn(false).when(mockDataRepoService).snapshotExists(any(), eq("fake-id"), any());
+
     UUID initialWorkspaceId = createDefaultWorkspace().getId();
 
     DataRepoSnapshot snapshot = new DataRepoSnapshot();
@@ -470,7 +466,8 @@ public class DataReferenceServiceTest extends BaseUnitTest {
         .andReturn();
   }
 
-  private CreatedWorkspace createDefaultWorkspace() throws Exception {
+  private Workspace createDefaultWorkspace() throws Exception {
+    WorkspaceRequest request = WorkspaceRequest.builder()
     CreateWorkspaceRequestBody body =
         new CreateWorkspaceRequestBody().id(workspaceId).spendProfile(null);
 

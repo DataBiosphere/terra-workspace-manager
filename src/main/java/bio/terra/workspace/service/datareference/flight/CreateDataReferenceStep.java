@@ -26,7 +26,6 @@ public class CreateDataReferenceStep implements Step {
     FlightMap inputMap = flightContext.getInputParameters();
     FlightMap workingMap = flightContext.getWorkingMap();
     UUID referenceId = workingMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
-    UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.class);
     DataReferenceRequest request =
         inputMap.get(DataReferenceFlightMapKeys.REFERENCE, DataReferenceRequest.class);
 

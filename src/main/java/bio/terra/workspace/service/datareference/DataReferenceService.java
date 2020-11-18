@@ -71,14 +71,12 @@ public class DataReferenceService {
     String description = "Create data reference in workspace " + referenceRequest.workspaceId();
 
     JobBuilder createJob =
-        jobService
-            .newJob(
-                description,
-                UUID.randomUUID().toString(),
-                CreateDataReferenceFlight.class,
-                null,
-                userReq)
-            .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, referenceRequest.workspaceId());
+        jobService.newJob(
+            description,
+            UUID.randomUUID().toString(),
+            CreateDataReferenceFlight.class,
+            null,
+            userReq);
 
     validationUtils.validateReferenceObject(
         referenceRequest.referenceType(), referenceRequest.referenceObject(), userReq);
@@ -93,8 +91,7 @@ public class DataReferenceService {
   public List<DataReference> enumerateDataReferences(
       UUID workspaceId, int offset, int limit, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
-    return dataReferenceDao.enumerateDataReferences(
-        workspaceId, userReq.getReqId().toString(), offset, limit);
+    return dataReferenceDao.enumerateDataReferences(workspaceId, offset, limit);
   }
 
   @Traced

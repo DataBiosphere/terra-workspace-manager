@@ -96,7 +96,10 @@ public class DataReferenceDao {
     }
   }
 
-  /** Retrieve a data reference by name from the DB. Names are unique per workspace, per reference type. */
+  /**
+   * Retrieve a data reference by name from the DB. Names are unique per workspace, per reference
+   * type.
+   */
   public DataReference getDataReferenceByName(
       UUID workspaceId, DataReferenceType type, String name) {
     String sql =
@@ -164,8 +167,7 @@ public class DataReferenceDao {
 
   // TODO: in the future, resource_id will be a foreign key to the workspace_resources table, and we
   // should consider joining and listing those entries here.
-  public List<DataReference> enumerateDataReferences(
-      UUID workspaceId, String owner, int offset, int limit) {
+  public List<DataReference> enumerateDataReferences(UUID workspaceId, int offset, int limit) {
     String sql =
         "SELECT workspace_id, reference_id, name, cloning_instructions, reference_type, reference"
             + " FROM workspace_data_reference"

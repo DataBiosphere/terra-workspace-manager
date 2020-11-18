@@ -8,11 +8,11 @@ import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.*;
 import bio.terra.workspace.common.utils.SamUtils;
-import bio.terra.workspace.generated.model.CloningInstructionsEnum;
-import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
-import bio.terra.workspace.generated.model.DataRepoSnapshot;
-import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.service.datareference.DataReferenceService;
+import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
+import bio.terra.workspace.service.datareference.model.DataReferenceType;
+import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -158,18 +158,18 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
         workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
 
     // Next, add a data reference to that workspace.
-    DataRepoSnapshot reference =
-        new DataRepoSnapshot().instanceName("fake instance").snapshot("fake snapshot");
-    CreateDataReferenceRequestBody referenceRequest =
-        new CreateDataReferenceRequestBody()
+    SnapshotReference snapshot = new SnapshotReference("fake instance", "fake snapshot");
+    DataReferenceRequest referenceRequest =
+        DataReferenceRequest.builder()
+            .workspaceId(workspaceId)
             .name("fake_data_reference")
-            .cloningInstructions(CloningInstructionsEnum.NOTHING)
-            .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-            .reference(reference);
+            .cloningInstructions(CloningInstructions.COPY_NOTHING)
+            .referenceType(DataReferenceType.DATA_REPO_SNAPSHOT)
+            .referenceObject(snapshot)
+            .build();
+
     UUID referenceId =
-        dataReferenceService
-            .createDataReference(workspaceId, referenceRequest, USER_REQUEST)
-            .getReferenceId();
+        dataReferenceService.createDataReference(referenceRequest, USER_REQUEST).referenceId();
     // Validate that the reference exists.
     dataReferenceService.getDataReference(workspaceId, referenceId, USER_REQUEST);
     // Delete the workspace.

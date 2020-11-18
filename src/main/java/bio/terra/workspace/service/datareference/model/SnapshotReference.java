@@ -69,7 +69,6 @@ public class SnapshotReference implements ReferenceObject {
     return Set.of(SNAPSHOT_REFERENCE_INSTANCE_NAME_KEY, SNAPSHOT_REFERENCE_SNAPSHOT_KEY);
   }
 
-  // TODO: snapshot validation stuff should go here.
   @Override
   public void setProperty(String key, String value) {
     if (!getPropertyKeys().contains(key)) {
