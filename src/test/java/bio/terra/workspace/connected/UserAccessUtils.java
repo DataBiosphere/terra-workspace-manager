@@ -39,14 +39,13 @@ public class UserAccessUtils {
   public AccessToken generateAccessToken(String userEmail) {
     try {
       GoogleCredentials credentials =
-        GoogleCredentials.fromStream(new FileInputStream(userDelegatedServiceAccountPath))
-            .createScoped(LOGIN_SCOPES)
-            .createDelegated(userEmail);
+          GoogleCredentials.fromStream(new FileInputStream(userDelegatedServiceAccountPath))
+              .createScoped(LOGIN_SCOPES)
+              .createDelegated(userEmail);
       credentials.refreshIfExpired();
       return credentials.getAccessToken();
     } catch (IOException e) {
-      throw new RuntimeException(
-              "Error creating user access token for user " + userEmail, e);
+      throw new RuntimeException("Error creating user access token for user " + userEmail, e);
     }
   }
 
