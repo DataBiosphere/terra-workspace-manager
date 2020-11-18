@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-/** Helper component for providing user access tokens for connected test. */
+/** Helper component for providing user access tokens for connected tests. */
 @Component
 @Profile("connected-test")
 public class UserAccessUtils {
@@ -35,45 +35,28 @@ public class UserAccessUtils {
   @Value("${workspace.connected-test.second-user-email}")
   private String secondUserEmail;
 
-  //    /** Provides {@link GoogleCredentials} that can be used to impersonate users. */
-  //    @Lazy
-  //    @Bean
-  //    public GoogleCredentials userDelegatedCredentials() throws IOException {
-  //        GoogleCredentials.fromStream(new FileInputStream(userDelegatedServiceAccountPath))
-  //        .createScoped();
-  //        GoogleCredentials credentials =
-  //                GoogleCredentials.fromStream(
-  //                        new
-  // ByteArrayInputStream(Files.readAllBytes(serviceAccountFile.toPath())))
-  //    }
-
   /** Generates an OAuth access token for the userEmail. Relies on domain delegation. */
-  public AccessToken generateAccessToken(String userEmail) throws IOException {
-    GoogleCredentials credentials =
+  public AccessToken generateAccessToken(String userEmail) {
+    try {
+      GoogleCredentials credentials =
         GoogleCredentials.fromStream(new FileInputStream(userDelegatedServiceAccountPath))
             .createScoped(LOGIN_SCOPES)
             .createDelegated(userEmail);
-    credentials.refreshIfExpired();
-    return credentials.getAccessToken();
+      credentials.refreshIfExpired();
+      return credentials.getAccessToken();
+    } catch (IOException e) {
+      throw new RuntimeException(
+              "Error creating  user access token for user " + userEmail, e);
+    }
   }
 
   /** Generates an OAuth access token for the default test user. */
   public AccessToken defaultUserAccessToken() {
-    try {
-      return generateAccessToken(defaultUserEmail);
-    } catch (IOException e) {
-      throw new RuntimeException(
-          "Error creating default user access token for user " + defaultUserEmail, e);
-    }
+    return generateAccessToken(defaultUserEmail);
   }
 
   /** Generates an OAuth access token for the second test user. */
   public AccessToken secondUserAccessToken() {
-    try {
-      return generateAccessToken(secondUserEmail);
-    } catch (IOException e) {
-      throw new RuntimeException(
-          "Error creating secibd user access token for user " + secondUserEmail, e);
-    }
+    return generateAccessToken(secondUserEmail);
   }
 }
