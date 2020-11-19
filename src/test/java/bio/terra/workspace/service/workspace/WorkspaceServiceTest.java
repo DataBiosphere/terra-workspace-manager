@@ -24,6 +24,7 @@ import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileExcep
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import java.util.Optional;
@@ -77,47 +78,80 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   public void testGetExistingWorkspace() {
-    UUID workspaceId = UUID.randomUUID();
-    workspaceService.createWorkspace(
-        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
 
     assertEquals(
-        workspaceId, workspaceService.getWorkspace(workspaceId, USER_REQUEST).workspaceId());
+        request.workspaceId(),
+        workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST).workspaceId());
   }
 
   @Test
   public void testWorkspaceStagePersists() {
-    UUID workspaceId = UUID.randomUUID();
-    workspaceService.createWorkspace(
-        workspaceId, Optional.empty(), WorkspaceStage.MC_WORKSPACE, USER_REQUEST);
-
-    Workspace createdWorkspace = workspaceService.getWorkspace(workspaceId, USER_REQUEST);
-    assertEquals(workspaceId, createdWorkspace.workspaceId());
+    WorkspaceRequest mcWorkspaceRequest =
+        defaultRequestBuilder(UUID.randomUUID())
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
+    workspaceService.createWorkspace(mcWorkspaceRequest, USER_REQUEST);
+    Workspace createdWorkspace =
+        workspaceService.getWorkspace(mcWorkspaceRequest.workspaceId(), USER_REQUEST);
+    assertEquals(mcWorkspaceRequest.workspaceId(), createdWorkspace.workspaceId());
     assertEquals(WorkspaceStage.MC_WORKSPACE, createdWorkspace.workspaceStage());
   }
 
   @Test
-  public void duplicateWorkspaceRejected() {
-    UUID workspaceId = UUID.randomUUID();
-    workspaceService.createWorkspace(
-        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
-
+  public void duplicateWorkspaceIdRequestsRejected() {
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+    // Note that the two calls use different jobIds for the same Workspace ID, making them
+    // logically distinct requests to create the same workspace.
+    WorkspaceRequest duplicateWorkspace = defaultRequestBuilder(request.workspaceId()).build();
     assertThrows(
         DuplicateWorkspaceException.class,
+        () -> workspaceService.createWorkspace(duplicateWorkspace, USER_REQUEST));
+  }
+
+  @Test
+  public void duplicateJobIdRequestOk() {
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    UUID returnedId = workspaceService.createWorkspace(request, USER_REQUEST);
+    // Because these calls share the same jobId they're treated as duplicate requests, rather
+    // than separate attempts to create the same workspace.
+    UUID duplicateReturnedId = workspaceService.createWorkspace(request, USER_REQUEST);
+    assertEquals(returnedId, duplicateReturnedId);
+    assertEquals(returnedId, request.workspaceId());
+  }
+
+  @Test
+  public void duplicateOperationSharesFailureResponse() {
+    String errorMsg = "fake SAM error message";
+    doThrow(new SamApiException(errorMsg))
+        .when(mockSamService)
+        .createWorkspaceWithDefaults(any(), any());
+
+    assertThrows(
+        SamApiException.class,
         () ->
             workspaceService.createWorkspace(
-                workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST));
+                defaultRequestBuilder(UUID.randomUUID()).build(), USER_REQUEST));
+    // This second call shares the above operation ID, and so should return the same SamApiException
+    // instead of a more generic internal Stairway exception.
+    assertThrows(
+        SamApiException.class,
+        () ->
+            workspaceService.createWorkspace(
+                defaultRequestBuilder(UUID.randomUUID()).build(), USER_REQUEST));
   }
 
   @Test
   public void testWithSpendProfile() {
-    UUID workspaceId = UUID.randomUUID();
     Optional<SpendProfileId> spendProfileId = Optional.of(SpendProfileId.create("foo"));
-    workspaceService.createWorkspace(
-        workspaceId, spendProfileId, WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
+    WorkspaceRequest request =
+        defaultRequestBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
 
-    Workspace createdWorkspace = workspaceService.getWorkspace(workspaceId, USER_REQUEST);
-    assertEquals(workspaceId, createdWorkspace.workspaceId());
+    Workspace createdWorkspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
+    assertEquals(request.workspaceId(), createdWorkspace.workspaceId());
     assertEquals(spendProfileId, createdWorkspace.spendProfileId());
   }
 
@@ -129,34 +163,32 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
         .when(mockSamService)
         .createWorkspaceWithDefaults(any(), any());
 
-    UUID workspaceId = UUID.randomUUID();
     SamApiException exception =
         assertThrows(
             SamApiException.class,
             () ->
                 workspaceService.createWorkspace(
-                    workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST));
+                    defaultRequestBuilder(UUID.randomUUID()).build(), USER_REQUEST));
     assertEquals(errorMsg, exception.getMessage());
   }
 
   @Test
   public void createAndDeleteWorkspace() {
-    UUID workspaceId = UUID.randomUUID();
-    workspaceService.createWorkspace(
-        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
 
-    workspaceService.deleteWorkspace(workspaceId, USER_REQUEST);
+    workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(workspaceId, USER_REQUEST));
+        () -> workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST));
   }
 
   @Test
   public void deleteWorkspaceWithDataReference() {
     // First, create a workspace.
     UUID workspaceId = UUID.randomUUID();
-    workspaceService.createWorkspace(
-        workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
+    WorkspaceRequest request = defaultRequestBuilder(workspaceId).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
 
     // Next, add a data reference to that workspace.
     SnapshotReference snapshot = SnapshotReference.create("fake instance", "fake snapshot");
@@ -172,35 +204,40 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     UUID referenceId =
         dataReferenceService.createDataReference(referenceRequest, USER_REQUEST).referenceId();
     // Validate that the reference exists.
-    dataReferenceService.getDataReference(workspaceId, referenceId, USER_REQUEST);
+    dataReferenceService.getDataReference(request.workspaceId(), referenceId, USER_REQUEST);
     // Delete the workspace.
-    workspaceService.deleteWorkspace(workspaceId, USER_REQUEST);
+    workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
     // Verify that the contained data reference is no longer returned.
     assertThrows(
         DataReferenceNotFoundException.class,
-        () -> dataReferenceService.getDataReference(workspaceId, referenceId, USER_REQUEST));
+        () ->
+            dataReferenceService.getDataReference(
+                request.workspaceId(), referenceId, USER_REQUEST));
   }
 
   @Test
   public void deleteWorkspaceWithGoogleContext() throws Exception {
-    UUID workspaceId = UUID.randomUUID();
-    workspaceService.createWorkspace(
-        workspaceId,
-        Optional.of(spendUtils.defaultSpendId()),
-        WorkspaceStage.MC_WORKSPACE,
-        USER_REQUEST);
+    WorkspaceRequest request =
+        defaultRequestBuilder(UUID.randomUUID())
+            .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
 
-    String jobId = workspaceService.createGoogleContext(workspaceId, USER_REQUEST);
+    String jobId = workspaceService.createGoogleContext(request.workspaceId(), USER_REQUEST);
     jobService.waitForJob(jobId);
     assertEquals(
         HttpStatus.OK,
         jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getStatusCode());
     String projectId =
-        workspaceService.getCloudContext(workspaceId, USER_REQUEST).googleProjectId().get();
+        workspaceService
+            .getCloudContext(request.workspaceId(), USER_REQUEST)
+            .googleProjectId()
+            .get();
     // Verify project exists by retrieving it.
     Project project = resourceManager.projects().get(projectId).execute();
 
-    workspaceService.deleteWorkspace(workspaceId, USER_REQUEST);
+    workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
     // Check that project is now being deleted.
     project = resourceManager.projects().get(projectId).execute();
     assertEquals("DELETE_REQUESTED", project.getLifecycleState());
@@ -208,64 +245,61 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   public void createGetDeleteGoogleContext() {
-    UUID workspaceId = UUID.randomUUID();
-    workspaceService.createWorkspace(
-        workspaceId,
-        Optional.of(spendUtils.defaultSpendId()),
-        WorkspaceStage.MC_WORKSPACE,
-        USER_REQUEST);
+    WorkspaceRequest request =
+        defaultRequestBuilder(UUID.randomUUID())
+            .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
 
-    String jobId = workspaceService.createGoogleContext(workspaceId, USER_REQUEST);
+    String jobId = workspaceService.createGoogleContext(request.workspaceId(), USER_REQUEST);
     jobService.waitForJob(jobId);
     assertEquals(
         HttpStatus.OK,
         jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getStatusCode());
     assertTrue(
-        workspaceService.getCloudContext(workspaceId, USER_REQUEST).googleProjectId().isPresent());
+        workspaceService
+            .getCloudContext(request.workspaceId(), USER_REQUEST)
+            .googleProjectId()
+            .isPresent());
 
-    workspaceService.deleteGoogleContext(workspaceId, USER_REQUEST);
+    workspaceService.deleteGoogleContext(request.workspaceId(), USER_REQUEST);
     assertEquals(
-        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, USER_REQUEST));
+        WorkspaceCloudContext.none(),
+        workspaceService.getCloudContext(request.workspaceId(), USER_REQUEST));
   }
 
   @Test
   public void createGoogleContextRawlsStageThrows() {
-    UUID workspaceId = UUID.randomUUID();
-    workspaceService.createWorkspace(
-        workspaceId,
-        Optional.empty(),
-        // RAWLS stage instead of MC.
-        WorkspaceStage.RAWLS_WORKSPACE,
-        USER_REQUEST);
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
 
     assertThrows(
         StageDisabledException.class,
-        () -> workspaceService.createGoogleContext(workspaceId, USER_REQUEST));
+        () -> workspaceService.createGoogleContext(request.workspaceId(), USER_REQUEST));
   }
 
   @Test
   public void createGoogleContextNoSpendProfileIdThrows() {
-    UUID workspaceId = UUID.randomUUID();
-    workspaceService.createWorkspace(
-        workspaceId,
-        // Don't specify a spend profile on the created worksapce.
-        Optional.empty(),
-        WorkspaceStage.MC_WORKSPACE,
-        USER_REQUEST);
+    WorkspaceRequest request =
+        defaultRequestBuilder(UUID.randomUUID())
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
 
     assertThrows(
         MissingSpendProfileException.class,
-        () -> workspaceService.createGoogleContext(workspaceId, USER_REQUEST));
+        () -> workspaceService.createGoogleContext(request.workspaceId(), USER_REQUEST));
   }
 
   @Test
   public void createGoogleContextSpendLinkingUnauthorizedThrows() {
-    UUID workspaceId = UUID.randomUUID();
-    workspaceService.createWorkspace(
-        workspaceId,
-        Optional.of(spendUtils.defaultSpendId()),
-        WorkspaceStage.MC_WORKSPACE,
-        USER_REQUEST);
+    WorkspaceRequest request =
+        defaultRequestBuilder(UUID.randomUUID())
+            .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
 
     Mockito.when(
             mockSamService.isAuthorized(
@@ -276,20 +310,34 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
         .thenReturn(false);
     assertThrows(
         SpendUnauthorizedException.class,
-        () -> workspaceService.createGoogleContext(workspaceId, USER_REQUEST));
+        () -> workspaceService.createGoogleContext(request.workspaceId(), USER_REQUEST));
   }
 
   @Test
   public void createGoogleContextSpendWithoutBillingAccountThrows() {
-    UUID workspaceId = UUID.randomUUID();
-    workspaceService.createWorkspace(
-        workspaceId,
-        Optional.of(spendUtils.noBillingAccount()),
-        WorkspaceStage.MC_WORKSPACE,
-        USER_REQUEST);
+    WorkspaceRequest request =
+        defaultRequestBuilder(UUID.randomUUID())
+            .spendProfileId(Optional.of(spendUtils.noBillingAccount()))
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
 
     assertThrows(
         NoBillingAccountException.class,
-        () -> workspaceService.createGoogleContext(workspaceId, USER_REQUEST));
+        () -> workspaceService.createGoogleContext(request.workspaceId(), USER_REQUEST));
+  }
+
+  /**
+   * Convenience method for getting a WorkspaceRequest builder with some pre-filled default values.
+   *
+   * <p>This provides default values for jobId (random UUID), spend profile (Optional.empty()), and
+   * workspace stage (RAWLS_WORKSPACE).
+   */
+  private WorkspaceRequest.Builder defaultRequestBuilder(UUID workspaceId) {
+    return WorkspaceRequest.builder()
+        .workspaceId(workspaceId)
+        .jobId(UUID.randomUUID().toString())
+        .spendProfileId(Optional.empty())
+        .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE);
   }
 }

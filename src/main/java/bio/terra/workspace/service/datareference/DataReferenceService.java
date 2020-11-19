@@ -99,10 +99,11 @@ public class DataReferenceService {
           DataReferenceFlightMapKeys.REFERENCE_PROPERTIES,
           objectMapper.writeValueAsString(referenceRequest.referenceObject().getProperties()));
     } catch (JsonProcessingException e) {
-      throw new RuntimeException("Error serializing referenceObject " + referenceRequest.referenceObject().toString());
+      throw new RuntimeException(
+          "Error serializing referenceObject " + referenceRequest.referenceObject().toString());
     }
 
-    UUID referenceIdResult = createJob.submitAndWait(UUID.class);
+    UUID referenceIdResult = createJob.submitAndWait(UUID.class, false);
 
     return dataReferenceDao.getDataReference(referenceRequest.workspaceId(), referenceIdResult);
   }

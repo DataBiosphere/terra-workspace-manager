@@ -28,8 +28,11 @@ public class DeleteWorkspaceAuthzStep implements Step {
     try {
       samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);
     } catch (SamApiException e) {
-      // Because there's no way to undo a Sam delete, we should always retry on Sam API errors.
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
+      // Stairway steps may run multiple times, so this may already have been deleted.
+      // For all other errors we should always retry because there's no way to undo a Sam delete.
+      if (e.getApiExceptionStatus() != 404) {
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
+      }
     }
     return StepResult.getStepResultSuccess();
   }

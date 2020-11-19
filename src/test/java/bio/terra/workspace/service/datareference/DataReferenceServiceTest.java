@@ -22,6 +22,7 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.List;
 import java.util.Optional;
@@ -193,8 +194,14 @@ public class DataReferenceServiceTest extends BaseConnectedTest {
   }
 
   private UUID createDefaultWorkspace() {
-    return workspaceService.createWorkspace(
-        UUID.randomUUID(), Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
+    WorkspaceRequest request =
+        WorkspaceRequest.builder()
+            .workspaceId(UUID.randomUUID())
+            .jobId(UUID.randomUUID().toString())
+            .spendProfileId(Optional.empty())
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
+    return workspaceService.createWorkspace(request, USER_REQUEST);
   }
 
   private DataReferenceRequest.Builder defaultReferenceRequest(UUID workspaceId) {

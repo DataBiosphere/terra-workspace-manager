@@ -2,6 +2,7 @@ package bio.terra.workspace.common;
 
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.DatabaseOperationException;
+import bio.terra.stairway.exception.DuplicateFlightIdSubmittedException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import java.time.Duration;
 import java.time.Instant;
@@ -19,7 +20,8 @@ public class StairwayTestUtils {
       Class<? extends Flight> flightClass,
       FlightMap inputParameters,
       Duration timeout)
-      throws DatabaseOperationException, StairwayExecutionException, InterruptedException {
+      throws DatabaseOperationException, StairwayExecutionException, InterruptedException,
+          DuplicateFlightIdSubmittedException {
     String flightId = stairway.createFlightId();
     stairway.submit(flightId, flightClass, inputParameters);
     return pollUntilComplete(flightId, stairway, timeout.dividedBy(20), timeout);

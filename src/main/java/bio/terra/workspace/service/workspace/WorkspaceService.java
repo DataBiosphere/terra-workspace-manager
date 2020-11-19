@@ -14,6 +14,7 @@ import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountExceptio
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.flight.*;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
@@ -49,29 +50,23 @@ public class WorkspaceService {
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
-  public UUID createWorkspace(
-      UUID workspaceId,
-      Optional<SpendProfileId> spendProfileId,
-      WorkspaceStage workspaceStage,
-      AuthenticatedUserRequest userReq) {
+  public UUID createWorkspace(WorkspaceRequest workspaceRequest, AuthenticatedUserRequest userReq) {
 
-    String description = "Create workspace " + workspaceId.toString();
+    String description = "Create workspace " + workspaceRequest.workspaceId().toString();
     JobBuilder createJob =
         jobService
             .newJob(
-                description,
-                UUID.randomUUID().toString(), // JobId does not need persistence for sync calls.
-                WorkspaceCreateFlight.class,
-                null,
-                userReq)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
-    if (spendProfileId.isPresent()) {
-      createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfileId.get().id());
+                description, workspaceRequest.jobId(), WorkspaceCreateFlight.class, null, userReq)
+            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceRequest.workspaceId());
+    if (workspaceRequest.spendProfileId().isPresent()) {
+      createJob.addParameter(
+          WorkspaceFlightMapKeys.SPEND_PROFILE_ID, workspaceRequest.spendProfileId().get().id());
     }
 
-    createJob.addParameter(WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceStage);
+    createJob.addParameter(
+        WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceRequest.workspaceStage());
 
-    return createJob.submitAndWait(UUID.class);
+    return createJob.submitAndWait(UUID.class, true);
   }
 
   /** Retrieves an existing workspace by ID */
@@ -97,7 +92,7 @@ public class WorkspaceService {
                 null, // Delete does not have a useful request body
                 userReq)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id);
-    deleteJob.submitAndWait(null);
+    deleteJob.submitAndWait(null, false);
   }
 
   /** Retrieves the cloud context of a workspace. */
@@ -136,7 +131,7 @@ public class WorkspaceService {
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
         .addParameter(
             WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendProfile.billingAccountId().get())
-        .submit();
+        .submit(false);
     return jobId;
   }
 
@@ -156,6 +151,6 @@ public class WorkspaceService {
             /* request= */ null,
             userReq)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
-        .submitAndWait(null);
+        .submitAndWait(null, false);
   }
 }

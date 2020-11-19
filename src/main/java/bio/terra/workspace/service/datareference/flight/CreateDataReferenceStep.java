@@ -49,7 +49,8 @@ public class CreateDataReferenceStep implements Step {
                   inputMap.get(DataReferenceFlightMapKeys.REFERENCE_PROPERTIES, String.class),
                   Map.class));
     } catch (JsonProcessingException ex) {
-      throw new RuntimeException("Error deserializing referenceObject: " + referenceObject.toString());
+      throw new RuntimeException(
+          "Error deserializing referenceObject: " + referenceObject.toString());
     }
     DataReferenceRequest request =
         DataReferenceRequest.builder()

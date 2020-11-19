@@ -20,8 +20,6 @@ public class CreateWorkspaceStep implements Step {
 
   private WorkspaceDao workspaceDao;
 
-  private static final String CREATE_WORKSPACE_COMPLETED_KEY = "createWorkspaceStepCompleted";
-
   private Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
 
   public CreateWorkspaceStep(WorkspaceDao workspaceDao) {
@@ -33,8 +31,6 @@ public class CreateWorkspaceStep implements Step {
     FlightMap inputMap = flightContext.getInputParameters();
 
     UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    FlightMap workingMap = flightContext.getWorkingMap();
-    workingMap.put(CREATE_WORKSPACE_COMPLETED_KEY, false);
 
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(inputMap.get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, String.class))
@@ -49,7 +45,6 @@ public class CreateWorkspaceStep implements Step {
             .build();
 
     workspaceDao.createWorkspace(workspaceToCreate);
-    workingMap.put(CREATE_WORKSPACE_COMPLETED_KEY, true);
 
     FlightUtils.setResponse(flightContext, workspaceId, HttpStatus.OK);
     logger.info(String.format("Workspace created with id %s", workspaceId));
@@ -60,11 +55,9 @@ public class CreateWorkspaceStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) {
     FlightMap inputMap = flightContext.getInputParameters();
-    FlightMap workingMap = flightContext.getWorkingMap();
-    if (workingMap.get(CREATE_WORKSPACE_COMPLETED_KEY, Boolean.class)) {
-      UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-      workspaceDao.deleteWorkspace(workspaceId);
-    }
+    UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    // Ignore return value, as we don't care whether a workspace was deleted or just not found.
+    workspaceDao.deleteWorkspace(workspaceId);
     return StepResult.getStepResultSuccess();
   }
 }

@@ -139,7 +139,7 @@ public class JobServiceTest extends BaseUnitTest {
   // Submit a flight; wait for it to finish; return the flight id
   private String runFlight(String description) throws StairwayException {
     String jobId = UUID.randomUUID().toString();
-    jobService.newJob(description, jobId, JobServiceTestFlight.class, null, testUser).submit();
+    jobService.newJob(description, jobId, JobServiceTestFlight.class, null, testUser).submit(false);
     jobService.waitForJob(jobId);
     return jobId;
   }
