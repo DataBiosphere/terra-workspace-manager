@@ -1,8 +1,5 @@
 package bio.terra.workspace.service.datareference.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.auto.value.AutoValue;
 import java.util.UUID;
 
@@ -17,30 +14,23 @@ import java.util.UUID;
  * <p>This class is Jackson serializable, and so can be stored in Stairway maps.
  */
 @AutoValue
-@JsonSerialize(as = DataReferenceRequest.class)
-@JsonDeserialize(builder = AutoValue_DataReferenceRequest.Builder.class)
 public abstract class DataReferenceRequest {
 
   /** ID of the workspace this reference belongs to. */
-  @JsonProperty
   public abstract UUID workspaceId();
 
   /**
    * Name of the reference. Names are unique per workspace, per reference type and user-provided.
    */
-  @JsonProperty
   public abstract String name();
 
   /** Type of this data reference. */
-  @JsonProperty
   public abstract DataReferenceType referenceType();
 
   /** Instructions for how to clone this reference (if at all). */
-  @JsonProperty
   public abstract CloningInstructions cloningInstructions();
 
   /** The actual object being referenced. */
-  @JsonProperty
   public abstract ReferenceObject referenceObject();
 
   public static DataReferenceRequest.Builder builder() {

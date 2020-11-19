@@ -100,9 +100,12 @@ public class DataReferenceDaoTest extends BaseUnitTest {
     assertThat(result.referenceId(), equalTo(referenceId));
     assertThat(result.name(), equalTo(referenceRequest.name()));
     assertThat(result.referenceType(), equalTo(referenceRequest.referenceType()));
-    // Compare properties rather than the referenceObjects themselves, as the interface does not require
+    // Compare properties rather than the referenceObjects themselves, as the interface does not
+    // require
     // a reasonable equals() method.
-    assertThat(result.referenceObject().getProperties(), equalTo(referenceRequest.referenceObject().getProperties()));
+    assertThat(
+        result.referenceObject().getProperties(),
+        equalTo(referenceRequest.referenceObject().getProperties()));
   }
 
   @Test
@@ -141,12 +144,12 @@ public class DataReferenceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void deleteNonExistentWorkspaceFails() throws Exception {
+  public void deleteNonExistentWorkspaceFails() {
     assertFalse(dataReferenceDao.deleteDataReference(UUID.randomUUID(), UUID.randomUUID()));
   }
 
   @Test
-  public void enumerateWorkspaceReferences() throws Exception {
+  public void enumerateWorkspaceReferences() {
     UUID workspaceId = workspaceDao.createWorkspace(defaultWorkspace());
     UUID firstReferenceId = UUID.randomUUID();
     DataReferenceRequest firstRequest = defaultReferenceBuilder().workspaceId(workspaceId).build();
@@ -156,7 +159,8 @@ public class DataReferenceDaoTest extends BaseUnitTest {
     DataReference firstReference = dataReferenceDao.getDataReference(workspaceId, firstReferenceId);
 
     // This needs a non-default name as we enforce name uniqueness per type per workspace.
-    DataReferenceRequest secondRequest = defaultReferenceBuilder().workspaceId(workspaceId).name("bar").build();
+    DataReferenceRequest secondRequest =
+        defaultReferenceBuilder().workspaceId(workspaceId).name("bar").build();
     UUID secondReferenceId = UUID.randomUUID();
     dataReferenceDao.createDataReference(secondRequest, secondReferenceId);
     DataReference secondReference =
@@ -171,7 +175,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void enumerateEmptyReferenceList() throws Exception {
+  public void enumerateEmptyReferenceList() {
     UUID workspaceId = workspaceDao.createWorkspace(defaultWorkspace());
 
     List<DataReference> result = dataReferenceDao.enumerateDataReferences(workspaceId, 0, 10);
@@ -195,7 +199,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
   private static DataReferenceRequest.Builder defaultReferenceBuilder() {
     SnapshotReference snapshot =
-        new SnapshotReference(UUID.randomUUID().toString(), UUID.randomUUID().toString());
+        SnapshotReference.create(UUID.randomUUID().toString(), UUID.randomUUID().toString());
     return DataReferenceRequest.builder()
         .workspaceId(UUID.randomUUID())
         .name("this_is_a_name")

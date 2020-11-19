@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.datareference.utils;
 
-import static bio.terra.workspace.generated.model.ReferenceTypeEnum.DATA_REPO_SNAPSHOT;
-
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.ReferenceObject;
@@ -38,20 +36,21 @@ public class DataReferenceValidationUtils {
     switch (referenceType) {
       case DATA_REPO_SNAPSHOT:
         validateSnapshotReference((SnapshotReference) reference, userReq);
+        return;
       default:
         throw new InvalidDataReferenceException(
             "Invalid reference type specified. Valid types include: "
-                + DATA_REPO_SNAPSHOT.toString());
+                + DataReferenceType.DATA_REPO_SNAPSHOT.toString());
     }
   }
 
   private void validateSnapshotReference(SnapshotReference ref, AuthenticatedUserRequest userReq) {
-    if (StringUtils.isBlank(ref.getInstanceName()) || StringUtils.isBlank(ref.getSnapshot())) {
+    if (StringUtils.isBlank(ref.instanceName()) || StringUtils.isBlank(ref.snapshot())) {
       throw new InvalidDataReferenceException(
           "Invalid Data Repo Snapshot identifier: "
               + "instanceName and snapshot must both be provided.");
     }
-    if (!dataRepoService.snapshotExists(ref.getInstanceName(), ref.getSnapshot(), userReq)) {
+    if (!dataRepoService.snapshotExists(ref.instanceName(), ref.snapshot(), userReq)) {
       throw new InvalidDataReferenceException(
           "The given snapshot could not be found in the Data Repo instance provided."
               + " Verify that your reference was correctly defined and the instance is correct");

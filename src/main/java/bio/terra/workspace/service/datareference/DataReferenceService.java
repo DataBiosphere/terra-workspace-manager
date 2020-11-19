@@ -14,6 +14,8 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
@@ -26,17 +28,20 @@ public class DataReferenceService {
   private final SamService samService;
   private final JobService jobService;
   private final DataReferenceValidationUtils validationUtils;
+  private final ObjectMapper objectMapper;
 
   @Autowired
   public DataReferenceService(
       DataReferenceDao dataReferenceDao,
       SamService samService,
       JobService jobService,
-      DataReferenceValidationUtils validationUtils) {
+      DataReferenceValidationUtils validationUtils,
+      ObjectMapper objectMapper) {
     this.dataReferenceDao = dataReferenceDao;
     this.samService = samService;
     this.jobService = jobService;
     this.validationUtils = validationUtils;
+    this.objectMapper = objectMapper;
   }
 
   @Traced
@@ -68,19 +73,34 @@ public class DataReferenceService {
     samService.workspaceAuthz(
         userReq, referenceRequest.workspaceId(), SamUtils.SAM_WORKSPACE_WRITE_ACTION);
 
+    validationUtils.validateReferenceObject(
+        referenceRequest.referenceType(), referenceRequest.referenceObject(), userReq);
+    validationUtils.validateReferenceName(referenceRequest.name());
+
     String description = "Create data reference in workspace " + referenceRequest.workspaceId();
 
     JobBuilder createJob =
-        jobService.newJob(
-            description,
-            UUID.randomUUID().toString(),
-            CreateDataReferenceFlight.class,
-            null,
-            userReq);
-
-    validationUtils.validateReferenceObject(
-        referenceRequest.referenceType(), referenceRequest.referenceObject(), userReq);
-    createJob.addParameter(DataReferenceFlightMapKeys.REFERENCE, referenceRequest);
+        jobService
+            .newJob(
+                description,
+                UUID.randomUUID().toString(),
+                CreateDataReferenceFlight.class,
+                null,
+                userReq)
+            .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, referenceRequest.workspaceId())
+            .addParameter(DataReferenceFlightMapKeys.NAME, referenceRequest.name())
+            .addParameter(
+                DataReferenceFlightMapKeys.REFERENCE_TYPE, referenceRequest.referenceType())
+            .addParameter(
+                DataReferenceFlightMapKeys.CLONING_INSTRUCTIONS,
+                referenceRequest.cloningInstructions());
+    try {
+      createJob.addParameter(
+          DataReferenceFlightMapKeys.REFERENCE_PROPERTIES,
+          objectMapper.writeValueAsString(referenceRequest.referenceObject().getProperties()));
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Error serializing referenceObject " + referenceRequest.referenceObject().toString());
+    }
 
     UUID referenceIdResult = createJob.submitAndWait(UUID.class);
 

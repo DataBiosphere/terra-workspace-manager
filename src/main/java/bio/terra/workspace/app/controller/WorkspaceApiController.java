@@ -4,14 +4,11 @@ import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.datareference.DataReferenceService;
-import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
-import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
-import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
@@ -20,8 +17,8 @@ import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import java.util.List;
 import java.net.URI;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -128,16 +125,20 @@ public class WorkspaceApiController implements WorkspaceApi {
         String.format(
             "Creating data reference in workspace %s for %s with body %s",
             id.toString(), userReq.getEmail(), body.toString()));
-    validateCreateDataReferenceRequestBody(body);
 
+    ControllerValidationUtils.validateCreateDataReferenceRequestBody(body);
     // TODO: this will require more translation when we add additional reference types.
+    SnapshotReference snapshot =
+        SnapshotReference.create(
+            body.getReference().getInstanceName(), body.getReference().getSnapshot());
+
     DataReferenceRequest referenceRequest =
         DataReferenceRequest.builder()
             .workspaceId(id)
             .name(body.getName())
             .referenceType(DataReferenceType.fromApiModel(body.getReferenceType()))
             .cloningInstructions(CloningInstructions.fromApiModel(body.getCloningInstructions()))
-            .referenceObject(SnapshotReference.fromApiModel(body.getReference()))
+            .referenceObject(snapshot)
             .build();
     DataReference reference = dataReferenceService.createDataReference(referenceRequest, userReq);
     logger.info(
@@ -248,24 +249,6 @@ public class WorkspaceApiController implements WorkspaceApi {
     return new ResponseEntity<>(jobResultHolder.getResult(), jobResultHolder.getStatusCode());
   }
   */
-
-  private void validateCreateDataReferenceRequestBody(CreateDataReferenceRequestBody body) {
-    if (body.getResourceId() != null) {
-      throw new ControlledResourceNotImplementedException(
-          "Unable to create a reference with a resourceId, use a reference type and description"
-              + " instead. This functionality will be implemented in the future.");
-    }
-    if (body.getReferenceType() == null || body.getReference() == null) {
-      throw new InvalidDataReferenceException(
-          "Data reference must contain a reference type and a reference description");
-    }
-    // TODO: remove this check when we add support for resource-specific credentials.
-    if (body.getCredentialId() != null) {
-      throw new InvalidDataReferenceException(
-          "Resource-specific credentials are not supported yet.");
-    }
-    DataReferenceValidationUtils.validateReferenceName(body.getName());
-  }
 
   @Override
   public ResponseEntity<JobModel> createGoogleContext(

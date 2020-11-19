@@ -239,7 +239,7 @@ public class DataReferenceDao {
     public ReferenceObject toReferenceObject(DataReferenceType type) {
       switch (type) {
         case DATA_REPO_SNAPSHOT:
-          return new SnapshotReference(
+          return SnapshotReference.create(
               properties.get(SnapshotReference.SNAPSHOT_REFERENCE_INSTANCE_NAME_KEY),
               properties.get(SnapshotReference.SNAPSHOT_REFERENCE_SNAPSHOT_KEY));
         default:

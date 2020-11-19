@@ -1,21 +1,29 @@
 package bio.terra.workspace.service.datareference.model;
 
+import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * An interface representing the subject of a data reference.
  *
- * <p>All referenced objects are described by a set of string key-value pairs. The set of keys
- * available are specific to each referenced object type, as are rules around validation of values.
+ * <p>All referenced objects are read-only value objects described by a set of string key-value
+ * pairs. The set of keys available are specific to each referenced object type, as are rules around
+ * validation of values. ReferenceObject implementations should be fully serializable by the output
+ * of getProperties.
  */
 public interface ReferenceObject {
-
   Map<String, String> getProperties();
 
-  String getProperty(String key);
-
-  Set<String> getPropertyKeys();
-
-  void setProperty(String key, String value);
+  public static ReferenceObject toReferenceObject(
+      DataReferenceType type, Map<String, String> properties) {
+    switch (type) {
+      case DATA_REPO_SNAPSHOT:
+        return SnapshotReference.create(
+            properties.get(SnapshotReference.SNAPSHOT_REFERENCE_INSTANCE_NAME_KEY),
+            properties.get(SnapshotReference.SNAPSHOT_REFERENCE_SNAPSHOT_KEY));
+      default:
+        throw new InvalidDataReferenceException(
+            "Attempting to create unsupported reference type " + type);
+    }
+  }
 }

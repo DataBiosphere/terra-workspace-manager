@@ -22,9 +22,9 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
+import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import java.util.Optional;
 import java.util.UUID;
@@ -159,7 +159,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
         workspaceId, Optional.empty(), WorkspaceStage.RAWLS_WORKSPACE, USER_REQUEST);
 
     // Next, add a data reference to that workspace.
-    SnapshotReference snapshot = new SnapshotReference("fake instance", "fake snapshot");
+    SnapshotReference snapshot = SnapshotReference.create("fake instance", "fake snapshot");
     DataReferenceRequest referenceRequest =
         DataReferenceRequest.builder()
             .workspaceId(workspaceId)

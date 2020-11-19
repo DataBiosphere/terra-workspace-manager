@@ -202,6 +202,9 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     assertThat(referenceList.getResources(), containsInAnyOrder(expectedResults));
   }
 
+  // TODO: limit and offset parameters to enumerateDataReference calls are validated in the
+  // Controller, so they should be tested in integration tests.
+
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
   public void getDataReferenceById(TestInfo testInfo) throws Exception {
