@@ -10,8 +10,6 @@ import java.util.UUID;
  * difference: a {@code DataReference} is a fully formed data reference, while a {@code
  * DataReferenceRequest} only contains fields specified by clients. Notably, a DataReferenceRequest
  * does not have a referenceId, which is generated as part of creating a data reference.
- *
- * <p>This class is Jackson serializable, and so can be stored in Stairway maps.
  */
 @AutoValue
 public abstract class DataReferenceRequest {
