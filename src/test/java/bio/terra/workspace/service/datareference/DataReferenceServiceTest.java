@@ -193,6 +193,10 @@ public class DataReferenceServiceTest extends BaseConnectedTest {
             dataReferenceService.deleteDataReference(workspaceId, UUID.randomUUID(), USER_REQUEST));
   }
 
+  /**
+   * Test utility which creates a workspace with a random ID, no spend profile, and stage
+   * RAWLS_WORKSPACE. Returns the generated workspace ID.
+   */
   private UUID createDefaultWorkspace() {
     WorkspaceRequest request =
         WorkspaceRequest.builder()
@@ -204,6 +208,12 @@ public class DataReferenceServiceTest extends BaseConnectedTest {
     return workspaceService.createWorkspace(request, USER_REQUEST);
   }
 
+  /**
+   * Test utility providing a pre-filled ReferenceRequest.Builder with the provided workspaceId.
+   *
+   * <p>This gives a constant name, cloning instructions, and SnapshotReference as a reference
+   * object.
+   */
   private DataReferenceRequest.Builder defaultReferenceRequest(UUID workspaceId) {
     SnapshotReference snapshot = SnapshotReference.create("foo", "bar");
     return DataReferenceRequest.builder()

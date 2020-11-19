@@ -10,10 +10,17 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
+/** A collection of validation functions for data references. */
 @Component
 public class DataReferenceValidationUtils {
 
   private DataRepoService dataRepoService;
+
+  /**
+   * Names must be 1-63 characters long, and may consist of alphanumeric characters and underscores
+   * (but may not start with an underscore). These restrictions match TDR snapshot name
+   * restrictions.
+   */
   public static final Pattern NAME_VALIDATION_PATTERN =
       Pattern.compile("^[a-zA-Z0-9][_a-zA-Z0-9]{0,62}$");
 
@@ -28,6 +35,10 @@ public class DataReferenceValidationUtils {
     this.dataRepoService = dataRepoService;
   }
 
+  /**
+   * Validates a referenceObject, with specific validation rules varying based on the actual type of
+   * the object.
+   */
   public void validateReferenceObject(
       DataReferenceType referenceType,
       ReferenceObject reference,

@@ -18,7 +18,7 @@ public abstract class DataReference {
   /** ID of the reference itself. */
   public abstract UUID referenceId();
 
-  /** Name of the reference. Names are unique per workspace, per reference type and user-provided */
+  /** Name of the reference. Names are unique per workspace, per reference type. */
   public abstract String name();
 
   /** Type of this data reference. */
@@ -30,7 +30,7 @@ public abstract class DataReference {
   /** The actual object being referenced. */
   public abstract ReferenceObject referenceObject();
 
-  /** Convenience method for translating to a API model DataReferenceDescription object. */
+  /** Convenience method for translating to an API model DataReferenceDescription object. */
   public DataReferenceDescription toApiModel() {
     return new DataReferenceDescription()
         .referenceId(referenceId())

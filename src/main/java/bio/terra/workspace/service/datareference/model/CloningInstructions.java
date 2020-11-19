@@ -4,7 +4,12 @@ import bio.terra.workspace.generated.model.CloningInstructionsEnum;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.EnumBiMap;
 
-/** Internal representation of data reference types. */
+/**
+ * Enum describing how to treat a resource when its containing workspace is cloned.
+ *
+ * <p>TODO: cloning is currently not supported, and these values are never used. Add descriptions of
+ * each behavior here when it exists.
+ */
 public enum CloningInstructions {
   COPY_NOTHING,
   COPY_DEFINITION,

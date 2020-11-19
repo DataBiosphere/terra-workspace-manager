@@ -4,6 +4,7 @@ import bio.terra.workspace.common.exception.*;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
+import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.flight.CreateDataReferenceFlight;
 import bio.terra.workspace.service.datareference.flight.DataReferenceFlightMapKeys;
 import bio.terra.workspace.service.datareference.model.DataReference;
@@ -22,6 +23,12 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/**
+ * Service for all operations on references to data.
+ *
+ * <p>Currently, this only supports references to uncontrolled resources. In the future, it may also
+ * support references to controlled resources.
+ */
 @Component
 public class DataReferenceService {
   private final DataReferenceDao dataReferenceDao;
@@ -44,6 +51,10 @@ public class DataReferenceService {
     this.objectMapper = objectMapper;
   }
 
+  /**
+   * Retrieve a data reference from the database by ID. References are always contained inside a
+   * single workspace.
+   */
   @Traced
   public DataReference getDataReference(
       UUID workspaceId, UUID referenceId, AuthenticatedUserRequest userReq) {
@@ -53,6 +64,10 @@ public class DataReferenceService {
     return dataReferenceDao.getDataReference(workspaceId, referenceId);
   }
 
+  /**
+   * Retrieve a data reference from the database by name. Names are unique per workspace, per data
+   * reference type.
+   */
   @Traced
   public DataReference getDataReferenceByName(
       UUID workspaceId,
@@ -66,6 +81,7 @@ public class DataReferenceService {
     return dataReferenceDao.getDataReferenceByName(workspaceId, referenceType, name);
   }
 
+  /** Create a data reference and return the newly created object. */
   @Traced
   public DataReference createDataReference(
       DataReferenceRequest referenceRequest, AuthenticatedUserRequest userReq) {
@@ -99,7 +115,7 @@ public class DataReferenceService {
           DataReferenceFlightMapKeys.REFERENCE_PROPERTIES,
           objectMapper.writeValueAsString(referenceRequest.referenceObject().getProperties()));
     } catch (JsonProcessingException e) {
-      throw new RuntimeException(
+      throw new InvalidDataReferenceException(
           "Error serializing referenceObject " + referenceRequest.referenceObject().toString());
     }
 
@@ -108,6 +124,12 @@ public class DataReferenceService {
     return dataReferenceDao.getDataReference(referenceRequest.workspaceId(), referenceIdResult);
   }
 
+  /**
+   * List data references in a workspace.
+   *
+   * <p>References are in ascending order by reference ID. At most {@Code limit} results will be
+   * returned, with the first being {@Code offset} entries from the start of the database.
+   */
   @Traced
   public List<DataReference> enumerateDataReferences(
       UUID workspaceId, int offset, int limit, AuthenticatedUserRequest userReq) {
@@ -115,6 +137,7 @@ public class DataReferenceService {
     return dataReferenceDao.enumerateDataReferences(workspaceId, offset, limit);
   }
 
+  /** Delete a data reference, or throw an exception if the specified reference does not exist. */
   @Traced
   public void deleteDataReference(
       UUID workspaceId, UUID referenceId, AuthenticatedUserRequest userReq) {

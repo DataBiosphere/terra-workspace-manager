@@ -4,8 +4,9 @@ import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.EnumBiMap;
 
-/** Internal representation of data reference types. */
+/** Enum describing the type of object a data reference is pointing to. */
 public enum DataReferenceType {
+  /** A snapshot stored in Data Repo. Corresponds to a {@Code SnapshotReference} object. */
   DATA_REPO_SNAPSHOT;
 
   private static final BiMap<DataReferenceType, ReferenceTypeEnum> typeMap =

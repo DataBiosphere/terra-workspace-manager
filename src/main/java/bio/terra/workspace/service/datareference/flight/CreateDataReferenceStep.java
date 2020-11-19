@@ -8,6 +8,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.DataReferenceDao;
+import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.DataReferenceType;
@@ -49,7 +50,7 @@ public class CreateDataReferenceStep implements Step {
                   inputMap.get(DataReferenceFlightMapKeys.REFERENCE_PROPERTIES, String.class),
                   Map.class));
     } catch (JsonProcessingException ex) {
-      throw new RuntimeException(
+      throw new InvalidDataReferenceException(
           "Error deserializing referenceObject: " + referenceObject.toString());
     }
     DataReferenceRequest request =

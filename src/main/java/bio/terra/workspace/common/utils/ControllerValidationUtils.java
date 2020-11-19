@@ -7,8 +7,16 @@ import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceE
 import java.util.ArrayList;
 import java.util.List;
 
+/** Various utilities for validating requests in Controllers. */
 public final class ControllerValidationUtils {
 
+  /**
+   * Utility to validate limit/offset parameters used in pagination.
+   *
+   * <p>This throws ValidationExceptions if invalid offset or limit values are provided. This only
+   * asserts that offset is at least 0 and limit is at least 1. More specific validation can be
+   * added for individual endpoints.
+   */
   public static void validatePaginationParams(int offset, int limit) {
     List<String> errors = new ArrayList<>();
     if (offset < 0) {
@@ -22,6 +30,13 @@ public final class ControllerValidationUtils {
     }
   }
 
+  /**
+   * Utility function for validating a CreateDataReferenceRequestBody.
+   *
+   * <p>CreateDataReferenceRequestBody is currently structured to allow several parameters for
+   * controlled and private resources that aren't supported in WM. This function throws exceptions
+   * if any of those fields are set, or if any required fields are missing.
+   */
   public static void validateCreateDataReferenceRequestBody(CreateDataReferenceRequestBody body) {
     if (body.getResourceId() != null) {
       throw new ControlledResourceNotImplementedException(
