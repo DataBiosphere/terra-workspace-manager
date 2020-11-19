@@ -8,6 +8,7 @@ import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Stairway;
 import bio.terra.stairway.exception.DatabaseOperationException;
+import bio.terra.stairway.exception.DuplicateFlightIdSubmittedException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.stairway.exception.StairwayExecutionException;
@@ -36,6 +37,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
@@ -50,6 +53,8 @@ public class JobService {
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
   private final ScheduledExecutorService executor;
   private final MdcHook mdcHook;
+
+  private final Logger logger = LoggerFactory.getLogger(JobService.class);
 
   @Autowired
   public JobService(
@@ -115,9 +120,22 @@ public class JobService {
   // submit a new job to stairway
   // protected method intended to be called only from JobBuilder
   protected String submit(
-      Class<? extends Flight> flightClass, FlightMap parameterMap, String jobId) {
+      Class<? extends Flight> flightClass,
+      FlightMap parameterMap,
+      String jobId,
+      boolean duplicateFlightOk) {
     try {
       stairway.submit(jobId, flightClass, parameterMap);
+    } catch (DuplicateFlightIdSubmittedException ex) {
+      // DuplicateFlightIdSubmittedException is a more specific StairwayException, and so needs to
+      // be checked separately. Allowing duplicate FlightIds is useful for ensuring idempotent
+      // behavior of flights.
+      logger.debug("Found duplicate flight ID, duplicateFlightOk = " + duplicateFlightOk);
+      if (duplicateFlightOk) {
+        return jobId;
+      } else {
+        throw new InternalStairwayException(ex);
+      }
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
@@ -130,8 +148,9 @@ public class JobService {
       Class<? extends Flight> flightClass,
       FlightMap parameterMap,
       Class<T> resultClass,
-      String jobId) {
-    submit(flightClass, parameterMap, jobId);
+      String jobId,
+      boolean duplicateFlightOk) {
+    submit(flightClass, parameterMap, jobId, duplicateFlightOk);
     waitForJob(jobId);
     AuthenticatedUserRequest userReq =
         parameterMap.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);

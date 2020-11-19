@@ -101,10 +101,8 @@ public class DataReferenceService {
     DataRepoSnapshot ref =
         validationUtils.validateReference(body.getReferenceType(), body.getReference(), userReq);
     createJob.addParameter(DataReferenceFlightMapKeys.REFERENCE, ref);
-
-    UUID referenceIdResult = createJob.submitAndWait(UUID.class);
-
-    return dataReferenceDao.getDataReference(workspaceId, referenceIdResult);
+    UUID referenceId = createJob.submitAndWait(UUID.class, false);
+    return dataReferenceDao.getDataReference(workspaceId, referenceId);
   }
 
   @Traced

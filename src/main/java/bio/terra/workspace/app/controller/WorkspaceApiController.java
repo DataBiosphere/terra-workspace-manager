@@ -1,7 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.workspace.common.model.Workspace;
-import bio.terra.workspace.common.model.WorkspaceStage;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.*;
@@ -12,6 +10,9 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.net.URI;
 import java.util.Optional;
 import java.util.UUID;
@@ -70,9 +71,18 @@ public class WorkspaceApiController implements WorkspaceApi {
     WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::create);
+    // If clients do not provide a job ID, we generate one instead.
+    String jobId = body.getJobId() != null ? body.getJobId() : UUID.randomUUID().toString();
 
-    UUID createdId =
-        workspaceService.createWorkspace(body.getId(), spendProfileId, internalStage, userReq);
+    WorkspaceRequest internalRequest =
+        WorkspaceRequest.builder()
+            .workspaceId(body.getId())
+            .jobId(jobId)
+            .spendProfileId(spendProfileId)
+            .workspaceStage(internalStage)
+            .build();
+    UUID createdId = workspaceService.createWorkspace(internalRequest, userReq);
+
     CreatedWorkspace responseWorkspace = new CreatedWorkspace().id(createdId);
     logger.info(
         String.format(
