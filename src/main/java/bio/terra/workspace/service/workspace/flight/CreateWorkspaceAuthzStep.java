@@ -10,11 +10,15 @@ import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CreateWorkspaceAuthzStep implements Step {
 
   private SamService samService;
   private AuthenticatedUserRequest userReq;
+
+  private final Logger logger = LoggerFactory.getLogger(CreateWorkspaceAuthzStep.class);
 
   public CreateWorkspaceAuthzStep(SamService samService, AuthenticatedUserRequest userReq) {
     this.samService = samService;
@@ -53,6 +57,7 @@ public class CreateWorkspaceAuthzStep implements Step {
     } catch (SamApiException ex) {
       // Do nothing if the resource to delete is not found, this may not be the first time undo is
       // called. Other exceptions still need to be surfaced.
+      logger.debug("Sam API error while undoing CreateWorkspaceAuthzStep, code is " + ex.getApiExceptionStatus());
       if (ex.getApiExceptionStatus() != 404) {
         throw ex;
       }

@@ -37,6 +37,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
@@ -51,6 +53,8 @@ public class JobService {
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
   private final ScheduledExecutorService executor;
   private final MdcHook mdcHook;
+
+  private final Logger logger = LoggerFactory.getLogger(JobService.class);
 
   @Autowired
   public JobService(
@@ -126,6 +130,7 @@ public class JobService {
       // DuplicateFlightIdSubmittedException is a more specific StairwayException, and so needs to
       // be checked separately. Allowing duplicate FlightIds is useful for ensuring idempotent
       // behavior of flights.
+      logger.debug("Found duplicate flight ID, duplicateFlightOk = " + duplicateFlightOk);
       if (duplicateFlightOk) {
         return jobId;
       } else {
