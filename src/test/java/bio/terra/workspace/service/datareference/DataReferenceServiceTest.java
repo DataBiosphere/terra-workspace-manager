@@ -63,25 +63,41 @@ public class DataReferenceServiceTest extends BaseConnectedTest {
     assertThat(ref.name(), equalTo(request.name()));
   }
 
-  @Test
-  public void testCreateInvalidDataReferenceNameFails() {
-    UUID workspaceId = createDefaultWorkspace();
-    DataReferenceRequest request =
-        defaultReferenceRequest(workspaceId).name("!!!!!!!!INVALID NAME!!!!!!!!1").build();
-    assertThrows(
-        InvalidDataReferenceException.class,
-        () -> dataReferenceService.createDataReference(request, USER_REQUEST));
-  }
-
-  @Test
-  public void testCreateDataReferenceNameTooLongFails() {
-    UUID workspaceId = createDefaultWorkspace();
-    DataReferenceRequest request =
-        defaultReferenceRequest(workspaceId).name("1".repeat(100)).build();
-    assertThrows(
-        InvalidDataReferenceException.class,
-        () -> dataReferenceService.createDataReference(request, USER_REQUEST));
-  }
+  // TODO(zloery): reference validation happens at the controller level, so these need to be
+  //    rewritten as integration tests.
+  // @Test
+  // public void testCreateInvalidDataReferenceNameFails() {
+  //   UUID workspaceId = createDefaultWorkspace();
+  //   DataReferenceRequest request =
+  //       defaultReferenceRequest(workspaceId).name("!!!!!!!!INVALID NAME!!!!!!!!1").build();
+  //   assertThrows(
+  //       InvalidDataReferenceException.class,
+  //       () -> dataReferenceService.createDataReference(request, USER_REQUEST));
+  // }
+  //
+  // @Test
+  // public void testCreateDataReferenceNameTooLongFails() {
+  //   UUID workspaceId = createDefaultWorkspace();
+  //   DataReferenceRequest request =
+  //       defaultReferenceRequest(workspaceId).name("1".repeat(100)).build();
+  //   assertThrows(
+  //       InvalidDataReferenceException.class,
+  //       () -> dataReferenceService.createDataReference(request, USER_REQUEST));
+  // }
+  //
+  // @Test
+  // public void testCreateDataSnapshotNotInDataRepo() {
+  //   doReturn(false).when(mockDataRepoService).snapshotExists(any(), eq("fake-id"), any());
+  //
+  //   UUID workspaceId = createDefaultWorkspace();
+  //   SnapshotReference snapshot = SnapshotReference.create("fake-instance", "fake-id");
+  //   DataReferenceRequest request =
+  //       defaultReferenceRequest(workspaceId).referenceObject(snapshot).build();
+  //
+  //   assertThrows(
+  //       InvalidDataReferenceException.class,
+  //       () -> dataReferenceService.createDataReference(request, USER_REQUEST));
+  // }
 
   @Test
   public void testGetDataReference() {
@@ -117,20 +133,6 @@ public class DataReferenceServiceTest extends BaseConnectedTest {
     assertThrows(
         DataReferenceNotFoundException.class,
         () -> dataReferenceService.getDataReference(workspaceId, UUID.randomUUID(), USER_REQUEST));
-  }
-
-  @Test
-  public void testCreateDataSnapshotNotInDataRepo() {
-    doReturn(false).when(mockDataRepoService).snapshotExists(any(), eq("fake-id"), any());
-
-    UUID workspaceId = createDefaultWorkspace();
-    SnapshotReference snapshot = SnapshotReference.create("fake-instance", "fake-id");
-    DataReferenceRequest request =
-        defaultReferenceRequest(workspaceId).referenceObject(snapshot).build();
-
-    assertThrows(
-        InvalidDataReferenceException.class,
-        () -> dataReferenceService.createDataReference(request, USER_REQUEST));
   }
 
   @Test

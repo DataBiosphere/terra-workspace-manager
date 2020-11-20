@@ -9,7 +9,6 @@ import bio.terra.workspace.service.datareference.flight.DataReferenceFlightMapKe
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.DataReferenceType;
-import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
