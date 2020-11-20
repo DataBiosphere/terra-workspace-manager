@@ -40,8 +40,8 @@ public class DataReferenceValidationUtils {
    * the object.
    */
   public void validateReferenceObject(
-      DataReferenceType referenceType,
       ReferenceObject reference,
+      DataReferenceType referenceType,
       AuthenticatedUserRequest userReq) {
 
     switch (referenceType) {

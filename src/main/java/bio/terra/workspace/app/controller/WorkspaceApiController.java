@@ -9,6 +9,7 @@ import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
+import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
@@ -38,6 +39,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class WorkspaceApiController implements WorkspaceApi {
   private WorkspaceService workspaceService;
   private DataReferenceService dataReferenceService;
+  private DataReferenceValidationUtils dataReferenceValidation;
   private JobService jobService;
   private AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
@@ -46,11 +48,13 @@ public class WorkspaceApiController implements WorkspaceApi {
   public WorkspaceApiController(
       WorkspaceService workspaceService,
       DataReferenceService dataReferenceService,
+      DataReferenceValidationUtils dataReferenceValidation,
       JobService jobService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request) {
     this.workspaceService = workspaceService;
     this.dataReferenceService = dataReferenceService;
+    this.dataReferenceValidation = dataReferenceValidation;
     this.jobService = jobService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
@@ -137,16 +141,19 @@ public class WorkspaceApiController implements WorkspaceApi {
             id.toString(), userReq.getEmail(), body.toString()));
 
     ControllerValidationUtils.validate(body);
+    DataReferenceValidationUtils.validateReferenceName(body.getName());
     // TODO: this will require more translation when we add additional reference types.
+    DataReferenceType referenceType = DataReferenceType.fromApiModel(body.getReferenceType());
     SnapshotReference snapshot =
         SnapshotReference.create(
             body.getReference().getInstanceName(), body.getReference().getSnapshot());
+    dataReferenceValidation.validateReferenceObject(snapshot, referenceType, userReq);
 
     DataReferenceRequest referenceRequest =
         DataReferenceRequest.builder()
             .workspaceId(id)
             .name(body.getName())
-            .referenceType(DataReferenceType.fromApiModel(body.getReferenceType()))
+            .referenceType(referenceType)
             .cloningInstructions(CloningInstructions.fromApiModel(body.getCloningInstructions()))
             .referenceObject(snapshot)
             .build();
@@ -186,6 +193,7 @@ public class WorkspaceApiController implements WorkspaceApi {
         String.format(
             "Getting data reference by name %s and reference type %s in workspace %s for %s",
             name, referenceType, workspaceId.toString(), userReq.getEmail()));
+    DataReferenceValidationUtils.validateReferenceName(name);
     DataReference ref =
         dataReferenceService.getDataReferenceByName(
             workspaceId, DataReferenceType.fromApiModel(referenceType), name, userReq);

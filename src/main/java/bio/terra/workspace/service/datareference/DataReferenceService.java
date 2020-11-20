@@ -32,7 +32,6 @@ public class DataReferenceService {
   private final DataReferenceDao dataReferenceDao;
   private final SamService samService;
   private final JobService jobService;
-  private final DataReferenceValidationUtils validationUtils;
   private final ObjectMapper objectMapper;
 
   @Autowired
@@ -40,12 +39,10 @@ public class DataReferenceService {
       DataReferenceDao dataReferenceDao,
       SamService samService,
       JobService jobService,
-      DataReferenceValidationUtils validationUtils,
       ObjectMapper objectMapper) {
     this.dataReferenceDao = dataReferenceDao;
     this.samService = samService;
     this.jobService = jobService;
-    this.validationUtils = validationUtils;
     this.objectMapper = objectMapper;
   }
 
@@ -72,8 +69,6 @@ public class DataReferenceService {
       DataReferenceType referenceType,
       String name,
       AuthenticatedUserRequest userReq) {
-
-    validationUtils.validateReferenceName(name);
     samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
 
     return dataReferenceDao.getDataReferenceByName(workspaceId, referenceType, name);
@@ -86,10 +81,6 @@ public class DataReferenceService {
 
     samService.workspaceAuthz(
         userReq, referenceRequest.workspaceId(), SamUtils.SAM_WORKSPACE_WRITE_ACTION);
-
-    validationUtils.validateReferenceObject(
-        referenceRequest.referenceType(), referenceRequest.referenceObject(), userReq);
-    validationUtils.validateReferenceName(referenceRequest.name());
 
     String description = "Create data reference in workspace " + referenceRequest.workspaceId();
 
