@@ -136,7 +136,7 @@ public class WorkspaceApiController implements WorkspaceApi {
             "Creating data reference in workspace %s for %s with body %s",
             id.toString(), userReq.getEmail(), body.toString()));
 
-    ControllerValidationUtils.validateCreateDataReferenceRequestBody(body);
+    ControllerValidationUtils.validate(body);
     // TODO: this will require more translation when we add additional reference types.
     SnapshotReference snapshot =
         SnapshotReference.create(

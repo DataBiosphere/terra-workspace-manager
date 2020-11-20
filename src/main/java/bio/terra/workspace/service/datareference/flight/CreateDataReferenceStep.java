@@ -8,14 +8,11 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.DataReferenceDao;
-import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.ReferenceObject;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
@@ -41,18 +38,9 @@ public class CreateDataReferenceStep implements Step {
         inputMap.get(DataReferenceFlightMapKeys.REFERENCE_TYPE, DataReferenceType.class);
     CloningInstructions cloningInstructions =
         inputMap.get(DataReferenceFlightMapKeys.CLONING_INSTRUCTIONS, CloningInstructions.class);
-    ReferenceObject referenceObject = null;
-    try {
-      referenceObject =
-          ReferenceObject.toReferenceObject(
-              type,
-              objectMapper.readValue(
-                  inputMap.get(DataReferenceFlightMapKeys.REFERENCE_PROPERTIES, String.class),
-                  Map.class));
-    } catch (JsonProcessingException ex) {
-      throw new InvalidDataReferenceException(
-          "Error deserializing referenceObject: " + referenceObject.toString());
-    }
+    ReferenceObject referenceObject =
+        ReferenceObject.fromJson(
+            inputMap.get(DataReferenceFlightMapKeys.REFERENCE_OBJECT, String.class), type);
     DataReferenceRequest request =
         DataReferenceRequest.builder()
             .workspaceId(workspaceId)

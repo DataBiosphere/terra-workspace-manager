@@ -4,7 +4,6 @@ import bio.terra.workspace.common.exception.*;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
-import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.flight.CreateDataReferenceFlight;
 import bio.terra.workspace.service.datareference.flight.DataReferenceFlightMapKeys;
 import bio.terra.workspace.service.datareference.model.DataReference;
@@ -15,7 +14,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
@@ -101,7 +99,7 @@ public class DataReferenceService {
                 description,
                 UUID.randomUUID().toString(),
                 CreateDataReferenceFlight.class,
-                null,
+                /* request = */ null,
                 userReq)
             .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, referenceRequest.workspaceId())
             .addParameter(DataReferenceFlightMapKeys.NAME, referenceRequest.name())
@@ -109,15 +107,10 @@ public class DataReferenceService {
                 DataReferenceFlightMapKeys.REFERENCE_TYPE, referenceRequest.referenceType())
             .addParameter(
                 DataReferenceFlightMapKeys.CLONING_INSTRUCTIONS,
-                referenceRequest.cloningInstructions());
-    try {
-      createJob.addParameter(
-          DataReferenceFlightMapKeys.REFERENCE_PROPERTIES,
-          objectMapper.writeValueAsString(referenceRequest.referenceObject().getProperties()));
-    } catch (JsonProcessingException e) {
-      throw new InvalidDataReferenceException(
-          "Error serializing referenceObject " + referenceRequest.referenceObject().toString());
-    }
+                referenceRequest.cloningInstructions())
+            .addParameter(
+                DataReferenceFlightMapKeys.REFERENCE_OBJECT,
+                referenceRequest.referenceObject().toJson());
 
     UUID referenceIdResult = createJob.submitAndWait(UUID.class, false);
 

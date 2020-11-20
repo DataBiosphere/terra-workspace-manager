@@ -15,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +58,9 @@ public class DataReferenceDao {
             .addValue("name", request.name())
             .addValue("cloning_instructions", request.cloningInstructions().toString())
             .addValue("reference_type", request.referenceType().toString())
-            .addValue("reference", ReferenceObjectV1.from(request.referenceObject()).serialize());
+            .addValue(
+                "reference",
+                serializeReferenceObject(request.referenceObject(), request.referenceType()));
 
     try {
       jdbcTemplate.update(sql, params);
@@ -187,33 +188,58 @@ public class DataReferenceDao {
 
   private static final RowMapper<DataReference> DATA_REFERENCE_ROW_MAPPER =
       (rs, rowNum) -> {
-        ReferenceObjectV1 deserializedReferenceObject =
-            ReferenceObjectV1.deserialize(rs.getString("reference"));
         DataReferenceType referenceType = DataReferenceType.valueOf(rs.getString("reference_type"));
+        ReferenceObject deserializedReferenceObject =
+            deserializeReferenceObject(rs.getString("reference"), referenceType);
         return DataReference.builder()
             .workspaceId(UUID.fromString(rs.getString("workspace_id")))
             .referenceId(UUID.fromString(rs.getString("reference_id")))
             .name(rs.getString("name"))
             .referenceType(referenceType)
             .cloningInstructions(CloningInstructions.valueOf(rs.getString("cloning_instructions")))
-            .referenceObject(deserializedReferenceObject.toReferenceObject(referenceType))
+            .referenceObject(deserializedReferenceObject)
             .build();
       };
 
+  public static String serializeReferenceObject(ReferenceObject obj, DataReferenceType type) {
+    switch (type) {
+      case DATA_REPO_SNAPSHOT:
+        return SnapshotReferenceV1.from((SnapshotReference) obj).serialize();
+      default:
+        throw new InvalidDataReferenceException(
+            "Attempting to serialize invalid reference type to DB: " + type);
+    }
+  }
+
+  public static ReferenceObject deserializeReferenceObject(
+      String jsonString, DataReferenceType type) throws SQLException {
+    switch (type) {
+      case DATA_REPO_SNAPSHOT:
+        DataReferenceDao.SnapshotReferenceV1 dbRef = SnapshotReferenceV1.deserialize(jsonString);
+        return SnapshotReference.create(dbRef.instanceName, dbRef.snapshot);
+      default:
+        throw new InvalidDataReferenceException(
+            "Attempting to deserialize invalid reference type to DB: " + type);
+    }
+  }
   /**
-   * JSON serialization class for ReferenceObjects in the workspace_data_reference.reference column.
+   * JSON serialization class for SnapshotReferences in the workspace_data_reference.reference
+   * column.
    */
   @VisibleForTesting
-  static class ReferenceObjectV1 {
+  static class SnapshotReferenceV1 {
     /** Version marker to store in the db so that we can update the format later if we need to. */
     @JsonProperty long version = 1;
 
-    @JsonProperty Map<String, String> properties;
+    @JsonProperty String instanceName;
 
-    public static DataReferenceDao.ReferenceObjectV1 from(ReferenceObject referenceObject) {
-      DataReferenceDao.ReferenceObjectV1 result = new DataReferenceDao.ReferenceObjectV1();
-      result.properties = referenceObject.getProperties();
-      return result;
+    @JsonProperty String snapshot;
+
+    public static SnapshotReferenceV1 from(SnapshotReference ref) {
+      SnapshotReferenceV1 dbRef = new SnapshotReferenceV1();
+      dbRef.instanceName = ref.instanceName();
+      dbRef.snapshot = ref.snapshot();
+      return dbRef;
     }
 
     /** Serialize for a JDBC string parameter value. */
@@ -226,25 +252,12 @@ public class DataReferenceDao {
     }
 
     /** Deserialize from a JDBC result set string value. */
-    public static DataReferenceDao.ReferenceObjectV1 deserialize(String serialized)
+    public static DataReferenceDao.SnapshotReferenceV1 deserialize(String serialized)
         throws SQLException {
       try {
-        return objectMapper.readValue(serialized, DataReferenceDao.ReferenceObjectV1.class);
+        return objectMapper.readValue(serialized, DataReferenceDao.SnapshotReferenceV1.class);
       } catch (JsonProcessingException e) {
         throw new SQLException("Unable to deserialize workspace_data_reference.reference", e);
-      }
-    }
-
-    /** Parse this into the actual referenceObject it represents. */
-    public ReferenceObject toReferenceObject(DataReferenceType type) {
-      switch (type) {
-        case DATA_REPO_SNAPSHOT:
-          return SnapshotReference.create(
-              properties.get(SnapshotReference.SNAPSHOT_REFERENCE_INSTANCE_NAME_KEY),
-              properties.get(SnapshotReference.SNAPSHOT_REFERENCE_SNAPSHOT_KEY));
-        default:
-          throw new InvalidDataReferenceException(
-              "Attempting to create unsupported reference type " + type);
       }
     }
   }

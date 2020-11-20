@@ -37,7 +37,7 @@ public final class ControllerValidationUtils {
    * controlled and private resources that aren't supported in WM. This function throws exceptions
    * if any of those fields are set, or if any required fields are missing.
    */
-  public static void validateCreateDataReferenceRequestBody(CreateDataReferenceRequestBody body) {
+  public static void validate(CreateDataReferenceRequestBody body) {
     if (body.getResourceId() != null) {
       throw new ControlledResourceNotImplementedException(
           "Unable to create a reference with a resourceId, use a reference type and description"

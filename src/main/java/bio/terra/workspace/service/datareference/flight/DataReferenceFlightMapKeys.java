@@ -6,7 +6,7 @@ public final class DataReferenceFlightMapKeys {
   public static final String NAME = "name";
   public static final String REFERENCE_TYPE = "referenceType";
   public static final String CLONING_INSTRUCTIONS = "cloningInstructions";
-  public static final String REFERENCE_PROPERTIES = "referenceProperties";
+  public static final String REFERENCE_OBJECT = "referenceObject";
 
   private DataReferenceFlightMapKeys() {}
 }

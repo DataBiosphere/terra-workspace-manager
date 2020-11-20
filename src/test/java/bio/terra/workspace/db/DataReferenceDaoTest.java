@@ -96,11 +96,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
     assertThat(result.referenceId(), equalTo(referenceId));
     assertThat(result.name(), equalTo(referenceRequest.name()));
     assertThat(result.referenceType(), equalTo(referenceRequest.referenceType()));
-    // Compare properties rather than the referenceObjects themselves, as the interface does not
-    // require an equals() method.
-    assertThat(
-        result.referenceObject().getProperties(),
-        equalTo(referenceRequest.referenceObject().getProperties()));
+    assertThat(result.referenceObject(), equalTo(referenceRequest.referenceObject()));
   }
 
   @Test
