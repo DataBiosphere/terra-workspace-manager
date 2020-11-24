@@ -7,12 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.eq;
 
-import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
-import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
@@ -32,7 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class DataReferenceServiceTest extends BaseConnectedTest {
+public class DataReferenceServiceTest extends BaseUnitTest {
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private DataReferenceService dataReferenceService;
@@ -187,7 +185,7 @@ public class DataReferenceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void testDeleteMissingDataReference() throws Exception {
+  public void testDeleteMissingDataReference() {
     UUID workspaceId = createDefaultWorkspace();
     assertThrows(
         DataReferenceNotFoundException.class,
