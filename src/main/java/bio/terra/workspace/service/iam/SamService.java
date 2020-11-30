@@ -5,7 +5,11 @@ import bio.terra.workspace.app.configuration.spring.TraceInterceptorConfig;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.common.utils.SamUtils;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
+import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,11 +35,14 @@ import org.springframework.stereotype.Component;
 public class SamService {
   private final SamConfiguration samConfig;
   private final ObjectMapper objectMapper;
+  private final WorkspaceDao workspaceDao;
 
   @Autowired
-  public SamService(SamConfiguration samConfig, ObjectMapper objectMapper) {
+  public SamService(
+      SamConfiguration samConfig, ObjectMapper objectMapper, WorkspaceDao workspaceDao) {
     this.samConfig = samConfig;
     this.objectMapper = objectMapper;
+    this.workspaceDao = workspaceDao;
   }
 
   private Logger logger = LoggerFactory.getLogger(SamService.class);
@@ -101,6 +108,50 @@ public class SamService {
           String.format(
               "User %s is authorized to %s workspace %s",
               userReq.getEmail(), action, workspaceId.toString()));
+  }
+
+  /**
+   * Wrapper around Sam client that grants a role to the provided user.
+   *
+   * <p>This operation is only available to MC_TERRA stage workspaces, as Rawls manages permissions
+   * directly on other workspaces.
+   */
+  public void addWorkspaceRole(
+      AuthenticatedUserRequest userReq, UUID workspaceId, IamRole role, String userEmail) {
+    WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
+    if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
+      throw new StageDisabledException(workspaceId, stage, "addWorkspaceRole");
+    }
+
+    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+    try {
+      resourceApi.addUserToPolicy(
+          SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), userEmail);
+    } catch (ApiException e) {
+      throw new SamApiException(e);
+    }
+  }
+
+  /**
+   * Wrapper around Sam client that removes a role from the provided user.
+   *
+   * <p>This operation is only available to MC_TERRA stage workspaces, as Rawls manages permissions
+   * directly on other workspaces.
+   */
+  public void removeWorkspaceRole(
+      AuthenticatedUserRequest userReq, UUID workspaceId, IamRole role, String userEmail) {
+    WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
+    if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
+      throw new StageDisabledException(workspaceId, stage, "removeWorkspaceRole");
+    }
+
+    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+    try {
+      resourceApi.removeUserFromPolicy(
+          SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), userEmail);
+    } catch (ApiException e) {
+      throw new SamApiException(e);
+    }
   }
 
   public SystemStatusSystems status() {

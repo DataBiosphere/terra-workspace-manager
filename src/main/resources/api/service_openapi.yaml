@@ -181,7 +181,7 @@ paths:
     post:
       summary: Create a google context for the workspace.
       operationId: createGoogleContext
-      tags: [Workspace]
+      tags: [McTerra]
       requestBody:
         required: true
         content:
@@ -211,7 +211,7 @@ paths:
     delete:
       summary: Deletes the google context and all of its data from a workspace.
       operationId: deleteGoogleContext
-      tags: [Workspace]
+      tags: [McTerra]
       responses:
         '204':
           description: OK
@@ -221,6 +221,52 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{id}/roles:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    get:
+      summary: Read all IAM roles and their members in a workspace.
+      operationId: getRoles
+      tags: [McTerra]
+      responses:
+        '200':
+          $ref: '#/components/responses/RoleBindingListResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{id}/roles/{role}/members/{memberEmail}:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/Role'
+    - $ref: '#/components/parameters/MemberEmail'
+    put:
+      summary: Add an IAM role to a user or group.
+      operationId: addRole
+      tags: [McTerra]
+      responses:
+        '204':
+          description: Role added successfully
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Remove an IAM role from a user or group.
+      operationId: removeRole
+      tags: [McTerra]
+      responses:
+        '204':
+          description: Role removed successfully
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 
   # Job paths, all disabled for now
 #  /api/jobs/v1/{id}:
@@ -335,6 +381,22 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/Name'
+
+    Role:
+      name: role
+      in: path
+      description: An IAM role
+      required: true
+      schema:
+        $ref: '#/components/schemas/IamRole'
+
+    MemberEmail:
+      name: memberEmail
+      in: path
+      description: A user or group's email. Used for adding or removing IAM permissions
+      required: true
+      schema:
+        type: string
 
   schemas:
     ErrorReport:
@@ -616,6 +678,30 @@ components:
             called idempotently.
           type: string
 
+    IamRole:
+      description: Enum containing all valid IAM roles on a Workspace
+      type: string
+      enum: ['READER', 'WRITER', 'OWNER']
+
+    RoleBinding:
+      description: A binding between an IAM role and users with that role
+      type: object
+      required: [role]
+      properties:
+        role:
+          $ref: '#/components/schemas/IamRole'
+        members:
+          description: A list of users that this role applies to
+          type: array
+          items:
+            type: string
+
+    RoleBindingList:
+      description: A list of role bindings
+      type: array
+      items:
+        $ref: '#/components/schemas/RoleBinding'
+
   responses:
     CreatedWorkspaceResponse:
       description: Response to createWorkspace calls
@@ -637,6 +723,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/DataReferenceList'
+
+    RoleBindingListResponse:
+      description: Response to list permissions calls
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RoleBindingList'
 
     # Error Responses
     BadRequest:
