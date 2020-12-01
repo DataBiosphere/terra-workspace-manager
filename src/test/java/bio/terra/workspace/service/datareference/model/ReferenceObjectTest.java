@@ -27,7 +27,7 @@ public class ReferenceObjectTest extends BaseUnitTest {
     SnapshotReference snapshotReference =
         (SnapshotReference)
             ReferenceObject.fromJson(
-                "{\"@type\":\"AutoValue_SnapshotReference\",\"instanceName\":\"foo\",\"snapshot\":\"bar\"}");
+                "{\"@type\":\"SnapshotReference\",\"instanceName\":\"foo\",\"snapshot\":\"bar\"}");
     assertEquals("foo", snapshotReference.instanceName());
     assertEquals("bar", snapshotReference.snapshot());
   }

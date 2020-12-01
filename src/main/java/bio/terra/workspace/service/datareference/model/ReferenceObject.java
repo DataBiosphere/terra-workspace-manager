@@ -1,10 +1,9 @@
 package bio.terra.workspace.service.datareference.model;
 
-import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY;
-import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
-
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -16,16 +15,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * rules. ReferenceObject implementations must be fully serializable by the output of getProperties.
  *
  * <p>In order to properly deserialize implementations of this class, the implementation classes
- * must be added to the list inside the {@Code JsonSubTypes} annotation below. If the implementation
- * is an AutoValue class, the {@Code value} property should point to the abstract class, and the
- * {@Code name} should refer to the generated AutoValue class name. This allows us to use the
- * annotation information written in the abstract class while actually working with generated
- * AutoValue objects.
+ * must be added to the list inside the {@Code JsonSubTypes} annotation below. The implementation
+ * class should specify a name using the {@Code JsonTypeName} annotation so that changes to the
+ * class name do not break backwards compatibility.
  */
-@JsonTypeInfo(use = NAME, include = PROPERTY)
-@JsonSubTypes({
-  @JsonSubTypes.Type(value = SnapshotReference.class, name = "AutoValue_SnapshotReference")
-})
+@JsonTypeInfo(use = Id.NAME, include = As.PROPERTY)
+@JsonSubTypes({@JsonSubTypes.Type(value = SnapshotReference.class, name = "SnapshotReference")})
 public interface ReferenceObject {
 
   /**
