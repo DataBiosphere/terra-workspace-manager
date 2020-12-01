@@ -182,7 +182,7 @@ public class DataReferenceDao {
       (rs, rowNum) -> {
         DataReferenceType referenceType = DataReferenceType.valueOf(rs.getString("reference_type"));
         ReferenceObject deserializedReferenceObject =
-            ReferenceObject.fromJson(rs.getString("reference"), referenceType);
+            ReferenceObject.fromJson(rs.getString("reference"));
         return DataReference.builder()
             .workspaceId(UUID.fromString(rs.getString("workspace_id")))
             .referenceId(UUID.fromString(rs.getString("reference_id")))

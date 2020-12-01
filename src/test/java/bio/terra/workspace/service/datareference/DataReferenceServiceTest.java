@@ -3,7 +3,6 @@ package bio.terra.workspace.service.datareference;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -16,7 +15,6 @@ import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.DataReferenceType;
-import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -157,27 +155,6 @@ public class DataReferenceServiceTest extends BaseUnitTest {
         DataReferenceNotFoundException.class,
         () ->
             dataReferenceService.deleteDataReference(workspaceId, UUID.randomUUID(), USER_REQUEST));
-  }
-
-  /**
-   * Hard code serialized values to check that code changes do not break backwards compatibility of
-   * stored JSON values. If these tests fail, your change may not work with existing databases.
-   */
-  @Test
-  public void SnapshotReferenceSerializationBackwardsCompatible() throws Exception {
-    SnapshotReference snapshotReference =
-        (SnapshotReference)
-            ReferenceObject.fromJson(
-                "{\"instanceName\":\"foo\",\"snapshot\":\"bar\"}",
-                DataReferenceType.DATA_REPO_SNAPSHOT);
-    assertEquals("foo", snapshotReference.instanceName());
-    assertEquals("bar", snapshotReference.snapshot());
-  }
-
-  @Test
-  public void SnapshotReferenceDeserializationnBackwardsCompatible() throws Exception {
-    String serializedSnapshot = SnapshotReference.create("foo", "bar").toJson();
-    assertEquals("{\"instanceName\":\"foo\",\"snapshot\":\"bar\"}", serializedSnapshot);
   }
 
   /**

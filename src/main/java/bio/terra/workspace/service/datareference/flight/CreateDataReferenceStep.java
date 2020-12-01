@@ -40,7 +40,7 @@ public class CreateDataReferenceStep implements Step {
         inputMap.get(DataReferenceFlightMapKeys.CLONING_INSTRUCTIONS, CloningInstructions.class);
     ReferenceObject referenceObject =
         ReferenceObject.fromJson(
-            inputMap.get(DataReferenceFlightMapKeys.REFERENCE_OBJECT, String.class), type);
+            inputMap.get(DataReferenceFlightMapKeys.REFERENCE_OBJECT, String.class));
     DataReferenceRequest request =
         DataReferenceRequest.builder()
             .workspaceId(workspaceId)

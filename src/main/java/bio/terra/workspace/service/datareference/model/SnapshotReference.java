@@ -4,7 +4,6 @@ import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auto.value.AutoValue;
 
 /**
@@ -16,12 +15,6 @@ import com.google.auto.value.AutoValue;
  */
 @AutoValue
 public abstract class SnapshotReference implements ReferenceObject {
-
-  /**
-   * This objectMapper is static to SnapshotReference so changes to other object mappers will not
-   * affect serialization of this class.
-   */
-  private static final ObjectMapper objectMapper = new ObjectMapper();
 
   @JsonCreator
   public static SnapshotReference create(
@@ -42,16 +35,6 @@ public abstract class SnapshotReference implements ReferenceObject {
       return objectMapper.writeValueAsString(this);
     } catch (JsonProcessingException e) {
       throw new RuntimeException("Error serializing SnapshotReference", e);
-    }
-  }
-
-  public static ReferenceObject fromJson(String jsonString) {
-    try {
-      // This must deserialize to a SnapshotReference and not an AutoValue_SnapshotReference, as
-      // the AutoValue class has no annotated constructors or factory methods.
-      return objectMapper.readValue(jsonString, SnapshotReference.class);
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException("Error deserializing to SnapshotReference " + jsonString, e);
     }
   }
 
