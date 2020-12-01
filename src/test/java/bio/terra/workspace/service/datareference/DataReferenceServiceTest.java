@@ -3,6 +3,7 @@ package bio.terra.workspace.service.datareference;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -15,6 +16,7 @@ import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.DataReferenceType;
+import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -60,42 +62,6 @@ public class DataReferenceServiceTest extends BaseUnitTest {
     assertThat(ref.workspaceId(), equalTo(workspaceId));
     assertThat(ref.name(), equalTo(request.name()));
   }
-
-  // TODO(zloery): reference validation happens at the controller level, so these need to be
-  //    rewritten as integration tests.
-  // @Test
-  // public void testCreateInvalidDataReferenceNameFails() {
-  //   UUID workspaceId = createDefaultWorkspace();
-  //   DataReferenceRequest request =
-  //       defaultReferenceRequest(workspaceId).name("!!!!!!!!INVALID NAME!!!!!!!!1").build();
-  //   assertThrows(
-  //       InvalidDataReferenceException.class,
-  //       () -> dataReferenceService.createDataReference(request, USER_REQUEST));
-  // }
-  //
-  // @Test
-  // public void testCreateDataReferenceNameTooLongFails() {
-  //   UUID workspaceId = createDefaultWorkspace();
-  //   DataReferenceRequest request =
-  //       defaultReferenceRequest(workspaceId).name("1".repeat(100)).build();
-  //   assertThrows(
-  //       InvalidDataReferenceException.class,
-  //       () -> dataReferenceService.createDataReference(request, USER_REQUEST));
-  // }
-  //
-  // @Test
-  // public void testCreateDataSnapshotNotInDataRepo() {
-  //   doReturn(false).when(mockDataRepoService).snapshotExists(any(), eq("fake-id"), any());
-  //
-  //   UUID workspaceId = createDefaultWorkspace();
-  //   SnapshotReference snapshot = SnapshotReference.create("fake-instance", "fake-id");
-  //   DataReferenceRequest request =
-  //       defaultReferenceRequest(workspaceId).referenceObject(snapshot).build();
-  //
-  //   assertThrows(
-  //       InvalidDataReferenceException.class,
-  //       () -> dataReferenceService.createDataReference(request, USER_REQUEST));
-  // }
 
   @Test
   public void testGetDataReference() {
@@ -191,6 +157,27 @@ public class DataReferenceServiceTest extends BaseUnitTest {
         DataReferenceNotFoundException.class,
         () ->
             dataReferenceService.deleteDataReference(workspaceId, UUID.randomUUID(), USER_REQUEST));
+  }
+
+  /**
+   * Hard code serialized values to check that code changes do not break backwards compatibility of
+   * stored JSON values. If these tests fail, your change may not work with existing databases.
+   */
+  @Test
+  public void SnapshotReferenceSerializationBackwardsCompatible() throws Exception {
+    SnapshotReference snapshotReference =
+        (SnapshotReference)
+            ReferenceObject.fromJson(
+                "{\"instanceName\":\"foo\",\"snapshot\":\"bar\"}",
+                DataReferenceType.DATA_REPO_SNAPSHOT);
+    assertEquals("foo", snapshotReference.instanceName());
+    assertEquals("bar", snapshotReference.snapshot());
+  }
+
+  @Test
+  public void SnapshotReferenceDeserializationnBackwardsCompatible() throws Exception {
+    String serializedSnapshot = SnapshotReference.create("foo", "bar").toJson();
+    assertEquals("{\"instanceName\":\"foo\",\"snapshot\":\"bar\"}", serializedSnapshot);
   }
 
   /**

@@ -26,7 +26,8 @@ public interface ReferenceObject {
    * static {@Code DataReferenceDao.deserializeReferenceObject} method instead.
    *
    * <p>Implementations of this interface are expected to provide a static method for deserializing
-   * from json which should be referenced here. This should
+   * from json which should be referenced here. This should be updated as new implementations are
+   * built.
    */
   static ReferenceObject fromJson(String jsonString, DataReferenceType type) {
     switch (type) {

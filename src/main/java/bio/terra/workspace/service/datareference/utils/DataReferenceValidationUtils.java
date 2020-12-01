@@ -18,8 +18,8 @@ public class DataReferenceValidationUtils {
 
   /**
    * Names must be 1-63 characters long, and may consist of alphanumeric characters and underscores
-   * (but may not start with an underscore). These restrictions match TDR snapshot name
-   * restrictions.
+   * (but may not start with an underscore). These restrictions match TDR snapshot name restrictions
+   * as we often expect users to use snapshot names as reference names, though this isn't required.
    */
   public static final Pattern NAME_VALIDATION_PATTERN =
       Pattern.compile("^[a-zA-Z0-9][_a-zA-Z0-9]{0,62}$");

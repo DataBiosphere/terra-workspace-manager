@@ -2,18 +2,12 @@ package bio.terra.workspace.db;
 
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
-import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.ReferenceObject;
-import bio.terra.workspace.service.datareference.model.SnapshotReference;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -58,9 +52,7 @@ public class DataReferenceDao {
             .addValue("name", request.name())
             .addValue("cloning_instructions", request.cloningInstructions().toString())
             .addValue("reference_type", request.referenceType().toString())
-            .addValue(
-                "reference",
-                serializeReferenceObject(request.referenceObject(), request.referenceType()));
+            .addValue("reference", request.referenceObject().toJson());
 
     try {
       jdbcTemplate.update(sql, params);
@@ -190,7 +182,7 @@ public class DataReferenceDao {
       (rs, rowNum) -> {
         DataReferenceType referenceType = DataReferenceType.valueOf(rs.getString("reference_type"));
         ReferenceObject deserializedReferenceObject =
-            deserializeReferenceObject(rs.getString("reference"), referenceType);
+            ReferenceObject.fromJson(rs.getString("reference"), referenceType);
         return DataReference.builder()
             .workspaceId(UUID.fromString(rs.getString("workspace_id")))
             .referenceId(UUID.fromString(rs.getString("reference_id")))
@@ -200,65 +192,4 @@ public class DataReferenceDao {
             .referenceObject(deserializedReferenceObject)
             .build();
       };
-
-  public static String serializeReferenceObject(ReferenceObject obj, DataReferenceType type) {
-    switch (type) {
-      case DATA_REPO_SNAPSHOT:
-        return SnapshotReferenceV1.from((SnapshotReference) obj).serialize();
-      default:
-        throw new InvalidDataReferenceException(
-            "Attempting to serialize invalid reference type to DB: " + type);
-    }
-  }
-
-  public static ReferenceObject deserializeReferenceObject(
-      String jsonString, DataReferenceType type) throws SQLException {
-    switch (type) {
-      case DATA_REPO_SNAPSHOT:
-        DataReferenceDao.SnapshotReferenceV1 dbRef = SnapshotReferenceV1.deserialize(jsonString);
-        return SnapshotReference.create(dbRef.instanceName, dbRef.snapshot);
-      default:
-        throw new InvalidDataReferenceException(
-            "Attempting to deserialize invalid reference type to DB: " + type);
-    }
-  }
-  /**
-   * JSON serialization class for SnapshotReferences in the workspace_data_reference.reference
-   * column.
-   */
-  @VisibleForTesting
-  static class SnapshotReferenceV1 {
-    /** Version marker to store in the db so that we can update the format later if we need to. */
-    @JsonProperty long version = 1;
-
-    @JsonProperty String instanceName;
-
-    @JsonProperty String snapshot;
-
-    public static SnapshotReferenceV1 from(SnapshotReference ref) {
-      SnapshotReferenceV1 dbRef = new SnapshotReferenceV1();
-      dbRef.instanceName = ref.instanceName();
-      dbRef.snapshot = ref.snapshot();
-      return dbRef;
-    }
-
-    /** Serialize for a JDBC string parameter value. */
-    public String serialize() {
-      try {
-        return objectMapper.writeValueAsString(this);
-      } catch (JsonProcessingException e) {
-        throw new RuntimeException("Unable to serialize workspace_data_reference.reference", e);
-      }
-    }
-
-    /** Deserialize from a JDBC result set string value. */
-    public static DataReferenceDao.SnapshotReferenceV1 deserialize(String serialized)
-        throws SQLException {
-      try {
-        return objectMapper.readValue(serialized, DataReferenceDao.SnapshotReferenceV1.class);
-      } catch (JsonProcessingException e) {
-        throw new SQLException("Unable to deserialize workspace_data_reference.reference", e);
-      }
-    }
-  }
 }
