@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An interface representing the subject of a data reference.
@@ -29,6 +31,8 @@ public interface ReferenceObject {
    */
   ObjectMapper objectMapper = new ObjectMapper();
 
+  Logger logger = LoggerFactory.getLogger(ReferenceObject.class);
+
   /**
    * Method for serializing a ReferenceObject to a json string.
    *
@@ -47,7 +51,9 @@ public interface ReferenceObject {
     try {
       return objectMapper.readValue(jsonString, ReferenceObject.class);
     } catch (JsonProcessingException e) {
-      throw new RuntimeException("Unable to deserialize ReferenceObject from string " + jsonString);
+      logger.error("Unable to deserialize ReferenceObject from string " + jsonString);
+      throw new RuntimeException(
+          "Unable to deserialize ReferenceObject from string. See logs for details.");
     }
   }
 }

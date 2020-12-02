@@ -50,8 +50,8 @@ public class DataReferenceDao {
             .addValue("workspace_id", request.workspaceId().toString())
             .addValue("reference_id", referenceId.toString())
             .addValue("name", request.name())
-            .addValue("cloning_instructions", request.cloningInstructions().toString())
-            .addValue("reference_type", request.referenceType().toString())
+            .addValue("cloning_instructions", request.cloningInstructions().toSql())
+            .addValue("reference_type", request.referenceType().toSql())
             .addValue("reference", request.referenceObject().toJson());
 
     try {
@@ -101,7 +101,7 @@ public class DataReferenceDao {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("id", workspaceId.toString())
-            .addValue("type", type.toString())
+            .addValue("type", type.toSql())
             .addValue("name", name);
 
     try {

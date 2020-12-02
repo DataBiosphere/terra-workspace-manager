@@ -44,6 +44,7 @@ public class DataReferenceValidationUtils {
       DataReferenceType referenceType,
       AuthenticatedUserRequest userReq) {
 
+    // TODO: throw an exception if referenceType doesn't actually match the type of reference.
     switch (referenceType) {
       case DATA_REPO_SNAPSHOT:
         validateSnapshotReference((SnapshotReference) reference, userReq);
