@@ -180,7 +180,7 @@ public class DataReferenceDao {
 
   private static final RowMapper<DataReference> DATA_REFERENCE_ROW_MAPPER =
       (rs, rowNum) -> {
-        DataReferenceType referenceType = DataReferenceType.valueOf(rs.getString("reference_type"));
+        DataReferenceType referenceType = DataReferenceType.fromSql(rs.getString("reference_type"));
         ReferenceObject deserializedReferenceObject =
             ReferenceObject.fromJson(rs.getString("reference"));
         return DataReference.builder()
@@ -188,7 +188,7 @@ public class DataReferenceDao {
             .referenceId(UUID.fromString(rs.getString("reference_id")))
             .name(rs.getString("name"))
             .referenceType(referenceType)
-            .cloningInstructions(CloningInstructions.valueOf(rs.getString("cloning_instructions")))
+            .cloningInstructions(CloningInstructions.fromSql(rs.getString("cloning_instructions")))
             .referenceObject(deserializedReferenceObject)
             .build();
       };

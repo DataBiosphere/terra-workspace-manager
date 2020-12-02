@@ -3,8 +3,7 @@ package bio.terra.workspace.service.datareference.model;
 import bio.terra.workspace.generated.model.CloningInstructionsEnum;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.EnumBiMap;
-import java.util.HashMap;
-import java.util.Map;
+import com.google.common.collect.EnumHashBiMap;
 
 /**
  * Enum describing how to treat a resource when its containing workspace is cloned.
@@ -21,7 +20,8 @@ public enum CloningInstructions {
   private static final BiMap<CloningInstructions, CloningInstructionsEnum> instructionMap =
       EnumBiMap.create(CloningInstructions.class, CloningInstructionsEnum.class);
 
-  private static final Map<CloningInstructions, String> sqlMap = new HashMap<>();
+  private static final BiMap<CloningInstructions, String> sqlMap =
+      EnumHashBiMap.create(CloningInstructions.class);
 
   static {
     instructionMap.put(CloningInstructions.COPY_NOTHING, CloningInstructionsEnum.NOTHING);
@@ -46,5 +46,10 @@ public enum CloningInstructions {
   /** Convert this to a String to be serialized to the DB. */
   public String toSql() {
     return sqlMap.get(this);
+  }
+
+  /** Deserialize a string from DB. */
+  public static CloningInstructions fromSql(String s) {
+    return sqlMap.inverse().get(s);
   }
 }

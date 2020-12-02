@@ -3,8 +3,7 @@ package bio.terra.workspace.service.datareference.model;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.EnumBiMap;
-import java.util.HashMap;
-import java.util.Map;
+import com.google.common.collect.EnumHashBiMap;
 
 /** Enum describing the type of object a data reference is pointing to. */
 public enum DataReferenceType {
@@ -14,7 +13,8 @@ public enum DataReferenceType {
   private static final BiMap<DataReferenceType, ReferenceTypeEnum> typeMap =
       EnumBiMap.create(DataReferenceType.class, ReferenceTypeEnum.class);
 
-  private static final Map<DataReferenceType, String> sqlMap = new HashMap<>();
+  private static final BiMap<DataReferenceType, String> sqlMap =
+      EnumHashBiMap.create(DataReferenceType.class);
 
   static {
     typeMap.put(DataReferenceType.DATA_REPO_SNAPSHOT, ReferenceTypeEnum.DATA_REPO_SNAPSHOT);
@@ -33,5 +33,10 @@ public enum DataReferenceType {
   /** Convert this to a String to be serialized to the DB. */
   public String toSql() {
     return sqlMap.get(this);
+  }
+
+  /** Deserialize a string from DB. */
+  public static DataReferenceType fromSql(String s) {
+    return sqlMap.inverse().get(s);
   }
 }
