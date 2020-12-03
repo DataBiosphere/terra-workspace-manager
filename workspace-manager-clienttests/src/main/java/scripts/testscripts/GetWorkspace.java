@@ -28,16 +28,20 @@ public class GetWorkspace extends TestScript {
         ApiClient apiClient = WorkspaceManagerServiceUtils.getClientForTestUser(testUser, server);
         WorkspaceApi workspaceApi = new WorkspaceApi(apiClient);
 
+        /**
+         * This GetWorkspace test expects a bogus workspace id resulting in
+         * workspace not found exception and http code 401
+         * **/
         try {
-            WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(UUID.fromString("1a315d46-351c-11eb-adc1-0242ac120002"));
-            logger.debug("workspaceDescription: {}", workspaceDescription);
+            WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(UUID.fromString("11111111-1111-1111-1111-111111111111"));
+            assertThat("GET workspace does not throw not found exception", true);
         } catch (ApiException apiEx) {
             logger.debug("Caught exception getting workspace ", apiEx);
-            assertThat("GET workspace did not throw not found exception", false);
+            assertThat("GET workspace throws not found exception", true);
         }
 
         int httpCode = workspaceApi.getApiClient().getStatusCode();
         logger.info("GET workspace HTTP code: {}", httpCode);
-        assertThat(httpCode, equalTo(200));
+        assertThat(httpCode, equalTo(401));
     }
 }

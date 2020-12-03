@@ -7,7 +7,7 @@
 
   "cluster": {},
   "deploymentScript": {},
-  "testRunnerServiceAccountFile": "dev-workspace-app-sa.json",
+  "testRunnerServiceAccountFile": "delegate-user-sa.json",
 
   "skipDeployment": true,
   "skipKubernetes": true
