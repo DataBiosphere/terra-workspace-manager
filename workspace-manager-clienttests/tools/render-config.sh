@@ -2,7 +2,7 @@
 
 VAULT_TOKEN=${1:-$(cat "$HOME"/.vault-token)}
 WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/dev/dev/workspace/app-sa
-WM_APP_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/../rendered/service-account.json
+WM_APP_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/../rendered/workspace-app-service-account.json
 USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/dev/common/firecloud-account.json
 USER_DELEGATED_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/../rendered/user-delegated-service-account.json
 JANITOR_CLIENT_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/integration/tools/crl_janitor/client-sa

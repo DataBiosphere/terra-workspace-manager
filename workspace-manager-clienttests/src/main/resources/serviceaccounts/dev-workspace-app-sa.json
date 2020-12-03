@@ -1,5 +1,5 @@
 {
   "name": "workspace-dev@broad-dsde-dev.iam.gserviceaccount.com",
-  "jsonKeyFilename": "service-account.json",
+  "jsonKeyFilename": "workspace-app-service-account.json",
   "jsonKeyDirectoryPath": "./rendered"
 }
