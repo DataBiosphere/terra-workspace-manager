@@ -4,7 +4,7 @@ pluginManagement {
             eachPlugin {
                 if (requested.id.namespace == 'bio.terra') {
                     if (requested.id.id == 'bio.terra.test-runner-plugin' || requested.id.id == 'bio.terra.test-runner-echo-plugin') {
-                        useModule("bio.terra:terra-test-runner:0.0.1-SNAPSHOT")
+                        useModule("bio.terra:terra-test-runner:" + requested.version)
                     }
                 }
             }

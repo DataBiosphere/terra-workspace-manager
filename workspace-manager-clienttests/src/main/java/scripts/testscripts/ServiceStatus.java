@@ -17,6 +17,7 @@ public class ServiceStatus extends TestScript {
         super();
     }
 
+    @Override
     public void userJourney(TestUserSpecification testUser) throws Exception {
         ApiClient apiClient = WorkspaceManagerServiceUtils.getClient(server);
         UnauthenticatedApi unauthenticatedApi = new UnauthenticatedApi(apiClient);
