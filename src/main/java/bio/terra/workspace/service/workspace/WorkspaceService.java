@@ -76,7 +76,7 @@ public class WorkspaceService {
     return workspaceDao.getWorkspace(id);
   }
 
-  /** Delete an existing workspace by ID. Does not delete underlying cloud context. */
+  /** Delete an existing workspace by ID. */
   @Traced
   public void deleteWorkspace(UUID id, AuthenticatedUserRequest userReq) {
 
