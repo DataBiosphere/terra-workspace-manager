@@ -3,6 +3,7 @@
   "description": "Workspace Dev env.",
 
   "samUri": "https://sam.dsde-dev.broadinstitute.org",
+  "datarepoUri": "https://jade.datarepo-dev.broadinstitute.org/",
   "workspaceManagerUri": "https://workspace.dsde-dev.broadinstitute.org",
 
   "cluster": {},

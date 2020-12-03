@@ -31,11 +31,13 @@ dependencies {
         logback = "1.2.3"
         slf4j = "1.7.25"
         hamcrest = "2.1"
+        swaggerAnnotations = "2.1.5"
 
         googleOauth2 = "0.20.0"
 
         bufferServiceClient = "0.4.0-SNAPSHOT"
         workspaceManagerServiceClient = "0.6.0-SNAPSHOT"
+        datarepoClient = "1.0.155-SNAPSHOT"
         testRunner = "0.0.1-SNAPSHOT"
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
@@ -51,8 +53,9 @@ dependencies {
     // Google dependencies
     compile "com.google.auth:google-auth-library-oauth2-http:${googleOauth2}"
 
-    // Buffer Service client library
-    implementation "bio.terra:terra-resource-buffer-client:${bufferServiceClient}"
+    // Data Repo client library
+    implementation "bio.terra:datarepo-client:${datarepoClient}"
+    compile "io.swagger.core.v3:swagger-annotations:${swaggerAnnotations}"
 
     // Workspace Manager Service client library
     implementation "bio.terra:workspace-manager-client:${workspaceManagerServiceClient}"
