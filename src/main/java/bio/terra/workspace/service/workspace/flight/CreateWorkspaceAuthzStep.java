@@ -57,7 +57,9 @@ public class CreateWorkspaceAuthzStep implements Step {
     } catch (SamApiException ex) {
       // Do nothing if the resource to delete is not found, this may not be the first time undo is
       // called. Other exceptions still need to be surfaced.
-      logger.debug("Sam API error while undoing CreateWorkspaceAuthzStep, code is " + ex.getApiExceptionStatus());
+      logger.debug(
+          "Sam API error while undoing CreateWorkspaceAuthzStep, code is "
+              + ex.getApiExceptionStatus());
       if (ex.getApiExceptionStatus() != 404) {
         throw ex;
       }

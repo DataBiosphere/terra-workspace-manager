@@ -4,6 +4,12 @@ import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.datareference.DataReferenceService;
+import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import bio.terra.workspace.service.datareference.model.DataReference;
+import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
+import bio.terra.workspace.service.datareference.model.DataReferenceType;
+import bio.terra.workspace.service.datareference.model.SnapshotReference;
+import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
@@ -14,6 +20,7 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.net.URI;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -32,6 +39,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class WorkspaceApiController implements WorkspaceApi {
   private WorkspaceService workspaceService;
   private DataReferenceService dataReferenceService;
+  private DataReferenceValidationUtils dataReferenceValidation;
   private JobService jobService;
   private AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
@@ -40,11 +48,13 @@ public class WorkspaceApiController implements WorkspaceApi {
   public WorkspaceApiController(
       WorkspaceService workspaceService,
       DataReferenceService dataReferenceService,
+      DataReferenceValidationUtils dataReferenceValidation,
       JobService jobService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request) {
     this.workspaceService = workspaceService;
     this.dataReferenceService = dataReferenceService;
+    this.dataReferenceValidation = dataReferenceValidation;
     this.jobService = jobService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
@@ -129,13 +139,31 @@ public class WorkspaceApiController implements WorkspaceApi {
         String.format(
             "Creating data reference in workspace %s for %s with body %s",
             id.toString(), userReq.getEmail(), body.toString()));
-    DataReferenceDescription desc = dataReferenceService.createDataReference(id, body, userReq);
+
+    ControllerValidationUtils.validate(body);
+    DataReferenceValidationUtils.validateReferenceName(body.getName());
+    // TODO: this will require more translation when we add additional reference types.
+    DataReferenceType referenceType = DataReferenceType.fromApiModel(body.getReferenceType());
+    SnapshotReference snapshot =
+        SnapshotReference.create(
+            body.getReference().getInstanceName(), body.getReference().getSnapshot());
+    dataReferenceValidation.validateReferenceObject(snapshot, referenceType, userReq);
+
+    DataReferenceRequest referenceRequest =
+        DataReferenceRequest.builder()
+            .workspaceId(id)
+            .name(body.getName())
+            .referenceType(referenceType)
+            .cloningInstructions(CloningInstructions.fromApiModel(body.getCloningInstructions()))
+            .referenceObject(snapshot)
+            .build();
+    DataReference reference = dataReferenceService.createDataReference(referenceRequest, userReq);
     logger.info(
         String.format(
             "Created data reference %s in workspace %s for %s ",
-            desc.toString(), id.toString(), userReq.getEmail()));
+            reference.toString(), id.toString(), userReq.getEmail()));
 
-    return new ResponseEntity<DataReferenceDescription>(desc, HttpStatus.OK);
+    return new ResponseEntity<>(reference.toApiModel(), HttpStatus.OK);
   }
 
   @Override
@@ -146,14 +174,13 @@ public class WorkspaceApiController implements WorkspaceApi {
         String.format(
             "Getting data reference by id %s in workspace %s for %s",
             referenceId.toString(), workspaceId.toString(), userReq.getEmail()));
-    DataReferenceDescription ref =
-        dataReferenceService.getDataReference(workspaceId, referenceId, userReq);
+    DataReference ref = dataReferenceService.getDataReference(workspaceId, referenceId, userReq);
     logger.info(
         String.format(
             "Got data reference %s in workspace %s for %s",
             ref.toString(), workspaceId.toString(), userReq.getEmail()));
 
-    return new ResponseEntity<DataReferenceDescription>(ref, HttpStatus.OK);
+    return new ResponseEntity<>(ref.toApiModel(), HttpStatus.OK);
   }
 
   @Override
@@ -166,14 +193,16 @@ public class WorkspaceApiController implements WorkspaceApi {
         String.format(
             "Getting data reference by name %s and reference type %s in workspace %s for %s",
             name, referenceType, workspaceId.toString(), userReq.getEmail()));
-    DataReferenceDescription ref =
-        dataReferenceService.getDataReferenceByName(workspaceId, referenceType, name, userReq);
+    DataReferenceValidationUtils.validateReferenceName(name);
+    DataReference ref =
+        dataReferenceService.getDataReferenceByName(
+            workspaceId, DataReferenceType.fromApiModel(referenceType), name, userReq);
     logger.info(
         String.format(
             "Got data reference %s in workspace %s for %s",
             ref.toString(), referenceType, workspaceId.toString(), userReq.getEmail()));
 
-    return new ResponseEntity<DataReferenceDescription>(ref, HttpStatus.OK);
+    return new ResponseEntity<>(ref.toApiModel(), HttpStatus.OK);
   }
 
   @Override
@@ -191,6 +220,28 @@ public class WorkspaceApiController implements WorkspaceApi {
             referenceId.toString(), workspaceId.toString(), userReq.getEmail()));
 
     return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
+  public ResponseEntity<DataReferenceList> enumerateReferences(
+      @PathVariable("id") UUID id,
+      @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
+      @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    logger.info(
+        String.format(
+            "Getting data references in workspace %s for %s", id.toString(), userReq.getEmail()));
+    ControllerValidationUtils.validatePaginationParams(offset, limit);
+    List<DataReference> enumerateResult =
+        dataReferenceService.enumerateDataReferences(id, offset, limit, userReq);
+    logger.info(
+        String.format(
+            "Got data references in workspace %s for %s", id.toString(), userReq.getEmail()));
+    DataReferenceList responseList = new DataReferenceList();
+    for (DataReference ref : enumerateResult) {
+      responseList.addResourcesItem(ref.toApiModel());
+    }
+    return ResponseEntity.ok(responseList);
   }
 
   /* Job endpoints disabled for now
@@ -216,25 +267,6 @@ public class WorkspaceApiController implements WorkspaceApi {
     return new ResponseEntity<>(jobResultHolder.getResult(), jobResultHolder.getStatusCode());
   }
   */
-
-  @Override
-  public ResponseEntity<DataReferenceList> enumerateReferences(
-      @PathVariable("id") UUID id,
-      @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
-      @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info(
-        String.format(
-            "Getting data references in workspace %s for %s", id.toString(), userReq.getEmail()));
-    ControllerValidationUtils.validatePaginationParams(offset, limit);
-    DataReferenceList enumerateResult =
-        dataReferenceService.enumerateDataReferences(id, offset, limit, userReq);
-    logger.info(
-        String.format(
-            "Got data references in workspace %s for %s",
-            enumerateResult.toString(), userReq.getEmail()));
-    return ResponseEntity.ok(enumerateResult);
-  }
 
   @Override
   public ResponseEntity<JobModel> createGoogleContext(
