@@ -1,0 +1,68 @@
+import org.gradle.api.JavaVersion
+import org.gradle.api.tasks.JavaExec
+
+plugins {
+    id 'java'
+    // Apply the application plugin to add support for building a CLI application in Java.
+    id 'application'
+    // Terra Test Runner Plugin
+    id 'bio.terra.test-runner-plugin' version '0.0.1-SNAPSHOT'
+}
+
+repositories {
+    // Use JCenter for resolving dependencies.
+    jcenter()
+    maven {
+        url 'https://broadinstitute.jfrog.io/broadinstitute/libs-release-local/'
+    }
+    maven {
+        url 'https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/'
+    }
+}
+
+dependencies {
+    ext {
+        apacheMath = '3.6.1'
+        findbugsAnnotations = "3.0.1"
+        guava = "29.0-jre"
+        jackson = "2.10.2"
+        jersey = "2.30.1"
+        kubernetesClient = "8.0.2"
+        logback = "1.2.3"
+        slf4j = "1.7.25"
+        hamcrest = "2.1"
+
+        googleOauth2 = "0.20.0"
+
+        bufferServiceClient = "0.4.0-SNAPSHOT"
+        workspaceManagerServiceClient = "0.6.0-SNAPSHOT"
+        testRunner = "0.0.1-SNAPSHOT"
+    }
+    implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
+    compileOnly "com.google.code.findbugs:annotations:${findbugsAnnotations}"
+    implementation group: 'com.google.guava', name: 'guava', version: "${guava}"
+    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson}"
+    compile "org.glassfish.jersey.inject:jersey-hk2:${jersey}"
+    compile "io.kubernetes:client-java:${kubernetesClient}"
+    compile "ch.qos.logback:logback-classic:${logback}"
+    compile "org.slf4j:slf4j-api:${slf4j}"
+    compile "org.hamcrest:hamcrest:${hamcrest}"
+
+    // Google dependencies
+    compile "com.google.auth:google-auth-library-oauth2-http:${googleOauth2}"
+
+    // Buffer Service client library
+    implementation "bio.terra:terra-resource-buffer-client:${bufferServiceClient}"
+
+    // Workspace Manager Service client library
+    implementation "bio.terra:workspace-manager-client:${workspaceManagerServiceClient}"
+
+    // Terra Test Runner Library
+    // implementation group: "bio.terra", name: "terra-test-runner", version: "0.0.1-SNAPSHOT"
+    implementation "bio.terra:terra-test-runner:${testRunner}"
+}
+
+group "bio.terra"
+version "1.0-SNAPSHOT"
+sourceCompatibility = JavaVersion.VERSION_1_8
+
