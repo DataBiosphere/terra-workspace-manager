@@ -82,9 +82,9 @@ jobs:
       id: image-name
       run: |
         DOCKER_TAG=""
-        if [[${{github.event_name == 'push' }}]]
+        if [[ ${{github.event_name == 'push' }} ]]; then
           DOCKER_TAG=${{ steps.tag.outputs.tag }}
-        elif [[${{github.event_name == 'pull_request' }}]]
+        elif [[ ${{github.event_name == 'pull_request' }} ]]; then
           DOCKER_TAG=pr${{ github.event.number }}-$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)
         fi
         echo ::set-output name=name::gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:${DOCKER_TAG}
