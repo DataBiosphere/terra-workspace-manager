@@ -1,4 +1,4 @@
-# Add an index on workspace_id and reference_id as they're frequently looked up together
+# Change workspace_data_reference.reference to jsonb for richer embedded-json support
 databaseChangeLog:
 - changeSet:
     id:  alterWorkspaceReferenceToJsonb
