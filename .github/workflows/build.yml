@@ -65,7 +65,7 @@ jobs:
         echo ::set-output name=gcr-key::$GCR_KEY
         echo ::add-mask::$GCR_KEY
     - name: Auth to GCR
-      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      uses: google-github-actions/setup-gcloud@master
       with:
         version: '270.0.0'
         service_account_email: ${{ steps.vault-secret-step.outputs.gcr-email }}
