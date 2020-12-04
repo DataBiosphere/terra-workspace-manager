@@ -55,7 +55,7 @@ jobs:
 
     # These steps aren't needed for unit tests
     - name: Get Vault token
-      if: ${{ matrix.gradleTask != unitTest }}
+      if: ${{ matrix.gradleTask != "unitTest" }}
       id: vault-token-step
       env:
         VAULT_ADDR: https://clotho.broadinstitute.org:8200
@@ -69,21 +69,21 @@ jobs:
         echo ::set-output name=vault-token::$VAULT_TOKEN
         echo ::add-mask::$VAULT_TOKEN
     - name: Grant execute permission for render_config
-      if: ${{ matrix.gradleTask != unitTest }}
+      if: ${{ matrix.gradleTask != "unitTest" }}
       run: chmod +x render_config.sh
     - name: Render configuration for tests
-      if: ${{ matrix.gradleTask != unitTest }}
+      if: ${{ matrix.gradleTask != "unitTest" }}
       run: ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }} dev
     - name: Ensure read permissions for rendered files
-      if: ${{ matrix.gradleTask != unitTest }}
+      if: ${{ matrix.gradleTask != "unitTest" }}
       run: sudo chmod +r rendered
 
     # Only integration tests need a running server
     - name: Run local server (in background)
-      if: ${{ matrix.gradleTask == integrationTest }}
+      if: ${{ matrix.gradleTask == "integrationTest" }}
       run: ./gradlew bootRun &
     - name: Wait for local server to start
-      if: ${{ matrix.gradleTask == integrationTest }}
+      if: ${{ matrix.gradleTask == "integrationTest" }}
       # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
       run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
 
