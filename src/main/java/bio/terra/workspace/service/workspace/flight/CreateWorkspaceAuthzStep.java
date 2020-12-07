@@ -6,7 +6,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.SamApiException;
-import bio.terra.workspace.common.utils.SamUtils;
+import bio.terra.workspace.service.iam.SamUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import java.util.UUID;

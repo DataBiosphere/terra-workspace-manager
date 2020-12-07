@@ -1,28 +1,36 @@
 package bio.terra.workspace.service.iam;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.exception.SamUnauthorizedException;
+import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-// TODO: these should be integration tests, since they're testing interactions between WM and Sam and should use valid credentials.
 public class SamServiceTest extends BaseConnectedTest {
 
   @Autowired SamService samService;
   @Autowired WorkspaceService workspaceService;
-
-  private AuthenticatedUserRequest testUser =
-      new AuthenticatedUserRequest()
-          .subjectId("SamUnitTest")
-          .email("stairway@unit.com")
-          .token(Optional.of("not-a-real-token"));
+  @Autowired UserAccessUtils userAccessUtils;
 
   @Test
-  public void AddedReaderCanRead() throws Exception {
-    Workspace workspace = workspaceService.createWorkspace()
-
+  public void AddedReaderCanRead() {
+    UUID workspaceId = createWorkspaceDefaultUser();
+    // Before being granted permission, secondary user should be rejected.
+    assertThrows(SamUnauthorizedException.class, () -> workspaceService.getWorkspace(workspaceId, secondaryUserRequest()));
+    samService.addWorkspaceRole(secondaryUserRequest(), workspaceId, IamRole.READER);
+    // After being granted permission, secondary user can read the workspace.
+    Workspace readWorkspace = workspaceService.getWorkspace(workspaceId, secondaryUserRequest());
+    assertEquals(readWorkspace.workspaceId(), workspaceId);
   }
 
   @Test
@@ -48,5 +56,30 @@ public class SamServiceTest extends BaseConnectedTest {
   @Test
   public void InvalidUserEmailRejected() throws Exception {
 
+  }
+
+  /** Convenience wrapper to build an AuthenticatedUserRequest from utils' default user.
+   *
+   * This only fills in access token, not email or subjectId..
+   * */
+  private AuthenticatedUserRequest defaultUserRequest() {
+    return new AuthenticatedUserRequest(null, null, Optional.of(userAccessUtils.defaultUserAccessToken().getTokenValue()));
+  }
+
+  /** Convenience wrapper to build an AuthenticatedUserRequest from utils' secondary default user.
+   *
+   * This only fills in access token, not email or subjectId.
+   * */
+  private AuthenticatedUserRequest secondaryUserRequest() {
+    return new AuthenticatedUserRequest(null, null, Optional.of(userAccessUtils.secondUserAccessToken().getTokenValue()));
+  }
+
+  /** Create a workspace using the default test user for connected tests, return its ID.. */
+  private UUID createWorkspaceDefaultUser() {
+    WorkspaceRequest request = WorkspaceRequest.builder()
+        .workspaceId(UUID.randomUUID())
+        .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+        .build();
+    return workspaceService.createWorkspace(request, defaultUserRequest());
   }
 }

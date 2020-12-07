@@ -4,7 +4,6 @@ import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.app.configuration.spring.TraceInterceptorConfig;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
-import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.iam.model.IamRole;

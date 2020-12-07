@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.spendprofile;
 
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
-import bio.terra.workspace.common.utils.SamUtils;
+import bio.terra.workspace.service.iam.SamUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;

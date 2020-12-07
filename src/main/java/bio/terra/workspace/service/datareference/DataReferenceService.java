@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.datareference;
 
 import bio.terra.workspace.common.exception.*;
-import bio.terra.workspace.common.utils.SamUtils;
+import bio.terra.workspace.service.iam.SamUtils;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.datareference.flight.CreateDataReferenceFlight;

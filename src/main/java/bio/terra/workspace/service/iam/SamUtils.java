@@ -1,4 +1,4 @@
-package bio.terra.workspace.common.utils;
+package bio.terra.workspace.service.iam;
 
 public class SamUtils {
 
