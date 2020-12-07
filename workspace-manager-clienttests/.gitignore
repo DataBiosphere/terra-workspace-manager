@@ -1,7 +1,6 @@
 HELP.md
 .gradle
 build/
-rendered/
 local-dev/terra-helm/
 local-dev/terra-helmfile/
 !gradle/wrapper/gradle-wrapper.jar
