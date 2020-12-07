@@ -32,6 +32,15 @@ jobs:
       - name: "Configure Test Runner"
         run: |
           cd ${GITHUB_WORKSPACE}/${workingDir}/workspace-manager-clienttests
+          ls
           chmod +x render-config.sh
           ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
-          ls rendered
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: |
+            ls
+            .gradle/caches
+            .gradle/wrapper
+          key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
+          restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
