@@ -32,7 +32,6 @@ jobs:
       - name: "Configure Test Runner"
         run: |
           cd ${GITHUB_WORKSPACE}/${workingDir}/workspace-manager-clienttests
-          ls
-          chmod +x render_config.sh
-          ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }}
+          chmod +x render-config.sh
+          ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
           ls rendered
