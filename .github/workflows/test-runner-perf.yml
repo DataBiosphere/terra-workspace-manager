@@ -44,5 +44,4 @@ jobs:
       - name: Run perf tests using test runner library
         run: |
           cd ${GITHUB_WORKSPACE}/${workingDir}/workspace-manager-clienttests
-          ls rendered
           ./gradlew runTest --args="configs/BasicAuthenticated.json /tmp/TestRunnerResults"
