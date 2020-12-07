@@ -5,6 +5,12 @@ The Test Runner library [GitHub repository](https://github.com/DataBiosphere/ter
 how to write and execute tests.
 
 #### Run a test
+The workspace manager tests require the appropriate service account keys to be available in the `rendered/` folder.
+Run the following command from the workspace-manager-clienttests directory to retrieve the required keys.
+```
+./render-config.sh
+```
+
 From the workspace-manager-clienttests directory:
 ```
 ./gradlew  runTest --args="configs/BasicAuthenticated.json /tmp/TR"
