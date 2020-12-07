@@ -45,7 +45,7 @@ public class WorkspaceDao {
   private Logger logger = LoggerFactory.getLogger(WorkspaceDao.class);
 
   /** Persists a workspace to DB. Returns ID of persisted workspace on success. */
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
   public UUID createWorkspace(Workspace workspace) {
     String sql =
         "INSERT INTO workspace (workspace_id, spend_profile, profile_settable, workspace_stage) values "
@@ -70,7 +70,7 @@ public class WorkspaceDao {
   }
 
   /** Deletes a workspace. Returns true on successful delete, false if there's nothing to delete. */
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
   public boolean deleteWorkspace(UUID workspaceId) {
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceId.toString());
@@ -89,6 +89,7 @@ public class WorkspaceDao {
   }
 
   /** Retrieves a workspace from database by ID. */
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
   public Workspace getWorkspace(UUID id) {
     String sql = "SELECT * FROM workspace where workspace_id = (:id)";
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id.toString());
@@ -114,8 +115,8 @@ public class WorkspaceDao {
     }
   }
 
-  // TODO: Unclear what level (if any) of @Transactional this requires.
   /** Retrieves the MC Terra migration stage of a workspace from database by ID. */
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
   public WorkspaceStage getWorkspaceStage(UUID workspaceId) {
     String sql = "SELECT workspace_stage FROM workspace WHERE workspace_id = :id";
     MapSqlParameterSource params =
@@ -124,7 +125,7 @@ public class WorkspaceDao {
   }
 
   /** Retrieves the cloud context of the workspace. */
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
   public WorkspaceCloudContext getCloudContext(UUID workspaceId) {
     String sql =
         "SELECT cloud_type, context FROM workspace_cloud_context "
@@ -137,7 +138,7 @@ public class WorkspaceDao {
   }
 
   /** Update the cloud context of the workspace, replacing the previous cloud context. */
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
   public void updateCloudContext(UUID workspaceId, WorkspaceCloudContext cloudContext) {
     if (cloudContext.googleProjectId().isPresent()) {
       String sql =

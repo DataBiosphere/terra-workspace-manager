@@ -19,6 +19,9 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class DataReferenceDao {
@@ -39,6 +42,7 @@ public class DataReferenceDao {
   private Logger logger = LoggerFactory.getLogger(DataReferenceDao.class);
 
   /** Create a data reference in a workspace and return the reference's ID. */
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
   public String createDataReference(DataReferenceRequest request, UUID referenceId)
       throws DuplicateDataReferenceException {
     String sql =
@@ -68,6 +72,7 @@ public class DataReferenceDao {
   }
 
   /** Retrieve a data reference by ID from the DB. */
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
   public DataReference getDataReference(UUID workspaceId, UUID referenceId) {
     String sql =
         "SELECT workspace_id, reference_id, name, cloning_instructions, reference_type, reference from workspace_data_reference where workspace_id = :workspace_id AND reference_id = :reference_id";
@@ -93,6 +98,7 @@ public class DataReferenceDao {
    * Retrieve a data reference by name from the DB. Names are unique per workspace, per reference
    * type.
    */
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
   public DataReference getDataReferenceByName(
       UUID workspaceId, DataReferenceType type, String name) {
     String sql =
@@ -117,6 +123,7 @@ public class DataReferenceDao {
   }
 
   /** Look up whether a reference is a controlled or uncontrolled resource. */
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
   public boolean isControlled(UUID workspaceId, UUID referenceId) {
     String sql =
         "SELECT CASE WHEN resource_id IS NULL THEN 'false' ELSE 'true' END FROM workspace_data_reference where reference_id = :id AND workspace_id = :workspace_id";
@@ -133,6 +140,7 @@ public class DataReferenceDao {
     }
   }
 
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
   public boolean deleteDataReference(UUID workspaceId, UUID referenceId) {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
@@ -160,6 +168,7 @@ public class DataReferenceDao {
 
   // TODO: in the future, resource_id will be a foreign key to the workspace_resources table, and we
   // should consider joining and listing those entries here.
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
   public List<DataReference> enumerateDataReferences(UUID workspaceId, int offset, int limit) {
     String sql =
         "SELECT workspace_id, reference_id, name, cloning_instructions, reference_type, reference"
