@@ -10,7 +10,7 @@ on:
       - 'local-dev/**'
 
 jobs:
-  test-runner-perf::
+  test-runner-perf:
     runs-on: ubuntu-latest
 
     steps:
