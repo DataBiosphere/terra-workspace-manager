@@ -104,9 +104,7 @@ dependencies {
 	// Test deps
 	testImplementation group: "com.google.auth", name: "google-auth-library-oauth2-http", version: "0.22.1"
 	testImplementation group: "io.vavr", name: "vavr", version: "0.10.3"
-	testImplementation(group: "org.springframework.boot", name: "spring-boot-starter-test") {
-		exclude group: "org.junit.vintage", module: "junit-vintage-engine"
-	}
+	testImplementation group: "org.springframework.boot", name: "spring-boot-starter-test"
 	testImplementation project(":workspace-manager-client")
 
 	annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
