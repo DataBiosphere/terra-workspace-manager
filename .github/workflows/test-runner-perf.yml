@@ -1,0 +1,37 @@
+# This workflow will build a Java project with Gradle
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
+
+name: Run Unit Tests
+
+on:
+  push:
+    paths-ignore:
+      - 'README.md'
+      - 'local-dev/**'
+
+jobs:
+  perf-test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get Vault token
+        id: vault-token-step
+        env:
+          VAULT_ADDR: https://clotho.broadinstitute.org:8200
+        run: |
+          VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
+            -e "VAULT_ADDR=${VAULT_ADDR}" \
+            vault:1.1.0 \
+            vault write -field token \
+              auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+              secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+          echo ::set-output name=vault-token::$VAULT_TOKEN
+          echo ::add-mask::$VAULT_TOKEN
+      - name: "Configure Test Runner"
+        run: |
+          cd ${GITHUB_WORKSPACE}/${workingDir}/workspace-manager-clienttests
+          chmod +x render_config.sh
+          ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }}
+          ls rendered
