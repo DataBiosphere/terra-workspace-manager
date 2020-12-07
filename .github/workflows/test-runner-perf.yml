@@ -43,5 +43,6 @@ jobs:
           restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
       - name: Run perf tests using test runner library
         run: |
-          ls
+          cd ${GITHUB_WORKSPACE}/${workingDir}/workspace-manager-clienttests
+          ls rendered
           ./gradlew runTest --args="configs/BasicAuthentcated.json /tmp/TestRunnerResults"
