@@ -52,7 +52,7 @@ public class McTerraController implements McTerraApi {
       @PathVariable("role") bio.terra.workspace.generated.model.IamRole role,
       @PathVariable("memberEmail") String memberEmail) {
     samService.addWorkspaceRole(
-        getAuthenticatedInfo(), id, IamRole.fromApiModel(role), memberEmail);
+        id, getAuthenticatedInfo(), IamRole.fromApiModel(role), memberEmail);
     return new ResponseEntity<>(HttpStatus.valueOf(204));
   }
 
@@ -62,7 +62,7 @@ public class McTerraController implements McTerraApi {
       @PathVariable("role") bio.terra.workspace.generated.model.IamRole role,
       @PathVariable("memberEmail") String memberEmail) {
     samService.removeWorkspaceRole(
-        getAuthenticatedInfo(), id, IamRole.fromApiModel(role), memberEmail);
+        id, getAuthenticatedInfo(), IamRole.fromApiModel(role), memberEmail);
     return new ResponseEntity<>(HttpStatus.valueOf(204));
   }
 

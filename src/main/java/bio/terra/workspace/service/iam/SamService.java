@@ -116,7 +116,7 @@ public class SamService {
    * directly on other workspaces.
    */
   public void addWorkspaceRole(
-      AuthenticatedUserRequest userReq, UUID workspaceId, IamRole role, String userEmail) {
+      UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
     WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
     if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
       throw new StageDisabledException(workspaceId, stage, "addWorkspaceRole");
@@ -125,7 +125,11 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       resourceApi.addUserToPolicy(
-          SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), userEmail);
+          SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), email);
+      logger.info(
+          String.format(
+              "Granted role %s to user %s in workspace %s",
+              role.toSamRole(), email, workspaceId.toString()));
     } catch (ApiException e) {
       throw new SamApiException(e);
     }
@@ -138,7 +142,7 @@ public class SamService {
    * directly on other workspaces.
    */
   public void removeWorkspaceRole(
-      AuthenticatedUserRequest userReq, UUID workspaceId, IamRole role, String userEmail) {
+      UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
     WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
     if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
       throw new StageDisabledException(workspaceId, stage, "removeWorkspaceRole");
@@ -146,8 +150,13 @@ public class SamService {
 
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
+      // TODO: what if user doesn't have role?
       resourceApi.removeUserFromPolicy(
-          SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), userEmail);
+          SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), email);
+      logger.info(
+          String.format(
+              "Removed role %s from user %s in workspace %s",
+              role.toSamRole(), email, workspaceId.toString()));
     } catch (ApiException e) {
       throw new SamApiException(e);
     }

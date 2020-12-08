@@ -1,9 +1,9 @@
 package bio.terra.workspace.service.workspace;
 
-import bio.terra.workspace.service.iam.SamUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.SamUtils;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendProfile;

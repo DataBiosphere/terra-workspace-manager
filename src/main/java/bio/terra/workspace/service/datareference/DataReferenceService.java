@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.datareference;
 
 import bio.terra.workspace.common.exception.*;
-import bio.terra.workspace.service.iam.SamUtils;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.datareference.flight.CreateDataReferenceFlight;
@@ -11,6 +10,7 @@ import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.SamUtils;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import com.fasterxml.jackson.databind.ObjectMapper;
