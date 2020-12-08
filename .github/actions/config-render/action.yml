@@ -18,11 +18,11 @@ runs:
         echo ::add-mask::$VAULT_TOKEN
       shell: bash
     - name: Grant execute permission for render_config
-      run: chmod +x render_config.sh
+      run: chmod +x $/render_config.sh
       shell: bash
     - name: Render configuration for tests
       run: $/render_config.sh ${{ steps.vault-token-step.outputs.vault-token }} dev
       shell: bash
     - name: Ensure read permissions for rendered files
-      run: sudo chmod +r rendered
+      run: sudo chmod +r $/rendered
       shell: bash
