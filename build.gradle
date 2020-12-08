@@ -221,7 +221,7 @@ task setGitVersion(type: WriteProperties) {
 
 jib {
 	from {
-		image = "adoptopenjdk:11-jre-hotspot"
+		image = "adoptopenjdk/openjdk11:jdk-11.28-alpine"
 	}
 	container {
 		filesModificationTime = java.time.ZonedDateTime.now().toString() // to prevent ui caching
