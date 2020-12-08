@@ -7,6 +7,7 @@ import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.service.iam.model.PolicyBinding;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -22,6 +23,7 @@ import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
+import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntry;
 import org.broadinstitute.dsde.workbench.client.sam.model.SubsystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
 import org.slf4j.Logger;
@@ -157,6 +159,36 @@ public class SamService {
           String.format(
               "Removed role %s from user %s in workspace %s",
               role.toSamRole(), email, workspaceId.toString()));
+    } catch (ApiException e) {
+      throw new SamApiException(e);
+    }
+  }
+
+  /**
+   * Wrapper around Sam client that retreives the current permissions model of a workspace.
+   *
+   * <p>This operation is only available to MC_TERRA stage workspaces, as Rawls manages permissions
+   * directly on other workspaces.
+   */
+  public List<PolicyBinding> ListRoleBindings(UUID workspaceId, AuthenticatedUserRequest userReq) {
+    WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
+    if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
+      throw new StageDisabledException(workspaceId, stage, "getPermissionsModel");
+    }
+
+    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+    try {
+      List<AccessPolicyResponseEntry> getResult =
+          resourceApi.listResourcePolicies(SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString());
+      return getResult.stream()
+          .map(
+              entry -> {
+                return PolicyBinding.builder()
+                    .role(IamRole.fromSam(entry.getPolicyName()))
+                    .users(entry.getPolicy().getMemberEmails())
+                    .build();
+              })
+          .collect(Collectors.toList());
     } catch (ApiException e) {
       throw new SamApiException(e);
     }

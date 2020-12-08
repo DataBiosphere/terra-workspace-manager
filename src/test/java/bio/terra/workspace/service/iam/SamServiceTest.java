@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.iam;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -17,11 +20,14 @@ import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.service.iam.model.PolicyBinding;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -138,12 +144,33 @@ public class SamServiceTest extends BaseConnectedTest {
   @Test
   public void InvalidUserEmailRejected() {
     UUID workspaceId = createWorkspaceDefaultUser();
-    // TODO: Honestly no idea what this will throw.
     assertThrows(
         SamApiException.class,
         () ->
             samService.addWorkspaceRole(
                 workspaceId, defaultUserRequest(), IamRole.READER, "!!!INVALID EMAIL ADDRESS!!!!"));
+  }
+
+  @Test
+  public void ListPermissionsIncludesAddedUsers() {
+    UUID workspaceId = createWorkspaceDefaultUser();
+    samService.addWorkspaceRole(
+        workspaceId, defaultUserRequest(), IamRole.READER, userAccessUtils.secondUserEmail());
+    List<PolicyBinding> policyList = samService.ListRoleBindings(workspaceId, defaultUserRequest());
+
+    PolicyBinding expectedOwnerBinding =
+        PolicyBinding.builder()
+            .role(IamRole.OWNER)
+            .users(Collections.singletonList(userAccessUtils.defaultUserEmail()))
+            .build();
+    PolicyBinding expectedReaderBinding =
+        PolicyBinding.builder()
+            .role(IamRole.READER)
+            .users(Collections.singletonList(userAccessUtils.secondUserEmail()))
+            .build();
+    assertThat(
+        policyList,
+        containsInAnyOrder(equalTo(expectedOwnerBinding), equalTo(expectedReaderBinding)));
   }
 
   /**

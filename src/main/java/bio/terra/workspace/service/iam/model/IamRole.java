@@ -2,8 +2,7 @@ package bio.terra.workspace.service.iam.model;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.EnumBiMap;
-import java.util.HashMap;
-import java.util.Map;
+import com.google.common.collect.EnumHashBiMap;
 
 /** Internal representation of IAM roles. */
 public enum IamRole {
@@ -11,7 +10,7 @@ public enum IamRole {
   WRITER,
   OWNER;
 
-  private static final Map<IamRole, String> samMap = new HashMap<>();
+  private static final BiMap<IamRole, String> samMap = EnumHashBiMap.create(IamRole.class);
   private static final BiMap<IamRole, bio.terra.workspace.generated.model.IamRole> apiMap =
       EnumBiMap.create(IamRole.class, bio.terra.workspace.generated.model.IamRole.class);
 
@@ -27,6 +26,10 @@ public enum IamRole {
 
   public static IamRole fromApiModel(bio.terra.workspace.generated.model.IamRole apiModel) {
     return apiMap.inverse().get(apiModel);
+  }
+
+  public static IamRole fromSam(String samRole) {
+    return samMap.inverse().get(samRole);
   }
 
   public bio.terra.workspace.generated.model.IamRole toApiModel() {
