@@ -1,5 +1,3 @@
-spring.profiles.include: human-readable-logging
-
 workspace:
   crl:
     testing-mode: true

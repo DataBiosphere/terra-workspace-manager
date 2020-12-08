@@ -7,7 +7,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ActiveProfiles("test")
+@ActiveProfiles({"test", "human-readable-logging"})
 @ContextConfiguration(classes = Main.class)
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(properties = {"spring.cloud.gcp.credentials.location="})
