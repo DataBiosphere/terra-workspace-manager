@@ -7,7 +7,7 @@ import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.iam.model.IamRole;
-import bio.terra.workspace.service.iam.model.PolicyBinding;
+import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -170,7 +170,7 @@ public class SamService {
    * <p>This operation is only available to MC_TERRA stage workspaces, as Rawls manages permissions
    * directly on other workspaces.
    */
-  public List<PolicyBinding> ListRoleBindings(UUID workspaceId, AuthenticatedUserRequest userReq) {
+  public List<RoleBinding> listRoleBindings(UUID workspaceId, AuthenticatedUserRequest userReq) {
     WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
     if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
       throw new StageDisabledException(workspaceId, stage, "getPermissionsModel");
@@ -183,7 +183,7 @@ public class SamService {
       return getResult.stream()
           .map(
               entry -> {
-                return PolicyBinding.builder()
+                return RoleBinding.builder()
                     .role(IamRole.fromSam(entry.getPolicyName()))
                     .users(entry.getPolicy().getMemberEmails())
                     .build();

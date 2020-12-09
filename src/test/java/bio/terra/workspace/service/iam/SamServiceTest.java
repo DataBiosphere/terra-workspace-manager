@@ -20,7 +20,7 @@ import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.model.IamRole;
-import bio.terra.workspace.service.iam.model.PolicyBinding;
+import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -156,21 +156,31 @@ public class SamServiceTest extends BaseConnectedTest {
     UUID workspaceId = createWorkspaceDefaultUser();
     samService.addWorkspaceRole(
         workspaceId, defaultUserRequest(), IamRole.READER, userAccessUtils.secondUserEmail());
-    List<PolicyBinding> policyList = samService.ListRoleBindings(workspaceId, defaultUserRequest());
+    List<RoleBinding> policyList = samService.listRoleBindings(workspaceId, defaultUserRequest());
 
-    PolicyBinding expectedOwnerBinding =
-        PolicyBinding.builder()
+    RoleBinding expectedOwnerBinding =
+        RoleBinding.builder()
             .role(IamRole.OWNER)
             .users(Collections.singletonList(userAccessUtils.defaultUserEmail()))
             .build();
-    PolicyBinding expectedReaderBinding =
-        PolicyBinding.builder()
+    RoleBinding expectedReaderBinding =
+        RoleBinding.builder()
             .role(IamRole.READER)
             .users(Collections.singletonList(userAccessUtils.secondUserEmail()))
             .build();
     assertThat(
         policyList,
         containsInAnyOrder(equalTo(expectedOwnerBinding), equalTo(expectedReaderBinding)));
+  }
+
+  @Test
+  public void WriterCannotListPermissions() {
+    UUID workspaceId = createWorkspaceDefaultUser();
+    samService.addWorkspaceRole(
+        workspaceId, defaultUserRequest(), IamRole.WRITER, userAccessUtils.secondUserEmail());
+    assertThrows(
+        SamApiException.class,
+        () -> samService.listRoleBindings(workspaceId, secondaryUserRequest()));
   }
 
   /**

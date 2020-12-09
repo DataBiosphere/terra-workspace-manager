@@ -3,13 +3,12 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.generated.controller.McTerraApi;
 import bio.terra.workspace.generated.model.CreateGoogleContextRequestBody;
 import bio.terra.workspace.generated.model.JobModel;
-import bio.terra.workspace.generated.model.RoleBinding;
 import bio.terra.workspace.generated.model.RoleBindingList;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.IamRole;
-import bio.terra.workspace.service.iam.model.PolicyBinding;
+import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.net.URI;
@@ -72,11 +71,13 @@ public class McTerraController implements McTerraApi {
 
   @Override
   public ResponseEntity<RoleBindingList> getRoles(@PathVariable("id") UUID id) {
-    List<PolicyBinding> bindingList = samService.ListRoleBindings(id, getAuthenticatedInfo());
+    List<RoleBinding> bindingList = samService.listRoleBindings(id, getAuthenticatedInfo());
     RoleBindingList responseList = new RoleBindingList();
-    for (PolicyBinding policyBinding : bindingList) {
+    for (RoleBinding roleBinding : bindingList) {
       responseList.add(
-          new RoleBinding().role(policyBinding.role().toApiModel()).members(policyBinding.users()));
+          new bio.terra.workspace.generated.model.RoleBinding()
+              .role(roleBinding.role().toApiModel())
+              .members(roleBinding.users()));
     }
     return new ResponseEntity<>(responseList, HttpStatus.OK);
   }
