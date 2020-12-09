@@ -14,6 +14,12 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    # A note on our use of a matrix here:
+    # Github workflows don't really support reusing code very well. Every workflow runs on a clean
+    # instance, so we can't share a setup workflow. We could write a custom action, but you can't
+    # call an action from another action, and they also don't have access to secrets.
+    # Github also doesn't support yaml anchors (https://github.community/t/support-for-yaml-anchors/),
+    # so we're using a matrix.
     strategy:
       fail-fast: false
       matrix:
