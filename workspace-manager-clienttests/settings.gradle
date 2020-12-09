@@ -15,4 +15,4 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-rootProject.name = 'workspace-manager-test-runner'
+rootProject.name = 'workspace-manager-clienttests'

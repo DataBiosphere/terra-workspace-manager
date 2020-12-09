@@ -33,8 +33,9 @@ public class GetWorkspace extends TestScript {
          * workspace not found exception and http code 401
          * **/
         try {
-            WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(UUID.fromString("11111111-1111-1111-1111-111111111111"));
-            assertThat("GET workspace does not throw not found exception", true);
+            String invalidWorkspaceId = "11111111-1111-1111-1111-111111111111";
+            WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(UUID.fromString(invalidWorkspaceId));
+            assertThat("GET workspace does not throw not found exception", false);
         } catch (ApiException apiEx) {
             logger.debug("Caught exception getting workspace ", apiEx);
             assertThat("GET workspace throws not found exception", true);

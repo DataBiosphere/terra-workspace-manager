@@ -35,8 +35,7 @@ dependencies {
 
         googleOauth2 = "0.20.0"
 
-        bufferServiceClient = "0.4.0-SNAPSHOT"
-        workspaceManagerServiceClient = "0.6.0-SNAPSHOT"
+        workspacemanagerClient = "0.6.0-SNAPSHOT"
         datarepoClient = "1.0.155-SNAPSHOT"
         testRunner = "0.0.1-SNAPSHOT"
     }
@@ -58,7 +57,21 @@ dependencies {
     compile "io.swagger.core.v3:swagger-annotations:${swaggerAnnotations}"
 
     // Workspace Manager Service client library
-    implementation "bio.terra:workspace-manager-client:${workspaceManagerServiceClient}"
+    //implementation "bio.terra:workspace-manager-client:${workspacemanagerClient}"
+
+    // Workspace Manager client library
+    // Gradle project property "workspacemanagerclientjar" overrides the fetch from Maven
+    if (project.hasProperty("workspacemanagerclientjar")) {
+        implementation files(project.findProperty("workspacemanagerclientjar"))
+        compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jackson}"
+        compile "org.glassfish.jersey.core:jersey-client:${jersey}"
+        compile "org.glassfish.jersey.media:jersey-media-json-jackson:${jersey}"
+        compile "org.glassfish.jersey.media:jersey-media-multipart:${jersey}"
+        compile "org.glassfish.jersey.inject:jersey-hk2:${jersey}"
+    } else {
+        implementation "bio.terra:workspace-manager-client:${workspacemanagerClient}"
+        compile "io.swagger.core.v3:swagger-annotations:${swaggerAnnotations}"
+    }
 
     // Terra Test Runner Library
     // implementation group: "bio.terra", name: "terra-test-runner", version: "0.0.1-SNAPSHOT"

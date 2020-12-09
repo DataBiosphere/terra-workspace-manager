@@ -6,12 +6,15 @@ how to write and execute tests.
 
 #### Run a test
 The workspace manager tests require the appropriate service account keys to be available in the `rendered/` folder.
+
 Run the following command from the workspace-manager-clienttests directory to retrieve the required keys.
+
 ```
 ./render-config.sh
 ```
 
-From the workspace-manager-clienttests directory:
+To run the test, use the following command from the workspace-manager-clienttests directory.
+
 ```
 ./gradlew  runTest --args="configs/BasicAuthenticated.json /tmp/TR"
 ```
@@ -23,13 +26,6 @@ TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-dev.json" ./gradlew  runTest --
 ```
 
 #### SA keys from Vault
-Run the ./render-config.sh script (inside tools directory) before running tests. 
-Currently this script targets the dev environment for testing.
-
-From the workspace-manager-clienttests/tools directory:
-```
-./render-config.sh
-```
 
 Each service account JSON files in the resources/serviceaccounts directory of this project specifies a default file
 path for the client secret file. This default path should match where the render-config.sh script puts the secret.
