@@ -186,7 +186,7 @@ public class SamServiceTest extends BaseConnectedTest {
   /**
    * Convenience wrapper to build an AuthenticatedUserRequest from utils' default user.
    *
-   * <p>This only fills in access token, not email or subjectId..
+   * <p>This only fills in access token, not email or subjectId.
    */
   private AuthenticatedUserRequest defaultUserRequest() {
     return new AuthenticatedUserRequest(
@@ -203,7 +203,7 @@ public class SamServiceTest extends BaseConnectedTest {
         null, null, Optional.of(userAccessUtils.secondUserAccessToken().getTokenValue()));
   }
 
-  /** Create a workspace using the default test user for connected tests, return its ID.. */
+  /** Create a workspace using the default test user for connected tests, return its ID. */
   private UUID createWorkspaceDefaultUser() {
     WorkspaceRequest request =
         WorkspaceRequest.builder()

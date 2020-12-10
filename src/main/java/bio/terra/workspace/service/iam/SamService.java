@@ -112,7 +112,7 @@ public class SamService {
   }
 
   /**
-   * Wrapper around Sam client that grants a role to the provided user.
+   * Wrapper around Sam client to grant a role to the provided user.
    *
    * <p>This operation is only available to MC_TERRA stage workspaces, as Rawls manages permissions
    * directly on other workspaces.
@@ -138,7 +138,7 @@ public class SamService {
   }
 
   /**
-   * Wrapper around Sam client that removes a role from the provided user.
+   * Wrapper around Sam client to remove a role from the provided user.
    *
    * <p>This operation is only available to MC_TERRA stage workspaces, as Rawls manages permissions
    * directly on other workspaces.
@@ -152,7 +152,6 @@ public class SamService {
 
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
-      // TODO: what if user doesn't have role?
       resourceApi.removeUserFromPolicy(
           SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), email);
       logger.info(
@@ -165,7 +164,7 @@ public class SamService {
   }
 
   /**
-   * Wrapper around Sam client that retreives the current permissions model of a workspace.
+   * Wrapper around Sam client to retrieve the current permissions model of a workspace.
    *
    * <p>This operation is only available to MC_TERRA stage workspaces, as Rawls manages permissions
    * directly on other workspaces.
@@ -178,16 +177,14 @@ public class SamService {
 
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
-      List<AccessPolicyResponseEntry> getResult =
+      List<AccessPolicyResponseEntry> samResult =
           resourceApi.listResourcePolicies(SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString());
-      return getResult.stream()
+      return samResult.stream()
           .map(
-              entry -> {
-                return RoleBinding.builder()
-                    .role(IamRole.fromSam(entry.getPolicyName()))
-                    .users(entry.getPolicy().getMemberEmails())
-                    .build();
-              })
+              entry -> RoleBinding.builder()
+                  .role(IamRole.fromSam(entry.getPolicyName()))
+                  .users(entry.getPolicy().getMemberEmails())
+                  .build())
           .collect(Collectors.toList());
     } catch (ApiException e) {
       throw new SamApiException(e);

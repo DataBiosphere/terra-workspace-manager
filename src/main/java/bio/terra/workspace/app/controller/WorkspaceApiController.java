@@ -275,7 +275,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<Void> addRole(
       @PathVariable("id") UUID id,
-      @PathVariable("role") bio.terra.workspace.generated.model.IamRole role,
+      @PathVariable("role") IamRole role,
       @PathVariable("memberEmail") String memberEmail) {
     samService.addWorkspaceRole(
         id,
@@ -288,7 +288,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<Void> removeRole(
       @PathVariable("id") UUID id,
-      @PathVariable("role") bio.terra.workspace.generated.model.IamRole role,
+      @PathVariable("role") IamRole role,
       @PathVariable("memberEmail") String memberEmail) {
     samService.removeWorkspaceRole(
         id,

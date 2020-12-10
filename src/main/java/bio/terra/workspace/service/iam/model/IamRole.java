@@ -32,12 +32,7 @@ public enum IamRole {
     return samMap.inverse().get(samRole);
   }
 
-  public bio.terra.workspace.generated.model.IamRole toApiModel() {
-    return apiMap.get(this);
-  }
+  public bio.terra.workspace.generated.model.IamRole toApiModel() { return apiMap.get(this); }
 
-  public String toSamRole() {
-    String role = samMap.get(this);
-    return role;
-  }
+  public String toSamRole() { return samMap.get(this); }
 }

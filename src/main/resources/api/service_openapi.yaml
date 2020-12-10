@@ -241,7 +241,7 @@ paths:
     - $ref: '#/components/parameters/Role'
     - $ref: '#/components/parameters/MemberEmail'
     put:
-      summary: Add an IAM role to a user or group.
+      summary: Add a IAM role to a user or group.
       operationId: addRole
       tags: [Workspace]
       responses:

@@ -3,7 +3,7 @@ package bio.terra.workspace.service.iam.model;
 import com.google.auto.value.AutoValue;
 import java.util.List;
 
-/** Representation of an IAM binding between a role and users/groups. */
+/** A binding between an IAM role and users/groups. */
 @AutoValue
 public abstract class RoleBinding {
 
