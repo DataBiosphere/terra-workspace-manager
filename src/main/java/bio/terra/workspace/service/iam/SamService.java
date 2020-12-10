@@ -6,10 +6,12 @@ import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
+import bio.terra.workspace.service.iam.model.IamRole;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -19,6 +21,8 @@ import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
+import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembership;
+import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequest;
 import org.broadinstitute.dsde.workbench.client.sam.model.SubsystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
 import org.slf4j.Logger;
@@ -53,10 +57,21 @@ public class SamService {
     return new ResourcesApi(getApiClient(accessToken));
   }
 
-  public void createWorkspaceWithDefaults(String authToken, UUID id) {
-    ResourcesApi resourceApi = samResourcesApi(authToken);
+  /**
+   * Wrapper around the Sam client to create a workspace resource in Sam.
+   *
+   * <p>This creates a workspace with the provided ID and requesting user as the sole Owner. Empty
+   * reader and writer policies are also created. Errors from the Sam client will be thrown as
+   * SamApiExceptions, which wrap the underlying error and expose its status code.
+   */
+  public void createWorkspaceWithDefaults(AuthenticatedUserRequest userReq, UUID id) {
+    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+    CreateResourceRequest workspaceRequest =
+        new CreateResourceRequest()
+            .resourceId(id.toString())
+            .policies(defaultWorkspacePolicies(userReq.getEmail()));
     try {
-      resourceApi.createResourceWithDefaults(SamUtils.SAM_WORKSPACE_RESOURCE, id.toString());
+      resourceApi.createResource(SamUtils.SAM_WORKSPACE_RESOURCE, workspaceRequest);
       logger.info(String.format("Created Sam resource for workspace %s", id.toString()));
     } catch (ApiException apiException) {
       throw new SamApiException(apiException);
@@ -130,5 +145,27 @@ public class SamService {
     } catch (ApiException | JsonProcessingException e) {
       return new SystemStatusSystems().ok(false).addMessagesItem(e.getLocalizedMessage());
     }
+  }
+
+  /**
+   * Builds a policy list with a single provided owner and empty reader + writer policies.
+   *
+   * <p>This is a helper function for building the policy section of a request to create a workspace
+   * resource in Sam. The provided user is granted the OWNER role and empty policies for reader and
+   * writer are also included.
+   *
+   * <p>The empty policies are included because Sam requires all policies on a workspace to be
+   * provided at creation time. Although policy membership can be modified later, policy creation
+   * must happen at the same time as workspace resource creation.
+   */
+  private List<AccessPolicyMembership> defaultWorkspacePolicies(String ownerEmail) {
+    List<AccessPolicyMembership> policyList = new ArrayList<>();
+    policyList.add(
+        new AccessPolicyMembership()
+            .addRolesItem(IamRole.OWNER.toSamRole())
+            .addMemberEmailsItem(ownerEmail));
+    policyList.add(new AccessPolicyMembership().addRolesItem(IamRole.WRITER.toSamRole()));
+    policyList.add(new AccessPolicyMembership().addRolesItem(IamRole.READER.toSamRole()));
+    return policyList;
   }
 }

@@ -42,7 +42,7 @@ public class CreateWorkspaceAuthzStep implements Step {
         SamUtils.SAM_WORKSPACE_RESOURCE,
         workspaceID.toString(),
         SamUtils.SAM_WORKSPACE_READ_ACTION)) {
-      samService.createWorkspaceWithDefaults(userReq.getRequiredToken(), workspaceID);
+      samService.createWorkspaceWithDefaults(userReq, workspaceID);
     }
     return StepResult.getStepResultSuccess();
   }
