@@ -12,6 +12,7 @@ import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
@@ -19,6 +20,7 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,6 +42,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   private DataReferenceService dataReferenceService;
   private DataReferenceValidationUtils dataReferenceValidation;
   private JobService jobService;
+  private SamService samService;
   private AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
 
@@ -49,12 +52,14 @@ public class WorkspaceApiController implements WorkspaceApi {
       DataReferenceService dataReferenceService,
       DataReferenceValidationUtils dataReferenceValidation,
       JobService jobService,
+      SamService samService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request) {
     this.workspaceService = workspaceService;
     this.dataReferenceService = dataReferenceService;
     this.dataReferenceValidation = dataReferenceValidation;
     this.jobService = jobService;
+    this.samService = samService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
   }
@@ -266,4 +271,65 @@ public class WorkspaceApiController implements WorkspaceApi {
     return new ResponseEntity<>(jobResultHolder.getResult(), jobResultHolder.getStatusCode());
   }
   */
+
+  @Override
+  public ResponseEntity<Void> addRole(
+      @PathVariable("id") UUID id,
+      @PathVariable("role") bio.terra.workspace.generated.model.IamRole role,
+      @PathVariable("memberEmail") String memberEmail) {
+    samService.addWorkspaceRole(
+        id,
+        getAuthenticatedInfo(),
+        bio.terra.workspace.service.iam.model.IamRole.fromApiModel(role),
+        memberEmail);
+    return new ResponseEntity<>(HttpStatus.valueOf(204));
+  }
+
+  @Override
+  public ResponseEntity<Void> removeRole(
+      @PathVariable("id") UUID id,
+      @PathVariable("role") bio.terra.workspace.generated.model.IamRole role,
+      @PathVariable("memberEmail") String memberEmail) {
+    samService.removeWorkspaceRole(
+        id,
+        getAuthenticatedInfo(),
+        bio.terra.workspace.service.iam.model.IamRole.fromApiModel(role),
+        memberEmail);
+    return new ResponseEntity<>(HttpStatus.valueOf(204));
+  }
+
+  @Override
+  public ResponseEntity<RoleBindingList> getRoles(@PathVariable("id") UUID id) {
+    List<bio.terra.workspace.service.iam.model.RoleBinding> bindingList =
+        samService.listRoleBindings(id, getAuthenticatedInfo());
+    RoleBindingList responseList = new RoleBindingList();
+    for (bio.terra.workspace.service.iam.model.RoleBinding roleBinding : bindingList) {
+      responseList.add(
+          new bio.terra.workspace.generated.model.RoleBinding()
+              .role(roleBinding.role().toApiModel())
+              .members(roleBinding.users()));
+    }
+    return new ResponseEntity<>(responseList, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<JobModel> createGoogleContext(
+      UUID id, @Valid CreateGoogleContextRequestBody body) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    // TODO(PF-153): Use the optional jobId from the body for idempotency instead of always creating
+    // a new job id.
+    String jobId = workspaceService.createGoogleContext(id, userReq);
+    JobModel jobModel = jobService.retrieveJob(jobId, userReq);
+    // TODO(PF-221): Fix the jobs polling location once it exists.
+    return ResponseEntity.status(HttpStatus.ACCEPTED)
+        .location(URI.create(String.format("/api/jobs/v1/%s", jobId)))
+        .body(jobModel);
+  }
+
+  @Override
+  public ResponseEntity<Void> deleteGoogleContext(UUID id) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    workspaceService.deleteGoogleContext(id, userReq);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
 }

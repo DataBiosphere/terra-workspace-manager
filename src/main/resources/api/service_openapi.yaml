@@ -181,7 +181,7 @@ paths:
     post:
       summary: Create a google context for the workspace.
       operationId: createGoogleContext
-      tags: [McTerra]
+      tags: [Workspace]
       requestBody:
         required: true
         content:
@@ -211,7 +211,7 @@ paths:
     delete:
       summary: Deletes the google context and all of its data from a workspace.
       operationId: deleteGoogleContext
-      tags: [McTerra]
+      tags: [Workspace]
       responses:
         '204':
           description: OK
@@ -228,7 +228,7 @@ paths:
     get:
       summary: Read all IAM roles and their members in a workspace.
       operationId: getRoles
-      tags: [McTerra]
+      tags: [Workspace]
       responses:
         '200':
           $ref: '#/components/responses/RoleBindingListResponse'
@@ -243,7 +243,7 @@ paths:
     put:
       summary: Add an IAM role to a user or group.
       operationId: addRole
-      tags: [McTerra]
+      tags: [Workspace]
       responses:
         '204':
           description: Role added successfully
@@ -256,7 +256,7 @@ paths:
     delete:
       summary: Remove an IAM role from a user or group.
       operationId: removeRole
-      tags: [McTerra]
+      tags: [Workspace]
       responses:
         '204':
           description: Role removed successfully
