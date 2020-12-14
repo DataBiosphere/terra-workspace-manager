@@ -53,6 +53,6 @@ public class SyncSamGroupsStep implements Step {
   // Sam policies are never "de-synced" from google groups, so there's nothing to undo here.
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    return null;
+    return StepResult.getStepResultSuccess();
   }
 }
