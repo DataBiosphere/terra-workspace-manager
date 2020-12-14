@@ -29,10 +29,10 @@ public class WorkspaceManagerServiceUtils {
      */
     public static ApiClient getClient(ServerSpecification server) throws IOException {
         if (Strings.isNullOrEmpty(server.workspaceManagerUri)) {
-            throw new IllegalArgumentException("Buffer Service URI cannot be empty");
+            throw new IllegalArgumentException("Workspace Manager Service URI cannot be empty");
         }
         if (server.testRunnerServiceAccount == null) {
-            throw new IllegalArgumentException("Buffer Service client service account is required");
+            throw new IllegalArgumentException("Workspace Manager Service client service account is required");
         }
 
         // refresh the client service account token

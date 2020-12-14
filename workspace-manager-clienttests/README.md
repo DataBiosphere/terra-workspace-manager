@@ -8,6 +8,7 @@ how to write and execute tests.
 The workspace manager tests require the appropriate service account keys to be available in the `rendered/` folder.
 
 Run the following command from the workspace-manager-clienttests directory to retrieve the required keys.
+Note: `render-config.sh` assumes a valid `.vault-token` in your `$HOME` directory.
 
 ```
 ./render-config.sh

@@ -22,9 +22,8 @@ public class ServiceStatus extends TestScript {
         ApiClient apiClient = WorkspaceManagerServiceUtils.getClient(server);
         UnauthenticatedApi unauthenticatedApi = new UnauthenticatedApi(apiClient);
         SystemStatus systemStatus = unauthenticatedApi.serviceStatus();
-        logger.info("systemStatus: {}", systemStatus);
 
         int httpCode = unauthenticatedApi.getApiClient().getStatusCode();
-        logger.info("Service status HTTP code: {}", httpCode);
+        logger.info("Service status with code {}: {}", httpCode, systemStatus);
     }
 }
