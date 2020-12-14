@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
+import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntry;
@@ -59,6 +60,10 @@ public class SamService {
 
   private ResourcesApi samResourcesApi(String accessToken) {
     return new ResourcesApi(getApiClient(accessToken));
+  }
+
+  private GoogleApi samGoogleApi(String accessToken) {
+    return new GoogleApi(getApiClient(accessToken));
   }
 
   public void createWorkspaceWithDefaults(String authToken, UUID id) {
@@ -181,11 +186,33 @@ public class SamService {
           resourceApi.listResourcePolicies(SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString());
       return samResult.stream()
           .map(
-              entry -> RoleBinding.builder()
-                  .role(IamRole.fromSam(entry.getPolicyName()))
-                  .users(entry.getPolicy().getMemberEmails())
-                  .build())
+              entry ->
+                  RoleBinding.builder()
+                      .role(IamRole.fromSam(entry.getPolicyName()))
+                      .users(entry.getPolicy().getMemberEmails())
+                      .build())
           .collect(Collectors.toList());
+    } catch (ApiException e) {
+      throw new SamApiException(e);
+    }
+  }
+
+  /**
+   * Wrapper around Sam client to sync a Sam policy to a Google group. Returns email of that group.
+   *
+   * <p>This operation in Sam is idempotent, so we don't worry about calling this multiple times.
+   */
+  public String syncWorkspacePolicy(
+      UUID workspaceId, IamRole role, AuthenticatedUserRequest userReq) {
+    GoogleApi googleApi = samGoogleApi(userReq.getRequiredToken());
+    try {
+      // Sam makes no guarantees about what values are returned from the POST call, so we instead
+      // fetch the group in a separate call after syncing.
+      googleApi.syncPolicy(
+          SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole());
+      return googleApi
+          .syncStatus(SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole())
+          .getEmail();
     } catch (ApiException e) {
       throw new SamApiException(e);
     }
