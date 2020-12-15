@@ -116,8 +116,14 @@ public class SamService {
    *
    * <p>This operation is only available to MC_TERRA stage workspaces, as Rawls manages permissions
    * directly on other workspaces.
+   *
+   * @param workspaceId The workspace this operation takes place in
+   * @param userReq Credentials of the user requesting this operation. Only owners have permission
+   *     to modify roles in a workspace.
+   * @param role The role being granted.
+   * @param email The user being granted a role.
    */
-  public void addWorkspaceRole(
+  public void grantWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
     WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
     if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
@@ -181,10 +187,11 @@ public class SamService {
           resourceApi.listResourcePolicies(SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString());
       return samResult.stream()
           .map(
-              entry -> RoleBinding.builder()
-                  .role(IamRole.fromSam(entry.getPolicyName()))
-                  .users(entry.getPolicy().getMemberEmails())
-                  .build())
+              entry ->
+                  RoleBinding.builder()
+                      .role(IamRole.fromSam(entry.getPolicyName()))
+                      .users(entry.getPolicy().getMemberEmails())
+                      .build())
           .collect(Collectors.toList());
     } catch (ApiException e) {
       throw new SamApiException(e);

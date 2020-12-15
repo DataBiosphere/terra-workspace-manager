@@ -273,11 +273,11 @@ public class WorkspaceApiController implements WorkspaceApi {
   */
 
   @Override
-  public ResponseEntity<Void> addRole(
+  public ResponseEntity<Void> grantRole(
       @PathVariable("id") UUID id,
       @PathVariable("role") IamRole role,
       @PathVariable("memberEmail") String memberEmail) {
-    samService.addWorkspaceRole(
+    samService.grantWorkspaceRole(
         id,
         getAuthenticatedInfo(),
         bio.terra.workspace.service.iam.model.IamRole.fromApiModel(role),

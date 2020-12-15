@@ -241,12 +241,12 @@ paths:
     - $ref: '#/components/parameters/Role'
     - $ref: '#/components/parameters/MemberEmail'
     put:
-      summary: Add an IAM role to a user or group.
-      operationId: addRole
+      summary: Grant an IAM role to a user or group.
+      operationId: grantRole
       tags: [Workspace]
       responses:
         '204':
-          description: Role added successfully
+          description: Role granted successfully
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
