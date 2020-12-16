@@ -1,11 +1,13 @@
 HELP.md
 .gradle
 build/
+rendered/*
 local-dev/terra-helm/
 local-dev/terra-helmfile/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**
 !**/src/test/**
+!rendered/.gitkeep
 
 ### STS ###
 .apt_generated
