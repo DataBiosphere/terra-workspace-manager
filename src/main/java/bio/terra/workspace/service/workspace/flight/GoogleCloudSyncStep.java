@@ -59,20 +59,20 @@ public class GoogleCloudSyncStep implements Step {
               .get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class),
           CloudSyncRoleMapping.cloudSyncRoleMap.get(IamRole.OWNER),
           bindings);
-
-      addGroupToRoleBindings(
-          flightContext
-              .getWorkingMap()
-              .get(WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL, String.class),
-          CloudSyncRoleMapping.cloudSyncRoleMap.get(IamRole.WRITER),
-          bindings);
-
-      addGroupToRoleBindings(
-          flightContext
-              .getWorkingMap()
-              .get(WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL, String.class),
-          CloudSyncRoleMapping.cloudSyncRoleMap.get(IamRole.READER),
-          bindings);
+      // TODO: temporarily commented out for manual testing to avoid sam client issues.
+      // addGroupToRoleBindings(
+      //     flightContext
+      //         .getWorkingMap()
+      //         .get(WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL, String.class),
+      //     CloudSyncRoleMapping.cloudSyncRoleMap.get(IamRole.WRITER),
+      //     bindings);
+      //
+      // addGroupToRoleBindings(
+      //     flightContext
+      //         .getWorkingMap()
+      //         .get(WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL, String.class),
+      //     CloudSyncRoleMapping.cloudSyncRoleMap.get(IamRole.READER),
+      //     bindings);
 
       Policy newPolicy = new Policy().setBindings(bindings).setEtag(currentPolicy.getEtag());
       SetIamPolicyRequest iamPolicyRequest = new SetIamPolicyRequest().setPolicy(newPolicy);
@@ -132,19 +132,20 @@ public class GoogleCloudSyncStep implements Step {
           CloudSyncRoleMapping.cloudSyncRoleMap.get(IamRole.OWNER),
           bindings);
 
-      removeGroupFromRoleBindings(
-          flightContext
-              .getWorkingMap()
-              .get(WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL, String.class),
-          CloudSyncRoleMapping.cloudSyncRoleMap.get(IamRole.WRITER),
-          bindings);
-
-      removeGroupFromRoleBindings(
-          flightContext
-              .getWorkingMap()
-              .get(WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL, String.class),
-          CloudSyncRoleMapping.cloudSyncRoleMap.get(IamRole.READER),
-          bindings);
+      // TODO: temporarily commented out for manual testing to avoid sam client issues.
+      // removeGroupFromRoleBindings(
+      //     flightContext
+      //         .getWorkingMap()
+      //         .get(WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL, String.class),
+      //     CloudSyncRoleMapping.cloudSyncRoleMap.get(IamRole.WRITER),
+      //     bindings);
+      //
+      // removeGroupFromRoleBindings(
+      //     flightContext
+      //         .getWorkingMap()
+      //         .get(WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL, String.class),
+      //     CloudSyncRoleMapping.cloudSyncRoleMap.get(IamRole.READER),
+      //     bindings);
 
       Policy newPolicy = new Policy().setBindings(bindings).setEtag(currentPolicy.getEtag());
       SetIamPolicyRequest iamPolicyRequest = new SetIamPolicyRequest().setPolicy(newPolicy);

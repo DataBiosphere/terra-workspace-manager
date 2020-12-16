@@ -40,12 +40,13 @@ public class SyncSamGroupsStep implements Step {
     workingMap.put(
         WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL,
         samService.syncWorkspacePolicy(workspaceId, IamRole.OWNER, userReq));
-    workingMap.put(
-        WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL,
-        samService.syncWorkspacePolicy(workspaceId, IamRole.WRITER, userReq));
-    workingMap.put(
-        WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL,
-        samService.syncWorkspacePolicy(workspaceId, IamRole.READER, userReq));
+    // TODO: temporarily commented out for manual testing to avoid sam client issues.
+    // workingMap.put(
+    //     WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL,
+    //     samService.syncWorkspacePolicy(workspaceId, IamRole.WRITER, userReq));
+    // workingMap.put(
+    //     WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL,
+    //     samService.syncWorkspacePolicy(workspaceId, IamRole.READER, userReq));
 
     return StepResult.getStepResultSuccess();
   }

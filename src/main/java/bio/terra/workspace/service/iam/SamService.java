@@ -210,9 +210,15 @@ public class SamService {
       // fetch the group in a separate call after syncing.
       googleApi.syncPolicy(
           SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole());
-      return googleApi
-          .syncStatus(SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole())
-          .getEmail();
+      String groupEmail =
+          googleApi
+              .syncStatus(SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole())
+              .getEmail();
+      logger.info(
+          String.format(
+              "Synced role %s to google group %s in workspace %s",
+              role.toSamRole(), groupEmail, workspaceId.toString()));
+      return groupEmail;
     } catch (ApiException e) {
       throw new SamApiException(e);
     }
