@@ -23,11 +23,7 @@ public class GetWorkspace extends TestScript {
     private UUID id;
     private CreatedWorkspace workspace;
 
-    /** Public constructor so that this class can be instantiated via reflection. */
-    public GetWorkspace() {
-        super();
-    }
-
+    @Override
     public void setup(List<TestUserSpecification> testUsers) throws Exception {
         assertThat("There must be at least one test user in configs/testusers directory.", testUsers!=null && testUsers.size()>0);
         id = UUID.randomUUID();
@@ -48,6 +44,7 @@ public class GetWorkspace extends TestScript {
         assertThat(httpCode, equalTo(200));
     }
 
+    @Override
     public void userJourney(TestUserSpecification testUser) throws Exception {
         ApiClient apiClient = WorkspaceManagerServiceUtils.getClientForTestUser(testUser, server);
         WorkspaceApi workspaceApi = new WorkspaceApi(apiClient);
@@ -59,7 +56,6 @@ public class GetWorkspace extends TestScript {
          * Throw workspace not found exception if anything goes wrong
          * **/
         try {
-            // String invalidWorkspaceId = "11111111-1111-1111-1111-111111111111";
             WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspace.getId());
             assertThat("GET workspace does not throw not found exception", true);
         } catch (ApiException apiEx) {
@@ -72,6 +68,7 @@ public class GetWorkspace extends TestScript {
         assertThat(httpCode, equalTo(200));
     }
 
+    @Override
     public void cleanup(List<TestUserSpecification> testUsers) throws Exception {
         assertThat("There must be at least one test user in configs/testusers directory.", testUsers!=null && testUsers.size()>0);
         ApiClient apiClient = WorkspaceManagerServiceUtils.getClientForTestUser(testUsers.get(0), server);
@@ -84,7 +81,7 @@ public class GetWorkspace extends TestScript {
         }
 
         int httpCode = workspaceApi.getApiClient().getStatusCode();
-        logger.info("DELELE workspace HTTP code: {}", httpCode);
-        assertThat(httpCode, equalTo(200));
+        logger.info("DELETE workspace HTTP code: {}", httpCode);
+        assertThat(httpCode, equalTo(204));
     }
 }

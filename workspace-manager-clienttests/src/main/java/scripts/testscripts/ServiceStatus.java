@@ -12,11 +12,6 @@ import scripts.utils.WorkspaceManagerServiceUtils;
 public class ServiceStatus extends TestScript {
     private static final Logger logger = LoggerFactory.getLogger(ServiceStatus.class);
 
-    /** Public constructor so that this class can be instantiated via reflection. */
-    public ServiceStatus() {
-        super();
-    }
-
     @Override
     public void userJourney(TestUserSpecification testUser) throws Exception {
         ApiClient apiClient = WorkspaceManagerServiceUtils.getClient(server);

@@ -11,13 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 public class WorkspaceManagerServiceUtils {
     private static final Logger logger = LoggerFactory.getLogger(WorkspaceManagerServiceUtils.class);
-
-    private static Map<TestUserSpecification, ApiClient> apiClientsForTestUsers = new HashMap<>();
 
     private WorkspaceManagerServiceUtils() {}
 
@@ -80,15 +76,6 @@ public class WorkspaceManagerServiceUtils {
                 AuthenticationUtils.getDelegatedUserCredential(
                         testUser, AuthenticationUtils.userLoginScopes);
         AccessToken userAccessToken = AuthenticationUtils.getAccessToken(userCredential);
-        // first check if there is already a cached ApiClient for this test user
-        ApiClient cachedApiClient = apiClientsForTestUsers.get(testUser);
-        if (cachedApiClient != null) {
-            // refresh the token here before returning
-            // this should be helpful for long-running tests (roughly > 1hr)
-            cachedApiClient.setAccessToken(userAccessToken.getTokenValue());
-
-            return cachedApiClient;
-        }
 
         // TODO: have ApiClients share an HTTP client, or one per each is ok?
         // no cached ApiClient found, so build a new one here and add it to the cache before returning
@@ -100,7 +87,6 @@ public class WorkspaceManagerServiceUtils {
 
         apiClient.setAccessToken(userAccessToken.getTokenValue());
 
-        apiClientsForTestUsers.put(testUser, apiClient);
         return apiClient;
     }
 }
