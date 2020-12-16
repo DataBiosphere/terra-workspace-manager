@@ -48,10 +48,10 @@ export ORG_GRADLE_PROJECT_workspacemanagerclientjar=~/terra-workspace-manager/wo
 ```
 
 This is useful for debugging or testing local server code changes that affect the generated client library (e.g. new API
-endpoint). You can generate the Data Repo client library with the Gradle assemble task of the datarepo-client sub-project.
+endpoint). You can generate the Workspace Manager client library with the Gradle assemble task of the workspace-manager-client sub-project.
 
 ```
-cd /Users/marikomedlock/Workspaces/jade-data-repo/datarepo-client
+cd ~/terra-workspace-manager/workspace-manager-client
 ../gradlew clean assemble
 ls -la ./build/libs/*jar
 ```

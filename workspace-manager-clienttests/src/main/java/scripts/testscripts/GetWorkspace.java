@@ -33,7 +33,7 @@ public class GetWorkspace extends TestScript {
             CreateWorkspaceRequestBody requestBody = new CreateWorkspaceRequestBody();
             requestBody.setId(id);
             requestBody.setJobId("testrunner");
-            requestBody.setSpendProfile("testrunner");
+            requestBody.setSpendProfile(null);
             workspace = workspaceApi.createWorkspace(requestBody);
         } catch (ApiException apiEx) {
             logger.debug("Caught exception creating workspace ", apiEx);
@@ -51,18 +51,11 @@ public class GetWorkspace extends TestScript {
 
         /**
          * This GetWorkspace test expects a valid workspace id
-         * created from the setup step.
+         * created by the setup step.
          *
-         * Throw workspace not found exception if anything goes wrong
+         * Throw exception if anything goes wrong
          * **/
-        try {
-            WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspace.getId());
-            assertThat("GET workspace does not throw not found exception", true);
-        } catch (ApiException apiEx) {
-            logger.debug("Caught exception getting workspace ", apiEx);
-            assertThat("GET workspace throws not found exception", true);
-        }
-
+        WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspace.getId());
         int httpCode = workspaceApi.getApiClient().getStatusCode();
         logger.info("GET workspace HTTP code: {}", httpCode);
         assertThat(httpCode, equalTo(200));

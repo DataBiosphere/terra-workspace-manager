@@ -19,14 +19,15 @@ public class WorkspaceManagerServiceUtils {
 
     /**
      * Build the Workspace Manager Service API client object for the given server specification.
+     * It is setting the access token for the Test Runner SA specified in the given server specification.
+     *
+     * A Test Runner SA is a GCP SA with appropriate permissions / scopes to run all the client tests within this repo.
+     * For example, to run resiliency tests against K8S infrastructure, you'll need a SA powerful enough to do things like list, read, and update.
      *
      * @param server the server we are testing against
      * @return the API client object
      */
-    public static ApiClient getClient(ServerSpecification server) throws IOException {
-        if (Strings.isNullOrEmpty(server.workspaceManagerUri)) {
-            throw new IllegalArgumentException("Workspace Manager Service URI cannot be empty");
-        }
+    public static ApiClient getClientForTestRunnerSA(ServerSpecification server) throws IOException {
         if (server.testRunnerServiceAccount == null) {
             throw new IllegalArgumentException("Workspace Manager Service client service account is required");
         }
@@ -40,19 +41,12 @@ public class WorkspaceManagerServiceUtils {
                 "Generated access token for workspace manager service client SA: {}",
                 server.testRunnerServiceAccount.name);
 
-        // build the client object
-        ApiClient apiClient = new ApiClient();
-        apiClient.setBasePath(server.workspaceManagerUri);
-        apiClient.setAccessToken(accessToken.getTokenValue());
-
-        return apiClient;
+        return buildClient(accessToken, server);
     }
 
     /**
-     * Build the Workspace Manager API client object for the given test user and server specifications. This
-     * class maintains a cache of API client objects, and will return the cached object if it already
-     * exists. The token is always refreshed, regardless of whether the API client object was found in
-     * the cache or not.
+     * Build the Workspace Manager API client object for the given test user and server specifications.
+     * The test user's token is always refreshed
      *
      * @param testUser the test user whose credentials are supplied to the API client object
      * @param server the server we are testing against
@@ -60,32 +54,48 @@ public class WorkspaceManagerServiceUtils {
      */
     public static ApiClient getClientForTestUser(
             TestUserSpecification testUser, ServerSpecification server) throws IOException {
-        if (server.workspaceManagerUri == null || server.workspaceManagerUri.isEmpty()) {
-            throw new IllegalArgumentException("Workspace Manager URI cannot be empty");
-        }
+        AccessToken accessToken = null;
 
         // if no test user is specified, then return a client object without an access token set
         // this is useful if the caller wants to make ONLY unauthenticated calls
-        if (testUser == null) {
-            ApiClient apiClient = new ApiClient();
-            apiClient.setBasePath(server.workspaceManagerUri);
+        if (testUser != null) {
+            logger.debug(
+                    "Fetching credentials and building Workspace Manager ApiClient object for test user: {}",
+                    testUser.name);
+
+            // refresh the user token
+            GoogleCredentials userCredential =
+                    AuthenticationUtils.getDelegatedUserCredential(
+                            testUser, AuthenticationUtils.userLoginScopes);
+            accessToken = AuthenticationUtils.getAccessToken(userCredential);
         }
 
-        // refresh the user token
-        GoogleCredentials userCredential =
-                AuthenticationUtils.getDelegatedUserCredential(
-                        testUser, AuthenticationUtils.userLoginScopes);
-        AccessToken userAccessToken = AuthenticationUtils.getAccessToken(userCredential);
+        return buildClient(accessToken, server);
+    }
 
-        // TODO: have ApiClients share an HTTP client, or one per each is ok?
-        // no cached ApiClient found, so build a new one here and add it to the cache before returning
-        logger.debug(
-                "Fetching credentials and building Workspace Manager ApiClient object for test user: {}",
-                testUser.name);
+    /**
+     * Build the Workspace Manager API client object for the server specifications.
+     * No access token is needed for this API client.
+     *
+     * @param server the server we are testing against
+     * @return the API client object for this user
+     */
+    public static ApiClient getClientWithoutAccessToken(ServerSpecification server) throws IOException {
+        return buildClient(null, server);
+    }
+
+    private static ApiClient buildClient(AccessToken accessToken, ServerSpecification server) throws IOException {
+        if (Strings.isNullOrEmpty(server.workspaceManagerUri)) {
+            throw new IllegalArgumentException("Workspace Manager Service URI cannot be empty");
+        }
+
+        // build the client object
         ApiClient apiClient = new ApiClient();
         apiClient.setBasePath(server.workspaceManagerUri);
 
-        apiClient.setAccessToken(userAccessToken.getTokenValue());
+        if (accessToken != null) {
+            apiClient.setAccessToken(accessToken.getTokenValue());
+        }
 
         return apiClient;
     }
