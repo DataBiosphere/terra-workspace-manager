@@ -10,7 +10,7 @@ The workspace manager tests require the appropriate service account keys to be a
 Run the following command from the workspace-manager-clienttests directory to retrieve the required keys.
 Note: `render-config.sh` assumes a valid `.vault-token` in your `$HOME` directory. Please refer to the following document on how to generate a `vault-token`
  
- https://github.com/broadinstitute/dsde-toolbox#authenticating-to-vault https://github.com/broadinstitute/dsde-toolbox#authenticating-to-vault
+ https://github.com/broadinstitute/dsde-toolbox#authenticating-to-vault 
 
 ```
 ./render-config.sh
