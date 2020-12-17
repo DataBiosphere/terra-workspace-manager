@@ -62,7 +62,7 @@ public class GoogleCloudSyncStep implements Step {
               .get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class),
           CloudSyncRoleMapping.cloudSyncRoleMap.get(IamRole.OWNER),
           bindings);
-      
+
       addGroupToRoleBindings(
           flightContext
               .getWorkingMap()

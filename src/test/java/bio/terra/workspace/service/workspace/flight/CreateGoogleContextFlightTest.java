@@ -2,6 +2,7 @@ package bio.terra.workspace.service.workspace.flight;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.cloudres.google.billing.CloudBillingClientCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
@@ -11,18 +12,30 @@ import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
+import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
-import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import com.google.api.services.cloudresourcemanager.model.Binding;
+import com.google.api.services.cloudresourcemanager.model.GetIamPolicyRequest;
+import com.google.api.services.cloudresourcemanager.model.Policy;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.serviceusage.v1.model.GoogleApiServiceusageV1Service;
 import com.google.api.services.serviceusage.v1.model.ListServicesResponse;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
@@ -32,23 +45,27 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
   /** How long to wait for a Stairway flight to complete before timing out the test. */
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(5);
 
-  @Autowired private WorkspaceDao workspaceDao;
+  @Autowired private WorkspaceService workspaceService;
   @Autowired private CloudResourceManagerCow resourceManager;
   @Autowired private ServiceUsageCow serviceUsage;
   @Autowired private CloudBillingClientCow billingClient;
   @Autowired private JobService jobService;
   @Autowired private SpendConnectedTestUtils spendUtils;
+  @Autowired private SamService samService;
+  @Autowired private UserAccessUtils userAccessUtils;
 
   @Test
   public void successCreatesProjectAndContext() throws Exception {
     UUID workspaceId = createWorkspace();
-    assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
+    AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
+    assertEquals(
+        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateGoogleContextFlight.class,
-            createInputParameters(workspaceId, spendUtils.defaultBillingAccountId()),
+            createInputParameters(workspaceId, spendUtils.defaultBillingAccountId(), userReq),
             STAIRWAY_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
@@ -59,30 +76,34 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
             .get(WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID, String.class);
     assertEquals(
         WorkspaceCloudContext.createGoogleContext(projectId),
-        workspaceDao.getCloudContext(workspaceId));
+        workspaceService.getCloudContext(workspaceId, userReq));
     Project project = resourceManager.projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());
     assertServiceApisEnabled(project, CreateProjectStep.ENABLED_SERVICES);
     assertEquals(
         "billingAccounts/" + spendUtils.defaultBillingAccountId(),
         billingClient.getProjectBillingInfo("projects/" + projectId).getBillingAccountName());
+    assertPolicyGroupsSynced(workspaceId, project);
   }
 
   @Test
   public void errorRevertsChanges() throws Exception {
     UUID workspaceId = createWorkspace();
-    assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
+    AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
+    assertEquals(
+        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
 
     // Submit a flight class that always errors.
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             ErrorCreateGoogleContextFlight.class,
-            createInputParameters(workspaceId, spendUtils.defaultBillingAccountId()),
+            createInputParameters(workspaceId, spendUtils.defaultBillingAccountId(), userReq),
             STAIRWAY_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
 
-    assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
+    assertEquals(
+        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
     String projectId =
         flightState
             .getResultMap()
@@ -95,22 +116,23 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
   }
 
   /** Creates a workspace, returning its workspaceId. */
-  // TODO make it easier for tests to create workspaces using WorkspaceService.
   private UUID createWorkspace() {
-    Workspace workspace =
-        Workspace.builder()
+    WorkspaceRequest request =
+        WorkspaceRequest.builder()
             .workspaceId(UUID.randomUUID())
-            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .jobId(UUID.randomUUID().toString())
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    workspaceDao.createWorkspace(workspace);
-    return workspace.workspaceId();
+    return workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
   }
 
   /** Create the FlightMap input parameters required for the {@link CreateGoogleContextFlight}. */
-  private static FlightMap createInputParameters(UUID workspaceId, String billingAccountId) {
+  private static FlightMap createInputParameters(
+      UUID workspaceId, String billingAccountId, AuthenticatedUserRequest userReq) {
     FlightMap inputs = new FlightMap();
     inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
     inputs.put(WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, billingAccountId);
+    inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userReq);
     return inputs;
   }
 
@@ -133,6 +155,41 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
             .map(GoogleApiServiceusageV1Service::getName)
             .collect(Collectors.toList()),
         Matchers.hasItems(serviceNames.toArray()));
+  }
+
+  private void assertPolicyGroupsSynced(UUID workspaceId, Project project) throws Exception {
+    Map<IamRole, String> roleToSamGroup =
+        Arrays.stream(IamRole.values())
+            .collect(
+                Collectors.toMap(
+                    Function.identity(),
+                    role ->
+                        "group:"
+                            + samService.syncWorkspacePolicy(
+                                workspaceId, role, userAccessUtils.defaultUserAuthRequest())));
+    Policy currentPolicy =
+        resourceManager
+            .projects()
+            .getIamPolicy(project.getProjectId(), new GetIamPolicyRequest())
+            .execute();
+    for (IamRole role : IamRole.values()) {
+      assertRoleBindingsInPolicy(role, roleToSamGroup.get(role), currentPolicy);
+    }
+  }
+
+  private void assertRoleBindingsInPolicy(IamRole role, String groupEmail, Policy gcpPolicy) {
+    List<String> expectedGcpRoleList = CloudSyncRoleMapping.cloudSyncRoleMap.get(role);
+    List<Binding> actualGcpBindingList = gcpPolicy.getBindings();
+    List<String> actualGcpRoleList =
+        actualGcpBindingList.stream().map(Binding::getRole).collect(Collectors.toList());
+    for (String gcpRole : expectedGcpRoleList) {
+      assertTrue(actualGcpRoleList.contains(gcpRole));
+      assertTrue(
+          actualGcpBindingList
+              .get(actualGcpRoleList.indexOf(gcpRole))
+              .getMembers()
+              .contains(groupEmail));
+    }
   }
 
   /**

@@ -1,10 +1,12 @@
 package bio.terra.workspace.connected;
 
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.ImmutableList;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -67,5 +69,19 @@ public class UserAccessUtils {
   /** Expose the second test user email. */
   public String secondUserEmail() {
     return secondUserEmail;
+  }
+
+  /** Wraps default user's email and token into an AuthenticatedUserRequest. */
+  public AuthenticatedUserRequest defaultUserAuthRequest() {
+    return new AuthenticatedUserRequest()
+        .email(defaultUserEmail())
+        .token(Optional.of(defaultUserAccessToken().getTokenValue()));
+  }
+
+  /** Wraps second user's email and token into an AuthenticatedUserRequest. */
+  public AuthenticatedUserRequest secondUserAuthRequest() {
+    return new AuthenticatedUserRequest()
+        .email(secondUserEmail())
+        .token(Optional.of(secondUserAccessToken().getTokenValue()));
   }
 }
