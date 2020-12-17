@@ -93,21 +93,22 @@ public class GoogleCloudSyncStep implements Step {
 
   /** Adds a Sam group to a list of GCP bindings, creating new bindings if they don't exist. */
   private void addGroupToRoleBindings(
-      String samGroupEmail, List<String> gcpRoles, List<Binding> existingBindings) {
+      String samGroupEmail, List<String> rolesToAdd, List<Binding> existingBindings) {
     // GCP IAM always prefixes groups with the literal "group:"
     String gcpGroupEmail = "group:" + samGroupEmail;
-    List<String> gcpBindingRoleList =
+    // This list must remain in the same order as existingBindings. This is important because we
+    // search this list, then use the resulting index in existingBindings.
+    List<String> existingGcpRoles =
         existingBindings.stream().map(Binding::getRole).collect(Collectors.toList());
-    for (String gcpRole : gcpRoles) {
+
+    for (String gcpRole : rolesToAdd) {
       // Check if a binding for this GCP role already exists. If it does, add the Sam group.
       // If it doesn't, create a new binding for the Sam group.
-      int bindingIndex = gcpBindingRoleList.indexOf(gcpRole);
+      int bindingIndex = existingGcpRoles.indexOf(gcpRole);
       if (bindingIndex != -1) {
         Binding gcpRoleBinding = existingBindings.get(bindingIndex);
         if (!gcpRoleBinding.getMembers().contains(gcpGroupEmail)) {
-          List<String> modifiedMemberList = gcpRoleBinding.getMembers();
-          modifiedMemberList.add(gcpGroupEmail);
-          gcpRoleBinding.setMembers(modifiedMemberList);
+          gcpRoleBinding.getMembers().add(gcpGroupEmail);
         }
       } else {
         Binding newBinding =
@@ -166,15 +167,17 @@ public class GoogleCloudSyncStep implements Step {
 
   /** Removes a Sam group from a list of GCP bindings if present. */
   private void removeGroupFromRoleBindings(
-      String samGroupEmail, List<String> gcpRoles, List<Binding> existingBindings) {
+      String samGroupEmail, List<String> rolesToRemove, List<Binding> existingBindings) {
     // GCP IAM always prefixes groups with the literal "group:"
     String gcpGroupEmail = "group:" + samGroupEmail;
-    List<String> gcpBindingRoleList =
+    // This list must remain in the same order as existingBindings. This is important because we
+    // search this list, then use the resulting index in existingBindings.
+    List<String> existingGcpRoles =
         existingBindings.stream().map(Binding::getRole).collect(Collectors.toList());
-    for (String gcpRole : gcpRoles) {
-      int bindingIndex = gcpBindingRoleList.indexOf(gcpRole);
+    for (String gcpRole : rolesToRemove) {
+      int bindingIndex = existingGcpRoles.indexOf(gcpRole);
       if (bindingIndex != -1) {
-        existingBindings.get(bindingIndex).getMembers().remove(samGroupEmail);
+        existingBindings.get(bindingIndex).getMembers().remove(gcpGroupEmail);
       }
     }
   }
