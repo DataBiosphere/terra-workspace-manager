@@ -38,7 +38,7 @@ The version of the Workspace Manager client JAR file is specified in the build.g
 fetched from the Broad Institute Maven repository. You can override this to use a local version of the Workspace Manager client
 JAR file by specifying a Gradle project property, either with a command line argument
 
-`./gradlew -Pworkspacemanagerclientjar=~/terra-workspace-manager/workspace-manager-client/build/libs/workspace-manager-client-0.5.0-SNAPSHOT.jar run --args="configs/BasicUnauthenticated.json`
+`./gradlew -Pworkspacemanagerclientjar=~/terra-workspace-manager/workspace-manager-client/build/libs/workspace-manager-client-0.5.0-SNAPSHOT.jar runTest --args="configs/BasicUnauthenticated.json"
 
 or an environment variable.
 
