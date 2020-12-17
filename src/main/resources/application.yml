@@ -40,8 +40,14 @@ spring:
           must-revalidate: true
         use-last-modified: false
       static-locations: classpath:/api/
+  profiles:
+    active: human-readable-logging
 
 workspace:
+  buffer:
+    pool-id: workspace_manager_v1
+    instance-url: https://buffer.dsde-dev.broadinstitute.org
+
   datarepo.instances:
     terra: ${env.urls.terra-datarepo}
 

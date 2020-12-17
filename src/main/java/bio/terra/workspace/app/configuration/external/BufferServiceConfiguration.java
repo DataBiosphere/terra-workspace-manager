@@ -1,0 +1,55 @@
+package bio.terra.workspace.app.configuration.external;
+
+import com.google.auth.oauth2.AccessToken;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.common.collect.ImmutableList;
+import java.io.FileInputStream;
+import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+@EnableConfigurationProperties
+@ConfigurationProperties(prefix = "workspace.buffer")
+public class BufferServiceConfiguration {
+
+  private String instanceUrl;
+  private String poolId;
+  private String bufferClientCredentialFilePath;
+
+  private static final ImmutableList<String> BUFFER_SCOPES =
+      ImmutableList.of("openid", "email", "profile");
+
+  public String getInstanceUrl() {
+    return instanceUrl;
+  }
+
+  public void setInstanceUrl(String instanceUrl) {
+    this.instanceUrl = instanceUrl;
+  }
+
+  public String getPoolId() {
+    return poolId;
+  }
+
+  public void setPoolId(String poolId) {
+    this.poolId = poolId;
+  }
+
+  public void setBufferClientCredentialFilePath(String bufferClientCredentialFilePath) {
+    this.bufferClientCredentialFilePath = bufferClientCredentialFilePath;
+  }
+
+  public String getAccessToken() throws IOException {
+    FileInputStream f = new FileInputStream(bufferClientCredentialFilePath);
+    GoogleCredentials credentials =
+        ServiceAccountCredentials.fromStream(new FileInputStream(bufferClientCredentialFilePath))
+            .createScoped(BUFFER_SCOPES);
+    AccessToken token = credentials.refreshAccessToken();
+    return token.getTokenValue();
+  }
+}
