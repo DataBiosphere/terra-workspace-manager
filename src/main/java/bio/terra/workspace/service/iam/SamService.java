@@ -190,8 +190,8 @@ public class SamService {
     UsersApi usersApi = samUsersApi(authToken);
     try {
       return usersApi.getUserStatusInfo().getUserEmail();
-    } catch (ApiException e) {
-      throw new SamApiException("Error fetching email from Sam: " + e);
+    } catch (ApiException samException) {
+      throw new SamApiException(samException);
     }
   }
 }
