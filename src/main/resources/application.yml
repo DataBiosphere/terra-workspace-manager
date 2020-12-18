@@ -40,8 +40,6 @@ spring:
           must-revalidate: true
         use-last-modified: false
       static-locations: classpath:/api/
-  profiles:
-    active: human-readable-logging
 
 workspace:
   buffer:

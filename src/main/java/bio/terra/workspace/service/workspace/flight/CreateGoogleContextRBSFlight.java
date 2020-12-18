@@ -11,7 +11,6 @@ import org.springframework.context.ApplicationContext;
 public class CreateGoogleContextRBSFlight extends Flight {
   public CreateGoogleContextRBSFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
-
     ApplicationContext appContext = (ApplicationContext) applicationContext;
     BufferService bufferService = appContext.getBean(BufferService.class);
     RetryRule retryRule =
@@ -19,7 +18,6 @@ public class CreateGoogleContextRBSFlight extends Flight {
             /* initialIntervalSeconds= */ 1,
             /* maxIntervalSeconds= */ 8,
             /* maxOperationTimeSeconds= */ 16);
-
-    addStep(new PullProjectFromPoolStep(bufferService));
+    addStep(new PullProjectFromPoolStep(bufferService), retryRule);
   }
 }

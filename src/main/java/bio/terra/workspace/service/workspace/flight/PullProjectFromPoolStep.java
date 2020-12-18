@@ -8,17 +8,12 @@ import bio.terra.buffer.model.ResourceInfo;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.service.buffer.BufferService;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+// NOTE: Do not use. This is just a test step to exercise RBS connection.
 public class PullProjectFromPoolStep implements Step {
-
   private final BufferService bufferService;
-
-  private final Logger logger = LoggerFactory.getLogger(PullProjectFromPoolStep.class);
 
   public PullProjectFromPoolStep(BufferService bufferService) {
     this.bufferService = bufferService;
@@ -27,12 +22,8 @@ public class PullProjectFromPoolStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext) {
     PoolInfo poolInfo = bufferService.getPoolInfo();
-    if (poolInfo == null) {
-      // TODO - this should be a different step.
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
-    }
 
-    // TODO - Do we want to re-use resuorce id?
+    // TODO(tovanadler): Move to it's own stairway step so that we can undo.
     String resourceId = UUID.randomUUID().toString();
     HandoutRequestBody body = new HandoutRequestBody();
     body.setHandoutRequestId(resourceId);
@@ -46,7 +37,7 @@ public class PullProjectFromPoolStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    // TODO - Figure out what needs to be cleaned up/
+    // TODO - Figure out what needs to be cleaned up.
     return StepResult.getStepResultSuccess();
   }
 }
