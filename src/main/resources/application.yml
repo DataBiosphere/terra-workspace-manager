@@ -31,7 +31,6 @@ server:
   port: 8080
 
 spring:
-  profiles.active: human-readable-logging
   application.name: workspace
   web:
     resources:

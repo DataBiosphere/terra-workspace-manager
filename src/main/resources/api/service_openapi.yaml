@@ -616,11 +616,6 @@ components:
             called idempotently.
           type: string
 
-    IamRole:
-      description: Enum containing all valid IAM roles on a Workspace
-      type: string
-      enum: ['READER', 'WRITER', 'OWNER']
-
   responses:
     CreatedWorkspaceResponse:
       description: Response to createWorkspace calls
