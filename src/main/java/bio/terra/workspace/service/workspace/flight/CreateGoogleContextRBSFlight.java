@@ -13,10 +13,11 @@ public class CreateGoogleContextRBSFlight extends Flight {
     super(inputParameters, applicationContext);
     ApplicationContext appContext = (ApplicationContext) applicationContext;
     BufferService bufferService = appContext.getBean(BufferService.class);
+    // TODO(tovanadler): Update the retry rules once we properly design the flight.
     RetryRule retryRule =
         new RetryRuleExponentialBackoff(
             /* initialIntervalSeconds= */ 1,
-            /* maxIntervalSeconds= */ 8,
+            /* maxIntervalSeconds= */ 5*60,
             /* maxOperationTimeSeconds= */ 16);
     addStep(new PullProjectFromPoolStep(bufferService), retryRule);
   }
