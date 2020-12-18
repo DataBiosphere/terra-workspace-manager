@@ -185,6 +185,7 @@ public class SamService {
     return policyMap;
   }
 
+  /** Fetch the email associated with an authToken from Sam. */
   private String getEmailFromToken(String authToken) {
     UsersApi usersApi = samUsersApi(authToken);
     try {
