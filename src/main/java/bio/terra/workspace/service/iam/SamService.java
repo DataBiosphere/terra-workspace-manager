@@ -11,7 +11,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -21,6 +21,7 @@ import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
+import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembership;
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequest;
 import org.broadinstitute.dsde.workbench.client.sam.model.SubsystemStatus;
@@ -57,6 +58,10 @@ public class SamService {
     return new ResourcesApi(getApiClient(accessToken));
   }
 
+  private UsersApi samUsersApi(String accessToken) {
+    return new UsersApi(getApiClient(accessToken));
+  }
+
   /**
    * Wrapper around the Sam client to create a workspace resource in Sam.
    *
@@ -66,10 +71,16 @@ public class SamService {
    */
   public void createWorkspaceWithDefaults(AuthenticatedUserRequest userReq, UUID id) {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+    // Sam will throw an error if no owner is specified, so the caller's email is required. It can
+    // be looked up using the auth token if that's all the caller provides.
+    String callerEmail =
+        userReq.getEmail() == null
+            ? getEmailFromToken(userReq.getRequiredToken())
+            : userReq.getEmail();
     CreateResourceRequest workspaceRequest =
         new CreateResourceRequest()
             .resourceId(id.toString())
-            .policies(defaultWorkspacePolicies(userReq.getEmail()));
+            .policies(defaultWorkspacePolicies(callerEmail));
     try {
       resourceApi.createResource(SamUtils.SAM_WORKSPACE_RESOURCE, workspaceRequest);
       logger.info(String.format("Created Sam resource for workspace %s", id.toString()));
@@ -92,7 +103,7 @@ public class SamService {
       String accessToken, String iamResourceType, String resourceId, String action) {
     ResourcesApi resourceApi = samResourcesApi(accessToken);
     try {
-      return resourceApi.resourceAction(iamResourceType, resourceId, action);
+      return resourceApi.resourcePermission(iamResourceType, resourceId, action);
     } catch (ApiException samException) {
       throw new SamApiException(samException);
     }
@@ -158,14 +169,28 @@ public class SamService {
    * provided at creation time. Although policy membership can be modified later, policy creation
    * must happen at the same time as workspace resource creation.
    */
-  private List<AccessPolicyMembership> defaultWorkspacePolicies(String ownerEmail) {
-    List<AccessPolicyMembership> policyList = new ArrayList<>();
-    policyList.add(
+  private Map<String, AccessPolicyMembership> defaultWorkspacePolicies(String ownerEmail) {
+    Map<String, AccessPolicyMembership> policyMap = new HashMap<>();
+    policyMap.put(
+        IamRole.OWNER.toSamRole(),
         new AccessPolicyMembership()
             .addRolesItem(IamRole.OWNER.toSamRole())
             .addMemberEmailsItem(ownerEmail));
-    policyList.add(new AccessPolicyMembership().addRolesItem(IamRole.WRITER.toSamRole()));
-    policyList.add(new AccessPolicyMembership().addRolesItem(IamRole.READER.toSamRole()));
-    return policyList;
+    policyMap.put(
+        IamRole.WRITER.toSamRole(),
+        new AccessPolicyMembership().addRolesItem(IamRole.WRITER.toSamRole()));
+    policyMap.put(
+        IamRole.READER.toSamRole(),
+        new AccessPolicyMembership().addRolesItem(IamRole.READER.toSamRole()));
+    return policyMap;
+  }
+
+  private String getEmailFromToken(String authToken) {
+    UsersApi usersApi = samUsersApi(authToken);
+    try {
+      return usersApi.getUserStatusInfo().getUserEmail();
+    } catch (ApiException e) {
+      throw new SamApiException("Error fetching email from Sam: " + e);
+    }
   }
 }

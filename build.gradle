@@ -71,7 +71,7 @@ dependencies {
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-billing', version: '0.0.4-SNAPSHOT'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager', version: '0.0.8-SNAPSHOT'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-serviceusage', version: '0.0.4-SNAPSHOT'
-	implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.12", version: "0.1-3a0df80"
+	implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.12", version: "0.1-61135c7"
 
 	// Versioned direct deps
 	implementation group: "com.google.auto.value", name: "auto-value-annotations", version: "1.7.4"
