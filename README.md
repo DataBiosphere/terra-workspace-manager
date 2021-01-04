@@ -28,6 +28,12 @@ In general, we use type-safe configuration parameters as shown here:
 That allows proper typing of parameters read from property files or environment variables. Parameters are
 then accessed with normal accessor methods. You should never need to use an `@Value` annotation.
 
+Be aware that environment variables will override values in our YAML configuration.
+This should not be used for configuration as it makes the source of values harder to track,
+but it may be useful for debugging unexpected configurations. See Spring Boot's 
+[Externalized Configuration documentation](https://docs.spring.io/spring-boot/docs/2.4.0/reference/html/spring-boot-features.html#boot-features-external-config)
+for the exact priority order of configurations.
+
 ### Initialization
 When the applications starts, Spring wires up the components based on the profiles in place.
 Setting different profiles allows different components to be included. This technique is used
