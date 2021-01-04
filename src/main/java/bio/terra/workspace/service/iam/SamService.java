@@ -173,6 +173,8 @@ public class SamService {
    *
    * <p>This operation is only available to MC_TERRA stage workspaces, as Rawls manages permissions
    * directly on other workspaces.
+   * Trying to remove a role that a user does not have will succeed, though Sam will error if the
+   * email is not a registered user.
    */
   public void removeWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
