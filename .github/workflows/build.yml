@@ -65,7 +65,7 @@ jobs:
         echo ::set-output name=gcr-key::$GCR_KEY
         echo ::add-mask::$GCR_KEY
     - name: Auth to GCR
-      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      uses: google-github-actions/setup-gcloud@master
       with:
         version: '270.0.0'
         service_account_email: ${{ steps.vault-secret-step.outputs.gcr-email }}
@@ -78,16 +78,39 @@ jobs:
         java-version: 11
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-    - name: Build and push GCR image using Jib (Official)
-      if: github.event_name == 'push'
-      run: "./gradlew jib --image=gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:${{ steps.tag.outputs.tag }}"
-    - name: Get short SHA
-      id: slug
-      if: github.event_name == 'pull_request'
-      run: echo ::set-output name=sha7::$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)
-    - name: Build and push GCR image using Jib (Pull Request)
-      if: github.event_name == 'pull_request'
-      run: "./gradlew jib --image=gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:pr${{ github.event.number }}-${{ steps.slug.outputs.sha7 }}"
+    - name: Construct docker image name and tag
+      id: image-name
+      run: |
+        DOCKER_TAG=""
+        if [[ ${{github.event_name == 'pull_request' }} ]]; then
+          DOCKER_TAG=pr${{ github.event.number }}-$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)
+        elif [[ ${{github.event_name == 'push' }} ]]; then
+          DOCKER_TAG=${{ steps.tag.outputs.tag }}
+        fi
+        echo ::set-output name=name::gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:${DOCKER_TAG}
+    - name: Build image locally with jib
+      run: "./gradlew jibDockerBuild --image=${{ steps.image-name.outputs.name }}"
+    - name: Run Trivy vulnerability scanner
+      id: scan-image
+      uses: aquasecurity/trivy-action@master
+      continue-on-error: true
+      with:
+        image-ref: ${{ steps.image-name.outputs.name }}
+        format: 'template'
+        template: '@/contrib/sarif.tpl'
+        output: 'trivy-results.sarif'
+        ignore-unfixed: true
+        severity: 'CRITICAL'
+        exit-code: '1'
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v1
+      with:
+        sarif_file: 'trivy-results.sarif'
+    - name: Abort if vulnerabilities found
+      if: ${{ steps.scan-image.outcome != 'success' }}
+      run: echo "::set-failed ::Vulnerability scan failed!"
+    - name: Push GCR image
+      run: "docker push ${{ steps.image-name.outputs.name }}"
     - name: Deploy to Terra Dev environment
       if: github.event_name == 'push'
       uses: broadinstitute/repository-dispatch@master

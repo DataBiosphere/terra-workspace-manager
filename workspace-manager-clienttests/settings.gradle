@@ -1,0 +1,18 @@
+pluginManagement {
+    repositories {
+        resolutionStrategy {
+            eachPlugin {
+                if (requested.id.namespace == 'bio.terra') {
+                    if (requested.id.id == 'bio.terra.test-runner-plugin' || requested.id.id == 'bio.terra.test-runner-echo-plugin') {
+                        useModule("bio.terra:terra-test-runner:" + requested.version)
+                    }
+                }
+            }
+        }
+        maven {
+            url "https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/"
+        }
+        gradlePluginPortal()
+    }
+}
+rootProject.name = 'workspace-manager-clienttests'
