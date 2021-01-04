@@ -62,26 +62,26 @@ public class UserAccessUtils {
   }
 
   /** Expose the default test user email. */
-  public String defaultUserEmail() {
+  public String getDefaultUserEmail() {
     return defaultUserEmail;
   }
 
   /** Expose the second test user email. */
-  public String secondUserEmail() {
+  public String getSecondUserEmail() {
     return secondUserEmail;
   }
 
   /** Provides an AuthenticatedUserRequest using the default user's email and access token. */
   public AuthenticatedUserRequest defaultUserAuthRequest() {
     return new AuthenticatedUserRequest()
-        .email(defaultUserEmail())
+        .email(getDefaultUserEmail())
         .token(Optional.of(defaultUserAccessToken().getTokenValue()));
   }
 
   /** Provides an AuthenticatedUserRequest using the second user's email and access token. */
   public AuthenticatedUserRequest secondUserAuthRequest() {
     return new AuthenticatedUserRequest()
-        .email(secondUserEmail())
+        .email(getSecondUserEmail())
         .token(Optional.of(secondUserAccessToken().getTokenValue()));
   }
 }
