@@ -6,11 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import com.google.common.collect.ImmutableList;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -20,18 +18,13 @@ public class SpendProfileServiceTest extends BaseConnectedTest {
   @Autowired SpendConnectedTestUtils spendUtils;
   @Autowired UserAccessUtils userAccessUtils;
 
-  private AuthenticatedUserRequest defaultUserRequest() {
-    return new AuthenticatedUserRequest()
-        .token(Optional.of(userAccessUtils.defaultUserAccessToken().getTokenValue()));
-  }
-
   @Test
   public void authorizeLinkingSuccess() {
     SpendProfileId id = spendUtils.defaultSpendId();
     SpendProfile profile = SpendProfile.builder().id(id).build();
     SpendProfileService service = new SpendProfileService(samService, ImmutableList.of(profile));
 
-    assertEquals(profile, service.authorizeLinking(id, defaultUserRequest()));
+    assertEquals(profile, service.authorizeLinking(id, userAccessUtils.defaultUserAuthRequest()));
   }
 
   @Test
@@ -42,11 +35,7 @@ public class SpendProfileServiceTest extends BaseConnectedTest {
 
     assertThrows(
         SpendUnauthorizedException.class,
-        () ->
-            service.authorizeLinking(
-                id,
-                new AuthenticatedUserRequest()
-                    .token(Optional.of(userAccessUtils.secondUserAccessToken().getTokenValue()))));
+        () -> service.authorizeLinking(id, userAccessUtils.secondUserAuthRequest()));
   }
 
   @Test
@@ -54,7 +43,9 @@ public class SpendProfileServiceTest extends BaseConnectedTest {
     SpendProfileService service = new SpendProfileService(samService, ImmutableList.of());
     assertThrows(
         SpendUnauthorizedException.class,
-        () -> service.authorizeLinking(SpendProfileId.create("bar"), defaultUserRequest()));
+        () ->
+            service.authorizeLinking(
+                SpendProfileId.create("bar"), userAccessUtils.defaultUserAuthRequest()));
   }
 
   @Test
@@ -65,6 +56,7 @@ public class SpendProfileServiceTest extends BaseConnectedTest {
             .id(spendUtils.defaultSpendId())
             .billingAccountId(spendUtils.defaultBillingAccountId())
             .build(),
-        service.authorizeLinking(spendUtils.defaultSpendId(), defaultUserRequest()));
+        service.authorizeLinking(
+            spendUtils.defaultSpendId(), userAccessUtils.defaultUserAuthRequest()));
   }
 }
