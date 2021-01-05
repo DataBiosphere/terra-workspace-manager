@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.iam.model;
 
 import com.google.common.collect.BiMap;
-import com.google.common.collect.EnumBiMap;
 import com.google.common.collect.EnumHashBiMap;
 
 /** Internal representation of IAM roles. */
