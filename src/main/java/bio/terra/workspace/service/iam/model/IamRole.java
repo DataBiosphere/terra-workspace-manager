@@ -28,7 +28,7 @@ public enum IamRole {
 
   public static IamRole fromSam(String samRole) {
     Optional<IamRole> result =
-        Arrays.stream(IamRole.values()).filter(x -> x.apiRole.equals(samRole)).findFirst();
+        Arrays.stream(IamRole.values()).filter(x -> x.samRole.equals(samRole)).findFirst();
     return result.orElseThrow(
         () -> new RuntimeException("No IamRole enum found corresponding to Sam role " + samRole));
   }
