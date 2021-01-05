@@ -22,7 +22,7 @@ public class DeleteGoogleContextFlight extends Flight {
         new RetryRuleExponentialBackoff(
             /* initialIntervalSeconds= */ 1,
             /* maxIntervalSeconds= */ 8,
-            /* maxOperationTimeSeconds= */ 16);
+            /* maxOperationTimeSeconds= */ 5 * 60);
     addStep(new DeleteProjectStep(resourceManager, workspaceDao), retryRule);
     addStep(new DeleteGoogleContextStep(workspaceDao, transactionTemplate), retryRule);
   }
