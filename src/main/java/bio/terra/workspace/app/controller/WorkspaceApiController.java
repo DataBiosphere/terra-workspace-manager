@@ -12,6 +12,7 @@ import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
@@ -41,6 +42,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   private DataReferenceService dataReferenceService;
   private DataReferenceValidationUtils dataReferenceValidation;
   private JobService jobService;
+  private SamService samService;
   private AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
 
@@ -50,12 +52,14 @@ public class WorkspaceApiController implements WorkspaceApi {
       DataReferenceService dataReferenceService,
       DataReferenceValidationUtils dataReferenceValidation,
       JobService jobService,
+      SamService samService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request) {
     this.workspaceService = workspaceService;
     this.dataReferenceService = dataReferenceService;
     this.dataReferenceValidation = dataReferenceValidation;
     this.jobService = jobService;
+    this.samService = samService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
   }
@@ -128,7 +132,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     workspaceService.deleteWorkspace(id, userReq);
     logger.info(String.format("Deleted workspace %s for %s", id.toString(), userReq.getEmail()));
 
-    return new ResponseEntity<>(HttpStatus.valueOf(204));
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
@@ -249,7 +253,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<Void> deleteJob(@PathVariable("id") String id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     jobService.releaseJob(id, userReq);
-    return new ResponseEntity<>(HttpStatus.valueOf(204));
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
@@ -267,6 +271,48 @@ public class WorkspaceApiController implements WorkspaceApi {
     return new ResponseEntity<>(jobResultHolder.getResult(), jobResultHolder.getStatusCode());
   }
   */
+
+  @Override
+  public ResponseEntity<Void> grantRole(
+      @PathVariable("id") UUID id,
+      @PathVariable("role") IamRole role,
+      @PathVariable("memberEmail") String memberEmail) {
+    ControllerValidationUtils.validateEmail(memberEmail);
+    samService.grantWorkspaceRole(
+        id,
+        getAuthenticatedInfo(),
+        bio.terra.workspace.service.iam.model.IamRole.fromApiModel(role),
+        memberEmail);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
+  public ResponseEntity<Void> removeRole(
+      @PathVariable("id") UUID id,
+      @PathVariable("role") IamRole role,
+      @PathVariable("memberEmail") String memberEmail) {
+    ControllerValidationUtils.validateEmail(memberEmail);
+    samService.removeWorkspaceRole(
+        id,
+        getAuthenticatedInfo(),
+        bio.terra.workspace.service.iam.model.IamRole.fromApiModel(role),
+        memberEmail);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
+  public ResponseEntity<RoleBindingList> getRoles(@PathVariable("id") UUID id) {
+    List<bio.terra.workspace.service.iam.model.RoleBinding> bindingList =
+        samService.listRoleBindings(id, getAuthenticatedInfo());
+    RoleBindingList responseList = new RoleBindingList();
+    for (bio.terra.workspace.service.iam.model.RoleBinding roleBinding : bindingList) {
+      responseList.add(
+          new bio.terra.workspace.generated.model.RoleBinding()
+              .role(roleBinding.role().toApiModel())
+              .members(roleBinding.users()));
+    }
+    return new ResponseEntity<>(responseList, HttpStatus.OK);
+  }
 
   @Override
   public ResponseEntity<JobModel> createGoogleContext(

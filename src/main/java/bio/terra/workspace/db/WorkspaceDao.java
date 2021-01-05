@@ -4,6 +4,7 @@ import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
+import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -121,6 +122,19 @@ public class WorkspaceDao {
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceId.toString());
     return WorkspaceStage.valueOf(jdbcTemplate.queryForObject(sql, params, String.class));
+  }
+
+  /**
+   * Check that the given workspace has stage MC_WORKSPACE, and throw an exception otherwise.
+   *
+   * @param workspaceId ID of the workspace to check
+   * @param action The action being performed, used in the exception message if needed
+   */
+  public void assertMcWorkspace(UUID workspaceId, String action) {
+    WorkspaceStage stage = getWorkspaceStage(workspaceId);
+    if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
+      throw new StageDisabledException(workspaceId, stage, action);
+    }
   }
 
   /** Retrieves the cloud context of the workspace. */

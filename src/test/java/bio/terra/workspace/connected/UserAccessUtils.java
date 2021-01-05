@@ -61,10 +61,12 @@ public class UserAccessUtils {
     return generateAccessToken(secondUserEmail);
   }
 
+  /** Expose the default test user email. */
   public String getDefaultUserEmail() {
     return defaultUserEmail;
   }
 
+  /** Expose the second test user email. */
   public String getSecondUserEmail() {
     return secondUserEmail;
   }

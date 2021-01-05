@@ -7,7 +7,6 @@ import static org.mockito.Mockito.*;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.*;
-import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
@@ -16,6 +15,7 @@ import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -63,9 +63,9 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     Mockito.when(
             mockSamService.isAuthorized(
                 Mockito.any(),
-                Mockito.eq(SamUtils.SPEND_PROFILE_RESOURCE),
+                Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
                 Mockito.any(),
-                Mockito.eq(SamUtils.SPEND_PROFILE_LINK_ACTION)))
+                Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
         .thenReturn(true);
   }
 
@@ -304,9 +304,9 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     Mockito.when(
             mockSamService.isAuthorized(
                 Mockito.eq(USER_REQUEST.getRequiredToken()),
-                Mockito.eq(SamUtils.SPEND_PROFILE_RESOURCE),
+                Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
                 Mockito.any(),
-                Mockito.eq(SamUtils.SPEND_PROFILE_LINK_ACTION)))
+                Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
         .thenReturn(false);
     assertThrows(
         SpendUnauthorizedException.class,
