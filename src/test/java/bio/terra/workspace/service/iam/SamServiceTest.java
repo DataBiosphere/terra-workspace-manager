@@ -117,7 +117,7 @@ public class SamServiceTest extends BaseConnectedTest {
         () ->
             samService.addWorkspaceRole(
                 workspaceId,
-                defaultUserRequest(),
+                secondaryUserRequest(),
                 IamRole.READER,
                 userAccessUtils.getSecondUserEmail()));
   }
@@ -168,9 +168,14 @@ public class SamServiceTest extends BaseConnectedTest {
             .role(IamRole.READER)
             .users(Collections.singletonList(userAccessUtils.getSecondUserEmail()))
             .build();
+    RoleBinding expectedWriterBinding =
+        RoleBinding.builder().role(IamRole.WRITER).users(Collections.emptyList()).build();
     assertThat(
         policyList,
-        containsInAnyOrder(equalTo(expectedOwnerBinding), equalTo(expectedReaderBinding)));
+        containsInAnyOrder(
+            equalTo(expectedOwnerBinding),
+            equalTo(expectedWriterBinding),
+            equalTo(expectedReaderBinding)));
   }
 
   @Test

@@ -157,6 +157,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
         Matchers.hasItems(serviceNames.toArray()));
   }
 
+  /** Asserts that Sam groups are granted their appropriate IAM roles on a GCP project. */
   private void assertPolicyGroupsSynced(UUID workspaceId, Project project) throws Exception {
     Map<IamRole, String> roleToSamGroup =
         Arrays.stream(IamRole.values())
@@ -177,6 +178,13 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
     }
   }
 
+  /**
+   * Validate that a GCP policy contains expected role bindings.
+   *
+   * @param role An IAM role. Maps to expected GCP roles in CloudSyncRoleMapping.
+   * @param groupEmail The group we expect roles to be bound to.
+   * @param gcpPolicy The GCP policy we're checking for role bindings.
+   */
   private void assertRoleBindingsInPolicy(IamRole role, String groupEmail, Policy gcpPolicy) {
     List<String> expectedGcpRoleList = CloudSyncRoleMapping.cloudSyncRoleMap.get(role);
     List<Binding> actualGcpBindingList = gcpPolicy.getBindings();

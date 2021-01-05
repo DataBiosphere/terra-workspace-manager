@@ -4,6 +4,7 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
@@ -14,9 +15,10 @@ import com.google.api.services.cloudresourcemanager.model.GetIamPolicyRequest;
 import com.google.api.services.cloudresourcemanager.model.Policy;
 import com.google.api.services.cloudresourcemanager.model.SetIamPolicyRequest;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,39 +50,37 @@ public class GoogleCloudSyncStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     String gcpProjectName = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
+    FlightMap workingMap = flightContext.getWorkingMap();
     try {
       Policy currentPolicy =
           resourceManagerCow
               .projects()
               .getIamPolicy(gcpProjectName, new GetIamPolicyRequest())
               .execute();
-      List<Binding> bindings = currentPolicy.getBindings();
+      List<Binding> existingBindings = currentPolicy.getBindings();
 
-      addGroupToRoleBindings(
-          flightContext
-              .getWorkingMap()
-              .get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class),
-          CloudSyncRoleMapping.cloudSyncRoleMap.get(IamRole.OWNER),
-          bindings);
-
-      addGroupToRoleBindings(
-          flightContext
-              .getWorkingMap()
-              .get(WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL, String.class),
-          CloudSyncRoleMapping.cloudSyncRoleMap.get(IamRole.WRITER),
-          bindings);
-
-      addGroupToRoleBindings(
-          flightContext
-              .getWorkingMap()
-              .get(WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL, String.class),
-          CloudSyncRoleMapping.cloudSyncRoleMap.get(IamRole.READER),
-          bindings);
-
+      Map<IamRole, String> samEmailMap =
+          Map.of(
+              IamRole.READER,
+              workingMap.get(WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL, String.class),
+              IamRole.WRITER,
+              workingMap.get(WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL, String.class),
+              IamRole.OWNER,
+              workingMap.get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class));
+      List<Binding> newBindings = new ArrayList<>();
+      for (IamRole iamRole : IamRole.values()) {
+        // GCP IAM always prefixes groups with the literal "group:"
+        String groupEmail = "group:" + samEmailMap.get(iamRole);
+        for (String gcpRole : CloudSyncRoleMapping.cloudSyncRoleMap.get(iamRole)) {
+          newBindings.add(
+              new Binding().setRole(gcpRole).setMembers(Collections.singletonList(groupEmail)));
+        }
+      }
+      newBindings.addAll(existingBindings);
       Policy newPolicy =
           new Policy()
               .setVersion(currentPolicy.getVersion())
-              .setBindings(bindings)
+              .setBindings(newBindings)
               .setEtag(currentPolicy.getEtag());
       SetIamPolicyRequest iamPolicyRequest = new SetIamPolicyRequest().setPolicy(newPolicy);
       logger.info("Setting new Cloud Context IAM policy: " + iamPolicyRequest.toPrettyString());
@@ -91,94 +91,12 @@ public class GoogleCloudSyncStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  /** Adds a Sam group to a list of GCP bindings, creating new bindings if they don't exist. */
-  private void addGroupToRoleBindings(
-      String samGroupEmail, List<String> rolesToAdd, List<Binding> existingBindings) {
-    // GCP IAM always prefixes groups with the literal "group:"
-    String gcpGroupEmail = "group:" + samGroupEmail;
-    // This list must remain in the same order as existingBindings. This is important because we
-    // search this list, then use the resulting index in existingBindings.
-    List<String> existingGcpRoles =
-        existingBindings.stream().map(Binding::getRole).collect(Collectors.toList());
-
-    for (String gcpRole : rolesToAdd) {
-      // Check if a binding for this GCP role already exists. If it does, add the Sam group.
-      // If it doesn't, create a new binding for the Sam group.
-      int bindingIndex = existingGcpRoles.indexOf(gcpRole);
-      if (bindingIndex != -1) {
-        Binding gcpRoleBinding = existingBindings.get(bindingIndex);
-        if (!gcpRoleBinding.getMembers().contains(gcpGroupEmail)) {
-          gcpRoleBinding.getMembers().add(gcpGroupEmail);
-        }
-      } else {
-        Binding newBinding =
-            new Binding().setRole(gcpRole).setMembers(Collections.singletonList(gcpGroupEmail));
-        existingBindings.add(newBinding);
-      }
-    }
-  }
-
   /**
-   * Read the GCP project's IAM bindings and remove Sam groups, if present.
-   *
-   * <p>Because the Sam google groups were synchronized for the first time earlier in this flight,
-   * we know that this flight is the only source that could have granted them GCP roles. Therefore,
-   * it's always safe to remove those roles in an undo step.
+   * Because the project will be deleted when other steps are undone, we don't need to undo
+   * permissions.
    */
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    String gcpProjectName = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
-    try {
-      Policy currentPolicy =
-          resourceManagerCow
-              .projects()
-              .getIamPolicy(gcpProjectName, new GetIamPolicyRequest())
-              .execute();
-      List<Binding> bindings = currentPolicy.getBindings();
-      removeGroupFromRoleBindings(
-          flightContext
-              .getWorkingMap()
-              .get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class),
-          CloudSyncRoleMapping.cloudSyncRoleMap.get(IamRole.OWNER),
-          bindings);
-
-      removeGroupFromRoleBindings(
-          flightContext
-              .getWorkingMap()
-              .get(WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL, String.class),
-          CloudSyncRoleMapping.cloudSyncRoleMap.get(IamRole.WRITER),
-          bindings);
-
-      removeGroupFromRoleBindings(
-          flightContext
-              .getWorkingMap()
-              .get(WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL, String.class),
-          CloudSyncRoleMapping.cloudSyncRoleMap.get(IamRole.READER),
-          bindings);
-
-      Policy newPolicy = new Policy().setBindings(bindings).setEtag(currentPolicy.getEtag());
-      SetIamPolicyRequest iamPolicyRequest = new SetIamPolicyRequest().setPolicy(newPolicy);
-      resourceManagerCow.projects().setIamPolicy(gcpProjectName, iamPolicyRequest).execute();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
     return StepResult.getStepResultSuccess();
-  }
-
-  /** Removes a Sam group from a list of GCP bindings if present. */
-  private void removeGroupFromRoleBindings(
-      String samGroupEmail, List<String> rolesToRemove, List<Binding> existingBindings) {
-    // GCP IAM always prefixes groups with the literal "group:"
-    String gcpGroupEmail = "group:" + samGroupEmail;
-    // This list must remain in the same order as existingBindings. This is important because we
-    // search this list, then use the resulting index in existingBindings.
-    List<String> existingGcpRoles =
-        existingBindings.stream().map(Binding::getRole).collect(Collectors.toList());
-    for (String gcpRole : rolesToRemove) {
-      int bindingIndex = existingGcpRoles.indexOf(gcpRole);
-      if (bindingIndex != -1) {
-        existingBindings.get(bindingIndex).getMembers().remove(gcpGroupEmail);
-      }
-    }
   }
 }
