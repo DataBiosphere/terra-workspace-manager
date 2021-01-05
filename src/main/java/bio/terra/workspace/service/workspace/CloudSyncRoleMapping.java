@@ -6,14 +6,13 @@ import com.google.common.collect.ImmutableMap;
 import java.util.List;
 
 public class CloudSyncRoleMapping {
-  // TODO: add custom bucket writer/owner roles
   public static final ImmutableMap<IamRole, List<String>> cloudSyncRoleMap =
       ImmutableMap.of(
           IamRole.OWNER,
               ImmutableList.of(
-                  "roles/viewer", "roles/bigquery.dataEditor", "roles/lifesciences.editor"),
+                  "roles/viewer", "roles/bigquery.dataEditor", "roles/lifesciences.editor", "roles/storage.objectAdmin"),
           IamRole.WRITER,
               ImmutableList.of(
-                  "roles/viewer", "roles/bigquery.dataEditor", "roles/lifesciences.editor"),
+                  "roles/viewer", "roles/bigquery.dataEditor", "roles/lifesciences.editor", "roles/storage.objectAdmin"),
           IamRole.READER, ImmutableList.of("roles/viewer"));
 }

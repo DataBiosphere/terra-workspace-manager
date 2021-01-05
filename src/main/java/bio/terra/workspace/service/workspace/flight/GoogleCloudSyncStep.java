@@ -32,8 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * Buffer Service may grant on projects before handing them out.
  *
  * <p>The "modify" part of this step specifically adds GCP bindings as specified in {@link
- * CloudSyncRoleMapping}. It adds new policy bindings for the specified roles, or modifies them to
- * include Sam groups if they already exist.
+ * CloudSyncRoleMapping}.
  */
 public class GoogleCloudSyncStep implements Step {
 
@@ -76,6 +75,7 @@ public class GoogleCloudSyncStep implements Step {
               new Binding().setRole(gcpRole).setMembers(Collections.singletonList(groupEmail)));
         }
       }
+      // Add all existing bindings to ensure we don't accidentally clobber existing permissions.
       newBindings.addAll(existingBindings);
       Policy newPolicy =
           new Policy()
