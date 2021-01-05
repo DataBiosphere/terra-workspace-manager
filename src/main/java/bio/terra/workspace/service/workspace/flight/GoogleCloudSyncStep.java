@@ -61,11 +61,11 @@ public class GoogleCloudSyncStep implements Step {
       Map<IamRole, String> samEmailMap =
           Map.of(
               IamRole.READER,
-              workingMap.get(WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL, String.class),
+                  workingMap.get(WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL, String.class),
               IamRole.WRITER,
-              workingMap.get(WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL, String.class),
+                  workingMap.get(WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL, String.class),
               IamRole.OWNER,
-              workingMap.get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class));
+                  workingMap.get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class));
       List<Binding> newBindings = new ArrayList<>();
       for (IamRole iamRole : IamRole.values()) {
         // GCP IAM always prefixes groups with the literal "group:"
