@@ -32,7 +32,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  * Buffer Service may grant on projects before handing them out.
  *
  * <p>The "modify" part of this step specifically adds GCP bindings as specified in {@link
- * CloudSyncRoleMapping}.
+ * CloudSyncRoleMapping}. Note that the bindings list sent to GCP may contain multiple entries with
+ * the same role. This is valid, though GCP will condense them into one binding per role internally.
  */
 public class GoogleCloudSyncStep implements Step {
 
