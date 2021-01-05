@@ -6,6 +6,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String GOOGLE_PROJECT_ID = "googleProjectId";
   public static final String WORKSPACE_STAGE = "workspaceStage";
   public static final String BILLING_ACCOUNT_ID = "billingAccountId";
+  public static final String RBS_RESOURCE_ID = "rbsResourceId";
 
   private WorkspaceFlightMapKeys() {}
 }

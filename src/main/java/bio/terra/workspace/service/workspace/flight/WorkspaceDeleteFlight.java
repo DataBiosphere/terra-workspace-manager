@@ -3,6 +3,8 @@ package bio.terra.workspace.service.workspace.flight;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.RetryRule;
+import bio.terra.stairway.RetryRuleExponentialBackoff;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -25,7 +27,13 @@ public class WorkspaceDeleteFlight extends Flight {
     // 1. delete controlled resources using the Cloud Resource Manager library
     // 2. Notify all registered applications of deletion, once applications are supported
     // 3. Delete policy objects in Policy Manager, once it exists.
-    addStep(new DeleteProjectStep(resourceManager, workspaceDao));
+
+    RetryRule retryRule =
+        new RetryRuleExponentialBackoff(
+            /* initialIntervalSeconds= */ 1,
+            /* maxIntervalSeconds= */ 8,
+            /* maxOperationTimeSeconds= */ 5 * 60);
+    addStep(new DeleteProjectStep(resourceManager, workspaceDao), retryRule);
     addStep(new DeleteWorkspaceAuthzStep(iamClient, userReq));
     addStep(new DeleteWorkspaceStateStep(workspaceDao));
   }
