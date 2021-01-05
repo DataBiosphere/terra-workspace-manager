@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace.flight;
 
+import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
@@ -13,12 +14,14 @@ public class CreateGoogleContextRBSFlight extends Flight {
     super(inputParameters, applicationContext);
     ApplicationContext appContext = (ApplicationContext) applicationContext;
     BufferService bufferService = appContext.getBean(BufferService.class);
-    // TODO(tovanadler): Update the retry rules once we properly design the flight.
+    CloudResourceManagerCow resourceManager = appContext.getBean(CloudResourceManagerCow.class);
+
     RetryRule retryRule =
         new RetryRuleExponentialBackoff(
             /* initialIntervalSeconds= */ 1,
-            /* maxIntervalSeconds= */ 5*60,
+            /* maxIntervalSeconds= */ 5 * 60,
             /* maxOperationTimeSeconds= */ 16);
-    addStep(new PullProjectFromPoolStep(bufferService), retryRule);
+    addStep(new GenerateResourceIdStep());
+    addStep(new PullProjectFromPoolStep(bufferService, resourceManager), retryRule);
   }
 }
