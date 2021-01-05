@@ -6,9 +6,18 @@ import bio.terra.workspace.service.datareference.exception.ControlledResourceNot
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Various utilities for validating requests in Controllers. */
 public final class ControllerValidationUtils {
+
+  private static Logger logger = LoggerFactory.getLogger(ControllerValidationUtils.class);
+
+  // Pattern shared with Sam, originally from https://www.regular-expressions.info/email.html.
+  public static final Pattern EMAIL_VALIDATION_PATTERN =
+      Pattern.compile("(?i)^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$");
 
   /**
    * Utility to validate limit/offset parameters used in pagination.
@@ -51,6 +60,19 @@ public final class ControllerValidationUtils {
     if (body.getCredentialId() != null) {
       throw new InvalidDataReferenceException(
           "Resource-specific credentials are not supported yet.");
+    }
+  }
+
+  /**
+   * Validate that a user-provided string matches the format of an email address.
+   *
+   * <p>This only validates the email addresses format, not whether it exists, what domain it's
+   * from, etc.
+   */
+  public static void validateEmail(String email) {
+    if (!EMAIL_VALIDATION_PATTERN.matcher(email).matches()) {
+      logger.warn("User provided invalid email for group or user: " + email);
+      throw new ValidationException("Invalid user or group email provided, see logs for details");
     }
   }
 }

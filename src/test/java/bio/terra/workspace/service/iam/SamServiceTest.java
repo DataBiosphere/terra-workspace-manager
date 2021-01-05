@@ -57,7 +57,7 @@ public class SamServiceTest extends BaseConnectedTest {
         SamUnauthorizedException.class,
         () -> workspaceService.getWorkspace(workspaceId, secondaryUserRequest()));
     // After being granted permission, secondary user can read the workspace.
-    samService.addWorkspaceRole(
+    samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), IamRole.READER, userAccessUtils.getSecondUserEmail());
     Workspace readWorkspace = workspaceService.getWorkspace(workspaceId, secondaryUserRequest());
     assertEquals(workspaceId, readWorkspace.workspaceId());
@@ -80,7 +80,7 @@ public class SamServiceTest extends BaseConnectedTest {
         SamUnauthorizedException.class,
         () -> dataReferenceService.createDataReference(referenceRequest, secondaryUserRequest()));
     // After being granted permission, secondary user can modify the workspace.
-    samService.addWorkspaceRole(
+    samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), IamRole.WRITER, userAccessUtils.getSecondUserEmail());
     DataReference reference =
         dataReferenceService.createDataReference(referenceRequest, secondaryUserRequest());
@@ -95,7 +95,7 @@ public class SamServiceTest extends BaseConnectedTest {
         SamUnauthorizedException.class,
         () -> workspaceService.getWorkspace(workspaceId, secondaryUserRequest()));
     // After being granted permission, secondary user can read the workspace.
-    samService.addWorkspaceRole(
+    samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), IamRole.READER, userAccessUtils.getSecondUserEmail());
     Workspace readWorkspace = workspaceService.getWorkspace(workspaceId, secondaryUserRequest());
     assertEquals(workspaceId, readWorkspace.workspaceId());
@@ -113,9 +113,9 @@ public class SamServiceTest extends BaseConnectedTest {
     // Note that this request uses the secondary user's authentication token, when only the first
     // user is an owner.
     assertThrows(
-        SamUnauthorizedException.class,
+        SamApiException.class,
         () ->
-            samService.addWorkspaceRole(
+            samService.grantWorkspaceRole(
                 workspaceId,
                 secondaryUserRequest(),
                 IamRole.READER,
@@ -134,7 +134,7 @@ public class SamServiceTest extends BaseConnectedTest {
     assertThrows(
         StageDisabledException.class,
         () ->
-            samService.addWorkspaceRole(
+            samService.grantWorkspaceRole(
                 workspaceId,
                 defaultUserRequest(),
                 IamRole.READER,
@@ -147,14 +147,14 @@ public class SamServiceTest extends BaseConnectedTest {
     assertThrows(
         SamApiException.class,
         () ->
-            samService.addWorkspaceRole(
+            samService.grantWorkspaceRole(
                 workspaceId, defaultUserRequest(), IamRole.READER, "!!!INVALID EMAIL ADDRESS!!!!"));
   }
 
   @Test
   public void ListPermissionsIncludesAddedUsers() {
     UUID workspaceId = createWorkspaceDefaultUser();
-    samService.addWorkspaceRole(
+    samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), IamRole.READER, userAccessUtils.getSecondUserEmail());
     List<RoleBinding> policyList = samService.listRoleBindings(workspaceId, defaultUserRequest());
 
@@ -181,7 +181,7 @@ public class SamServiceTest extends BaseConnectedTest {
   @Test
   public void WriterCannotListPermissions() {
     UUID workspaceId = createWorkspaceDefaultUser();
-    samService.addWorkspaceRole(
+    samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), IamRole.WRITER, userAccessUtils.getSecondUserEmail());
     assertThrows(
         SamApiException.class,
@@ -189,7 +189,7 @@ public class SamServiceTest extends BaseConnectedTest {
   }
 
   /**
-   * Convenience wrapper to build an AuthenticatedUserRequest from utils' default user.
+   * Convenience method to build an AuthenticatedUserRequest from utils' default user.
    *
    * <p>This only fills in access token, not email or subjectId.
    */
@@ -199,7 +199,7 @@ public class SamServiceTest extends BaseConnectedTest {
   }
 
   /**
-   * Convenience wrapper to build an AuthenticatedUserRequest from utils' secondary default user.
+   * Convenience method to build an AuthenticatedUserRequest from utils' secondary default user.
    *
    * <p>This only fills in access token, not email or subjectId.
    */

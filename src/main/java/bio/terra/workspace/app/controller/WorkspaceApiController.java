@@ -132,7 +132,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     workspaceService.deleteWorkspace(id, userReq);
     logger.info(String.format("Deleted workspace %s for %s", id.toString(), userReq.getEmail()));
 
-    return new ResponseEntity<>(HttpStatus.valueOf(204));
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
@@ -253,7 +253,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<Void> deleteJob(@PathVariable("id") String id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     jobService.releaseJob(id, userReq);
-    return new ResponseEntity<>(HttpStatus.valueOf(204));
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
@@ -273,16 +273,17 @@ public class WorkspaceApiController implements WorkspaceApi {
   */
 
   @Override
-  public ResponseEntity<Void> addRole(
+  public ResponseEntity<Void> grantRole(
       @PathVariable("id") UUID id,
       @PathVariable("role") IamRole role,
       @PathVariable("memberEmail") String memberEmail) {
-    samService.addWorkspaceRole(
+    ControllerValidationUtils.validateEmail(memberEmail);
+    samService.grantWorkspaceRole(
         id,
         getAuthenticatedInfo(),
         bio.terra.workspace.service.iam.model.IamRole.fromApiModel(role),
         memberEmail);
-    return new ResponseEntity<>(HttpStatus.valueOf(204));
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
@@ -290,12 +291,13 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("id") UUID id,
       @PathVariable("role") IamRole role,
       @PathVariable("memberEmail") String memberEmail) {
+    ControllerValidationUtils.validateEmail(memberEmail);
     samService.removeWorkspaceRole(
         id,
         getAuthenticatedInfo(),
         bio.terra.workspace.service.iam.model.IamRole.fromApiModel(role),
         memberEmail);
-    return new ResponseEntity<>(HttpStatus.valueOf(204));
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override

@@ -8,7 +8,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.SamUtils;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,9 +39,9 @@ public class CreateWorkspaceAuthzStep implements Step {
     // error or success message from Sam.
     if (!samService.isAuthorized(
         userReq.getRequiredToken(),
-        SamUtils.SAM_WORKSPACE_RESOURCE,
+        SamConstants.SAM_WORKSPACE_RESOURCE,
         workspaceID.toString(),
-        SamUtils.SAM_WORKSPACE_READ_ACTION)) {
+        SamConstants.SAM_WORKSPACE_READ_ACTION)) {
       samService.createWorkspaceWithDefaults(userReq, workspaceID);
     }
     return StepResult.getStepResultSuccess();
