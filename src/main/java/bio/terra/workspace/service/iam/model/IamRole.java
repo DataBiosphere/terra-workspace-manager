@@ -1,42 +1,43 @@
 package bio.terra.workspace.service.iam.model;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.EnumBiMap;
-import com.google.common.collect.EnumHashBiMap;
+import java.util.Arrays;
+import java.util.Optional;
 
 /** Internal representation of IAM roles. */
 public enum IamRole {
-  READER,
-  WRITER,
-  OWNER;
+  READER("reader", bio.terra.workspace.generated.model.IamRole.READER),
+  WRITER("writer", bio.terra.workspace.generated.model.IamRole.WRITER),
+  OWNER("owner", bio.terra.workspace.generated.model.IamRole.OWNER);
 
-  private static final BiMap<IamRole, String> samMap = EnumHashBiMap.create(IamRole.class);
-  private static final BiMap<IamRole, bio.terra.workspace.generated.model.IamRole> apiMap =
-      EnumBiMap.create(IamRole.class, bio.terra.workspace.generated.model.IamRole.class);
+  private String samRole;
+  private bio.terra.workspace.generated.model.IamRole apiRole;
 
-  static {
-    samMap.put(IamRole.READER, "reader");
-    samMap.put(IamRole.WRITER, "writer");
-    samMap.put(IamRole.OWNER, "owner");
-
-    apiMap.put(READER, bio.terra.workspace.generated.model.IamRole.READER);
-    apiMap.put(WRITER, bio.terra.workspace.generated.model.IamRole.WRITER);
-    apiMap.put(OWNER, bio.terra.workspace.generated.model.IamRole.OWNER);
+  IamRole(String samRole, bio.terra.workspace.generated.model.IamRole apiRole) {
+    this.samRole = samRole;
+    this.apiRole = apiRole;
   }
 
   public static IamRole fromApiModel(bio.terra.workspace.generated.model.IamRole apiModel) {
-    return apiMap.inverse().get(apiModel);
+    Optional<IamRole> result =
+        Arrays.stream(IamRole.values()).filter(x -> x.apiRole.equals(apiModel)).findFirst();
+    return result.orElseThrow(
+        () ->
+            new RuntimeException(
+                "No IamRole enum found corresponding to model role " + apiModel.toString()));
   }
 
   public static IamRole fromSam(String samRole) {
-    return samMap.inverse().get(samRole);
+    Optional<IamRole> result =
+        Arrays.stream(IamRole.values()).filter(x -> x.apiRole.equals(samRole)).findFirst();
+    return result.orElseThrow(
+        () -> new RuntimeException("No IamRole enum found corresponding to Sam role " + samRole));
   }
 
   public bio.terra.workspace.generated.model.IamRole toApiModel() {
-    return apiMap.get(this);
+    return apiRole;
   }
 
   public String toSamRole() {
-    return samMap.get(this);
+    return samRole;
   }
 }

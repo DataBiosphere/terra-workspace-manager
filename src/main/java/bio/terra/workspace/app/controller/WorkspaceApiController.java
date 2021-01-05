@@ -277,6 +277,7 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("id") UUID id,
       @PathVariable("role") IamRole role,
       @PathVariable("memberEmail") String memberEmail) {
+    ControllerValidationUtils.validateEmail(memberEmail);
     samService.grantWorkspaceRole(
         id,
         getAuthenticatedInfo(),
@@ -290,6 +291,7 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("id") UUID id,
       @PathVariable("role") IamRole role,
       @PathVariable("memberEmail") String memberEmail) {
+    ControllerValidationUtils.validateEmail(memberEmail);
     samService.removeWorkspaceRole(
         id,
         getAuthenticatedInfo(),
