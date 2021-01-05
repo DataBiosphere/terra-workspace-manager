@@ -10,7 +10,7 @@ import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.SamUtils;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,7 +53,7 @@ public class DataReferenceService {
   public DataReference getDataReference(
       UUID workspaceId, UUID referenceId, AuthenticatedUserRequest userReq) {
 
-    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
+    samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
 
     return dataReferenceDao.getDataReference(workspaceId, referenceId);
   }
@@ -68,7 +68,7 @@ public class DataReferenceService {
       DataReferenceType referenceType,
       String name,
       AuthenticatedUserRequest userReq) {
-    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
+    samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
 
     return dataReferenceDao.getDataReferenceByName(workspaceId, referenceType, name);
   }
@@ -79,7 +79,7 @@ public class DataReferenceService {
       DataReferenceRequest referenceRequest, AuthenticatedUserRequest userReq) {
 
     samService.workspaceAuthz(
-        userReq, referenceRequest.workspaceId(), SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+        userReq, referenceRequest.workspaceId(), SamConstants.SAM_WORKSPACE_WRITE_ACTION);
 
     String description = "Create data reference in workspace " + referenceRequest.workspaceId();
 
@@ -116,7 +116,7 @@ public class DataReferenceService {
   @Traced
   public List<DataReference> enumerateDataReferences(
       UUID workspaceId, int offset, int limit, AuthenticatedUserRequest userReq) {
-    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
+    samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return dataReferenceDao.enumerateDataReferences(workspaceId, offset, limit);
   }
 
@@ -125,7 +125,7 @@ public class DataReferenceService {
   public void deleteDataReference(
       UUID workspaceId, UUID referenceId, AuthenticatedUserRequest userReq) {
 
-    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+    samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
 
     if (dataReferenceDao.isControlled(workspaceId, referenceId)) {
       throw new ControlledResourceNotImplementedException(

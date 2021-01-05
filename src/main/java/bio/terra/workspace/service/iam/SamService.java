@@ -8,8 +8,7 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
-import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -89,7 +88,7 @@ public class SamService {
             .resourceId(id.toString())
             .policies(defaultWorkspacePolicies(callerEmail));
     try {
-      resourceApi.createResource(SamUtils.SAM_WORKSPACE_RESOURCE, workspaceRequest);
+      resourceApi.createResource(SamConstants.SAM_WORKSPACE_RESOURCE, workspaceRequest);
       logger.info(String.format("Created Sam resource for workspace %s", id.toString()));
     } catch (ApiException apiException) {
       throw new SamApiException(apiException);
@@ -99,7 +98,7 @@ public class SamService {
   public void deleteWorkspace(String authToken, UUID id) {
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
-      resourceApi.deleteResource(SamUtils.SAM_WORKSPACE_RESOURCE, id.toString());
+      resourceApi.deleteResource(SamConstants.SAM_WORKSPACE_RESOURCE, id.toString());
       logger.info(String.format("Deleted Sam resource for workspace %s", id.toString()));
     } catch (ApiException apiException) {
       throw new SamApiException(apiException);
@@ -121,7 +120,7 @@ public class SamService {
     boolean isAuthorized =
         isAuthorized(
             userReq.getRequiredToken(),
-            SamUtils.SAM_WORKSPACE_RESOURCE,
+            SamConstants.SAM_WORKSPACE_RESOURCE,
             workspaceId.toString(),
             action);
     if (!isAuthorized)
@@ -139,8 +138,8 @@ public class SamService {
   /**
    * Wrapper around Sam client to grant a role to the provided user.
    *
-   * <p>This operation is only available to MC_TERRA stage workspaces, as Rawls manages permissions
-   * directly on other workspaces.
+   * <p>This operation is only available to MC_WORKSPACE stage workspaces, as Rawls manages
+   * permissions directly on other workspaces.
    *
    * @param workspaceId The workspace this operation takes place in
    * @param userReq Credentials of the user requesting this operation. Only owners have permission
@@ -150,15 +149,11 @@ public class SamService {
    */
   public void grantWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
-    WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
-    if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
-      throw new StageDisabledException(workspaceId, stage, "addWorkspaceRole");
-    }
-
+    workspaceDao.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       resourceApi.addUserToPolicy(
-          SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), email);
+          SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), email);
       logger.info(
           String.format(
               "Granted role %s to user %s in workspace %s",
@@ -171,22 +166,17 @@ public class SamService {
   /**
    * Wrapper around Sam client to remove a role from the provided user.
    *
-   * <p>This operation is only available to MC_TERRA stage workspaces, as Rawls manages permissions
-   * directly on other workspaces.
-   * Trying to remove a role that a user does not have will succeed, though Sam will error if the
-   * email is not a registered user.
+   * <p>This operation is only available to MC_WORKSPACE stage workspaces, as Rawls manages
+   * permissions directly on other workspaces. Trying to remove a role that a user does not have
+   * will succeed, though Sam will error if the email is not a registered user.
    */
   public void removeWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
-    WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
-    if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
-      throw new StageDisabledException(workspaceId, stage, "removeWorkspaceRole");
-    }
-
+    workspaceDao.assertMcWorkspace(workspaceId, "removeWorkspaceRole");
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       resourceApi.removeUserFromPolicy(
-          SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), email);
+          SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), email);
       logger.info(
           String.format(
               "Removed role %s from user %s in workspace %s",
@@ -199,19 +189,16 @@ public class SamService {
   /**
    * Wrapper around Sam client to retrieve the current permissions model of a workspace.
    *
-   * <p>This operation is only available to MC_TERRA stage workspaces, as Rawls manages permissions
-   * directly on other workspaces.
+   * <p>This operation is only available to MC_WORKSPACE stage workspaces, as Rawls manages
+   * permissions directly on other workspaces.
    */
   public List<RoleBinding> listRoleBindings(UUID workspaceId, AuthenticatedUserRequest userReq) {
-    WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
-    if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
-      throw new StageDisabledException(workspaceId, stage, "getPermissionsModel");
-    }
-
+    workspaceDao.assertMcWorkspace(workspaceId, "listRoleBindings");
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       List<AccessPolicyResponseEntry> samResult =
-          resourceApi.listResourcePolicies(SamUtils.SAM_WORKSPACE_RESOURCE, workspaceId.toString());
+          resourceApi.listResourcePolicies(
+              SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString());
       return samResult.stream()
           .map(
               entry ->

@@ -3,7 +3,7 @@ package bio.terra.workspace.service.workspace;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.SamUtils;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
@@ -11,11 +11,9 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
-import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.flight.*;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
 import java.util.UUID;
@@ -72,7 +70,7 @@ public class WorkspaceService {
   /** Retrieves an existing workspace by ID */
   @Traced
   public Workspace getWorkspace(UUID id, AuthenticatedUserRequest userReq) {
-    samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_READ_ACTION);
+    samService.workspaceAuthz(userReq, id, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return workspaceDao.getWorkspace(id);
   }
 
@@ -80,7 +78,7 @@ public class WorkspaceService {
   @Traced
   public void deleteWorkspace(UUID id, AuthenticatedUserRequest userReq) {
 
-    samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_DELETE_ACTION);
+    samService.workspaceAuthz(userReq, id, SamConstants.SAM_WORKSPACE_DELETE_ACTION);
 
     String description = "Delete workspace " + id;
     JobBuilder deleteJob =
@@ -98,18 +96,15 @@ public class WorkspaceService {
   /** Retrieves the cloud context of a workspace. */
   @Traced
   public WorkspaceCloudContext getCloudContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
-    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
+    samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return workspaceDao.getCloudContext(workspaceId);
   }
 
   /** Start a job to create a Google cloud context for the workspace. Returns the job id. */
   @Traced
   public String createGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
-    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
-    WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
-    if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
-      throw new StageDisabledException(workspaceId, stage, "createGoogleContext");
-    }
+    samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+    workspaceDao.assertMcWorkspace(workspaceId, "createGoogleContext");
     Optional<SpendProfileId> spendProfileId =
         workspaceDao.getWorkspace(workspaceId).spendProfileId();
     if (spendProfileId.isEmpty()) {
@@ -138,11 +133,8 @@ public class WorkspaceService {
   /** Delete the Google cloud context for the workspace. */
   @Traced
   public void deleteGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
-    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
-    WorkspaceStage stage = workspaceDao.getWorkspaceStage(workspaceId);
-    if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
-      throw new StageDisabledException(workspaceId, stage, "deleteGoogleContext");
-    }
+    samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+    workspaceDao.assertMcWorkspace(workspaceId, "deleteGoogleContext");
     jobService
         .newJob(
             "Delete Google Context " + workspaceId,

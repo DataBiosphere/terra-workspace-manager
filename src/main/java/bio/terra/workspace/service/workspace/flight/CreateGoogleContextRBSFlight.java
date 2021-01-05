@@ -17,7 +17,7 @@ public class CreateGoogleContextRBSFlight extends Flight {
     RetryRule retryRule =
         new RetryRuleExponentialBackoff(
             /* initialIntervalSeconds= */ 1,
-            /* maxIntervalSeconds= */ 5*60,
+            /* maxIntervalSeconds= */ 5 * 60,
             /* maxOperationTimeSeconds= */ 16);
     addStep(new PullProjectFromPoolStep(bufferService), retryRule);
   }
