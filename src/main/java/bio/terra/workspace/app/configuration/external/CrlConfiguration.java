@@ -2,9 +2,15 @@ package bio.terra.workspace.app.configuration.external;
 
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.common.cleanup.CleanupConfig;
+import bio.terra.cloudres.google.api.services.common.Defaults;
 import bio.terra.cloudres.google.billing.CloudBillingClientCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.services.cloudresourcemanager.CloudResourceManager;
+import com.google.api.services.cloudresourcemanager.CloudResourceManagerScopes;
+import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import java.io.FileInputStream;
@@ -86,8 +92,18 @@ public class CrlConfiguration {
   @Lazy
   public CloudResourceManagerCow cloudResourceManagerCow()
       throws IOException, GeneralSecurityException {
-    return CloudResourceManagerCow.create(
-        clientConfig(), GoogleCredentials.getApplicationDefault());
+    CloudResourceManagerCow cloudResourceManagerCow =
+      new CloudResourceManagerCow(
+          clientConfig(),
+          new CloudResourceManager.Builder(
+              GoogleNetHttpTransport.newTrustedTransport(),
+              Defaults.jsonFactory(),
+              setHttpTimeout(
+                  new HttpCredentialsAdapter(
+                      GoogleCredentials.getApplicationDefault()
+                          .createScoped(CloudResourceManagerScopes.all()))))
+              .setApplicationName(CLIENT_NAME));
+    return cloudResourceManagerCow;
   }
 
   /** The CRL {@link CloudBillingClientCow} which wrappers Google Billing API. */
@@ -111,5 +127,15 @@ public class CrlConfiguration {
       throw new RuntimeException(
           "Unable to load GoogleCredentials from configuration: " + serviceAccountPath, e);
     }
+  }
+
+  /** Sets longer timeout because operations may take longer than default timeout. */
+  private static HttpRequestInitializer setHttpTimeout(
+      final HttpRequestInitializer requestInitializer) {
+    return httpRequest -> {
+      requestInitializer.initialize(httpRequest);
+      httpRequest.setConnectTimeout(5 * 60000); // 5 minutes connect timeout
+      httpRequest.setReadTimeout(5 * 60000); // 5 minutes read timeout
+    };
   }
 }
