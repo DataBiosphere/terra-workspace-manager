@@ -91,8 +91,8 @@ jobs:
     - name: Build image locally with jib
       run: "./gradlew jibDockerBuild --image=${{ steps.image-name.outputs.name }}"
     - uses: broadinstitute/dsp-appsec-trivy-action@v1
-        with:
-          image: ${{ steps.image-name.outputs.name }}
+      with:
+        image: ${{ steps.image-name.outputs.name }}
     - name: Push GCR image
       run: "docker push ${{ steps.image-name.outputs.name }}"
     - name: Deploy to Terra Dev environment
