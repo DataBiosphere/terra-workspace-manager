@@ -9,6 +9,7 @@ import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.GoogleWorkspaceConfiguration;
+import bio.terra.workspace.service.workspace.exceptions.RetryableCrlException;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.cloudresourcemanager.model.ResourceId;
 import com.google.api.services.serviceusage.v1.model.BatchEnableServicesRequest;
@@ -70,7 +71,7 @@ public class CreateProjectStep implements Step {
               .operationCow(resourceManager.projects().create(project).execute());
       pollUntilSuccess(operation, Duration.ofSeconds(30), Duration.ofMinutes(5));
     } catch (IOException e) {
-      throw new RetryException("Error creating project.", e);
+      throw new RetryableCrlException("Error creating project.", e);
     }
   }
 
@@ -90,7 +91,7 @@ public class CreateProjectStep implements Step {
                       .execute());
       pollUntilSuccess(operation, Duration.ofSeconds(30), Duration.ofMinutes(5));
     } catch (IOException e) {
-      throw new RetryException("Error enabling services.", e);
+      throw new RetryableCrlException("Error enabling services.", e);
     }
   }
 
@@ -107,21 +108,21 @@ public class CreateProjectStep implements Step {
 
   /**
    * Poll until the operation has completed. Throws any error or timeouts as a {@link
-   * RetryException}.
+   * RetryableCrlException}.
    */
   private static void pollUntilSuccess(
       OperationCow<?> operation, Duration pollingInterval, Duration timeout) throws RetryException {
     try {
       operation = OperationUtils.pollUntilComplete(operation, pollingInterval, timeout);
       if (operation.getOperationAdapter().getError() != null) {
-        throw new RetryException(
+        throw new RetryableCrlException(
             String.format(
                 "Error polling operation. name [%s] message [%s]",
                 operation.getOperationAdapter().getName(),
                 operation.getOperationAdapter().getError().getMessage()));
       }
     } catch (IOException | InterruptedException e) {
-      throw new RetryException("Error polling.", e);
+      throw new RetryableCrlException("Error polling.", e);
     }
   }
 }

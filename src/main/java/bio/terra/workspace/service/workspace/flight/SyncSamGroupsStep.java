@@ -10,7 +10,6 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import java.util.UUID;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * A {@Code Step} which synchronizes Sam policies with google groups and stores the group names in
@@ -20,7 +19,6 @@ public class SyncSamGroupsStep implements Step {
 
   private final SamService samService;
 
-  @Autowired
   public SyncSamGroupsStep(SamService samService) {
     this.samService = samService;
   }
