@@ -37,7 +37,7 @@ public class CreateGoogleContextFlight extends Flight {
         retryRule);
     addStep(new SetProjectBillingStep(billingClient));
     addStep(new StoreGoogleContextStep(workspaceDao, transactionTemplate), retryRule);
-    addStep(new SyncSamGroupsStep(samService));
-    addStep(new GoogleCloudSyncStep(resourceManager));
+    addStep(new SyncSamGroupsStep(samService), retryRule);
+    addStep(new GoogleCloudSyncStep(resourceManager), retryRule);
   }
 }

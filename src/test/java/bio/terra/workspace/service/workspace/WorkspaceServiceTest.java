@@ -67,6 +67,9 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
                 Mockito.any(),
                 Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
         .thenReturn(true);
+    // Return a valid google group for cloud sync, as Google validates groups added to GCP projects.
+    Mockito.when(mockSamService.syncWorkspacePolicy(any(), any(), any()))
+        .thenReturn("terra-workspace-manager-test-group@googlegroups.com");
   }
 
   @Test
