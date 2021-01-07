@@ -220,6 +220,8 @@ task setGitVersion(type: WriteProperties) {
 
 jib {
 	from {
+		// see https://github.com/broadinstitute/dsp-appsec-blessed-images/tree/main/jre
+		// Google's distroless images are openjdk, this is the simplest with adoptopenjdk
 		image = "us.gcr.io/broad-dsp-gcr-public/base/jre:11-alpine"
 	}
 	container {
