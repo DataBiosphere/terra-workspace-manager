@@ -6,9 +6,9 @@
   "application": {},
   "testScripts": [
     {
-      "name": "GetWorkspace",
-      "numberOfUserJourneyThreadsToRun": 10,
-      "userJourneyThreadPoolSize": 2,
+      "name": "GetRoles",
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 5,
       "expectedTimeForEachUnit": "SECONDS"
     }
