@@ -11,6 +11,20 @@
       "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 5,
       "expectedTimeForEachUnit": "SECONDS"
+    },
+    {
+      "name": "CreateGetDeleteDataReference",
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 1,
+      "expectedTimeForEach": 5,
+      "expectedTimeForEachUnit": "SECONDS"
+    },
+    {
+      "name": "GetDataReferenceByName",
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 1,
+      "expectedTimeForEach": 5,
+      "expectedTimeForEachUnit": "SECONDS"
     }
   ],
   "testUserFiles": ["william.json"]
