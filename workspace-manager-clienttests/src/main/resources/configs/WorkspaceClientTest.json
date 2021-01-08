@@ -1,0 +1,17 @@
+{
+  "name": "WorkspaceClientTest",
+  "description": "Client tests for workspace endpoints. Authentication required.",
+  "serverSpecificationFile": "workspace-dev.json",
+  "kubernetes": {},
+  "application": {},
+  "testScripts": [
+    {
+      "name": "CreateGetDeleteWorkspace",
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 1,
+      "expectedTimeForEach": 5,
+      "expectedTimeForEachUnit": "SECONDS"
+    }
+  ],
+  "testUserFiles": ["william.json"]
+}

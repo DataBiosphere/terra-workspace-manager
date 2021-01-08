@@ -4,9 +4,15 @@ import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.client.ApiClient;
+import bio.terra.workspace.model.CloningInstructionsEnum;
+import bio.terra.workspace.model.CreateDataReferenceRequestBody;
+import bio.terra.workspace.model.DataReferenceDescription;
+import bio.terra.workspace.model.DataRepoSnapshot;
+import bio.terra.workspace.model.ReferenceTypeEnum;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
