@@ -40,22 +40,16 @@ public class CreateGetDeleteWorkspace extends TestScript {
     } catch (ApiException apiEx) {
       logger.debug("Caught exception creating workspace ", apiEx);
     }
-    int httpCode = workspaceApi.getApiClient().getStatusCode();
-    logger.info("CREATE workspace HTTP code: {}", httpCode);
-    assertThat(httpCode, equalTo(200));
+    WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "CREATE workspace");
     assertThat(workspace.getId(), equalTo(id));
 
     WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(id);
-    httpCode = workspaceApi.getApiClient().getStatusCode();
-    logger.info("GET workspace HTTP code: {}", httpCode);
-    assertThat(httpCode, equalTo(200));
+    WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "GET workspace");
     assertThat(workspaceDescription.getId(), equalTo(id));
     assertThat(workspaceDescription.getStage(), equalTo(WorkspaceStageModel.RAWLS_WORKSPACE));
 
     workspaceApi.deleteWorkspace(id);
-    httpCode = workspaceApi.getApiClient().getStatusCode();
-    logger.info("DELETE workspace HTTP code: {}", httpCode);
-    assertThat(httpCode, equalTo(204));
+    WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "DELETE workspace");
   }
 
   @Override

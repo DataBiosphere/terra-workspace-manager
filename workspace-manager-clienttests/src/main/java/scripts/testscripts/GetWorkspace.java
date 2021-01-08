@@ -20,32 +20,27 @@ import static org.hamcrest.Matchers.equalTo;
 
 public class GetWorkspace extends TestScript {
     private static final Logger logger = LoggerFactory.getLogger(GetWorkspace.class);
-    private UUID id;
+    private UUID workspaceId;
     private CreatedWorkspace workspace;
 
     @Override
     public void setup(List<TestUserSpecification> testUsers) throws Exception {
         assertThat("There must be at least one test user in configs/testusers directory.", testUsers!=null && testUsers.size()>0);
-        id = UUID.randomUUID();
-        ApiClient apiClient = WorkspaceManagerServiceUtils.getClientForTestUser(testUsers.get(0), server);
-        WorkspaceApi workspaceApi = new WorkspaceApi(apiClient);
+        workspaceId = UUID.randomUUID();
+        WorkspaceApi workspaceApi = WorkspaceManagerServiceUtils.getWorkspaceApiForTestUser(testUsers.get(0), server);
         try {
             CreateWorkspaceRequestBody requestBody = new CreateWorkspaceRequestBody();
-            requestBody.setId(id);
+            requestBody.setId(workspaceId);
             workspace = workspaceApi.createWorkspace(requestBody);
         } catch (ApiException apiEx) {
             logger.debug("Caught exception creating workspace ", apiEx);
         }
-
-        int httpCode = workspaceApi.getApiClient().getStatusCode();
-        logger.info("CREATE workspace HTTP code: {}", httpCode);
-        assertThat(httpCode, equalTo(200));
+        WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "CREATE workspace");
     }
 
     @Override
     public void userJourney(TestUserSpecification testUser) throws Exception {
-        ApiClient apiClient = WorkspaceManagerServiceUtils.getClientForTestUser(testUser, server);
-        WorkspaceApi workspaceApi = new WorkspaceApi(apiClient);
+        WorkspaceApi workspaceApi = WorkspaceManagerServiceUtils.getWorkspaceApiForTestUser(testUser, server);
 
         /**
          * This GetWorkspace test expects a valid workspace id
@@ -54,25 +49,18 @@ public class GetWorkspace extends TestScript {
          * Throw exception if anything goes wrong
          * **/
         WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspace.getId());
-        int httpCode = workspaceApi.getApiClient().getStatusCode();
-        logger.info("GET workspace HTTP code: {}", httpCode);
-        assertThat(httpCode, equalTo(200));
+        WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "GET workspace");
     }
 
     @Override
     public void cleanup(List<TestUserSpecification> testUsers) throws Exception {
         assertThat("There must be at least one test user in configs/testusers directory.", testUsers!=null && testUsers.size()>0);
-        ApiClient apiClient = WorkspaceManagerServiceUtils.getClientForTestUser(testUsers.get(0), server);
-        WorkspaceApi workspaceApi = new WorkspaceApi(apiClient);
-
+        WorkspaceApi workspaceApi = WorkspaceManagerServiceUtils.getWorkspaceApiForTestUser(testUsers.get(0), server);
         try {
             workspaceApi.deleteWorkspace(workspace.getId());
         } catch (ApiException apiEx) {
             logger.debug("Caught exception deleting workspace ", apiEx);
         }
-
-        int httpCode = workspaceApi.getApiClient().getStatusCode();
-        logger.info("DELETE workspace HTTP code: {}", httpCode);
-        assertThat(httpCode, equalTo(204));
+        WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "DELETE workspace");
     }
 }
