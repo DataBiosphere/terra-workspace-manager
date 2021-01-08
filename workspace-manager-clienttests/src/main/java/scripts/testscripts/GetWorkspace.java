@@ -32,8 +32,6 @@ public class GetWorkspace extends TestScript {
         try {
             CreateWorkspaceRequestBody requestBody = new CreateWorkspaceRequestBody();
             requestBody.setId(id);
-            requestBody.setJobId("testrunner");
-            requestBody.setSpendProfile(null);
             workspace = workspaceApi.createWorkspace(requestBody);
         } catch (ApiException apiEx) {
             logger.debug("Caught exception creating workspace ", apiEx);
