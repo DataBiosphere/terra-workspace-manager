@@ -21,7 +21,6 @@ import static org.hamcrest.Matchers.equalTo;
 
 public class CreateGetDeleteWorkspace extends TestScript {
   private static final Logger logger = LoggerFactory.getLogger(CreateGetDeleteWorkspace.class);
-  private CreatedWorkspace workspace;
 
   @Override
   public void setup(List<TestUserSpecification> testUsers) throws Exception {
@@ -30,25 +29,26 @@ public class CreateGetDeleteWorkspace extends TestScript {
 
   @Override
   public void userJourney(TestUserSpecification testUser) throws Exception {
-    UUID id = UUID.randomUUID();
+    UUID workspaceId = UUID.randomUUID();
     ApiClient apiClient = WorkspaceManagerServiceUtils.getClientForTestUser(testUser, server);
     WorkspaceApi workspaceApi = new WorkspaceApi(apiClient);
+    CreatedWorkspace workspace = null;
     try {
       CreateWorkspaceRequestBody requestBody = new CreateWorkspaceRequestBody();
-      requestBody.setId(id);
+      requestBody.setId(workspaceId);
       workspace = workspaceApi.createWorkspace(requestBody);
     } catch (ApiException apiEx) {
       logger.debug("Caught exception creating workspace ", apiEx);
     }
     WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "CREATE workspace");
-    assertThat(workspace.getId(), equalTo(id));
+    assertThat(workspace.getId(), equalTo(workspaceId));
 
-    WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(id);
+    WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspaceId);
     WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "GET workspace");
-    assertThat(workspaceDescription.getId(), equalTo(id));
+    assertThat(workspaceDescription.getId(), equalTo(workspaceId));
     assertThat(workspaceDescription.getStage(), equalTo(WorkspaceStageModel.RAWLS_WORKSPACE));
 
-    workspaceApi.deleteWorkspace(id);
+    workspaceApi.deleteWorkspace(workspaceId);
     WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "DELETE workspace");
   }
 

@@ -27,7 +27,6 @@ import static org.hamcrest.Matchers.equalTo;
 public class CreateGetDeleteDataReference extends TestScript {
   private static final Logger logger = LoggerFactory.getLogger(CreateGetDeleteDataReference.class);
   private UUID workspaceId;
-  private CreatedWorkspace workspace;
 
   @Override
   public void setup(List<TestUserSpecification> testUsers) throws Exception {
@@ -36,7 +35,7 @@ public class CreateGetDeleteDataReference extends TestScript {
     WorkspaceApi workspaceApi = WorkspaceManagerServiceUtils.getWorkspaceApiForTestUser(testUsers.get(0), server);
     try {
       CreateWorkspaceRequestBody requestBody = new CreateWorkspaceRequestBody().id(workspaceId);
-      workspace = workspaceApi.createWorkspace(requestBody);
+      workspaceApi.createWorkspace(requestBody);
     } catch (ApiException apiEx) {
       logger.debug("Caught exception creating workspace ", apiEx);
     }
