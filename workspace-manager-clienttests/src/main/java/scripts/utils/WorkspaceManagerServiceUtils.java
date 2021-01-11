@@ -2,8 +2,6 @@ package scripts.utils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.lessThan;
 
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
@@ -114,11 +112,7 @@ public class WorkspaceManagerServiceUtils {
 
     public static void assertHttpOk(WorkspaceApi workspaceApi, String label) {
         int httpCode = workspaceApi.getApiClient().getStatusCode();
-        logger.info("{} HTTP code: {}", label, httpCode);
-        // Code will initialize to zero for non-overridden methods like setup()
-        if (httpCode > 0) {
-            assertThat(httpCode, greaterThanOrEqualTo(HttpStatusCodes.STATUS_CODE_OK));
-            assertThat(httpCode, lessThan(300));
-        }
+        logger.debug("{} HTTP code: {}", label, httpCode);
+        assertThat(HttpStatusCodes.isSuccess(httpCode), equalTo(true));
     }
 }
