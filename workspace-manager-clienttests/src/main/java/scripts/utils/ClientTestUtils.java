@@ -2,8 +2,6 @@ package scripts.utils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.lessThan;
 
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
