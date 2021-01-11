@@ -1,6 +1,6 @@
 {
-  "name": "WorkspaceClientTest",
-  "description": "Client tests for workspace endpoints. Authentication required.",
+  "name": "Basic Integration Test",
+  "description": "Basic integration tests for workspace endpoints. Authentication required.",
   "serverSpecificationFile": "workspace-dev.json",
   "kubernetes": {},
   "application": {},
