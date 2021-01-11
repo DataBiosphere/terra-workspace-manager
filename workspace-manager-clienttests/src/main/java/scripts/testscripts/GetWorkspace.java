@@ -1,5 +1,8 @@
 package scripts.testscripts;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
@@ -8,22 +11,23 @@ import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.WorkspaceDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.List;
 import java.util.UUID;
 import scripts.utils.WorkspaceTestScriptBase;
 
 public class GetWorkspace extends WorkspaceTestScriptBase {
     private static final Logger logger = LoggerFactory.getLogger(GetWorkspace.class);
-    private CreatedWorkspace workspace;
+
+    private UUID workspaceId;
 
     @Override
     public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
         throws ApiException {
-        final UUID workspaceId = UUID.randomUUID();
-        final CreateWorkspaceRequestBody requestBody = new CreateWorkspaceRequestBody();
-        requestBody.setId(workspaceId);
-        workspace = workspaceApi.createWorkspace(requestBody);
+        workspaceId = UUID.randomUUID();
+        final var requestBody = new CreateWorkspaceRequestBody()
+            .id(workspaceId);
+        final CreatedWorkspace workspace = workspaceApi.createWorkspace(requestBody);
+        assertThat(workspace.getId(), equalTo(workspaceId));
     }
 
     @Override
@@ -35,13 +39,14 @@ public class GetWorkspace extends WorkspaceTestScriptBase {
          *
          * Throw exception if anything goes wrong
          * **/
-        final WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspace.getId());
+        final WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspaceId);
+        assertThat(workspaceDescription.getId(), equalTo(workspaceId));
     }
 
     @Override
     public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
         throws ApiException {
-        workspaceApi.deleteWorkspace(workspace.getId());
+        workspaceApi.deleteWorkspace(workspaceId);
     }
 
 }

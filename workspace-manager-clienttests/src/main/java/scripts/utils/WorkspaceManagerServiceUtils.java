@@ -114,7 +114,7 @@ public class WorkspaceManagerServiceUtils {
 
     public static void assertHttpOk(WorkspaceApi workspaceApi, String label) {
         int httpCode = workspaceApi.getApiClient().getStatusCode();
-        logger.info("{}} HTTP code: {}", label, httpCode);
+        logger.info("{} HTTP code: {}", label, httpCode);
         // Code will initialize to zero for non-overridden methods like setup()
         if (httpCode > 0) {
             assertThat(httpCode, greaterThanOrEqualTo(HttpStatusCodes.STATUS_CODE_OK));

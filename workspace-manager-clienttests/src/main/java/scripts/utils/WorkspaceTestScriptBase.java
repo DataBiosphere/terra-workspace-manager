@@ -10,6 +10,13 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Intermediate base class for testing Workspace Manager in the TestRunner framework. This class handles
+ * obtaining the WorkspaceApi object and basic checks and debugging around its status code.
+ *
+ * Users of this class need to o verload doUserJourney() with efssentially the body of the userJourney() method,
+ * and optionally doSetup() and doCleanup() aw well.
+ */
 public abstract class WorkspaceTestScriptBase extends TestScript {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceTestScriptBase.class);
 
@@ -56,12 +63,11 @@ public abstract class WorkspaceTestScriptBase extends TestScript {
     WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "cleanup");
   }
 
-  public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws ApiException {
-  }
+  public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws ApiException {}
 
-  // doUserJourney is hte only method we force the class to override, so we don't get trivially passing tests that forget
+  // doUserJourney is the only method we force the class to override, so we don't get trivially passing tests that forget
   // to have a body
   public abstract void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi) throws ApiException;
 
-  public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws ApiException { };
+  public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws ApiException {};
 }
