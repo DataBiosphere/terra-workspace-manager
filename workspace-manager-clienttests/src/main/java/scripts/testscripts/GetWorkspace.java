@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.UUID;
+import scripts.utils.WorkspaceManagerServiceUtils;
 import scripts.utils.WorkspaceTestScriptBase;
 
 public class GetWorkspace extends WorkspaceTestScriptBase {
@@ -28,6 +29,7 @@ public class GetWorkspace extends WorkspaceTestScriptBase {
             .id(workspaceId);
         final CreatedWorkspace workspace = workspaceApi.createWorkspace(requestBody);
         assertThat(workspace.getId(), equalTo(workspaceId));
+        WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "CREATE workspace");
     }
 
     @Override
@@ -41,12 +43,14 @@ public class GetWorkspace extends WorkspaceTestScriptBase {
          * **/
         final WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspaceId);
         assertThat(workspaceDescription.getId(), equalTo(workspaceId));
+        WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "GET workspace");
     }
 
     @Override
     public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
         throws ApiException {
         workspaceApi.deleteWorkspace(workspaceId);
+        WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "DELETE workspace");
     }
 
 }
