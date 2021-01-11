@@ -1,24 +1,17 @@
 package scripts.utils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.equalTo;
 
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
-import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.CreateDataReferenceRequestBody;
-import bio.terra.workspace.model.DataReferenceDescription;
-import bio.terra.workspace.model.DataRepoSnapshot;
-import bio.terra.workspace.model.ReferenceTypeEnum;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,9 +78,9 @@ public class WorkspaceManagerServiceUtils {
         return buildClient(accessToken, server);
     }
 
-    /** Build a WorkspaceApi using the ApiClient from getClientForTestUser. */
-    public static WorkspaceApi getWorkspaceApiForTestUser(TestUserSpecification testUser, ServerSpecification server) throws IOException {
-        return new WorkspaceApi(getClientForTestUser(testUser, server));
+    public static WorkspaceApi getWorkspaceClient(TestUserSpecification testUser, ServerSpecification server) throws IOException {
+        final ApiClient apiClient = getClientForTestUser(testUser, server);
+        return new WorkspaceApi(apiClient);
     }
 
     /**
@@ -99,16 +92,6 @@ public class WorkspaceManagerServiceUtils {
      */
     public static ApiClient getClientWithoutAccessToken(ServerSpecification server) throws IOException {
         return buildClient(null, server);
-    }
-
-    public static void assertHttpOk(WorkspaceApi workspaceApi, String label) {
-        int httpCode = workspaceApi.getApiClient().getStatusCode();
-        logger.info("{}} HTTP code: {}", label, httpCode);
-        // Code will initialize to zero for non-overridden methods like setup()
-        if (httpCode > 0) {
-            assertThat(httpCode, greaterThanOrEqualTo(HttpStatusCodes.STATUS_CODE_OK));
-            assertThat(httpCode, lessThan(300));
-        }
     }
 
     private static ApiClient buildClient(AccessToken accessToken, ServerSpecification server) throws IOException {
@@ -127,4 +110,9 @@ public class WorkspaceManagerServiceUtils {
         return apiClient;
     }
 
+    public static void assertHttpOk(WorkspaceApi workspaceApi, String label) {
+        int httpCode = workspaceApi.getApiClient().getStatusCode();
+        logger.debug("{} HTTP code: {}", label, httpCode);
+        assertThat(HttpStatusCodes.isSuccess(httpCode), equalTo(true));
+    }
 }

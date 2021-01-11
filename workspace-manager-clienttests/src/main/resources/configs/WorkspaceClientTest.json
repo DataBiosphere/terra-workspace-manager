@@ -1,7 +1,7 @@
 {
   "name": "WorkspaceClientTest",
   "description": "Client tests for workspace endpoints. Authentication required.",
-  "serverSpecificationFile": "local-with-dev.json",
+  "serverSpecificationFile": "workspace-dev.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [

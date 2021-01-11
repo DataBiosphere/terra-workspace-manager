@@ -15,7 +15,7 @@ sourceCompatibility = JavaVersion.VERSION_11
 
 allprojects {
 	group = "bio.terra"
-	version = "0.6.0-SNAPSHOT"
+	version = "0.7.0-SNAPSHOT"
 	ext {
 		artifactGroup = "${group}.workspace"
 		swaggerOutputDir = "${buildDir}/swagger-code"
@@ -220,7 +220,9 @@ task setGitVersion(type: WriteProperties) {
 
 jib {
 	from {
-		image = "adoptopenjdk:11-jre-hotspot"
+		// see https://github.com/broadinstitute/dsp-appsec-blessed-images/tree/main/jre
+		// Google's distroless images are openjdk, this is the simplest with adoptopenjdk
+		image = "us.gcr.io/broad-dsp-gcr-public/base/jre:11-alpine"
 	}
 	container {
 		filesModificationTime = java.time.ZonedDateTime.now().toString() // to prevent ui caching

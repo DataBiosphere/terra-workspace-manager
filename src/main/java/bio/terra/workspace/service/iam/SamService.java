@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
+import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
@@ -62,6 +63,10 @@ public class SamService {
 
   private ResourcesApi samResourcesApi(String accessToken) {
     return new ResourcesApi(getApiClient(accessToken));
+  }
+
+  private GoogleApi samGoogleApi(String accessToken) {
+    return new GoogleApi(getApiClient(accessToken));
   }
 
   private UsersApi samUsersApi(String accessToken) {
@@ -207,6 +212,34 @@ public class SamService {
                       .users(entry.getPolicy().getMemberEmails())
                       .build())
           .collect(Collectors.toList());
+    } catch (ApiException e) {
+      throw new SamApiException(e);
+    }
+  }
+
+  /**
+   * Wrapper around Sam client to sync a Sam policy to a Google group. Returns email of that group.
+   *
+   * <p>This operation in Sam is idempotent, so we don't worry about calling this multiple times.
+   */
+  public String syncWorkspacePolicy(
+      UUID workspaceId, IamRole role, AuthenticatedUserRequest userReq) {
+    GoogleApi googleApi = samGoogleApi(userReq.getRequiredToken());
+    try {
+      // Sam makes no guarantees about what values are returned from the POST call, so we instead
+      // fetch the group in a separate call after syncing.
+      googleApi.syncPolicy(
+          SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole());
+      String groupEmail =
+          googleApi
+              .syncStatus(
+                  SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole())
+              .getEmail();
+      logger.info(
+          String.format(
+              "Synced role %s to google group %s in workspace %s",
+              role.toSamRole(), groupEmail, workspaceId.toString()));
+      return groupEmail;
     } catch (ApiException e) {
       throw new SamApiException(e);
     }

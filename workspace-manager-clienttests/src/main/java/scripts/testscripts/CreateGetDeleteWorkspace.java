@@ -15,33 +15,23 @@ import scripts.utils.WorkspaceManagerServiceUtils;
 
 import java.util.List;
 import java.util.UUID;
+import scripts.utils.WorkspaceTestScriptBase;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-public class CreateGetDeleteWorkspace extends TestScript {
+public class CreateGetDeleteWorkspace extends WorkspaceTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(CreateGetDeleteWorkspace.class);
 
-  @Override
-  public void setup(List<TestUserSpecification> testUsers) throws Exception {
-    assertThat("There must be at least one test user in configs/testusers directory.", testUsers!=null && testUsers.size()>0);
-  }
+  // No setup necessary!
 
   @Override
-  public void userJourney(TestUserSpecification testUser) throws Exception {
+  public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi) throws ApiException {
     UUID workspaceId = UUID.randomUUID();
-    ApiClient apiClient = WorkspaceManagerServiceUtils.getClientForTestUser(testUser, server);
-    WorkspaceApi workspaceApi = new WorkspaceApi(apiClient);
-    CreatedWorkspace workspace = null;
-    try {
-      CreateWorkspaceRequestBody requestBody = new CreateWorkspaceRequestBody();
-      requestBody.setId(workspaceId);
-      workspace = workspaceApi.createWorkspace(requestBody);
-    } catch (ApiException apiEx) {
-      logger.debug("Caught exception creating workspace ", apiEx);
-    }
+    CreateWorkspaceRequestBody requestBody = new CreateWorkspaceRequestBody();
+    requestBody.setId(workspaceId);
+    workspaceApi.createWorkspace(requestBody);
     WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "CREATE workspace");
-    assertThat(workspace.getId(), equalTo(workspaceId));
 
     WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspaceId);
     WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "GET workspace");
@@ -52,8 +42,5 @@ public class CreateGetDeleteWorkspace extends TestScript {
     WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "DELETE workspace");
   }
 
-  @Override
-  public void cleanup(List<TestUserSpecification> testUsers) throws Exception {
-    assertThat("There must be at least one test user in configs/testusers directory.", testUsers!=null && testUsers.size()>0);
-  }
+  // No cleanup necessary!
 }

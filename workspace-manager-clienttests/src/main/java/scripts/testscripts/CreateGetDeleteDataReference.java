@@ -20,32 +20,25 @@ import scripts.utils.WorkspaceManagerServiceUtils;
 
 import java.util.List;
 import java.util.UUID;
+import scripts.utils.WorkspaceTestScriptBase;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-public class CreateGetDeleteDataReference extends TestScript {
+public class CreateGetDeleteDataReference extends WorkspaceTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(CreateGetDeleteDataReference.class);
   private UUID workspaceId;
 
   @Override
-  public void setup(List<TestUserSpecification> testUsers) throws Exception {
-    assertThat("There must be at least one test user in configs/testusers directory.", testUsers!=null && testUsers.size()>0);
+  public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws ApiException {
     workspaceId = UUID.randomUUID();
-    WorkspaceApi workspaceApi = WorkspaceManagerServiceUtils.getWorkspaceApiForTestUser(testUsers.get(0), server);
-    try {
-      CreateWorkspaceRequestBody requestBody = new CreateWorkspaceRequestBody().id(workspaceId);
-      workspaceApi.createWorkspace(requestBody);
-    } catch (ApiException apiEx) {
-      logger.debug("Caught exception creating workspace ", apiEx);
-    }
-
+    CreateWorkspaceRequestBody requestBody = new CreateWorkspaceRequestBody().id(workspaceId);
+    workspaceApi.createWorkspace(requestBody);
     WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "CREATE workspace");
   }
 
   @Override
-  public void userJourney(TestUserSpecification testUser) throws Exception {
-    WorkspaceApi workspaceApi = WorkspaceManagerServiceUtils.getWorkspaceApiForTestUser(testUser, server);
+  public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi) throws ApiException {
     CreateDataReferenceRequestBody referenceRequest = DataReferenceUtils
         .defaultDataReferenceRequest();
     DataReferenceDescription createdReferenceDescription = workspaceApi.createDataReference(referenceRequest, workspaceId);
@@ -60,14 +53,8 @@ public class CreateGetDeleteDataReference extends TestScript {
   }
 
   @Override
-  public void cleanup(List<TestUserSpecification> testUsers) throws Exception {
-    assertThat("There must be at least one test user in configs/testusers directory.", testUsers!=null && testUsers.size()>0);
-    WorkspaceApi workspaceApi = WorkspaceManagerServiceUtils.getWorkspaceApiForTestUser(testUsers.get(0), server);
-    try {
-      workspaceApi.deleteWorkspace(workspaceId);
-    } catch (ApiException apiEx) {
-      logger.debug("Caught exception deleting workspace ", apiEx);
-    }
+  public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws ApiException {
+    workspaceApi.deleteWorkspace(workspaceId);
     WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "DELETE workspace");
   }
 }

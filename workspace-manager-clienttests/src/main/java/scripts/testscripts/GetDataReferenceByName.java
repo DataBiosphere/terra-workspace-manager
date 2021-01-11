@@ -20,24 +20,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.DataReferenceUtils;
 import scripts.utils.WorkspaceManagerServiceUtils;
+import scripts.utils.WorkspaceTestScriptBase;
 
-public class GetDataReferenceByName extends TestScript {
+public class GetDataReferenceByName extends WorkspaceTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(GetDataReferenceByName.class);
   private UUID workspaceId;
   private DataReferenceDescription dataReference;
 
   @Override
-  public void setup(List<TestUserSpecification> testUsers) throws Exception {
-    assertThat("There must be at least one test user in configs/testusers directory.", testUsers!=null && testUsers.size()>0);
+  public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws ApiException {
     workspaceId = UUID.randomUUID();
-    WorkspaceApi workspaceApi = WorkspaceManagerServiceUtils.getWorkspaceApiForTestUser(testUsers.get(0), server);
     // First, create a workspace.
-    try {
-      CreateWorkspaceRequestBody requestBody = new CreateWorkspaceRequestBody().id(workspaceId);
-      workspaceApi.createWorkspace(requestBody);
-    } catch (ApiException apiEx) {
-      logger.debug("Caught exception creating workspace ", apiEx);
-    }
+    CreateWorkspaceRequestBody requestBody = new CreateWorkspaceRequestBody().id(workspaceId);
+    workspaceApi.createWorkspace(requestBody);
     WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "CREATE workspace");
     // Second, create a data reference in that workspace.
     CreateDataReferenceRequestBody referenceRequest = DataReferenceUtils
@@ -47,22 +42,15 @@ public class GetDataReferenceByName extends TestScript {
   }
 
   @Override
-  public void userJourney(TestUserSpecification testUser) throws Exception {
-    WorkspaceApi workspaceApi = WorkspaceManagerServiceUtils.getWorkspaceApiForTestUser(testUser, server);
+  public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi) throws ApiException {
     DataReferenceDescription receivedReference = workspaceApi.getDataReferenceByName(workspaceId, dataReference.getReferenceType(), dataReference.getName());
     WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "GET data reference");
     assertThat(receivedReference, equalTo(dataReference));
   }
 
   @Override
-  public void cleanup(List<TestUserSpecification> testUsers) throws Exception {
-    assertThat("There must be at least one test user in configs/testusers directory.", testUsers!=null && testUsers.size()>0);
-    WorkspaceApi workspaceApi = WorkspaceManagerServiceUtils.getWorkspaceApiForTestUser(testUsers.get(0), server);
-    try {
-      workspaceApi.deleteWorkspace(workspaceId);
-    } catch (ApiException apiEx) {
-      logger.debug("Caught exception deleting workspace ", apiEx);
-    }
+  public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws ApiException {
+    workspaceApi.deleteWorkspace(workspaceId);
     WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "DELETE workspace");
   }
 }
