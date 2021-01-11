@@ -9,13 +9,18 @@ import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.IamRole;
+import bio.terra.workspace.model.RoleBinding;
 import bio.terra.workspace.model.RoleBindingList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scripts.utils.WorkspaceTestScriptBase;
 
 public class GetRoles extends WorkspaceTestScriptBase {
 private static final IamRole IAM_ROLE = IamRole.WRITER;
+  private static final Logger logger = LoggerFactory.getLogger(GetRoles.class);
   private UUID workspaceId;
 
   // Grant a role for all test users on a new workspace
@@ -32,11 +37,14 @@ private static final IamRole IAM_ROLE = IamRole.WRITER;
   @Override
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws ApiException {
+    logger.info("Granting role {} for user {} on workspace id {}", IAM_ROLE.toString(), testUser.userEmail, workspaceId.toString());
     // grant the role
     workspaceApi.grantRole(workspaceId, IAM_ROLE, testUser.userEmail);
 
     // check granted roles
     final RoleBindingList roles = workspaceApi.getRoles(workspaceId);
+
+    logger.debug("For workspace id {}, retrieved role bindings:\n{}", workspaceId.toString(), roles.toString());
    // our user should be in this list, with the correct role
     boolean isInList = roles.stream()
         .anyMatch(rb ->
