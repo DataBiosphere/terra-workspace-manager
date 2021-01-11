@@ -17,6 +17,7 @@ import scripts.utils.WorkspaceTestScriptBase;
 
 public class GetWorkspace extends WorkspaceTestScriptBase {
     private static final Logger logger = LoggerFactory.getLogger(GetWorkspace.class);
+
     private UUID workspaceId;
 
     @Override
