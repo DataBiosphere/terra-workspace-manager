@@ -714,7 +714,7 @@ components:
         $ref: '#/components/schemas/RoleBinding'
 
     MemberEmail:
-      description: A user or group's email. Used for adding or removing IAM permissions
+      description: A user or group's email.
       type: string
 
   responses:
