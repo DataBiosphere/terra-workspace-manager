@@ -5,9 +5,9 @@ name: Run Workspace Manager Integration Tests
 
 on:
   push:
-    paths-ignore:
-      - 'README.md'
-      - 'local-dev/**'
+    branches: [ dev ]
+  pull_request:
+    branches: [ '**' ]
 
 jobs:
   test-runner-perf:
