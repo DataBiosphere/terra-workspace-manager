@@ -29,7 +29,7 @@ public class GetWorkspace extends WorkspaceTestScriptBase {
             .id(workspaceId);
         final CreatedWorkspace workspace = workspaceApi.createWorkspace(requestBody);
         assertThat(workspace.getId(), equalTo(workspaceId));
-        WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "CREATE workspace");
+        WorkspaceManagerServiceUtils.assertHttpSuccess(workspaceApi, "CREATE workspace");
     }
 
     @Override
@@ -43,14 +43,14 @@ public class GetWorkspace extends WorkspaceTestScriptBase {
          * **/
         final WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspaceId);
         assertThat(workspaceDescription.getId(), equalTo(workspaceId));
-        WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "GET workspace");
+        WorkspaceManagerServiceUtils.assertHttpSuccess(workspaceApi, "GET workspace");
     }
 
     @Override
     public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
         throws ApiException {
         workspaceApi.deleteWorkspace(workspaceId);
-        WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "DELETE workspace");
+        WorkspaceManagerServiceUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");
     }
 
 }

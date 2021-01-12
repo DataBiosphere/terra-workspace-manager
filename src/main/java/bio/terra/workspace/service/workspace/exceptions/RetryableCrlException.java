@@ -2,9 +2,10 @@ package bio.terra.workspace.service.workspace.exceptions;
 
 import bio.terra.stairway.exception.RetryException;
 
-/** Exception for retryable errors thrown by the Cloud Resource Library (CRL).
+/**
+ * Exception for retryable errors thrown by the Cloud Resource Library (CRL).
  *
- * This extends Stairway's RetryException, which will signal Stairway to retry any step this is
+ * <p>This extends Stairway's RetryException, which will signal Stairway to retry any step this is
  * thrown from (modulo a retry rule).
  */
 public class RetryableCrlException extends RetryException {

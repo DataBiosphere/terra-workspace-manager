@@ -4,6 +4,7 @@ import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.model.DataRepoSnapshot;
 import bio.terra.workspace.model.ReferenceTypeEnum;
+import java.util.UUID;
 
 public class DataReferenceUtils {
 
@@ -22,7 +23,9 @@ public class DataReferenceUtils {
         new DataRepoSnapshot()
             .snapshot("97b5559a-2f8f-4df3-89ae-5a249173ee0c")
             .instanceName("terra");
-    String dataReferenceName = "workspace_integration_test_snapshot";
+    // Names need to be unique per reference type within a workspace, use a random name here
+    // to support multiple test threads running at once.
+    String dataReferenceName = "snapshot_" + UUID.randomUUID().toString().replace("-", "_");
     CreateDataReferenceRequestBody referenceRequest =
         new CreateDataReferenceRequestBody()
             .name(dataReferenceName)
