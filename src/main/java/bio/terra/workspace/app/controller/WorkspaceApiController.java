@@ -276,7 +276,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<Void> grantRole(
       @PathVariable("id") UUID id,
       @PathVariable("role") IamRole role,
-      @PathVariable("memberEmail") String memberEmail) {
+      @RequestBody String memberEmail) {
     ControllerValidationUtils.validateEmail(memberEmail);
     samService.grantWorkspaceRole(
         id,
