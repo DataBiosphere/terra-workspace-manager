@@ -24,7 +24,7 @@ public abstract class WorkspaceTestScriptBase extends TestScript {
   public void setup(List<TestUserSpecification> testUsers) throws Exception {
     assertThat("There must be at least one test user in configs/testusers directory.",
         testUsers != null && testUsers.size() > 0);
-    final WorkspaceApi workspaceApi = WorkspaceManagerServiceUtils
+    final WorkspaceApi workspaceApi = ClientTestUtils
         .getWorkspaceClient(testUsers.get(0), server);
     try {
       doSetup(testUsers, workspaceApi);
@@ -36,7 +36,7 @@ public abstract class WorkspaceTestScriptBase extends TestScript {
 
   @Override
   public void userJourney(TestUserSpecification testUser) throws Exception {
-    final WorkspaceApi workspaceApi = WorkspaceManagerServiceUtils
+    final WorkspaceApi workspaceApi = ClientTestUtils
         .getWorkspaceClient(testUser, server);
     try {
       doUserJourney(testUser, workspaceApi);
@@ -50,7 +50,7 @@ public abstract class WorkspaceTestScriptBase extends TestScript {
   public void cleanup(List<TestUserSpecification> testUsers) throws Exception {
     assertThat("There must be at least one test user in configs/testusers directory.",
         testUsers != null && testUsers.size() > 0);
-    final WorkspaceApi workspaceApi = WorkspaceManagerServiceUtils
+    final WorkspaceApi workspaceApi = ClientTestUtils
         .getWorkspaceClient(testUsers.get(0), server);
     try {
       doCleanup(testUsers, workspaceApi);
