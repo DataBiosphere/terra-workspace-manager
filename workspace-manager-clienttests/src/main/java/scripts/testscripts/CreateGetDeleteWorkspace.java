@@ -8,7 +8,7 @@ import bio.terra.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.model.WorkspaceStageModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scripts.utils.WorkspaceManagerServiceUtils;
+import scripts.utils.ClientTestUtils;
 
 import java.util.UUID;
 import scripts.utils.WorkspaceTestScriptBase;
@@ -19,24 +19,20 @@ import static org.hamcrest.Matchers.equalTo;
 public class CreateGetDeleteWorkspace extends WorkspaceTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(CreateGetDeleteWorkspace.class);
 
-  // No setup necessary!
-
   @Override
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi) throws ApiException {
     UUID workspaceId = UUID.randomUUID();
     CreateWorkspaceRequestBody requestBody = new CreateWorkspaceRequestBody();
     requestBody.setId(workspaceId);
     workspaceApi.createWorkspace(requestBody);
-    WorkspaceManagerServiceUtils.assertHttpSuccess(workspaceApi, "CREATE workspace");
+    ClientTestUtils.assertHttpSuccess(workspaceApi, "CREATE workspace");
 
     WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspaceId);
-    WorkspaceManagerServiceUtils.assertHttpSuccess(workspaceApi, "GET workspace");
+    ClientTestUtils.assertHttpSuccess(workspaceApi, "GET workspace");
     assertThat(workspaceDescription.getId(), equalTo(workspaceId));
     assertThat(workspaceDescription.getStage(), equalTo(WorkspaceStageModel.RAWLS_WORKSPACE));
 
     workspaceApi.deleteWorkspace(workspaceId);
-    WorkspaceManagerServiceUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");
+    ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");
   }
-
-  // No cleanup necessary!
 }

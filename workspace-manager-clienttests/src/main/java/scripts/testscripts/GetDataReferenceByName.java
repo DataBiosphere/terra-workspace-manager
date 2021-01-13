@@ -7,45 +7,28 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CreateDataReferenceRequestBody;
-import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.DataReferenceDescription;
 import java.util.List;
-import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import scripts.utils.DataReferenceUtils;
-import scripts.utils.WorkspaceManagerServiceUtils;
-import scripts.utils.WorkspaceTestScriptBase;
+import scripts.utils.ClientTestUtils;
+import scripts.utils.WorkspaceFixtureTestScriptBase;
 
-public class GetDataReferenceByName extends WorkspaceTestScriptBase {
-  private static final Logger logger = LoggerFactory.getLogger(GetDataReferenceByName.class);
-  private UUID workspaceId;
+public class GetDataReferenceByName extends WorkspaceFixtureTestScriptBase {
   private DataReferenceDescription dataReference;
 
   @Override
   public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws ApiException {
-    workspaceId = UUID.randomUUID();
-    // First, create a workspace.
-    CreateWorkspaceRequestBody requestBody = new CreateWorkspaceRequestBody().id(workspaceId);
-    workspaceApi.createWorkspace(requestBody);
-    WorkspaceManagerServiceUtils.assertHttpSuccess(workspaceApi, "CREATE workspace");
-    // Second, create a data reference in that workspace.
-    CreateDataReferenceRequestBody referenceRequest = DataReferenceUtils
-        .defaultDataReferenceRequest();
-    dataReference = workspaceApi.createDataReference(referenceRequest, workspaceId);
-    WorkspaceManagerServiceUtils.assertHttpSuccess(workspaceApi, "CREATE data reference");
+    // Create the workspace test fixture.
+    super.doSetup(testUsers, workspaceApi);
+    // Create a data reference in the provided workspace.
+    CreateDataReferenceRequestBody referenceRequest = ClientTestUtils.getTestCreateDataReferenceRequestBody();
+    dataReference = workspaceApi.createDataReference(referenceRequest, getWorkspaceId());
+    ClientTestUtils.assertHttpSuccess(workspaceApi, "CREATE data reference");
   }
 
   @Override
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi) throws ApiException {
-    DataReferenceDescription receivedReference = workspaceApi.getDataReferenceByName(workspaceId, dataReference.getReferenceType(), dataReference.getName());
-    WorkspaceManagerServiceUtils.assertHttpSuccess(workspaceApi, "GET data reference");
+    DataReferenceDescription receivedReference = workspaceApi.getDataReferenceByName(getWorkspaceId(), dataReference.getReferenceType(), dataReference.getName());
+    ClientTestUtils.assertHttpSuccess(workspaceApi, "GET data reference");
     assertThat(receivedReference, equalTo(dataReference));
-  }
-
-  @Override
-  public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws ApiException {
-    workspaceApi.deleteWorkspace(workspaceId);
-    WorkspaceManagerServiceUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");
   }
 }
