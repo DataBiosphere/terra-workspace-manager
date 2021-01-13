@@ -49,4 +49,4 @@ jobs:
           cd workspace-manager-clienttests
           ls src/main/resources/configs/integration
           ls src/main/resources/suites
-          ./gradlew runTest --args="BasicIntegration.json /tmp/TestRunnerResults"
+          ./gradlew runTest --args="configs/integration/BasicUnauthenticated.json /tmp/TestRunnerResults"
