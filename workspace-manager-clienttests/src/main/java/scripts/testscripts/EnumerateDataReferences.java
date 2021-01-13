@@ -138,15 +138,4 @@ public class EnumerateDataReferences extends WorkspaceFixtureTestScriptBase {
         getWorkspaceId(), workspaceApi, 10 * PAGE_SIZE, PAGE_SIZE);
     assertThat(referencesBeyondUpperBound, is(empty()));
   }
-
-  @Override
-  public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-      throws ApiException {
-    for (UUID referenceId : dataReferenceIds) {
-      workspaceApi.deleteDataReference(getWorkspaceId(), referenceId);
-      logger.debug("deleted data reference with ID: {}", referenceId.toString());
-    }
-    // cleanup the workspace
-    super.doCleanup(testUsers, workspaceApi);
-  }
 }

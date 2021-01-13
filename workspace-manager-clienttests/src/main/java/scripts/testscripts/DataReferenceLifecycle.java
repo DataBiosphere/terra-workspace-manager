@@ -2,6 +2,7 @@ package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
@@ -10,6 +11,7 @@ import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.model.DataReferenceDescription;
 import bio.terra.workspace.model.ReferenceTypeEnum;
+import org.apache.http.HttpStatus;
 import scripts.utils.WorkspaceFixtureTestScriptBase;
 import scripts.utils.ClientTestUtils;
 
@@ -38,7 +40,15 @@ public class DataReferenceLifecycle extends WorkspaceFixtureTestScriptBase {
     // remove reference
     workspaceApi.deleteDataReference(getWorkspaceId(), newReference.getReferenceId());
 
-    // TODO: assert 404 when retrieving again. This may interfere with parent class checking of status.
+    // verify it's not there anymore
+    DataReferenceDescription dataReferenceDescription = null;
+    try {
+       dataReferenceDescription = workspaceApi.getDataReference(getWorkspaceId(), newReference.getReferenceId());
+    } catch (ApiException expected) {
+      assertThat(expected.getCode(), equalTo(HttpStatus.SC_NOT_FOUND));
+    }
+    assertThat(dataReferenceDescription, equalTo(null));
+    assertThat(workspaceApi.getApiClient().getStatusCode(), equalTo(HttpStatus.SC_NOT_FOUND));
   }
 
   private void assertDataReferenceDescription(DataReferenceDescription dataReferenceDescription, String dataReferenceName) {

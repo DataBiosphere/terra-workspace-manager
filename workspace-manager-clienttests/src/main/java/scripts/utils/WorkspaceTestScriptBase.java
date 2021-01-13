@@ -32,7 +32,6 @@ public abstract class WorkspaceTestScriptBase extends TestScript {
       logger.debug("Caught exception creating setup ", apiEx);
       throw(apiEx);
     }
-    ClientTestUtils.assertHttpOk(workspaceApi, "setup");
   }
 
   @Override
@@ -45,7 +44,6 @@ public abstract class WorkspaceTestScriptBase extends TestScript {
       logger.debug("Caught exception in userJourney ", apiEx);
       throw(apiEx);
     }
-    ClientTestUtils.assertHttpOk(workspaceApi, "userJourney");
   }
 
   @Override
@@ -60,7 +58,6 @@ public abstract class WorkspaceTestScriptBase extends TestScript {
       logger.debug("Caught exception during cleanup ", apiEx);
       throw(apiEx);
     }
-    ClientTestUtils.assertHttpOk(workspaceApi, "cleanup");
   }
 
   public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws ApiException {}
