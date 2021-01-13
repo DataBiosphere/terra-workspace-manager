@@ -17,7 +17,7 @@ import scripts.testscripts.GetWorkspace;
 
 /**
  * Base class for tests that use a single workspace as a fixture. The expectation is that
- * the workspace setup & destruction are all that neeeds to hapen in setup() nad cleanup(), although
+ * the workspace setup & destruction are all that needs to happen in setup() and cleanup(), although
  * doSetup() and doCleanup() can still be overridden, provided the caller calls super().
  *
  * No doUserJourney() implementation is provided, and this must be overridden by inheriting classes.
@@ -36,7 +36,7 @@ public abstract class WorkspaceFixtureTestScriptBase extends WorkspaceTestScript
   }
 
   /**
-   * Create a workspace as a test fixture (i.e. not specidfically the code under test).
+   * Create a workspace as a test fixture (i.e. not specifically the code under test).
    * @param testUsers - test user configurations
    * @param workspaceApi - API with workspace methods
    * @throws ApiException
