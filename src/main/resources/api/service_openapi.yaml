@@ -240,7 +240,7 @@ paths:
     - $ref: '#/components/parameters/Id'
     - $ref: '#/components/parameters/Role'
     - $ref: '#/components/parameters/MemberEmail'
-    put:
+    post:
       summary: Grant an IAM role to a user or group.
       operationId: grantRole
       tags: [Workspace]
