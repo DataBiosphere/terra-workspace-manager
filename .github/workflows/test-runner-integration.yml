@@ -48,5 +48,5 @@ jobs:
           ./gradlew :workspace-manager-client:build
           cd workspace-manager-clienttests
           ls src/main/resources/configs/integration
-          ls src/main/resources/suites/integration
+          ls src/main/resources/suites
           ./gradlew runTest --args="BasicIntegration.json /tmp/TestRunnerResults"
