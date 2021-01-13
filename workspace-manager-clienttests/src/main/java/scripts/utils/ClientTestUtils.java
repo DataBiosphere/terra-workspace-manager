@@ -8,19 +8,34 @@ import bio.terra.testrunner.runner.config.ServerSpecification;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
+import bio.terra.workspace.client.ApiException;
+import bio.terra.workspace.model.CloningInstructionsEnum;
+import bio.terra.workspace.model.CreateDataReferenceRequestBody;
+import bio.terra.workspace.model.DataReferenceDescription;
+import bio.terra.workspace.model.DataReferenceList;
+import bio.terra.workspace.model.DataRepoSnapshot;
+import bio.terra.workspace.model.ReferenceTypeEnum;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
+import java.util.List;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import scripts.testscripts.EnumerateDataReferences;
 
-public class WorkspaceManagerServiceUtils {
-    private static final Logger logger = LoggerFactory.getLogger(WorkspaceManagerServiceUtils.class);
+public class ClientTestUtils {
 
-    private WorkspaceManagerServiceUtils() {}
+    public static final String DATA_REFERENCE_NAME_PREFIX = "REF_";
+    public static final String TEST_SNAPSHOT = "97b5559a-2f8f-4df3-89ae-5a249173ee0c";
+    public static final String TERRA_DATA_REPO_INSTANCE = "terra";
+
+    private static final Logger logger = LoggerFactory.getLogger(ClientTestUtils.class);
+
+    private ClientTestUtils() {}
 
     /**
      * Build the Workspace Manager Service API client object for the given server specification.
@@ -114,5 +129,41 @@ public class WorkspaceManagerServiceUtils {
         int httpCode = workspaceApi.getApiClient().getStatusCode();
         logger.debug("{} HTTP code: {}", label, httpCode);
         assertThat(HttpStatusCodes.isSuccess(httpCode), equalTo(true));
+    }
+
+    /**
+     * Return a globally unique data reference name starting with the constant prefix.
+     * This will include a UUID reformatted to meet the rules for data reference names
+     * (just replacing hyphens with underscores). This method is useful when creating references
+     * on the same workspace from multiple threads.
+     * @return
+     */
+    public static String getUniqueDataReferenceName() {
+        return DATA_REFERENCE_NAME_PREFIX +
+            UUID.randomUUID()
+                .toString()
+                .replace("-", "_");
+    }
+
+    public static DataRepoSnapshot getTestDataRepoSnapshot() {
+      return new DataRepoSnapshot()
+          .snapshot(TEST_SNAPSHOT)
+          .instanceName(TERRA_DATA_REPO_INSTANCE);
+    }
+
+    public static CreateDataReferenceRequestBody getTestCreateDataReferenceRequestBody() {
+      return new CreateDataReferenceRequestBody()
+          .name(getUniqueDataReferenceName())
+          .cloningInstructions(CloningInstructionsEnum.REFERENCE)
+          .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
+          .reference(getTestDataRepoSnapshot());
+    }
+
+    public static List<DataReferenceDescription> getDataReferenceDescriptions(
+        UUID workspaceId, WorkspaceApi workspaceApi,
+        int offset, int limit) throws ApiException {
+      final DataReferenceList dataReferenceListFirstPage = workspaceApi.enumerateReferences(
+          workspaceId, offset, limit);
+      return dataReferenceListFirstPage.getResources();
     }
 }

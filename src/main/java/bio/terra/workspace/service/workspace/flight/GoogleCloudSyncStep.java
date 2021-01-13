@@ -19,10 +19,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * A {@link Step} that grants GCP IAM permissions to Sam policy groups.
@@ -60,9 +58,12 @@ public class GoogleCloudSyncStep implements Step {
       List<Binding> existingBindings = currentPolicy.getBindings();
 
       // GCP IAM always prefixes groups with the literal "group:"
-      String readerGroup = "group:" + workingMap.get(WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL, String.class);
-      String writerGroup = "group:" + workingMap.get(WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL, String.class);
-      String ownerGroup = "group:" + workingMap.get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class);
+      String readerGroup =
+          "group:" + workingMap.get(WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL, String.class);
+      String writerGroup =
+          "group:" + workingMap.get(WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL, String.class);
+      String ownerGroup =
+          "group:" + workingMap.get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class);
       List<Binding> newBindings = new ArrayList<>();
       newBindings.addAll(bindingsForRole(IamRole.READER, readerGroup));
       newBindings.addAll(bindingsForRole(IamRole.WRITER, writerGroup));
@@ -84,16 +85,17 @@ public class GoogleCloudSyncStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  /** Build a list of role bindings for a given group, using CloudSyncRoleMapping.
+  /**
+   * Build a list of role bindings for a given group, using CloudSyncRoleMapping.
    *
    * @param role The role granted to this user. Translated to GCP roles using CloudSyncRoleMapping.
-   * @param group The group being granted a role. Should be prefixed with the literal "group:" for GCP.
-   * */
+   * @param group The group being granted a role. Should be prefixed with the literal "group:" for
+   *     GCP.
+   */
   private List<Binding> bindingsForRole(IamRole role, String group) {
     List<Binding> bindings = new ArrayList<>();
     for (String gcpRole : CloudSyncRoleMapping.cloudSyncRoleMap.get(role)) {
-      bindings.add(
-          new Binding().setRole(gcpRole).setMembers(Collections.singletonList(group)));
+      bindings.add(new Binding().setRole(gcpRole).setMembers(Collections.singletonList(group)));
     }
     return bindings;
   }

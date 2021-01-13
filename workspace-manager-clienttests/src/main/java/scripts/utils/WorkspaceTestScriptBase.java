@@ -24,7 +24,7 @@ public abstract class WorkspaceTestScriptBase extends TestScript {
   public void setup(List<TestUserSpecification> testUsers) throws Exception {
     assertThat("There must be at least one test user in configs/testusers directory.",
         testUsers != null && testUsers.size() > 0);
-    final WorkspaceApi workspaceApi = WorkspaceManagerServiceUtils
+    final WorkspaceApi workspaceApi = ClientTestUtils
         .getWorkspaceClient(testUsers.get(0), server);
     try {
       doSetup(testUsers, workspaceApi);
@@ -32,12 +32,12 @@ public abstract class WorkspaceTestScriptBase extends TestScript {
       logger.debug("Caught exception creating setup ", apiEx);
       throw(apiEx);
     }
-    WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "setup");
+    ClientTestUtils.assertHttpOk(workspaceApi, "setup");
   }
 
   @Override
   public void userJourney(TestUserSpecification testUser) throws Exception {
-    final WorkspaceApi workspaceApi = WorkspaceManagerServiceUtils
+    final WorkspaceApi workspaceApi = ClientTestUtils
         .getWorkspaceClient(testUser, server);
     try {
       doUserJourney(testUser, workspaceApi);
@@ -45,14 +45,14 @@ public abstract class WorkspaceTestScriptBase extends TestScript {
       logger.debug("Caught exception in userJourney ", apiEx);
       throw(apiEx);
     }
-    WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "userJourney");
+    ClientTestUtils.assertHttpOk(workspaceApi, "userJourney");
   }
 
   @Override
   public void cleanup(List<TestUserSpecification> testUsers) throws Exception {
     assertThat("There must be at least one test user in configs/testusers directory.",
         testUsers != null && testUsers.size() > 0);
-    final WorkspaceApi workspaceApi = WorkspaceManagerServiceUtils
+    final WorkspaceApi workspaceApi = ClientTestUtils
         .getWorkspaceClient(testUsers.get(0), server);
     try {
       doCleanup(testUsers, workspaceApi);
@@ -60,7 +60,7 @@ public abstract class WorkspaceTestScriptBase extends TestScript {
       logger.debug("Caught exception during cleanup ", apiEx);
       throw(apiEx);
     }
-    WorkspaceManagerServiceUtils.assertHttpOk(workspaceApi, "cleanup");
+    ClientTestUtils.assertHttpOk(workspaceApi, "cleanup");
   }
 
   public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws ApiException {}
