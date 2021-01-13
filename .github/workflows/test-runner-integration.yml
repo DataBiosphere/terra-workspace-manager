@@ -47,4 +47,5 @@ jobs:
         run: |
           ./gradlew :workspace-manager-client:build
           cd workspace-manager-clienttests
+          ls suites
           ./gradlew runTest --args="BasicIntegration.json /tmp/TestRunnerResults"
