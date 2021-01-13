@@ -235,20 +235,15 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/roles/{role}/members:
+  /api/workspaces/v1/{id}/roles/{role}/members/{memberEmail}:
     parameters:
     - $ref: '#/components/parameters/Id'
     - $ref: '#/components/parameters/Role'
-    put:
+    - $ref: '#/components/parameters/MemberEmail'
+    post:
       summary: Grant an IAM role to a user or group.
       operationId: grantRole
       tags: [Workspace]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MemberEmail'
       responses:
         '204':
           description: Role granted successfully
@@ -258,12 +253,6 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-
-  /api/workspaces/v1/{id}/roles/{role}/members/{memberEmail}:
-    parameters:
-    - $ref: '#/components/parameters/Id'
-    - $ref: '#/components/parameters/Role'
-    - $ref: '#/components/parameters/MemberEmail'
     delete:
       summary: Remove an IAM role from a user or group.
       operationId: removeRole
@@ -404,7 +393,7 @@ components:
     MemberEmail:
       name: memberEmail
       in: path
-      description: A user or group's email.
+      description: A user or group's email. Used for adding or removing IAM permissions
       required: true
       schema:
         type: string
@@ -712,10 +701,6 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/RoleBinding'
-
-    MemberEmail:
-      description: A user or group's email.
-      type: string
 
   responses:
     CreatedWorkspaceResponse:
