@@ -2,5 +2,5 @@
   "name": "BasicSmoke",
   "description": "Smoke tests.",
   "serverSpecificationFile": "workspace-dev.json",
-  "testConfigurationFiles": ["BasicUnauthenticated.json", "BasicAuthenticated.json"]
+  "testConfigurationFiles": ["integration/BasicUnauthenticated.json", "integration/BasicAuthenticated.json"]
 }

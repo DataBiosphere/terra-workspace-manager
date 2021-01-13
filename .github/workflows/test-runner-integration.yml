@@ -4,10 +4,7 @@
 name: Run Workspace Manager Integration Tests
 
 on:
-  push:
-    branches: [ dev ]
-  pull_request:
-    branches: [ '**' ]
+  push
 
 jobs:
   test-runner-perf:
@@ -50,4 +47,4 @@ jobs:
         run: |
           ./gradlew :workspace-manager-client:build
           cd workspace-manager-clienttests
-          ./gradlew runTest --args="configs/integration/BasicAuthenticated.json /tmp/TestRunnerResults"
+          ./gradlew runTest --args="integration/BasicUnauthenticated.json /tmp/TestRunnerResults"
