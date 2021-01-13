@@ -14,7 +14,9 @@ import bio.terra.workspace.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.model.DataReferenceDescription;
 import bio.terra.workspace.model.DataReferenceList;
 import bio.terra.workspace.model.DataRepoSnapshot;
+import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ReferenceTypeEnum;
+import bio.terra.workspace.model.RoleBindingList;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -166,4 +168,20 @@ public class ClientTestUtils {
           workspaceId, offset, limit);
       return dataReferenceListFirstPage.getResources();
     }
+
+    /**
+     * True if the role binding list contains a binding for a given user and Iam Role.
+     * @param roleBindings - list of role bindings, as retrieved via getRoles()
+     * @param userEmail - user to check for
+     * @param role - role to check
+     * @return
+     */
+  public static boolean containsBinding(
+      RoleBindingList roleBindings,
+      String userEmail,
+      IamRole role) {
+    return roleBindings.stream()
+        .anyMatch(rb ->
+            rb.getRole() == role && rb.getMembers().contains(userEmail));
+  }
 }

@@ -7,30 +7,7 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.WorkspaceDescription;
-<<<<<<< HEAD
 import scripts.utils.WorkspaceFixtureTestScriptBase;
-=======
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.util.List;
-import java.util.UUID;
-import scripts.utils.WorkspaceTestScriptBase;
-
-public class GetWorkspace extends WorkspaceTestScriptBase {
-    private static final Logger logger = LoggerFactory.getLogger(GetWorkspace.class);
-
-    private UUID workspaceId;
-
-    @Override
-    public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-        throws ApiException {
-        workspaceId = UUID.randomUUID();
-        final var requestBody = new CreateWorkspaceRequestBody()
-            .id(workspaceId);
-        final CreatedWorkspace workspace = workspaceApi.createWorkspace(requestBody);
-        assertThat(workspace.getId(), equalTo(workspaceId));
-    }
->>>>>>> c138852 (cleanup rebase)
 
 public class GetWorkspace extends WorkspaceFixtureTestScriptBase {
     @Override
@@ -42,21 +19,8 @@ public class GetWorkspace extends WorkspaceFixtureTestScriptBase {
          *
          * Throw exception if anything goes wrong
          * **/
-<<<<<<< HEAD
         final WorkspaceDescription workspaceDescription = workspaceApi
             .getWorkspace(getWorkspaceId());
         assertThat(workspaceDescription.getId(), equalTo(getWorkspaceId()));
     }
-=======
-        final WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspaceId);
-        assertThat(workspaceDescription.getId(), equalTo(workspaceId));
-    }
-
-    @Override
-    public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-        throws ApiException {
-        workspaceApi.deleteWorkspace(workspaceId);
-    }
-
->>>>>>> c138852 (cleanup rebase)
 }
