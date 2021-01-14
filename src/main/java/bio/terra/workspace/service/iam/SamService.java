@@ -154,6 +154,7 @@ public class SamService {
    */
   public void grantWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
+    workspaceAuthz(userReq, workspaceId, SamActionToModifyRole(role));
     workspaceDao.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
@@ -177,6 +178,7 @@ public class SamService {
    */
   public void removeWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
+    workspaceAuthz(userReq, workspaceId, SamActionToModifyRole(role));
     workspaceDao.assertMcWorkspace(workspaceId, "removeWorkspaceRole");
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
@@ -198,6 +200,7 @@ public class SamService {
    * permissions directly on other workspaces.
    */
   public List<RoleBinding> listRoleBindings(UUID workspaceId, AuthenticatedUserRequest userReq) {
+    workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_IAM_ACTION);
     workspaceDao.assertMcWorkspace(workspaceId, "listRoleBindings");
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
@@ -308,6 +311,23 @@ public class SamService {
       return usersApi.getUserStatusInfo().getUserEmail();
     } catch (ApiException samException) {
       throw new SamApiException(samException);
+    }
+  }
+
+  /** Returns the Sam action corresponding to modifying an IAM role. */
+  private String SamActionToModifyRole(IamRole role) {
+    switch (role) {
+      case READER:
+        return SamConstants.SAM_WORKSPACE_SHARE_READER_IAM_ACTION;
+      case WRITER:
+        return SamConstants.SAM_WORKSPACE_SHARE_WRITER_IAM_ACTION;
+      case OWNER:
+        return SamConstants.SAM_WORKSPACE_SHARE_OWNER_IAM_ACTION;
+      default:
+        throw new RuntimeException(
+            String.format(
+                "Attempting to modify Sam policy for unknown role: %s. You're likely missing a constant in SamConstants.",
+                role));
     }
   }
 }
