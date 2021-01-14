@@ -1,6 +1,6 @@
 {
-  "name": "BasicNightlyPerf",
-  "description": "Nightly perf tests.",
+  "name": "BasicPerf",
+  "description": "Perf tests.",
   "serverSpecificationFile": "workspace-dev.json",
   "testConfigurationFiles": ["perf/BasicUnauthenticated.json"]
 }

@@ -27,7 +27,7 @@ Integration Test
 
 Perf Test
 ```
-./gradlew  runTest --args="suites/BasicNightlyPerf.json /tmp/TR"
+./gradlew  runTest --args="suites/BasicPerf.json /tmp/TR"
 ```
 
 The default server that the test will run against is specified in the resources/configs/integration/BasicAuthenticated.json file, using integration test as example.
