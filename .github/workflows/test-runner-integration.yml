@@ -4,10 +4,7 @@
 name: Test Runner Integration Tests
 
 on:
-  push:
-    branches: [ dev ]
-  pull_request:
-    branches: [ '**' ]
+  push
 
 jobs:
   test-runner-integration:
@@ -48,6 +45,10 @@ jobs:
           restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
       - name: Build the WSM client and run the Basic Integration test suite
         run: |
-          ./gradlew :workspace-manager-client:build
+          echo "Building WSM client library"
+          ./gradlew :workspace-manager-client:clean :workspace-manager-client:assemble
           cd workspace-manager-clienttests
+          export ORG_GRADLE_PROJECT_workspacemanagerclientjar=$(find .. -type f -name "workspace-manager-client*.jar")
+          echo "ORG_GRADLE_PROJECT_workspacemanagerclientjar = ${ORG_GRADLE_PROJECT_workspacemanagerclientjar}"
+          echo "Running test suite"
           ./gradlew runTest --args="suites/BasicIntegration.json /tmp/TestRunnerResults"
