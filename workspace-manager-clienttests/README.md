@@ -76,7 +76,8 @@ export ORG_GRADLE_PROJECT_workspacemanagerclientjar=~/terra-workspace-manager/wo
 ```
 
 This is useful for debugging or testing local server code changes that affect the generated client library (e.g. new API
-endpoint). You can generate the Workspace Manager client library with the Gradle assemble task of the workspace-manager-client sub-project.
+endpoint). You can generate the Workspace Manager client library with the Gradle assemble task of the `workspace-manager-client` sub-project.
+Please refer to `test-runner-integration.yml` for an example use case.
 
 ```
 cd ~/terra-workspace-manager/workspace-manager-client
