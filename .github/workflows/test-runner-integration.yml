@@ -4,7 +4,10 @@
 name: Sample Integration Tests
 
 on:
-  push
+  push:
+    branches: [ dev ]
+  pull_request:
+    branches: [ '**' ]
 
 jobs:
   test-runner-integration:
