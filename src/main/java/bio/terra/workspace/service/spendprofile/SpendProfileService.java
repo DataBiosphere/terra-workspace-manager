@@ -1,9 +1,9 @@
 package bio.terra.workspace.service.spendprofile;
 
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
-import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import com.google.common.collect.Maps;
 import java.util.List;
@@ -46,9 +46,9 @@ public class SpendProfileService {
       SpendProfileId spendProfileId, AuthenticatedUserRequest userRequest) {
     if (!samService.isAuthorized(
         userRequest.getRequiredToken(),
-        SamUtils.SPEND_PROFILE_RESOURCE,
+        SamConstants.SPEND_PROFILE_RESOURCE,
         spendProfileId.id(),
-        SamUtils.SPEND_PROFILE_LINK_ACTION)) {
+        SamConstants.SPEND_PROFILE_LINK_ACTION)) {
       throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
     }
     SpendProfile spend = spendProfiles.get(spendProfileId);

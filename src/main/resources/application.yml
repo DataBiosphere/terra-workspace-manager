@@ -32,13 +32,20 @@ server:
 
 spring:
   application.name: workspace
-  resources:
-    cache.cachecontrol:
-      max-age: 0
-      must-revalidate: true
-    static-locations: classpath:/api/
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          max-age: 0
+          must-revalidate: true
+        use-last-modified: false
+      static-locations: classpath:/api/
 
 workspace:
+  buffer:
+    pool-id: workspace_manager_v1
+    instance-url: https://buffer.dsde-dev.broadinstitute.org
+
   datarepo.instances:
     terra: ${env.urls.terra-datarepo}
 

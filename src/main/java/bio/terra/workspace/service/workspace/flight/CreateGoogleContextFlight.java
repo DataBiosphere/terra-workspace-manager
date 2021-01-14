@@ -6,6 +6,7 @@ import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.stairway.*;
 import bio.terra.workspace.app.configuration.external.GoogleWorkspaceConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.iam.SamService;
 import org.springframework.context.ApplicationContext;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -23,6 +24,7 @@ public class CreateGoogleContextFlight extends Flight {
     CloudBillingClientCow billingClient = appContext.getBean(CloudBillingClientCow.class);
     WorkspaceDao workspaceDao = appContext.getBean(WorkspaceDao.class);
     TransactionTemplate transactionTemplate = appContext.getBean(TransactionTemplate.class);
+    SamService samService = appContext.getBean(SamService.class);
 
     RetryRule retryRule =
         new RetryRuleExponentialBackoff(
@@ -35,5 +37,7 @@ public class CreateGoogleContextFlight extends Flight {
         retryRule);
     addStep(new SetProjectBillingStep(billingClient));
     addStep(new StoreGoogleContextStep(workspaceDao, transactionTemplate), retryRule);
+    addStep(new SyncSamGroupsStep(samService), retryRule);
+    addStep(new GoogleCloudSyncStep(resourceManager), retryRule);
   }
 }

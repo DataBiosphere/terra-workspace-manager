@@ -1,11 +1,9 @@
 package bio.terra.workspace.service.workspace;
 
-import bio.terra.workspace.common.model.Workspace;
-import bio.terra.workspace.common.model.WorkspaceStage;
-import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
@@ -14,6 +12,8 @@ import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.flight.*;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,43 +48,37 @@ public class WorkspaceService {
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
-  public UUID createWorkspace(
-      UUID workspaceId,
-      Optional<SpendProfileId> spendProfileId,
-      WorkspaceStage workspaceStage,
-      AuthenticatedUserRequest userReq) {
+  public UUID createWorkspace(WorkspaceRequest workspaceRequest, AuthenticatedUserRequest userReq) {
 
-    String description = "Create workspace " + workspaceId.toString();
+    String description = "Create workspace " + workspaceRequest.workspaceId().toString();
     JobBuilder createJob =
         jobService
             .newJob(
-                description,
-                UUID.randomUUID().toString(), // JobId does not need persistence for sync calls.
-                WorkspaceCreateFlight.class,
-                null,
-                userReq)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
-    if (spendProfileId.isPresent()) {
-      createJob.addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfileId.get().id());
+                description, workspaceRequest.jobId(), WorkspaceCreateFlight.class, null, userReq)
+            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceRequest.workspaceId());
+    if (workspaceRequest.spendProfileId().isPresent()) {
+      createJob.addParameter(
+          WorkspaceFlightMapKeys.SPEND_PROFILE_ID, workspaceRequest.spendProfileId().get().id());
     }
 
-    createJob.addParameter(WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceStage);
+    createJob.addParameter(
+        WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceRequest.workspaceStage());
 
-    return createJob.submitAndWait(UUID.class);
+    return createJob.submitAndWait(UUID.class, true);
   }
 
   /** Retrieves an existing workspace by ID */
   @Traced
   public Workspace getWorkspace(UUID id, AuthenticatedUserRequest userReq) {
-    samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_READ_ACTION);
+    samService.workspaceAuthz(userReq, id, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return workspaceDao.getWorkspace(id);
   }
 
-  /** Delete an existing workspace by ID. Does not delete underlying cloud context. */
+  /** Delete an existing workspace by ID. */
   @Traced
   public void deleteWorkspace(UUID id, AuthenticatedUserRequest userReq) {
 
-    samService.workspaceAuthz(userReq, id, SamUtils.SAM_WORKSPACE_DELETE_ACTION);
+    samService.workspaceAuthz(userReq, id, SamConstants.SAM_WORKSPACE_DELETE_ACTION);
 
     String description = "Delete workspace " + id;
     JobBuilder deleteJob =
@@ -96,20 +90,21 @@ public class WorkspaceService {
                 null, // Delete does not have a useful request body
                 userReq)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id);
-    deleteJob.submitAndWait(null);
+    deleteJob.submitAndWait(null, false);
   }
 
   /** Retrieves the cloud context of a workspace. */
   @Traced
   public WorkspaceCloudContext getCloudContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
-    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
+    samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return workspaceDao.getCloudContext(workspaceId);
   }
 
   /** Start a job to create a Google cloud context for the workspace. Returns the job id. */
   @Traced
   public String createGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
-    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+    samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+    workspaceDao.assertMcWorkspace(workspaceId, "createGoogleContext");
     Optional<SpendProfileId> spendProfileId =
         workspaceDao.getWorkspace(workspaceId).spendProfileId();
     if (spendProfileId.isEmpty()) {
@@ -131,14 +126,15 @@ public class WorkspaceService {
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
         .addParameter(
             WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendProfile.billingAccountId().get())
-        .submit();
+        .submit(false);
     return jobId;
   }
 
   /** Delete the Google cloud context for the workspace. */
   @Traced
   public void deleteGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
-    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+    samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+    workspaceDao.assertMcWorkspace(workspaceId, "deleteGoogleContext");
     jobService
         .newJob(
             "Delete Google Context " + workspaceId,
@@ -147,6 +143,6 @@ public class WorkspaceService {
             /* request= */ null,
             userReq)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
-        .submitAndWait(null);
+        .submitAndWait(null, false);
   }
 }

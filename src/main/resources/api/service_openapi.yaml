@@ -175,6 +175,99 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{id}/google:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      summary: Create a google context for the workspace.
+      operationId: createGoogleContext
+      tags: [Workspace]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGoogleContextRequestBody'
+      responses:
+        '202':
+          description: Redirect for profile successful creation
+          headers:
+            location:
+              description: url for the job result
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobModel'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Deletes the google context and all of its data from a workspace.
+      operationId: deleteGoogleContext
+      tags: [Workspace]
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{id}/roles:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    get:
+      summary: Read all IAM roles and their members in a workspace.
+      operationId: getRoles
+      tags: [Workspace]
+      responses:
+        '200':
+          $ref: '#/components/responses/RoleBindingListResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{id}/roles/{role}/members/{memberEmail}:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/Role'
+    - $ref: '#/components/parameters/MemberEmail'
+    post:
+      summary: Grant an IAM role to a user or group.
+      operationId: grantRole
+      tags: [Workspace]
+      responses:
+        '204':
+          description: Role granted successfully
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Remove an IAM role from a user or group.
+      operationId: removeRole
+      tags: [Workspace]
+      responses:
+        '204':
+          description: Role removed successfully
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+
   # Job paths, all disabled for now
 #  /api/jobs/v1/{id}:
 #    parameters:
@@ -289,6 +382,22 @@ components:
       schema:
         $ref: '#/components/schemas/Name'
 
+    Role:
+      name: role
+      in: path
+      description: An IAM role
+      required: true
+      schema:
+        $ref: '#/components/schemas/IamRole'
+
+    MemberEmail:
+      name: memberEmail
+      in: path
+      description: A user or group's email. Used for adding or removing IAM permissions
+      required: true
+      schema:
+        type: string
+
   schemas:
     ErrorReport:
       type: object
@@ -401,6 +510,14 @@ components:
           items:
             type: string
             format: uuid
+        jobId:
+          description: |
+            Optional ID used for idempotency. If multiple requests use the same
+            jobId, they will be considered logical duplicates rather than
+            unique requests. Sending different requests with the same jobId
+            will lead to all but one of the request bodies being ignored.
+            This will be randomly generated if not provided in a request.
+          type: string
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
 
@@ -426,6 +543,8 @@ components:
           type: string
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
+        googleContext:
+          $ref: '#/components/schemas/GoogleContext'
 
     CloningInstructionsEnum:
       type: string
@@ -440,6 +559,14 @@ components:
       # PLACEHOLDER_VALUE should be removed when we have an actual second value
       # to use.
       enum: ['DATA_REPO_SNAPSHOT', 'PLACEHOLDER_VALUE'] #eventually include GCS bucket, etc.
+
+    GoogleContext:
+      type: object
+      description: The Google cloud space associated with a workspace.
+      properties:
+        projectId:
+          description: The ID of Google Project associated with the workspace.
+          type: string
 
     CreateDataReferenceRequestBody:
       type: object
@@ -540,6 +667,41 @@ components:
       type: string
       enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']
 
+    CreateGoogleContextRequestBody:
+      description: Request body object for creating the Google context.
+      type: object
+      properties:
+        jobId:
+          description: |
+            The ID to use for the job of creating the google context. If not specified, a job id
+            will be randomly generated. If specified, the create Google context endpoint can be
+            called idempotently.
+          type: string
+
+    IamRole:
+      description: Enum containing all valid IAM roles on a Workspace
+      type: string
+      enum: ['READER', 'WRITER', 'OWNER']
+
+    RoleBinding:
+      description: A binding between an IAM role and users with that role
+      type: object
+      required: [role]
+      properties:
+        role:
+          $ref: '#/components/schemas/IamRole'
+        members:
+          description: A list of users that this role applies to
+          type: array
+          items:
+            type: string
+
+    RoleBindingList:
+      description: A list of role bindings
+      type: array
+      items:
+        $ref: '#/components/schemas/RoleBinding'
+
   responses:
     CreatedWorkspaceResponse:
       description: Response to createWorkspace calls
@@ -561,6 +723,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/DataReferenceList'
+
+    RoleBindingListResponse:
+      description: Response to list permissions calls
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RoleBindingList'
 
     # Error Responses
     BadRequest:

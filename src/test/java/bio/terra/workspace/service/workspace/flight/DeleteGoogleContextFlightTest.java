@@ -6,12 +6,15 @@ import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.stairway.*;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.model.Workspace;
-import bio.terra.workspace.common.model.WorkspaceStage;
-import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
+import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import java.time.Duration;
 import java.util.UUID;
@@ -28,18 +31,21 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
    */
   private static final Duration CREATION_FLIGHT_TIMEOUT = Duration.ofMinutes(5);
 
-  @Autowired private WorkspaceDao workspaceDao;
+  @Autowired private WorkspaceService workspaceService;
   @Autowired private CloudResourceManagerCow resourceManager;
   @Autowired private JobService jobService;
   @Autowired private SpendConnectedTestUtils spendUtils;
+  @Autowired private UserAccessUtils userAccessUtils;
 
   @Test
   public void deleteContext() throws Exception {
     UUID workspaceId = createWorkspace();
     FlightMap createParameters = new FlightMap();
+    AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
     createParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
     createParameters.put(
         WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendUtils.defaultBillingAccountId());
+    createParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userReq);
 
     // Create the google context.
     FlightState flightState =
@@ -50,7 +56,8 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
             CREATION_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
-    String projectId = workspaceDao.getCloudContext(workspaceId).googleProjectId().get();
+    String projectId =
+        workspaceService.getCloudContext(workspaceId, userReq).googleProjectId().get();
     Project project = resourceManager.projects().get(projectId).execute();
     assertEquals("ACTIVE", project.getLifecycleState());
 
@@ -65,7 +72,8 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
             DELETION_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
-    assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
+    assertEquals(
+        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
     project = resourceManager.projects().get(projectId).execute();
     assertEquals("DELETE_REQUESTED", project.getLifecycleState());
   }
@@ -73,7 +81,9 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
   @Test
   public void deleteNonExistentContextIsOk() throws Exception {
     UUID workspaceId = createWorkspace();
-    assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
+    AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
+    assertEquals(
+        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
 
     FlightMap inputParameters = new FlightMap();
     inputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
@@ -85,18 +95,18 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
             DELETION_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
-    assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
+    assertEquals(
+        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
   }
 
   /** Creates a workspace, returning its workspaceId. */
-  // TODO make it easier for tests to create workspaces using WorkspaceService.
   private UUID createWorkspace() {
-    Workspace workspace =
-        Workspace.builder()
+    WorkspaceRequest request =
+        WorkspaceRequest.builder()
             .workspaceId(UUID.randomUUID())
+            .jobId(UUID.randomUUID().toString())
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
-    workspaceDao.createWorkspace(workspace);
-    return workspace.workspaceId();
+    return workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
   }
 }

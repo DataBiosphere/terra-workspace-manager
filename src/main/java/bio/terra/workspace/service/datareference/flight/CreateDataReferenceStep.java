@@ -8,9 +8,11 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.DataReferenceDao;
-import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
-import bio.terra.workspace.generated.model.DataRepoSnapshot;
-import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
+import bio.terra.workspace.service.datareference.model.DataReferenceType;
+import bio.terra.workspace.service.datareference.model.ReferenceObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
@@ -18,9 +20,11 @@ import org.springframework.http.HttpStatus;
 public class CreateDataReferenceStep implements Step {
 
   private DataReferenceDao dataReferenceDao;
+  private ObjectMapper objectMapper;
 
-  public CreateDataReferenceStep(DataReferenceDao dataReferenceDao) {
+  public CreateDataReferenceStep(DataReferenceDao dataReferenceDao, ObjectMapper objectMapper) {
     this.dataReferenceDao = dataReferenceDao;
+    this.objectMapper = objectMapper;
   }
 
   @Override
@@ -29,21 +33,25 @@ public class CreateDataReferenceStep implements Step {
     FlightMap workingMap = flightContext.getWorkingMap();
     UUID referenceId = workingMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
     UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    DataRepoSnapshot reference =
-        inputMap.get(DataReferenceFlightMapKeys.REFERENCE, DataRepoSnapshot.class);
-    CreateDataReferenceRequestBody body =
-        inputMap.get(JobMapKeys.REQUEST.getKeyName(), CreateDataReferenceRequestBody.class);
+    String name = inputMap.get(DataReferenceFlightMapKeys.NAME, String.class);
+    DataReferenceType type =
+        inputMap.get(DataReferenceFlightMapKeys.REFERENCE_TYPE, DataReferenceType.class);
+    CloningInstructions cloningInstructions =
+        inputMap.get(DataReferenceFlightMapKeys.CLONING_INSTRUCTIONS, CloningInstructions.class);
+    ReferenceObject referenceObject =
+        ReferenceObject.fromJson(
+            inputMap.get(DataReferenceFlightMapKeys.REFERENCE_OBJECT, String.class));
+    DataReferenceRequest request =
+        DataReferenceRequest.builder()
+            .workspaceId(workspaceId)
+            .name(name)
+            .referenceType(type)
+            .cloningInstructions(cloningInstructions)
+            .referenceObject(referenceObject)
+            .build();
 
     try {
-      dataReferenceDao.createDataReference(
-          referenceId,
-          workspaceId,
-          body.getName(),
-          body.getResourceId(),
-          body.getCredentialId(),
-          body.getCloningInstructions(),
-          body.getReferenceType(),
-          reference);
+      dataReferenceDao.createDataReference(request, referenceId);
     } catch (DuplicateDataReferenceException e) {
       // Stairway can call the same step multiple times as part of a flight, so finding a duplicate
       // reference here is fine.

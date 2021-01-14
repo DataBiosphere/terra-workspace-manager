@@ -1,92 +1,87 @@
 package bio.terra.workspace.service.datareference;
 
 import bio.terra.workspace.common.exception.*;
-import bio.terra.workspace.common.utils.SamUtils;
 import bio.terra.workspace.db.DataReferenceDao;
-import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
-import bio.terra.workspace.generated.model.DataReferenceDescription;
-import bio.terra.workspace.generated.model.DataReferenceList;
-import bio.terra.workspace.generated.model.DataRepoSnapshot;
-import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
-import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.flight.CreateDataReferenceFlight;
 import bio.terra.workspace.service.datareference.flight.DataReferenceFlightMapKeys;
-import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
+import bio.terra.workspace.service.datareference.model.DataReference;
+import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
+import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/**
+ * Service for all operations on references to data.
+ *
+ * <p>Currently, this only supports references to uncontrolled resources. In the future, it may also
+ * support references to controlled resources.
+ */
 @Component
 public class DataReferenceService {
   private final DataReferenceDao dataReferenceDao;
   private final SamService samService;
   private final JobService jobService;
-  private final DataReferenceValidationUtils validationUtils;
+  private final ObjectMapper objectMapper;
 
   @Autowired
   public DataReferenceService(
       DataReferenceDao dataReferenceDao,
       SamService samService,
       JobService jobService,
-      DataReferenceValidationUtils validationUtils) {
+      ObjectMapper objectMapper) {
     this.dataReferenceDao = dataReferenceDao;
     this.samService = samService;
     this.jobService = jobService;
-    this.validationUtils = validationUtils;
+    this.objectMapper = objectMapper;
   }
 
+  /**
+   * Retrieve a data reference from the database by ID. References are always contained inside a
+   * single workspace.
+   */
   @Traced
-  public DataReferenceDescription getDataReference(
+  public DataReference getDataReference(
       UUID workspaceId, UUID referenceId, AuthenticatedUserRequest userReq) {
 
-    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
+    samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
 
     return dataReferenceDao.getDataReference(workspaceId, referenceId);
   }
 
+  /**
+   * Retrieve a data reference from the database by name. Names are unique per workspace, per data
+   * reference type.
+   */
   @Traced
-  public DataReferenceDescription getDataReferenceByName(
+  public DataReference getDataReferenceByName(
       UUID workspaceId,
-      ReferenceTypeEnum referenceType,
+      DataReferenceType referenceType,
       String name,
       AuthenticatedUserRequest userReq) {
-
-    validationUtils.validateReferenceName(name);
-    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
+    samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
 
     return dataReferenceDao.getDataReferenceByName(workspaceId, referenceType, name);
   }
 
+  /** Create a data reference and return the newly created object. */
   @Traced
-  public DataReferenceDescription createDataReference(
-      UUID workspaceId, CreateDataReferenceRequestBody body, AuthenticatedUserRequest userReq) {
+  public DataReference createDataReference(
+      DataReferenceRequest referenceRequest, AuthenticatedUserRequest userReq) {
 
-    // validate shape of request as soon as it comes in
-    if (body.getResourceId() != null) {
-      throw new ControlledResourceNotImplementedException(
-          "Unable to create a reference with a resourceId, use a reference type and description"
-              + " instead. This functionality will be implemented in the future.");
-    }
-    if (body.getReferenceType() == null || body.getReference() == null) {
-      throw new InvalidDataReferenceException(
-          "Data reference must contain a reference type and a reference description");
-    }
-    // TODO: remove this check when we add support for resource-specific credentials.
-    if (body.getCredentialId() != null) {
-      throw new InvalidDataReferenceException(
-          "Resource-specific credentials are not supported yet.");
-    }
+    samService.workspaceAuthz(
+        userReq, referenceRequest.workspaceId(), SamConstants.SAM_WORKSPACE_WRITE_ACTION);
 
-    validationUtils.validateReferenceName(body.getName());
-    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
-
-    String description = "Create data reference in workspace " + workspaceId;
+    String description = "Create data reference in workspace " + referenceRequest.workspaceId();
 
     JobBuilder createJob =
         jobService
@@ -94,32 +89,43 @@ public class DataReferenceService {
                 description,
                 UUID.randomUUID().toString(),
                 CreateDataReferenceFlight.class,
-                body,
+                /* request = */ null,
                 userReq)
-            .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, workspaceId);
+            .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, referenceRequest.workspaceId())
+            .addParameter(DataReferenceFlightMapKeys.NAME, referenceRequest.name())
+            .addParameter(
+                DataReferenceFlightMapKeys.REFERENCE_TYPE, referenceRequest.referenceType())
+            .addParameter(
+                DataReferenceFlightMapKeys.CLONING_INSTRUCTIONS,
+                referenceRequest.cloningInstructions())
+            .addParameter(
+                DataReferenceFlightMapKeys.REFERENCE_OBJECT,
+                referenceRequest.referenceObject().toJson());
 
-    DataRepoSnapshot ref =
-        validationUtils.validateReference(body.getReferenceType(), body.getReference(), userReq);
-    createJob.addParameter(DataReferenceFlightMapKeys.REFERENCE, ref);
+    UUID referenceIdResult = createJob.submitAndWait(UUID.class, false);
 
-    UUID referenceIdResult = createJob.submitAndWait(UUID.class);
-
-    return dataReferenceDao.getDataReference(workspaceId, referenceIdResult);
+    return dataReferenceDao.getDataReference(referenceRequest.workspaceId(), referenceIdResult);
   }
 
+  /**
+   * List data references in a workspace.
+   *
+   * <p>References are in ascending order by reference ID. At most {@Code limit} results will be
+   * returned, with the first being {@Code offset} entries from the start of the database.
+   */
   @Traced
-  public DataReferenceList enumerateDataReferences(
+  public List<DataReference> enumerateDataReferences(
       UUID workspaceId, int offset, int limit, AuthenticatedUserRequest userReq) {
-    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_READ_ACTION);
-    return dataReferenceDao.enumerateDataReferences(
-        workspaceId, userReq.getReqId().toString(), offset, limit);
+    samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    return dataReferenceDao.enumerateDataReferences(workspaceId, offset, limit);
   }
 
+  /** Delete a data reference, or throw an exception if the specified reference does not exist. */
   @Traced
   public void deleteDataReference(
       UUID workspaceId, UUID referenceId, AuthenticatedUserRequest userReq) {
 
-    samService.workspaceAuthz(userReq, workspaceId, SamUtils.SAM_WORKSPACE_WRITE_ACTION);
+    samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
 
     if (dataReferenceDao.isControlled(workspaceId, referenceId)) {
       throw new ControlledResourceNotImplementedException(

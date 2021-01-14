@@ -1,6 +1,6 @@
-package bio.terra.workspace.common.utils;
+package bio.terra.workspace.service.iam.model;
 
-public class SamUtils {
+public class SamConstants {
 
   public static String SAM_WORKSPACE_RESOURCE = "workspace";
   public static String SAM_WORKSPACE_READ_ACTION = "read";

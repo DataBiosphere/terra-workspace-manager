@@ -27,8 +27,10 @@ jobs:
       run: echo ::set-output name=versions::{\"releases\":{\"${HELM_CHART_NAME}\":{\"appVersion\":\"pr${{ github.event.issue.number }}-${{ steps.slug.outputs.sha7 }}\"}}}
     - name: Construct version override JSON
       id: versions-override
+      env:
+        COMMENT_BODY: ${{ github.event.comment.body }}
       run: |
-        comment='${{ github.event.comment.body }}'
+        comment='$COMMENT_BODY'
         override=${comment#'preview-create'}
         if [[ $override == '' ]]; then override='{}'; fi
         echo "override: $override"
@@ -113,8 +115,10 @@ jobs:
       run: echo ::set-output name=versions::{\"releases\":{\"${HELM_CHART_NAME}\":{\"appVersion\":\"pr${{ github.event.issue.number }}-${{ steps.slug.outputs.sha7 }}\"}}}
     - name: Construct version override JSON
       id: versions-override
+      env:
+        COMMENT_BODY: ${{ github.event.comment.body }}
       run: |
-        comment='${{ github.event.comment.body }}'
+        comment='$COMMENT_BODY'
         override=${comment#'preview-test'}
         if [[ $override == '' ]]; then override='{}'; fi
         echo "override: $override"

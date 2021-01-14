@@ -1,4 +1,4 @@
-package bio.terra.workspace.common.model;
+package bio.terra.workspace.service.workspace.model;
 
 import bio.terra.workspace.generated.model.WorkspaceStageModel;
 import com.google.common.collect.BiMap;
