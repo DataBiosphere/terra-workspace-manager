@@ -29,7 +29,7 @@ jobs:
               secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
           echo '::set-output name=vault-token::$VAULT_TOKEN'
           echo '::add-mask::$VAULT_TOKEN'
-          echo "Vault token is ${{steps.vault-token-step.outputs.vault-token}}$
+          echo "Vault token is ${{steps.vault-token-step.outputs.vault-token}}$"
       - name: "Configure Test Runner"
         run: |
           cd ${GITHUB_WORKSPACE}/${workingDir}/workspace-manager-clienttests
