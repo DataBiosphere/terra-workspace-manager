@@ -31,7 +31,7 @@ jobs:
               secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
           echo ::set-output name=vault-token::$VAULT_TOKEN
           echo ::add-mask::$VAULT_TOKEN
-      - name: "Render configs for Test Runner"
+      - name: Render configs for Test Runner
         run: |
           cd ${GITHUB_WORKSPACE}/${workingDir}/workspace-manager-clienttests
           chmod +x render-config.sh
@@ -45,7 +45,7 @@ jobs:
             .gradle/wrapper
           key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
           restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
-      - name: Run Basic Intergation tests using test runner library
+      - name: Build the WSM client and run the Basic Perf test suite
         run: |
           ./gradlew :workspace-manager-client:build
           cd workspace-manager-clienttests
