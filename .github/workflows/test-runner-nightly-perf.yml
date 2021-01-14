@@ -6,7 +6,7 @@ name: Sample Nightly Perf Tests
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: '0 14 * * *' # run at 2 PM UTC, 9 AM EST.
+    - cron: '0 6 * * *' # run at 6 AM UTC, 1 AM ET.
 
 jobs:
   test-runner-integration:
@@ -49,6 +49,4 @@ jobs:
         run: |
           ./gradlew :workspace-manager-client:build
           cd workspace-manager-clienttests
-          ls src/main/resources/configs/integration
-          ls src/main/resources/suites
           ./gradlew runTest --args="suites/BasicNightlyPerf.json /tmp/TestRunnerResults"

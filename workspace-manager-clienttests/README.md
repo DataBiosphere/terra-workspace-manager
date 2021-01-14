@@ -16,16 +16,25 @@ Note: `render-config.sh` assumes a valid `.vault-token` in your `$HOME` director
 ./render-config.sh
 ```
 
-To run the test, use the following command from the workspace-manager-clienttests directory.
+To run the tests, use one of the following commands from the workspace-manager-clienttests directory.
+NB: The `BasicIntegration.json` and `BasicNightlyPerf.json` are sample test suite configurations for Integration and Perf tests.
+See `test-runner-integration.yml` and `test-runner-nightly-perf.yml` in `.github/workflows` for use cases.
 
+Integration Test
 ```
-./gradlew  runTest --args="integration/BasicAuthenticated.json /tmp/TR"
+./gradlew  runTest --args="suites/BasicIntegration.json /tmp/TR"
 ```
 
-The default server that this test will run against is specified in the resources/configs/integration/BasicAuthenticated.json file.
+Perf Test
+```
+./gradlew  runTest --args="suites/BasicNightlyPerf.json /tmp/TR"
+```
+
+The default server that the test will run against is specified in the resources/configs/integration/BasicAuthenticated.json file, using integration test as example.
 To override the default server, set an environment variable
 ```
-TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-dev.json" ./gradlew  runTest --args="integration/BasicAuthenticated.json /tmp/TR"
+export TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-dev.json" 
+./gradlew  runTest --args="suites/BasicIntegration.json /tmp/TR"
 ```
 
 #### SA keys from Vault
@@ -38,13 +47,13 @@ The version of the Workspace Manager client JAR file is specified in the build.g
 fetched from the Broad Institute Maven repository. You can override this to use a local version of the Workspace Manager client
 JAR file by specifying a Gradle project property, either with a command line argument
 
-`./gradlew -Pworkspacemanagerclientjar=~/terra-workspace-manager/workspace-manager-client/build/libs/workspace-manager-client-0.5.0-SNAPSHOT.jar runTest --args="integration/BasicAuthenticated.json"
+`./gradlew -Pworkspacemanagerclientjar=~/terra-workspace-manager/workspace-manager-client/build/libs/workspace-manager-client-0.5.0-SNAPSHOT.jar runTest --args="suites/BasicIntegration.json"
 
 or an environment variable.
 
 ```
 export ORG_GRADLE_PROJECT_workspacemanagerclientjar=~/terra-workspace-manager/workspace-manager-client/build/libs/workspace-manager-client-0.5.0-SNAPSHOT.jar
-./gradlew runTest --args="integration/BasicAuthenticated.json /tmp/TestRunnerResults"
+./gradlew runTest --args="suites/BasicIntegration.json /tmp/TestRunnerResults"
 ```
 
 This is useful for debugging or testing local server code changes that affect the generated client library (e.g. new API
