@@ -247,9 +247,7 @@ paths:
       responses:
         '204':
           description: Role granted successfully
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '404':
+        '401':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
@@ -260,9 +258,7 @@ paths:
       responses:
         '204':
           description: Role removed successfully
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '404':
+        '401':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'

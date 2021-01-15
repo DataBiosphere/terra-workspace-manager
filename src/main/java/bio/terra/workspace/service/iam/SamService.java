@@ -314,20 +314,8 @@ public class SamService {
     }
   }
 
-  /** Returns the Sam action corresponding to modifying an IAM role. */
+  /** Returns the Sam action for modifying a given IAM role. */
   private String SamActionToModifyRole(IamRole role) {
-    switch (role) {
-      case READER:
-        return SamConstants.SAM_WORKSPACE_SHARE_READER_IAM_ACTION;
-      case WRITER:
-        return SamConstants.SAM_WORKSPACE_SHARE_WRITER_IAM_ACTION;
-      case OWNER:
-        return SamConstants.SAM_WORKSPACE_SHARE_OWNER_IAM_ACTION;
-      default:
-        throw new RuntimeException(
-            String.format(
-                "Attempting to modify Sam policy for unknown role: %s. You're likely missing a constant in SamConstants.",
-                role));
-    }
+    return String.format("share_policy::%s", role.toSamRole());
   }
 }
