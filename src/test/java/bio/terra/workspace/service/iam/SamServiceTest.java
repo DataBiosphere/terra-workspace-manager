@@ -113,7 +113,7 @@ public class SamServiceTest extends BaseConnectedTest {
     // Note that this request uses the secondary user's authentication token, when only the first
     // user is an owner.
     assertThrows(
-        SamApiException.class,
+        SamUnauthorizedException.class,
         () ->
             samService.grantWorkspaceRole(
                 workspaceId,
@@ -184,7 +184,7 @@ public class SamServiceTest extends BaseConnectedTest {
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), IamRole.WRITER, userAccessUtils.getSecondUserEmail());
     assertThrows(
-        SamApiException.class,
+        SamUnauthorizedException.class,
         () -> samService.listRoleBindings(workspaceId, secondaryUserRequest()));
   }
 

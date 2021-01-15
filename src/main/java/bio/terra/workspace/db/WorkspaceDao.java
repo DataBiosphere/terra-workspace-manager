@@ -111,7 +111,7 @@ public class WorkspaceDao {
       logger.info(String.format("Retrieved workspace record %s", result.toString()));
       return result;
     } catch (EmptyResultDataAccessException e) {
-      throw new WorkspaceNotFoundException("Workspace not found.");
+      throw new WorkspaceNotFoundException(String.format("Workspace %s not found.", id.toString()));
     }
   }
 
@@ -121,7 +121,12 @@ public class WorkspaceDao {
     String sql = "SELECT workspace_stage FROM workspace WHERE workspace_id = :id";
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceId.toString());
-    return WorkspaceStage.valueOf(jdbcTemplate.queryForObject(sql, params, String.class));
+    try {
+      return WorkspaceStage.valueOf(jdbcTemplate.queryForObject(sql, params, String.class));
+    } catch (EmptyResultDataAccessException e) {
+      throw new WorkspaceNotFoundException(
+          String.format("Workspace %s not found.", workspaceId.toString()));
+    }
   }
 
   /**
