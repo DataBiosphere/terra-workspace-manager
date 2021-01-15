@@ -105,6 +105,9 @@ public class WorkspaceService {
   public String createGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     workspaceDao.assertMcWorkspace(workspaceId, "createGoogleContext");
+    if (!workspaceDao.getCloudContext(workspaceId).googleProjectId().isEmpty()) {
+      throw new
+    }
     Optional<SpendProfileId> spendProfileId =
         workspaceDao.getWorkspace(workspaceId).spendProfileId();
     if (spendProfileId.isEmpty()) {
