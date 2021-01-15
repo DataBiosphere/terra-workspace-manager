@@ -1,0 +1,52 @@
+# This workflow will build a Java project with Gradle
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
+
+name: Test Runner Nightly Perf Tests
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 6 * * *' # run at 6 AM UTC, 1 AM ET.
+
+jobs:
+  test-runner-integration:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up AdoptOpenJDK 11
+        uses: joschi/setup-jdk@v2
+        with:
+          java-version: 11
+      - name: Get Vault token
+        id: vault-token-step
+        env:
+          VAULT_ADDR: https://clotho.broadinstitute.org:8200
+        run: |
+          VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
+            -e "VAULT_ADDR=${VAULT_ADDR}" \
+            vault:1.1.0 \
+            vault write -field token \
+              auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+              secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+          echo ::set-output name=vault-token::$VAULT_TOKEN
+          echo ::add-mask::$VAULT_TOKEN
+      - name: Render configs for Test Runner
+        run: |
+          cd ${GITHUB_WORKSPACE}/${workingDir}/workspace-manager-clienttests
+          chmod +x render-config.sh
+          ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
+          chmod +r rendered
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: |
+            .gradle/caches
+            .gradle/wrapper
+          key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
+          restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+      - name: Build the WSM client and run the Basic Perf test suite
+        run: |
+          ./gradlew :workspace-manager-client:build
+          cd workspace-manager-clienttests
+          ./gradlew runTest --args="suites/BasicPerf.json /tmp/TestRunnerResults"

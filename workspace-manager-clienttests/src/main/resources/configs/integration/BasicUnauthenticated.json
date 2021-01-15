@@ -1,0 +1,17 @@
+{
+  "name": "BasicUnauthenticated",
+  "description": "Check the service status once. No authentication required.",
+  "serverSpecificationFile": "workspace-dev.json",
+  "kubernetes": {},
+  "application": {},
+  "testScripts": [
+    {
+      "name": "ServiceStatus",
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 2,
+      "expectedTimeForEach": 5,
+      "expectedTimeForEachUnit": "SECONDS"
+    }
+  ],
+  "testUserFiles": []
+}
