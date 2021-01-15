@@ -1,3 +1,17 @@
+{{!--
+  Copied from the https://github.com/swagger-api/swagger-codegen-generators tagged release 1.0.24:
+  https://github.com/swagger-api/swagger-codegen-generators/blob/v1.0.24/src/main/resources/handlebars/Java/libraries/jersey2/ApiClient.mustache
+
+  This file may include Terra-specific modifications to the Swagger-codegen generated API client
+  code. This file (ApiClient.mustache) is responsible for generating the generic ApiClient class,
+  e.g. bio.terra.*.ApiClient.
+
+  All Terra changes or additions should be surrounded by comment blocks of the form:
+
+  {{! Begin Terra changes }}
+  // Code
+  {{! End Terra changes }}
+--}}
 package {{invokerPackage}};
 
 import javax.ws.rs.client.Client;
@@ -676,9 +690,13 @@ public class ApiClient {
   public <T> T invokeAPI(String path, String method, List<Pair> queryParams, Object body, Map<String, String> headerParams, Map<String, Object> formParams, String accept, String contentType, String[] authNames, GenericType<T> returnType) throws ApiException {
     updateParamsForAuth(authNames, queryParams, headerParams);
 
-    if (body == null && (method.equals("POST") || method.equals("PUT"))) {
+    {{! Begin Terra change }}
+    if (body == null && "POST".equals(method)) {
+      // Jersey2 workaround: replace a null body with an empty string to force Jersey2 to
+      // include a Content-Length header in the POST request. See PF-356 for details.
       body = "";
     }
+    {{! End Terra change }}
     // Not using `.target(this.basePath).path(path)` below,
     // to support (constant) query string in `path`, e.g. "/posts?draft=1"
     WebTarget target = httpClient.target(this.basePath + path);

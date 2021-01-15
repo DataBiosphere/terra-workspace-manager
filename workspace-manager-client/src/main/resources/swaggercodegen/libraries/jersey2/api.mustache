@@ -1,3 +1,17 @@
+{{!--
+  Copied from the https://github.com/swagger-api/swagger-codegen-generators tagged release 1.0.24:
+  https://github.com/swagger-api/swagger-codegen-generators/blob/v1.0.24/src/main/resources/handlebars/Java/libraries/jersey2/api.mustache
+
+  This file may include Terra-specific modifications to the Swagger-codegen generated API client
+  code. This file (api.mustache) is responsible for generating each typed API class, e.g.
+  bio.terra.*.api.FooApi.
+
+  All Terra changes or additions should be surrounded by comment blocks of the form:
+
+  {{! Begin Terra changes }}
+  // Code
+  {{! End Terra changes }}
+--}}
 package {{package}};
 
 import {{invokerPackage}}.ApiException;
