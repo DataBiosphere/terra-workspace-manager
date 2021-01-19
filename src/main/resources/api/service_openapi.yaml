@@ -206,6 +206,8 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/ServerError'
     delete:
@@ -764,6 +766,12 @@ components:
             $ref: '#/components/schemas/ErrorReport'
     NotFound:
       description: Not found (or unauthorized)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorReport'
+    Conflict:
+      description: Request conflicts with current state
       content:
         application/json:
           schema:
