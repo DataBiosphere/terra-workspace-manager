@@ -39,10 +39,10 @@ public class IntegrationTestConfiguration {
   }
 
   public String getUserEmail() {
-    this.userEmail.get(testEnv);
+    return this.userEmail.get(testEnv);
   }
 
-  public void setUserEmail( HashMap<String, String> userEmail) {
+  public void setUserEmail(HashMap<String, String> userEmail) {
     this.userEmail = userEmail;
   }
 

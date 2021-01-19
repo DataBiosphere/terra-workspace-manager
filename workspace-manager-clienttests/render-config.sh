@@ -11,7 +11,8 @@ elif ! [[ "${ENV}" = "dev" ||  "${ENV}" = "alpha" || "${ENV}" = "staging" ]]; th
     exit 1
 fi
 
-WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/${ENV}/${ENV}/workspace/app-sacount.json
+WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/${ENV}/${ENV}/workspace/app-sa
+WM_APP_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/rendered/workspace-manager-app-service-account.json
 USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/${ENV}/common/firecloud-account.json
 USER_DELEGATED_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/rendered/user-delegated-service-account.json
 TESTRUNNER_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/dev/common/testrunner-sa
