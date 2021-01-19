@@ -6,8 +6,18 @@ name: Run Tests
 on:
   push:
     branches: [ dev ]
+    inputs:
+      testEnv:
+        description: 'Environment in which tests should be run. Currently works on dev, alpha and staging'
+        required: true
+        default: 'dev'
   pull_request:
     branches: [ '**' ]
+    inputs:
+      testEnv:
+        description: 'Environment in which tests should be run. Currently works on dev, alpha and staging'
+        required: true
+        default: 'local'
   workflow_dispatch:
     inputs:
       testEnv:
