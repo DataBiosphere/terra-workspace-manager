@@ -6,10 +6,14 @@ VAULT_TOKEN=${2:-$(cat "$HOME"/.vault-token)}
 if [ -z "${ENV}" ]; then
     echo "ENV not undefined."
     exit 1
-elif ! [[ "${ENV}" = "dev" ||  "${ENV}" = "alpha" || "${ENV}" = "staging" ]]; then
+elif ! [[  "${ENV}" = "local" || "${ENV}" = "dev" ||  "${ENV}" = "alpha" || "${ENV}" = "staging" ]]; then
     echo "ENV not supported."
     exit 1
+elif [ "${ENV}" = "local" ]; then
+  ENV=dev
 fi
+
+
 
 WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/${ENV}/${ENV}/workspace/app-sa
 WM_APP_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/rendered/workspace-manager-app-service-account.json
