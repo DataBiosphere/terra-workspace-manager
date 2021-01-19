@@ -8,6 +8,12 @@ on:
     branches: [ dev ]
   pull_request:
     branches: [ '**' ]
+  workflow_dispatch:
+    inputs:
+      testEnv:
+        description: 'Environment in which tests should be run. Currently works on dev, alpha and staging'
+        required: true
+        default: 'dev'
 
 jobs:
   test:
@@ -78,12 +84,12 @@ jobs:
       if: matrix.gradleTask != 'unitTest'
       run: |
         chmod +x render_config.sh
-        ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }} dev
+        ./render_config.sh ${{ github.event.inputs.testEnv }} ${{ steps.vault-token-step.outputs.vault-token }}
         chmod +r rendered
 
     # Only integration tests need a running server
     - name: Run local server (in background)
-      if: matrix.gradleTask == 'integrationTest'
+      if: matrix.gradleTask == 'integrationTest' &&  github.event.inputs.testEnv == 'local'
       run: ./gradlew bootRun &
     - name: Wait for local server to start
       if: matrix.gradleTask == 'integrationTest'
@@ -92,7 +98,7 @@ jobs:
 
     - name: Run tests
       env:
-        TEST_ENV: dev
+        TEST_ENV: ${{ github.event.inputs.testEnv }}
       run: ./gradlew ${{ matrix.gradleTask }} --scan
     - name: Upload Test Reports
       uses: actions/upload-artifact@v1

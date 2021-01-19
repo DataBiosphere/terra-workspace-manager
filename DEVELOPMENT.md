@@ -81,7 +81,7 @@ To run unit tests:
 To run integration tests: (see **NOTE** below)
 
 ```sh
-./render_config.sh # First time only
+./render_config.sh <ENV> # First time only
 ./gradlew integrationTest
 ```
  

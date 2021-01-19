@@ -1,9 +1,19 @@
 #!/bin/bash
 
-VAULT_TOKEN=${1:-$(cat "$HOME"/.vault-token)}
-WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/dev/dev/workspace/app-sa
+ENV=$1
+VAULT_TOKEN=${2:-$(cat "$HOME"/.vault-token)}
+
+if [ -z "${ENV}" ]; then
+    echo "ENV not undefined."
+    exit 1
+elif ! [[ "${ENV}" = "dev" ||  "${ENV}" = "alpha" || "${ENV}" = "staging" ]]; then
+    echo "ENV not supported."
+    exit 1
+fi
+
+WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/${ENV}/${ENV}/workspace/app-sa
 WM_APP_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/rendered/service-account.json
-USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/dev/common/firecloud-account.json
+USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/${ENV}/common/firecloud-account.json
 USER_DELEGATED_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/rendered/user-delegated-service-account.json
 JANITOR_CLIENT_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/integration/tools/crl_janitor/client-sa
 JANITOR_CLIENT_SERVICE_ACCOUNT_OUTPUT_PATH="$(dirname $0)"/rendered/janitor-client-sa-account.json

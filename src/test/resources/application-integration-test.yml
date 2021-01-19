@@ -1,13 +1,24 @@
 workspace.integration-test:
   data-repo-instance-names:
+    local: terra
     dev: terra
+    alpha: terra
+    staging: terra
   data-repo-snapshot-id:
+    local: 97b5559a-2f8f-4df3-89ae-5a249173ee0c
     dev: 97b5559a-2f8f-4df3-89ae-5a249173ee0c
-  user-email: william.thunderlord@test.firecloud.org
+    alpha: d56f4db5-b6c6-4a7e-8be2-ff6aa21c4fa6
+    staging:
+  user-email:
+    local: william.thunderlord@test.firecloud.org
+    dev: william.thunderlord@test.firecloud.org
+    alpha: hermione.owner@test.firecloud.org
+    staging: scarlett.flowerpicker@test.firecloud.org
   user-delegated-service-account-path: rendered/user-delegated-service-account.json
   wsm-endpoints:
     workspaces: api/workspaces/v1
   wsm-urls:
-# swap the commented line to run integration tests against dev
-#    dev: https://workspace.dsde-dev.broadinstitute.org/
-    dev: http://localhost:8080/
+    local: http://localhost:8080/
+    dev: https://workspace.dsde-dev.broadinstitute.org/
+    alpha: https://workspace.dsde-alpha.broadinstitute.org/
+    staging: https://workspace.dsde-staging.broadinstitute.org/
