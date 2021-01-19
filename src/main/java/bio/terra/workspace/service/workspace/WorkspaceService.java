@@ -9,6 +9,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
+import bio.terra.workspace.service.workspace.exceptions.DuplicateGoogleContextException;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.flight.*;
@@ -106,7 +107,7 @@ public class WorkspaceService {
     samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     workspaceDao.assertMcWorkspace(workspaceId, "createGoogleContext");
     if (!workspaceDao.getCloudContext(workspaceId).googleProjectId().isEmpty()) {
-      throw new
+      throw new DuplicateGoogleContextException(workspaceId);
     }
     Optional<SpendProfileId> spendProfileId =
         workspaceDao.getWorkspace(workspaceId).spendProfileId();
