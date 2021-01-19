@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "workspace.integration-test")
 public class IntegrationTestConfiguration {
 
-  @Value("${TEST_ENV:dev}")
+  @Value("${TEST_ENV:local}")
   private String testEnv;
 
   private HashMap<String, String> wsmUrls;
@@ -19,7 +19,7 @@ public class IntegrationTestConfiguration {
   private HashMap<String, String> dataRepoInstanceNames;
   private HashMap<String, String> dataRepoSnapshotId;
   /** What user to impersonate to run the integration tests. */
-  private String userEmail;
+  private HashMap<String, String> userEmail;
   /**
    * The path to the service account to use. This service account should be delegated to impersonate
    * users. https://developers.google.com/admin-sdk/directory/v1/guides/delegation
@@ -39,10 +39,10 @@ public class IntegrationTestConfiguration {
   }
 
   public String getUserEmail() {
-    return userEmail;
+    this.userEmail.get(testEnv);
   }
 
-  public void setUserEmail(String userEmail) {
+  public void setUserEmail( HashMap<String, String> userEmail) {
     this.userEmail = userEmail;
   }
 
