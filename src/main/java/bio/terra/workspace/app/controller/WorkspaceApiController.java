@@ -276,13 +276,13 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<Void> grantRole(
       @PathVariable("id") UUID id,
       @PathVariable("role") IamRole role,
-      @PathVariable("memberEmail") String memberEmail) {
-    ControllerValidationUtils.validateEmail(memberEmail);
+      @RequestBody GrantRoleRequestBody body) {
+    ControllerValidationUtils.validateEmail(body.getMemberEmail());
     samService.grantWorkspaceRole(
         id,
         getAuthenticatedInfo(),
         bio.terra.workspace.service.iam.model.IamRole.fromApiModel(role),
-        memberEmail);
+        body.getMemberEmail());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

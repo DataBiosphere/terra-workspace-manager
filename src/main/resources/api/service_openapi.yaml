@@ -235,15 +235,20 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/roles/{role}/members/{memberEmail}:
+  /api/workspaces/v1/{id}/roles/{role}/members:
     parameters:
     - $ref: '#/components/parameters/Id'
     - $ref: '#/components/parameters/Role'
-    - $ref: '#/components/parameters/MemberEmail'
     post:
       summary: Grant an IAM role to a user or group.
       operationId: grantRole
       tags: [Workspace]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantRoleRequestBody'
       responses:
         '204':
           description: Role granted successfully
@@ -253,6 +258,11 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{id}/roles/{role}/members/{memberEmail}:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/Role'
+    - $ref: '#/components/parameters/MemberEmail'
     delete:
       summary: Remove an IAM role from a user or group.
       operationId: removeRole
@@ -701,6 +711,14 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/RoleBinding'
+
+    GrantRoleRequestBody:
+      description: The body for a request to grant a role to a single user.
+      type: object
+      required: [memberEmail]
+      properties:
+        memberEmail:
+          type: string
 
   responses:
     CreatedWorkspaceResponse:
