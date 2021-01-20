@@ -81,7 +81,7 @@ jobs:
           export ORG_GRADLE_PROJECT_workspacemanagerclientjar=$(find .. -type f -name "workspace-manager-client*.jar")
           echo "ORG_GRADLE_PROJECT_workspacemanagerclientjar = ${ORG_GRADLE_PROJECT_workspacemanagerclientjar}"
           echo "Test Runner config"
-          ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }}
+          ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
           echo "Running test suite"
           ./gradlew runTest --args="suites/BasicIntegration.json /tmp/TestRunnerResults"
           ls -l /tmp/TestRunnerResults
