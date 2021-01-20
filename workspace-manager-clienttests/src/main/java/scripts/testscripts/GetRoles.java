@@ -1,7 +1,6 @@
 package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
@@ -18,9 +17,9 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.WorkspaceFixtureTestScriptBase;
 
-public class RoleLifecycle extends WorkspaceFixtureTestScriptBase {
+public class GetRoles extends WorkspaceFixtureTestScriptBase {
 private static final IamRole IAM_ROLE = IamRole.WRITER;
-  private static final Logger logger = LoggerFactory.getLogger(RoleLifecycle.class);
+  private static final Logger logger = LoggerFactory.getLogger(GetRoles.class);
 
   @Override
   public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)

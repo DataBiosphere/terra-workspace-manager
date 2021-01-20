@@ -1,12 +1,12 @@
 {
-  "name": "RoleLifecycle",
+  "name": "GetRoles",
   "description": "CRUD for roles",
   "serverSpecificationFile": "workspace-dev.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
     {
-      "name": "RoleLifecycle",
+      "name": "GetRoles",
       "numberOfUserJourneyThreadsToRun": 10,
       "userJourneyThreadPoolSize": 2,
       "expectedTimeForEach": 5,
