@@ -127,7 +127,7 @@ public class ClientTestUtils {
         return apiClient;
     }
 
-    public static void assertHttpOk(WorkspaceApi workspaceApi, String label) {
+    public static void assertHttpSuccess(WorkspaceApi workspaceApi, String label) {
         int httpCode = workspaceApi.getApiClient().getStatusCode();
         logger.debug("{} HTTP code: {}", label, httpCode);
         assertThat(HttpStatusCodes.isSuccess(httpCode), equalTo(true));
