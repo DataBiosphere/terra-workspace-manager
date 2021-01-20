@@ -4,7 +4,7 @@ ENV=${1:-local}
 VAULT_TOKEN=${2:-$(cat "$HOME"/.vault-token)}
 
 if [ -z "${ENV}" ]; then
-    echo "ENV not undefined."
+    echo "ENV not defined."
     exit 1
 elif ! [[  "${ENV}" = "local" || "${ENV}" = "dev" ||  "${ENV}" = "alpha" || "${ENV}" = "staging" ]]; then
     echo "ENV not supported."
