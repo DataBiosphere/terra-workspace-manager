@@ -12,11 +12,11 @@ DSDE_TOOLBOX_DOCKER_IMAGE=broadinstitute/dsde-toolbox:consul-0.20.0
 
 docker run --rm -e VAULT_TOKEN="$VAULT_TOKEN" $DSDE_TOOLBOX_DOCKER_IMAGE \
     vault read -format=json ${WM_APP_SERVICE_ACCOUNT_VAULT_PATH} | \
-    jq -r .data.key | base64 -D > ${WM_APP_SERVICE_ACCOUNT_OUTPUT_PATH}
+    jq -r .data.key | base64 -d > ${WM_APP_SERVICE_ACCOUNT_OUTPUT_PATH}
 docker run --rm -e VAULT_TOKEN="$VAULT_TOKEN" $DSDE_TOOLBOX_DOCKER_IMAGE \
     vault read -format=json ${USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH} | \
     # Not base64 encoded or stored under 'key'
     jq -r .data > ${USER_DELEGATED_SERVICE_ACCOUNT_OUTPUT_PATH}
 docker run --rm -e VAULT_TOKEN="$VAULT_TOKEN" $DSDE_TOOLBOX_DOCKER_IMAGE \
     vault read -format=json ${TESTRUNNER_SERVICE_ACCOUNT_VAULT_PATH} | \
-    jq -r .data.key | base64 -D > ${TESTRUNNER_SERVICE_ACCOUNT_OUTPUT_PATH}
+    jq -r .data.key | base64 -d > ${TESTRUNNER_SERVICE_ACCOUNT_OUTPUT_PATH}
