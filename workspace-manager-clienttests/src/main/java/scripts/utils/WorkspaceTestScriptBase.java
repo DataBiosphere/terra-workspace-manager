@@ -60,11 +60,11 @@ public abstract class WorkspaceTestScriptBase extends TestScript {
     }
   }
 
-  public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws ApiException {}
+  protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws ApiException {}
 
   // doUserJourney is the only method we force the class to override, so we don't get trivially passing tests that forget
   // to have a body
-  public abstract void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi) throws ApiException;
+  protected abstract void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi) throws ApiException;
 
-  public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws ApiException {};
+  protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws ApiException {};
 }

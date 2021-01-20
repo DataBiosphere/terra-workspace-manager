@@ -9,6 +9,7 @@ import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.WorkspaceDescription;
+import bio.terra.workspace.model.WorkspaceStageModel;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -31,7 +32,7 @@ public abstract class WorkspaceFixtureTestScriptBase extends WorkspaceTestScript
    * Allow inheriting classes to obtain the workspace ID for the fixture.
    * @return
    */
-  public UUID getWorkspaceId() {
+  protected UUID getWorkspaceId() {
     return workspaceId;
   }
 
@@ -42,11 +43,12 @@ public abstract class WorkspaceFixtureTestScriptBase extends WorkspaceTestScript
    * @throws ApiException
    */
   @Override
-  public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
+  protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws ApiException {
     workspaceId = UUID.randomUUID();
     final var requestBody = new CreateWorkspaceRequestBody()
-        .id(workspaceId);
+        .id(workspaceId)
+        .stage(getStageModel());
     final CreatedWorkspace workspace = workspaceApi.createWorkspace(requestBody);
     assertThat(workspace.getId(), equalTo(workspaceId));
   }
@@ -58,9 +60,17 @@ public abstract class WorkspaceFixtureTestScriptBase extends WorkspaceTestScript
    * @throws ApiException
    */
   @Override
-  public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
+  protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws ApiException {
     workspaceApi.deleteWorkspace(workspaceId);
   }
 
+  /**
+   * Override this method to change the stage model of the workspace. Preserves default
+   * of RAWLS_WORKSPACE.
+   * @return the stage model to be used in create
+   */
+  protected WorkspaceStageModel getStageModel() {
+    return WorkspaceStageModel.RAWLS_WORKSPACE;
+  }
 }
