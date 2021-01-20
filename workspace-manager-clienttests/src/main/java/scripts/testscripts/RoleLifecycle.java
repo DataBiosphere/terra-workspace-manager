@@ -8,8 +8,10 @@ import static org.hamcrest.Matchers.is;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
+import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.RoleBindingList;
+import bio.terra.workspace.model.WorkspaceStageModel;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +30,10 @@ private static final IamRole IAM_ROLE = IamRole.WRITER;
     for (TestUserSpecification testUser : testUsers) {
       logger.info("Granting role {} for user {} on workspace id {}", IAM_ROLE.toString(),
           testUser.userEmail, getWorkspaceId().toString());
+      final var body = new GrantRoleRequestBody()
+          .memberEmail(testUser.userEmail);
       // grant the role
-      workspaceApi.grantRole(getWorkspaceId(), IAM_ROLE, testUser.userEmail);
+      workspaceApi.grantRole(body, getWorkspaceId(), IAM_ROLE);
     }
   }
 
@@ -46,4 +50,12 @@ private static final IamRole IAM_ROLE = IamRole.WRITER;
     assertThat(isInList, equalTo(true));
   }
 
+  /**
+   * Specify an MC Terra workspace so that roles are supported.
+   * @return
+   */
+  @Override
+  protected WorkspaceStageModel getStageModel() {
+    return WorkspaceStageModel.MC_WORKSPACE;
+  }
 }
