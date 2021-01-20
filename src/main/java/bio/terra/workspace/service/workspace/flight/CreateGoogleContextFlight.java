@@ -1,14 +1,10 @@
 package bio.terra.workspace.service.workspace.flight;
 
-import bio.terra.cloudres.google.billing.CloudBillingClientCow;
-import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
-import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
-import bio.terra.stairway.*;
-import bio.terra.workspace.app.configuration.external.GoogleWorkspaceConfiguration;
-import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.service.iam.SamService;
-import org.springframework.context.ApplicationContext;
-import org.springframework.transaction.support.TransactionTemplate;
+import bio.terra.stairway.Flight;
+import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.RetryRule;
+import bio.terra.stairway.RetryRuleExponentialBackoff;
+import bio.terra.workspace.common.utils.FlightApplicationContext;
 
 /** A {@link Flight} for creating a Google cloud context for a workspace. */
 public class CreateGoogleContextFlight extends Flight {
@@ -16,15 +12,8 @@ public class CreateGoogleContextFlight extends Flight {
   public CreateGoogleContextFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
 
-    ApplicationContext appContext = (ApplicationContext) applicationContext;
-    GoogleWorkspaceConfiguration googleWorkspaceConfiguration =
-        appContext.getBean(GoogleWorkspaceConfiguration.class);
-    CloudResourceManagerCow resourceManager = appContext.getBean(CloudResourceManagerCow.class);
-    ServiceUsageCow serviceUsage = appContext.getBean(ServiceUsageCow.class);
-    CloudBillingClientCow billingClient = appContext.getBean(CloudBillingClientCow.class);
-    WorkspaceDao workspaceDao = appContext.getBean(WorkspaceDao.class);
-    TransactionTemplate transactionTemplate = appContext.getBean(TransactionTemplate.class);
-    SamService samService = appContext.getBean(SamService.class);
+    FlightApplicationContext appContext =
+        FlightApplicationContext.getFromObject(applicationContext);
 
     RetryRule retryRule =
         new RetryRuleExponentialBackoff(
@@ -33,11 +22,17 @@ public class CreateGoogleContextFlight extends Flight {
             /* maxOperationTimeSeconds= */ 16);
     addStep(new GenerateProjectIdStep());
     addStep(
-        new CreateProjectStep(resourceManager, serviceUsage, googleWorkspaceConfiguration),
+        new CreateProjectStep(
+            appContext.getResourceManager(),
+            appContext.getServiceUsage(),
+            appContext.getGoogleWorkspaceConfiguration()),
         retryRule);
-    addStep(new SetProjectBillingStep(billingClient));
-    addStep(new StoreGoogleContextStep(workspaceDao, transactionTemplate), retryRule);
-    addStep(new SyncSamGroupsStep(samService), retryRule);
-    addStep(new GoogleCloudSyncStep(resourceManager), retryRule);
+    addStep(new SetProjectBillingStep(appContext.getBillingClient()));
+    addStep(
+        new StoreGoogleContextStep(
+            appContext.getWorkspaceDao(), appContext.getTransactionTemplate()),
+        retryRule);
+    addStep(new SyncSamGroupsStep(appContext.getSamService()), retryRule);
+    addStep(new GoogleCloudSyncStep(appContext.getResourceManager()), retryRule);
   }
 }
