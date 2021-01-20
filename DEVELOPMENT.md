@@ -41,7 +41,7 @@ To start a postgres container configured with the necessary databases:
 ```
 To stop the container:
 ```sh
-./local-dev/run_postgres.sh start
+./local-dev/run_postgres.sh stop
 ```
 Note that the contents of the database is not saved between container runs.
 

@@ -19,7 +19,7 @@ public class IntegrationTestConfiguration {
   private HashMap<String, String> dataRepoInstanceNames;
   private HashMap<String, String> dataRepoSnapshotId;
   /** What user to impersonate to run the integration tests. */
-  private HashMap<String, String> userEmails;
+  private HashMap<String, String> userEmail;
   /**
    * The path to the service account to use. This service account should be delegated to impersonate
    * users. https://developers.google.com/admin-sdk/directory/v1/guides/delegation
@@ -39,11 +39,11 @@ public class IntegrationTestConfiguration {
   }
 
   public String getUserEmail() {
-    return this.userEmails.get(testEnv);
+    return this.userEmail.get(testEnv);
   }
 
-  public void setUserEmails(HashMap<String, String> userEmails) {
-    this.userEmails = userEmails;
+  public void setUserEmail(HashMap<String, String> userEmail) {
+    this.userEmail = userEmail;
   }
 
   public String getUserDelegatedServiceAccountPath() {
