@@ -86,4 +86,4 @@ jobs:
           ./gradlew runTest --args="suites/BasicIntegration.json /tmp/TestRunnerResults"
           ls -l /tmp/TestRunnerResults
           echo "Upload test results"
-          ./gradlew uploadResults --args="TerraWSMDevjson /tmp/TestRunnerResults"
+          ./gradlew uploadResults --args="TerraWSMDev.json /tmp/TestRunnerResults"
