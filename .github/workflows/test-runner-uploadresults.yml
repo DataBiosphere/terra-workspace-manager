@@ -1,13 +1,14 @@
 # This workflow will build a Java project with Gradle
 # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
 
-name: Test Runner Integration Tests and Upload Results
+name: Run Tests
 
 on:
   push
 
 jobs:
   test-runner-integration:
+
     runs-on: ubuntu-latest
 
     services:
@@ -33,7 +34,20 @@ jobs:
         uses: joschi/setup-jdk@v2
         with:
           java-version: 11
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
+          restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # These steps aren't needed for unit tests
       - name: Get Vault token
+        if: matrix.gradleTask != 'unitTest'
         id: vault-token-step
         env:
           VAULT_ADDR: https://clotho.broadinstitute.org:8200
@@ -46,21 +60,11 @@ jobs:
               secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
           echo ::set-output name=vault-token::$VAULT_TOKEN
           echo ::add-mask::$VAULT_TOKEN
-      - name: Render configs for Test Runner
+      - name: Set permissions and render test configurations
         run: |
-          cd ${GITHUB_WORKSPACE}/${workingDir}/workspace-manager-clienttests
-          chmod +x render-config.sh
-          ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
+          chmod +x render_config.sh
+          ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }} dev
           chmod +r rendered
-          ls -l rendered
-      - name: Cache Gradle packages
-        uses: actions/cache@v2
-        with:
-          path: |
-            .gradle/caches
-            .gradle/wrapper
-          key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
-          restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
 
       # Only integration tests need a running server
       - name: Run local server (in background)
@@ -76,6 +80,8 @@ jobs:
           cd workspace-manager-clienttests
           export ORG_GRADLE_PROJECT_workspacemanagerclientjar=$(find .. -type f -name "workspace-manager-client*.jar")
           echo "ORG_GRADLE_PROJECT_workspacemanagerclientjar = ${ORG_GRADLE_PROJECT_workspacemanagerclientjar}"
+          echo "Test Runner config"
+          ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }}
           echo "Running test suite"
           ./gradlew runTest --args="suites/BasicIntegration.json /tmp/TestRunnerResults"
           ls -l /tmp/TestRunnerResults
