@@ -6,18 +6,8 @@ name: Run Tests
 on:
   push:
     branches: [ dev ]
-    inputs:
-      testEnv:
-        description: 'Environment in which tests should be run. Currently works on dev, alpha and staging'
-        required: true
-        default: 'dev'
   pull_request:
     branches: [ '**' ]
-    inputs:
-      testEnv:
-        description: 'Environment in which tests should be run. Currently works on dev, alpha and staging'
-        required: true
-        default: 'local'
   workflow_dispatch:
     inputs:
       testEnv:
@@ -99,10 +89,10 @@ jobs:
 
     # Only integration tests need a running server
     - name: Run local server (in background)
-      if: matrix.gradleTask == 'integrationTest' &&  github.event.inputs.testEnv == 'local'
+      if: matrix.gradleTask == 'integrationTest' &&  ${{ github.event.issue.pull_request }}
       run: ./gradlew bootRun &
     - name: Wait for local server to start
-      if: matrix.gradleTask == 'integrationTest'
+      if: matrix.gradleTask == 'integrationTest' &&  ${{ github.event.issue.pull_request }}
       # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
       run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
 
