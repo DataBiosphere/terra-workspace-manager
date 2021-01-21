@@ -62,6 +62,9 @@ To view the current `kubectl config` do
 ```shell script
 $ kubectl config view
 ```
+
+<details>
+
 ```text
 apiVersion: v1
 clusters:
@@ -100,6 +103,7 @@ users:
         token-key: '{.credential.access_token}'
       name: gcp
 ```
+</details>
 The credentials and other info are contained in a `kubectl context` and can be inspected:
 ```shell script
 kubectl config get-contexts
