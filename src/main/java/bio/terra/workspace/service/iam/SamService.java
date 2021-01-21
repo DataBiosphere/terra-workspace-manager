@@ -154,7 +154,7 @@ public class SamService {
    */
   public void grantWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
-    workspaceAuthz(userReq, workspaceId, SamActionToModifyRole(role));
+    workspaceAuthz(userReq, workspaceId, samActionToModifyRole(role));
     workspaceDao.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
@@ -178,7 +178,7 @@ public class SamService {
    */
   public void removeWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
-    workspaceAuthz(userReq, workspaceId, SamActionToModifyRole(role));
+    workspaceAuthz(userReq, workspaceId, samActionToModifyRole(role));
     workspaceDao.assertMcWorkspace(workspaceId, "removeWorkspaceRole");
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
@@ -315,7 +315,7 @@ public class SamService {
   }
 
   /** Returns the Sam action for modifying a given IAM role. */
-  private String SamActionToModifyRole(IamRole role) {
+  private String samActionToModifyRole(IamRole role) {
     return String.format("share_policy::%s", role.toSamRole());
   }
 }
