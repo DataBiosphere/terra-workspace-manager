@@ -65,6 +65,8 @@ $ kubectl config view
 
 <details>
 
+<summary>Config view output</summary>
+
 ```text
 apiVersion: v1
 clusters:
@@ -166,6 +168,11 @@ To list the nodes in the cluster do
 ```shell script
 kubectl get nodes
 ```
+
+<details>
+
+<summary>Node list</summary>
+
 ```text
 NAME                                             STATUS   ROLES    AGE   VERSION
 gke-terra-integration-cronjob-v1-9d4ae6cb-dvz6   Ready    <none>   31h   v1.17.14-gke.400
@@ -177,3 +184,5 @@ gke-terra-integration-default-c1ae3b79-qstb      Ready    <none>   30h   v1.17.1
 gke-terra-integration-default-c1ae3b79-rert      Ready    <none>   30h   v1.17.14-gke.400
 gke-terra-integration-default-v2-95d71f95-gdfy   Ready    <none>   30h   v1.17.14-gke.400
 ```
+
+</details>
