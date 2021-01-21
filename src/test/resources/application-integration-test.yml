@@ -13,7 +13,8 @@ workspace:
     local: 97b5559a-2f8f-4df3-89ae-5a249173ee0c
     dev: 97b5559a-2f8f-4df3-89ae-5a249173ee0c
     alpha: d56f4db5-b6c6-4a7e-8be2-ff6aa21c4fa6
-    staging: #waiting on Data Repo to create snapshots for staging
+    # waiting on Data Repo to create snapshots for staging
+    staging: 1234
   user-email: william.thunderlord@test.firecloud.org
   user-delegated-service-account-path: rendered/user-delegated-service-account.json
   wsm-endpoints:
