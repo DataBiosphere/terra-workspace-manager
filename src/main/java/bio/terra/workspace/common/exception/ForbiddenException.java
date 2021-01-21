@@ -7,26 +7,26 @@ package bio.terra.workspace.common.exception;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 
-public abstract class UnauthorizedException extends ErrorReportException {
-  private static final HttpStatus thisStatus = HttpStatus.UNAUTHORIZED;
+public abstract class ForbiddenException extends ErrorReportException {
+  private static final HttpStatus thisStatus = HttpStatus.FORBIDDEN;
 
-  public UnauthorizedException(String message) {
+  public ForbiddenException(String message) {
     super(message, null, thisStatus);
   }
 
-  public UnauthorizedException(String message, Throwable cause) {
+  public ForbiddenException(String message, Throwable cause) {
     super(message, cause, null, thisStatus);
   }
 
-  public UnauthorizedException(Throwable cause) {
+  public ForbiddenException(Throwable cause) {
     super(null, cause, null, thisStatus);
   }
 
-  public UnauthorizedException(String message, List<String> causes) {
+  public ForbiddenException(String message, List<String> causes) {
     super(message, causes, thisStatus);
   }
 
-  public UnauthorizedException(String message, Throwable cause, List<String> causes) {
+  public ForbiddenException(String message, Throwable cause, List<String> causes) {
     super(message, cause, causes, thisStatus);
   }
 }

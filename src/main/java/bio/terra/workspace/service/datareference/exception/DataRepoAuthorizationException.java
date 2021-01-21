@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.datareference.exception;
 
-import bio.terra.workspace.common.exception.UnauthorizedException;
+import bio.terra.workspace.common.exception.ForbiddenException;
 
-public class DataRepoAuthorizationException extends UnauthorizedException {
+public class DataRepoAuthorizationException extends ForbiddenException {
   public DataRepoAuthorizationException(String message) {
     super(message);
   }
