@@ -1,6 +1,6 @@
 {
   "name": "BasicIntegration",
   "description": "Integration tests.",
-  "serverSpecificationFile": "workspace-dev.json",
+  "serverSpecificationFile": "workspace-local.json",
   "testConfigurationFiles": ["integration/BasicUnauthenticated.json"]
 }
