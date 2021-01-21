@@ -12,13 +12,13 @@ import bio.terra.stairway.exception.DuplicateFlightIdSubmittedException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.stairway.exception.StairwayExecutionException;
+import bio.terra.workspace.app.configuration.external.IngressConfiguration;
 import bio.terra.workspace.app.configuration.external.JobConfiguration;
 import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
 import bio.terra.workspace.common.exception.stairway.StairwayInitializationException;
 import bio.terra.workspace.common.utils.MdcHook;
-import bio.terra.workspace.generated.model.JobModel;
+import bio.terra.workspace.generated.model.JobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.exception.InternalStairwayException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.job.exception.JobNotCompleteException;
@@ -48,8 +48,8 @@ import org.springframework.stereotype.Component;
 public class JobService {
 
   private final Stairway stairway;
-  private final SamService samService;
   private final JobConfiguration jobConfig;
+  private final IngressConfiguration ingressConfig;
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
   private final ScheduledExecutorService executor;
   private final MdcHook mdcHook;
@@ -58,14 +58,14 @@ public class JobService {
 
   @Autowired
   public JobService(
-      SamService samService,
       JobConfiguration jobConfig,
+      IngressConfiguration ingressConfig,
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
       ApplicationContext applicationContext,
       MdcHook mdcHook,
       ObjectMapper objectMapper) {
-    this.samService = samService;
     this.jobConfig = jobConfig;
+    this.ingressConfig = ingressConfig;
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
     this.executor = Executors.newScheduledThreadPool(jobConfig.getMaxThreads());
     this.mdcHook = mdcHook;
@@ -230,12 +230,12 @@ public class JobService {
     }
   }
 
-  public JobModel mapFlightStateToJobModel(FlightState flightState) {
+  public JobReport mapFlightStateToJobReport(FlightState flightState) {
     FlightMap inputParameters = flightState.getInputParameters();
     String description = inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class);
     FlightStatus flightStatus = flightState.getFlightStatus();
     String submittedDate = flightState.getSubmitted().toString();
-    JobModel.StatusEnum jobStatus = getJobStatus(flightStatus);
+    JobReport.StatusEnum jobStatus = getJobStatus(flightStatus);
 
     String completedDate = null;
     HttpStatus statusCode = HttpStatus.ACCEPTED;
@@ -252,32 +252,41 @@ public class JobService {
       completedDate = flightState.getCompleted().get().toString();
     }
 
-    JobModel jobModel =
-        new JobModel()
+    JobReport jobReport =
+        new JobReport()
             .id(flightState.getFlightId())
             .description(description)
             .status(jobStatus)
             .statusCode(statusCode.value())
             .submitted(submittedDate)
-            .completed(completedDate);
+            .completed(completedDate)
+            .resultURL(resultUrlFromFlightState(flightState));
 
-    return jobModel;
+    return jobReport;
   }
 
-  private JobModel.StatusEnum getJobStatus(FlightStatus flightStatus) {
+  private String resultUrlFromFlightState(FlightState flightState) {
+    String urlSuffix =
+        flightState
+            .getInputParameters()
+            .get(JobMapKeys.RESULT_URL_SUFFIX.getKeyName(), String.class);
+    return String.format("%s/%s", ingressConfig.getFqdn(), urlSuffix);
+  }
+
+  private JobReport.StatusEnum getJobStatus(FlightStatus flightStatus) {
     switch (flightStatus) {
       case RUNNING:
-        return JobModel.StatusEnum.RUNNING;
+        return JobReport.StatusEnum.RUNNING;
       case SUCCESS:
-        return JobModel.StatusEnum.SUCCEEDED;
+        return JobReport.StatusEnum.SUCCEEDED;
       case ERROR:
       case FATAL:
       default:
-        return JobModel.StatusEnum.FAILED;
+        return JobReport.StatusEnum.FAILED;
     }
   }
 
-  public List<JobModel> enumerateJobs(int offset, int limit, AuthenticatedUserRequest userReq) {
+  public List<JobReport> enumerateJobs(int offset, int limit, AuthenticatedUserRequest userReq) {
 
     List<FlightState> flightStateList;
     try {
@@ -289,21 +298,21 @@ public class JobService {
       throw new InternalStairwayException(stairwayEx);
     }
 
-    List<JobModel> jobModelList = new ArrayList<>();
+    List<JobReport> jobModelList = new ArrayList<>();
     for (FlightState flightState : flightStateList) {
-      JobModel jobModel = mapFlightStateToJobModel(flightState);
+      JobReport jobModel = mapFlightStateToJobReport(flightState);
       jobModelList.add(jobModel);
     }
     return jobModelList;
   }
 
   @Traced
-  public JobModel retrieveJob(String jobId, AuthenticatedUserRequest userReq) {
+  public JobReport retrieveJob(String jobId, AuthenticatedUserRequest userReq) {
 
     try {
       verifyUserAccess(jobId, userReq); // jobId=flightId
       FlightState flightState = stairway.getFlightState(jobId);
-      return mapFlightStateToJobModel(flightState);
+      return mapFlightStateToJobReport(flightState);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }

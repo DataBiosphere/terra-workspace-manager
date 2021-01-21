@@ -8,7 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.generated.model.JobModel;
+import bio.terra.workspace.generated.model.JobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
@@ -80,7 +80,7 @@ public class JobServiceTest extends BaseUnitTest {
   }
 
   private void testSingleRetrieval(List<String> fids) {
-    JobModel response = jobService.retrieveJob(fids.get(2), testUser);
+    JobReport response = jobService.retrieveJob(fids.get(2), testUser);
     assertThat(response, notNullValue());
     validateJobModel(response, 2, fids);
   }
@@ -95,10 +95,10 @@ public class JobServiceTest extends BaseUnitTest {
 
   // Get some range and compare it with the fids
   private void testEnumRange(List<String> fids, int offset, int limit) {
-    List<JobModel> jobList = jobService.enumerateJobs(offset, limit, testUser);
+    List<JobReport> jobList = jobService.enumerateJobs(offset, limit, testUser);
     assertThat(jobList, notNullValue());
     int index = offset;
-    for (JobModel job : jobList) {
+    for (JobReport job : jobList) {
       validateJobModel(job, index, fids);
       index++;
     }
@@ -106,7 +106,7 @@ public class JobServiceTest extends BaseUnitTest {
 
   // Get some range and make sure we got the number we expected
   private void testEnumCount(int count, int offset, int length) {
-    List<JobModel> jobList = jobService.enumerateJobs(offset, length, testUser);
+    List<JobReport> jobList = jobService.enumerateJobs(offset, length, testUser);
     assertThat(jobList, notNullValue());
     assertThat(jobList.size(), equalTo(count));
   }
@@ -129,11 +129,11 @@ public class JobServiceTest extends BaseUnitTest {
         });
   }
 
-  private void validateJobModel(JobModel jm, int index, List<String> fids) {
-    assertThat(jm.getDescription(), equalTo(makeDescription(index)));
-    assertThat(jm.getId(), equalTo(fids.get(index)));
-    assertThat(jm.getStatus(), equalTo(JobModel.StatusEnum.SUCCEEDED));
-    assertThat(jm.getStatusCode(), equalTo(HttpStatus.I_AM_A_TEAPOT.value()));
+  private void validateJobModel(JobReport jr, int index, List<String> fids) {
+    assertThat(jr.getDescription(), equalTo(makeDescription(index)));
+    assertThat(jr.getId(), equalTo(fids.get(index)));
+    assertThat(jr.getStatus(), equalTo(JobReport.StatusEnum.SUCCEEDED));
+    assertThat(jr.getStatusCode(), equalTo(HttpStatus.I_AM_A_TEAPOT.value()));
   }
 
   // Submit a flight; wait for it to finish; return the flight id

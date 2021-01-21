@@ -315,13 +315,13 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<JobModel> createGoogleContext(
+  public ResponseEntity<JobReport> createGoogleContext(
       UUID id, @Valid CreateGoogleContextRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     // TODO(PF-153): Use the optional jobId from the body for idempotency instead of always creating
     // a new job id.
     String jobId = workspaceService.createGoogleContext(id, userReq);
-    JobModel jobModel = jobService.retrieveJob(jobId, userReq);
+    JobReport jobModel = jobService.retrieveJob(jobId, userReq);
     // TODO(PF-221): Fix the jobs polling location once it exists.
     return ResponseEntity.status(HttpStatus.ACCEPTED)
         .location(URI.create(String.format("/api/jobs/v1/%s", jobId)))
