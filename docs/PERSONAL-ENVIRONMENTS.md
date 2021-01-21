@@ -24,9 +24,14 @@ repetition to bring the main points home. Additionally, the exercises on the mai
 well-paced, insightful, and a realistic facsimile of a k8s cluster and the process of interacting
 with it. The [kubectl Cheat Sheet](https://kubernetes.io/docs/reference/kubectl/cheatsheet/) has lots
 of useful goodies.
-## Setup
-### Prerequisites
-#### Accounts
+
+#### Terraform
+[Terraform Up & Running](https://www.amazon.com/Terraform-Running-Writing-Infrastructure-Code/dp/1491977086)
+is an excellent resource for getting your head around Terraform and some of the
+design decisions that went into it.
+
+## Prerequisites
+### Accounts
 You'll need
 1. An `@broadinstitute.org` account
 2. Membership in the Google group [dsde-engineering](https://groups.google.com/a/broadinstitute.org/g/dsde-engineering)
@@ -35,6 +40,151 @@ for access to private Github repos and [ArgoCD](https://argoproj.github.io/argo-
 4. A linkage between this GitHub account and your Broad account, using the [Broad Institute GitHub App](https://broad-github.appspot.com/). 
 5. (helpful) SSH credentials for using GitHub
 6. Membership in the private Git team for Platform Foundations.
+
+## Step 1: Terraform Orchestration for Terra Environment
+At this point, the [existing documentation](https://docs.dsp-devops.broadinstitute.org/mc-terra/mcterra-quickstarts#Create-a-new-namespaced-environment-in-an-existing-cluster)
+in the DevOps Confluence is applicable. The process involves two different pull requests in different
+repositories. The first is a change to the [terraform-ap-depoyments](https://github.com/broadinstitute/terraform-ap-deployments)
+repo, and the subject is any cloud dependencies that must be instantiated for the new environment. Different
+use cases will have different needs here, but for Workspace Manager we're interested in the following.
+
+First, we declare a new Terra Environment in [atlantis.yaml](https://github.com/broadinstitute/terraform-ap-deployments/blob/master/atlantis.yaml#L70). A new object
+in a yaml array describes the top-level properties of the environment. Note that "environment" here
+is a set of conventions for creating a stand-alone instance of one or more services, and not anything
+specific in k8s or Terraform. Mine looks like this:
+```yaml
+- name: terra-env-jcarlton
+  dir: terra-env
+  workflow: terra-env-jcarlton
+  workspace: jcarlton
+  autoplan:
+    enabled: false
+```
+It's easy to get confused between the env name (`terra-env-jcarlton`), the workspace (`jcarlton`), and the k8s namespace eventually
+created (`terra-jcarlton`). There are numerous examples of the conventions in this file, and I admit
+I cheated a little off the surrounding entries. Note that Atlantis is a tool for managing Terraform updates,
+but atlantis.yaml is not itself a Terraform file.
+
+Second, we specify some workflow settings for deploying the environment. Among other things, this tells
+Atlantis to pass the variables file `jcarlton.tfvars`
+```yaml
+  terra-env-jcarlton:
+    plan:
+      steps:
+        - init:
+            extra_args: ["-upgrade"]
+        - plan:
+            extra_args: ["-var-file", "tfvars/jcarlton.tfvars"]
+```
+
+Third, we check in a tfvars file for Terraform to use as its input variables when building this [workspace](https://www.terraform.io/docs/state/workspaces.html).
+```hcl-terraform
+# General
+google_project = "terra-kernel-k8s"
+cluster        = "integration"
+cluster_short  = "integ"
+
+terra_apps = {
+  workspace_manager = true,
+  crl_janitor       = true,
+  buffer            = true,
+}
+
+# Resource Buffer Service Testing
+buffer_google_folder_ids   = ["637867149294"]
+buffer_billing_account_ids = ["01A82E-CA8A14-367457"]
+
+# Workspace Manager
+wsm_workspace_project_folder_id = "1094831421623" # DSP Integration
+wsm_billing_account_ids         = ["01A82E-CA8A14-367457"]
+```
+This file should be in a path like `terraform-ap-deployments/terra-env/tfvars/jcarlton.tfvars`. IDs will vary, thougth I borrowed
+mine from a teammate. Folder IDs refer to [GCP Project Folders](https://cloud.google.com/resource-manager/docs/creating-managing-folders).
+The entries under `terra_apps` describe services your deployment will depend on (but not deploy). Google project and cluster
+information should be the same for everyone.
+
+The repository is integrated with [Atlantis](https://www.runatlantis.io/), which checks terraform artifacts
+before merge to make sure they can `plan` and `apply` successfully. When pushing a PR to this repo, 
+it's expected you'll run `atlantis` commands as part of the review process. First, a github comment of
+ ```shell script
+ atlantis plan -p terra-env-jcarlton
+```
+to which `broadbot` will reply:
+```text
+Ran Plan for project: terra-env-jcarlton dir: terra-env workspace: jcarlton
+
+Show Output
+```
+
+Following a successful plan, run `atlantis apply`, and if that's successful (and you get an approval), 
+you can merge the PR.
+## Step 2: Helm Chart
+[Helm]() uses a [helmfile](https://github.com/roboll/helmfile) to orchestrate and manage Helm charts,
+in turn allowing large-scale Kubernetes deployments. For this new environment,
+the Helm chart doesn't need changing, but we set up instructions to create an instance with it.
+### Personal yaml file
+This file describes the Terra apps that are required for the personal environment. In my case those were
+resource buffer, janitor, and workspace manager. For the file `terra-helmfile/environments/personal/jcarlton.yaml`:
+```yaml
+# Environment overrides for jcarlton environment
+releases:
+  crljanitor:
+    enabled: true
+  workspacemanager:
+    enabled: true
+  buffer:
+    enabled: true
+```
+If any environments are disabled, their resources are not generated by Terraform.
+
+The main helmfile itself gets a simple two-line entry for this project pointing to other files with
+properties to read (including the one above):
+```yaml
+  jcarlton:
+    values:
+      - environments/personal.yaml
+      - environments/personal/jcarlton.yaml
+```
+The main personal.yaml is nearly empty (and should not be edited). It appears just to be a lightweight
+bit of plumbing so the whole repo isn't just one massive file.
+<details>
+
+<summary>personal.yaml</summary>
+
+```yaml
+# Common settings for private developer environments
+base: 'personal'
+
+# All private dev environments go to same cluster
+defaultCluster: terra-integration
+
+# Enable services below, eg:
+# releases:
+#   cromwell:
+#     enabled: true
+```
+
+</details>
+
+Finally, each service to be included has its own `values` file for our environment:
+For `terra/values/workspacemanager/personal/jcarlton.yaml`, you should verify that [vault](https://www.vaultproject.io/) has secret
+stored at the path described. In my case this had already been taken care of.
+
+```yaml
+vault:
+  pathPrefix: secret/dsde/terra/kernel/integration/jcarlton
+
+ingress:
+  staticIpName: terra-integration-jcarlton-workspace-ip
+```
+
+For `terra/values/crljanitor/personal/jcarlton.yaml`, you need the IP address from the `atlantis apply` call in the previous PR.
+```yaml
+vault:
+  pathPrefix: secret/dsde/terra/kernel/integration/jcarlton
+  configPathPrefix: config/terraform/terra/integration/jcarlton
+serviceIP: 35.223.31.120
+```
 
 ## Administration
 ### `kubectl` Setup
@@ -106,6 +256,7 @@ users:
       name: gcp
 ```
 </details>
+
 The credentials and other info are contained in a `kubectl context` and can be inspected:
 ```shell script
 kubectl config get-contexts
