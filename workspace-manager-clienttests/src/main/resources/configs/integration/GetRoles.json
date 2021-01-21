@@ -1,0 +1,17 @@
+{
+  "name": "GetRoles",
+  "description": "CRUD for roles",
+  "serverSpecificationFile": "workspace-dev.json",
+  "kubernetes": {},
+  "application": {},
+  "testScripts": [
+    {
+      "name": "GetRoles",
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 2,
+      "expectedTimeForEach": 5,
+      "expectedTimeForEachUnit": "SECONDS"
+    }
+  ],
+  "testUserFiles": ["william.json"]
+}

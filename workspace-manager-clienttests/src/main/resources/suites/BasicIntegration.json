@@ -1,0 +1,13 @@
+{
+  "name": "BasicIntegration",
+  "description": "Integration tests.",
+  "serverSpecificationFile": "workspace-dev.json",
+  "testConfigurationFiles": [
+    "integration/BasicAuthenticated.json",
+    "integration/BasicUnauthenticated.json",
+    "integration/CreateGetDeleteWorkspace.json",
+    "integration/DataReferenceLifecycle.json",
+    "integration/EnumerateDataReferences.json",
+    "integration/GetRoles.json"
+  ]
+}
