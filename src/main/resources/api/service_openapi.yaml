@@ -256,8 +256,8 @@ paths:
       responses:
         '204':
           description: Role granted successfully
-        '401':
-          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{id}/roles/{role}/members/{memberEmail}:
@@ -272,8 +272,8 @@ paths:
       responses:
         '204':
           description: Role removed successfully
-        '401':
-          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
 
