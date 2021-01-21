@@ -92,6 +92,5 @@ jobs:
           ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
           echo "Running test suite"
           ./gradlew runTest --args="suites/BasicIntegration.json /tmp/TestRunnerResults"
-          ls -l /tmp/TestRunnerResults
           echo "Upload test results"
           ./gradlew uploadResults --args="TerraWSMDev.json /tmp/TestRunnerResults"
