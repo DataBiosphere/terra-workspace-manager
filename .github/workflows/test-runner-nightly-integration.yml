@@ -4,9 +4,7 @@
 name: Test Runner Nightly Integration Tests
 
 on:
-  workflow_dispatch: {}
-  schedule:
-    - cron: '0 2 * * *' # run at 2 AM UTC
+  push
 
 jobs:
   test-runner-integration:
@@ -28,6 +26,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      # This step is needed when running test using a local server.
       - name: Initialize Postgres DB
         env:
           PGPASSWORD: postgres
@@ -36,6 +35,7 @@ jobs:
         uses: joschi/setup-jdk@v2
         with:
           java-version: 11
+      # This step caches Gradle packages for reuse in the same VM instance.
       - name: Cache Gradle packages
         uses: actions/cache@v2
         with:
@@ -75,13 +75,17 @@ jobs:
         # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
         run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
 
-      - name: Build the WSM client and run the Basic Integration test suite
+      - name: Build the WSM client
         run: |
           echo "Building WSM client library"
           ./gradlew :workspace-manager-client:clean :workspace-manager-client:assemble
           cd workspace-manager-clienttests
           export ORG_GRADLE_PROJECT_workspacemanagerclientjar=$(find .. -type f -name "workspace-manager-client*.jar")
           echo "ORG_GRADLE_PROJECT_workspacemanagerclientjar = ${ORG_GRADLE_PROJECT_workspacemanagerclientjar}"
+
+      - name: Run the Basic Integration test suite
+        run: |
+          cd workspace-manager-clienttests
           echo "Test Runner config"
           ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
           echo "Running test suite"
