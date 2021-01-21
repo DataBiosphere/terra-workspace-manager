@@ -7,7 +7,7 @@ if [ -z "${ENV}" ]; then
     echo "ENV not defined."
     exit 1
 elif ! [[  "${ENV}" = "local" || "${ENV}" = "dev" ||  "${ENV}" = "alpha" || "${ENV}" = "staging" ]]; then
-    echo "ENV not supported."
+    echo "${ENV} not supported."
     exit 1
 elif [ "${ENV}" = "local" ]; then
   ENV=dev
