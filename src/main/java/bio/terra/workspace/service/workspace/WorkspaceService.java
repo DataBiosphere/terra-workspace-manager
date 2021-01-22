@@ -71,13 +71,16 @@ public class WorkspaceService {
   /** Retrieves an existing workspace by ID */
   @Traced
   public Workspace getWorkspace(UUID id, AuthenticatedUserRequest userReq) {
+    Workspace workspace = workspaceDao.getWorkspace(id);
     samService.workspaceAuthz(userReq, id, SamConstants.SAM_WORKSPACE_READ_ACTION);
-    return workspaceDao.getWorkspace(id);
+    return workspace;
   }
 
   /** Delete an existing workspace by ID. */
   @Traced
   public void deleteWorkspace(UUID id, AuthenticatedUserRequest userReq) {
+    // getWorkspace will throw WorkspaceNotFoundException if it doesn't exist
+    workspaceDao.getWorkspace(id);
 
     samService.workspaceAuthz(userReq, id, SamConstants.SAM_WORKSPACE_DELETE_ACTION);
 
