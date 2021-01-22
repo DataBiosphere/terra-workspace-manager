@@ -90,6 +90,29 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  public void testGetForbiddenMissingWorkspace() {
+    doThrow(new SamUnauthorizedException("forbid!"))
+        .when(mockSamService)
+        .workspaceAuthz(any(), any(), any());
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () -> workspaceService.getWorkspace(UUID.randomUUID(), USER_REQUEST));
+  }
+
+  @Test
+  public void testGetForbiddenExistingWorkspace() {
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+
+    doThrow(new SamUnauthorizedException("forbid!"))
+            .when(mockSamService)
+            .workspaceAuthz(any(), any(), any());
+    assertThrows(
+        SamUnauthorizedException.class,
+        () -> workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST));
+  }
+
+  @Test
   public void testWorkspaceStagePersists() {
     WorkspaceRequest mcWorkspaceRequest =
         defaultRequestBuilder(UUID.randomUUID())
