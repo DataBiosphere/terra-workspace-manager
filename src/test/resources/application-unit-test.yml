@@ -1,0 +1,4 @@
+# Do not configure CRL for unit tests
+workspace:
+  crl:
+    testing-mode: false

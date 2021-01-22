@@ -15,7 +15,7 @@ import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.app.configuration.external.JobConfiguration;
 import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
 import bio.terra.workspace.common.exception.stairway.StairwayInitializationException;
-import bio.terra.workspace.common.utils.FlightApplicationContext;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.MdcHook;
 import bio.terra.workspace.generated.model.JobModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -61,7 +61,7 @@ public class JobService {
       SamService samService,
       JobConfiguration jobConfig,
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
-      FlightApplicationContext applicationContext,
+      FlightBeanBag applicationContext,
       MdcHook mdcHook,
       ObjectMapper objectMapper) {
     this.samService = samService;

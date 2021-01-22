@@ -5,6 +5,9 @@ workspace.integration-test:
     dev: 97b5559a-2f8f-4df3-89ae-5a249173ee0c
   user-email: william.thunderlord@test.firecloud.org
   user-delegated-service-account-path: rendered/user-delegated-service-account.json
+  workspace:
+    crl:
+      testing-mode: true
   wsm-endpoints:
     workspaces: api/workspaces/v1
   wsm-urls:

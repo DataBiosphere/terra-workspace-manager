@@ -21,7 +21,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  * properly types without casting.
  */
 @Component
-public class FlightApplicationContext {
+public class FlightBeanBag {
   private final BufferService bufferService;
   private final CloudBillingClientCow billingClient;
   private final CloudResourceManagerCow resourceManager;
@@ -34,7 +34,7 @@ public class FlightApplicationContext {
   private final WorkspaceDao workspaceDao;
 
   @Autowired
-  public FlightApplicationContext(
+  public FlightBeanBag(
       BufferService bufferService,
       CloudBillingClientCow billingClient,
       CloudResourceManagerCow resourceManager,
@@ -57,8 +57,8 @@ public class FlightApplicationContext {
     this.workspaceDao = workspaceDao;
   }
 
-  public static FlightApplicationContext getFromObject(Object object) {
-    return (FlightApplicationContext) object;
+  public static FlightBeanBag getFromObject(Object object) {
+    return (FlightBeanBag) object;
   }
 
   public BufferService getBufferService() {

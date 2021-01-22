@@ -4,7 +4,7 @@ import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.RetryRuleExponentialBackoff;
-import bio.terra.workspace.common.utils.FlightApplicationContext;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 
@@ -13,8 +13,7 @@ public class WorkspaceDeleteFlight extends Flight {
   public WorkspaceDeleteFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
 
-    FlightApplicationContext appContext =
-        FlightApplicationContext.getFromObject(applicationContext);
+    FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
 
     AuthenticatedUserRequest userReq =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
