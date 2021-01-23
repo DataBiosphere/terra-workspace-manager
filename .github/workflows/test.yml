@@ -81,20 +81,25 @@ jobs:
         echo ::set-output name=vault-token::$VAULT_TOKEN
         echo ::add-mask::$VAULT_TOKEN
 
-
-    - name: Set permissions and render test configurations
-      if: matrix.gradleTask != 'unitTest'
+    - name: Set permissions and render test configurations pull request and push
+      if: matrix.gradleTask != 'unitTest' && ( ${{ github.event.issue.pull_request }} || ${{github.event.issue.push}} )
       run: |
         chmod +x render_config.sh
-        if [ ${{ github.event.issue.pull_request || github.event.issue.push}} ] ; then
-          echo "pull request or push"
-          ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }}
-        else
-          ./render_config.sh ${{ github.event.inputs.testEnv }} ${{ steps.vault-token-step.outputs.vault-token }}
-        fi
+        echo "pull request or push"
+        ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }}
         chmod +r rendered
 
-    # Only integration tests need a running server
+    - name: Set permissions and render test configurations workflow dispatch
+      if: matrix.gradleTask != 'unitTest' && !( ${{ github.event.issue.pull_request }} || ${{github.event.issue.push}} )
+      run: |
+        chmod +x render_config.sh
+        echo "triggered by dispatch"
+        ./render_config.sh ${{ github.event.inputs.testEnv }} ${{ steps.vault-token-step.outputs.vault-token }}
+        chmod +r rendered
+
+
+
+      # Only integration tests need a running server
     - name: Run local server (in background)
       if: matrix.gradleTask == 'integrationTest' &&  ${{ github.event.issue.pull_request }}
       run: ./gradlew bootRun &
