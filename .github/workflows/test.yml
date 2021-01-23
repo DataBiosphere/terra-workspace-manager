@@ -82,7 +82,7 @@ jobs:
         echo ::add-mask::$VAULT_TOKEN
 
     - name: Set permissions and render test configurations pull request and push
-      if: matrix.gradleTask != 'unitTest' && ( ${{ github.event.issue.pull_request }} || ${{github.event.issue.push}} )
+      if: matrix.gradleTask != 'unitTest' && ( ${{ github.event.issue.pull_request }} || ${{ github.event.issue.push }} )
       run: |
         chmod +x render_config.sh
         echo "pull request or push"
@@ -90,7 +90,7 @@ jobs:
         chmod +r rendered
 
     - name: Set permissions and render test configurations workflow dispatch
-      if: matrix.gradleTask != 'unitTest' && !( ${{ github.event.issue.pull_request }} || ${{github.event.issue.push}} )
+      if: matrix.gradleTask != 'unitTest' &&  ${{ !github.event.issue.pull_request }} && ${{ !github.event.issue.push }} )
       run: |
         chmod +x render_config.sh
         echo "triggered by dispatch"
