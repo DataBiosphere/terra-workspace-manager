@@ -86,7 +86,7 @@ jobs:
       if: matrix.gradleTask != 'unitTest'
       run: |
         chmod +x render_config.sh
-        if ${{ github.event.issue.pull_request || github.event.issue.push}} ; then
+        if [ ${{ github.event.issue.pull_request || github.event.issue.push}} ] ; then
           echo "pull request or push"
           ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }}
         else
