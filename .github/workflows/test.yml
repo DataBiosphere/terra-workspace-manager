@@ -86,7 +86,7 @@ jobs:
       run: |
         chmod +x render_config.sh
         echo "pull request or push"
-        ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }}
+        ./render_config.sh local ${{ steps.vault-token-step.outputs.vault-token }}
         chmod +r rendered
 
     - name: Set permissions and render test configurations workflow dispatch
