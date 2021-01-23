@@ -124,6 +124,17 @@ public class WorkspaceDao {
     return WorkspaceStage.valueOf(jdbcTemplate.queryForObject(sql, params, String.class));
   }
 
+  // TODO: do all three variants of assertMcWorkspace belong in WorkspaceDAO?
+  private void assertMcWorkspace(WorkspaceStage stage, UUID workspaceId, String action) {
+    if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
+      throw new StageDisabledException(workspaceId, stage, action);
+    }
+  }
+
+  public void assertMcWorkspace(Workspace workspace, String action) {
+    assertMcWorkspace(workspace.workspaceStage(), workspace.workspaceId(), action);
+  }
+
   /**
    * Check that the given workspace has stage MC_WORKSPACE, and throw an exception otherwise.
    *
@@ -132,9 +143,7 @@ public class WorkspaceDao {
    */
   public void assertMcWorkspace(UUID workspaceId, String action) {
     WorkspaceStage stage = getWorkspaceStage(workspaceId);
-    if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
-      throw new StageDisabledException(workspaceId, stage, action);
-    }
+    assertMcWorkspace(stage, workspaceId, action);
   }
 
   /** Retrieves the cloud context of the workspace. */

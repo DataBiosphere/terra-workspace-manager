@@ -9,6 +9,7 @@ import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -121,23 +122,48 @@ public class SamService {
   }
 
   @Traced
-  public void workspaceAuthz(AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
+  public void workspaceAuthzOnly(AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
     boolean isAuthorized =
-        isAuthorized(
-            userReq.getRequiredToken(),
-            SamConstants.SAM_WORKSPACE_RESOURCE,
-            workspaceId.toString(),
-            action);
+            isAuthorized(
+                    userReq.getRequiredToken(),
+                    SamConstants.SAM_WORKSPACE_RESOURCE,
+                    workspaceId.toString(),
+                    action);
     if (!isAuthorized)
       throw new SamUnauthorizedException(
-          String.format(
-              "User %s is not authorized to %s workspace %s or it does not exist",
-              userReq.getEmail(), action, workspaceId));
+              String.format(
+                      "User %s is not authorized to %s workspace %s or it does not exist",
+                      userReq.getEmail(), action, workspaceId));
     else
       logger.info(
-          String.format(
-              "User %s is authorized to %s workspace %s",
-              userReq.getEmail(), action, workspaceId.toString()));
+              String.format(
+                      "User %s is authorized to %s workspace %s",
+                      userReq.getEmail(), action, workspaceId.toString()));
+  }
+
+  /**
+   * Convenience function that checks existence of a workspace, followed by an authorization check
+   * against that workspace.
+   *
+   * Throws WorkspaceNotFoundException from getWorkspace if the workspace does not exist, regardless
+   * of the user's permission.
+   *
+   * Throws SamUnauthorizedException if the user is not permitted to perform the specified action
+   * on the workspace in question.
+   *
+   * Returns the Workspace object if it exists and the user is permitted to perform the specified action.
+   *
+   * @param userReq the user's authenticated request
+   * @param workspaceId id of the workspace in question
+   * @param action the action to authorize against the workspace
+   * @return the workspace, if it exists and the user is permitted to perform the specified action.
+   */
+  @Traced
+  // TODO: this doesn't belong in SamService; it should move to ... where? WorkspaceService?
+  public Workspace authorizedGetWorkspace(AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
+    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
+    workspaceAuthzOnly(userReq, workspaceId, action);
+    return workspace;
   }
 
   /**

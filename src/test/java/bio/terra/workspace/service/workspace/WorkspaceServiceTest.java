@@ -93,7 +93,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void testGetForbiddenMissingWorkspace() {
     doThrow(new SamUnauthorizedException("forbid!"))
         .when(mockSamService)
-        .workspaceAuthz(any(), any(), any());
+        .authorizedGetWorkspace(any(), any(), any());
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> workspaceService.getWorkspace(UUID.randomUUID(), USER_REQUEST));
@@ -106,7 +106,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
 
     doThrow(new SamUnauthorizedException("forbid!"))
             .when(mockSamService)
-            .workspaceAuthz(any(), any(), any());
+            .authorizedGetWorkspace(any(), any(), any());
     assertThrows(
         SamUnauthorizedException.class,
         () -> workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST));
@@ -213,7 +213,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void deleteForbiddenMissingWorkspace() {
     doThrow(new SamUnauthorizedException("forbid!"))
             .when(mockSamService)
-            .workspaceAuthz(any(), any(), any());
+            .authorizedGetWorkspace(any(), any(), any());
 
     assertThrows(
             WorkspaceNotFoundException.class,
@@ -227,7 +227,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
 
     doThrow(new SamUnauthorizedException("forbid!"))
             .when(mockSamService)
-            .workspaceAuthz(any(), any(), any());
+            .authorizedGetWorkspace(any(), any(), any());
 
     assertThrows(
             SamUnauthorizedException.class,
