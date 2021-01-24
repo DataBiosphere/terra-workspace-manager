@@ -90,7 +90,7 @@ jobs:
         chmod +r rendered
 
     - name: Set permissions and render test configurations workflow dispatch
-      if: matrix.gradleTask != 'unitTest' && !${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+      if: ${{ matrix.gradleTask != 'unitTest' && !( github.event_name == 'pull_request' || github.event_name == 'push' ) }}
       run: |
         chmod +x render_config.sh
         echo "triggered by dispatch"
