@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "workspace.integration-test")
 public class IntegrationTestConfiguration {
 
-  @Value("${TEST_ENV:dev}")
+  @Value("${TEST_ENV:local}")
   private String testEnv;
 
   private HashMap<String, String> wsmUrls;
