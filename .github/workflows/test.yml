@@ -82,7 +82,7 @@ jobs:
         echo ::add-mask::$VAULT_TOKEN
 
     - name: Set permissions and render test configurations pull request and push
-      if: matrix.gradleTask != 'unitTest' && ( ${{ github.event.issue.pull_request }} || ${{ github.event.issue.push }} )
+      if: ${{ matrix.gradleTask != 'unitTest' && ( github.event_name == 'pull_request' || github.event_name == 'push' ) }}
       run: |
         chmod +x render_config.sh
         echo "pull request or push"
@@ -99,10 +99,10 @@ jobs:
 
       # Only integration tests need a running servers
     - name: Run local server (in background)
-      if: matrix.gradleTask == 'integrationTest' &&  ${{ github.event.issue.pull_request }}
+      if: matrix.gradleTask == 'integrationTest' && ( github.event_name == 'pull_request' || github.event_name == 'push' )
       run: ./gradlew bootRun &
     - name: Wait for local server to start
-      if: matrix.gradleTask == 'integrationTest' &&  ${{ github.event.issue.pull_request }}
+      if: matrix.gradleTask == 'integrationTest' && ( github.event_name == 'pull_request' || github.event_name == 'push' )
       # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
       run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
 
