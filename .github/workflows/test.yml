@@ -111,17 +111,13 @@ jobs:
       env:
         TEST_ENV: local
       run: ./gradlew ${{ matrix.gradleTask }} --scan
-    - name: Upload Test Reports
-      uses: actions/upload-artifact@v1
-      with:
-        name: Test Reports
-        path: build/reports/tests
 
     - name: Run tests on persistent workspace manager
       if: github.event_name != 'pull_request' && github.event_name != 'push'
       env:
         TEST_ENV: ${{ github.event.inputs.testEnv }}
       run: ./gradlew ${{ matrix.gradleTask }} --scan
+
     - name: Upload Test Reports
       uses: actions/upload-artifact@v1
       with:
