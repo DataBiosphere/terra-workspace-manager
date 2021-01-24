@@ -82,7 +82,7 @@ jobs:
         echo ::add-mask::$VAULT_TOKEN
 
     - name: Set permissions and render test configurations pull request and push
-      if: ${{ matrix.gradleTask != 'unitTest' && ( github.event_name == 'pull_request' || github.event_name == 'push' ) }}
+      if: matrix.gradleTask != 'unitTest' && ( github.event_name == 'pull_request' || github.event_name == 'push' )
       run: |
         chmod +x render_config.sh
         echo "pull request or push"
@@ -90,7 +90,7 @@ jobs:
         chmod +r rendered
 
     - name: Set permissions and render test configurations workflow dispatch
-      if: ${{ matrix.gradleTask != 'unitTest' && !( github.event_name == 'pull_request' || github.event_name == 'push' ) }}
+      if: matrix.gradleTask != 'unitTest' && !( github.event_name == 'pull_request' || github.event_name == 'push' )
       run: |
         chmod +x render_config.sh
         echo "triggered by dispatch"
@@ -106,7 +106,19 @@ jobs:
       # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
       run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
 
-    - name: Run tests
+    - name: Run tests with local workspace manager
+      if: github.event_name == 'pull_request' || github.event_name == 'push'
+      env:
+        TEST_ENV: local
+      run: ./gradlew ${{ matrix.gradleTask }} --scan
+    - name: Upload Test Reports
+      uses: actions/upload-artifact@v1
+      with:
+        name: Test Reports
+        path: build/reports/tests
+
+    - name: Run tests on ${{ github.event.inputs.testEnv }} workspace manager
+      if: !( github.event_name == 'pull_request' || github.event_name == 'push' )
       env:
         TEST_ENV: ${{ github.event.inputs.testEnv }}
       run: ./gradlew ${{ matrix.gradleTask }} --scan
