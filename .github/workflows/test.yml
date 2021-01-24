@@ -118,7 +118,7 @@ jobs:
         path: build/reports/tests
 
     - name: Run tests on persistent workspace manager
-      if: !( github.event_name == 'pull_request' || github.event_name == 'push' )
+      if: github.event_name != 'pull_request' && github.event_name != 'push'
       env:
         TEST_ENV: ${{ github.event.inputs.testEnv }}
       run: ./gradlew ${{ matrix.gradleTask }} --scan
