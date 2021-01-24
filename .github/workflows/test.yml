@@ -90,14 +90,14 @@ jobs:
         chmod +r rendered
 
     - name: Set permissions and render test configurations workflow dispatch
-      if: matrix.gradleTask != 'unitTest' && !github.event.issue.pull_request && !github.event.issue.push
+      if: ${{ matrix.gradleTask != 'unitTest' && !github.event.issue.pull_request && !github.event.issue.push }}
       run: |
         chmod +x render_config.sh
         echo "triggered by dispatch"
         ./render_config.sh ${{ github.event.inputs.testEnv }} ${{ steps.vault-token-step.outputs.vault-token }}
         chmod +r rendered
 
-      # Only integration tests need a running server
+      # Only integration tests need a running servers
     - name: Run local server (in background)
       if: matrix.gradleTask == 'integrationTest' &&  ${{ github.event.issue.pull_request }}
       run: ./gradlew bootRun &
