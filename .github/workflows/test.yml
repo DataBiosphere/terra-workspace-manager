@@ -106,7 +106,7 @@ jobs:
       # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
       run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
 
-    - name: Run tests with local workspace manager
+    - name: Run tests
       if: github.event_name == 'pull_request' || github.event_name == 'push'
       env:
         TEST_ENV: local
@@ -117,7 +117,7 @@ jobs:
         name: Test Reports
         path: build/reports/tests
 
-    - name: Run tests on ${{ github.event.inputs.testEnv }} workspace manager
+    - name: Run tests on persistent workspace manager
       if: !( github.event_name == 'pull_request' || github.event_name == 'push' )
       env:
         TEST_ENV: ${{ github.event.inputs.testEnv }}
