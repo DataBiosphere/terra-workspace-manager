@@ -19,6 +19,7 @@ import bio.terra.workspace.common.exception.stairway.StairwayInitializationExcep
 import bio.terra.workspace.common.utils.MdcHook;
 import bio.terra.workspace.generated.model.JobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.exception.DuplicateJobIdException;
 import bio.terra.workspace.service.job.exception.InternalStairwayException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.job.exception.JobNotCompleteException;
@@ -120,22 +121,15 @@ public class JobService {
   // submit a new job to stairway
   // protected method intended to be called only from JobBuilder
   protected String submit(
-      Class<? extends Flight> flightClass,
-      FlightMap parameterMap,
-      String jobId,
-      boolean duplicateFlightOk) {
+      Class<? extends Flight> flightClass, FlightMap parameterMap, String jobId) {
     try {
       stairway.submit(jobId, flightClass, parameterMap);
     } catch (DuplicateFlightIdSubmittedException ex) {
       // DuplicateFlightIdSubmittedException is a more specific StairwayException, and so needs to
       // be checked separately. Allowing duplicate FlightIds is useful for ensuring idempotent
       // behavior of flights.
-      logger.debug("Found duplicate flight ID, duplicateFlightOk = " + duplicateFlightOk);
-      if (duplicateFlightOk) {
-        return jobId;
-      } else {
-        throw new InternalStairwayException(ex);
-      }
+      logger.warn(String.format("Received duplicate job ID: %s", jobId));
+      throw new DuplicateJobIdException("Recieved duplicate jobId", ex);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
@@ -148,9 +142,8 @@ public class JobService {
       Class<? extends Flight> flightClass,
       FlightMap parameterMap,
       Class<T> resultClass,
-      String jobId,
-      boolean duplicateFlightOk) {
-    submit(flightClass, parameterMap, jobId, duplicateFlightOk);
+      String jobId) {
+    submit(flightClass, parameterMap, jobId);
     waitForJob(jobId);
     AuthenticatedUserRequest userReq =
         parameterMap.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
@@ -343,7 +336,8 @@ public class JobService {
    */
   @Traced
   public <T> JobResultWithStatus<T> retrieveJobResult(
-      String jobId, Class<T> resultClass, AuthenticatedUserRequest userReq) {
+      String jobId, Class<T> resultClass, AuthenticatedUserRequest userReq)
+      throws JobResponseException {
 
     try {
       verifyUserAccess(jobId, userReq); // jobId=flightId
@@ -354,7 +348,7 @@ public class JobService {
   }
 
   private <T> JobResultWithStatus<T> retrieveJobResultWorker(String jobId, Class<T> resultClass)
-      throws StairwayException, InterruptedException {
+      throws StairwayException, InterruptedException, JobResponseException {
     FlightState flightState = stairway.getFlightState(jobId);
     FlightMap resultMap = flightState.getResultMap().orElse(null);
     if (resultMap == null) {

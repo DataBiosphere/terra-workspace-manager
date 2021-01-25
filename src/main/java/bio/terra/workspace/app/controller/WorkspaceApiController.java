@@ -3,6 +3,7 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.generated.model.JobReport.StatusEnum;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
@@ -14,13 +15,14 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.job.JobService.JobResultWithStatus;
+import bio.terra.workspace.service.job.exception.JobResponseException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -68,6 +70,11 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
     return authenticatedUserRequestFactory.from(request);
+  }
+
+  // Returns
+  private String getAsyncResultEndpoint(String jobId) {
+    return String.format("%s/result/%s", request.getServletPath(), jobId);
   }
 
   @Override
@@ -315,21 +322,46 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<JobReport> createGoogleContext(
-      UUID id, @Valid CreateGoogleContextRequestBody body) {
+  public ResponseEntity<JobReport> createCloudContext(UUID id, @Valid JobControl body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    // TODO(PF-153): Use the optional jobId from the body for idempotency instead of always creating
-    // a new job id.
-    String jobId = workspaceService.createGoogleContext(id, userReq);
-    JobReport jobModel = jobService.retrieveJob(jobId, userReq);
-    // TODO(PF-221): Fix the jobs polling location once it exists.
-    return ResponseEntity.status(HttpStatus.ACCEPTED)
-        .location(URI.create(String.format("/api/jobs/v1/%s", jobId)))
-        .body(jobModel);
+    String jobId = body.getId();
+    String resultUrlSuffix = getAsyncResultEndpoint(jobId);
+
+    workspaceService.createGoogleContext(id, jobId, resultUrlSuffix, userReq);
+    JobReport jobReport = jobService.retrieveJob(jobId, userReq);
+    return ResponseEntity.status(HttpStatus.ACCEPTED).body(jobReport);
   }
 
   @Override
-  public ResponseEntity<Void> deleteGoogleContext(UUID id) {
+  public ResponseEntity<GoogleContextWithJobReport> createCloudContextResult(
+      UUID id, String jobId) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    JobReport jobReport = jobService.retrieveJob(jobId, userReq);
+    GoogleContextWithJobReport response = new GoogleContextWithJobReport().jobReport(jobReport);
+    // If the job is still running, return a 202 with the JobReport. Otherwise return the result.
+    if (jobReport.getStatus().equals(StatusEnum.RUNNING)) {
+      return new ResponseEntity<>(response, HttpStatus.ACCEPTED);
+    }
+    try {
+      JobResultWithStatus<WorkspaceCloudContext> jobResult =
+          jobService.retrieveJobResult(jobId, WorkspaceCloudContext.class, userReq);
+      GoogleContext googleContext =
+          new GoogleContext().projectId(jobResult.getResult().googleProjectId().get());
+      response
+          .googleContext(googleContext)
+          .getJobReport()
+          .statusCode(jobResult.getStatusCode().value());
+    } catch (JobResponseException jobFailure) {
+      // This indicates the job failed with an exception, which is fine. In this case we return the
+      // JobReport (containing the error message) without a result.
+      // TODO!
+      logger.error("Job failure!!!", jobFailure);
+    }
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> deleteCloudContext(UUID id, CloudContext cloudContext) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     workspaceService.deleteGoogleContext(id, userReq);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);

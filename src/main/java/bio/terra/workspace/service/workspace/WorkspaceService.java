@@ -5,6 +5,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -64,7 +65,7 @@ public class WorkspaceService {
     createJob.addParameter(
         WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceRequest.workspaceStage());
 
-    return createJob.submitAndWait(UUID.class, true);
+    return createJob.submitAndWait(UUID.class);
   }
 
   /** Retrieves an existing workspace by ID */
@@ -90,7 +91,7 @@ public class WorkspaceService {
                 null, // Delete does not have a useful request body
                 userReq)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id);
-    deleteJob.submitAndWait(null, false);
+    deleteJob.submitAndWait(null);
   }
 
   /** Retrieves the cloud context of a workspace. */
@@ -102,7 +103,8 @@ public class WorkspaceService {
 
   /** Start a job to create a Google cloud context for the workspace. Returns the job id. */
   @Traced
-  public String createGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
+  public String createGoogleContext(
+      UUID workspaceId, String jobId, String resultUrlSuffix, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     workspaceDao.assertMcWorkspace(workspaceId, "createGoogleContext");
     Optional<SpendProfileId> spendProfileId =
@@ -115,7 +117,6 @@ public class WorkspaceService {
       throw new NoBillingAccountException(spendProfileId.get());
     }
 
-    String jobId = UUID.randomUUID().toString();
     jobService
         .newJob(
             "Create Google Context " + workspaceId,
@@ -126,7 +127,8 @@ public class WorkspaceService {
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
         .addParameter(
             WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendProfile.billingAccountId().get())
-        .submit(false);
+        .addParameter(JobMapKeys.RESULT_URL_SUFFIX.getKeyName(), resultUrlSuffix)
+        .submit();
     return jobId;
   }
 
@@ -143,6 +145,6 @@ public class WorkspaceService {
             /* request= */ null,
             userReq)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
-        .submitAndWait(null, false);
+        .submitAndWait(null);
   }
 }

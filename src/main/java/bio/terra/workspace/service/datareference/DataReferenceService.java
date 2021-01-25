@@ -102,7 +102,7 @@ public class DataReferenceService {
                 DataReferenceFlightMapKeys.REFERENCE_OBJECT,
                 referenceRequest.referenceObject().toJson());
 
-    UUID referenceIdResult = createJob.submitAndWait(UUID.class, false);
+    UUID referenceIdResult = createJob.submitAndWait(UUID.class);
 
     return dataReferenceDao.getDataReference(referenceRequest.workspaceId(), referenceIdResult);
   }

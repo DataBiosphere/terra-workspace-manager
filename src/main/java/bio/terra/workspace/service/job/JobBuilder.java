@@ -56,27 +56,22 @@ public class JobBuilder {
   /**
    * Submit a job to stairway and return the jobID immediately.
    *
-   * @param duplicateFlightOk indicates how duplicate job IDs should be treated. true indicates this
-   *     should be ignored, false indicates this should be raised as an exception.
    * @return jobID of submitted flight
    */
   // TODO: this is really a flag indicating "was this ID generated or not". This should be set
   // at creation of a JobBuilder instead of on submit calls.
-  public String submit(boolean duplicateFlightOk) {
-    return jobServiceRef.submit(flightClass, jobParameterMap, jobId, duplicateFlightOk);
+  public String submit() {
+    return jobServiceRef.submit(flightClass, jobParameterMap, jobId);
   }
 
   /**
    * Submit a job to stairway, wait until it's complete, and return the job result.
    *
    * @param resultClass Class of the job's result
-   * @param duplicateFlightOk indicates how duplicate job IDs should be treated. true indicates this
-   *     should be ignored, false indicates this should be raised as an exception.
    * @return Result of the finished job.
    */
   @Traced
-  public <T> T submitAndWait(Class<T> resultClass, boolean duplicateFlightOk) {
-    return jobServiceRef.submitAndWait(
-        flightClass, jobParameterMap, resultClass, jobId, duplicateFlightOk);
+  public <T> T submitAndWait(Class<T> resultClass) {
+    return jobServiceRef.submitAndWait(flightClass, jobParameterMap, resultClass, jobId);
   }
 }
