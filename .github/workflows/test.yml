@@ -81,6 +81,7 @@ jobs:
         echo ::set-output name=vault-token::$VAULT_TOKEN
         echo ::add-mask::$VAULT_TOKEN
 
+      # Set permissions on pull request and push
     - name: Set permissions and render test configurations pull request and push
       if: matrix.gradleTask != 'unitTest' && ( github.event_name == 'pull_request' || github.event_name == 'push' )
       run: |
@@ -89,6 +90,7 @@ jobs:
         ./render_config.sh local ${{ steps.vault-token-step.outputs.vault-token }}
         chmod +r rendered
 
+      # Set permissions on a workflow dispatch
     - name: Set permissions and render test configurations workflow dispatch
       if: matrix.gradleTask != 'unitTest' && !( github.event_name == 'pull_request' || github.event_name == 'push' )
       run: |
@@ -106,12 +108,14 @@ jobs:
       # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
       run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
 
+      # Run tests for pull requests and merge to dev
     - name: Run tests
       if: github.event_name == 'pull_request' || github.event_name == 'push'
       env:
         TEST_ENV: local
       run: ./gradlew ${{ matrix.gradleTask }} --scan
 
+      # Run tests for workflow dispatch
     - name: Run tests on persistent workspace manager
       if: github.event_name != 'pull_request' && github.event_name != 'push'
       env:

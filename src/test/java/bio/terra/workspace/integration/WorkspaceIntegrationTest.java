@@ -289,7 +289,6 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     String userEmail = testConfig.getUserEmail();
     CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(workspaceId);
     String jsonBody = testUtils.mapToJson(body);
-    logger.info("JSON BODY: ", jsonBody);
 
     return workspaceManagerTestClient.post(userEmail, path, jsonBody, CreatedWorkspace.class);
   }
