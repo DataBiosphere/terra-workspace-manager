@@ -87,7 +87,8 @@ public class WorkspaceService {
    * @return the workspace, if it exists and the user is permitted to perform the specified action.
    */
   @Traced
-  public Workspace authorizedGetWorkspace(AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
+  public Workspace authorizedGetWorkspace(
+      AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
     Workspace workspace = workspaceDao.getWorkspace(workspaceId);
     samService.workspaceAuthzOnly(userReq, workspaceId, action);
     return workspace;
@@ -127,7 +128,8 @@ public class WorkspaceService {
   /** Start a job to create a Google cloud context for the workspace. Returns the job id. */
   @Traced
   public String createGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
-    Workspace workspace = authorizedGetWorkspace(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+    Workspace workspace =
+        authorizedGetWorkspace(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     workspaceDao.assertMcWorkspace(workspace, "createGoogleContext");
     if (!workspaceDao.getCloudContext(workspaceId).googleProjectId().isEmpty()) {
       throw new DuplicateGoogleContextException(workspaceId);
@@ -159,7 +161,8 @@ public class WorkspaceService {
   /** Delete the Google cloud context for the workspace. */
   @Traced
   public void deleteGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
-    Workspace workspace = authorizedGetWorkspace(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+    Workspace workspace =
+        authorizedGetWorkspace(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     workspaceDao.assertMcWorkspace(workspace, "deleteGoogleContext");
     jobService
         .newJob(

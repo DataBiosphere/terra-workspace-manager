@@ -121,23 +121,24 @@ public class SamService {
   }
 
   @Traced
-  public void workspaceAuthzOnly(AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
+  public void workspaceAuthzOnly(
+      AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
     boolean isAuthorized =
-            isAuthorized(
-                    userReq.getRequiredToken(),
-                    SamConstants.SAM_WORKSPACE_RESOURCE,
-                    workspaceId.toString(),
-                    action);
+        isAuthorized(
+            userReq.getRequiredToken(),
+            SamConstants.SAM_WORKSPACE_RESOURCE,
+            workspaceId.toString(),
+            action);
     if (!isAuthorized)
       throw new SamUnauthorizedException(
-              String.format(
-                      "User %s is not authorized to %s workspace %s or it does not exist",
-                      userReq.getEmail(), action, workspaceId));
+          String.format(
+              "User %s is not authorized to %s workspace %s or it does not exist",
+              userReq.getEmail(), action, workspaceId));
     else
       logger.info(
-              String.format(
-                      "User %s is authorized to %s workspace %s",
-                      userReq.getEmail(), action, workspaceId.toString()));
+          String.format(
+              "User %s is authorized to %s workspace %s",
+              userReq.getEmail(), action, workspaceId.toString()));
   }
 
   /**

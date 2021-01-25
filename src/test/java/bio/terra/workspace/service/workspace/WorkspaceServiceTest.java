@@ -81,14 +81,6 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   public void testGetExistingWorkspace() {
-    Mockito.when(
-            mockSamService.isAuthorized(
-                Mockito.any(),
-                Mockito.eq(SamConstants.SAM_WORKSPACE_RESOURCE),
-                Mockito.any(),
-                Mockito.eq(SamConstants.SAM_WORKSPACE_READ_ACTION)))
-        .thenReturn(true);
-
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
@@ -113,8 +105,8 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     doThrow(new SamUnauthorizedException("forbid!"))
-            .when(mockSamService)
-            .workspaceAuthzOnly(any(), any(), any());
+        .when(mockSamService)
+        .workspaceAuthzOnly(any(), any(), any());
     assertThrows(
         SamUnauthorizedException.class,
         () -> workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST));
@@ -220,12 +212,12 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   public void deleteForbiddenMissingWorkspace() {
     doThrow(new SamUnauthorizedException("forbid!"))
-            .when(mockSamService)
-            .workspaceAuthzOnly(any(), any(), any());
+        .when(mockSamService)
+        .workspaceAuthzOnly(any(), any(), any());
 
     assertThrows(
-            WorkspaceNotFoundException.class,
-            () -> workspaceService.deleteWorkspace(UUID.randomUUID(), USER_REQUEST));
+        WorkspaceNotFoundException.class,
+        () -> workspaceService.deleteWorkspace(UUID.randomUUID(), USER_REQUEST));
   }
 
   @Test
@@ -234,12 +226,12 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     doThrow(new SamUnauthorizedException("forbid!"))
-            .when(mockSamService)
-            .workspaceAuthzOnly(any(), any(), any());
+        .when(mockSamService)
+        .workspaceAuthzOnly(any(), any(), any());
 
     assertThrows(
-            SamUnauthorizedException.class,
-            () -> workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST));
+        SamUnauthorizedException.class,
+        () -> workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST));
   }
 
   @Test
