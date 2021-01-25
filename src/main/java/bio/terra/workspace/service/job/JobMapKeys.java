@@ -8,6 +8,7 @@ public enum JobMapKeys {
   STATUS_CODE("status_code"),
   AUTH_USER_INFO("auth_user_info"),
   SUBJECT_ID("subjectId"),
+  // URL suffix for results of an async operation. Should be prefixed with /, e.g. "/api/result/job"
   RESULT_URL_SUFFIX("resultUrlSuffix"),
 
   // parameter for the job

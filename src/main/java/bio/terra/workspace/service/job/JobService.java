@@ -129,7 +129,7 @@ public class JobService {
       // be checked separately. Allowing duplicate FlightIds is useful for ensuring idempotent
       // behavior of flights.
       logger.warn(String.format("Received duplicate job ID: %s", jobId));
-      throw new DuplicateJobIdException("Recieved duplicate jobId", ex);
+      throw new DuplicateJobIdException("Received duplicate jobId, see logs for details", ex);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
@@ -263,7 +263,7 @@ public class JobService {
         flightState
             .getInputParameters()
             .get(JobMapKeys.RESULT_URL_SUFFIX.getKeyName(), String.class);
-    return String.format("%s/%s", ingressConfig.getFqdn(), urlSuffix);
+    return ingressConfig.getFqdn() + urlSuffix;
   }
 
   private JobReport.StatusEnum getJobStatus(FlightStatus flightStatus) {
