@@ -123,7 +123,7 @@ public class DataReferenceServiceTest extends BaseUnitTest {
     String samMessage = "Fake Sam unauthorized message";
     doThrow(new SamUnauthorizedException(samMessage))
         .when(mockSamService)
-        .authorizedGetWorkspace(any(), any(), any());
+        .workspaceAuthzOnly(any(), any(), any());
     UUID workspaceId = createDefaultWorkspace();
     assertThrows(
         SamUnauthorizedException.class,

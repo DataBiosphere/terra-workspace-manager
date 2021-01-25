@@ -81,6 +81,14 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   public void testGetExistingWorkspace() {
+    Mockito.when(
+            mockSamService.isAuthorized(
+                Mockito.any(),
+                Mockito.eq(SamConstants.SAM_WORKSPACE_RESOURCE),
+                Mockito.any(),
+                Mockito.eq(SamConstants.SAM_WORKSPACE_READ_ACTION)))
+        .thenReturn(true);
+
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
@@ -93,7 +101,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void testGetForbiddenMissingWorkspace() {
     doThrow(new SamUnauthorizedException("forbid!"))
         .when(mockSamService)
-        .authorizedGetWorkspace(any(), any(), any());
+        .workspaceAuthzOnly(any(), any(), any());
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> workspaceService.getWorkspace(UUID.randomUUID(), USER_REQUEST));
@@ -106,7 +114,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
 
     doThrow(new SamUnauthorizedException("forbid!"))
             .when(mockSamService)
-            .authorizedGetWorkspace(any(), any(), any());
+            .workspaceAuthzOnly(any(), any(), any());
     assertThrows(
         SamUnauthorizedException.class,
         () -> workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST));
@@ -213,7 +221,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void deleteForbiddenMissingWorkspace() {
     doThrow(new SamUnauthorizedException("forbid!"))
             .when(mockSamService)
-            .authorizedGetWorkspace(any(), any(), any());
+            .workspaceAuthzOnly(any(), any(), any());
 
     assertThrows(
             WorkspaceNotFoundException.class,
@@ -227,7 +235,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
 
     doThrow(new SamUnauthorizedException("forbid!"))
             .when(mockSamService)
-            .authorizedGetWorkspace(any(), any(), any());
+            .workspaceAuthzOnly(any(), any(), any());
 
     assertThrows(
             SamUnauthorizedException.class,
@@ -258,9 +266,10 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     dataReferenceService.getDataReference(request.workspaceId(), referenceId, USER_REQUEST);
     // Delete the workspace.
     workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
-    // Verify that the contained data reference is no longer returned.
+    // Verify that the workspace was successfully deleted, even though it contained references
+    // TODO: is there a way to verify the data ref rows were deleted?
     assertThrows(
-        DataReferenceNotFoundException.class,
+        WorkspaceNotFoundException.class,
         () ->
             dataReferenceService.getDataReference(
                 request.workspaceId(), referenceId, USER_REQUEST));
