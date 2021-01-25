@@ -1,12 +1,18 @@
 package bio.terra.workspace.service.workspace;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 
-import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.exception.*;
+import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
+import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
+import bio.terra.workspace.common.exception.SamApiException;
+import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
@@ -40,7 +46,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private DataReferenceService dataReferenceService;
   @Autowired private JobService jobService;
-  @Autowired private CloudResourceManagerCow resourceManager;
+  @Autowired private CrlService crl;
   @Autowired private SpendConnectedTestUtils spendUtils;
 
   @MockBean private DataRepoService dataRepoService;
@@ -237,12 +243,14 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
             .getCloudContext(request.workspaceId(), USER_REQUEST)
             .googleProjectId()
             .get();
+
     // Verify project exists by retrieving it.
-    Project project = resourceManager.projects().get(projectId).execute();
+    Project project = crl.cloudResourceManagerCow().projects().get(projectId).execute();
 
     workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
+
     // Check that project is now being deleted.
-    project = resourceManager.projects().get(projectId).execute();
+    project = crl.cloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals("DELETE_REQUESTED", project.getLifecycleState());
   }
 

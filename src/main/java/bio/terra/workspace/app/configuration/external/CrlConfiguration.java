@@ -1,20 +1,7 @@
 package bio.terra.workspace.app.configuration.external;
 
-import bio.terra.cloudres.common.ClientConfig;
-import bio.terra.cloudres.common.cleanup.CleanupConfig;
-import bio.terra.cloudres.google.billing.CloudBillingClientCow;
-import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
-import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.auth.oauth2.ServiceAccountCredentials;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -24,16 +11,18 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 @ConfigurationProperties(prefix = "workspace.crl")
 public class CrlConfiguration {
-  /** The client name required by CRL. */
-  public static final String CLIENT_NAME = "workspace";
-  /** How long to keep the resource before Janitor do the cleanup. */
-  public static final Duration TEST_RESOURCE_TIME_TO_LIVE = Duration.ofHours(1);
+  /**
+   * Whether to enable the use of the Cloud Resource Library. It is disabled for unit testing. The
+   * default for all other testing and production is true.
+   */
+  private boolean useCrl = true;
 
   /**
-   * Whether we're running RBS in test mode with Cloud Resource Library. If so, we enable to the
-   * Janitor to auto-delete all created cloud resources.
+   * Whether to enable the use of the Janitor by the Cloud Resource Library to auto-delete all
+   * created cloud resources. It is set to true for connected and integration testing. The default
+   * for production is false.
    */
-  private boolean testingMode = false;
+  private boolean useJanitor = false;
 
   /** Credential file path to be able to publish message to Janitor */
   private String janitorClientCredentialFilePath;
@@ -44,8 +33,32 @@ public class CrlConfiguration {
   /** pubsub topic id to publish track resource to Janitor */
   private String janitorTrackResourceTopicId;
 
-  public void setTestingMode(boolean testingMode) {
-    this.testingMode = testingMode;
+  public boolean useCrl() {
+    return useCrl;
+  }
+
+  public void setUseCrl(boolean useCrl) {
+    this.useCrl = useCrl;
+  }
+
+  public boolean useJanitor() {
+    return useJanitor;
+  }
+
+  public String getJanitorClientCredentialFilePath() {
+    return janitorClientCredentialFilePath;
+  }
+
+  public String getJanitorTrackResourceProjectId() {
+    return janitorTrackResourceProjectId;
+  }
+
+  public String getJanitorTrackResourceTopicId() {
+    return janitorTrackResourceTopicId;
+  }
+
+  public void setUseJanitor(boolean useJanitor) {
+    this.useJanitor = useJanitor;
   }
 
   public void setJanitorClientCredentialFilePath(String janitorClientCredentialFilePath) {
@@ -58,58 +71,5 @@ public class CrlConfiguration {
 
   public void setJanitorTrackResourceTopicId(String janitorTrackResourceTopicId) {
     this.janitorTrackResourceTopicId = janitorTrackResourceTopicId;
-  }
-
-  /**
-   * The {@link ClientConfig} in CRL's COW object. If in test, it will also include {@link
-   * CleanupConfig}.
-   */
-  @Bean
-  @Lazy
-  public ClientConfig clientConfig() {
-    ClientConfig.Builder builder = ClientConfig.Builder.newBuilder().setClient(CLIENT_NAME);
-    if (testingMode) {
-      builder.setCleanupConfig(
-          CleanupConfig.builder()
-              .setCleanupId(CLIENT_NAME + "-test")
-              .setJanitorProjectId(janitorTrackResourceProjectId)
-              .setTimeToLive(TEST_RESOURCE_TIME_TO_LIVE)
-              .setJanitorTopicName(janitorTrackResourceTopicId)
-              .setCredentials(getGoogleCredentialsOrDie(janitorClientCredentialFilePath))
-              .build());
-    }
-    return builder.build();
-  }
-
-  /** The CRL {@link CloudResourceManagerCow} which wrappers Google Cloud Resource Manager API. */
-  @Bean
-  @Lazy
-  public CloudResourceManagerCow cloudResourceManagerCow()
-      throws IOException, GeneralSecurityException {
-    return CloudResourceManagerCow.create(
-        clientConfig(), GoogleCredentials.getApplicationDefault());
-  }
-
-  /** The CRL {@link CloudBillingClientCow} which wrappers Google Billing API. */
-  @Bean
-  @Lazy
-  public CloudBillingClientCow cloudBillingClientCow() throws IOException {
-    return new CloudBillingClientCow(clientConfig(), GoogleCredentials.getApplicationDefault());
-  }
-
-  /** The CRL {@link ServiceUsageCow} which wrappers Google Cloud ServiceUsage API. */
-  @Bean
-  @Lazy
-  public ServiceUsageCow serviceUsageCow() throws GeneralSecurityException, IOException {
-    return ServiceUsageCow.create(clientConfig(), GoogleCredentials.getApplicationDefault());
-  }
-
-  private static ServiceAccountCredentials getGoogleCredentialsOrDie(String serviceAccountPath) {
-    try {
-      return ServiceAccountCredentials.fromStream(new FileInputStream(serviceAccountPath));
-    } catch (Exception e) {
-      throw new RuntimeException(
-          "Unable to load GoogleCredentials from configuration: " + serviceAccountPath, e);
-    }
   }
 }
