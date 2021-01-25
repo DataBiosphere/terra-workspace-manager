@@ -132,7 +132,7 @@ public class SamService {
     if (!isAuthorized)
       throw new SamUnauthorizedException(
           String.format(
-              "User %s is not authorized to %s workspace %s or it does not exist",
+              "User %s is not authorized to %s workspace %s",
               userReq.getEmail(), action, workspaceId));
     else
       logger.info(
