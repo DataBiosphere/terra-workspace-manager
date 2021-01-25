@@ -49,7 +49,6 @@ jobs:
 
       # These steps aren't needed for unit tests
       - name: Get Vault token
-        if: matrix.gradleTask != 'unitTest'
         id: vault-token-step
         env:
           VAULT_ADDR: https://clotho.broadinstitute.org:8200
@@ -68,7 +67,7 @@ jobs:
           ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }} dev
           chmod +r rendered
 
-      # Only integration tests need a running server
+      # Spin up a local server.
       - name: Run local server (in background)
         run: ./gradlew bootRun &
       - name: Wait for local server to start
@@ -90,5 +89,11 @@ jobs:
           ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
           echo "Running test suite"
           ./gradlew runTest --args="suites/BasicIntegration.json /tmp/TestRunnerResults"
+
+      - name: Upload test results
+        if: ${{ always() }}
+        run: |
+          cd workspace-manager-clienttests
           echo "Upload test results"
+          more rendered/testrunner-service-account.json
           ./gradlew uploadResults --args="TerraWSMDev.json /tmp/TestRunnerResults"
