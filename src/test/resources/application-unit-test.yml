@@ -1,4 +1,5 @@
-# Do not configure CRL for unit tests
 workspace:
   crl:
-    testing-mode: false
+    # Unit tests should not be communicating with clouds, so they should not use CRL or Janitor
+    use-crl: false
+    use-janitor: false

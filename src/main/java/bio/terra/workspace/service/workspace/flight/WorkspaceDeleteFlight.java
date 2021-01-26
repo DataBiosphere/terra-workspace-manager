@@ -4,16 +4,23 @@ import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.RetryRuleExponentialBackoff;
-import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
+import org.springframework.context.ApplicationContext;
 
 public class WorkspaceDeleteFlight extends Flight {
 
-  public WorkspaceDeleteFlight(FlightMap inputParameters, Object applicationContext) {
+  public WorkspaceDeleteFlight(FlightMap inputParameters, Object applicationContext)
+      throws Exception {
     super(inputParameters, applicationContext);
 
-    FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
+    ApplicationContext appContext = (ApplicationContext) applicationContext;
+    WorkspaceDao workspaceDao = appContext.getBean(WorkspaceDao.class);
+    SamService iamClient = appContext.getBean(SamService.class);
+    CrlService crl = appContext.getBean(CrlService.class);
 
     AuthenticatedUserRequest userReq =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
@@ -27,10 +34,8 @@ public class WorkspaceDeleteFlight extends Flight {
             /* initialIntervalSeconds= */ 1,
             /* maxIntervalSeconds= */ 8,
             /* maxOperationTimeSeconds= */ 5 * 60);
-    addStep(
-        new DeleteProjectStep(appContext.getResourceManager(), appContext.getWorkspaceDao()),
-        retryRule);
-    addStep(new DeleteWorkspaceAuthzStep(appContext.getSamService(), userReq));
-    addStep(new DeleteWorkspaceStateStep(appContext.getWorkspaceDao()));
+    addStep(new DeleteProjectStep(crl.getCloudResourceManagerCow(), workspaceDao), retryRule);
+    addStep(new DeleteWorkspaceAuthzStep(iamClient, userReq));
+    addStep(new DeleteWorkspaceStateStep(workspaceDao));
   }
 }

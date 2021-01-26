@@ -56,7 +56,7 @@ paths:
           $ref: '#/components/responses/CreatedWorkspaceResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '401':
+        '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/NotFound'
@@ -75,12 +75,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WorkspaceDescription'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
-          description: Get request error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorReport'
+          $ref: '#/components/responses/ServerError'
     delete:
       summary: Delete a Workspace.
       operationId: deleteWorkspace
@@ -90,7 +90,9 @@ paths:
           description: Success
         '400':
           $ref: '#/components/responses/BadRequest'
-        '401':
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
@@ -116,6 +118,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
     get:
@@ -130,8 +134,10 @@ paths:
           $ref: '#/components/responses/ReferenceListResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '401':
+        '403':
           $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -146,6 +152,10 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/DataReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
     delete:
@@ -157,6 +167,8 @@ paths:
           description: OK
         '403':
           $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -172,6 +184,10 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/DataReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
 

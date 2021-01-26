@@ -2,11 +2,13 @@ package bio.terra.workspace.service.workspace.flight;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
-import bio.terra.stairway.*;
+import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.FlightState;
+import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
@@ -32,7 +34,7 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
   private static final Duration CREATION_FLIGHT_TIMEOUT = Duration.ofMinutes(5);
 
   @Autowired private WorkspaceService workspaceService;
-  @Autowired private CloudResourceManagerCow resourceManager;
+  @Autowired private CrlService crl;
   @Autowired private JobService jobService;
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private UserAccessUtils userAccessUtils;
@@ -58,7 +60,7 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
 
     String projectId =
         workspaceService.getCloudContext(workspaceId, userReq).googleProjectId().get();
-    Project project = resourceManager.projects().get(projectId).execute();
+    Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals("ACTIVE", project.getLifecycleState());
 
     // Delete the google context.
@@ -74,7 +76,7 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
 
     assertEquals(
         WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
-    project = resourceManager.projects().get(projectId).execute();
+    project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals("DELETE_REQUESTED", project.getLifecycleState());
   }
 

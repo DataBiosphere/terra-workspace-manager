@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.job.exception;
 
-import bio.terra.workspace.common.exception.UnauthorizedException;
+import bio.terra.workspace.common.exception.ForbiddenException;
 
-public class JobUnauthorizedException extends UnauthorizedException {
+public class JobUnauthorizedException extends ForbiddenException {
   public JobUnauthorizedException(String message) {
     super(message);
   }

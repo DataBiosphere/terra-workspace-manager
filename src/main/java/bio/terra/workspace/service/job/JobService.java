@@ -74,6 +74,7 @@ public class JobService {
         Stairway.newBuilder()
             .applicationContext(applicationContext)
             .exceptionSerializer(serializer)
+            .keepFlightLog(true)
             .enableWorkQueue(false)
             .stairwayHook(mdcHook);
     try {

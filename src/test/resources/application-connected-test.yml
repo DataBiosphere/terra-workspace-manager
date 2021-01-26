@@ -37,7 +37,6 @@ workspace:
     default-user-email: william.thunderlord@test.firecloud.org
     second-user-email: harry.potter@test.firecloud.org
 
-  workspace:
-    crl:
-      testing-mode: true
-
+  crl:
+    use-crl: true
+    use-janitor: true
