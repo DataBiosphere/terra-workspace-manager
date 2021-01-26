@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.*;
+import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
@@ -42,6 +43,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private JobService jobService;
   @Autowired private CloudResourceManagerCow resourceManager;
   @Autowired private SpendConnectedTestUtils spendUtils;
+  @Autowired private DataReferenceDao dataReferenceDao;
 
   @MockBean private DataRepoService dataRepoService;
 
@@ -87,6 +89,29 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     assertEquals(
         request.workspaceId(),
         workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST).workspaceId());
+  }
+
+  @Test
+  public void testGetForbiddenMissingWorkspace() {
+    doThrow(new SamUnauthorizedException("forbid!"))
+        .when(mockSamService)
+        .workspaceAuthzOnly(any(), any(), any());
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () -> workspaceService.getWorkspace(UUID.randomUUID(), USER_REQUEST));
+  }
+
+  @Test
+  public void testGetForbiddenExistingWorkspace() {
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+
+    doThrow(new SamUnauthorizedException("forbid!"))
+        .when(mockSamService)
+        .workspaceAuthzOnly(any(), any(), any());
+    assertThrows(
+        SamUnauthorizedException.class,
+        () -> workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST));
   }
 
   @Test
@@ -187,6 +212,31 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  public void deleteForbiddenMissingWorkspace() {
+    doThrow(new SamUnauthorizedException("forbid!"))
+        .when(mockSamService)
+        .workspaceAuthzOnly(any(), any(), any());
+
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () -> workspaceService.deleteWorkspace(UUID.randomUUID(), USER_REQUEST));
+  }
+
+  @Test
+  public void deleteForbiddenExistingWorkspace() {
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+
+    doThrow(new SamUnauthorizedException("forbid!"))
+        .when(mockSamService)
+        .workspaceAuthzOnly(any(), any(), any());
+
+    assertThrows(
+        SamUnauthorizedException.class,
+        () -> workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST));
+  }
+
+  @Test
   public void deleteWorkspaceWithDataReference() {
     // First, create a workspace.
     UUID workspaceId = UUID.randomUUID();
@@ -210,9 +260,19 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     dataReferenceService.getDataReference(request.workspaceId(), referenceId, USER_REQUEST);
     // Delete the workspace.
     workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
-    // Verify that the contained data reference is no longer returned.
+    // Verify that the workspace was successfully deleted, even though it contained references
+
+    // Verify the data ref rows in question were also deleted; this is a direct call to the SQL
+    // table
     assertThrows(
         DataReferenceNotFoundException.class,
+        () -> dataReferenceDao.getDataReference(request.workspaceId(), referenceId));
+
+    // Verify that attempting to retrieve the reference via DataReferenceService fails; this
+    // includes
+    // workspace-existence and permission checks
+    assertThrows(
+        WorkspaceNotFoundException.class,
         () ->
             dataReferenceService.getDataReference(
                 request.workspaceId(), referenceId, USER_REQUEST));
