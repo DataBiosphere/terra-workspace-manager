@@ -90,10 +90,9 @@ jobs:
           echo "Running test suite"
           ./gradlew runTest --args="suites/BasicIntegration.json /tmp/TestRunnerResults"
 
-      - name: Upload test results
+      - name: Upload test results to Google Bucket
         if: ${{ always() }}
         run: |
           cd workspace-manager-clienttests
-          echo "Upload test results"
-          more rendered/testrunner-service-account.json
+          echo "Upload test results to Google Bucket"
           ./gradlew uploadResults --args="CompressDirectoryToBucket.json /tmp/TestRunnerResults"
