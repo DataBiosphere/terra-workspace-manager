@@ -16,7 +16,6 @@ import bio.terra.workspace.service.workspace.flight.*;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -134,13 +133,11 @@ public class WorkspaceService {
     if (!workspaceDao.getCloudContext(workspaceId).googleProjectId().isEmpty()) {
       throw new DuplicateGoogleContextException(workspaceId);
     }
-    Optional<SpendProfileId> spendProfileId = workspace.spendProfileId();
-    if (spendProfileId.isEmpty()) {
-      throw new MissingSpendProfileException(workspaceId);
-    }
-    SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId.get(), userReq);
+    SpendProfileId spendProfileId =
+        workspace.spendProfileId().orElseThrow(() -> new MissingSpendProfileException(workspaceId));
+    SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId, userReq);
     if (spendProfile.billingAccountId().isEmpty()) {
-      throw new NoBillingAccountException(spendProfileId.get());
+      throw new NoBillingAccountException(spendProfileId);
     }
 
     String jobId = UUID.randomUUID().toString();
