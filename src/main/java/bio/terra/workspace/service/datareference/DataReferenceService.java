@@ -47,7 +47,8 @@ public class DataReferenceService {
 
   /**
    * Retrieve a data reference from the database by ID. References are always contained inside a
-   * single workspace. Verifies workspace existence and read permission before retrieving the reference.
+   * single workspace. Verifies workspace existence and read permission before retrieving the
+   * reference.
    */
   @Traced
   public DataReference getDataReference(
@@ -61,7 +62,8 @@ public class DataReferenceService {
 
   /**
    * Retrieve a data reference from the database by name. Names are unique per workspace, per data
-   * reference type. Verifies workspace existence and read permission before retrieving the reference.
+   * reference type. Verifies workspace existence and read permission before retrieving the
+   * reference.
    */
   @Traced
   public DataReference getDataReferenceByName(
@@ -76,9 +78,9 @@ public class DataReferenceService {
   }
 
   /**
-   * Create a data reference and return the newly created object.  Verifies workspace existence
-   * and write permission before creating the reference.
-   * */
+   * Create a data reference and return the newly created object. Verifies workspace existence and
+   * write permission before creating the reference.
+   */
   @Traced
   public DataReference createDataReference(
       DataReferenceRequest referenceRequest, AuthenticatedUserRequest userReq) {
@@ -129,9 +131,9 @@ public class DataReferenceService {
   }
 
   /**
-   * Delete a data reference, or throw an exception if the specified reference does not exist.  Verifies
-   * workspace existence and write permission before deleting the reference.
-   * */
+   * Delete a data reference, or throw an exception if the specified reference does not exist.
+   * Verifies workspace existence and write permission before deleting the reference.
+   */
   @Traced
   public void deleteDataReference(
       UUID workspaceId, UUID referenceId, AuthenticatedUserRequest userReq) {
