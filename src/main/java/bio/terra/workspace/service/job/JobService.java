@@ -264,11 +264,11 @@ public class JobService {
   }
 
   private String resultUrlFromFlightState(FlightState flightState) {
-    String urlSuffix =
+    String relativePath =
         flightState
             .getInputParameters()
-            .get(JobMapKeys.RESULT_URL_SUFFIX.getKeyName(), String.class);
-    return ingressConfig.getDomainName() + urlSuffix;
+            .get(JobMapKeys.RESULT_RELATIVE_PATH.getKeyName(), String.class);
+    return ingressConfig.getDomainName() + relativePath;
   }
 
   private JobReport.StatusEnum getJobStatus(FlightStatus flightStatus) {

@@ -58,8 +58,6 @@ public class JobBuilder {
    *
    * @return jobID of submitted flight
    */
-  // TODO: this is really a flag indicating "was this ID generated or not". This should be set
-  // at creation of a JobBuilder instead of on submit calls.
   public String submit() {
     return jobServiceRef.submit(flightClass, jobParameterMap, jobId);
   }

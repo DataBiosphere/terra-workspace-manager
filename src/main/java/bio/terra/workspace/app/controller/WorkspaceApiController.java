@@ -303,9 +303,9 @@ public class WorkspaceApiController implements WorkspaceApi {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ControllerValidationUtils.validateCloudContext(body.getCloudContext());
     String jobId = body.getJobControl().getId();
-    String resultUrlSuffix = getAsyncResultEndpoint(jobId);
+    String resultRelativePath = getAsyncResultEndpoint(jobId);
 
-    workspaceService.createGoogleContext(id, jobId, resultUrlSuffix, userReq);
+    workspaceService.createGoogleContext(id, jobId, resultRelativePath, userReq);
     JobReport jobReport = jobService.retrieveJob(jobId, userReq);
     return ResponseEntity.status(HttpStatus.ACCEPTED).body(jobReport);
   }

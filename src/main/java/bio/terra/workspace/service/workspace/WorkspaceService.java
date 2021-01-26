@@ -105,7 +105,7 @@ public class WorkspaceService {
   /** Start a job to create a Google cloud context for the workspace. Returns the job id. */
   @Traced
   public String createGoogleContext(
-      UUID workspaceId, String jobId, String resultUrlSuffix, AuthenticatedUserRequest userReq) {
+      UUID workspaceId, String jobId, String resultRelativePath, AuthenticatedUserRequest userReq) {
     samService.workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     workspaceDao.assertMcWorkspace(workspaceId, "createGoogleContext");
     if (!workspaceDao.getCloudContext(workspaceId).googleProjectId().isEmpty()) {
@@ -131,7 +131,7 @@ public class WorkspaceService {
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
         .addParameter(
             WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendProfile.billingAccountId().get())
-        .addParameter(JobMapKeys.RESULT_URL_SUFFIX.getKeyName(), resultUrlSuffix)
+        .addParameter(JobMapKeys.RESULT_RELATIVE_PATH.getKeyName(), resultRelativePath)
         .submit();
     return jobId;
   }
