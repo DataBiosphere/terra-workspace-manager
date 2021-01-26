@@ -187,7 +187,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/JobControl'
+              $ref: '#/components/schemas/CreateCloudContextRequest'
       responses:
         '202':
           $ref: '#/components/responses/JobReportResponse'
@@ -214,7 +214,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GoogleContextWithJobReport'
+                $ref: '#/components/schemas/CreateCloudContextResult'
         202:
           $ref: '#/components/responses/JobReportResponse'
         '400':
@@ -599,6 +599,18 @@ components:
       description: Enum representing a cloud with additonal workspace context.
       enum: ['GOOGLE']
 
+    CreateCloudContextRequest:
+      type: object
+      required: [cloudContext, jobControl]
+      description: |
+        Request body for asynchronously creating a cloud context for a workspace.
+        Contains a CloudContext enum and JobControl object.
+      properties:
+        cloudContext:
+          $ref: '#/components/schemas/CloudContext'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
     GoogleContext:
       type: object
       description: The Google cloud space associated with a workspace.
@@ -607,15 +619,22 @@ components:
           description: The ID of Google Project associated with the workspace.
           type: string
 
-    GoogleContextWithJobReport:
+    # TODO: we don't yet know what a non-google cloud context looks like, so
+    # it's difficult to shape CreateCloudContextResult appropriately.
+    CreateCloudContextResult:
       type: object
-      description: A GoogleContext object with an associated JobReport.
-      required: [jobReport, googleContext]
+      description: |
+        The result of a call to create a cloud context for a workspace. Contains
+        a JobReport detailing the async operation and either a GoogleContext
+        or an ErrorReport detailing an error.
+      required: [jobReport]
       properties:
         jobReport:
           $ref: '#/components/schemas/JobReport'
         googleContext:
           $ref: '#/components/schemas/GoogleContext'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
 
     CreateDataReferenceRequestBody:
       type: object

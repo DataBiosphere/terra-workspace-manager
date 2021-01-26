@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.common.exception.ErrorReportException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.*;
@@ -15,8 +16,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.job.JobService.JobResultWithStatus;
-import bio.terra.workspace.service.job.exception.JobResponseException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -322,9 +321,11 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<JobReport> createCloudContext(UUID id, @Valid JobControl body) {
+  public ResponseEntity<JobReport> createCloudContext(
+      UUID id, @Valid CreateCloudContextRequest body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    String jobId = body.getId();
+    ControllerValidationUtils.validateCloudContext(body.getCloudContext());
+    String jobId = body.getJobControl().getId();
     String resultUrlSuffix = getAsyncResultEndpoint(jobId);
 
     workspaceService.createGoogleContext(id, jobId, resultUrlSuffix, userReq);
@@ -333,29 +334,35 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<GoogleContextWithJobReport> createCloudContextResult(
-      UUID id, String jobId) {
+  public ResponseEntity<CreateCloudContextResult> createCloudContextResult(UUID id, String jobId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     JobReport jobReport = jobService.retrieveJob(jobId, userReq);
-    GoogleContextWithJobReport response = new GoogleContextWithJobReport().jobReport(jobReport);
-    // If the job is still running, return a 202 with the JobReport. Otherwise return the result.
+    CreateCloudContextResult response = new CreateCloudContextResult().jobReport(jobReport);
+    // If the job is still running, return a 202 with just the JobReport.
     if (jobReport.getStatus().equals(StatusEnum.RUNNING)) {
       return new ResponseEntity<>(response, HttpStatus.ACCEPTED);
     }
     try {
-      JobResultWithStatus<WorkspaceCloudContext> jobResult =
-          jobService.retrieveJobResult(jobId, WorkspaceCloudContext.class, userReq);
+      // This flight does not write a result, but retrieveJobResult will check for a SUCCESS status
+      // or exceptions that may have been thrown.
+      jobService.retrieveJobResult(jobId, null, userReq);
+      WorkspaceCloudContext cloudContext = workspaceService.getCloudContext(id, userReq);
       GoogleContext googleContext =
-          new GoogleContext().projectId(jobResult.getResult().googleProjectId().get());
-      response
-          .googleContext(googleContext)
-          .getJobReport()
-          .statusCode(jobResult.getStatusCode().value());
-    } catch (JobResponseException jobFailure) {
-      // This indicates the job failed with an exception, which is fine. In this case we return the
-      // JobReport (containing the error message) without a result.
-      // TODO!
-      logger.error("Job failure!!!", jobFailure);
+          new GoogleContext().projectId(cloudContext.googleProjectId().get());
+      response.googleContext(googleContext);
+    } catch (RuntimeException jobFailure) {
+      // This indicates the job failed with an exception. Jobs can throw any runtime exception, so
+      // this cannot be a narrower catch statement.
+      if (jobFailure instanceof ErrorReportException) {
+        ErrorReportException ex = (ErrorReportException) jobFailure;
+        response.errorReport(
+            new ErrorReport()
+                .message(ex.getMessage())
+                .statusCode(ex.getStatusCode().value())
+                .causes(ex.getCauses()));
+      } else {
+        response.errorReport(new ErrorReport().message(jobFailure.getMessage()).statusCode(500));
+      }
     }
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
