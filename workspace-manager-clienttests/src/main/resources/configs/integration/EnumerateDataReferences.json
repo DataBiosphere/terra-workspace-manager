@@ -1,13 +1,13 @@
 {
-  "name": "BasicAuthenticated",
-  "description": "Concurrent tests. Authentication required.",
+  "name": "EnumerateDataReferences",
+  "description": "Test the offset and limit logic for enumerating data references on a workspace.",
   "serverSpecificationFile": "workspace-dev.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
     {
-      "name": "GetWorkspace",
-      "numberOfUserJourneyThreadsToRun": 10,
+      "name": "EnumerateDataReferences",
+      "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 2,
       "expectedTimeForEach": 5,
       "expectedTimeForEachUnit": "SECONDS"

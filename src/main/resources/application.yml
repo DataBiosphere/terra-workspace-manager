@@ -42,10 +42,6 @@ spring:
       static-locations: classpath:/api/
 
 workspace:
-  buffer:
-    pool-id: workspace_manager_v1
-    instance-url: https://buffer.dsde-dev.broadinstitute.org
-
   datarepo.instances:
     terra: ${env.urls.terra-datarepo}
   ingress:

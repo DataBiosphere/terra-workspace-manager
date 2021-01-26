@@ -17,7 +17,7 @@ public class BufferServiceConfiguration {
 
   private String instanceUrl;
   private String poolId;
-  private String bufferClientCredentialFilePath;
+  private String clientCredentialFilePath;
 
   private static final ImmutableList<String> BUFFER_SCOPES =
       ImmutableList.of("openid", "email", "profile");
@@ -38,14 +38,14 @@ public class BufferServiceConfiguration {
     this.poolId = poolId;
   }
 
-  public void setBufferClientCredentialFilePath(String bufferClientCredentialFilePath) {
-    this.bufferClientCredentialFilePath = bufferClientCredentialFilePath;
+  public void setClientCredentialFilePath(String clientCredentialFilePath) {
+    this.clientCredentialFilePath = clientCredentialFilePath;
   }
 
   public String getAccessToken() throws IOException {
-    FileInputStream f = new FileInputStream(bufferClientCredentialFilePath);
+    FileInputStream f = new FileInputStream(clientCredentialFilePath);
     GoogleCredentials credentials =
-        ServiceAccountCredentials.fromStream(new FileInputStream(bufferClientCredentialFilePath))
+        ServiceAccountCredentials.fromStream(new FileInputStream(clientCredentialFilePath))
             .createScoped(BUFFER_SCOPES);
     AccessToken token = credentials.refreshAccessToken();
     return token.getTokenValue();
