@@ -36,3 +36,7 @@ workspace:
     user-delegated-service-account-path: rendered/user-delegated-service-account.json
     default-user-email: william.thunderlord@test.firecloud.org
     second-user-email: harry.potter@test.firecloud.org
+
+  crl:
+    use-crl: true
+    use-janitor: true
