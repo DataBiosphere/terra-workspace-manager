@@ -1,6 +1,6 @@
 {
-  "name": "workspace-dev",
-  "description": "Workspace Dev env.",
+  "name": "workspace-local",
+  "description": "Workspace Local env.",
 
   "samUri": "https://sam.dsde-dev.broadinstitute.org",
   "datarepoUri": "https://jade.datarepo-dev.broadinstitute.org/",
