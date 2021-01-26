@@ -30,6 +30,7 @@ swaggerSources {
 		code {
 			language = "java"
 			library = "jersey2"
+			templateDir = file("${projectDir}/src/main/resources/swaggercodegen")
 			outputDir = file("${swaggerOutputDir}")
 			rawOptions = [
 					"--model-package", "${artifactGroup}.model",
