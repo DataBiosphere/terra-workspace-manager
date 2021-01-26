@@ -33,11 +33,13 @@ public class CreateGoogleContextFlight extends Flight {
     addStep(new GenerateProjectIdStep());
     addStep(
         new CreateProjectStep(
-            crl.cloudResourceManagerCow(), crl.serviceUsageCow(), googleWorkspaceConfiguration),
+            crl.getCloudResourceManagerCow(),
+            crl.getServiceUsageCow(),
+            googleWorkspaceConfiguration),
         retryRule);
-    addStep(new SetProjectBillingStep(crl.cloudBillingClientCow()));
+    addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()));
     addStep(new StoreGoogleContextStep(workspaceDao, transactionTemplate), retryRule);
     addStep(new SyncSamGroupsStep(samService), retryRule);
-    addStep(new GoogleCloudSyncStep(crl.cloudResourceManagerCow()), retryRule);
+    addStep(new GoogleCloudSyncStep(crl.getCloudResourceManagerCow()), retryRule);
   }
 }

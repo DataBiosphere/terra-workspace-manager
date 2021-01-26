@@ -73,12 +73,12 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
     assertEquals(
         WorkspaceCloudContext.createGoogleContext(projectId),
         workspaceService.getCloudContext(workspaceId, userReq));
-    Project project = crl.cloudResourceManagerCow().projects().get(projectId).execute();
+    Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());
     assertServiceApisEnabled(project, CreateProjectStep.ENABLED_SERVICES);
     assertEquals(
         "billingAccounts/" + spendUtils.defaultBillingAccountId(),
-        crl.cloudBillingClientCow()
+        crl.getCloudBillingClientCow()
             .getProjectBillingInfo("projects/" + projectId)
             .getBillingAccountName());
     assertPolicyGroupsSynced(workspaceId, project);
@@ -108,7 +108,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
             .get()
             .get(WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID, String.class);
     // The Project should exist, but requested to be deleted.
-    Project project = crl.cloudResourceManagerCow().projects().get(projectId).execute();
+    Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());
     assertEquals("DELETE_REQUESTED", project.getLifecycleState());
   }
@@ -143,7 +143,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
                     String.format("projects/%d/services/%s", project.getProjectNumber(), apiName))
             .collect(Collectors.toList());
     ListServicesResponse servicesList =
-        crl.serviceUsageCow()
+        crl.getServiceUsageCow()
             .services()
             .list("projects/" + project.getProjectId())
             .setFilter("state:ENABLED")
@@ -167,7 +167,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
                             + samService.syncWorkspacePolicy(
                                 workspaceId, role, userAccessUtils.defaultUserAuthRequest())));
     Policy currentPolicy =
-        crl.cloudResourceManagerCow()
+        crl.getCloudResourceManagerCow()
             .projects()
             .getIamPolicy(project.getProjectId(), new GetIamPolicyRequest())
             .execute();

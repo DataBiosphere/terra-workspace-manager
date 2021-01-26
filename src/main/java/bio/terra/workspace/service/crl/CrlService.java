@@ -21,12 +21,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class CrlService {
   /** The client name required by CRL. */
-  public static final String CLIENT_NAME = "workspace";
-  /** How long to keep the resource before Janitor do the cleanup. */
-  public static final Duration TEST_RESOURCE_TIME_TO_LIVE = Duration.ofHours(1);
+  private static final String CLIENT_NAME = "workspace";
+
+  /** How long to keep the resource before Janitor does the cleanup. */
+  private static final Duration TEST_RESOURCE_TIME_TO_LIVE = Duration.ofHours(1);
 
   private final CrlConfiguration crlConfig;
-
   private final CloudResourceManagerCow crlResourceManagerCow;
   private final CloudBillingClientCow crlBillingClientCow;
   private final ServiceUsageCow crlServiceUsageCow;
@@ -35,9 +35,9 @@ public class CrlService {
   public CrlService(CrlConfiguration crlConfig) {
     this.crlConfig = crlConfig;
 
-    ClientConfig clientConfig;
-    if (crlConfig.useCrl()) {
-      var creds = buildCredentials();
+    final ClientConfig clientConfig;
+    if (crlConfig.getUseCrl()) {
+      GoogleCredentials creds = getApplicationCredentials();
       clientConfig = buildClientConfig();
       try {
         this.crlResourceManagerCow = CloudResourceManagerCow.create(clientConfig, creds);
@@ -58,33 +58,33 @@ public class CrlService {
   /**
    * @return CRL {@link CloudResourceManagerCow} which wrappers Google Cloud Resource Manager API
    */
-  public CloudResourceManagerCow cloudResourceManagerCow() {
+  public CloudResourceManagerCow getCloudResourceManagerCow() {
     assertCrlInUse();
     return crlResourceManagerCow;
   }
 
-  /** The CRL {@link CloudBillingClientCow} which wrappers Google Billing API. */
-  public CloudBillingClientCow cloudBillingClientCow() {
+  /** Returns the CRL {@link CloudBillingClientCow} which wrappers Google Billing API. */
+  public CloudBillingClientCow getCloudBillingClientCow() {
     assertCrlInUse();
     return crlBillingClientCow;
   }
 
-  /** The CRL {@link ServiceUsageCow} which wrappers Google Cloud ServiceUsage API. */
-  public ServiceUsageCow serviceUsageCow() {
+  /** Returns the CRL {@link ServiceUsageCow} which wrappers Google Cloud ServiceUsage API. */
+  public ServiceUsageCow getServiceUsageCow() {
     assertCrlInUse();
     return crlServiceUsageCow;
   }
 
-  private ServiceAccountCredentials getGoogleCredentialsOrDie(String serviceAccountPath) {
+  private ServiceAccountCredentials getJanitorCredentials(String serviceAccountPath) {
     try {
       return ServiceAccountCredentials.fromStream(new FileInputStream(serviceAccountPath));
     } catch (Exception e) {
-      throw new RuntimeException(
+      throw new CrlSecurityException(
           "Unable to load GoogleCredentials from configuration: " + serviceAccountPath, e);
     }
   }
 
-  private GoogleCredentials buildCredentials() {
+  private GoogleCredentials getApplicationCredentials() {
     try {
       return GoogleCredentials.getApplicationDefault();
     } catch (IOException e) {
@@ -101,15 +101,14 @@ public class CrlService {
               .setTimeToLive(TEST_RESOURCE_TIME_TO_LIVE)
               .setJanitorProjectId(crlConfig.getJanitorTrackResourceProjectId())
               .setJanitorTopicName(crlConfig.getJanitorTrackResourceTopicId())
-              .setCredentials(
-                  getGoogleCredentialsOrDie(crlConfig.getJanitorClientCredentialFilePath()))
+              .setCredentials(getJanitorCredentials(crlConfig.getJanitorClientCredentialFilePath()))
               .build());
     }
     return builder.build();
   }
 
   private void assertCrlInUse() {
-    if (!crlConfig.useCrl()) {
+    if (!crlConfig.getUseCrl()) {
       throw new CrlNotInUseException("Attempt to use CRL when it is set not to be used");
     }
   }

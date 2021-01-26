@@ -245,12 +245,12 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
             .get();
 
     // Verify project exists by retrieving it.
-    Project project = crl.cloudResourceManagerCow().projects().get(projectId).execute();
+    Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
 
     workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
 
     // Check that project is now being deleted.
-    project = crl.cloudResourceManagerCow().projects().get(projectId).execute();
+    project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals("DELETE_REQUESTED", project.getLifecycleState());
   }
 

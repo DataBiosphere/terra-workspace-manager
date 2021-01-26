@@ -23,6 +23,7 @@ public class CreateGoogleContextRBSFlight extends Flight {
             /* maxIntervalSeconds= */ 5 * 60,
             /* maxOperationTimeSeconds= */ 16);
     addStep(new GenerateResourceIdStep());
-    addStep(new PullProjectFromPoolStep(bufferService, crl.cloudResourceManagerCow()), retryRule);
+    addStep(
+        new PullProjectFromPoolStep(bufferService, crl.getCloudResourceManagerCow()), retryRule);
   }
 }

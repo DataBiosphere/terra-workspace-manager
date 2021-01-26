@@ -33,7 +33,7 @@ public class CrlConfiguration {
   /** pubsub topic id to publish track resource to Janitor */
   private String janitorTrackResourceTopicId;
 
-  public boolean useCrl() {
+  public boolean getUseCrl() {
     return useCrl;
   }
 

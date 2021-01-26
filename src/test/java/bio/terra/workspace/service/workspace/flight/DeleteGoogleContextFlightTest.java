@@ -60,7 +60,7 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
 
     String projectId =
         workspaceService.getCloudContext(workspaceId, userReq).googleProjectId().get();
-    Project project = crl.cloudResourceManagerCow().projects().get(projectId).execute();
+    Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals("ACTIVE", project.getLifecycleState());
 
     // Delete the google context.
@@ -76,7 +76,7 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
 
     assertEquals(
         WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
-    project = crl.cloudResourceManagerCow().projects().get(projectId).execute();
+    project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals("DELETE_REQUESTED", project.getLifecycleState());
   }
 

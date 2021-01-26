@@ -34,7 +34,7 @@ public class WorkspaceDeleteFlight extends Flight {
             /* initialIntervalSeconds= */ 1,
             /* maxIntervalSeconds= */ 8,
             /* maxOperationTimeSeconds= */ 5 * 60);
-    addStep(new DeleteProjectStep(crl.cloudResourceManagerCow(), workspaceDao), retryRule);
+    addStep(new DeleteProjectStep(crl.getCloudResourceManagerCow(), workspaceDao), retryRule);
     addStep(new DeleteWorkspaceAuthzStep(iamClient, userReq));
     addStep(new DeleteWorkspaceStateStep(workspaceDao));
   }
