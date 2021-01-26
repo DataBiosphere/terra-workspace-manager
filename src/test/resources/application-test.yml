@@ -2,7 +2,7 @@ workspace:
   buffer:
     pool-id: workspace_manager_v1
     instance-url: https://buffer.tools.integ.envs.broadinstitute.org
-    buffer-client-credential-file-path: rendered/buffer-client-sa-account.json
+    client-credential-file-path: rendered/buffer-client-sa-account.json
 
   crl:
     testing-mode: true

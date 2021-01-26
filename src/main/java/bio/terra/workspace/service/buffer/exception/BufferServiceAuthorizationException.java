@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.buffer.exception;
 
-import bio.terra.workspace.common.exception.UnauthorizedException;
+import bio.terra.workspace.common.exception.ForbiddenException;
 
-public class BufferServiceAuthorizationException extends UnauthorizedException {
+public class BufferServiceAuthorizationException extends ForbiddenException {
 
   public BufferServiceAuthorizationException(String message) {
     super(message);
