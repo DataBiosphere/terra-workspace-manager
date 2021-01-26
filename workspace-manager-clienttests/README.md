@@ -49,6 +49,17 @@ Perf Test
 ```
 ./gradlew  runTest --args="suites/BasicPerf.json /tmp/TR"
 ```
+#### Upload test results to Google Bucket
+To upload Test Runner results to a Google Bucket.
+Specify the location of the bucket in the `uploadlists` directory.
+For example, the `CompressDirectoryToBucket.json` specifies the 
+name of the bucket and the Java class in the `uploadscripts` directory for uploading the test results.
+
+The Gradle `uploadResults` task below archive the test results located in `/tmp/TR` to the bucket specified in config file `CompressDirectoryToBucket.json`.
+
+```
+./gradlew uploadResults --args="CompressDirectoryToBucket.json /tmp/TR"
+```
 
 The default server that the test will run against is specified in the test config file.
 To override the default server, set an environment variable as in the following example.

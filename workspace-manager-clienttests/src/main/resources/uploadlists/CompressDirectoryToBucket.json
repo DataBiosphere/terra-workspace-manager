@@ -1,6 +1,6 @@
 {
-  "name": "TerraWSMDev",
-  "description": "Upload to the broad-dsde-dev project, testrunner-results bucket",
+  "name": "CompressDirectoryToBucket",
+  "description": "Compress results directory to the broad-dsde-dev-testrunner-results bucket",
   "uploaderServiceAccountFile": "dev-testrunner-sa.json",
   "uploadScripts": [
     {
