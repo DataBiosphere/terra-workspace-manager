@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.*;
+import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
@@ -42,6 +43,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private JobService jobService;
   @Autowired private CloudResourceManagerCow resourceManager;
   @Autowired private SpendConnectedTestUtils spendUtils;
+  @Autowired private DataReferenceDao dataReferenceDao;
 
   @MockBean private DataRepoService dataRepoService;
 
@@ -259,7 +261,16 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     // Delete the workspace.
     workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
     // Verify that the workspace was successfully deleted, even though it contained references
-    // TODO: is there a way to verify the data ref rows were deleted?
+
+    // Verify the data ref rows in question were also deleted; this is a direct call to the SQL
+    // table
+    assertThrows(
+        DataReferenceNotFoundException.class,
+        () -> dataReferenceDao.getDataReference(request.workspaceId(), referenceId));
+
+    // Verify that attempting to retrieve the reference via DataReferenceService fails; this
+    // includes
+    // workspace-existence and permission checks
     assertThrows(
         WorkspaceNotFoundException.class,
         () ->
