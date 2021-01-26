@@ -1,4 +1,4 @@
-lThis directory contains scripts for running continuous development builds. This 
+This directory contains scripts for running continuous development builds. This 
 is not necessary for deployment, but it can be helpful for developing faster.
 The provided setup script clones the terra-helm and terra-helmfile git repos,
 and templates in the desired Terra environment/k8s namespace to target.
