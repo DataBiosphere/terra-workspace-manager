@@ -268,7 +268,7 @@ public class JobService {
         flightState
             .getInputParameters()
             .get(JobMapKeys.RESULT_URL_SUFFIX.getKeyName(), String.class);
-    return ingressConfig.getFqdn() + urlSuffix;
+    return ingressConfig.getDomainName() + urlSuffix;
   }
 
   private JobReport.StatusEnum getJobStatus(FlightStatus flightStatus) {

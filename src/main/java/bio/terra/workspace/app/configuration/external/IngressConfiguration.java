@@ -10,13 +10,13 @@ import org.springframework.context.annotation.Configuration;
 public class IngressConfiguration {
 
   /** Fully-qualified domain name. The base URL this instance can be accessed at. */
-  private String fqdn;
+  private String domainName;
 
-  public String getFqdn() {
-    return fqdn;
+  public String getDomainName() {
+    return domainName;
   }
 
-  public void setFqdn(String fqdn) {
-    this.fqdn = fqdn;
+  public void setDomainName(String domainName) {
+    this.domainName = domainName;
   }
 }
