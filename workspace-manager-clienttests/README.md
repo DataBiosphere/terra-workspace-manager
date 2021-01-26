@@ -51,9 +51,7 @@ Perf Test
 ```
 #### Upload test results to Google Bucket
 To upload Test Runner results to a Google Bucket.
-Specify the location of the bucket in the `uploadlists` directory.
-For example, the `CompressDirectoryToBucket.json` specifies the 
-name of the bucket and the Java class in the `uploadscripts` directory for uploading the test results.
+The bucket location is specified as a parameter in an upload config file located in the `resources/uploadlists` directory
 
 The Gradle `uploadResults` task below archive the test results located in `/tmp/TR` to the bucket specified in config file `CompressDirectoryToBucket.json`.
 
