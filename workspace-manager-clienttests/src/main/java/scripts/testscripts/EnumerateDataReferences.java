@@ -114,7 +114,6 @@ public class EnumerateDataReferences extends WorkspaceFixtureTestScriptBase {
     assertThat(idsFromTwoPages.size(), equalTo(2 * PAGE_SIZE));
 
     // final partial page
-    // fetch second page
     final List<DataReferenceDescription> referenceDescriptionsPage2 = ClientTestUtils
         .getDataReferenceDescriptions(
         getWorkspaceId(), workspaceApi, 2 * PAGE_SIZE, PAGE_SIZE);
