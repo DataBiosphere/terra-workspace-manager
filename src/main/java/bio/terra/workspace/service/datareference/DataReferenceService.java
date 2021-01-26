@@ -54,7 +54,7 @@ public class DataReferenceService {
   public DataReference getDataReference(
       UUID workspaceId, UUID referenceId, AuthenticatedUserRequest userReq) {
 
-    workspaceService.authorizedGetWorkspace(
+    workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
 
     return dataReferenceDao.getDataReference(workspaceId, referenceId);
@@ -71,7 +71,7 @@ public class DataReferenceService {
       DataReferenceType referenceType,
       String name,
       AuthenticatedUserRequest userReq) {
-    workspaceService.authorizedGetWorkspace(
+    workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
 
     return dataReferenceDao.getDataReferenceByName(workspaceId, referenceType, name);
@@ -85,7 +85,7 @@ public class DataReferenceService {
   public DataReference createDataReference(
       DataReferenceRequest referenceRequest, AuthenticatedUserRequest userReq) {
 
-    workspaceService.authorizedGetWorkspace(
+    workspaceService.validateWorkspaceAndAction(
         userReq, referenceRequest.workspaceId(), SamConstants.SAM_WORKSPACE_WRITE_ACTION);
 
     String description = "Create data reference in workspace " + referenceRequest.workspaceId();
@@ -125,7 +125,7 @@ public class DataReferenceService {
   @Traced
   public List<DataReference> enumerateDataReferences(
       UUID workspaceId, int offset, int limit, AuthenticatedUserRequest userReq) {
-    workspaceService.authorizedGetWorkspace(
+    workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return dataReferenceDao.enumerateDataReferences(workspaceId, offset, limit);
   }
@@ -138,7 +138,7 @@ public class DataReferenceService {
   public void deleteDataReference(
       UUID workspaceId, UUID referenceId, AuthenticatedUserRequest userReq) {
 
-    workspaceService.authorizedGetWorkspace(
+    workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
 
     if (dataReferenceDao.isControlled(workspaceId, referenceId)) {

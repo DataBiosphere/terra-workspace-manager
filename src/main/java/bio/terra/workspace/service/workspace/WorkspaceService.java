@@ -86,7 +86,7 @@ public class WorkspaceService {
    * @return the workspace, if it exists and the user is permitted to perform the specified action.
    */
   @Traced
-  public Workspace authorizedGetWorkspace(
+  public Workspace validateWorkspaceAndAction(
       AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
     Workspace workspace = workspaceDao.getWorkspace(workspaceId);
     samService.workspaceAuthzOnly(userReq, workspaceId, action);
@@ -96,13 +96,13 @@ public class WorkspaceService {
   /** Retrieves an existing workspace by ID */
   @Traced
   public Workspace getWorkspace(UUID id, AuthenticatedUserRequest userReq) {
-    return authorizedGetWorkspace(userReq, id, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    return validateWorkspaceAndAction(userReq, id, SamConstants.SAM_WORKSPACE_READ_ACTION);
   }
 
   /** Delete an existing workspace by ID. */
   @Traced
   public void deleteWorkspace(UUID id, AuthenticatedUserRequest userReq) {
-    authorizedGetWorkspace(userReq, id, SamConstants.SAM_WORKSPACE_DELETE_ACTION);
+    validateWorkspaceAndAction(userReq, id, SamConstants.SAM_WORKSPACE_DELETE_ACTION);
 
     String description = "Delete workspace " + id;
     JobBuilder deleteJob =
@@ -123,7 +123,7 @@ public class WorkspaceService {
    */
   @Traced
   public WorkspaceCloudContext getCloudContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
-    authorizedGetWorkspace(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return workspaceDao.getCloudContext(workspaceId);
   }
 
@@ -134,7 +134,7 @@ public class WorkspaceService {
   @Traced
   public String createGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     Workspace workspace =
-        authorizedGetWorkspace(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+        validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     workspaceDao.assertMcWorkspace(workspace, "createGoogleContext");
     if (!workspaceDao.getCloudContext(workspaceId).googleProjectId().isEmpty()) {
       throw new DuplicateGoogleContextException(workspaceId);
@@ -168,7 +168,7 @@ public class WorkspaceService {
   @Traced
   public void deleteGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     Workspace workspace =
-        authorizedGetWorkspace(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+        validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     workspaceDao.assertMcWorkspace(workspace, "deleteGoogleContext");
     jobService
         .newJob(
