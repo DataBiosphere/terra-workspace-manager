@@ -84,25 +84,25 @@ public class JobService {
     }
   }
 
-  public static class JobResultWithStatus<T> {
+  public static class JobResultOrException<T> {
     private T result;
-    private HttpStatus statusCode;
+    private RuntimeException exception;
 
     public T getResult() {
       return result;
     }
 
-    public JobResultWithStatus<T> result(T result) {
+    public JobResultOrException<T> result(T result) {
       this.result = result;
       return this;
     }
 
-    public HttpStatus getStatusCode() {
-      return statusCode;
+    public RuntimeException getException() {
+      return exception;
     }
 
-    public JobResultWithStatus<T> statusCode(HttpStatus httpStatus) {
-      this.statusCode = httpStatus;
+    public JobResultOrException<T> exception(RuntimeException exception) {
+      this.exception = exception;
       return this;
     }
   }
@@ -136,7 +136,8 @@ public class JobService {
     return jobId;
   }
 
-  // submit a new job to stairway, wait for it to finish, then return the result
+  // Submit a new job to stairway, wait for it to finish, then return the result.
+  // This will throw any exception raised by the flight.
   // protected method intended to be called only from JobBuilder
   protected <T> T submitAndWait(
       Class<? extends Flight> flightClass,
@@ -148,7 +149,11 @@ public class JobService {
     AuthenticatedUserRequest userReq =
         parameterMap.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    return retrieveJobResult(jobId, resultClass, userReq).getResult();
+    JobResultOrException<T> resultOrException = retrieveJobResult(jobId, resultClass, userReq);
+    if (resultOrException.getException() != null) {
+      throw resultOrException.getException();
+    }
+    return resultOrException.getResult();
   }
 
   @VisibleForTesting
@@ -291,12 +296,12 @@ public class JobService {
       throw new InternalStairwayException(stairwayEx);
     }
 
-    List<JobReport> jobModelList = new ArrayList<>();
+    List<JobReport> jobReportList = new ArrayList<>();
     for (FlightState flightState : flightStateList) {
-      JobReport jobModel = mapFlightStateToJobReport(flightState);
-      jobModelList.add(jobModel);
+      JobReport jobReport = mapFlightStateToJobReport(flightState);
+      jobReportList.add(jobReport);
     }
-    return jobModelList;
+    return jobReportList;
   }
 
   @Traced
@@ -316,28 +321,24 @@ public class JobService {
    *
    * <ol>
    *   <li>Flight is still running. Throw an JobNotComplete exception
-   *   <li>Successful flight: extract the resultMap RESPONSE as the target class. If a
-   *       statusContainer is present, we try to retrieve the STATUS_CODE from the resultMap and
-   *       store it in the container. That allows flight steps used in async REST API endpoints to
-   *       set alternate success status codes. The status code defaults to OK, if it is not set in
-   *       the resultMap.
-   *   <li>Failed flight: if there is an exception, throw it. Note that we can only throw
-   *       RuntimeExceptions to be handled by the global exception handler. Non-runtime exceptions
-   *       require throw clauses on the controller methods; those are not present in the
-   *       swagger-generated code, so it introduces a mismatch. Instead, in this code if the caught
-   *       exception is not a runtime exception, then we throw JobResponseException passing in the
-   *       Throwable to the exception. In the global exception handler, we retrieve the Throwable
-   *       and use the error text from that in the error model
-   *   <li>Failed flight: no exception present. We throw InvalidResultState exception
+   *   <li>Successful flight: extract the resultMap RESPONSE as the target class.
+   *   <li>Failed flight: if there is an exception, store it in the returned JobResultOrException.
+   *       Note that we only store RuntimeExceptions to allow higher-level methods to throw these
+   *       exceptions if they choose. Non-runtime exceptions require throw clauses on the controller
+   *       methods; those are not present in the swagger-generated code, so it introduces a
+   *       mismatch. Instead, in this code if the caught exception is not a runtime exception, then
+   *       we store JobResponseException, passing in the Throwable to the exception. In the global
+   *       exception handler, we retrieve the Throwable and use the error text from that in the
+   *       error model.
+   *   <li>Failed flight: no exception present. Throw an InvalidResultState exception
    * </ol>
    *
    * @param jobId to process
    * @return object of the result class pulled from the result map
    */
   @Traced
-  public <T> JobResultWithStatus<T> retrieveJobResult(
-      String jobId, Class<T> resultClass, AuthenticatedUserRequest userReq)
-      throws JobResponseException {
+  public <T> JobResultOrException<T> retrieveJobResult(
+      String jobId, Class<T> resultClass, AuthenticatedUserRequest userReq) {
 
     try {
       verifyUserAccess(jobId, userReq); // jobId=flightId
@@ -347,8 +348,8 @@ public class JobService {
     }
   }
 
-  private <T> JobResultWithStatus<T> retrieveJobResultWorker(String jobId, Class<T> resultClass)
-      throws StairwayException, InterruptedException, JobResponseException {
+  private <T> JobResultOrException<T> retrieveJobResultWorker(String jobId, Class<T> resultClass)
+      throws StairwayException, InterruptedException {
     FlightState flightState = stairway.getFlightState(jobId);
     FlightMap resultMap = flightState.getResultMap().orElse(null);
     if (resultMap == null) {
@@ -361,21 +362,16 @@ public class JobService {
         if (flightState.getException().isPresent()) {
           Exception exception = flightState.getException().get();
           if (exception instanceof RuntimeException) {
-            throw (RuntimeException) exception;
+            return new JobResultOrException<T>().exception((RuntimeException) exception);
           } else {
-            throw new JobResponseException("wrap non-runtime exception", exception);
+            return new JobResultOrException<T>()
+                .exception(new JobResponseException("wrap non-runtime exception", exception));
           }
         }
         throw new InvalidResultStateException("Failed operation with no exception reported");
 
       case SUCCESS:
-        HttpStatus statusCode =
-            resultMap.get(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class);
-        if (statusCode == null) {
-          statusCode = HttpStatus.OK;
-        }
-        return new JobResultWithStatus<T>()
-            .statusCode(statusCode)
+        return new JobResultOrException<T>()
             .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), resultClass));
 
       case RUNNING:

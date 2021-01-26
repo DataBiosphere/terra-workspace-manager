@@ -3,6 +3,7 @@ package bio.terra.workspace.service.job;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -82,14 +83,14 @@ public class JobServiceTest extends BaseUnitTest {
   private void testSingleRetrieval(List<String> fids) {
     JobReport response = jobService.retrieveJob(fids.get(2), testUser);
     assertThat(response, notNullValue());
-    validateJobModel(response, 2, fids);
+    validateJobReport(response, 2, fids);
   }
 
   private void testResultRetrieval(List<String> fids) {
-    JobService.JobResultWithStatus<String> resultHolder =
+    JobService.JobResultOrException<String> resultHolder =
         jobService.retrieveJobResult(fids.get(2), String.class, testUser);
 
-    assertThat(resultHolder.getStatusCode(), equalTo(HttpStatus.I_AM_A_TEAPOT));
+    assertNull(resultHolder.getException());
     assertThat(resultHolder.getResult(), equalTo(makeDescription(2)));
   }
 
@@ -99,7 +100,7 @@ public class JobServiceTest extends BaseUnitTest {
     assertThat(jobList, notNullValue());
     int index = offset;
     for (JobReport job : jobList) {
-      validateJobModel(job, index, fids);
+      validateJobReport(job, index, fids);
       index++;
     }
   }
@@ -129,7 +130,7 @@ public class JobServiceTest extends BaseUnitTest {
         });
   }
 
-  private void validateJobModel(JobReport jr, int index, List<String> fids) {
+  private void validateJobReport(JobReport jr, int index, List<String> fids) {
     assertThat(jr.getDescription(), equalTo(makeDescription(index)));
     assertThat(jr.getId(), equalTo(fids.get(index)));
     assertThat(jr.getStatus(), equalTo(JobReport.StatusEnum.SUCCEEDED));

@@ -1,7 +1,7 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.workspace.common.exception.ErrorReportException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
+import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.generated.model.JobReport.StatusEnum;
@@ -16,6 +16,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.job.JobService.JobResultOrException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -254,30 +255,6 @@ public class WorkspaceApiController implements WorkspaceApi {
     return ResponseEntity.ok(responseList);
   }
 
-  /* Job endpoints disabled for now
-  @Override
-  public ResponseEntity<Void> deleteJob(@PathVariable("id") String id) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    jobService.releaseJob(id, userReq);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-  }
-
-  @Override
-  public ResponseEntity<JobModel> pollAsyncJob(@PathVariable("id") String id) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    JobModel job = jobService.retrieveJob(id, userReq);
-    return new ResponseEntity<JobModel>(job, HttpStatus.valueOf(job.getStatusCode()));
-  }
-
-  @Override
-  public ResponseEntity<Object> retrieveJobResult(@PathVariable("id") String id) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    JobResultWithStatus<Object> jobResultHolder =
-        jobService.retrieveJobResult(id, Object.class, userReq);
-    return new ResponseEntity<>(jobResultHolder.getResult(), jobResultHolder.getStatusCode());
-  }
-  */
-
   @Override
   public ResponseEntity<Void> grantRole(
       @PathVariable("id") UUID id,
@@ -342,28 +319,19 @@ public class WorkspaceApiController implements WorkspaceApi {
     if (jobReport.getStatus().equals(StatusEnum.RUNNING)) {
       return new ResponseEntity<>(response, HttpStatus.ACCEPTED);
     }
-    try {
-      // This flight does not write a result, but retrieveJobResult will check for a SUCCESS status
-      // or exceptions that may have been thrown.
-      jobService.retrieveJobResult(jobId, null, userReq);
-      WorkspaceCloudContext cloudContext = workspaceService.getCloudContext(id, userReq);
-      GoogleContext googleContext =
-          new GoogleContext().projectId(cloudContext.googleProjectId().get());
-      response.googleContext(googleContext);
-    } catch (RuntimeException jobFailure) {
-      // This indicates the job failed with an exception. Jobs can throw any runtime exception, so
-      // this cannot be a narrower catch statement.
-      if (jobFailure instanceof ErrorReportException) {
-        ErrorReportException ex = (ErrorReportException) jobFailure;
-        response.errorReport(
-            new ErrorReport()
-                .message(ex.getMessage())
-                .statusCode(ex.getStatusCode().value())
-                .causes(ex.getCauses()));
-      } else {
-        response.errorReport(new ErrorReport().message(jobFailure.getMessage()).statusCode(500));
-      }
+    // This flight does not directly output a result, but may still throw errors. Either the
+    // errorReport or the googleContext field will be populated in the response, but never both.
+    JobResultOrException resultOrException = jobService.retrieveJobResult(jobId, null, userReq);
+    if (resultOrException.getException() != null) {
+      response.errorReport(ErrorReportUtils.buildErrorReport(resultOrException.getException()));
+      // Note that even failed jobs return with a 200 status, as they are finished.
+      return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    WorkspaceCloudContext cloudContext = workspaceService.getCloudContext(id, userReq);
+    GoogleContext googleContext =
+        new GoogleContext().projectId(cloudContext.googleProjectId().get());
+    response.googleContext(googleContext);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 

@@ -35,7 +35,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpStatus;
 
 public class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private WorkspaceService workspaceService;
@@ -230,9 +229,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     String jobId = UUID.randomUUID().toString();
     workspaceService.createGoogleContext(request.workspaceId(), jobId, "/fake/value", USER_REQUEST);
     jobService.waitForJob(jobId);
-    assertEquals(
-        HttpStatus.OK,
-        jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getStatusCode());
+    assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
     String projectId =
         workspaceService
             .getCloudContext(request.workspaceId(), USER_REQUEST)
@@ -259,9 +256,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     String jobId = UUID.randomUUID().toString();
     workspaceService.createGoogleContext(request.workspaceId(), jobId, "/fake/value", USER_REQUEST);
     jobService.waitForJob(jobId);
-    assertEquals(
-        HttpStatus.OK,
-        jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getStatusCode());
+    assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
     assertTrue(
         workspaceService
             .getCloudContext(request.workspaceId(), USER_REQUEST)
