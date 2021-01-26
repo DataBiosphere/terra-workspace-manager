@@ -1,17 +1,12 @@
 package bio.terra.workspace.service.workspace;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.SamApiException;
+import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
@@ -33,8 +28,6 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.model.Project;
-import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -42,12 +35,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+
 public class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private DataReferenceService dataReferenceService;
   @Autowired private JobService jobService;
   @Autowired private CrlService crl;
   @Autowired private SpendConnectedTestUtils spendUtils;
+  @Autowired private DataReferenceDao dataReferenceDao;
 
   @MockBean private DataRepoService dataRepoService;
 
@@ -93,6 +97,29 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     assertEquals(
         request.workspaceId(),
         workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST).workspaceId());
+  }
+
+  @Test
+  public void testGetForbiddenMissingWorkspace() {
+    doThrow(new SamUnauthorizedException("forbid!"))
+        .when(mockSamService)
+        .workspaceAuthzOnly(any(), any(), any());
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () -> workspaceService.getWorkspace(UUID.randomUUID(), USER_REQUEST));
+  }
+
+  @Test
+  public void testGetForbiddenExistingWorkspace() {
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+
+    doThrow(new SamUnauthorizedException("forbid!"))
+        .when(mockSamService)
+        .workspaceAuthzOnly(any(), any(), any());
+    assertThrows(
+        SamUnauthorizedException.class,
+        () -> workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST));
   }
 
   @Test
@@ -193,6 +220,31 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  public void deleteForbiddenMissingWorkspace() {
+    doThrow(new SamUnauthorizedException("forbid!"))
+        .when(mockSamService)
+        .workspaceAuthzOnly(any(), any(), any());
+
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () -> workspaceService.deleteWorkspace(UUID.randomUUID(), USER_REQUEST));
+  }
+
+  @Test
+  public void deleteForbiddenExistingWorkspace() {
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+
+    doThrow(new SamUnauthorizedException("forbid!"))
+        .when(mockSamService)
+        .workspaceAuthzOnly(any(), any(), any());
+
+    assertThrows(
+        SamUnauthorizedException.class,
+        () -> workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST));
+  }
+
+  @Test
   public void deleteWorkspaceWithDataReference() {
     // First, create a workspace.
     UUID workspaceId = UUID.randomUUID();
@@ -216,9 +268,19 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     dataReferenceService.getDataReference(request.workspaceId(), referenceId, USER_REQUEST);
     // Delete the workspace.
     workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
-    // Verify that the contained data reference is no longer returned.
+    // Verify that the workspace was successfully deleted, even though it contained references
+
+    // Verify the data ref rows in question were also deleted; this is a direct call to the SQL
+    // table
     assertThrows(
         DataReferenceNotFoundException.class,
+        () -> dataReferenceDao.getDataReference(request.workspaceId(), referenceId));
+
+    // Verify that attempting to retrieve the reference via DataReferenceService fails; this
+    // includes
+    // workspace-existence and permission checks
+    assertThrows(
+        WorkspaceNotFoundException.class,
         () ->
             dataReferenceService.getDataReference(
                 request.workspaceId(), referenceId, USER_REQUEST));

@@ -124,17 +124,32 @@ public class WorkspaceDao {
     return WorkspaceStage.valueOf(jdbcTemplate.queryForObject(sql, params, String.class));
   }
 
+  // underlying implementation for the two public assertMcWorkspace() methods
+  private void assertMcWorkspace(WorkspaceStage stage, UUID workspaceId, String actionMessage) {
+    if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
+      throw new StageDisabledException(workspaceId, stage, actionMessage);
+    }
+  }
+
   /**
    * Check that the given workspace has stage MC_WORKSPACE, and throw an exception otherwise.
    *
-   * @param workspaceId ID of the workspace to check
-   * @param action The action being performed, used in the exception message if needed
+   * @param workspace the workspace to check
+   * @param actionMessage The action being performed, used only in the exception message if needed
    */
-  public void assertMcWorkspace(UUID workspaceId, String action) {
+  public void assertMcWorkspace(Workspace workspace, String actionMessage) {
+    assertMcWorkspace(workspace.workspaceStage(), workspace.workspaceId(), actionMessage);
+  }
+
+  /**
+   * Check that the given workspace id has stage MC_WORKSPACE, and throw an exception otherwise.
+   *
+   * @param workspaceId ID of the workspace to check
+   * @param actionMessage The action being performed, used only in the exception message if needed
+   */
+  public void assertMcWorkspace(UUID workspaceId, String actionMessage) {
     WorkspaceStage stage = getWorkspaceStage(workspaceId);
-    if (!WorkspaceStage.MC_WORKSPACE.equals(stage)) {
-      throw new StageDisabledException(workspaceId, stage, action);
-    }
+    assertMcWorkspace(stage, workspaceId, actionMessage);
   }
 
   /** Retrieves the cloud context of the workspace. */
