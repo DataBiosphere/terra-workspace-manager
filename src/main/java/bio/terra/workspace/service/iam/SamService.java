@@ -155,8 +155,8 @@ public class SamService {
    */
   public void grantWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
-    workspaceAuthz(userReq, workspaceId, samActionToModifyRole(role));
     workspaceDao.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
+    workspaceAuthzOnly(userReq, workspaceId, samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       resourceApi.addUserToPolicy(
@@ -179,8 +179,8 @@ public class SamService {
    */
   public void removeWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
-    workspaceAuthz(userReq, workspaceId, samActionToModifyRole(role));
     workspaceDao.assertMcWorkspace(workspaceId, "removeWorkspaceRole");
+    workspaceAuthzOnly(userReq, workspaceId, samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       resourceApi.removeUserFromPolicy(
@@ -201,8 +201,8 @@ public class SamService {
    * permissions directly on other workspaces.
    */
   public List<RoleBinding> listRoleBindings(UUID workspaceId, AuthenticatedUserRequest userReq) {
-    workspaceAuthz(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_IAM_ACTION);
     workspaceDao.assertMcWorkspace(workspaceId, "listRoleBindings");
+    workspaceAuthzOnly(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_IAM_ACTION);
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       List<AccessPolicyResponseEntry> samResult =

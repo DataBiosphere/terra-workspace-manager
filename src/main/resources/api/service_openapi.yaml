@@ -250,6 +250,10 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/RoleBindingListResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -272,6 +276,8 @@ paths:
           description: Role granted successfully
         '403':
           $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{id}/roles/{role}/members/{memberEmail}:
@@ -288,6 +294,8 @@ paths:
           description: Role removed successfully
         '403':
           $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
 
