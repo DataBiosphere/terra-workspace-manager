@@ -47,7 +47,7 @@ public class DataReferenceService {
 
   /**
    * Retrieve a data reference from the database by ID. References are always contained inside a
-   * single workspace.
+   * single workspace. Verifies workspace existence and read permission before retrieving the reference.
    */
   @Traced
   public DataReference getDataReference(
@@ -61,7 +61,7 @@ public class DataReferenceService {
 
   /**
    * Retrieve a data reference from the database by name. Names are unique per workspace, per data
-   * reference type.
+   * reference type. Verifies workspace existence and read permission before retrieving the reference.
    */
   @Traced
   public DataReference getDataReferenceByName(
@@ -75,7 +75,10 @@ public class DataReferenceService {
     return dataReferenceDao.getDataReferenceByName(workspaceId, referenceType, name);
   }
 
-  /** Create a data reference and return the newly created object. */
+  /**
+   * Create a data reference and return the newly created object.  Verifies workspace existence
+   * and write permission before creating the reference.
+   * */
   @Traced
   public DataReference createDataReference(
       DataReferenceRequest referenceRequest, AuthenticatedUserRequest userReq) {
@@ -114,6 +117,8 @@ public class DataReferenceService {
    *
    * <p>References are in ascending order by reference ID. At most {@Code limit} results will be
    * returned, with the first being {@Code offset} entries from the start of the database.
+   *
+   * <p>Verifies workspace existence and read permission before listing the references.
    */
   @Traced
   public List<DataReference> enumerateDataReferences(
@@ -123,7 +128,10 @@ public class DataReferenceService {
     return dataReferenceDao.enumerateDataReferences(workspaceId, offset, limit);
   }
 
-  /** Delete a data reference, or throw an exception if the specified reference does not exist. */
+  /**
+   * Delete a data reference, or throw an exception if the specified reference does not exist.  Verifies
+   * workspace existence and write permission before deleting the reference.
+   * */
   @Traced
   public void deleteDataReference(
       UUID workspaceId, UUID referenceId, AuthenticatedUserRequest userReq) {

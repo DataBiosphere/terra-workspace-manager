@@ -117,14 +117,20 @@ public class WorkspaceService {
     deleteJob.submitAndWait(null, false);
   }
 
-  /** Retrieves the cloud context of a workspace. */
+  /**
+   * Retrieves the cloud context of a workspace.  Verifies workspace existence and
+   * read permission before retrieving the cloud context.
+   * */
   @Traced
   public WorkspaceCloudContext getCloudContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     authorizedGetWorkspace(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return workspaceDao.getCloudContext(workspaceId);
   }
 
-  /** Start a job to create a Google cloud context for the workspace. Returns the job id. */
+  /**
+   * Start a job to create a Google cloud context for the workspace. Returns the job id.  Verifies
+   * workspace existence and write permission before starting the job.
+   * */
   @Traced
   public String createGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     Workspace workspace =
@@ -155,7 +161,10 @@ public class WorkspaceService {
     return jobId;
   }
 
-  /** Delete the Google cloud context for the workspace. */
+  /**
+   * Delete the Google cloud context for the workspace.  Verifies workspace existence and
+   * write permission before deleting the cloud context.
+   * */
   @Traced
   public void deleteGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     Workspace workspace =
