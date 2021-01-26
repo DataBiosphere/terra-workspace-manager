@@ -71,7 +71,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     return authenticatedUserRequestFactory.from(request);
   }
 
-  // Returns
+  // Returns the result endpoint corresponding to an async request. Used to build a JobReport.
   private String getAsyncResultEndpoint(String jobId) {
     return String.format("%s/result/%s", request.getServletPath(), jobId);
   }
@@ -370,6 +370,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<Void> deleteCloudContext(UUID id, CloudContext cloudContext) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    ControllerValidationUtils.validateCloudContext(cloudContext);
     workspaceService.deleteGoogleContext(id, userReq);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
