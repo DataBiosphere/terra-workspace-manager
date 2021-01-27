@@ -8,11 +8,11 @@ import com.google.auto.value.AutoValue;
 
 /** TODO javadoc */
 @AutoValue
-@JsonTypeName("BigQueryReference")
-public abstract class BigQueryReference implements ReferenceObject {
+@JsonTypeName("BigQueryDatasetReference")
+public abstract class BigQueryDatasetReference implements ReferenceObject {
 
   @JsonCreator
-  public static BigQueryReference create(
+  public static BigQueryDatasetReference create(
       @JsonProperty("projectId") String projectId,
       @JsonProperty("datasetName") String datasetName) {
     return new AutoValue_BigQueryReference(projectId, datasetName);

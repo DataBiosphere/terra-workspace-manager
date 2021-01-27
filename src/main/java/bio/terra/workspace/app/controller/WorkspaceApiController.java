@@ -4,10 +4,13 @@ import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.datareference.DataReferenceService;
+import bio.terra.workspace.service.datareference.model.BigQueryDatasetReference;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.DataReferenceType;
+import bio.terra.workspace.service.datareference.model.GoogleBucketReference;
+import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -38,12 +41,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class WorkspaceApiController implements WorkspaceApi {
-  private WorkspaceService workspaceService;
-  private DataReferenceService dataReferenceService;
-  private DataReferenceValidationUtils dataReferenceValidation;
-  private JobService jobService;
-  private SamService samService;
-  private AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
+  private final WorkspaceService workspaceService;
+  private final DataReferenceService dataReferenceService;
+  private final DataReferenceValidationUtils dataReferenceValidation;
+  private final JobService jobService;
+  private final SamService samService;
+  private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
 
   @Autowired
@@ -64,7 +67,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     this.request = request;
   }
 
-  private Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
+  private final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
     return authenticatedUserRequestFactory.from(request);
@@ -147,11 +150,18 @@ public class WorkspaceApiController implements WorkspaceApi {
     ControllerValidationUtils.validate(body);
     DataReferenceValidationUtils.validateReferenceName(body.getName());
     // TODO: this will require more translation when we add additional reference types.
-    DataReferenceType referenceType = DataReferenceType.fromApiModel(body.getReferenceType());
-    SnapshotReference snapshot =
-        SnapshotReference.create(
-            body.getReference().getInstanceName(), body.getReference().getSnapshot());
-    dataReferenceValidation.validateReferenceObject(snapshot, referenceType, userReq);
+    final DataReferenceType referenceType = DataReferenceType.fromApiModel(body.getReferenceType());
+
+    final DataReferenceInfo referenceInfo = body.getReferenceInfo();
+    final ReferenceObject referenceObject;
+    if (body.getReference() != null) {
+      referenceObject = SnapshotReference.create(
+          body.getReference().getInstanceName(), body.getReference().getSnapshot());
+    } else {
+      referenceObject = referenceInfoToReferenceObject(body.getReferenceType(), referenceInfo);
+    }
+
+    dataReferenceValidation.validateReferenceObject(referenceObject, referenceType, userReq);
 
     DataReferenceRequest referenceRequest =
         DataReferenceRequest.builder()
@@ -159,7 +169,7 @@ public class WorkspaceApiController implements WorkspaceApi {
             .name(body.getName())
             .referenceType(referenceType)
             .cloningInstructions(CloningInstructions.fromApiModel(body.getCloningInstructions()))
-            .referenceObject(snapshot)
+            .referenceObject(referenceObject)
             .build();
     DataReference reference = dataReferenceService.createDataReference(referenceRequest, userReq);
     logger.info(
@@ -168,6 +178,29 @@ public class WorkspaceApiController implements WorkspaceApi {
             reference.toString(), id.toString(), userReq.getEmail()));
 
     return new ResponseEntity<>(reference.toApiModel(), HttpStatus.OK);
+  }
+
+  private static ReferenceObject referenceInfoToReferenceObject(ReferenceTypeEnum referenceTypeEnum,
+      DataReferenceInfo referenceInfo) {
+    final ReferenceObject result;
+    switch (referenceTypeEnum) {
+      case DATA_REPO_SNAPSHOT:
+        result = SnapshotReference.create(
+              referenceInfo.getDataRepoSnapshot().getInstanceName(),
+              referenceInfo.getDataRepoSnapshot().getSnapshot());
+        break;
+      case GOOGLE_BUCKET:
+        result = GoogleBucketReference.create(referenceInfo.getGoogleBucket().getBucketName());
+        break;
+      case BIG_QUERY_DATASET:
+        result = BigQueryDatasetReference.create(
+            referenceInfo.getBigQueryDataset().getProjectId(),
+            referenceInfo.getBigQueryDataset().getDatasetName());
+        break;
+      default:
+        throw new IllegalArgumentException("Unrecognized reference type");
+    }
+    return result;
   }
 
   @Override

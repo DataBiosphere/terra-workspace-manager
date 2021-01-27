@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 @JsonSubTypes({
   @JsonSubTypes.Type(value = SnapshotReference.class, name = "SnapshotReference"),
   @JsonSubTypes.Type(value = GoogleBucketReference.class, name = "GoogleBucketReference"),
-  @JsonSubTypes.Type(value = BigQueryReference.class, name = "BigQueryReference")
+  @JsonSubTypes.Type(value = BigQueryDatasetReference.class, name = "BigQueryDatasetReference")
 })
 public interface ReferenceObject {
 
