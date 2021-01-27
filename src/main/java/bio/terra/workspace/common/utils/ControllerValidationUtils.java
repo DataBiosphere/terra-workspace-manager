@@ -2,6 +2,8 @@ package bio.terra.workspace.common.utils;
 
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
+import bio.terra.workspace.generated.model.DataReferenceInfo;
+import bio.terra.workspace.generated.model.ReferenceTypeEnum;
 import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import java.util.ArrayList;
@@ -42,24 +44,29 @@ public final class ControllerValidationUtils {
   /**
    * Utility function for validating a CreateDataReferenceRequestBody.
    *
-   * <p>CreateDataReferenceRequestBody is currently structured to allow several parameters for
-   * controlled and private resources that aren't supported in WM. This function throws exceptions
-   * if any of those fields are set, or if any required fields are missing.
+   * <p>CreateDataReferenceRequestBody holds one of several types of data reference. This enforces
+   * that exactly one type of reference is present, and that it matches the specified ReferenceType
+   * field.
    */
   public static void validate(CreateDataReferenceRequestBody body) {
-    if (body.getResourceId() != null) {
-      throw new ControlledResourceNotImplementedException(
-          "Unable to create a reference with a resourceId, use a reference type and description"
-              + " instead. This functionality will be implemented in the future.");
+    ReferenceTypeEnum referenceType = body.getReferenceType();
+    DataReferenceInfo info = body.getReferenceInfo();
+    final boolean valid;
+    switch (referenceType) {
+      case DATA_REPO_SNAPSHOT:
+        valid = ((info.getDataRepoSnapshot() == null && body.getReference() == null) || info.getBigQueryDataset() != null || info.getDataRepoSnapshot() != null);
+        break;
+      case GOOGLE_BUCKET:
+        valid = (info.getGoogleBucket() == null || info.getBigQueryDataset() != null || info.getDataRepoSnapshot() != null || body.getReference() != null);
+        break;
+      case BIG_QUERY_DATASET:
+        valid = (info.getBigQueryDataset() == null || info.getGoogleBucket() != null || info.getDataRepoSnapshot() != null || body.getReference() != null);
+        break;
+      default:
+        throw new InvalidDataReferenceException("Unknown reference type specified");
     }
-    if (body.getReferenceType() == null || body.getReference() == null) {
-      throw new InvalidDataReferenceException(
-          "Data reference must contain a reference type and a reference description");
-    }
-    // TODO: remove this check when we add support for resource-specific credentials.
-    if (body.getCredentialId() != null) {
-      throw new InvalidDataReferenceException(
-          "Resource-specific credentials are not supported yet.");
+    if (!valid) {
+      throw new InvalidDataReferenceException("Exactly one field of ReferenceInfo must be set, and it should match ReferenceType");
     }
   }
 

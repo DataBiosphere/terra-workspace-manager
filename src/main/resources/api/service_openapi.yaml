@@ -106,7 +106,7 @@ paths:
       tags: [Workspace]
       requestBody:
         required: true
-        description: Stuff TBD
+        description: Request specifying the data reference to create.
         content:
           application/json:
             schema:
@@ -582,11 +582,7 @@ components:
     ReferenceTypeEnum:
       type: string
       description: The type of a reference, if an uncontrolled resource
-      # TODO: swagger-codegen always looks for and removes a common prefix for
-      # enum values, which breaks enums that only have a single value.
-      # PLACEHOLDER_VALUE should be removed when we have an actual second value
-      # to use.
-      enum: ['DATA_REPO_SNAPSHOT', 'PLACEHOLDER_VALUE'] #eventually include GCS bucket, etc.
+      enum: ['DATA_REPO_SNAPSHOT', 'GOOGLE_BUCKET', 'BIG_QUERY_DATASET']
 
     GoogleContext:
       type: object
@@ -598,23 +594,20 @@ components:
 
     CreateDataReferenceRequestBody:
       type: object
-      required: [name, cloningInstructions]
+      required: [name, referenceType, cloningInstructions]
       properties:
         name:
           $ref: "#/components/schemas/Name"
-        resourceId:
-          description: The ID of the resource
-          type: string
-          format: uuid
-        referenceType:
-          $ref: '#/components/schemas/ReferenceTypeEnum'
-        reference:
-          $ref: '#/components/schemas/DataRepoSnapshot'
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
-        credentialId:
-          description: The IDs of the credentials to use with this resource
-          type: string
+        # Indicates which of the reference fields is present.
+        referenceType:
+          $ref: '#/components/schemas/ReferenceTypeEnum'
+        # TODO: this is deprecated, use referenceInfo.dataRepoSnapshot instead.
+        reference:
+          $ref: '#/components/schemas/DataRepoSnapshot'
+        referenceInfo:
+          $ref: '#/components/schemas/DataReferenceInfo'
 
     DataReferenceDescription:
       type: object
@@ -631,42 +624,15 @@ components:
           description: The ID of the workspace containing the reference
           type: string
           format: uuid
-        resourceDescription:
-          $ref: '#/components/schemas/ResourceDescription'
         referenceType:
           $ref: '#/components/schemas/ReferenceTypeEnum'
+        # TODO: this is deprecated, use referenceInfo.dataRepoSnapshot instead.
         reference:
           $ref: '#/components/schemas/DataRepoSnapshot'
-        credentialId:
-          description: The ID of the credential to use when accessing the resource
-          type: string
+        referenceInfo:
+          $ref: '#/components/schemas/DataReferenceInfo'
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
-    ResourceDescription:
-      description: Description of the workspace resource, if this is a controlled reference.
-      type: object
-      required: [resourceId, workspaceId, isVisible]
-      properties:
-        resourceId:
-          description: The ID of the resource
-          type: string
-          format: uuid
-        workspaceId:
-          description: The ID of the workspace holding the resource
-          type: string
-          format: uuid
-        applicationId:
-          description: ID of application this resource is associated with, if any
-          type: string
-        isVisible:
-          description: Whether this resource is visible or not
-          type: boolean
-        owner:
-          description: ID of owner. null for shared resources
-          type: string
-        attributes:
-          description: JSON map of user-provided attributes
-          type: string
 
     DataReferenceList:
       type: object
@@ -678,8 +644,21 @@ components:
           items:
             $ref: '#/components/schemas/DataReferenceDescription'
 
+    DataReferenceInfo:
+      description: |
+        A reference to one of several cloud resources. This is a workaround for
+        OpenAPI's oneof construct, which does not generate properly.
+      type: object
+      properties:
+        dataRepoSnapshot:
+          $ref: '#/components/schemas/DataRepoSnapshot'
+        googleBucket:
+          $ref: '#/components/schemas/GoogleBucket'
+        bigQueryDataset:
+          $ref: '#/components/schemas/BigQueryDataset'
+
     DataRepoSnapshot:
-      description: Currently, the only supported uncontrolled reference type.
+      description: A reference to a snapshot in Data Repo.
       type: object
       required: [instanceName, snapshot]
       properties:
@@ -688,6 +667,27 @@ components:
           type: string
         snapshot:
           description: The ID of the Data Repo snapshot
+          type: string
+
+    GoogleBucket:
+      description: A reference to a GCS bucket.
+      type: object
+      required: [bucketName]
+      properties:
+        bucketName:
+          description: The name of the bucket
+          type: string
+
+    BigQueryDataset:
+      description: A reference to a BigQuery dataset.
+      type: object
+      required: [projectId, datasetName]
+      properties:
+        projectId:
+          description: ID of the Google project holding this dataset
+          type: string
+        datasetName:
+          description: The name of this dataset
           type: string
 
     WorkspaceStageModel:
