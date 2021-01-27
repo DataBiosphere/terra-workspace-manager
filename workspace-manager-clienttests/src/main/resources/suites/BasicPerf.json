@@ -1,7 +1,7 @@
 {
   "name": "BasicPerf",
   "description": "Perf tests.",
-  "serverSpecificationFile": "workspace-dev.json",
+  "serverSpecificationFile": "workspace-wsmtest.json",
   "testConfigurationFiles": [
     "perf/BasicAuthenticated.json",
     "perf/BasicUnauthenticated.json",

@@ -10,11 +10,10 @@ public final class StartupInitializer {
 
   public static void initialize(ApplicationContext applicationContext) {
     // Initialize or upgrade the database depending on the configuration
-    MigrateService migrateService = (MigrateService) applicationContext.getBean("migrateService");
+    MigrateService migrateService = applicationContext.getBean(MigrateService.class);
     WorkspaceDatabaseConfiguration workspaceDatabaseConfiguration =
-        (WorkspaceDatabaseConfiguration)
-            applicationContext.getBean("workspaceDatabaseConfiguration");
-    JobService jobService = (JobService) applicationContext.getBean("jobService");
+        applicationContext.getBean(WorkspaceDatabaseConfiguration.class);
+    JobService jobService = applicationContext.getBean(JobService.class);
 
     if (workspaceDatabaseConfiguration.isInitializeOnStart()) {
       migrateService.initialize(changelogPath, workspaceDatabaseConfiguration.getDataSource());
