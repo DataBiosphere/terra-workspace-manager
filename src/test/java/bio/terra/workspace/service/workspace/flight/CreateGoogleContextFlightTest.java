@@ -4,15 +4,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.cloudres.google.billing.CloudBillingClientCow;
-import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
-import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.IamRole;
@@ -46,9 +44,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(5);
 
   @Autowired private WorkspaceService workspaceService;
-  @Autowired private CloudResourceManagerCow resourceManager;
-  @Autowired private ServiceUsageCow serviceUsage;
-  @Autowired private CloudBillingClientCow billingClient;
+  @Autowired private CrlService crl;
   @Autowired private JobService jobService;
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private SamService samService;
@@ -77,12 +73,14 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
     assertEquals(
         WorkspaceCloudContext.createGoogleContext(projectId),
         workspaceService.getCloudContext(workspaceId, userReq));
-    Project project = resourceManager.projects().get(projectId).execute();
+    Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());
     assertServiceApisEnabled(project, CreateProjectStep.ENABLED_SERVICES);
     assertEquals(
         "billingAccounts/" + spendUtils.defaultBillingAccountId(),
-        billingClient.getProjectBillingInfo("projects/" + projectId).getBillingAccountName());
+        crl.getCloudBillingClientCow()
+            .getProjectBillingInfo("projects/" + projectId)
+            .getBillingAccountName());
     assertPolicyGroupsSynced(workspaceId, project);
   }
 
@@ -110,7 +108,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
             .get()
             .get(WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID, String.class);
     // The Project should exist, but requested to be deleted.
-    Project project = resourceManager.projects().get(projectId).execute();
+    Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());
     assertEquals("DELETE_REQUESTED", project.getLifecycleState());
   }
@@ -145,7 +143,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
                     String.format("projects/%d/services/%s", project.getProjectNumber(), apiName))
             .collect(Collectors.toList());
     ListServicesResponse servicesList =
-        serviceUsage
+        crl.getServiceUsageCow()
             .services()
             .list("projects/" + project.getProjectId())
             .setFilter("state:ENABLED")
@@ -169,7 +167,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
                             + samService.syncWorkspacePolicy(
                                 workspaceId, role, userAccessUtils.defaultUserAuthRequest())));
     Policy currentPolicy =
-        resourceManager
+        crl.getCloudResourceManagerCow()
             .projects()
             .getIamPolicy(project.getProjectId(), new GetIamPolicyRequest())
             .execute();

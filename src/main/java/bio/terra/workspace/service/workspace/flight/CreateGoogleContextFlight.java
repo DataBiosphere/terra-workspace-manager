@@ -1,11 +1,12 @@
 package bio.terra.workspace.service.workspace.flight;
 
-import bio.terra.cloudres.google.billing.CloudBillingClientCow;
-import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
-import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
-import bio.terra.stairway.*;
+import bio.terra.stairway.Flight;
+import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.RetryRule;
+import bio.terra.stairway.RetryRuleExponentialBackoff;
 import bio.terra.workspace.app.configuration.external.GoogleWorkspaceConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import org.springframework.context.ApplicationContext;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -19,9 +20,7 @@ public class CreateGoogleContextFlight extends Flight {
     ApplicationContext appContext = (ApplicationContext) applicationContext;
     GoogleWorkspaceConfiguration googleWorkspaceConfiguration =
         appContext.getBean(GoogleWorkspaceConfiguration.class);
-    CloudResourceManagerCow resourceManager = appContext.getBean(CloudResourceManagerCow.class);
-    ServiceUsageCow serviceUsage = appContext.getBean(ServiceUsageCow.class);
-    CloudBillingClientCow billingClient = appContext.getBean(CloudBillingClientCow.class);
+    CrlService crl = appContext.getBean(CrlService.class);
     WorkspaceDao workspaceDao = appContext.getBean(WorkspaceDao.class);
     TransactionTemplate transactionTemplate = appContext.getBean(TransactionTemplate.class);
     SamService samService = appContext.getBean(SamService.class);
@@ -33,11 +32,14 @@ public class CreateGoogleContextFlight extends Flight {
             /* maxOperationTimeSeconds= */ 16);
     addStep(new GenerateProjectIdStep());
     addStep(
-        new CreateProjectStep(resourceManager, serviceUsage, googleWorkspaceConfiguration),
+        new CreateProjectStep(
+            crl.getCloudResourceManagerCow(),
+            crl.getServiceUsageCow(),
+            googleWorkspaceConfiguration),
         retryRule);
-    addStep(new SetProjectBillingStep(billingClient));
+    addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()));
     addStep(new StoreGoogleContextStep(workspaceDao, transactionTemplate), retryRule);
     addStep(new SyncSamGroupsStep(samService), retryRule);
-    addStep(new GoogleCloudSyncStep(resourceManager), retryRule);
+    addStep(new GoogleCloudSyncStep(crl.getCloudResourceManagerCow()), retryRule);
   }
 }
