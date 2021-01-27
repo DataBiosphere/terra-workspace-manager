@@ -45,6 +45,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
+    - name: Set
+      id: set-env-step
+      run: |
+        if $ {{ github.event_name == 'pull_request' || github.event_name == 'push' }}; then
+          ENV=local
+        elif ${{ github.event_name == 'workflow_dispatch' }}; then
+          ENV=${{ github.event.inputs.testEnv }}
+        fi
+
+        echo ::set-output name=test-env::$ENV
+
     - name: Initialize Postgres DB
       env:
         PGPASSWORD: postgres
@@ -82,20 +94,11 @@ jobs:
 
       # Set permissions on pull request and push
     - name: Set permissions and render test configurations pull request and push
-      if: matrix.gradleTask != 'unitTest' && ( github.event_name == 'pull_request' || github.event_name == 'push' )
+      if: matrix.gradleTask != 'unitTest'
       run: |
         chmod +x render_config.sh
         echo "pull request or push"
-        ./render_config.sh local ${{ steps.vault-token-step.outputs.vault-token }}
-        chmod +r rendered
-
-      # Set permissions on a workflow dispatch
-    - name: Set permissions and render test configurations workflow dispatch
-      if: matrix.gradleTask != 'unitTest' && github.event_name == 'workflow_dispatch'
-      run: |
-        chmod +x render_config.sh
-        echo "triggered by dispatch"
-        ./render_config.sh ${{ github.event.inputs.testEnv }} ${{ steps.vault-token-step.outputs.vault-token }}
+        ./render_config.sh ${{ steps.set-env-step.outputs.test-env }} ${{ steps.vault-token-step.outputs.vault-token }}
         chmod +r rendered
 
       # Only integration tests need a running servers
@@ -107,18 +110,10 @@ jobs:
       # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
       run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
 
-      # Run tests for pull requests and merge to dev
-    - name: Run tests
-      if: github.event_name == 'pull_request' || github.event_name == 'push'
-      env:
-        TEST_ENV: local
-      run: ./gradlew ${{ matrix.gradleTask }} --scan
-
-      # Run tests for workflow dispatch
+      # Run tests
     - name: Run tests on persistent workspace manager
-      if: github.event_name == 'workflow_dispatch'
       env:
-        TEST_ENV: ${{ github.event.inputs.testEnv }}
+        TEST_ENV:  ${{ steps.set-env-step.outputs.test-env }}
       run: ./gradlew ${{ matrix.gradleTask }} --scan
 
     - name: Upload Test Reports
