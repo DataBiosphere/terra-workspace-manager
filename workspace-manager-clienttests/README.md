@@ -78,11 +78,9 @@ Additional `k8s` permission will allow test runner to manipulate a cluster for r
 
 Here's the vault paths of various test runner SA keys.
 
-Static environments (alpha, dev, perf, qa, staging)
+Static environments (`<env> = { alpha, dev, perf, qa, staging }`)
 One test runner SA key for each static environment.
 `secret/dsde/terra/kernel/<env>/common/testrunner-sa`
-
-`<env> = { alpha, dev, perf, qa, staging }`
 
 Preview environments
 One common test runner SA key for all preview environments.
