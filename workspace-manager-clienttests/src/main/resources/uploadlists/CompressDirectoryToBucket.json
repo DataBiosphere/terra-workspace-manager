@@ -1,0 +1,12 @@
+{
+  "name": "CompressDirectoryToBucket",
+  "description": "Compress results directory to the broad-dsde-dev-testrunner-results bucket",
+  "uploaderServiceAccountFile": "dev-testrunner-sa.json",
+  "uploadScripts": [
+    {
+      "name": "CompressDirectoryToBucket",
+      "description": "Save the compressed results directory to a bucket.",
+      "parameters": ["gs://broad-dsde-dev-testrunner-results"]
+    }
+  ]
+}

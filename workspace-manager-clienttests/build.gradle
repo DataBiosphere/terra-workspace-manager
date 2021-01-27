@@ -33,6 +33,8 @@ dependencies {
         hamcrest = "2.1"
         swaggerAnnotations = "2.1.5"
 
+        googleApi = "1.23.0"
+        googleCloud = "1.108.0"
         googleOauth2 = "0.20.0"
 
         workspacemanagerClient = "0.9.0-SNAPSHOT"
@@ -50,7 +52,10 @@ dependencies {
     compile "org.hamcrest:hamcrest:${hamcrest}"
 
     // Google dependencies
+    compile "com.google.api-client:google-api-client:${googleApi}"
     compile "com.google.auth:google-auth-library-oauth2-http:${googleOauth2}"
+    compile "com.google.cloud:google-cloud-bigquery:${googleCloud}"
+    compile "com.google.cloud:google-cloud-storage:${googleCloud}"
 
     // Data Repo client library
     implementation "bio.terra:datarepo-client:${datarepoClient}"

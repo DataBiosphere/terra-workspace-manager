@@ -1,0 +1,15 @@
+{
+  "name": "workspace-local",
+  "description": "Workspace Local env.",
+
+  "samUri": "https://sam.dsde-dev.broadinstitute.org",
+  "datarepoUri": "https://jade.datarepo-dev.broadinstitute.org/",
+  "workspaceManagerUri": "http://localhost:8080",
+
+  "cluster": {},
+  "deploymentScript": {},
+  "testRunnerServiceAccountFile": "delegate-user-sa.json",
+
+  "skipDeployment": true,
+  "skipKubernetes": true
+}
