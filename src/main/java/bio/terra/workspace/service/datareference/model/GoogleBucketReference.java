@@ -12,8 +12,7 @@ import com.google.auto.value.AutoValue;
 public abstract class GoogleBucketReference implements ReferenceObject {
 
   @JsonCreator
-  public static GoogleBucketReference create(
-      @JsonProperty("bucketName") String bucketName) {
+  public static GoogleBucketReference create(@JsonProperty("bucketName") String bucketName) {
     return new AutoValue_GoogleBucketReference(bucketName);
   }
 
@@ -28,5 +27,4 @@ public abstract class GoogleBucketReference implements ReferenceObject {
       throw new RuntimeException("Error serializing GoogleBucketReference", e);
     }
   }
-
 }

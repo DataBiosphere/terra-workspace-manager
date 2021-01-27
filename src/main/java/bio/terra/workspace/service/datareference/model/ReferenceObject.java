@@ -22,9 +22,11 @@ import org.slf4j.LoggerFactory;
  * class name do not break backwards compatibility.
  */
 @JsonTypeInfo(use = Id.NAME, include = As.PROPERTY)
-@JsonSubTypes({@JsonSubTypes.Type(value = SnapshotReference.class, name = "SnapshotReference"),
-    @JsonSubTypes.Type(value = GoogleBucketReference.class, name = "GoogleBucketReference"),
-    @JsonSubTypes.Type(value = BigQueryReference.class, name = "BigQueryReference")})
+@JsonSubTypes({
+  @JsonSubTypes.Type(value = SnapshotReference.class, name = "SnapshotReference"),
+  @JsonSubTypes.Type(value = GoogleBucketReference.class, name = "GoogleBucketReference"),
+  @JsonSubTypes.Type(value = BigQueryReference.class, name = "BigQueryReference")
+})
 public interface ReferenceObject {
 
   /**

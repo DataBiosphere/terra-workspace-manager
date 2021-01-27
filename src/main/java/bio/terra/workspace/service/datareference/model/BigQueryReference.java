@@ -12,10 +12,9 @@ import com.google.auto.value.AutoValue;
 public abstract class BigQueryReference implements ReferenceObject {
 
   @JsonCreator
-  public static GoogleBucketReference create(
+  public static BigQueryReference create(
       @JsonProperty("projectId") String projectId,
-      @JsonProperty("datasetName") String datasetName)
-  {
+      @JsonProperty("datasetName") String datasetName) {
     return new AutoValue_BigQueryReference(projectId, datasetName);
   }
 
@@ -33,5 +32,4 @@ public abstract class BigQueryReference implements ReferenceObject {
       throw new RuntimeException("Error serializing BigQueryReference", e);
     }
   }
-
 }

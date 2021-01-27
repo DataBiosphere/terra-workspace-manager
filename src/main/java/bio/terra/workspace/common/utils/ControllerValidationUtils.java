@@ -4,7 +4,6 @@ import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.DataReferenceInfo;
 import bio.terra.workspace.generated.model.ReferenceTypeEnum;
-import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,19 +53,31 @@ public final class ControllerValidationUtils {
     final boolean valid;
     switch (referenceType) {
       case DATA_REPO_SNAPSHOT:
-        valid = ((info.getDataRepoSnapshot() == null && body.getReference() == null) || info.getBigQueryDataset() != null || info.getDataRepoSnapshot() != null);
+        valid =
+            ((info.getDataRepoSnapshot() == null && body.getReference() == null)
+                || info.getBigQueryDataset() != null
+                || info.getDataRepoSnapshot() != null);
         break;
       case GOOGLE_BUCKET:
-        valid = (info.getGoogleBucket() == null || info.getBigQueryDataset() != null || info.getDataRepoSnapshot() != null || body.getReference() != null);
+        valid =
+            (info.getGoogleBucket() == null
+                || info.getBigQueryDataset() != null
+                || info.getDataRepoSnapshot() != null
+                || body.getReference() != null);
         break;
       case BIG_QUERY_DATASET:
-        valid = (info.getBigQueryDataset() == null || info.getGoogleBucket() != null || info.getDataRepoSnapshot() != null || body.getReference() != null);
+        valid =
+            (info.getBigQueryDataset() == null
+                || info.getGoogleBucket() != null
+                || info.getDataRepoSnapshot() != null
+                || body.getReference() != null);
         break;
       default:
         throw new InvalidDataReferenceException("Unknown reference type specified");
     }
     if (!valid) {
-      throw new InvalidDataReferenceException("Exactly one field of ReferenceInfo must be set, and it should match ReferenceType");
+      throw new InvalidDataReferenceException(
+          "Exactly one field of ReferenceInfo must be set, and it should match ReferenceType");
     }
   }
 
