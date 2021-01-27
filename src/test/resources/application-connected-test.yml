@@ -1,5 +1,5 @@
 workspace:
-  # workspace-wsmtest folder id to match dev service account used in testing.
+  # workspace-wsmtest folder id to match wsmtest service account used in testing.
   google.folder-id: 575483070815
   spend:
     spend-profiles:
