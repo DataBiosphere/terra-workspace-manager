@@ -49,7 +49,7 @@ jobs:
     - name: Set
       id: set-env-step
       run: |
-        if $ {{ github.event_name == 'pull_request' || github.event_name == 'push' }}; then
+        if ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}; then
           ENV=local
         elif ${{ github.event_name == 'workflow_dispatch' }}; then
           ENV=${{ github.event.inputs.testEnv }}
