@@ -13,8 +13,8 @@ env:
       pass: ${DATABASE_USER_PASSWORD:wmpwd}
       user: ${DATABASE_USER:wmuser}
   tracing:
-    enabled: ${CLOUD_TRACE_ENABLED:false}
-    probability: ${SAMPLING_PROBABILITY:0}
+    enabled: ${CLOUD_TRACE_ENABLED:true}
+    probability: ${SAMPLING_PROBABILITY:1}
     project-id: ${SERVICE_GOOGLE_PROJECT:broad-dsde-dev}
   urls: # While we've traditionally thought of these as env specific and ok to hardcode, with kubernetes they may change
     sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org/}

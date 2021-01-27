@@ -74,6 +74,15 @@ dependencies {
 	implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.12", version: "0.1-61135c7"
 	implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
 
+	// Terra common library
+	// Gradle project property "terracommonlibjar" overrides the fetch from Maven
+	// DO NOT SUBMIT intellij hack. How do I intellij properties?
+//	if (project.hasProperty("terracommonlibjar")) {
+		implementation files(project.findProperty("terracommonlibjar"))
+//	} else {
+//		implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.9-SNAPSHOT"
+//	}
+
 	// Versioned direct deps
 	implementation group: "com.google.auto.value", name: "auto-value-annotations", version: "1.7.4"
 	implementation group: "com.google.guava", name:"guava", version: "30.0-jre"
