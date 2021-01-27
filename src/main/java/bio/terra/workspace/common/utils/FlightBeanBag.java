@@ -12,11 +12,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * The purpose of FlightApplicationContext is to provide a clean interface for flights to get access
- * to singleton Spring components. This avoids the use of dynamic bean lookups in flights and
- * casting the lookup result. Instead, flights make calls to accessors in this class. Spring will
- * wire up the underlying methods once at startup avoiding the bean lookup. The objects will be
- * properly types without casting.
+ * The purpose of FlightBeanBag is to provide a clean interface for flights to get access to
+ * singleton Spring components. This avoids the use of dynamic bean lookups in flights and casting
+ * the lookup result. Instead, flights make calls to accessors in this class. Spring will wire up
+ * the underlying methods once at startup avoiding the bean lookup. The objects will be properly
+ * types without casting.
  */
 @Component
 public class FlightBeanBag {

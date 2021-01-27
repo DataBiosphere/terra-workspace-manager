@@ -17,7 +17,7 @@ public class CreateGoogleContextFlight extends Flight {
   public CreateGoogleContextFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
 
-    FlightBeanBag appContext = (FlightBeanBag) applicationContext;
+    FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
     CrlService crl = appContext.getCrlService();
 
     RetryRule retryRule =
