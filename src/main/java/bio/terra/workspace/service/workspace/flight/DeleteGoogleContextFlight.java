@@ -4,27 +4,31 @@ import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.RetryRuleExponentialBackoff;
-import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.crl.CrlService;
-import org.springframework.context.ApplicationContext;
-import org.springframework.transaction.support.TransactionTemplate;
 
 /** A {@link Flight} for deleting a Google cloud context for a workspace. */
 public class DeleteGoogleContextFlight extends Flight {
-  public DeleteGoogleContextFlight(FlightMap inputParameters, Object applicationContext)
-      throws Exception {
+  private static final int INITIAL_INTERVALS_SECONDS = 1;
+  private static final int MAX_INTERVAL_SECONDS = 8;
+  private static final int MAX_OPERATION_TIME_SECONDS = 5 * 60;
+
+  public DeleteGoogleContextFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
-    ApplicationContext appContext = (ApplicationContext) applicationContext;
-    CrlService crl = appContext.getBean(CrlService.class);
-    WorkspaceDao workspaceDao = appContext.getBean(WorkspaceDao.class);
-    TransactionTemplate transactionTemplate = appContext.getBean(TransactionTemplate.class);
+
+    FlightBeanBag appContext = (FlightBeanBag) applicationContext;
+    CrlService crl = appContext.getCrlService();
 
     RetryRule retryRule =
         new RetryRuleExponentialBackoff(
-            /* initialIntervalSeconds= */ 1,
-            /* maxIntervalSeconds= */ 8,
-            /* maxOperationTimeSeconds= */ 5 * 60);
-    addStep(new DeleteProjectStep(crl.getCloudResourceManagerCow(), workspaceDao), retryRule);
-    addStep(new DeleteGoogleContextStep(workspaceDao, transactionTemplate), retryRule);
+            INITIAL_INTERVALS_SECONDS, MAX_INTERVAL_SECONDS, MAX_OPERATION_TIME_SECONDS);
+
+    addStep(
+        new DeleteProjectStep(crl.getCloudResourceManagerCow(), appContext.getWorkspaceDao()),
+        retryRule);
+    addStep(
+        new DeleteGoogleContextStep(
+            appContext.getWorkspaceDao(), appContext.getTransactionTemplate()),
+        retryRule);
   }
 }

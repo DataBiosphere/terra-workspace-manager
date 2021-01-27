@@ -5,7 +5,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.test.context.ActiveProfiles;
 
 @Tag("unit")
-@ActiveProfiles("unit-test")
 @AutoConfigureMockMvc
 @ActiveProfiles("unit-test")
 public class BaseUnitTest extends BaseTest {}
