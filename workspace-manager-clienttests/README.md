@@ -67,7 +67,7 @@ export TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-dev.json"
 ```
 
 #### SA keys from Vault
-Each service account JSON files in the resources/serviceaccounts directory of this project specifies a default file
+Each service account JSON file in the resources/serviceaccounts directory of this project specifies a default file
 path for the client secret file. This default path should match where the render-config.sh script puts the secret.
 
 #### Test runner SA keys
