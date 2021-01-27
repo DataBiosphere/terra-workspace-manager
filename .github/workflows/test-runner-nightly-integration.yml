@@ -4,7 +4,10 @@
 name: Test Runner Nightly Integration Tests
 
 on:
-  push
+  push:
+    branches: [ dev ]
+  pull_request:
+      branches: [ '**' ]
 
 jobs:
   test-runner-integration:
