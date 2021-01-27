@@ -13,7 +13,6 @@ on:
       testEnv:
         description: 'Environment in which tests should be run. Currently works on dev, alpha and staging'
         required: true
-        default: 'dev'
 
 jobs:
   test:
@@ -92,7 +91,7 @@ jobs:
 
       # Set permissions on a workflow dispatch
     - name: Set permissions and render test configurations workflow dispatch
-      if: matrix.gradleTask != 'unitTest' && !( github.event_name == 'pull_request' || github.event_name == 'push' )
+      if: matrix.gradleTask != 'unitTest' && github.event_name == 'workflow_dispatch'
       run: |
         chmod +x render_config.sh
         echo "triggered by dispatch"
@@ -117,7 +116,7 @@ jobs:
 
       # Run tests for workflow dispatch
     - name: Run tests on persistent workspace manager
-      if: github.event_name != 'pull_request' && github.event_name != 'push'
+      if: github.event_name == 'workflow_dispatch'
       env:
         TEST_ENV: ${{ github.event.inputs.testEnv }}
       run: ./gradlew ${{ matrix.gradleTask }} --scan
