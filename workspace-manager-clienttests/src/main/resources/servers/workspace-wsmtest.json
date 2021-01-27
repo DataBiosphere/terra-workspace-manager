@@ -1,10 +1,10 @@
 {
-  "name": "workspace-dev",
-  "description": "Workspace Dev env.",
+  "name": "workspace-wsmtest",
+  "description": "Workspace Manager Test Environment",
 
   "samUri": "https://sam.dsde-dev.broadinstitute.org",
   "datarepoUri": "https://jade.datarepo-dev.broadinstitute.org/",
-  "workspaceManagerUri": "https://workspace.dsde-dev.broadinstitute.org",
+  "workspaceManagerUri": "https://workspace.wsmtest.integ.envs.broadinstitute.org/",
 
   "cluster": {},
   "deploymentScript": {},
