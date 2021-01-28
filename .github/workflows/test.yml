@@ -108,11 +108,11 @@ jobs:
 
       # Only integration tests need a running servers
     - name: Run local server (in background)
-      if: ${{ steps.set-env-step.outputs.local-server }}
+      if: steps.set-env-step.outputs.local-server == 'true'
       run: ./gradlew bootRun &
 
     - name: Wait for local server to start
-      if: ${{ steps.set-env-step.outputs.local-server }}
+      if: steps.set-env-step.outputs.local-server == 'true'
       # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
       run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
 
