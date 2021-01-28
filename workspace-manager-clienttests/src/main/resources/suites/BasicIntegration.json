@@ -1,7 +1,7 @@
 {
   "name": "BasicIntegration",
   "description": "Integration tests.",
-  "serverSpecificationFile": "workspace-dev.json",
+  "serverSpecificationFile": "workspace-wsmtest.json",
   "testConfigurationFiles": [
     "integration/BasicAuthenticated.json",
     "integration/BasicUnauthenticated.json",
@@ -11,3 +11,4 @@
     "integration/GetRoles.json"
   ]
 }
+

@@ -17,6 +17,7 @@ import bio.terra.workspace.app.configuration.external.JobConfiguration;
 import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
 import bio.terra.workspace.common.exception.stairway.StairwayInitializationException;
 import bio.terra.workspace.common.utils.ErrorReportUtils;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.MdcHook;
 import bio.terra.workspace.generated.model.ErrorReport;
 import bio.terra.workspace.generated.model.JobReport;
@@ -44,7 +45,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
@@ -65,7 +65,7 @@ public class JobService {
       JobConfiguration jobConfig,
       IngressConfiguration ingressConfig,
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
-      ApplicationContext applicationContext,
+      FlightBeanBag applicationContext,
       MdcHook mdcHook,
       ObjectMapper objectMapper) {
     this.jobConfig = jobConfig;
