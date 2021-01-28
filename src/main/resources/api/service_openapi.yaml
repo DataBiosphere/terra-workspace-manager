@@ -205,6 +205,8 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateCloudContextRequest'
       responses:
+        '200':
+          $ref: '#/components/responses/CreateCloudContextResultResponse'
         '202':
           $ref: '#/components/responses/JobReportResponse'
         '400':
@@ -225,14 +227,10 @@ paths:
       operationId: createCloudContextResult
       tags: [Workspace]
       responses:
-        200:
-          description: Job is complete (succeeded or failed)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateCloudContextResult'
-        202:
-          $ref: '#/components/responses/JobReportResponse'
+        '200':
+          $ref: '#/components/responses/CreateCloudContextResultResponse'
+        '202':
+          $ref: '#/components/responses/CreateCloudContextResultResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -333,11 +331,6 @@ paths:
       responses:
         200:
           description: Job is complete (succeeded or failed)
-          headers:
-            location:
-              description: url to retrieve the job result
-              schema:
-                type: string
           content:
             application/json:
               schema:
@@ -345,10 +338,6 @@ paths:
         202:
           description: Job is running
           headers:
-            location:
-              description: url for this endpoint
-              schema:
-                type: string
             Retry-After:
               description: >-
                 optional - estimated seconds to wait before polling again. This allows
@@ -647,8 +636,6 @@ components:
           description: The ID of Google Project associated with the workspace.
           type: string
 
-    # TODO: we don't yet know what a non-google cloud context looks like, so
-    # it's difficult to shape CreateCloudContextResult appropriately.
     CreateCloudContextResult:
       type: object
       description: |
@@ -823,6 +810,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/RoleBindingList'
+
+    CreateCloudContextResultResponse:
+      description: Job is complete (succeeded or failed)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateCloudContextResult'
 
     JobReportResponse:
       description: A response containing a JobReport object. Returned for running jobs.

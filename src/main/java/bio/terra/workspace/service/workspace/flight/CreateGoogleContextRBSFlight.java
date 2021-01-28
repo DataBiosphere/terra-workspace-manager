@@ -25,5 +25,6 @@ public class CreateGoogleContextRBSFlight extends Flight {
     addStep(new GenerateResourceIdStep());
     addStep(
         new PullProjectFromPoolStep(bufferService, crl.getCloudResourceManagerCow()), retryRule);
+    addStep(new SetGoogleContextOutputStep());
   }
 }

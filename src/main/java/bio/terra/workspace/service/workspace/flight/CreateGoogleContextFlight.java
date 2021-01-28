@@ -41,5 +41,6 @@ public class CreateGoogleContextFlight extends Flight {
     addStep(new StoreGoogleContextStep(workspaceDao, transactionTemplate), retryRule);
     addStep(new SyncSamGroupsStep(samService), retryRule);
     addStep(new GoogleCloudSyncStep(crl.getCloudResourceManagerCow()), retryRule);
+    addStep(new SetGoogleContextOutputStep());
   }
 }

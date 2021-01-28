@@ -1,7 +1,6 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
-import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.generated.model.JobReport.StatusEnum;
@@ -16,7 +15,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.job.JobService.JobResultOrException;
+import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -73,6 +72,8 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   // Returns the result endpoint corresponding to an async request. Used to build a JobReport.
+  // This assumes the result endpoint is at /result/{jobId} relative to the async endpoint, which
+  // is standard but not enforced.
   private String getAsyncResultEndpoint(String jobId) {
     return String.format("%s/result/%s", request.getServletPath(), jobId);
   }
@@ -298,7 +299,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<JobReport> createCloudContext(
+  public ResponseEntity<CreateCloudContextResult> createCloudContext(
       UUID id, @Valid CreateCloudContextRequest body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ControllerValidationUtils.validateCloudContext(body.getCloudContext());
@@ -306,33 +307,32 @@ public class WorkspaceApiController implements WorkspaceApi {
     String resultRelativePath = getAsyncResultEndpoint(jobId);
 
     workspaceService.createGoogleContext(id, jobId, resultRelativePath, userReq);
-    JobReport jobReport = jobService.retrieveJob(jobId, userReq);
-    return ResponseEntity.status(HttpStatus.ACCEPTED).body(jobReport);
+    CreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userReq);
+    return new ResponseEntity<>(
+        response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));
   }
 
   @Override
   public ResponseEntity<CreateCloudContextResult> createCloudContextResult(UUID id, String jobId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    JobReport jobReport = jobService.retrieveJob(jobId, userReq);
-    CreateCloudContextResult response = new CreateCloudContextResult().jobReport(jobReport);
-    // If the job is still running, return a 202 with just the JobReport.
-    if (jobReport.getStatus().equals(StatusEnum.RUNNING)) {
-      return new ResponseEntity<>(response, HttpStatus.ACCEPTED);
-    }
-    // This flight does not directly output a result, but may still throw errors. Either the
-    // errorReport or the googleContext field will be populated in the response, but never both.
-    JobResultOrException resultOrException = jobService.retrieveJobResult(jobId, null, userReq);
-    if (resultOrException.getException() != null) {
-      response.errorReport(ErrorReportUtils.buildErrorReport(resultOrException.getException()));
-      // Note that even failed jobs return with a 200 status, as they are finished.
-      return new ResponseEntity<>(response, HttpStatus.OK);
-    }
+    CreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userReq);
+    return new ResponseEntity<>(
+        response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));
+  }
 
-    WorkspaceCloudContext cloudContext = workspaceService.getCloudContext(id, userReq);
-    GoogleContext googleContext =
-        new GoogleContext().projectId(cloudContext.googleProjectId().get());
-    response.googleContext(googleContext);
-    return new ResponseEntity<>(response, HttpStatus.OK);
+  private CreateCloudContextResult fetchCreateCloudContextResult(
+      String jobId, AuthenticatedUserRequest userReq) {
+    final AsyncJobResult<WorkspaceCloudContext> jobResult =
+        jobService.retrieveAsyncJobResult(jobId, WorkspaceCloudContext.class, userReq);
+    final GoogleContext googleContext;
+    if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
+      googleContext = new GoogleContext().projectId(jobResult.getResult().googleProjectId().get());
+    } else {
+      googleContext = null;
+    }
+    return new CreateCloudContextResult()
+        .jobReport(jobResult.getJobReport())
+        .googleContext(googleContext);
   }
 
   @Override

@@ -32,6 +32,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -71,7 +72,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
             .get()
             .get(WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID, String.class);
     assertEquals(
-        WorkspaceCloudContext.createGoogleContext(projectId),
+        WorkspaceCloudContext.builder().googleProjectId(Optional.of((projectId))).build(),
         workspaceService.getCloudContext(workspaceId, userReq));
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());

@@ -16,8 +16,11 @@ import bio.terra.workspace.app.configuration.external.IngressConfiguration;
 import bio.terra.workspace.app.configuration.external.JobConfiguration;
 import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
 import bio.terra.workspace.common.exception.stairway.StairwayInitializationException;
+import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.common.utils.MdcHook;
+import bio.terra.workspace.generated.model.ErrorReport;
 import bio.terra.workspace.generated.model.JobReport;
+import bio.terra.workspace.generated.model.JobReport.StatusEnum;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.exception.DuplicateJobIdException;
 import bio.terra.workspace.service.job.exception.InternalStairwayException;
@@ -104,6 +107,41 @@ public class JobService {
 
     public JobResultOrException<T> exception(RuntimeException exception) {
       this.exception = exception;
+      return this;
+    }
+  }
+
+  // The result of an asynchronous job is a JobReport and exactly one of a job result
+  // or an ErrorReport. If the job is incomplete, only jobReport will be present.
+  public static class AsyncJobResult<T> {
+    private JobReport jobReport;
+    private T result;
+    private ErrorReport errorReport;
+
+    public T getResult() {
+      return result;
+    }
+
+    public AsyncJobResult<T> result(T result) {
+      this.result = result;
+      return this;
+    }
+
+    public ErrorReport getErrorReport() {
+      return errorReport;
+    }
+
+    public AsyncJobResult<T> errorReport(ErrorReport errorReport) {
+      this.errorReport = errorReport;
+      return this;
+    }
+
+    public JobReport getJobReport() {
+      return jobReport;
+    }
+
+    public AsyncJobResult<T> jobReport(JobReport jobReport) {
+      this.jobReport = jobReport;
       return this;
     }
   }
@@ -344,6 +382,42 @@ public class JobService {
     try {
       verifyUserAccess(jobId, userReq); // jobId=flightId
       return retrieveJobResultWorker(jobId, resultClass);
+    } catch (StairwayException | InterruptedException stairwayEx) {
+      throw new InternalStairwayException(stairwayEx);
+    }
+  }
+
+  /**
+   * Retrieves the result of an asynchronous job.
+   *
+   * <p>Stairway has no concept of synchronous vs asynchronous flights. However, MC Terra has a
+   * service-level standard result for asynchronous jobs which includes a JobReport and either a
+   * result or error if the job is complete. This is a convenience for callers who would otherwise
+   * need to construct their own AsyncJobResult object.
+   *
+   * <p>Unlike retrieveJobResult, this will not throw for a flight in progress. Instead, it will
+   * return a JobReport without a result or error.
+   */
+  public <T> AsyncJobResult<T> retrieveAsyncJobResult(
+      String jobId, Class<T> resultClass, AuthenticatedUserRequest userReq) {
+    try {
+      verifyUserAccess(jobId, userReq); // jobId=flightId
+      JobReport jobReport = retrieveJob(jobId, userReq);
+      if (jobReport.getStatus().equals(StatusEnum.RUNNING)) {
+        return new AsyncJobResult<T>().jobReport(jobReport);
+      }
+
+      JobResultOrException<T> resultOrException = retrieveJobResultWorker(jobId, resultClass);
+      final ErrorReport errorReport;
+      if (jobReport.getStatus().equals(StatusEnum.FAILED)) {
+        errorReport = ErrorReportUtils.buildErrorReport(resultOrException.getException());
+      } else {
+        errorReport = null;
+      }
+      return new AsyncJobResult<T>()
+          .jobReport(jobReport)
+          .result(resultOrException.getResult())
+          .errorReport(errorReport);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }

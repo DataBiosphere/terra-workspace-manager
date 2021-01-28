@@ -192,7 +192,9 @@ public class WorkspaceDao {
   private static final RowMapper<WorkspaceCloudContext> GOOGLE_CONTEXT_ROW_MAPPER =
       (rs, rowNum) -> {
         GoogleCloudContextV1 context = GoogleCloudContextV1.deserialize(rs.getString("context"));
-        return WorkspaceCloudContext.createGoogleContext(context.googleProjectId);
+        return WorkspaceCloudContext.builder()
+            .googleProjectId(Optional.of(context.googleProjectId))
+            .build();
       };
 
   @VisibleForTesting

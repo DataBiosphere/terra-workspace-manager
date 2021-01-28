@@ -158,11 +158,13 @@ public class WorkspaceDaoTest extends BaseUnitTest {
   public void updateCloudContext_Google() {
     workspaceDao.createWorkspace(defaultWorkspace());
 
-    WorkspaceCloudContext googleContext1 = WorkspaceCloudContext.createGoogleContext("my-project1");
+    WorkspaceCloudContext googleContext1 =
+        WorkspaceCloudContext.builder().googleProjectId(Optional.of("my-project1")).build();
     workspaceDao.updateCloudContext(workspaceId, googleContext1);
     assertEquals(googleContext1, workspaceDao.getCloudContext(workspaceId));
 
-    WorkspaceCloudContext googleContext2 = WorkspaceCloudContext.createGoogleContext("my-project2");
+    WorkspaceCloudContext googleContext2 =
+        WorkspaceCloudContext.builder().googleProjectId(Optional.of(("my-project2"))).build();
     workspaceDao.updateCloudContext(workspaceId, googleContext2);
     assertEquals(googleContext2, workspaceDao.getCloudContext(workspaceId));
   }
@@ -188,7 +190,8 @@ public class WorkspaceDaoTest extends BaseUnitTest {
     workspaceDao.createWorkspace(defaultWorkspace());
 
     workspaceDao.updateCloudContext(
-        workspaceId, WorkspaceCloudContext.createGoogleContext("my-project"));
+        workspaceId,
+        WorkspaceCloudContext.builder().googleProjectId(Optional.of(("my-project"))).build());
     workspaceDao.updateCloudContext(workspaceId, WorkspaceCloudContext.none());
     assertEquals(WorkspaceCloudContext.none(), workspaceDao.getCloudContext(workspaceId));
   }
@@ -198,7 +201,8 @@ public class WorkspaceDaoTest extends BaseUnitTest {
     workspaceDao.createWorkspace(defaultWorkspace());
 
     workspaceDao.updateCloudContext(
-        workspaceId, WorkspaceCloudContext.createGoogleContext("my-project"));
+        workspaceId,
+        WorkspaceCloudContext.builder().googleProjectId(Optional.of(("my-project"))).build());
 
     assertTrue(workspaceDao.deleteWorkspace(workspaceId));
     assertThrows(WorkspaceNotFoundException.class, () -> workspaceDao.getWorkspace(workspaceId));
