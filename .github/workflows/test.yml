@@ -46,7 +46,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set
+    - name: Set env and whether or not to use a local server
       id: set-env-step
       run: |
         if ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}; then
@@ -58,14 +58,17 @@ jobs:
         fi
         echo ::set-output name=test-env::$ENV
         echo ::set-output name=local-server::$LOCAL_SERVER
+
     - name: Initialize Postgres DB
       env:
         PGPASSWORD: postgres
       run: psql -h 127.0.0.1 -U postgres -f ./local-dev/local-postgres-init.sql
+
     - name: Set up AdoptOpenJDK 11
       uses: joschi/setup-jdk@v2
       with:
         java-version: 11
+
     - name: Cache Gradle packages
       uses: actions/cache@v2
       with:
@@ -74,6 +77,7 @@ jobs:
           ~/.gradle/wrapper
         key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
         restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
@@ -104,16 +108,16 @@ jobs:
 
       # Only integration tests need a running servers
     - name: Run local server (in background)
-      if: steps.set-env-step.outputs.local-server
+      if: ${{ steps.set-env-step.outputs.local-server }}
       run: ./gradlew bootRun &
 
     - name: Wait for local server to start
-      if: steps.set-env-step.outputs.local-server
+      if: ${{ steps.set-env-step.outputs.local-server }}
       # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
       run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
 
       # Run tests
-    - name: Run tests on persistent workspace manager
+    - name: Run tests
       env:
         TEST_ENV:  ${{ steps.set-env-step.outputs.test-env }}
       run: ./gradlew ${{ matrix.gradleTask }} --scan
