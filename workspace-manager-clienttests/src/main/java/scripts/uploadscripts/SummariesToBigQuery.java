@@ -77,7 +77,7 @@ public class SummariesToBigQuery extends UploadScript {
         // insert a single row into testRun
         if (BigQueryUtils.checkRowExists(
                 bigQueryClient, projectId, datasetName, testRunTableName, "id", testRunSummary.id)) {
-            logger.info(
+            logger.warn(
                     "A row with this id already exists in the "
                             + testRunTableName
                             + " table. Inserting a duplicate.");
