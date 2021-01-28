@@ -1,24 +1,24 @@
 #!/bin/bash
 
-ENV=${1:-local}
+WSM_ENV=${1:-local}
 VAULT_TOKEN=${2:-$(cat "$HOME"/.vault-token)}
 
-if [ -z "${ENV}" ]; then
+if [ -z "${WSM_ENV}" ]; then
     echo "ENV not defined."
     exit 1
-elif ! [[  "${ENV}" = "local" || "${ENV}" = "dev" ||  "${ENV}" = "alpha" || "${ENV}" = "staging" ]]; then
-    echo "${ENV} not supported."
+elif ! [[  "${WSM_ENV}" = "local" || "${WSM_ENV}" = "dev" ||  "${WSM_ENV}" = "alpha" || "${WSM_ENV}" = "staging" ]]; then
+    echo "${WSM_ENV} not supported."
     exit 1
-elif [ "${ENV}" = "local" ]; then
+elif [ "${WSM_ENV}" = "local" ]; then
   ENV=dev
   WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/integration/wsmtest/workspace/app-sa
 else
-  WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/${ENV}/${ENV}/workspace/app-sa
+  WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/${WSM_ENV}/${WSM_ENV}/workspace/app-sa
 fi
 
 
 WM_APP_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/rendered/service-account.json
-USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/${ENV}/common/firecloud-account.json
+USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/${WSM_ENV}/common/firecloud-account.json
 USER_DELEGATED_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/rendered/user-delegated-service-account.json
 JANITOR_CLIENT_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/integration/tools/crl_janitor/client-sa
 JANITOR_CLIENT_SERVICE_ACCOUNT_OUTPUT_PATH="$(dirname $0)"/rendered/janitor-client-sa-account.json
