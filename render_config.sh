@@ -6,11 +6,11 @@ VAULT_TOKEN=${2:-$(cat "$HOME"/.vault-token)}
 if [ -z "${WSM_ENV}" ]; then
     echo "ENV not defined."
     exit 1
-elif ! [[  "${WSM_ENV}" = "local" || "${WSM_ENV}" = "dev" ||  "${WSM_ENV}" = "alpha" || "${WSM_ENV}" = "staging" ]]; then
+elif ! [[  "${WSM_ENV}" == "local" || "${WSM_ENV}" == "dev" ||  "${WSM_ENV}" == "alpha" || "${WSM_ENV}" == "staging" ]]; then
     echo "${WSM_ENV} not supported."
     exit 1
-elif [ "${WSM_ENV}" = "local" ]; then
-  ENV=dev
+elif [ "${WSM_ENV}" == "local" ]; then
+  WSM_ENV=dev
   WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/integration/wsmtest/workspace/app-sa
 else
   WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/${WSM_ENV}/${WSM_ENV}/workspace/app-sa
