@@ -102,7 +102,6 @@ jobs:
       if: matrix.gradleTask != 'unitTest'
       run: |
         chmod +x render_config.sh
-        echo "pull request or push"
         ./render_config.sh ${{ steps.set-env-step.outputs.test-env }} ${{ steps.vault-token-step.outputs.vault-token }}
         chmod +r rendered
 
