@@ -332,6 +332,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     }
     return new CreateCloudContextResult()
         .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getErrorReport())
         .googleContext(googleContext);
   }
 
