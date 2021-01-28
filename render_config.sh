@@ -11,10 +11,12 @@ elif ! [[  "${ENV}" = "local" || "${ENV}" = "dev" ||  "${ENV}" = "alpha" || "${E
     exit 1
 elif [ "${ENV}" = "local" ]; then
   ENV=dev
+  WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/integration/wsmtest/workspace/app-sa
+else
+  WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/${ENV}/${ENV}/workspace/app-sa
 fi
 
 
-WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/${ENV}/${ENV}/workspace/app-sa
 WM_APP_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/rendered/service-account.json
 USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/${ENV}/common/firecloud-account.json
 USER_DELEGATED_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/rendered/user-delegated-service-account.json
