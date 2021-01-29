@@ -106,7 +106,7 @@ paths:
       tags: [Workspace]
       requestBody:
         required: true
-        description: Request specifying the data reference to create.
+        description: Exactly one field of referenceInfo should be filled in
         content:
           application/json:
             schema:

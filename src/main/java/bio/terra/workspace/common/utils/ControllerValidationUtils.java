@@ -49,35 +49,39 @@ public final class ControllerValidationUtils {
    */
   public static void validate(CreateDataReferenceRequestBody body) {
     ReferenceTypeEnum referenceType = body.getReferenceType();
+    // ReferenceType can be null if the user provides an invalid enum value.
+    if (referenceType == null) {
+      throw new ValidationException("Invalid reference type specified");
+    }
     DataReferenceInfo info = body.getReferenceInfo();
     final boolean valid;
     switch (referenceType) {
       case DATA_REPO_SNAPSHOT:
         valid =
-            ((info.getDataRepoSnapshot() == null && body.getReference() == null)
-                || info.getBigQueryDataset() != null
-                || info.getDataRepoSnapshot() != null);
+            ((info.getDataRepoSnapshot() != null || body.getReference() != null)
+                && info.getBigQueryDataset() == null
+                && info.getGoogleBucket() == null);
         break;
       case GOOGLE_BUCKET:
         valid =
-            (info.getGoogleBucket() == null
-                || info.getBigQueryDataset() != null
-                || info.getDataRepoSnapshot() != null
-                || body.getReference() != null);
+            (info.getGoogleBucket() != null
+                && info.getBigQueryDataset() == null
+                && info.getDataRepoSnapshot() == null
+                && body.getReference() == null);
         break;
       case BIG_QUERY_DATASET:
         valid =
-            (info.getBigQueryDataset() == null
-                || info.getGoogleBucket() != null
-                || info.getDataRepoSnapshot() != null
-                || body.getReference() != null);
+            (info.getBigQueryDataset() != null
+                && info.getGoogleBucket() == null
+                && info.getDataRepoSnapshot() == null
+                && body.getReference() == null);
         break;
       default:
         throw new InvalidDataReferenceException("Unknown reference type specified");
     }
     if (!valid) {
       throw new InvalidDataReferenceException(
-          "Exactly one field of ReferenceInfo must be set, and it should match ReferenceType");
+          "Exactly one field of ReferenceInfo must be set and it must match ReferenceType");
     }
   }
 

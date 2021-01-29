@@ -1,13 +1,22 @@
 package bio.terra.workspace.service.datareference.utils;
 
+import bio.terra.cloudres.google.bigquery.DatasetCow;
+import bio.terra.cloudres.google.storage.BucketCow;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
+import bio.terra.workspace.service.datareference.model.BigQueryDatasetReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceType;
+import bio.terra.workspace.service.datareference.model.GoogleBucketReference;
 import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import com.google.cloud.bigquery.BigQueryException;
+import com.google.cloud.bigquery.DatasetId;
+import com.google.cloud.storage.StorageException;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /** A collection of validation functions for data references. */
@@ -15,6 +24,7 @@ import org.springframework.stereotype.Component;
 public class DataReferenceValidationUtils {
 
   private DataRepoService dataRepoService;
+  private CrlService crlService;
 
   /**
    * Names must be 1-63 characters long, and may consist of alphanumeric characters and underscores
@@ -31,8 +41,10 @@ public class DataReferenceValidationUtils {
     }
   }
 
-  public DataReferenceValidationUtils(DataRepoService dataRepoService) {
+  @Autowired
+  public DataReferenceValidationUtils(DataRepoService dataRepoService, CrlService crlService) {
     this.dataRepoService = dataRepoService;
+    this.crlService = crlService;
   }
 
   /**
@@ -49,6 +61,11 @@ public class DataReferenceValidationUtils {
         validateSnapshotReference((SnapshotReference) reference, userReq);
         return;
       case GOOGLE_BUCKET:
+        validateGoogleBucket((GoogleBucketReference) reference, userReq);
+        return;
+      case BIG_QUERY_DATASET:
+        validateBigQueryDataset((BigQueryDatasetReference) reference, userReq);
+        return;
       default:
         throw new InvalidDataReferenceException(
             "Invalid reference type specified. Valid types include: "
@@ -66,6 +83,40 @@ public class DataReferenceValidationUtils {
       throw new InvalidDataReferenceException(
           "The given snapshot could not be found in the Data Repo instance provided."
               + " Verify that your reference was correctly defined and the instance is correct");
+    }
+  }
+
+  /**
+   * Validates that a bucket exists and the user has GET access to it. This makes no other
+   * assumptions about the bucket.
+   */
+  private void validateGoogleBucket(GoogleBucketReference ref, AuthenticatedUserRequest userReq) {
+    try {
+      BucketCow bucket = crlService.makeStorageCow(userReq).get(ref.bucketName());
+      if (bucket == null) {
+        throw new InvalidDataReferenceException(
+            "Could not access specified GCS bucket. Ensure the name is correct and that you have access.");
+      }
+    } catch (StorageException e) {
+      throw new InvalidDataReferenceException("Error while trying to access GCS bucket", e);
+    }
+  }
+
+  /**
+   * Validates that a BQ dataset exists and the user has GET access to it. This makes no other
+   * assumptions about the dataset.
+   */
+  private void validateBigQueryDataset(
+      BigQueryDatasetReference ref, AuthenticatedUserRequest userReq) {
+    try {
+      DatasetId datasetId = DatasetId.of(ref.projectId(), ref.datasetName());
+      DatasetCow dataset = crlService.makeBigQueryCow(userReq).getDataset(datasetId);
+      if (dataset == null) {
+        throw new InvalidDataReferenceException(
+            "Could not access specified BigQuery dataset. Ensure the name and GCP project are correct and that you have access.");
+      }
+    } catch (BigQueryException e) {
+      throw new InvalidDataReferenceException("Error while trying to access BigQuery dataset", e);
     }
   }
 }

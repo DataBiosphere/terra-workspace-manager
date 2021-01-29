@@ -2,15 +2,21 @@ package bio.terra.workspace.service.crl;
 
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.common.cleanup.CleanupConfig;
+import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.billing.CloudBillingClientCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
+import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.workspace.app.configuration.external.CrlConfiguration;
 import bio.terra.workspace.service.crl.exception.CrlInternalException;
 import bio.terra.workspace.service.crl.exception.CrlNotInUseException;
 import bio.terra.workspace.service.crl.exception.CrlSecurityException;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.bigquery.BigQueryOptions;
+import com.google.cloud.storage.StorageOptions;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -26,6 +32,7 @@ public class CrlService {
   /** How long to keep the resource before Janitor does the cleanup. */
   private static final Duration TEST_RESOURCE_TIME_TO_LIVE = Duration.ofHours(1);
 
+  private final ClientConfig clientConfig;
   private final CrlConfiguration crlConfig;
   private final CloudResourceManagerCow crlResourceManagerCow;
   private final CloudBillingClientCow crlBillingClientCow;
@@ -35,7 +42,6 @@ public class CrlService {
   public CrlService(CrlConfiguration crlConfig) {
     this.crlConfig = crlConfig;
 
-    final ClientConfig clientConfig;
     if (crlConfig.getUseCrl()) {
       GoogleCredentials creds = getApplicationCredentials();
       clientConfig = buildClientConfig();
@@ -55,24 +61,39 @@ public class CrlService {
     }
   }
 
-  /**
-   * @return CRL {@link CloudResourceManagerCow} which wrappers Google Cloud Resource Manager API
-   */
+  /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
+  public BigQueryCow makeBigQueryCow(AuthenticatedUserRequest userReq) {
+    assertCrlInUse();
+    AccessToken accessToken = new AccessToken(userReq.getRequiredToken(), null);
+    GoogleCredentials creds = GoogleCredentials.create(accessToken);
+    return new BigQueryCow(
+        clientConfig, BigQueryOptions.newBuilder().setCredentials(creds).build());
+  }
+
+  /** @return CRL {@link CloudResourceManagerCow} which wraps Google Cloud Resource Manager API */
   public CloudResourceManagerCow getCloudResourceManagerCow() {
     assertCrlInUse();
     return crlResourceManagerCow;
   }
 
-  /** Returns the CRL {@link CloudBillingClientCow} which wrappers Google Billing API. */
+  /** Returns the CRL {@link CloudBillingClientCow} which wraps Google Billing API. */
   public CloudBillingClientCow getCloudBillingClientCow() {
     assertCrlInUse();
     return crlBillingClientCow;
   }
 
-  /** Returns the CRL {@link ServiceUsageCow} which wrappers Google Cloud ServiceUsage API. */
+  /** Returns the CRL {@link ServiceUsageCow} which wraps Google Cloud ServiceUsage API. */
   public ServiceUsageCow getServiceUsageCow() {
     assertCrlInUse();
     return crlServiceUsageCow;
+  }
+
+  /** @return CRL {@link StorageCow} which wraps Google Cloud Storage API */
+  public StorageCow makeStorageCow(AuthenticatedUserRequest userReq) {
+    assertCrlInUse();
+    AccessToken accessToken = new AccessToken(userReq.getRequiredToken(), null);
+    GoogleCredentials creds = GoogleCredentials.create(accessToken);
+    return new StorageCow(clientConfig, StorageOptions.newBuilder().setCredentials(creds).build());
   }
 
   private ServiceAccountCredentials getJanitorCredentials(String serviceAccountPath) {

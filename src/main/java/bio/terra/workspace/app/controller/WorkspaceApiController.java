@@ -149,14 +149,14 @@ public class WorkspaceApiController implements WorkspaceApi {
 
     ControllerValidationUtils.validate(body);
     DataReferenceValidationUtils.validateReferenceName(body.getName());
-    // TODO: this will require more translation when we add additional reference types.
     final DataReferenceType referenceType = DataReferenceType.fromApiModel(body.getReferenceType());
 
     final DataReferenceInfo referenceInfo = body.getReferenceInfo();
     final ReferenceObject referenceObject;
     if (body.getReference() != null) {
-      referenceObject = SnapshotReference.create(
-          body.getReference().getInstanceName(), body.getReference().getSnapshot());
+      referenceObject =
+          SnapshotReference.create(
+              body.getReference().getInstanceName(), body.getReference().getSnapshot());
     } else {
       referenceObject = referenceInfoToReferenceObject(body.getReferenceType(), referenceInfo);
     }
@@ -180,22 +180,24 @@ public class WorkspaceApiController implements WorkspaceApi {
     return new ResponseEntity<>(reference.toApiModel(), HttpStatus.OK);
   }
 
-  private static ReferenceObject referenceInfoToReferenceObject(ReferenceTypeEnum referenceTypeEnum,
-      DataReferenceInfo referenceInfo) {
+  private static ReferenceObject referenceInfoToReferenceObject(
+      ReferenceTypeEnum referenceTypeEnum, DataReferenceInfo referenceInfo) {
     final ReferenceObject result;
     switch (referenceTypeEnum) {
       case DATA_REPO_SNAPSHOT:
-        result = SnapshotReference.create(
-              referenceInfo.getDataRepoSnapshot().getInstanceName(),
-              referenceInfo.getDataRepoSnapshot().getSnapshot());
+        result =
+            SnapshotReference.create(
+                referenceInfo.getDataRepoSnapshot().getInstanceName(),
+                referenceInfo.getDataRepoSnapshot().getSnapshot());
         break;
       case GOOGLE_BUCKET:
         result = GoogleBucketReference.create(referenceInfo.getGoogleBucket().getBucketName());
         break;
       case BIG_QUERY_DATASET:
-        result = BigQueryDatasetReference.create(
-            referenceInfo.getBigQueryDataset().getProjectId(),
-            referenceInfo.getBigQueryDataset().getDatasetName());
+        result =
+            BigQueryDatasetReference.create(
+                referenceInfo.getBigQueryDataset().getProjectId(),
+                referenceInfo.getBigQueryDataset().getDatasetName());
         break;
       default:
         throw new IllegalArgumentException("Unrecognized reference type");
