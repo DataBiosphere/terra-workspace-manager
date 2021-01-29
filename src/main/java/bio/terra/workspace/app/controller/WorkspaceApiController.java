@@ -71,9 +71,9 @@ public class WorkspaceApiController implements WorkspaceApi {
     return authenticatedUserRequestFactory.from(request);
   }
 
-  // Returns the result endpoint corresponding to an async request. Used to build a JobReport.
-  // This assumes the result endpoint is at /result/{jobId} relative to the async endpoint, which
-  // is standard but not enforced.
+  // Returns the result endpoint corresponding to an async request, prefixed with a / character.
+  // Used to build a JobReport. This assumes the result endpoint is at /result/{jobId} relative to
+  // the async endpoint, which is standard but not enforced.
   private String getAsyncResultEndpoint(String jobId) {
     return String.format("%s/result/%s", request.getServletPath(), jobId);
   }
@@ -304,9 +304,9 @@ public class WorkspaceApiController implements WorkspaceApi {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ControllerValidationUtils.validateCloudContext(body.getCloudContext());
     String jobId = body.getJobControl().getId();
-    String resultRelativePath = getAsyncResultEndpoint(jobId);
+    String resultPath = getAsyncResultEndpoint(jobId);
 
-    workspaceService.createGoogleContext(id, jobId, resultRelativePath, userReq);
+    workspaceService.createGoogleContext(id, jobId, resultPath, userReq);
     CreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userReq);
     return new ResponseEntity<>(
         response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));

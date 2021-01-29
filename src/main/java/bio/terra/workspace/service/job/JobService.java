@@ -303,11 +303,13 @@ public class JobService {
   }
 
   private String resultUrlFromFlightState(FlightState flightState) {
-    String relativePath =
+    // Note that the RESULT_PATH key is always prefixed with "/", and domain names should never have
+    // a trailing "/".
+    String resultPath =
         flightState
             .getInputParameters()
-            .get(JobMapKeys.RESULT_RELATIVE_PATH.getKeyName(), String.class);
-    return ingressConfig.getDomainName() + relativePath;
+            .get(JobMapKeys.RESULT_PATH.getKeyName(), String.class);
+    return ingressConfig.getDomainName() + resultPath;
   }
 
   private JobReport.StatusEnum getJobStatus(FlightStatus flightStatus) {

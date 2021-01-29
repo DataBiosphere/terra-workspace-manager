@@ -134,7 +134,7 @@ public class WorkspaceService {
    */
   @Traced
   public String createGoogleContext(
-      UUID workspaceId, String jobId, String resultRelativePath, AuthenticatedUserRequest userReq) {
+      UUID workspaceId, String jobId, String resultPath, AuthenticatedUserRequest userReq) {
     Workspace workspace =
         validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     workspaceDao.assertMcWorkspace(workspace, "createGoogleContext");
@@ -158,7 +158,7 @@ public class WorkspaceService {
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
         .addParameter(
             WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendProfile.billingAccountId().get())
-        .addParameter(JobMapKeys.RESULT_RELATIVE_PATH.getKeyName(), resultRelativePath)
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
         .submit();
     return jobId;
   }

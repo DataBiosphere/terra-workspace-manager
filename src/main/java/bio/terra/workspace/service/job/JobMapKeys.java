@@ -10,7 +10,7 @@ public enum JobMapKeys {
   SUBJECT_ID("subjectId"),
   // Path for results of an async operation, relative to domain. Should be prefixed with /, e.g.
   // "/api/result/job"
-  RESULT_RELATIVE_PATH("resultRelativePath"),
+  RESULT_PATH("resultPath"),
 
   // parameter for the job
   FLIGHT_CLASS("flight_class");
