@@ -33,6 +33,7 @@ import bio.terra.workspace.service.job.exception.JobUnauthorizedException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -303,13 +304,9 @@ public class JobService {
   }
 
   private String resultUrlFromFlightState(FlightState flightState) {
-    // Note that the RESULT_PATH key is always prefixed with "/", and domain names should never have
-    // a trailing "/".
     String resultPath =
-        flightState
-            .getInputParameters()
-            .get(JobMapKeys.RESULT_PATH.getKeyName(), String.class);
-    return ingressConfig.getDomainName() + resultPath;
+        flightState.getInputParameters().get(JobMapKeys.RESULT_PATH.getKeyName(), String.class);
+    return Path.of(ingressConfig.getDomainName(), resultPath).toString();
   }
 
   private JobReport.StatusEnum getJobStatus(FlightStatus flightStatus) {
