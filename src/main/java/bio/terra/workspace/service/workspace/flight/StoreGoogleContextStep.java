@@ -8,7 +8,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
-import java.util.Optional;
 import java.util.UUID;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -37,8 +36,8 @@ public class StoreGoogleContextStep implements Step {
     return transactionTemplate.execute(
         (status -> {
           WorkspaceCloudContext cloudContext = workspaceDao.getCloudContext(workspaceId);
-          if (cloudContext.googleProjectId().isPresent()) {
-            String existingProjectId = cloudContext.googleProjectId().get();
+          if (cloudContext.googleProjectId() != null) {
+            String existingProjectId = cloudContext.googleProjectId();
             if (!existingProjectId.equals(projectId)) {
               return new StepResult(
                   StepStatus.STEP_RESULT_FAILURE_FATAL,
@@ -50,8 +49,7 @@ public class StoreGoogleContextStep implements Step {
             return StepResult.getStepResultSuccess();
           }
           workspaceDao.updateCloudContext(
-              workspaceId,
-              WorkspaceCloudContext.builder().googleProjectId(Optional.of(projectId)).build());
+              workspaceId, WorkspaceCloudContext.builder().googleProjectId(projectId).build());
           return StepResult.getStepResultSuccess();
         }));
   }
@@ -67,7 +65,7 @@ public class StoreGoogleContextStep implements Step {
     transactionTemplate.execute(
         status -> {
           WorkspaceCloudContext cloudContext = workspaceDao.getCloudContext(workspaceId);
-          if (cloudContext.googleProjectId().get().equals(projectId)) {
+          if (cloudContext.googleProjectId().equals(projectId)) {
             // TODO: once multiple clouds are supported, we need to only clear the google context if
             // it exists.
             workspaceDao.updateCloudContext(workspaceId, WorkspaceCloudContext.none());

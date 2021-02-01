@@ -8,7 +8,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
-import java.util.Optional;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -22,7 +21,7 @@ public class SetGoogleContextOutputStep implements Step {
       throws InterruptedException, RetryException {
     String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
     WorkspaceCloudContext cloudContext =
-        WorkspaceCloudContext.builder().googleProjectId(Optional.of(projectId)).build();
+        WorkspaceCloudContext.builder().googleProjectId(projectId).build();
     FlightUtils.setResponse(flightContext, cloudContext, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }

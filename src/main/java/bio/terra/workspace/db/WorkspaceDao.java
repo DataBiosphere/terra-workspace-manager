@@ -168,7 +168,7 @@ public class WorkspaceDao {
   /** Update the cloud context of the workspace, replacing the previous cloud context. */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public void updateCloudContext(UUID workspaceId, WorkspaceCloudContext cloudContext) {
-    if (cloudContext.googleProjectId().isPresent()) {
+    if (cloudContext.googleProjectId() != null) {
       String sql =
           "INSERT INTO workspace_cloud_context (workspace_id, cloud_type, context) "
               + "VALUES (:workspace_id, :cloud_type, :context::json) "
@@ -192,9 +192,7 @@ public class WorkspaceDao {
   private static final RowMapper<WorkspaceCloudContext> GOOGLE_CONTEXT_ROW_MAPPER =
       (rs, rowNum) -> {
         GoogleCloudContextV1 context = GoogleCloudContextV1.deserialize(rs.getString("context"));
-        return WorkspaceCloudContext.builder()
-            .googleProjectId(Optional.of(context.googleProjectId))
-            .build();
+        return WorkspaceCloudContext.builder().googleProjectId(context.googleProjectId).build();
       };
 
   @VisibleForTesting
@@ -212,7 +210,7 @@ public class WorkspaceDao {
 
     public static GoogleCloudContextV1 from(WorkspaceCloudContext workspaceCloudContext) {
       GoogleCloudContextV1 result = new GoogleCloudContextV1();
-      result.googleProjectId = workspaceCloudContext.googleProjectId().orElse(null);
+      result.googleProjectId = workspaceCloudContext.googleProjectId();
       return result;
     }
 

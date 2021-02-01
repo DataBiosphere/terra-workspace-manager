@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.auto.value.AutoValue;
-import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * The cloud contexts associated with a resource.
@@ -19,13 +19,14 @@ import java.util.Optional;
 @JsonSerialize(as = WorkspaceCloudContext.class)
 @JsonDeserialize(builder = AutoValue_WorkspaceCloudContext.Builder.class)
 public abstract class WorkspaceCloudContext {
-  /** The Google Project id for workspaces with Google context. */
+  /** The Google Project id for workspaces with Google context. May be null if no project exists. */
+  @Nullable
   @JsonProperty("googleProjectId")
-  public abstract Optional<String> googleProjectId();
+  public abstract String googleProjectId();
 
   // Convenience method for quickly creating an empty WorkspaceCloudContext.
   public static WorkspaceCloudContext none() {
-    return builder().googleProjectId(Optional.empty()).build();
+    return builder().googleProjectId(null).build();
   }
 
   public static WorkspaceCloudContext.Builder builder() {
@@ -34,8 +35,9 @@ public abstract class WorkspaceCloudContext {
 
   @AutoValue.Builder
   public abstract static class Builder {
+    @Nullable
     @JsonProperty("googleProjectId")
-    public abstract WorkspaceCloudContext.Builder googleProjectId(Optional<String> value);
+    public abstract WorkspaceCloudContext.Builder googleProjectId(String value);
 
     public abstract WorkspaceCloudContext build();
   }

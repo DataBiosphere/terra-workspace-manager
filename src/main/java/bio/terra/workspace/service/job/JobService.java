@@ -306,6 +306,9 @@ public class JobService {
   private String resultUrlFromFlightState(FlightState flightState) {
     String resultPath =
         flightState.getInputParameters().get(JobMapKeys.RESULT_PATH.getKeyName(), String.class);
+    if (resultPath == null) {
+      resultPath = "";
+    }
     return Path.of(ingressConfig.getDomainName(), resultPath).toString();
   }
 

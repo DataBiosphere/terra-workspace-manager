@@ -299,10 +299,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     jobService.waitForJob(jobId);
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
     String projectId =
-        workspaceService
-            .getCloudContext(request.workspaceId(), USER_REQUEST)
-            .googleProjectId()
-            .get();
+        workspaceService.getCloudContext(request.workspaceId(), USER_REQUEST).googleProjectId();
 
     // Verify project exists by retrieving it.
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
@@ -328,10 +325,8 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     jobService.waitForJob(jobId);
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
     assertTrue(
-        workspaceService
-            .getCloudContext(request.workspaceId(), USER_REQUEST)
-            .googleProjectId()
-            .isPresent());
+        workspaceService.getCloudContext(request.workspaceId(), USER_REQUEST).googleProjectId()
+            != null);
 
     workspaceService.deleteGoogleContext(request.workspaceId(), USER_REQUEST);
     assertEquals(

@@ -120,14 +120,14 @@ public class WorkspaceApiController implements WorkspaceApi {
     Workspace workspace = workspaceService.getWorkspace(id, userReq);
     WorkspaceCloudContext cloudContext = workspaceService.getCloudContext(id, userReq);
 
-    Optional<GoogleContext> googleContext =
-        cloudContext.googleProjectId().map(projectId -> new GoogleContext().projectId(projectId));
+    // null if no context exists.
+    GoogleContext googleContext = new GoogleContext().projectId(cloudContext.googleProjectId());
     WorkspaceDescription desc =
         new WorkspaceDescription()
             .id(workspace.workspaceId())
             .spendProfile(workspace.spendProfileId().map(SpendProfileId::id).orElse(null))
             .stage(workspace.workspaceStage().toApiModel())
-            .googleContext(googleContext.orElse(null));
+            .googleContext(googleContext);
     logger.info(String.format("Got workspace %s for %s", desc.toString(), userReq.getEmail()));
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
@@ -326,7 +326,7 @@ public class WorkspaceApiController implements WorkspaceApi {
         jobService.retrieveAsyncJobResult(jobId, WorkspaceCloudContext.class, userReq);
     final GoogleContext googleContext;
     if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
-      googleContext = new GoogleContext().projectId(jobResult.getResult().googleProjectId().get());
+      googleContext = new GoogleContext().projectId(jobResult.getResult().googleProjectId());
     } else {
       googleContext = null;
     }
