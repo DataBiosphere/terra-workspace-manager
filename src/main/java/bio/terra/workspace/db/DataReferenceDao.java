@@ -128,7 +128,8 @@ public class DataReferenceDao {
             .addValue("workspace_id", workspaceId.toString());
 
     try {
-      return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, Boolean.class)).orElse(false);
+      return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, Boolean.class))
+          .orElse(false);
     } catch (EmptyResultDataAccessException e) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
     }

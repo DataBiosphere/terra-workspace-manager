@@ -99,13 +99,14 @@ public class WorkspaceDao {
               jdbcTemplate.query(
                   sql,
                   params,
-                  (rs, rowNum) -> Workspace.builder()
-                      .workspaceId(UUID.fromString(rs.getString("workspace_id")))
-                      .spendProfileId(
-                          Optional.ofNullable(rs.getString("spend_profile"))
-                              .map(SpendProfileId::create))
-                      .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
-                      .build()));
+                  (rs, rowNum) ->
+                      Workspace.builder()
+                          .workspaceId(UUID.fromString(rs.getString("workspace_id")))
+                          .spendProfileId(
+                              Optional.ofNullable(rs.getString("spend_profile"))
+                                  .map(SpendProfileId::create))
+                          .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
+                          .build()));
       logger.info(String.format("Retrieved workspace record %s", result.toString()));
       return result;
     } catch (EmptyResultDataAccessException e) {

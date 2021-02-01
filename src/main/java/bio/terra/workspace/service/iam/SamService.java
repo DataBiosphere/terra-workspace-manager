@@ -258,9 +258,7 @@ public class SamService {
       // proper types.
       SystemStatus samStatus = statusApi.getSystemStatus();
       String serializedStatus = objectMapper.writeValueAsString(samStatus.getSystems());
-      TypeReference<Map<String, SubsystemStatus>> typeRef =
-          new TypeReference<>() {
-          };
+      TypeReference<Map<String, SubsystemStatus>> typeRef = new TypeReference<>() {};
       Map<String, SubsystemStatus> subsystemStatusMap =
           objectMapper.readValue(serializedStatus, typeRef);
       List<String> subsystemStatusMessages =

@@ -6,7 +6,6 @@ import bio.terra.stairway.*;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.job.JobService;
 import com.google.common.collect.ImmutableMap;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

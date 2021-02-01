@@ -46,8 +46,8 @@ public class PullProjectFromPoolStep implements Step {
     } catch (BufferServiceAPIException e) {
       // The NOT_FOUND status code indicates that Buffer Service is still creating a project and we
       // must retry. Retrying TOO_MANY_REQUESTS gives the service time to recover from load.
-      if (e.getStatusCode() == HttpStatus.NOT_FOUND ||
-          e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
+      if (e.getStatusCode() == HttpStatus.NOT_FOUND
+          || e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
