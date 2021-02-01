@@ -22,3 +22,6 @@ docker run --rm -e VAULT_TOKEN="$VAULT_TOKEN" $DSDE_TOOLBOX_DOCKER_IMAGE \
 docker run --rm -e VAULT_TOKEN="$VAULT_TOKEN" $DSDE_TOOLBOX_DOCKER_IMAGE \
     vault read -format=json ${TESTRUNNER_SERVICE_ACCOUNT_VAULT_PATH} | \
     jq -r .data.key | base64 -d > ${TESTRUNNER_SERVICE_ACCOUNT_OUTPUT_PATH}
+docker run --rm -e VAULT_TOKEN="$VAULT_TOKEN" $DSDE_TOOLBOX_DOCKER_IMAGE \
+    vault read -format=json ${TESTRUNNER_K8S_SERVICE_ACCOUNT_VAULT_PATH} | \
+    jq -r .data.key | base64 -d > ${TESTRUNNER_K8S_SERVICE_ACCOUNT_OUTPUT_PATH}
