@@ -49,9 +49,6 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
   //  this test and elsewhere. AS-431.
   private final String TAG_NEEDS_CLEANUP = "needs-cleanup";
 
-  @BeforeEach
-  public void setup() {}
-
   /*
    * TODO: Cloud Resource Library (CRL) is planning to broadly address resource cleanup for integration tests in MC Terra
    *  applications.

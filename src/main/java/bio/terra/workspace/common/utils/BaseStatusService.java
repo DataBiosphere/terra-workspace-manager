@@ -46,7 +46,7 @@ public class BaseStatusService {
     subsystems.forEach(
         /*parallelismThreshold=*/ 1,
         (name, subsystem) -> {
-          SystemStatusSystems subsystemStatus = null;
+          SystemStatusSystems subsystemStatus;
           try {
             subsystemStatus = subsystem.getStatusCheckFn().get();
             subsystemStatus.critical(subsystem.isCritical());

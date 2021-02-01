@@ -141,7 +141,7 @@ public class WorkspaceService {
     Workspace workspace =
         validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     workspaceDao.assertMcWorkspace(workspace, "createGoogleContext");
-    if (!workspaceDao.getCloudContext(workspaceId).googleProjectId().isEmpty()) {
+    if (workspaceDao.getCloudContext(workspaceId).googleProjectId().isPresent()) {
       throw new DuplicateGoogleContextException(workspaceId);
     }
     SpendProfileId spendProfileId =

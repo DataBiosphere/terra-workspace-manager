@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  * class should specify a name using the {@Code JsonTypeName} annotation so that changes to the
  * class name do not break backwards compatibility.
  */
-@JsonTypeInfo(use = Id.NAME, include = As.PROPERTY)
+@JsonTypeInfo(use = Id.NAME)
 @JsonSubTypes({@JsonSubTypes.Type(value = SnapshotReference.class, name = "SnapshotReference")})
 public interface ReferenceObject {
 
