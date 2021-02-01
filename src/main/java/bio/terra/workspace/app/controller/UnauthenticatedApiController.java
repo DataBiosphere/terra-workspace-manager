@@ -13,8 +13,8 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class UnauthenticatedApiController implements UnauthenticatedApi {
 
-  private WorkspaceManagerStatusService statusService;
-  private SystemVersion currentVersion;
+  private final WorkspaceManagerStatusService statusService;
+  private final SystemVersion currentVersion;
 
   @Autowired
   public UnauthenticatedApiController(

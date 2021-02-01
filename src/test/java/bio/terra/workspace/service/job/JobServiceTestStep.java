@@ -6,7 +6,7 @@ import bio.terra.stairway.StepResult;
 import org.springframework.http.HttpStatus;
 
 public class JobServiceTestStep implements Step {
-  private String description;
+  private final String description;
 
   public JobServiceTestStep(String description) {
     this.description = description;

@@ -43,7 +43,7 @@ public class WorkspaceDao {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  private Logger logger = LoggerFactory.getLogger(WorkspaceDao.class);
+  private final Logger logger = LoggerFactory.getLogger(WorkspaceDao.class);
 
   /** Persists a workspace to DB. Returns ID of persisted workspace on success. */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)

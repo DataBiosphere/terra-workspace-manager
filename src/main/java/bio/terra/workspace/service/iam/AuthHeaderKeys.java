@@ -7,7 +7,7 @@ public enum AuthHeaderKeys {
   OIDC_CLAIM_EMAIL("OIDC_CLAIM_email"),
   OIDC_CLAIM_USER_ID("OIDC_CLAIM_user_id");
 
-  private String keyName;
+  private final String keyName;
 
   AuthHeaderKeys(String keyName) {
     this.keyName = keyName;

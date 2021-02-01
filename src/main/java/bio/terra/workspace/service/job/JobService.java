@@ -184,8 +184,8 @@ public class JobService {
   }
 
   private class PollFlightTask implements Callable<FlightState> {
-    private Stairway stairway;
-    private String flightId;
+    private final Stairway stairway;
+    private final String flightId;
 
     public PollFlightTask(Stairway stairway, String flightId) {
       this.stairway = stairway;

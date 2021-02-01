@@ -9,8 +9,8 @@ public enum IamRole {
   WRITER("writer", bio.terra.workspace.generated.model.IamRole.WRITER),
   OWNER("owner", bio.terra.workspace.generated.model.IamRole.OWNER);
 
-  private String samRole;
-  private bio.terra.workspace.generated.model.IamRole apiRole;
+  private final String samRole;
+  private final bio.terra.workspace.generated.model.IamRole apiRole;
 
   IamRole(String samRole, bio.terra.workspace.generated.model.IamRole apiRole) {
     this.samRole = samRole;

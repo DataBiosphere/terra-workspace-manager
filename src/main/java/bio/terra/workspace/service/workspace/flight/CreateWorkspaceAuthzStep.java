@@ -15,8 +15,8 @@ import org.slf4j.LoggerFactory;
 
 public class CreateWorkspaceAuthzStep implements Step {
 
-  private SamService samService;
-  private AuthenticatedUserRequest userReq;
+  private final SamService samService;
+  private final AuthenticatedUserRequest userReq;
 
   private final Logger logger = LoggerFactory.getLogger(CreateWorkspaceAuthzStep.class);
 
