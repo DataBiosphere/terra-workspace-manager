@@ -36,6 +36,7 @@ allprojects {
 				entry "opencensus-impl"
 			}
 
+			dependency group: "bio.terra.cloud-resource-lib", name: "cloud-resource-schema", version: "0.4.0"
 			dependency group: "io.swagger.core.v3", name: "swagger-annotations", version: "2.1.6"
 			dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.23"
 		}
@@ -124,6 +125,20 @@ if (hasProperty("buildScan")) {
 		termsOfServiceUrl = "https://gradle.com/terms-of-service"
 		termsOfServiceAgree = "yes"
 	}
+}
+
+// CRL schema extraction
+configurations {
+	cloudResourceSchema { transitive = false }
+}
+dependencies {
+	cloudResourceSchema group: 'bio.terra.cloud-resource-lib', name: 'cloud-resource-schema'
+}
+task unzipCloudResourceSchema(type: Copy) {
+	from zipTree(configurations.cloudResourceSchema.singleFile).matching {
+		include 'cloud_resources_uid.yaml'
+	}
+	into "${buildDir}/crlSchema"
 }
 
 // Defs
@@ -232,7 +247,8 @@ jib {
 }
 
 // Internal dependencies
-
+// Note The Open API schema depends on an external library - cloud-resource-schema, so need to unzip it first.
+swaggerSources.server.code.dependsOn tasks.unzipCloudResourceSchema
 sourceSets.main.java.srcDir "${swaggerOutputDir}/src/main/java"
 compileJava.dependsOn swaggerSources.server.code, spotlessApply, setGitVersion
 

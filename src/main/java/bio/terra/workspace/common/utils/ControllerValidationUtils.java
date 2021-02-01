@@ -53,7 +53,10 @@ public final class ControllerValidationUtils {
     if (referenceType == null) {
       throw new ValidationException("Invalid reference type specified");
     }
-    DataReferenceInfo info = body.getReferenceInfo();
+    // TODO(PF-404): requests using the deprecated reference field will not set the referenceInfo
+    // field. referenceInfo can be made required and this check can be removed once clients migrate.
+    DataReferenceInfo info =
+        body.getReferenceInfo() == null ? new DataReferenceInfo() : body.getReferenceInfo();
     final boolean valid;
     switch (referenceType) {
       case DATA_REPO_SNAPSHOT:

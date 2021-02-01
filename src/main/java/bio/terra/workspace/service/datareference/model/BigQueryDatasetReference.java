@@ -1,13 +1,21 @@
 package bio.terra.workspace.service.datareference.model;
 
-import bio.terra.workspace.generated.model.BigQueryDataset;
+import bio.terra.workspace.generated.model.GoogleBigQueryDatasetUid;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.auto.value.AutoValue;
 
-/** TODO javadoc */
+/**
+ * A representation of a reference to a BigQuery dataset.
+ *
+ * <p>The {@Code JsonTypeName} annotation specifies the class name used for serialization (see the
+ * {@Code JsonSubTypes} annotation in {@Code ReferenceObject} for corresponding deserialization). By
+ * using a constant string instead of the actual class name, changing the name of this class will
+ * not break backwards compatibility with existing serialized objects. This string does not need to
+ * match the class name - it only matches for clarity.
+ */
 @AutoValue
 @JsonTypeName("BigQueryDatasetReference")
 public abstract class BigQueryDatasetReference implements ReferenceObject {
@@ -35,7 +43,7 @@ public abstract class BigQueryDatasetReference implements ReferenceObject {
   }
 
   /** Convenience method for translating this to its equivalent API representation. */
-  public BigQueryDataset toApiModel() {
-    return new BigQueryDataset().projectId(projectId()).datasetName(datasetName());
+  public GoogleBigQueryDatasetUid toApiModel() {
+    return new GoogleBigQueryDatasetUid().projectId(projectId()).datasetId(datasetName());
   }
 }

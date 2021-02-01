@@ -197,7 +197,7 @@ public class WorkspaceApiController implements WorkspaceApi {
         result =
             BigQueryDatasetReference.create(
                 referenceInfo.getBigQueryDataset().getProjectId(),
-                referenceInfo.getBigQueryDataset().getDatasetName());
+                referenceInfo.getBigQueryDataset().getDatasetId());
         break;
       default:
         throw new IllegalArgumentException("Unrecognized reference type");

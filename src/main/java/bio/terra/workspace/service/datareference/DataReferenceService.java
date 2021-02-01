@@ -89,9 +89,9 @@ public class DataReferenceService {
         userReq, referenceRequest.workspaceId(), SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     try {
       dataReferenceDao.getDataReferenceByName(
-              referenceRequest.workspaceId(),
-              referenceRequest.referenceType(),
-              referenceRequest.name());
+          referenceRequest.workspaceId(),
+          referenceRequest.referenceType(),
+          referenceRequest.name());
       throw new DuplicateDataReferenceException(
           "A reference with the specified name and type already exists in this workspace.");
     } catch (DataReferenceNotFoundException e) {

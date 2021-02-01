@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.datareference.utils;
 
-import bio.terra.cloudres.google.bigquery.DatasetCow;
-import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.model.BigQueryDatasetReference;
@@ -14,6 +12,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.storage.StorageException;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,11 +91,13 @@ public class DataReferenceValidationUtils {
    */
   private void validateGoogleBucket(GoogleBucketReference ref, AuthenticatedUserRequest userReq) {
     try {
-      BucketCow bucket = crlService.makeStorageCow(userReq).get(ref.bucketName());
-      if (bucket == null) {
-        throw new InvalidDataReferenceException(
-            "Could not access specified GCS bucket. Ensure the name is correct and that you have access.");
-      }
+      // StorageCow.get() returns null if the bucket does not exist or a user does not have access,
+      // which fails validation.
+      Optional.ofNullable(crlService.makeStorageCow(userReq).get(ref.bucketName()))
+          .orElseThrow(
+              () ->
+                  new InvalidDataReferenceException(
+                      "Could not access specified GCS bucket. Ensure the name is correct and that you have access."));
     } catch (StorageException e) {
       throw new InvalidDataReferenceException("Error while trying to access GCS bucket", e);
     }
@@ -110,11 +111,13 @@ public class DataReferenceValidationUtils {
       BigQueryDatasetReference ref, AuthenticatedUserRequest userReq) {
     try {
       DatasetId datasetId = DatasetId.of(ref.projectId(), ref.datasetName());
-      DatasetCow dataset = crlService.makeBigQueryCow(userReq).getDataset(datasetId);
-      if (dataset == null) {
-        throw new InvalidDataReferenceException(
-            "Could not access specified BigQuery dataset. Ensure the name and GCP project are correct and that you have access.");
-      }
+      // BigQueryCow.get() returns null if the bucket does not exist or a user does not have access,
+      // which fails validation.
+      Optional.ofNullable(crlService.makeBigQueryCow(userReq).getDataset(datasetId))
+          .orElseThrow(
+              () ->
+                  new InvalidDataReferenceException(
+                      "Could not access specified BigQuery dataset. Ensure the name and GCP project are correct and that you have access."));
     } catch (BigQueryException e) {
       throw new InvalidDataReferenceException("Error while trying to access BigQuery dataset", e);
     }
