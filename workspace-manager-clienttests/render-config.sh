@@ -7,6 +7,8 @@ USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/dev/common/firec
 USER_DELEGATED_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/rendered/user-delegated-service-account.json
 TESTRUNNER_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/dev/common/testrunner-sa
 TESTRUNNER_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/rendered/testrunner-service-account.json
+TESTRUNNER_K8S_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/integration/ichang/testrunner-sa
+TESTRUNNER_K8S_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/rendered/testrunner-k8s-service-account.json
 
 DSDE_TOOLBOX_DOCKER_IMAGE=broadinstitute/dsde-toolbox:consul-0.20.0
 

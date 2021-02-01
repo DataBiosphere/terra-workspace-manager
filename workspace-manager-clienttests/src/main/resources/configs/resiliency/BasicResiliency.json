@@ -1,0 +1,17 @@
+{
+  "name": "BasicResiliency",
+  "description": "Check the service status once. No authentication required.",
+  "serverSpecificationFile": "workspace-resiliency.json",
+  "kubernetes": {},
+  "application": {},
+  "testScripts": [
+    {
+      "name": "ServiceStatus",
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 2,
+      "expectedTimeForEach": 5,
+      "expectedTimeForEachUnit": "SECONDS"
+    }
+  ],
+  "testUserFiles": []
+}

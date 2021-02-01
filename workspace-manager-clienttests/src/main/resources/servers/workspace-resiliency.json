@@ -8,7 +8,7 @@
 
   "cluster": {},
   "deploymentScript": {},
-  "testRunnerServiceAccountFile": "delegate-user-sa.json",
+  "testRunnerServiceAccountFile": "testrunner-k8s-sa.json",
 
   "skipDeployment": true,
   "skipKubernetes": true
