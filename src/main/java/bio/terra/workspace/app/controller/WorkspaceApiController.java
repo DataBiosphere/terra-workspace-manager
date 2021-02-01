@@ -203,8 +203,8 @@ public class WorkspaceApiController implements WorkspaceApi {
             workspaceId, DataReferenceType.fromApiModel(referenceType), name, userReq);
     logger.info(
         String.format(
-            "Got data reference %s in workspace %s for %s",
-            ref.toString(), referenceType, workspaceId.toString(), userReq.getEmail()));
+            "Got data reference %s of type %s in workspace %s for %s",
+            ref.toString(), referenceType.toString(), workspaceId.toString(), userReq.getEmail()));
 
     return new ResponseEntity<>(ref.toApiModel(), HttpStatus.OK);
   }
@@ -223,7 +223,7 @@ public class WorkspaceApiController implements WorkspaceApi {
             "Deleted data reference by id %s in workspace %s for %s",
             referenceId.toString(), workspaceId.toString(), userReq.getEmail()));
 
-    return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override

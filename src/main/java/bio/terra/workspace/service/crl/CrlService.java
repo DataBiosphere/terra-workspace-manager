@@ -35,10 +35,9 @@ public class CrlService {
   public CrlService(CrlConfiguration crlConfig) {
     this.crlConfig = crlConfig;
 
-    final ClientConfig clientConfig;
     if (crlConfig.getUseCrl()) {
       GoogleCredentials creds = getApplicationCredentials();
-      clientConfig = buildClientConfig();
+      final ClientConfig clientConfig = buildClientConfig();
       try {
         this.crlResourceManagerCow = CloudResourceManagerCow.create(clientConfig, creds);
         this.crlBillingClientCow = new CloudBillingClientCow(clientConfig, creds);
@@ -48,7 +47,6 @@ public class CrlService {
         throw new CrlInternalException("Error creating resource manager wrapper", e);
       }
     } else {
-      clientConfig = null;
       crlResourceManagerCow = null;
       crlBillingClientCow = null;
       crlServiceUsageCow = null;

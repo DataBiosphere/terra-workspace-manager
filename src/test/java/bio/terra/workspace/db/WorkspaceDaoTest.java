@@ -79,9 +79,7 @@ public class WorkspaceDaoTest extends BaseUnitTest {
     // Assert the object no longer exists after deletion
     assertThrows(
         EmptyResultDataAccessException.class,
-        () -> {
-          jdbcTemplate.queryForMap(readSql, params);
-        });
+        () -> jdbcTemplate.queryForMap(readSql, params));
   }
 
   @Test
@@ -132,9 +130,7 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> {
-          workspaceDao.getWorkspace(workspaceId);
-        });
+        () -> workspaceDao.getWorkspace(workspaceId));
   }
 
   @Test
@@ -149,9 +145,7 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
     assertThrows(
         DuplicateWorkspaceException.class,
-        () -> {
-          workspaceDao.createWorkspace(workspace);
-        });
+        () -> workspaceDao.createWorkspace(workspace));
   }
 
   @Test

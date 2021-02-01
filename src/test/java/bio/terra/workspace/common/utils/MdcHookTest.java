@@ -140,10 +140,6 @@ public class MdcHookTest extends BaseUnitTest {
 
     private void assertMatchesExpectedContext() {
       try {
-        Map<String, String> mdcContext = MDC.getCopyOfContextMap();
-        if (mdcContext == null) {
-          mdcContext = ImmutableMap.of();
-        }
         assertEquals(expectedContext, MDC.getCopyOfContextMap());
       } catch (AssertionError error) {
         // Rethrow an AssertionError as an Exception so that Stairway can handle it

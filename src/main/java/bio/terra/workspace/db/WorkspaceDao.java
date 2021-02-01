@@ -78,7 +78,7 @@ public class WorkspaceDao {
     int rowsAffected =
         jdbcTemplate.update("DELETE FROM workspace WHERE workspace_id = :id", params);
 
-    Boolean deleted = rowsAffected > 0;
+    boolean deleted = rowsAffected > 0;
 
     if (deleted)
       logger.info(String.format("Deleted record for workspace %s", workspaceId.toString()));
@@ -99,15 +99,13 @@ public class WorkspaceDao {
               jdbcTemplate.query(
                   sql,
                   params,
-                  (rs, rowNum) -> {
-                    return Workspace.builder()
-                        .workspaceId(UUID.fromString(rs.getString("workspace_id")))
-                        .spendProfileId(
-                            Optional.ofNullable(rs.getString("spend_profile"))
-                                .map(SpendProfileId::create))
-                        .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
-                        .build();
-                  }));
+                  (rs, rowNum) -> Workspace.builder()
+                      .workspaceId(UUID.fromString(rs.getString("workspace_id")))
+                      .spendProfileId(
+                          Optional.ofNullable(rs.getString("spend_profile"))
+                              .map(SpendProfileId::create))
+                      .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
+                      .build()));
       logger.info(String.format("Retrieved workspace record %s", result.toString()));
       return result;
     } catch (EmptyResultDataAccessException e) {
@@ -204,7 +202,7 @@ public class WorkspaceDao {
   @VisibleForTesting
   static class GoogleCloudContextV1 {
     /** Version marker to store in the db so that we can update the format later if we need to. */
-    @JsonProperty long version = 1;
+    @JsonProperty final long version = 1;
 
     @JsonProperty String googleProjectId;
 

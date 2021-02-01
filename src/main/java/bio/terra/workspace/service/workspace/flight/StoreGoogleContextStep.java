@@ -65,7 +65,7 @@ public class StoreGoogleContextStep implements Step {
     transactionTemplate.execute(
         status -> {
           WorkspaceCloudContext cloudContext = workspaceDao.getCloudContext(workspaceId);
-          if (cloudContext.googleProjectId().get().equals(projectId)) {
+          if (cloudContext.googleProjectId().isPresent() && cloudContext.googleProjectId().get().equals(projectId)) {
             // TODO: once multiple clouds are supported, we need to only clear the google context if
             // it exists.
             workspaceDao.updateCloudContext(workspaceId, WorkspaceCloudContext.none());

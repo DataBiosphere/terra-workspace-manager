@@ -9,6 +9,7 @@ import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,7 +128,7 @@ public class DataReferenceDao {
             .addValue("workspace_id", workspaceId.toString());
 
     try {
-      return jdbcTemplate.queryForObject(sql, params, Boolean.class).booleanValue();
+      return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, Boolean.class)).orElse(false);
     } catch (EmptyResultDataAccessException e) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
     }
@@ -142,7 +143,7 @@ public class DataReferenceDao {
         jdbcTemplate.update(
             "DELETE FROM workspace_data_reference WHERE reference_id = :id AND workspace_id = :workspace_id",
             params);
-    Boolean deleted = rowsAffected > 0;
+    boolean deleted = rowsAffected > 0;
 
     if (deleted)
       logger.info(

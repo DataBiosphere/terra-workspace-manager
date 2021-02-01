@@ -48,7 +48,6 @@ import org.springframework.stereotype.Component;
 public class JobService {
 
   private final Stairway stairway;
-  private final SamService samService;
   private final JobConfiguration jobConfig;
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
   private final ScheduledExecutorService executor;
@@ -64,7 +63,6 @@ public class JobService {
       FlightBeanBag applicationContext,
       MdcHook mdcHook,
       ObjectMapper objectMapper) {
-    this.samService = samService;
     this.jobConfig = jobConfig;
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
     this.executor = Executors.newScheduledThreadPool(jobConfig.getMaxThreads());
@@ -183,7 +181,7 @@ public class JobService {
     throw new InternalStairwayException("Flight did not complete in the allowed wait time");
   }
 
-  private class PollFlightTask implements Callable<FlightState> {
+  private static class PollFlightTask implements Callable<FlightState> {
     private final Stairway stairway;
     private final String flightId;
 
@@ -253,16 +251,13 @@ public class JobService {
       completedDate = flightState.getCompleted().get().toString();
     }
 
-    JobModel jobModel =
-        new JobModel()
-            .id(flightState.getFlightId())
-            .description(description)
-            .status(jobStatus)
-            .statusCode(statusCode.value())
-            .submitted(submittedDate)
-            .completed(completedDate);
-
-    return jobModel;
+    return new JobModel()
+        .id(flightState.getFlightId())
+        .description(description)
+        .status(jobStatus)
+        .statusCode(statusCode.value())
+        .submitted(submittedDate)
+        .completed(completedDate);
   }
 
   private JobModel.StatusEnum getJobStatus(FlightStatus flightStatus) {

@@ -18,8 +18,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class WorkspaceManagerStatusService extends BaseStatusService {
 
-  private final NamedParameterJdbcTemplate jdbcTemplate;
-
   @Autowired
   public WorkspaceManagerStatusService(
       DataRepoService dataRepoService,
@@ -28,7 +26,6 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
       SamService samService,
       @Value("${workspace.status-check.staleness-threshold-ms}") long staleThresholdMillis) {
     super(staleThresholdMillis);
-    this.jdbcTemplate = jdbcTemplate;
     Supplier<SystemStatusSystems> dbHealthFn =
         () ->
             new SystemStatusSystems()
@@ -44,8 +41,7 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
           new StatusSubsystem(checkDataRepoInstanceFn, /*isCritical=*/ false));
     }
 
-    Supplier<SystemStatusSystems> samStatusFn = () -> samService.status();
-    registerSubsystem("Sam", new StatusSubsystem(samStatusFn, /*isCritical=*/ true));
+    registerSubsystem("Sam", new StatusSubsystem(samService::status, /*isCritical=*/ true));
   }
 
   private Boolean isConnectionValid(Connection connection) throws SQLException {

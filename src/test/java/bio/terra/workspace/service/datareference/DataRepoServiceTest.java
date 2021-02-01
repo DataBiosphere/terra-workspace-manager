@@ -17,9 +17,7 @@ public class DataRepoServiceTest extends BaseUnitTest {
   public void testValidateInvalidDataRepoInstance() throws Exception {
     assertThrows(
         ValidationException.class,
-        () -> {
-          dataRepoService.getInstanceUrl("fake-invalid-test");
-        });
+        () -> dataRepoService.getInstanceUrl("fake-invalid-test"));
   }
 
   @Test

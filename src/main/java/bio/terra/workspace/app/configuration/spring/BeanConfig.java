@@ -56,8 +56,6 @@ public class BeanConfig {
   // done, it should happen inside this method.
   @Bean
   public SmartInitializingSingleton postSetupInitialization(ApplicationContext applicationContext) {
-    return () -> {
-      StartupInitializer.initialize(applicationContext);
-    };
+    return () -> StartupInitializer.initialize(applicationContext);
   }
 }
