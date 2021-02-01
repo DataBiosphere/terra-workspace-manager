@@ -7,13 +7,19 @@ import bio.terra.stairway.RetryRuleExponentialBackoff;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.crl.CrlService;
 
-// NOTE: DO NOT USE. Currently just a shell class to exercise connection to Buffer Service.
+/**
+ * A {@link Flight} for creating a Google cloud context for a workspace using RBS (Buffer Service)
+ * to create the project.
+ */
 public class CreateGoogleContextRBSFlight extends Flight {
+  // Buffer Retry rule settings. For Buffer Service, allow for long wait times.
+  // If the pool is empty, RBS may need time to actually create a new project.
+  private static final int BUFFER_INITIAL_INTERVAL_SECONDS = 1;
+  private static final int BUFFER_MAX_INTERVAL_SECONDS = 5 * 60;
+  private static final int BUFFER_MAX_OPERATION_TIME_SECONDS = 15 * 60;
   // Retry rule settings
   private static final int INITIAL_INTERVAL_SECONDS = 1;
-  private static final int MAX_INTERVAL_SECONDS = 5 * 60;
-  // TODO: This makes no sense to have a max operation time of sixteen seconds and an interval of
-  // five minutes!
+  private static final int MAX_INTERVAL_SECONDS = 8;
   private static final int MAX_OPERATION_TIME_SECONDS = 16;
 
   public CreateGoogleContextRBSFlight(FlightMap inputParameters, Object applicationContext) {
@@ -22,15 +28,27 @@ public class CreateGoogleContextRBSFlight extends Flight {
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
     CrlService crl = appContext.getCrlService();
 
-    RetryRule retryRule =
+    RetryRule bufferRetryRule =
         new RetryRuleExponentialBackoff(
-            INITIAL_INTERVAL_SECONDS, MAX_INTERVAL_SECONDS, MAX_OPERATION_TIME_SECONDS);
+            BUFFER_INITIAL_INTERVAL_SECONDS,
+            BUFFER_MAX_INTERVAL_SECONDS,
+            BUFFER_MAX_OPERATION_TIME_SECONDS);
 
     addStep(new GenerateResourceIdStep());
     addStep(
         new PullProjectFromPoolStep(
             appContext.getBufferService(), crl.getCloudResourceManagerCow()),
+        bufferRetryRule);
+    RetryRule retryRule =
+        new RetryRuleExponentialBackoff(
+            INITIAL_INTERVAL_SECONDS, MAX_INTERVAL_SECONDS, MAX_OPERATION_TIME_SECONDS);
+    addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()));
+    addStep(
+        new StoreGoogleContextStep(
+            appContext.getWorkspaceDao(), appContext.getTransactionTemplate()),
         retryRule);
+    addStep(new SyncSamGroupsStep(appContext.getSamService()), retryRule);
+    addStep(new GoogleCloudSyncStep(crl.getCloudResourceManagerCow()), retryRule);
     addStep(new SetGoogleContextOutputStep());
   }
 }

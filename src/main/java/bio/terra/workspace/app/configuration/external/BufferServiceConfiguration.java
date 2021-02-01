@@ -10,17 +10,28 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+/** Configuration for managing connection to Buffer Service. * */
 @Configuration
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "workspace.buffer")
 public class BufferServiceConfiguration {
 
+  // TODO(PF-302): Clean up once fully using Buffer Service.
+  private boolean enabled = false;
   private String instanceUrl;
   private String poolId;
   private String clientCredentialFilePath;
 
   private static final ImmutableList<String> BUFFER_SCOPES =
       ImmutableList.of("openid", "email", "profile");
+
+  public boolean getEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
+  }
 
   public String getInstanceUrl() {
     return instanceUrl;

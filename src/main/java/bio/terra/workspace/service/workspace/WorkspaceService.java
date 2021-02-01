@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.stairway.Flight;
+import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -34,17 +36,20 @@ public class WorkspaceService {
   private final WorkspaceDao workspaceDao;
   private final SamService samService;
   private final SpendProfileService spendProfileService;
+  private final BufferServiceConfiguration bufferServiceConfiguration;
 
   @Autowired
   public WorkspaceService(
       JobService jobService,
       WorkspaceDao workspaceDao,
       SamService samService,
-      SpendProfileService spendProfileService) {
+      SpendProfileService spendProfileService,
+      BufferServiceConfiguration bufferServiceConfiguration) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
     this.spendProfileService = spendProfileService;
+    this.bufferServiceConfiguration = bufferServiceConfiguration;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
@@ -147,12 +152,15 @@ public class WorkspaceService {
     if (spendProfile.billingAccountId().isEmpty()) {
       throw new NoBillingAccountException(spendProfileId);
     }
-
+    Class<? extends Flight> flightClass = CreateGoogleContextFlight.class;
+    if (bufferServiceConfiguration.getEnabled()) {
+      flightClass = CreateGoogleContextRBSFlight.class;
+    }
     jobService
         .newJob(
             "Create Google Context " + workspaceId,
             jobId,
-            CreateGoogleContextFlight.class,
+            flightClass,
             /* request= */ null,
             userReq)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
