@@ -1,13 +1,13 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
-bio.terra.cloud-resource-lib:cloud-resource-schema:0.4.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:cloud-resource-schema:0.4.0=cloudResourceSchema,productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
 bio.terra.cloud-resource-lib:common:0.4.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-bio.terra.cloud-resource-lib:google-api-services-common:0.0.5-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:google-api-services-common:0.4.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra.cloud-resource-lib:google-bigquery:0.4.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-bio.terra.cloud-resource-lib:google-billing:0.0.4-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-bio.terra.cloud-resource-lib:google-cloudresourcemanager:0.0.8-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-bio.terra.cloud-resource-lib:google-serviceusage:0.0.4-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:google-billing:0.4.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:google-cloudresourcemanager:0.4.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:google-serviceusage:0.4.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra.cloud-resource-lib:google-storage:0.4.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra.janitor:terra-resource-janitor-client:0.0.2-SNAPSHOT=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
 bio.terra:datarepo-client:1.0.1-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
