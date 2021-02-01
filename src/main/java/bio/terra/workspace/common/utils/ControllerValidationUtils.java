@@ -56,11 +56,6 @@ public final class ControllerValidationUtils {
       throw new InvalidDataReferenceException(
           "Data reference must contain a reference type and a reference description");
     }
-    // TODO: remove this check when we add support for resource-specific credentials.
-    if (body.getCredentialId() != null) {
-      throw new InvalidDataReferenceException(
-          "Resource-specific credentials are not supported yet.");
-    }
   }
 
   /**
