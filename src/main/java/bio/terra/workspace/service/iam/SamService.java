@@ -50,7 +50,7 @@ public class SamService {
     this.workspaceDao = workspaceDao;
   }
 
-  private Logger logger = LoggerFactory.getLogger(SamService.class);
+  private final Logger logger = LoggerFactory.getLogger(SamService.class);
 
   private ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();

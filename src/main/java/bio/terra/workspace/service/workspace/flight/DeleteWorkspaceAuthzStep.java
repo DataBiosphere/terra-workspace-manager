@@ -13,8 +13,8 @@ import java.util.UUID;
 
 public class DeleteWorkspaceAuthzStep implements Step {
 
-  private SamService samService;
-  private AuthenticatedUserRequest userReq;
+  private final SamService samService;
+  private final AuthenticatedUserRequest userReq;
 
   public DeleteWorkspaceAuthzStep(SamService samService, AuthenticatedUserRequest userReq) {
     this.samService = samService;

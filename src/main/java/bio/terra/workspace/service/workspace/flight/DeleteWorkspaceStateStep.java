@@ -14,7 +14,7 @@ import org.springframework.http.HttpStatus;
 
 public class DeleteWorkspaceStateStep implements Step {
 
-  private WorkspaceDao workspaceDao;
+  private final WorkspaceDao workspaceDao;
 
   @Autowired
   public DeleteWorkspaceStateStep(WorkspaceDao workspaceDao) {

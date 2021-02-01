@@ -18,9 +18,9 @@ import org.springframework.http.HttpStatus;
 
 public class CreateWorkspaceStep implements Step {
 
-  private WorkspaceDao workspaceDao;
+  private final WorkspaceDao workspaceDao;
 
-  private Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
+  private final Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
 
   public CreateWorkspaceStep(WorkspaceDao workspaceDao) {
     this.workspaceDao = workspaceDao;

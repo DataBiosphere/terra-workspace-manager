@@ -38,12 +38,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class WorkspaceApiController implements WorkspaceApi {
-  private WorkspaceService workspaceService;
-  private DataReferenceService dataReferenceService;
-  private DataReferenceValidationUtils dataReferenceValidation;
-  private JobService jobService;
-  private SamService samService;
-  private AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
+  private final WorkspaceService workspaceService;
+  private final DataReferenceService dataReferenceService;
+  private final DataReferenceValidationUtils dataReferenceValidation;
+  private final JobService jobService;
+  private final SamService samService;
+  private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
 
   @Autowired
@@ -64,7 +64,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     this.request = request;
   }
 
-  private Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
+  private final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
     return authenticatedUserRequestFactory.from(request);
@@ -81,7 +81,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     // the features it gates. If stage isn't specified in a create request, we default to
     // RAWLS_WORKSPACE.
     WorkspaceStageModel requestStage = body.getStage();
-    requestStage = (requestStage == null ? requestStage.RAWLS_WORKSPACE : requestStage);
+    requestStage = (requestStage == null ? WorkspaceStageModel.RAWLS_WORKSPACE : requestStage);
     WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::create);
