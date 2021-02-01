@@ -5,12 +5,10 @@ import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.datareference.DataReferenceService;
-import bio.terra.workspace.service.datareference.model.BigQueryDatasetReference;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.DataReferenceType;
-import bio.terra.workspace.service.datareference.model.GoogleBucketReference;
 import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
@@ -159,7 +157,9 @@ public class WorkspaceApiController implements WorkspaceApi {
           SnapshotReference.create(
               body.getReference().getInstanceName(), body.getReference().getSnapshot());
     } else {
-      referenceObject = ControllerTranslationUtils.referenceInfoToReferenceObject(body.getReferenceType(), referenceInfo);
+      referenceObject =
+          ControllerTranslationUtils.referenceInfoToReferenceObject(
+              body.getReferenceType(), referenceInfo);
     }
 
     dataReferenceValidation.validateReferenceObject(referenceObject, referenceType, userReq);
