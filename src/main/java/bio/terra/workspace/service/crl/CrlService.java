@@ -61,15 +61,6 @@ public class CrlService {
     }
   }
 
-  /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
-  public BigQueryCow makeBigQueryCow(AuthenticatedUserRequest userReq) {
-    assertCrlInUse();
-    AccessToken accessToken = new AccessToken(userReq.getRequiredToken(), null);
-    GoogleCredentials creds = GoogleCredentials.create(accessToken);
-    return new BigQueryCow(
-        clientConfig, BigQueryOptions.newBuilder().setCredentials(creds).build());
-  }
-
   /** @return CRL {@link CloudResourceManagerCow} which wraps Google Cloud Resource Manager API */
   public CloudResourceManagerCow getCloudResourceManagerCow() {
     assertCrlInUse();
@@ -88,8 +79,17 @@ public class CrlService {
     return crlServiceUsageCow;
   }
 
+  /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
+  public BigQueryCow createBigQueryCow(AuthenticatedUserRequest userReq) {
+    assertCrlInUse();
+    AccessToken accessToken = new AccessToken(userReq.getRequiredToken(), null);
+    GoogleCredentials creds = GoogleCredentials.create(accessToken);
+    return new BigQueryCow(
+        clientConfig, BigQueryOptions.newBuilder().setCredentials(creds).build());
+  }
+
   /** @return CRL {@link StorageCow} which wraps Google Cloud Storage API */
-  public StorageCow makeStorageCow(AuthenticatedUserRequest userReq) {
+  public StorageCow createStorageCow(AuthenticatedUserRequest userReq) {
     assertCrlInUse();
     AccessToken accessToken = new AccessToken(userReq.getRequiredToken(), null);
     GoogleCredentials creds = GoogleCredentials.create(accessToken);

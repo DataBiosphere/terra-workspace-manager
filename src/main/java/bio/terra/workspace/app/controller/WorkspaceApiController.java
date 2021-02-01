@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.common.utils.ControllerTranslationUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.*;
@@ -158,7 +159,7 @@ public class WorkspaceApiController implements WorkspaceApi {
           SnapshotReference.create(
               body.getReference().getInstanceName(), body.getReference().getSnapshot());
     } else {
-      referenceObject = referenceInfoToReferenceObject(body.getReferenceType(), referenceInfo);
+      referenceObject = ControllerTranslationUtils.referenceInfoToReferenceObject(body.getReferenceType(), referenceInfo);
     }
 
     dataReferenceValidation.validateReferenceObject(referenceObject, referenceType, userReq);
@@ -178,31 +179,6 @@ public class WorkspaceApiController implements WorkspaceApi {
             reference.toString(), id.toString(), userReq.getEmail()));
 
     return new ResponseEntity<>(reference.toApiModel(), HttpStatus.OK);
-  }
-
-  private static ReferenceObject referenceInfoToReferenceObject(
-      ReferenceTypeEnum referenceTypeEnum, DataReferenceInfo referenceInfo) {
-    final ReferenceObject result;
-    switch (referenceTypeEnum) {
-      case DATA_REPO_SNAPSHOT:
-        result =
-            SnapshotReference.create(
-                referenceInfo.getDataRepoSnapshot().getInstanceName(),
-                referenceInfo.getDataRepoSnapshot().getSnapshot());
-        break;
-      case GOOGLE_BUCKET:
-        result = GoogleBucketReference.create(referenceInfo.getGoogleBucket().getBucketName());
-        break;
-      case BIG_QUERY_DATASET:
-        result =
-            BigQueryDatasetReference.create(
-                referenceInfo.getBigQueryDataset().getProjectId(),
-                referenceInfo.getBigQueryDataset().getDatasetId());
-        break;
-      default:
-        throw new IllegalArgumentException("Unrecognized reference type");
-    }
-    return result;
   }
 
   @Override

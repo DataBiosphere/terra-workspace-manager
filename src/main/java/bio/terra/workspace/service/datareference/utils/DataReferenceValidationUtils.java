@@ -93,7 +93,7 @@ public class DataReferenceValidationUtils {
     try {
       // StorageCow.get() returns null if the bucket does not exist or a user does not have access,
       // which fails validation.
-      Optional.ofNullable(crlService.makeStorageCow(userReq).get(ref.bucketName()))
+      Optional.ofNullable(crlService.createStorageCow(userReq).get(ref.bucketName()))
           .orElseThrow(
               () ->
                   new InvalidDataReferenceException(
@@ -113,7 +113,7 @@ public class DataReferenceValidationUtils {
       DatasetId datasetId = DatasetId.of(ref.projectId(), ref.datasetName());
       // BigQueryCow.get() returns null if the bucket does not exist or a user does not have access,
       // which fails validation.
-      Optional.ofNullable(crlService.makeBigQueryCow(userReq).getDataset(datasetId))
+      Optional.ofNullable(crlService.createBigQueryCow(userReq).getDataset(datasetId))
           .orElseThrow(
               () ->
                   new InvalidDataReferenceException(
