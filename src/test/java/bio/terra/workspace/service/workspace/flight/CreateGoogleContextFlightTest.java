@@ -152,7 +152,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
         servicesList.getServices().stream()
             .map(GoogleApiServiceusageV1Service::getName)
             .collect(Collectors.toList()),
-        Matchers.hasItems(serviceNames));
+        Matchers.hasItems(serviceNames.toArray()));
   }
 
   /** Asserts that Sam groups are granted their appropriate IAM roles on a GCP project. */
