@@ -1,6 +1,5 @@
 package bio.terra.workspace.common.utils;
 
-import bio.terra.workspace.app.configuration.external.GoogleWorkspaceConfiguration;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.buffer.BufferService;
@@ -23,7 +22,6 @@ public class FlightBeanBag {
   private final BufferService bufferService;
   private final CrlService crlService;
   private final DataReferenceDao dataReferenceDao;
-  private final GoogleWorkspaceConfiguration googleWorkspaceConfiguration;
   private final ObjectMapper objectMapper;
   private final SamService samService;
   private final TransactionTemplate transactionTemplate;
@@ -34,7 +32,6 @@ public class FlightBeanBag {
       BufferService bufferService,
       CrlService crlService,
       DataReferenceDao dataReferenceDao,
-      GoogleWorkspaceConfiguration googleWorkspaceConfiguration,
       ObjectMapper objectMapper,
       SamService samService,
       TransactionTemplate transactionTemplate,
@@ -42,7 +39,6 @@ public class FlightBeanBag {
     this.bufferService = bufferService;
     this.crlService = crlService;
     this.dataReferenceDao = dataReferenceDao;
-    this.googleWorkspaceConfiguration = googleWorkspaceConfiguration;
     this.objectMapper = objectMapper;
     this.samService = samService;
     this.transactionTemplate = transactionTemplate;
@@ -63,10 +59,6 @@ public class FlightBeanBag {
 
   public DataReferenceDao getDataReferenceDao() {
     return dataReferenceDao;
-  }
-
-  public GoogleWorkspaceConfiguration getGoogleWorkspaceConfiguration() {
-    return googleWorkspaceConfiguration;
   }
 
   public ObjectMapper getObjectMapper() {
