@@ -169,7 +169,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
     WorkspaceResponse<?> deleteResponse =
         workspaceManagerTestClient.delete(testConfig.getUserEmail(), deletePath);
-    assertEquals(HttpStatus.valueOf(204), deleteResponse.getStatusCode());
+    assertEquals(HttpStatus.NO_CONTENT, deleteResponse.getStatusCode());
   }
 
   @Test

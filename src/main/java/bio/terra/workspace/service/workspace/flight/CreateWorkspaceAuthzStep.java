@@ -12,6 +12,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 
 public class CreateWorkspaceAuthzStep implements Step {
 
@@ -60,7 +61,7 @@ public class CreateWorkspaceAuthzStep implements Step {
       logger.debug(
           "Sam API error while undoing CreateWorkspaceAuthzStep, code is "
               + ex.getApiExceptionStatus());
-      if (ex.getApiExceptionStatus() != 404) {
+      if (ex.getApiExceptionStatus() != HttpStatus.NOT_FOUND.value()) {
         throw ex;
       }
     }

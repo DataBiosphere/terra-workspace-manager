@@ -10,6 +10,7 @@ import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 
 public class DeleteWorkspaceAuthzStep implements Step {
 
@@ -30,7 +31,7 @@ public class DeleteWorkspaceAuthzStep implements Step {
     } catch (SamApiException e) {
       // Stairway steps may run multiple times, so this may already have been deleted.
       // For all other errors we should always retry because there's no way to undo a Sam delete.
-      if (e.getApiExceptionStatus() != 404) {
+      if (e.getApiExceptionStatus() != HttpStatus.NOT_FOUND.value()) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
       }
     }
