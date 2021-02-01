@@ -29,7 +29,7 @@ public class DeleteWorkspaceStateStep implements Step {
     // not found, but the user-facing delete operation should return a 204 even if the workspace is
     // not found.
     workspaceDao.deleteWorkspace(workspaceID);
-    FlightUtils.setResponse(flightContext, null, HttpStatus.valueOf(204));
+    FlightUtils.setResponse(flightContext, null, HttpStatus.NO_CONTENT);
     return StepResult.getStepResultSuccess();
   }
 
