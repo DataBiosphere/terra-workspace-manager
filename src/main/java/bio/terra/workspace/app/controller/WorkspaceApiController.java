@@ -85,7 +85,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     // the features it gates. If stage isn't specified in a create request, we default to
     // RAWLS_WORKSPACE.
     WorkspaceStageModel requestStage = body.getStage();
-    requestStage = (requestStage == null ? requestStage.RAWLS_WORKSPACE : requestStage);
+    requestStage = (requestStage == null ? WorkspaceStageModel.RAWLS_WORKSPACE : requestStage);
     WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::create);

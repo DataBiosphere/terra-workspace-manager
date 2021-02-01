@@ -69,7 +69,7 @@ of the class. Spring will autowire all of the inputs to the constructor.
 ```java
 @Component
 public class Foo {
-    private Bar bar;
+    private final Bar bar;
     private Fribble fribble;
 
     @Autowired

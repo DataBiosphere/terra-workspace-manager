@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 /** Various utilities for validating requests in Controllers. */
 public final class ControllerValidationUtils {
 
-  private static Logger logger = LoggerFactory.getLogger(ControllerValidationUtils.class);
+  private static final Logger logger = LoggerFactory.getLogger(ControllerValidationUtils.class);
 
   // Pattern shared with Sam, originally from https://www.regular-expressions.info/email.html.
   public static final Pattern EMAIL_VALIDATION_PATTERN =

@@ -22,8 +22,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class DataReferenceValidationUtils {
 
-  private DataRepoService dataRepoService;
-  private CrlService crlService;
+  private final DataRepoService dataRepoService;
+  private final CrlService crlService;
 
   /**
    * Names must be 1-63 characters long, and may consist of alphanumeric characters and underscores

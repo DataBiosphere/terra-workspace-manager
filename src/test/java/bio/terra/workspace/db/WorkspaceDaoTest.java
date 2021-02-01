@@ -32,7 +32,7 @@ public class WorkspaceDaoTest extends BaseUnitTest {
 
   private UUID workspaceId;
   private Optional<SpendProfileId> spendProfileId;
-  private String readSql =
+  private final String readSql =
       "SELECT workspace_id, spend_profile, profile_settable FROM workspace WHERE workspace_id = :id";
 
   @BeforeEach

@@ -30,7 +30,7 @@ public class DataRepoService {
     this.dataRepoConfiguration = dataRepoConfiguration;
   }
 
-  private Logger logger = LoggerFactory.getLogger(DataRepoService.class);
+  private final Logger logger = LoggerFactory.getLogger(DataRepoService.class);
 
   private ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();
