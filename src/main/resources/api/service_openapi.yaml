@@ -616,9 +616,6 @@ components:
           $ref: '#/components/schemas/DataRepoSnapshot'
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
-        credentialId:
-          description: The IDs of the credentials to use with this resource
-          type: string
 
     DataReferenceDescription:
       type: object
