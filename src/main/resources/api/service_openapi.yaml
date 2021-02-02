@@ -669,27 +669,6 @@ components:
           description: The ID of the Data Repo snapshot
           type: string
 
-#    GoogleBucket:
-#      description: A reference to a GCS bucket.
-#      type: object
-#      required: [bucketName]
-#      properties:
-#        bucketName:
-#          description: The name of the bucket
-#          type: string
-#
-#    BigQueryDataset:
-#      description: A reference to a BigQuery dataset.
-#      type: object
-#      required: [projectId, datasetName]
-#      properties:
-#        projectId:
-#          description: ID of the Google project holding this dataset
-#          type: string
-#        datasetName:
-#          description: The name of this dataset
-#          type: string
-
     WorkspaceStageModel:
       description: Enum for possible stages of a workspace along the Rawls migration path
       type: string
