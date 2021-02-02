@@ -121,7 +121,7 @@ public class DataReferenceServiceTest extends BaseUnitTest {
     UUID workspaceId = createDefaultWorkspace();
     DataReferenceRequest request =
         defaultReferenceRequest(workspaceId, DataReferenceType.DATA_REPO_SNAPSHOT).build();
-    dataReferenceService.createDataReference(request, USER_REQUEST).referenceId();
+    dataReferenceService.createDataReference(request, USER_REQUEST);
 
     DataReference ref =
         dataReferenceService.getDataReferenceByName(
@@ -137,7 +137,7 @@ public class DataReferenceServiceTest extends BaseUnitTest {
     DataReferenceRequest request =
         defaultReferenceRequest(workspaceId, DataReferenceType.DATA_REPO_SNAPSHOT).build();
     String snapshotName = request.name();
-    dataReferenceService.createDataReference(request, USER_REQUEST).referenceId();
+    dataReferenceService.createDataReference(request, USER_REQUEST);
 
     // Names are unique per reference type within a workspace.
     // This call looks up a GCS bucket with the snapshot's name, which should not exist.

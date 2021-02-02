@@ -45,8 +45,8 @@ public abstract class DataReference {
       case DATA_REPO_SNAPSHOT:
         // TODO: we populate both the deprecated reference field and the new referenceInfo fields
         // until all clients have migrated to use the new field.
-        reference.reference(((SnapshotReference) referenceObject()).toApiModel());
         reference
+            .reference(((SnapshotReference) referenceObject()).toApiModel())
             .getReferenceInfo()
             .dataRepoSnapshot(((SnapshotReference) referenceObject()).toApiModel());
         break;

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.datareference.model;
 
+import bio.terra.workspace.common.exception.SerializationException;
 import bio.terra.workspace.generated.model.GoogleBucketUid;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -33,7 +34,7 @@ public abstract class GoogleBucketReference implements ReferenceObject {
     try {
       return objectMapper.writeValueAsString(this);
     } catch (JsonProcessingException e) {
-      throw new RuntimeException("Error serializing GoogleBucketReference", e);
+      throw new SerializationException("Error serializing GoogleBucketReference", e);
     }
   }
 

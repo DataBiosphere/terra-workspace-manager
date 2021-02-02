@@ -82,18 +82,18 @@ public class CrlService {
   /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
   public BigQueryCow createBigQueryCow(AuthenticatedUserRequest userReq) {
     assertCrlInUse();
-    AccessToken accessToken = new AccessToken(userReq.getRequiredToken(), null);
-    GoogleCredentials creds = GoogleCredentials.create(accessToken);
     return new BigQueryCow(
-        clientConfig, BigQueryOptions.newBuilder().setCredentials(creds).build());
+        clientConfig,
+        BigQueryOptions.newBuilder().setCredentials(googleCredentialsFromUserReq(userReq)).build());
   }
 
   /** @return CRL {@link StorageCow} which wraps Google Cloud Storage API */
   public StorageCow createStorageCow(AuthenticatedUserRequest userReq) {
     assertCrlInUse();
-    AccessToken accessToken = new AccessToken(userReq.getRequiredToken(), null);
-    GoogleCredentials creds = GoogleCredentials.create(accessToken);
-    return new StorageCow(clientConfig, StorageOptions.newBuilder().setCredentials(creds).build());
+
+    return new StorageCow(
+        clientConfig,
+        StorageOptions.newBuilder().setCredentials(googleCredentialsFromUserReq(userReq)).build());
   }
 
   private ServiceAccountCredentials getJanitorCredentials(String serviceAccountPath) {
@@ -111,6 +111,12 @@ public class CrlService {
     } catch (IOException e) {
       throw new CrlSecurityException("Failed to get credentials", e);
     }
+  }
+
+  private GoogleCredentials googleCredentialsFromUserReq(AuthenticatedUserRequest userReq) {
+    // The expirationTime argument is only used for refresh tokens, not access tokens.
+    AccessToken accessToken = new AccessToken(userReq.getRequiredToken(), null);
+    return GoogleCredentials.create(accessToken);
   }
 
   private ClientConfig buildClientConfig() {
