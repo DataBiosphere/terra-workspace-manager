@@ -55,6 +55,9 @@ jobs:
         elif ${{ github.event_name == 'workflow_dispatch' }}; then
           ENV=${{ github.event.inputs.testEnv }}
           LOCAL_SERVER=false
+        else
+          echo ::error ::${{ github.event_name }} not supported for this workflow
+          exit 1
         fi
         echo ::set-output name=test-env::$ENV
         echo ::set-output name=local-server::$LOCAL_SERVER
@@ -97,7 +100,7 @@ jobs:
         echo ::set-output name=vault-token::$VAULT_TOKEN
         echo ::add-mask::$VAULT_TOKEN
 
-    - name: Set permissions and render test configurations pull request and push
+    - name: Set permissions and render test configurations
       if: matrix.gradleTask != 'unitTest'
       run: |
         chmod +x render_config.sh
