@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.datareference.utils;
 
+import bio.terra.cloudres.google.bigquery.DatasetCow;
+import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.model.BigQueryDatasetReference;
@@ -12,9 +14,10 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.storage.StorageException;
-import java.util.Optional;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +27,8 @@ public class DataReferenceValidationUtils {
 
   private final DataRepoService dataRepoService;
   private final CrlService crlService;
+
+  private static final Logger logger = LoggerFactory.getLogger(DataReferenceValidationUtils.class);
 
   /**
    * Names must be 1-63 characters long, and may consist of alphanumeric characters and underscores
@@ -79,6 +84,10 @@ public class DataReferenceValidationUtils {
               + "instanceName and snapshot must both be provided.");
     }
     if (!dataRepoService.snapshotExists(ref.instanceName(), ref.snapshot(), userReq)) {
+      logger.warn(
+          String.format(
+              "Snapshot %s not found in data repo instance %s",
+              ref.snapshot(), ref.instanceName()));
       throw new InvalidDataReferenceException(
           "The given snapshot could not be found in the Data Repo instance provided."
               + " Verify that your reference was correctly defined and the instance is correct");
@@ -93,11 +102,12 @@ public class DataReferenceValidationUtils {
     try {
       // StorageCow.get() returns null if the bucket does not exist or a user does not have access,
       // which fails validation.
-      Optional.ofNullable(crlService.createStorageCow(userReq).get(ref.bucketName()))
-          .orElseThrow(
-              () ->
-                  new InvalidDataReferenceException(
-                      "Could not access specified GCS bucket. Ensure the name is correct and that you have access."));
+      BucketCow bucket = crlService.createStorageCow(userReq).get(ref.bucketName());
+      if (bucket == null) {
+        logger.warn(String.format("Bucket %s not found", ref.bucketName()));
+        throw new InvalidDataReferenceException(
+            "Could not access specified GCS bucket. Ensure the name is correct and that you have access.");
+      }
     } catch (StorageException e) {
       throw new InvalidDataReferenceException("Error while trying to access GCS bucket", e);
     }
@@ -113,11 +123,14 @@ public class DataReferenceValidationUtils {
       DatasetId datasetId = DatasetId.of(ref.projectId(), ref.datasetName());
       // BigQueryCow.get() returns null if the bucket does not exist or a user does not have access,
       // which fails validation.
-      Optional.ofNullable(crlService.createBigQueryCow(userReq).getDataset(datasetId))
-          .orElseThrow(
-              () ->
-                  new InvalidDataReferenceException(
-                      "Could not access specified BigQuery dataset. Ensure the name and GCP project are correct and that you have access."));
+      DatasetCow dataset = crlService.createBigQueryCow(userReq).getDataset(datasetId);
+      if (dataset == null) {
+        logger.warn(
+            String.format(
+                "Dataset %s not found in project %s", ref.datasetName(), ref.projectId()));
+        throw new InvalidDataReferenceException(
+            "Could not access specified BigQuery dataset. Ensure the name and GCP project are correct and that you have access.");
+      }
     } catch (BigQueryException e) {
       throw new InvalidDataReferenceException("Error while trying to access BigQuery dataset", e);
     }
