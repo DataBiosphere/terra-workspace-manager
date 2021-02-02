@@ -187,6 +187,7 @@ org.glassfish:jakarta.el:3.0.3=compileClasspath,productionRuntimeClasspath,runti
 org.hamcrest:hamcrest:2.2=testCompileClasspath,testRuntimeClasspath
 org.hashids:hashids:1.0.3=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.javassist:javassist:3.25.0-GA=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.jetbrains:annotations:15.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.json:json:20140107=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.junit.jupiter:junit-jupiter-api:5.7.0=testCompileClasspath,testRuntimeClasspath
 org.junit.jupiter:junit-jupiter-engine:5.7.0=testRuntimeClasspath

@@ -10,6 +10,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.jetbrains.annotations.Nullable;
 
 /** Base class for accessing database connection configuration properties. */
 public class BaseDatabaseConfiguration {
@@ -21,7 +22,7 @@ public class BaseDatabaseConfiguration {
   private String password;
 
   // Not a property
-  private PoolingDataSource<PoolableConnection> dataSource;
+  private @Nullable PoolingDataSource<PoolableConnection> dataSource;
 
   public String getUri() {
     return uri;
@@ -50,7 +51,7 @@ public class BaseDatabaseConfiguration {
   }
 
   // Main use of the configuration is this pooling data source object.
-  public PoolingDataSource<PoolableConnection> getDataSource() {
+  public @Nullable PoolingDataSource<PoolableConnection> getDataSource() {
     // Lazy allocation of the data source
     if (dataSource == null) {
       configureDataSource();

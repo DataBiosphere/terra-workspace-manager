@@ -9,6 +9,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
@@ -22,7 +23,7 @@ public class DeleteWorkspaceStateStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) throws RetryException {
+  public StepResult doStep(@NotNull FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     // WorkspaceDao.deleteWorkspace returns true if a delete succeeds or false if the workspace is
@@ -34,7 +35,7 @@ public class DeleteWorkspaceStateStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext flightContext) {
+  public @NotNull StepResult undoStep(FlightContext flightContext) {
     // We can't really undo a state delete: deleting the workspace cascades to multiple other
     // state tables, and this undo can't re-create all that state.
     // This should absolutely be the last step of a flight, and because we're unable to undo it

@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.configuration.external;
 
 import bio.terra.workspace.app.configuration.BaseDatabaseConfiguration;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -44,7 +45,7 @@ public class WorkspaceDatabaseConfiguration extends BaseDatabaseConfiguration {
   // This bean plus the @EnableTransactionManagement annotation above enables the use of the
   // @Transaction annotation to control the transaction properties of the data source.
   @Bean("transactionManager")
-  public PlatformTransactionManager getTransactionManager() {
+  public @NotNull PlatformTransactionManager getTransactionManager() {
     return new DataSourceTransactionManager(getDataSource());
   }
 }

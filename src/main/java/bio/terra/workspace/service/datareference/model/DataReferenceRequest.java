@@ -2,6 +2,7 @@ package bio.terra.workspace.service.datareference.model;
 
 import com.google.auto.value.AutoValue;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This is an internal representation of a request to create a data reference.
@@ -31,7 +32,7 @@ public abstract class DataReferenceRequest {
   /** The actual object being referenced. */
   public abstract ReferenceObject referenceObject();
 
-  public static DataReferenceRequest.Builder builder() {
+  public static DataReferenceRequest.@NotNull Builder builder() {
     return new AutoValue_DataReferenceRequest.Builder();
   }
 
@@ -47,6 +48,6 @@ public abstract class DataReferenceRequest {
 
     public abstract DataReferenceRequest.Builder referenceObject(ReferenceObject value);
 
-    public abstract DataReferenceRequest build();
+    public abstract @NotNull DataReferenceRequest build();
   }
 }

@@ -14,6 +14,7 @@ import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAPIException;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAuthorizationException;
 import java.io.IOException;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -31,7 +32,7 @@ public class PullProjectFromPoolStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) {
+  public StepResult doStep(@NotNull FlightContext flightContext) {
     try {
       String resourceId = flightContext.getWorkingMap().get(RBS_RESOURCE_ID, String.class);
       logger.info("Preparing to query Buffer Service for resource with ID: " + resourceId);
@@ -46,8 +47,8 @@ public class PullProjectFromPoolStep implements Step {
     } catch (BufferServiceAPIException e) {
       // The NOT_FOUND status code indicates that Buffer Service is still creating a project and we
       // must retry. Retrying TOO_MANY_REQUESTS gives the service time to recover from load.
-      if (e.getStatusCode() == HttpStatus.NOT_FOUND ||
-          e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
+      if (e.getStatusCode() == HttpStatus.NOT_FOUND
+          || e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
@@ -58,7 +59,7 @@ public class PullProjectFromPoolStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext flightContext) {
+  public StepResult undoStep(@NotNull FlightContext flightContext) {
     String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
     if (projectId != null) {
       try {

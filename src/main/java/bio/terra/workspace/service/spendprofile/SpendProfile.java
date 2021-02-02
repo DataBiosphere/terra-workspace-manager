@@ -3,6 +3,7 @@ package bio.terra.workspace.service.spendprofile;
 import com.google.auto.value.AutoValue;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A Terra resource modeling an account for spending money in the cloud.
@@ -18,7 +19,7 @@ public abstract class SpendProfile {
   /** The id of the Google Billing Account associated with the SpendProfile, if there is one. */
   public abstract Optional<String> billingAccountId();
 
-  public static Builder builder() {
+  public static @NotNull Builder builder() {
     return new AutoValue_SpendProfile.Builder();
   }
 
@@ -29,6 +30,6 @@ public abstract class SpendProfile {
 
     public abstract Builder billingAccountId(@Nullable String billingAccountId);
 
-    public abstract SpendProfile build();
+    public abstract @NotNull SpendProfile build();
   }
 }

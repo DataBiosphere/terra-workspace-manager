@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -193,7 +194,7 @@ public class SamServiceTest extends BaseConnectedTest {
    *
    * <p>This only fills in access token, not email or subjectId.
    */
-  private AuthenticatedUserRequest defaultUserRequest() {
+  private @NotNull AuthenticatedUserRequest defaultUserRequest() {
     return new AuthenticatedUserRequest(
         null, null, Optional.of(userAccessUtils.defaultUserAccessToken().getTokenValue()));
   }
@@ -203,7 +204,7 @@ public class SamServiceTest extends BaseConnectedTest {
    *
    * <p>This only fills in access token, not email or subjectId.
    */
-  private AuthenticatedUserRequest secondaryUserRequest() {
+  private @NotNull AuthenticatedUserRequest secondaryUserRequest() {
     return new AuthenticatedUserRequest(
         null, null, Optional.of(userAccessUtils.secondUserAccessToken().getTokenValue()));
   }

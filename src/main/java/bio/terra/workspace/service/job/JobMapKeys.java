@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.job;
 
+import org.jetbrains.annotations.NotNull;
+
 public enum JobMapKeys {
   // parameters for all flight types
   DESCRIPTION("description"),
@@ -22,7 +24,7 @@ public enum JobMapKeys {
     return keyName;
   }
 
-  public static boolean isRequiredKey(String keyName) {
+  public static boolean isRequiredKey(@NotNull String keyName) {
     return keyName.equals(JobMapKeys.DESCRIPTION.getKeyName())
         || keyName.equals(JobMapKeys.REQUEST.getKeyName())
         || keyName.equals(JobMapKeys.AUTH_USER_INFO.getKeyName())

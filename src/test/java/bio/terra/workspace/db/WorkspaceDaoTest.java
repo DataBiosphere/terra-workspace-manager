@@ -15,6 +15,7 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -225,7 +226,7 @@ public class WorkspaceDaoTest extends BaseUnitTest {
     assertEquals(1, WorkspaceDao.CloudType.values().length);
   }
 
-  private Workspace defaultWorkspace() {
+  private @NotNull Workspace defaultWorkspace() {
     return Workspace.builder()
         .workspaceId(workspaceId)
         .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)

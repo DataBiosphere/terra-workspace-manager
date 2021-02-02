@@ -30,6 +30,7 @@ import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEn
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequest;
 import org.broadinstitute.dsde.workbench.client.sam.model.SubsystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -61,15 +62,15 @@ public class SamService {
     return client.setBasePath(samConfig.getBasePath());
   }
 
-  private ResourcesApi samResourcesApi(String accessToken) {
+  private @NotNull ResourcesApi samResourcesApi(String accessToken) {
     return new ResourcesApi(getApiClient(accessToken));
   }
 
-  private GoogleApi samGoogleApi(String accessToken) {
+  private @NotNull GoogleApi samGoogleApi(String accessToken) {
     return new GoogleApi(getApiClient(accessToken));
   }
 
-  private UsersApi samUsersApi(String accessToken) {
+  private @NotNull UsersApi samUsersApi(String accessToken) {
     return new UsersApi(getApiClient(accessToken));
   }
 
@@ -80,7 +81,8 @@ public class SamService {
    * reader and writer policies are also created. Errors from the Sam client will be thrown as
    * SamApiExceptions, which wrap the underlying error and expose its status code.
    */
-  public void createWorkspaceWithDefaults(AuthenticatedUserRequest userReq, UUID id) {
+  public void createWorkspaceWithDefaults(
+      @NotNull AuthenticatedUserRequest userReq, @NotNull UUID id) {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     // Sam will throw an error if no owner is specified, so the caller's email is required. It can
     // be looked up using the auth token if that's all the caller provides.
@@ -100,7 +102,7 @@ public class SamService {
     }
   }
 
-  public void deleteWorkspace(String authToken, UUID id) {
+  public void deleteWorkspace(String authToken, @NotNull UUID id) {
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
       resourceApi.deleteResource(SamConstants.SAM_WORKSPACE_RESOURCE, id.toString());
@@ -122,7 +124,7 @@ public class SamService {
 
   @Traced
   public void workspaceAuthzOnly(
-      AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
+      @NotNull AuthenticatedUserRequest userReq, @NotNull UUID workspaceId, String action) {
     boolean isAuthorized =
         isAuthorized(
             userReq.getRequiredToken(),
@@ -154,7 +156,10 @@ public class SamService {
    * @param email The user being granted a role.
    */
   public void grantWorkspaceRole(
-      UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
+      @NotNull UUID workspaceId,
+      @NotNull AuthenticatedUserRequest userReq,
+      @NotNull IamRole role,
+      String email) {
     workspaceDao.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
@@ -177,7 +182,10 @@ public class SamService {
    * will succeed, though Sam will error if the email is not a registered user.
    */
   public void removeWorkspaceRole(
-      UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
+      @NotNull UUID workspaceId,
+      @NotNull AuthenticatedUserRequest userReq,
+      @NotNull IamRole role,
+      String email) {
     workspaceDao.assertMcWorkspace(workspaceId, "removeWorkspaceRole");
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
@@ -198,7 +206,8 @@ public class SamService {
    * <p>This operation is only available to MC_WORKSPACE stage workspaces, as Rawls manages
    * permissions directly on other workspaces.
    */
-  public List<RoleBinding> listRoleBindings(UUID workspaceId, AuthenticatedUserRequest userReq) {
+  public List<RoleBinding> listRoleBindings(
+      @NotNull UUID workspaceId, @NotNull AuthenticatedUserRequest userReq) {
     workspaceDao.assertMcWorkspace(workspaceId, "listRoleBindings");
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
@@ -224,7 +233,7 @@ public class SamService {
    * <p>This operation in Sam is idempotent, so we don't worry about calling this multiple times.
    */
   public String syncWorkspacePolicy(
-      UUID workspaceId, IamRole role, AuthenticatedUserRequest userReq) {
+      @NotNull UUID workspaceId, @NotNull IamRole role, @NotNull AuthenticatedUserRequest userReq) {
     GoogleApi googleApi = samGoogleApi(userReq.getRequiredToken());
     try {
       // Sam makes no guarantees about what values are returned from the POST call, so we instead
@@ -270,7 +279,7 @@ public class SamService {
               .collect(Collectors.toList());
 
       return new SystemStatusSystems().ok(samStatus.getOk()).messages(subsystemStatusMessages);
-    } catch (ApiException | JsonProcessingException e) {
+    } catch (@NotNull ApiException | JsonProcessingException e) {
       return new SystemStatusSystems().ok(false).addMessagesItem(e.getLocalizedMessage());
     }
   }
@@ -286,7 +295,7 @@ public class SamService {
    * provided at creation time. Although policy membership can be modified later, policy creation
    * must happen at the same time as workspace resource creation.
    */
-  private Map<String, AccessPolicyMembership> defaultWorkspacePolicies(String ownerEmail) {
+  private @NotNull Map<String, AccessPolicyMembership> defaultWorkspacePolicies(String ownerEmail) {
     Map<String, AccessPolicyMembership> policyMap = new HashMap<>();
     policyMap.put(
         IamRole.OWNER.toSamRole(),

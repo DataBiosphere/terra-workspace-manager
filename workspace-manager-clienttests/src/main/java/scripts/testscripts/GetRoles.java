@@ -12,6 +12,7 @@ import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.RoleBindingList;
 import bio.terra.workspace.model.WorkspaceStageModel;
 import java.util.List;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
@@ -22,7 +23,7 @@ private static final IamRole IAM_ROLE = IamRole.WRITER;
   private static final Logger logger = LoggerFactory.getLogger(GetRoles.class);
 
   @Override
-  public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
+  public void doSetup(@NotNull List<TestUserSpecification> testUsers, @NotNull WorkspaceApi workspaceApi)
       throws ApiException {
     super.doSetup(testUsers, workspaceApi);
 
@@ -37,7 +38,7 @@ private static final IamRole IAM_ROLE = IamRole.WRITER;
   }
 
   @Override
-  public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
+  public void doUserJourney(@NotNull TestUserSpecification testUser, @NotNull WorkspaceApi workspaceApi)
       throws ApiException {
 
     // check granted roles
@@ -54,7 +55,7 @@ private static final IamRole IAM_ROLE = IamRole.WRITER;
    * @return
    */
   @Override
-  protected WorkspaceStageModel getStageModel() {
+  protected @NotNull WorkspaceStageModel getStageModel() {
     return WorkspaceStageModel.MC_WORKSPACE;
   }
 }

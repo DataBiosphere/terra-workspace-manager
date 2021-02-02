@@ -6,6 +6,7 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.RetryRuleExponentialBackoff;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.crl.CrlService;
+import org.jetbrains.annotations.NotNull;
 
 /** A {@link Flight} for deleting a Google cloud context for a workspace. */
 public class DeleteGoogleContextFlight extends Flight {
@@ -13,7 +14,7 @@ public class DeleteGoogleContextFlight extends Flight {
   private static final int MAX_INTERVAL_SECONDS = 8;
   private static final int MAX_OPERATION_TIME_SECONDS = 5 * 60;
 
-  public DeleteGoogleContextFlight(FlightMap inputParameters, Object applicationContext) {
+  public DeleteGoogleContextFlight(FlightMap inputParameters, @NotNull Object applicationContext) {
     super(inputParameters, applicationContext);
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);

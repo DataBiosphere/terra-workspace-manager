@@ -10,6 +10,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A {@Code Step} which synchronizes Sam policies with google groups and stores the group names in
@@ -26,7 +27,7 @@ public class SyncSamGroupsStep implements Step {
   // Note that the SamService.syncWorkspacePolicy is already idempotent, so this doesn't need to
   // be explicitly handled here.
   @Override
-  public StepResult doStep(FlightContext flightContext)
+  public StepResult doStep(@NotNull FlightContext flightContext)
       throws InterruptedException, RetryException {
     UUID workspaceId =
         flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);

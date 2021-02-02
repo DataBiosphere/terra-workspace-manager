@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +46,7 @@ public class GoogleCloudSyncStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext)
+  public StepResult doStep(@NotNull FlightContext flightContext)
       throws InterruptedException, RetryException {
     String gcpProjectName = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
     FlightMap workingMap = flightContext.getWorkingMap();
@@ -92,7 +93,7 @@ public class GoogleCloudSyncStep implements Step {
    * @param group The group being granted a role. Should be prefixed with the literal "group:" for
    *     GCP.
    */
-  private List<Binding> bindingsForRole(IamRole role, String group) {
+  private @NotNull List<Binding> bindingsForRole(IamRole role, String group) {
     List<Binding> bindings = new ArrayList<>();
     for (String gcpRole : CloudSyncRoleMapping.cloudSyncRoleMap.get(role)) {
       bindings.add(new Binding().setRole(gcpRole).setMembers(Collections.singletonList(group)));

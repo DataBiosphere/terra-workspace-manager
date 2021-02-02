@@ -3,6 +3,7 @@ package bio.terra.workspace.service.job;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 
 public class JobServiceTestStep implements Step {
@@ -13,7 +14,7 @@ public class JobServiceTestStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext context) {
+  public StepResult doStep(@NotNull FlightContext context) {
     // Configure the results
     context.getWorkingMap().put(JobMapKeys.RESPONSE.getKeyName(), description);
     context.getWorkingMap().put(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.I_AM_A_TEAPOT);

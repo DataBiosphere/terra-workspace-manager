@@ -96,6 +96,8 @@ dependencies {
 	implementation group: "org.apache.commons", name: "commons-pool2"
 	implementation group: "org.springframework.boot", name: "spring-boot-starter-data-jdbc"
 	implementation group: "org.springframework.boot", name: "spring-boot-starter-web"
+	// https://mvnrepository.com/artifact/org.jetbrains/annotations
+	implementation group: 'org.jetbrains', name: 'annotations', version: '15.0'
 
 	// Swagger deps
 	implementation group: "io.swagger.core.v3", name: "swagger-annotations"

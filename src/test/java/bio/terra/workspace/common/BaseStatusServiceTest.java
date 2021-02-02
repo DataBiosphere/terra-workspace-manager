@@ -9,12 +9,13 @@ import bio.terra.workspace.generated.model.SystemStatusSystems;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 public class BaseStatusServiceTest extends BaseUnitTest {
 
   private class BaseStatusServiceTestImpl extends BaseStatusService {
-    public BaseStatusServiceTestImpl(List<StatusSubsystem> subsystems) {
+    public BaseStatusServiceTestImpl(@NotNull List<StatusSubsystem> subsystems) {
       super(/*staleThresholdMillis=*/ 600000);
       for (int i = 0; i < subsystems.size(); i++) {
         registerSubsystem("subsystem" + i, subsystems.get(i));

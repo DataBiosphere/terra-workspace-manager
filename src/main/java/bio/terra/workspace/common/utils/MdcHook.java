@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -47,7 +48,7 @@ public class MdcHook implements StairwayHook {
   }
 
   @Override
-  public HookAction startStep(FlightContext flightContext) {
+  public @NotNull HookAction startStep(@NotNull FlightContext flightContext) {
     String serializedMdc = flightContext.getInputParameters().get(MDC_FLIGHT_MAP_KEY, String.class);
     // Note that this destroys any previous context on this thread.
     MDC.setContextMap(deserializeMdc(serializedMdc));
@@ -55,19 +56,19 @@ public class MdcHook implements StairwayHook {
   }
 
   @Override
-  public HookAction endStep(FlightContext flightContext) {
+  public @NotNull HookAction endStep(FlightContext flightContext) {
     MDC.clear();
     return HookAction.CONTINUE;
   }
 
   @Override
-  public HookAction startFlight(FlightContext flightContext) {
+  public @NotNull HookAction startFlight(FlightContext flightContext) {
     // Do nothing for flights.
     return HookAction.CONTINUE;
   }
 
   @Override
-  public HookAction endFlight(FlightContext flightContext) {
+  public @NotNull HookAction endFlight(FlightContext flightContext) {
     // Do nothing for flights.
     return HookAction.CONTINUE;
   }

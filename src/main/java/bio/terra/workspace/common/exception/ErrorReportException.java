@@ -6,10 +6,11 @@ package bio.terra.workspace.common.exception;
 
 import java.util.List;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 
 public abstract class ErrorReportException extends RuntimeException {
-  private final List<String> causes;
+  private final @Nullable List<String> causes;
   private final HttpStatus statusCode;
 
   public ErrorReportException(String message) {
@@ -43,7 +44,7 @@ public abstract class ErrorReportException extends RuntimeException {
     this.statusCode = statusCode;
   }
 
-  public List<String> getCauses() {
+  public @Nullable List<String> getCauses() {
     return causes;
   }
 

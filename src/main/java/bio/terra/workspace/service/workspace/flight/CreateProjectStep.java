@@ -18,6 +18,7 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Optional;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A {@link Step} for creating a Google Project for a workspace.
@@ -43,7 +44,7 @@ public class CreateProjectStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) throws RetryException {
+  public StepResult doStep(@NotNull FlightContext flightContext) throws RetryException {
     String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
     createProject(projectId);
     enableServices(projectId);
@@ -96,7 +97,7 @@ public class CreateProjectStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext flightContext) {
+  public StepResult undoStep(@NotNull FlightContext flightContext) {
     String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
     try {
       GoogleUtils.deleteProject(projectId, resourceManager);
@@ -111,7 +112,8 @@ public class CreateProjectStep implements Step {
    * RetryableCrlException}.
    */
   private static void pollUntilSuccess(
-      OperationCow<?> operation, Duration pollingInterval, Duration timeout) throws RetryException {
+      OperationCow<?> operation, Duration pollingInterval, @NotNull Duration timeout)
+      throws RetryException {
     try {
       operation = OperationUtils.pollUntilComplete(operation, pollingInterval, timeout);
       if (operation.getOperationAdapter().getError() != null) {
@@ -121,7 +123,7 @@ public class CreateProjectStep implements Step {
                 operation.getOperationAdapter().getName(),
                 operation.getOperationAdapter().getError().getMessage()));
       }
-    } catch (IOException | InterruptedException e) {
+    } catch (@NotNull IOException | InterruptedException e) {
       throw new RetryableCrlException("Error polling.", e);
     }
   }

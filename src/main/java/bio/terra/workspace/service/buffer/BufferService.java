@@ -12,6 +12,7 @@ import bio.terra.workspace.service.buffer.exception.BufferServiceAPIException;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAuthorizationException;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -31,7 +32,7 @@ public class BufferService {
     this.bufferServiceConfiguration = bufferServiceConfiguration;
   }
 
-  private ApiClient getApiClient(String accessToken) {
+  private @NotNull ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();
     client.addDefaultHeader(
         TraceInterceptorConfig.MDC_REQUEST_ID_HEADER,
@@ -40,7 +41,7 @@ public class BufferService {
     return client;
   }
 
-  private BufferApi bufferApi(String instanceUrl) throws IOException {
+  private @NotNull BufferApi bufferApi(String instanceUrl) throws IOException {
     return new BufferApi(
         getApiClient(bufferServiceConfiguration.getAccessToken()).setBasePath(instanceUrl));
   }

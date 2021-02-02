@@ -23,6 +23,8 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import java.util.List;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +51,7 @@ public class ClientTestUtils {
      * @param server the server we are testing against
      * @return the API client object
      */
-    public static ApiClient getClientForTestRunnerSA(ServerSpecification server) throws IOException {
+    public static @NotNull ApiClient getClientForTestRunnerSA(@NotNull ServerSpecification server) throws IOException {
         if (server.testRunnerServiceAccount == null) {
             throw new IllegalArgumentException("Workspace Manager Service client service account is required");
         }
@@ -74,8 +76,8 @@ public class ClientTestUtils {
      * @param server the server we are testing against
      * @return the API client object for this user
      */
-    public static ApiClient getClientForTestUser(
-            TestUserSpecification testUser, ServerSpecification server) throws IOException {
+    public static @NotNull ApiClient getClientForTestUser(
+            @Nullable TestUserSpecification testUser, @NotNull ServerSpecification server) throws IOException {
         AccessToken accessToken = null;
 
         // if no test user is specified, then return a client object without an access token set
@@ -95,7 +97,7 @@ public class ClientTestUtils {
         return buildClient(accessToken, server);
     }
 
-    public static WorkspaceApi getWorkspaceClient(TestUserSpecification testUser, ServerSpecification server) throws IOException {
+    public static @NotNull WorkspaceApi getWorkspaceClient(TestUserSpecification testUser, @NotNull ServerSpecification server) throws IOException {
         final ApiClient apiClient = getClientForTestUser(testUser, server);
         return new WorkspaceApi(apiClient);
     }
@@ -107,11 +109,12 @@ public class ClientTestUtils {
      * @param server the server we are testing against
      * @return the API client object for this user
      */
-    public static ApiClient getClientWithoutAccessToken(ServerSpecification server) throws IOException {
+    public static @NotNull ApiClient getClientWithoutAccessToken(@NotNull ServerSpecification server) throws IOException {
         return buildClient(null, server);
     }
 
-    private static ApiClient buildClient(AccessToken accessToken, ServerSpecification server) throws IOException {
+    private static @NotNull ApiClient buildClient(
+        @Nullable AccessToken accessToken, @NotNull ServerSpecification server) throws IOException {
         if (Strings.isNullOrEmpty(server.workspaceManagerUri)) {
             throw new IllegalArgumentException("Workspace Manager Service URI cannot be empty");
         }
@@ -127,7 +130,7 @@ public class ClientTestUtils {
         return apiClient;
     }
 
-    public static void assertHttpSuccess(WorkspaceApi workspaceApi, String label) {
+    public static void assertHttpSuccess(@NotNull WorkspaceApi workspaceApi, String label) {
         int httpCode = workspaceApi.getApiClient().getStatusCode();
         logger.debug("{} HTTP code: {}", label, httpCode);
         assertThat(HttpStatusCodes.isSuccess(httpCode), equalTo(true));
@@ -140,7 +143,7 @@ public class ClientTestUtils {
      * on the same workspace from multiple threads.
      * @return
      */
-    public static String getUniqueDataReferenceName() {
+    public static @NotNull String getUniqueDataReferenceName() {
         return DATA_REFERENCE_NAME_PREFIX +
             UUID.randomUUID()
                 .toString()
@@ -162,7 +165,7 @@ public class ClientTestUtils {
     }
 
     public static List<DataReferenceDescription> getDataReferenceDescriptions(
-        UUID workspaceId, WorkspaceApi workspaceApi,
+        UUID workspaceId, @NotNull WorkspaceApi workspaceApi,
         int offset, int limit) throws ApiException {
       final DataReferenceList dataReferenceListFirstPage = workspaceApi.enumerateReferences(
           workspaceId, offset, limit);
@@ -177,7 +180,7 @@ public class ClientTestUtils {
      * @return
      */
   public static boolean containsBinding(
-      RoleBindingList roleBindings,
+      @NotNull RoleBindingList roleBindings,
       String userEmail,
       IamRole role) {
     return roleBindings.stream()

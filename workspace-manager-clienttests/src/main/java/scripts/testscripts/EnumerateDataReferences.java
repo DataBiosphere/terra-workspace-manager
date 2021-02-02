@@ -20,6 +20,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
@@ -34,7 +35,7 @@ public class EnumerateDataReferences extends WorkspaceFixtureTestScriptBase {
   private List<UUID> dataReferenceIds;
 
   @Override
-  public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
+  public void doSetup(List<TestUserSpecification> testUsers, @NotNull WorkspaceApi workspaceApi)
       throws ApiException {
 
     // initialize workspace
@@ -64,7 +65,7 @@ public class EnumerateDataReferences extends WorkspaceFixtureTestScriptBase {
   }
 
   @Override
-  public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
+  public void doUserJourney(TestUserSpecification testUser, @NotNull WorkspaceApi workspaceApi)
       throws ApiException {
 
 

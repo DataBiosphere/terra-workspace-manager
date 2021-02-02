@@ -6,6 +6,7 @@ import bio.terra.stairway.exception.DuplicateFlightIdSubmittedException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import java.time.Duration;
 import java.time.Instant;
+import org.jetbrains.annotations.NotNull;
 
 /** Test utilities for working with Stairway. */
 public class StairwayTestUtils {
@@ -15,11 +16,11 @@ public class StairwayTestUtils {
    * Submits the flight and block until Stairway completes it by polling regularly until the timeout
    * is reached.
    */
-  public static FlightState blockUntilFlightCompletes(
-      Stairway stairway,
+  public static @NotNull FlightState blockUntilFlightCompletes(
+      @NotNull Stairway stairway,
       Class<? extends Flight> flightClass,
       FlightMap inputParameters,
-      Duration timeout)
+      @NotNull Duration timeout)
       throws DatabaseOperationException, StairwayExecutionException, InterruptedException,
           DuplicateFlightIdSubmittedException {
     String flightId = stairway.createFlightId();
@@ -32,7 +33,10 @@ public class StairwayTestUtils {
    * numPolls} times every {@code pollInterval}.
    */
   public static FlightState pollUntilComplete(
-      String flightId, Stairway stairway, Duration pollInterval, Duration timeout)
+      String flightId,
+      @NotNull Stairway stairway,
+      @NotNull Duration pollInterval,
+      @NotNull Duration timeout)
       throws InterruptedException, DatabaseOperationException {
     for (Instant deadline = Instant.now().plus(timeout);
         Instant.now().isBefore(deadline);
@@ -51,7 +55,7 @@ public class StairwayTestUtils {
    */
   public static class ErrorDoStep implements Step {
     @Override
-    public StepResult doStep(FlightContext flightContext) {
+    public @NotNull StepResult doStep(FlightContext flightContext) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
     }
 

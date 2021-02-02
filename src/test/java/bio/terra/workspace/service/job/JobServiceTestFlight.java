@@ -2,10 +2,11 @@ package bio.terra.workspace.service.job;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import org.jetbrains.annotations.NotNull;
 
 public class JobServiceTestFlight extends Flight {
 
-  public JobServiceTestFlight(FlightMap inputParameters, Object applicationContext) {
+  public JobServiceTestFlight(@NotNull FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
 
     // Pull out our parameters and feed them in to the step classes.

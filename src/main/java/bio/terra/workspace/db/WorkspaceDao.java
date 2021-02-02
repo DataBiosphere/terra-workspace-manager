@@ -14,6 +14,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +48,7 @@ public class WorkspaceDao {
 
   /** Persists a workspace to DB. Returns ID of persisted workspace on success. */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public UUID createWorkspace(Workspace workspace) {
+  public UUID createWorkspace(@NotNull Workspace workspace) {
     String sql =
         "INSERT INTO workspace (workspace_id, spend_profile, profile_settable, workspace_stage) values "
             + "(:id, :spend_profile, :spend_profile_settable, :workspace_stage)";
@@ -72,7 +73,7 @@ public class WorkspaceDao {
 
   /** Deletes a workspace. Returns true on successful delete, false if there's nothing to delete. */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public boolean deleteWorkspace(UUID workspaceId) {
+  public boolean deleteWorkspace(@NotNull UUID workspaceId) {
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceId.toString());
     int rowsAffected =
@@ -90,7 +91,7 @@ public class WorkspaceDao {
   }
 
   /** Retrieves a workspace from database by ID. */
-  public Workspace getWorkspace(UUID id) {
+  public @NotNull Workspace getWorkspace(@NotNull UUID id) {
     String sql = "SELECT * FROM workspace where workspace_id = (:id)";
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id.toString());
     try {
@@ -117,7 +118,7 @@ public class WorkspaceDao {
 
   // TODO: Unclear what level (if any) of @Transactional this requires.
   /** Retrieves the MC Terra migration stage of a workspace from database by ID. */
-  public WorkspaceStage getWorkspaceStage(UUID workspaceId) {
+  public WorkspaceStage getWorkspaceStage(@NotNull UUID workspaceId) {
     String sql = "SELECT workspace_stage FROM workspace WHERE workspace_id = :id";
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceId.toString());
@@ -137,7 +138,7 @@ public class WorkspaceDao {
    * @param workspace the workspace to check
    * @param actionMessage The action being performed, used only in the exception message if needed
    */
-  public void assertMcWorkspace(Workspace workspace, String actionMessage) {
+  public void assertMcWorkspace(@NotNull Workspace workspace, String actionMessage) {
     assertMcWorkspace(workspace.workspaceStage(), workspace.workspaceId(), actionMessage);
   }
 
@@ -147,14 +148,14 @@ public class WorkspaceDao {
    * @param workspaceId ID of the workspace to check
    * @param actionMessage The action being performed, used only in the exception message if needed
    */
-  public void assertMcWorkspace(UUID workspaceId, String actionMessage) {
+  public void assertMcWorkspace(@NotNull UUID workspaceId, String actionMessage) {
     WorkspaceStage stage = getWorkspaceStage(workspaceId);
     assertMcWorkspace(stage, workspaceId, actionMessage);
   }
 
   /** Retrieves the cloud context of the workspace. */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public WorkspaceCloudContext getCloudContext(UUID workspaceId) {
+  public @NotNull WorkspaceCloudContext getCloudContext(@NotNull UUID workspaceId) {
     String sql =
         "SELECT cloud_type, context FROM workspace_cloud_context "
             + "WHERE workspace_id = :workspace_id;";
@@ -167,7 +168,8 @@ public class WorkspaceDao {
 
   /** Update the cloud context of the workspace, replacing the previous cloud context. */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public void updateCloudContext(UUID workspaceId, WorkspaceCloudContext cloudContext) {
+  public void updateCloudContext(
+      @NotNull UUID workspaceId, @NotNull WorkspaceCloudContext cloudContext) {
     if (cloudContext.googleProjectId().isPresent()) {
       String sql =
           "INSERT INTO workspace_cloud_context (workspace_id, cloud_type, context) "
@@ -208,7 +210,8 @@ public class WorkspaceDao {
 
     @JsonProperty String googleProjectId;
 
-    public static GoogleCloudContextV1 from(WorkspaceCloudContext workspaceCloudContext) {
+    public static @NotNull GoogleCloudContextV1 from(
+        @NotNull WorkspaceCloudContext workspaceCloudContext) {
       GoogleCloudContextV1 result = new GoogleCloudContextV1();
       result.googleProjectId = workspaceCloudContext.googleProjectId().orElse(null);
       return result;

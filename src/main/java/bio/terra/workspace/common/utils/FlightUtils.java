@@ -4,6 +4,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.generated.model.ErrorReport;
 import bio.terra.workspace.service.job.JobMapKeys;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 
 /** Common methods for building flights */
@@ -18,7 +19,7 @@ public final class FlightUtils {
    * @param responseStatus
    */
   public static void setErrorResponse(
-      FlightContext context, String message, HttpStatus responseStatus) {
+      @NotNull FlightContext context, String message, HttpStatus responseStatus) {
     ErrorReport errorModel = new ErrorReport().message(message);
     setResponse(context, errorModel, responseStatus);
   }
@@ -31,7 +32,7 @@ public final class FlightUtils {
    * @param responseStatus status code to set
    */
   public static void setResponse(
-      FlightContext context, Object responseObject, HttpStatus responseStatus) {
+      @NotNull FlightContext context, Object responseObject, HttpStatus responseStatus) {
     FlightMap workingMap = context.getWorkingMap();
     workingMap.put(JobMapKeys.RESPONSE.getKeyName(), responseObject);
     workingMap.put(JobMapKeys.STATUS_CODE.getKeyName(), responseStatus);

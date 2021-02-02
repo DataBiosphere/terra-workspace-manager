@@ -9,6 +9,7 @@ import bio.terra.workspace.db.WorkspaceDao;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +32,7 @@ public class DeleteProjectStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) {
+  public StepResult doStep(@NotNull FlightContext flightContext) {
     UUID workspaceId =
         flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     Optional<String> projectId = workspaceDao.getCloudContext(workspaceId).googleProjectId();
@@ -48,7 +49,7 @@ public class DeleteProjectStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+  public StepResult undoStep(@NotNull FlightContext flightContext) throws InterruptedException {
     UUID workspaceId =
         flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     Optional<String> projectId = workspaceDao.getCloudContext(workspaceId).googleProjectId();

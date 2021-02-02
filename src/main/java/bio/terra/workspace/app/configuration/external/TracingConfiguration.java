@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.configuration.external;
 
+import org.jetbrains.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -9,11 +10,11 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "workspace.tracing")
 public class TracingConfiguration {
   /** Rate of sampling, 0.0 - 1.0 */
-  Double probability = null;
+  @Nullable Double probability = null;
   /** GCP project id for trace */
-  String projectId = null;
+  @Nullable String projectId = null;
 
-  public Double getProbability() {
+  public @Nullable Double getProbability() {
     return probability;
   }
 
@@ -21,7 +22,7 @@ public class TracingConfiguration {
     this.probability = probability;
   }
 
-  public String getProjectId() {
+  public @Nullable String getProjectId() {
     return projectId;
   }
 

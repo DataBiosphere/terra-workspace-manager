@@ -7,11 +7,12 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.WorkspaceDescription;
+import org.jetbrains.annotations.NotNull;
 import scripts.utils.WorkspaceFixtureTestScriptBase;
 
 public class GetWorkspace extends WorkspaceFixtureTestScriptBase {
     @Override
-    public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
+    public void doUserJourney(TestUserSpecification testUser, @NotNull WorkspaceApi workspaceApi)
         throws ApiException {
         /**
          * This GetWorkspace test expects a valid workspace id

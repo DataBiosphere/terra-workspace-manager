@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.function.Supplier;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -18,14 +19,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class WorkspaceManagerStatusService extends BaseStatusService {
 
-  private final NamedParameterJdbcTemplate jdbcTemplate;
+  private final @NotNull NamedParameterJdbcTemplate jdbcTemplate;
 
   @Autowired
   public WorkspaceManagerStatusService(
-      DataRepoService dataRepoService,
-      DataRepoConfiguration dataRepoConfiguration,
-      NamedParameterJdbcTemplate jdbcTemplate,
-      SamService samService,
+      @NotNull DataRepoService dataRepoService,
+      @NotNull DataRepoConfiguration dataRepoConfiguration,
+      @NotNull NamedParameterJdbcTemplate jdbcTemplate,
+      @NotNull SamService samService,
       @Value("${workspace.status-check.staleness-threshold-ms}") long staleThresholdMillis) {
     super(staleThresholdMillis);
     this.jdbcTemplate = jdbcTemplate;
@@ -48,7 +49,7 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
     registerSubsystem("Sam", new StatusSubsystem(samStatusFn, /*isCritical=*/ true));
   }
 
-  private Boolean isConnectionValid(Connection connection) throws SQLException {
+  private Boolean isConnectionValid(@NotNull Connection connection) throws SQLException {
     return connection.isValid(0);
   }
 }

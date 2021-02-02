@@ -7,6 +7,7 @@ import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceE
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +47,7 @@ public final class ControllerValidationUtils {
    * controlled and private resources that aren't supported in WM. This function throws exceptions
    * if any of those fields are set, or if any required fields are missing.
    */
-  public static void validate(CreateDataReferenceRequestBody body) {
+  public static void validate(@NotNull CreateDataReferenceRequestBody body) {
     if (body.getResourceId() != null) {
       throw new ControlledResourceNotImplementedException(
           "Unable to create a reference with a resourceId, use a reference type and description"
@@ -69,7 +70,7 @@ public final class ControllerValidationUtils {
    * <p>This only validates the email addresses format, not whether it exists, what domain it's
    * from, etc.
    */
-  public static void validateEmail(String email) {
+  public static void validateEmail(@NotNull String email) {
     if (!EMAIL_VALIDATION_PATTERN.matcher(email).matches()) {
       logger.warn("User provided invalid email for group or user: " + email);
       throw new ValidationException("Invalid user or group email provided, see logs for details");

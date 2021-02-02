@@ -12,13 +12,14 @@ import bio.terra.workspace.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.model.DataReferenceDescription;
 import bio.terra.workspace.model.ReferenceTypeEnum;
 import org.apache.http.HttpStatus;
+import org.jetbrains.annotations.NotNull;
 import scripts.utils.WorkspaceFixtureTestScriptBase;
 import scripts.utils.ClientTestUtils;
 
 public class DataReferenceLifecycle extends WorkspaceFixtureTestScriptBase {
 
   @Override
-  public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
+  public void doUserJourney(TestUserSpecification testUser, @NotNull WorkspaceApi workspaceApi)
       throws ApiException {
     // Create a data reference
     final CreateDataReferenceRequestBody body = ClientTestUtils.getTestCreateDataReferenceRequestBody();
@@ -51,7 +52,7 @@ public class DataReferenceLifecycle extends WorkspaceFixtureTestScriptBase {
     assertThat(workspaceApi.getApiClient().getStatusCode(), equalTo(HttpStatus.SC_NOT_FOUND));
   }
 
-  private void assertDataReferenceDescription(DataReferenceDescription dataReferenceDescription, String dataReferenceName) {
+  private void assertDataReferenceDescription(@NotNull DataReferenceDescription dataReferenceDescription, String dataReferenceName) {
     assertThat(dataReferenceDescription.getCloningInstructions(), equalTo(CloningInstructionsEnum.REFERENCE));
     assertThat(dataReferenceDescription.getName(), equalTo(dataReferenceName));
     assertThat(dataReferenceDescription.getReferenceType(), equalTo(ReferenceTypeEnum.DATA_REPO_SNAPSHOT));

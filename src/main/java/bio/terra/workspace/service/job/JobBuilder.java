@@ -5,12 +5,14 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.exception.InvalidJobParameterException;
 import io.opencensus.contrib.spring.aop.Traced;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class JobBuilder {
 
   private final JobService jobServiceRef;
   private final Class<? extends Flight> flightClass;
-  private final FlightMap jobParameterMap;
+  private final @NotNull FlightMap jobParameterMap;
   private final String jobId;
 
   // constructor only takes required parameters
@@ -19,7 +21,7 @@ public class JobBuilder {
       String jobId,
       Class<? extends Flight> flightClass,
       Object request,
-      AuthenticatedUserRequest userReq,
+      @NotNull AuthenticatedUserRequest userReq,
       JobService jobServiceRef) {
     this.jobServiceRef = jobServiceRef;
     this.flightClass = flightClass;
@@ -35,7 +37,7 @@ public class JobBuilder {
 
   // use addParameter method for optional parameter
   // returns the JobBuilder object to allow method chaining
-  public JobBuilder addParameter(String keyName, Object val) {
+  public @NotNull JobBuilder addParameter(@Nullable String keyName, Object val) {
     if (keyName == null) {
       throw new InvalidJobParameterException("Parameter name cannot be null.");
     }

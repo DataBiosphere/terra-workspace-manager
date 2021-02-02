@@ -10,6 +10,8 @@ import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +41,8 @@ public class DataReferenceDao {
   private final Logger logger = LoggerFactory.getLogger(DataReferenceDao.class);
 
   /** Create a data reference in a workspace and return the reference's ID. */
-  public String createDataReference(DataReferenceRequest request, UUID referenceId)
+  public String createDataReference(
+      @NotNull DataReferenceRequest request, @NotNull UUID referenceId)
       throws DuplicateDataReferenceException {
     String sql =
         "INSERT INTO workspace_data_reference (workspace_id, reference_id, name, cloning_instructions, reference_type, reference) VALUES "
@@ -68,7 +71,8 @@ public class DataReferenceDao {
   }
 
   /** Retrieve a data reference by ID from the DB. */
-  public DataReference getDataReference(UUID workspaceId, UUID referenceId) {
+  public @Nullable DataReference getDataReference(
+      @NotNull UUID workspaceId, @NotNull UUID referenceId) {
     String sql =
         "SELECT workspace_id, reference_id, name, cloning_instructions, reference_type, reference from workspace_data_reference where workspace_id = :workspace_id AND reference_id = :reference_id";
 
@@ -93,8 +97,8 @@ public class DataReferenceDao {
    * Retrieve a data reference by name from the DB. Names are unique per workspace, per reference
    * type.
    */
-  public DataReference getDataReferenceByName(
-      UUID workspaceId, DataReferenceType type, String name) {
+  public @Nullable DataReference getDataReferenceByName(
+      @NotNull UUID workspaceId, @NotNull DataReferenceType type, String name) {
     String sql =
         "SELECT workspace_id, reference_id, name, cloning_instructions, reference_type, reference from workspace_data_reference where workspace_id = :id AND reference_type = :type AND name = :name";
 
@@ -117,7 +121,7 @@ public class DataReferenceDao {
   }
 
   /** Look up whether a reference is a controlled or uncontrolled resource. */
-  public boolean isControlled(UUID workspaceId, UUID referenceId) {
+  public boolean isControlled(@NotNull UUID workspaceId, @NotNull UUID referenceId) {
     String sql =
         "SELECT CASE WHEN resource_id IS NULL THEN 'false' ELSE 'true' END FROM workspace_data_reference where reference_id = :id AND workspace_id = :workspace_id";
 
@@ -133,7 +137,7 @@ public class DataReferenceDao {
     }
   }
 
-  public boolean deleteDataReference(UUID workspaceId, UUID referenceId) {
+  public boolean deleteDataReference(@NotNull UUID workspaceId, @NotNull UUID referenceId) {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("id", referenceId.toString())
@@ -160,7 +164,8 @@ public class DataReferenceDao {
 
   // TODO: in the future, resource_id will be a foreign key to the workspace_resources table, and we
   // should consider joining and listing those entries here.
-  public List<DataReference> enumerateDataReferences(UUID workspaceId, int offset, int limit) {
+  public @NotNull List<DataReference> enumerateDataReferences(
+      @NotNull UUID workspaceId, int offset, int limit) {
     String sql =
         "SELECT workspace_id, reference_id, name, cloning_instructions, reference_type, reference"
             + " FROM workspace_data_reference"

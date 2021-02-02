@@ -6,6 +6,7 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.RetryRuleExponentialBackoff;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.crl.CrlService;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A {@link Flight} for creating a Google cloud context for a workspace using RBS (Buffer Service)
@@ -22,7 +23,8 @@ public class CreateGoogleContextRBSFlight extends Flight {
   private static final int MAX_INTERVAL_SECONDS = 8;
   private static final int MAX_OPERATION_TIME_SECONDS = 16;
 
-  public CreateGoogleContextRBSFlight(FlightMap inputParameters, Object applicationContext) {
+  public CreateGoogleContextRBSFlight(
+      FlightMap inputParameters, @NotNull Object applicationContext) {
     super(inputParameters, applicationContext);
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);

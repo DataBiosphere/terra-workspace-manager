@@ -7,6 +7,7 @@ import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -49,7 +50,7 @@ public class FlightBeanBag {
     this.workspaceDao = workspaceDao;
   }
 
-  public static FlightBeanBag getFromObject(Object object) {
+  public static @NotNull FlightBeanBag getFromObject(@NotNull Object object) {
     return (FlightBeanBag) object;
   }
 

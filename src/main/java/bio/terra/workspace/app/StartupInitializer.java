@@ -3,12 +3,13 @@ package bio.terra.workspace.app;
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.migrate.MigrateService;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationContext;
 
 public final class StartupInitializer {
   private static final String changelogPath = "db/changelog.xml";
 
-  public static void initialize(ApplicationContext applicationContext) {
+  public static void initialize(@NotNull ApplicationContext applicationContext) {
     // Initialize or upgrade the database depending on the configuration
     MigrateService migrateService = applicationContext.getBean(MigrateService.class);
     WorkspaceDatabaseConfiguration workspaceDatabaseConfiguration =

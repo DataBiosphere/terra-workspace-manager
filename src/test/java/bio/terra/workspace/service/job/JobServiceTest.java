@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -79,13 +80,13 @@ public class JobServiceTest extends BaseUnitTest {
     }
   }
 
-  private void testSingleRetrieval(List<String> fids) {
+  private void testSingleRetrieval(@NotNull List<String> fids) {
     JobModel response = jobService.retrieveJob(fids.get(2), testUser);
     assertThat(response, notNullValue());
     validateJobModel(response, 2, fids);
   }
 
-  private void testResultRetrieval(List<String> fids) {
+  private void testResultRetrieval(@NotNull List<String> fids) {
     JobService.JobResultWithStatus<String> resultHolder =
         jobService.retrieveJobResult(fids.get(2), String.class, testUser);
 
@@ -94,7 +95,7 @@ public class JobServiceTest extends BaseUnitTest {
   }
 
   // Get some range and compare it with the fids
-  private void testEnumRange(List<String> fids, int offset, int limit) {
+  private void testEnumRange(@NotNull List<String> fids, int offset, int limit) {
     List<JobModel> jobList = jobService.enumerateJobs(offset, limit, testUser);
     assertThat(jobList, notNullValue());
     int index = offset;
@@ -129,7 +130,7 @@ public class JobServiceTest extends BaseUnitTest {
         });
   }
 
-  private void validateJobModel(JobModel jm, int index, List<String> fids) {
+  private void validateJobModel(@NotNull JobModel jm, int index, @NotNull List<String> fids) {
     assertThat(jm.getDescription(), equalTo(makeDescription(index)));
     assertThat(jm.getId(), equalTo(fids.get(index)));
     assertThat(jm.getStatus(), equalTo(JobModel.StatusEnum.SUCCEEDED));

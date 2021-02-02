@@ -1,6 +1,7 @@
 package bio.terra.workspace.integration.common.configuration;
 
 import java.util.HashMap;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -34,7 +35,7 @@ public class IntegrationTestConfiguration {
     this.wsmUrls = wsmUrls;
   }
 
-  public String getWsmWorkspacesBaseUrl() {
+  public @NotNull String getWsmWorkspacesBaseUrl() {
     return this.wsmUrls.get(testEnv) + this.wsmEndpoints.get("workspaces");
   }
 

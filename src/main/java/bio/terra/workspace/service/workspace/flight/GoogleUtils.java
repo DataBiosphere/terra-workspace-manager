@@ -6,6 +6,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import java.io.IOException;
 import java.util.Optional;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 
 /** Utilities for interacting with Google Cloud APIs within {@link Step}s. */
@@ -13,8 +14,8 @@ public class GoogleUtils {
   private GoogleUtils() {}
 
   /** Try to delete the Project associated with {@code projectId}. */
-  public static void deleteProject(String projectId, CloudResourceManagerCow resourceManager)
-      throws IOException {
+  public static void deleteProject(
+      String projectId, @NotNull CloudResourceManagerCow resourceManager) throws IOException {
     Optional<Project> project = retrieveProject(projectId, resourceManager);
     if (project.isEmpty()) {
       // The project does not exist.
@@ -33,7 +34,7 @@ public class GoogleUtils {
    * errors as no project existing.
    */
   public static Optional<Project> retrieveProject(
-      String projectId, CloudResourceManagerCow resourceManager) throws IOException {
+      String projectId, @NotNull CloudResourceManagerCow resourceManager) throws IOException {
     try {
       return Optional.of(resourceManager.projects().get(projectId).execute());
     } catch (GoogleJsonResponseException e) {

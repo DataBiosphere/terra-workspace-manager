@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +61,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
    *  Doc: https://docs.google.com/document/d/13mYVJML_fOLsX1gxQxRJgECUNT27dAMKzEJxUEvtQqM/edit#heading=h.x06ofvfgp7wt
    */
   @AfterEach
-  public void tearDown(TestInfo testInfo) throws Exception {
+  public void tearDown(@NotNull TestInfo testInfo) throws Exception {
     Set<String> tags = testInfo.getTags();
     if (tags != null && tags.contains(TAG_NEEDS_CLEANUP)) {
       List<UUID> uuidList = testToWorkspaceIdsMap.get(testInfo.getDisplayName());
@@ -72,7 +73,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void createWorkspace(TestInfo testInfo) throws Exception {
+  public void createWorkspace(@NotNull TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -86,7 +87,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void getWorkspace(TestInfo testInfo) throws Exception {
+  public void getWorkspace(@NotNull TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -106,7 +107,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void deleteWorkspace(TestInfo testInfo) throws Exception {
+  public void deleteWorkspace(@NotNull TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
     WorkspaceResponse<CreatedWorkspace> workspaceResponse = createDefaultWorkspace(workspaceId);
@@ -134,7 +135,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void createDataReference(TestInfo testInfo) throws Exception {
+  public void createDataReference(@NotNull TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -154,7 +155,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void deleteDataReference(TestInfo testInfo) throws Exception {
+  public void deleteDataReference(@NotNull TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -174,7 +175,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void listDataReference(TestInfo testInfo) throws Exception {
+  public void listDataReference(@NotNull TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -207,7 +208,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void getDataReferenceById(TestInfo testInfo) throws Exception {
+  public void getDataReferenceById(@NotNull TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -236,7 +237,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void getDataReferenceByNameAndType(TestInfo testInfo) throws Exception {
+  public void getDataReferenceByNameAndType(@NotNull TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -286,7 +287,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     assertEquals(WorkspaceStageModel.RAWLS_WORKSPACE, workspaceDescription.getStage());
   }
 
-  private WorkspaceResponse<CreatedWorkspace> createDefaultWorkspace(UUID workspaceId)
+  private @NotNull WorkspaceResponse<CreatedWorkspace> createDefaultWorkspace(UUID workspaceId)
       throws Exception {
     String path = testConfig.getWsmWorkspacesBaseUrl();
     String userEmail = testConfig.getUserEmail();
@@ -296,7 +297,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     return workspaceManagerTestClient.post(userEmail, path, jsonBody, CreatedWorkspace.class);
   }
 
-  private WorkspaceResponse<DataReferenceDescription> createDefaultDataReference(
+  private @NotNull WorkspaceResponse<DataReferenceDescription> createDefaultDataReference(
       UUID workspaceId, String dataReferenceName) throws Exception {
     // This method relies on a persistent snapshot existing in Data Repo, currently in dev.
     // This snapshot was created using our dev service account, which is a steward in dev Data Repo.
@@ -326,7 +327,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
         userEmail, path, testUtils.mapToJson(request), DataReferenceDescription.class);
   }
 
-  private void cleanUpWorkspaces(List<UUID> workspaceIds) throws Exception {
+  private void cleanUpWorkspaces(@NotNull List<UUID> workspaceIds) throws Exception {
     /* TODO: Currently fetching token once here before cleaning up (potentially multiple workspaceIds) for each test
         method. Is it likely that a token will expire mid-cleanup (i.e. works for one delete, but expires before
         the next one)? In any case, caching the auth token will enable us to efficiently auth before EACH delete request.

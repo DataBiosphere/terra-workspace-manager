@@ -5,10 +5,12 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import org.jetbrains.annotations.NotNull;
 
 public class WorkspaceCreateFlight extends Flight {
 
-  public WorkspaceCreateFlight(FlightMap inputParameters, Object applicationContext) {
+  public WorkspaceCreateFlight(
+      @NotNull FlightMap inputParameters, @NotNull Object applicationContext) {
     super(inputParameters, applicationContext);
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);

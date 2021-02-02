@@ -10,6 +10,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -27,7 +28,7 @@ public class CreateWorkspaceAuthzStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) throws RetryException {
+  public StepResult doStep(@NotNull FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
 
@@ -49,7 +50,7 @@ public class CreateWorkspaceAuthzStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext flightContext) {
+  public StepResult undoStep(@NotNull FlightContext flightContext) {
     FlightMap inputMap = flightContext.getInputParameters();
     // Only delete the Sam resource if we actually created it in the do step.
     UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);

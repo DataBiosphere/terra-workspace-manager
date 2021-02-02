@@ -3,6 +3,7 @@ package bio.terra.workspace.common.exception;
 import java.util.Collections;
 import java.util.List;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 
 /** Wrapper exception for non-200 responses from calls to Sam. */
@@ -10,7 +11,7 @@ public class SamApiException extends ErrorReportException {
 
   private ApiException apiException;
 
-  public SamApiException(ApiException samException) {
+  public SamApiException(@NotNull ApiException samException) {
     super(
         "Error from SAM: ",
         samException,

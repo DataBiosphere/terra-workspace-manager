@@ -13,6 +13,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.hashids.Hashids;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -34,7 +35,7 @@ public class TraceInterceptorConfig implements WebMvcConfigurer {
   private final Hashids hashids = new Hashids("requestIdSalt", 8);
 
   @Autowired
-  public TraceInterceptorConfig(TracingConfiguration tracingConfiguration) {
+  public TraceInterceptorConfig(@NotNull TracingConfiguration tracingConfiguration) {
 
     TraceConfig globalTraceConfig = Tracing.getTraceConfig();
     globalTraceConfig.updateActiveTraceParams(
@@ -44,7 +45,7 @@ public class TraceInterceptorConfig implements WebMvcConfigurer {
   }
 
   @Override
-  public void addInterceptors(InterceptorRegistry registry) {
+  public void addInterceptors(@NotNull InterceptorRegistry registry) {
     registry.addInterceptor(
         new HandlerInterceptor() {
           @Override
@@ -89,7 +90,7 @@ public class TraceInterceptorConfig implements WebMvcConfigurer {
     return hashids.encode(generatedLong);
   }
 
-  private String getMDCRequestId(HttpServletRequest httpRequest) {
+  private String getMDCRequestId(@NotNull HttpServletRequest httpRequest) {
     return getFirstNonNull(
         () -> httpRequest.getHeader(MDC_REQUEST_ID_HEADER),
         () -> httpRequest.getHeader(MDC_CORRELATION_ID_HEADER),

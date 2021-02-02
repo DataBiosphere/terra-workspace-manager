@@ -3,6 +3,7 @@ package bio.terra.workspace.service.datareference.model;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
 import com.google.auto.value.AutoValue;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Internal representation of an uncontrolled data reference.
@@ -41,7 +42,7 @@ public abstract class DataReference {
         .cloningInstructions(cloningInstructions().toApiModel());
   }
 
-  public static Builder builder() {
+  public static @NotNull Builder builder() {
     return new AutoValue_DataReference.Builder();
   }
 
@@ -59,6 +60,6 @@ public abstract class DataReference {
 
     public abstract DataReference.Builder referenceObject(ReferenceObject value);
 
-    public abstract DataReference build();
+    public abstract @NotNull DataReference build();
   }
 }

@@ -2,6 +2,7 @@ package bio.terra.workspace.service.iam.model;
 
 import java.util.Arrays;
 import java.util.Optional;
+import org.jetbrains.annotations.NotNull;
 
 /** Internal representation of IAM roles. */
 public enum IamRole {
@@ -17,7 +18,8 @@ public enum IamRole {
     this.apiRole = apiRole;
   }
 
-  public static IamRole fromApiModel(bio.terra.workspace.generated.model.IamRole apiModel) {
+  public static IamRole fromApiModel(
+      bio.terra.workspace.generated.model.@NotNull IamRole apiModel) {
     Optional<IamRole> result =
         Arrays.stream(IamRole.values()).filter(x -> x.apiRole.equals(apiModel)).findFirst();
     return result.orElseThrow(

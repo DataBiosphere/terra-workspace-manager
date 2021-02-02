@@ -5,6 +5,7 @@ import bio.terra.workspace.generated.model.SystemStatusSystems;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.scheduling.annotation.Scheduled;
 
 /*
@@ -19,7 +20,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 */
 public class BaseStatusService {
 
-  private final ConcurrentHashMap<String, StatusSubsystem> subsystems;
+  private final @NotNull ConcurrentHashMap<String, StatusSubsystem> subsystems;
   private long lastUpdatedTimestampMillis;
   private final SystemStatus currentStatus;
   private final long staleThresholdMillis;
@@ -31,7 +32,7 @@ public class BaseStatusService {
     this.staleThresholdMillis = staleThresholdMillis;
   }
 
-  protected void registerSubsystem(String name, StatusSubsystem subsystem) {
+  protected void registerSubsystem(@NotNull String name, @NotNull StatusSubsystem subsystem) {
     subsystems.put(name, subsystem);
   }
 

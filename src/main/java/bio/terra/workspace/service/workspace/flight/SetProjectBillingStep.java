@@ -5,6 +5,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import com.google.cloud.billing.v1.ProjectBillingInfo;
+import org.jetbrains.annotations.NotNull;
 
 /** A {@link Step} to set the billing account on the Google project. */
 public class SetProjectBillingStep implements Step {
@@ -15,7 +16,7 @@ public class SetProjectBillingStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) {
+  public StepResult doStep(@NotNull FlightContext flightContext) {
     String projectId =
         flightContext.getWorkingMap().get(WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID, String.class);
     String billingAccountId =

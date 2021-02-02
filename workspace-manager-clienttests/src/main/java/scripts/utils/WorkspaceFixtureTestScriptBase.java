@@ -12,6 +12,7 @@ import bio.terra.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.model.WorkspaceStageModel;
 import java.util.List;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.testscripts.GetWorkspace;
@@ -43,7 +44,7 @@ public abstract class WorkspaceFixtureTestScriptBase extends WorkspaceTestScript
    * @throws ApiException
    */
   @Override
-  protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
+  protected void doSetup(List<TestUserSpecification> testUsers, @NotNull WorkspaceApi workspaceApi)
       throws ApiException {
     workspaceId = UUID.randomUUID();
     final var requestBody = new CreateWorkspaceRequestBody()
@@ -60,7 +61,7 @@ public abstract class WorkspaceFixtureTestScriptBase extends WorkspaceTestScript
    * @throws ApiException
    */
   @Override
-  protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
+  protected void doCleanup(List<TestUserSpecification> testUsers, @NotNull WorkspaceApi workspaceApi)
       throws ApiException {
     workspaceApi.deleteWorkspace(workspaceId);
   }

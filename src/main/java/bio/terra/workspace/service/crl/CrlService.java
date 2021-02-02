@@ -15,6 +15,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -26,13 +28,13 @@ public class CrlService {
   /** How long to keep the resource before Janitor does the cleanup. */
   private static final Duration TEST_RESOURCE_TIME_TO_LIVE = Duration.ofHours(1);
 
-  private final CrlConfiguration crlConfig;
-  private final CloudResourceManagerCow crlResourceManagerCow;
-  private final CloudBillingClientCow crlBillingClientCow;
-  private final ServiceUsageCow crlServiceUsageCow;
+  private final @NotNull CrlConfiguration crlConfig;
+  private final @Nullable CloudResourceManagerCow crlResourceManagerCow;
+  private final @Nullable CloudBillingClientCow crlBillingClientCow;
+  private final @Nullable ServiceUsageCow crlServiceUsageCow;
 
   @Autowired
-  public CrlService(CrlConfiguration crlConfig) {
+  public CrlService(@NotNull CrlConfiguration crlConfig) {
     this.crlConfig = crlConfig;
 
     final ClientConfig clientConfig;
@@ -44,7 +46,7 @@ public class CrlService {
         this.crlBillingClientCow = new CloudBillingClientCow(clientConfig, creds);
         this.crlServiceUsageCow = ServiceUsageCow.create(clientConfig, creds);
 
-      } catch (GeneralSecurityException | IOException e) {
+      } catch (@NotNull GeneralSecurityException | IOException e) {
         throw new CrlInternalException("Error creating resource manager wrapper", e);
       }
     } else {
@@ -58,24 +60,24 @@ public class CrlService {
   /**
    * @return CRL {@link CloudResourceManagerCow} which wrappers Google Cloud Resource Manager API
    */
-  public CloudResourceManagerCow getCloudResourceManagerCow() {
+  public @Nullable CloudResourceManagerCow getCloudResourceManagerCow() {
     assertCrlInUse();
     return crlResourceManagerCow;
   }
 
   /** Returns the CRL {@link CloudBillingClientCow} which wrappers Google Billing API. */
-  public CloudBillingClientCow getCloudBillingClientCow() {
+  public @Nullable CloudBillingClientCow getCloudBillingClientCow() {
     assertCrlInUse();
     return crlBillingClientCow;
   }
 
   /** Returns the CRL {@link ServiceUsageCow} which wrappers Google Cloud ServiceUsage API. */
-  public ServiceUsageCow getServiceUsageCow() {
+  public @Nullable ServiceUsageCow getServiceUsageCow() {
     assertCrlInUse();
     return crlServiceUsageCow;
   }
 
-  private ServiceAccountCredentials getJanitorCredentials(String serviceAccountPath) {
+  private ServiceAccountCredentials getJanitorCredentials(@NotNull String serviceAccountPath) {
     try {
       return ServiceAccountCredentials.fromStream(new FileInputStream(serviceAccountPath));
     } catch (Exception e) {

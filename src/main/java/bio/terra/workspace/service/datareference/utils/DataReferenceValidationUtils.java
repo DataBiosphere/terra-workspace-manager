@@ -8,6 +8,7 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
 /** A collection of validation functions for data references. */
@@ -24,7 +25,7 @@ public class DataReferenceValidationUtils {
   public static final Pattern NAME_VALIDATION_PATTERN =
       Pattern.compile("^[a-zA-Z0-9][_a-zA-Z0-9]{0,62}$");
 
-  public static void validateReferenceName(String name) {
+  public static void validateReferenceName(@NotNull String name) {
     if (StringUtils.isEmpty(name) || !NAME_VALIDATION_PATTERN.matcher(name).matches()) {
       throw new InvalidDataReferenceException(
           "Invalid reference name specified. Name must be 1 to 63 alphanumeric characters or underscores, and cannot start with an underscore.");
@@ -41,8 +42,8 @@ public class DataReferenceValidationUtils {
    */
   public void validateReferenceObject(
       ReferenceObject reference,
-      DataReferenceType referenceType,
-      AuthenticatedUserRequest userReq) {
+      @NotNull DataReferenceType referenceType,
+      @NotNull AuthenticatedUserRequest userReq) {
 
     // TODO: throw an exception if referenceType doesn't actually match the type of reference.
     switch (referenceType) {
@@ -56,7 +57,8 @@ public class DataReferenceValidationUtils {
     }
   }
 
-  private void validateSnapshotReference(SnapshotReference ref, AuthenticatedUserRequest userReq) {
+  private void validateSnapshotReference(
+      @NotNull SnapshotReference ref, @NotNull AuthenticatedUserRequest userReq) {
     if (StringUtils.isBlank(ref.instanceName()) || StringUtils.isBlank(ref.snapshot())) {
       throw new InvalidDataReferenceException(
           "Invalid Data Repo Snapshot identifier: "

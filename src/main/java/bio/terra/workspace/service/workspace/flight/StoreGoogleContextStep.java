@@ -9,6 +9,8 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -26,7 +28,7 @@ public class StoreGoogleContextStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) {
+  public @Nullable StepResult doStep(@NotNull FlightContext flightContext) {
     UUID workspaceId =
         flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
@@ -55,7 +57,7 @@ public class StoreGoogleContextStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext flightContext) {
+  public StepResult undoStep(@NotNull FlightContext flightContext) {
     UUID workspaceId =
         flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);

@@ -7,6 +7,7 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.job.JobService;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -155,7 +156,7 @@ public class MdcHookTest extends BaseUnitTest {
   /** A {@link Step} that always fails in a non-retryable way. */
   public static class ErrorStep implements Step {
     @Override
-    public StepResult doStep(FlightContext flightContext) {
+    public @NotNull StepResult doStep(FlightContext flightContext) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
     }
 

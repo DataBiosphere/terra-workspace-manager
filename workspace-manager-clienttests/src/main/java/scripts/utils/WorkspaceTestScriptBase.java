@@ -7,6 +7,7 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +22,7 @@ public abstract class WorkspaceTestScriptBase extends TestScript {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceTestScriptBase.class);
 
   @Override
-  public void setup(List<TestUserSpecification> testUsers) throws Exception {
+  public void setup(@Nullable List<TestUserSpecification> testUsers) throws Exception {
     assertThat("There must be at least one test user in configs/testusers directory.",
         testUsers != null && testUsers.size() > 0);
     final WorkspaceApi workspaceApi = ClientTestUtils
@@ -47,7 +48,7 @@ public abstract class WorkspaceTestScriptBase extends TestScript {
   }
 
   @Override
-  public void cleanup(List<TestUserSpecification> testUsers) throws Exception {
+  public void cleanup(@Nullable List<TestUserSpecification> testUsers) throws Exception {
     assertThat("There must be at least one test user in configs/testusers directory.",
         testUsers != null && testUsers.size() > 0);
     final WorkspaceApi workspaceApi = ClientTestUtils

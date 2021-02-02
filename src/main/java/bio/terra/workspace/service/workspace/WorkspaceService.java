@@ -19,6 +19,7 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -53,7 +54,8 @@ public class WorkspaceService {
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
-  public UUID createWorkspace(WorkspaceRequest workspaceRequest, AuthenticatedUserRequest userReq) {
+  public UUID createWorkspace(
+      @NotNull WorkspaceRequest workspaceRequest, @NotNull AuthenticatedUserRequest userReq) {
 
     String description = "Create workspace " + workspaceRequest.workspaceId().toString();
     JobBuilder createJob =
@@ -91,8 +93,8 @@ public class WorkspaceService {
    * @return the workspace, if it exists and the user is permitted to perform the specified action.
    */
   @Traced
-  public Workspace validateWorkspaceAndAction(
-      AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
+  public @NotNull Workspace validateWorkspaceAndAction(
+      @NotNull AuthenticatedUserRequest userReq, @NotNull UUID workspaceId, String action) {
     Workspace workspace = workspaceDao.getWorkspace(workspaceId);
     samService.workspaceAuthzOnly(userReq, workspaceId, action);
     return workspace;
@@ -100,13 +102,14 @@ public class WorkspaceService {
 
   /** Retrieves an existing workspace by ID */
   @Traced
-  public Workspace getWorkspace(UUID id, AuthenticatedUserRequest userReq) {
+  public @NotNull Workspace getWorkspace(
+      @NotNull UUID id, @NotNull AuthenticatedUserRequest userReq) {
     return validateWorkspaceAndAction(userReq, id, SamConstants.SAM_WORKSPACE_READ_ACTION);
   }
 
   /** Delete an existing workspace by ID. */
   @Traced
-  public void deleteWorkspace(UUID id, AuthenticatedUserRequest userReq) {
+  public void deleteWorkspace(@NotNull UUID id, @NotNull AuthenticatedUserRequest userReq) {
     validateWorkspaceAndAction(userReq, id, SamConstants.SAM_WORKSPACE_DELETE_ACTION);
 
     String description = "Delete workspace " + id;
@@ -127,7 +130,8 @@ public class WorkspaceService {
    * before retrieving the cloud context.
    */
   @Traced
-  public WorkspaceCloudContext getCloudContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
+  public @NotNull WorkspaceCloudContext getCloudContext(
+      @NotNull UUID workspaceId, @NotNull AuthenticatedUserRequest userReq) {
     validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return workspaceDao.getCloudContext(workspaceId);
   }
@@ -137,7 +141,8 @@ public class WorkspaceService {
    * workspace existence and write permission before starting the job.
    */
   @Traced
-  public String createGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
+  public String createGoogleContext(
+      @NotNull UUID workspaceId, @NotNull AuthenticatedUserRequest userReq) {
     Workspace workspace =
         validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     workspaceDao.assertMcWorkspace(workspace, "createGoogleContext");
@@ -174,7 +179,8 @@ public class WorkspaceService {
    * permission before deleting the cloud context.
    */
   @Traced
-  public void deleteGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
+  public void deleteGoogleContext(
+      @NotNull UUID workspaceId, @NotNull AuthenticatedUserRequest userReq) {
     Workspace workspace =
         validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     workspaceDao.assertMcWorkspace(workspace, "deleteGoogleContext");

@@ -13,6 +13,7 @@ import bio.terra.workspace.service.datareference.exception.DataRepoInternalServe
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.HashMap;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -32,7 +33,7 @@ public class DataRepoService {
 
   private final Logger logger = LoggerFactory.getLogger(DataRepoService.class);
 
-  private ApiClient getApiClient(String accessToken) {
+  private @NotNull ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();
     client.addDefaultHeader(
         TraceInterceptorConfig.MDC_REQUEST_ID_HEADER,
@@ -41,12 +42,13 @@ public class DataRepoService {
     return client;
   }
 
-  private RepositoryApi repositoryApi(String instanceName, AuthenticatedUserRequest userReq) {
+  private @NotNull RepositoryApi repositoryApi(
+      @NotNull String instanceName, @NotNull AuthenticatedUserRequest userReq) {
     String instanceUrl = getInstanceUrl(instanceName);
     return new RepositoryApi(getApiClient(userReq.getRequiredToken()).setBasePath(instanceUrl));
   }
 
-  public String getInstanceUrl(String instanceName) {
+  public String getInstanceUrl(@NotNull String instanceName) {
     HashMap<String, String> dataRepoInstances = dataRepoConfiguration.getInstances();
     String cleanedInstanceName = instanceName.toLowerCase().trim();
 
@@ -62,7 +64,7 @@ public class DataRepoService {
 
   @Traced
   public boolean snapshotExists(
-      String instanceName, String snapshotId, AuthenticatedUserRequest userReq) {
+      @NotNull String instanceName, String snapshotId, @NotNull AuthenticatedUserRequest userReq) {
     RepositoryApi repositoryApi = repositoryApi(instanceName, userReq);
 
     try {

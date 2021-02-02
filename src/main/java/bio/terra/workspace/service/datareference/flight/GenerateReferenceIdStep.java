@@ -6,6 +6,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Stairway step to generate a unique id for a data reference.
@@ -17,7 +18,7 @@ import java.util.UUID;
 public class GenerateReferenceIdStep implements Step {
 
   @Override
-  public StepResult doStep(FlightContext flightContext)
+  public StepResult doStep(@NotNull FlightContext flightContext)
       throws InterruptedException, RetryException {
     FlightMap workingMap = flightContext.getWorkingMap();
 

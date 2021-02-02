@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableList;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Optional;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -72,14 +73,14 @@ public class UserAccessUtils {
   }
 
   /** Provides an AuthenticatedUserRequest using the default user's email and access token. */
-  public AuthenticatedUserRequest defaultUserAuthRequest() {
+  public @NotNull AuthenticatedUserRequest defaultUserAuthRequest() {
     return new AuthenticatedUserRequest()
         .email(getDefaultUserEmail())
         .token(Optional.of(defaultUserAccessToken().getTokenValue()));
   }
 
   /** Provides an AuthenticatedUserRequest using the second user's email and access token. */
-  public AuthenticatedUserRequest secondUserAuthRequest() {
+  public @NotNull AuthenticatedUserRequest secondUserAuthRequest() {
     return new AuthenticatedUserRequest()
         .email(getSecondUserEmail())
         .token(Optional.of(secondUserAccessToken().getTokenValue()));

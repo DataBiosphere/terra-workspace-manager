@@ -4,6 +4,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import com.google.auto.value.AutoValue;
 import java.util.Optional;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Internal representation of a request to create a workspace.
@@ -36,7 +37,7 @@ public abstract class WorkspaceRequest {
   /** Temporary feature flag indicating whether this workspace uses MC Terra features. */
   public abstract WorkspaceStage workspaceStage();
 
-  public static WorkspaceRequest.Builder builder() {
+  public static WorkspaceRequest.@NotNull Builder builder() {
     return new AutoValue_WorkspaceRequest.Builder();
   }
 
@@ -50,6 +51,6 @@ public abstract class WorkspaceRequest {
 
     public abstract WorkspaceRequest.Builder workspaceStage(WorkspaceStage value);
 
-    public abstract WorkspaceRequest build();
+    public abstract @NotNull WorkspaceRequest build();
   }
 }

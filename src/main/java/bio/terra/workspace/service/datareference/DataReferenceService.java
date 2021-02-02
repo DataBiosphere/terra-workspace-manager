@@ -17,6 +17,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -51,8 +53,10 @@ public class DataReferenceService {
    * reference.
    */
   @Traced
-  public DataReference getDataReference(
-      UUID workspaceId, UUID referenceId, AuthenticatedUserRequest userReq) {
+  public @Nullable DataReference getDataReference(
+      @NotNull UUID workspaceId,
+      @NotNull UUID referenceId,
+      @NotNull AuthenticatedUserRequest userReq) {
 
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
@@ -66,11 +70,11 @@ public class DataReferenceService {
    * reference.
    */
   @Traced
-  public DataReference getDataReferenceByName(
-      UUID workspaceId,
-      DataReferenceType referenceType,
+  public @Nullable DataReference getDataReferenceByName(
+      @NotNull UUID workspaceId,
+      @NotNull DataReferenceType referenceType,
       String name,
-      AuthenticatedUserRequest userReq) {
+      @NotNull AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
 
@@ -82,8 +86,8 @@ public class DataReferenceService {
    * write permission before creating the reference.
    */
   @Traced
-  public DataReference createDataReference(
-      DataReferenceRequest referenceRequest, AuthenticatedUserRequest userReq) {
+  public @Nullable DataReference createDataReference(
+      @NotNull DataReferenceRequest referenceRequest, @NotNull AuthenticatedUserRequest userReq) {
 
     workspaceService.validateWorkspaceAndAction(
         userReq, referenceRequest.workspaceId(), SamConstants.SAM_WORKSPACE_WRITE_ACTION);
@@ -123,8 +127,8 @@ public class DataReferenceService {
    * <p>Verifies workspace existence and read permission before listing the references.
    */
   @Traced
-  public List<DataReference> enumerateDataReferences(
-      UUID workspaceId, int offset, int limit, AuthenticatedUserRequest userReq) {
+  public @NotNull List<DataReference> enumerateDataReferences(
+      @NotNull UUID workspaceId, int offset, int limit, @NotNull AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return dataReferenceDao.enumerateDataReferences(workspaceId, offset, limit);
@@ -136,7 +140,9 @@ public class DataReferenceService {
    */
   @Traced
   public void deleteDataReference(
-      UUID workspaceId, UUID referenceId, AuthenticatedUserRequest userReq) {
+      @NotNull UUID workspaceId,
+      @NotNull UUID referenceId,
+      @NotNull AuthenticatedUserRequest userReq) {
 
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);

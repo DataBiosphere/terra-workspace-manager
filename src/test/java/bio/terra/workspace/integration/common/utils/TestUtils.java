@@ -3,6 +3,8 @@ package bio.terra.workspace.integration.common.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +16,7 @@ public class TestUtils {
 
   @Autowired private ObjectMapper objectMapper;
 
-  public <T> T mapFromJson(String content, Class<T> valueType) throws IOException {
+  public <T> T mapFromJson(String content, @NotNull Class<T> valueType) throws IOException {
     try {
       return objectMapper.readValue(content, valueType);
     } catch (IOException ex) {
@@ -23,7 +25,7 @@ public class TestUtils {
     }
   }
 
-  public String mapToJson(Object value) {
+  public @Nullable String mapToJson(Object value) {
     try {
       return objectMapper.writeValueAsString(value);
     } catch (JsonProcessingException ex) {

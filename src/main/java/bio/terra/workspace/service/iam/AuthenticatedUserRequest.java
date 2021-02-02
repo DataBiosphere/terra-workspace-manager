@@ -4,6 +4,7 @@ import bio.terra.workspace.common.exception.ApiException;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Optional;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 
 public class AuthenticatedUserRequest {
 
@@ -26,7 +27,7 @@ public class AuthenticatedUserRequest {
     return subjectId;
   }
 
-  public AuthenticatedUserRequest subjectId(String subjectId) {
+  public @NotNull AuthenticatedUserRequest subjectId(String subjectId) {
     this.subjectId = subjectId;
     return this;
   }
@@ -35,7 +36,7 @@ public class AuthenticatedUserRequest {
     return email;
   }
 
-  public AuthenticatedUserRequest email(String email) {
+  public @NotNull AuthenticatedUserRequest email(String email) {
     this.email = email;
     return this;
   }
@@ -44,13 +45,13 @@ public class AuthenticatedUserRequest {
     return token;
   }
 
-  public AuthenticatedUserRequest token(Optional<String> token) {
+  public @NotNull AuthenticatedUserRequest token(Optional<String> token) {
     this.token = token;
     return this;
   }
 
   @JsonIgnore
-  public String getRequiredToken() {
+  public @NotNull String getRequiredToken() {
     if (!token.isPresent()) {
       throw new ApiException("Token required");
     }
@@ -61,7 +62,7 @@ public class AuthenticatedUserRequest {
     return reqId;
   }
 
-  public AuthenticatedUserRequest reqId(UUID reqId) {
+  public @NotNull AuthenticatedUserRequest reqId(UUID reqId) {
     this.reqId = reqId;
     return this;
   }

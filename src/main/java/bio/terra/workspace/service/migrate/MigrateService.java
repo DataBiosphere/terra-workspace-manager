@@ -10,6 +10,7 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
 import liquibase.lockservice.DatabaseChangeLogLock;
 import liquibase.resource.ClassLoaderResourceAccessor;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -33,7 +34,7 @@ public class MigrateService {
    * @param changesetFile - relative path to the changeset file in the project
    * @param dataSource - database to operate on
    */
-  public void initialize(String changesetFile, DataSource dataSource) {
+  public void initialize(String changesetFile, @NotNull DataSource dataSource) {
     migrateWorker(changesetFile, dataSource, true);
   }
 
@@ -45,11 +46,12 @@ public class MigrateService {
    * @param changesetFile - relative path to the changeset file in the project
    * @param dataSource - database to operate on
    */
-  public void upgrade(String changesetFile, DataSource dataSource) {
+  public void upgrade(String changesetFile, @NotNull DataSource dataSource) {
     migrateWorker(changesetFile, dataSource, false);
   }
 
-  private void migrateWorker(String changesetFile, DataSource dataSource, boolean initialize) {
+  private void migrateWorker(
+      String changesetFile, @NotNull DataSource dataSource, boolean initialize) {
     try (Connection connection = dataSource.getConnection()) {
       Liquibase liquibase =
           new Liquibase(
@@ -76,7 +78,7 @@ public class MigrateService {
 
       logger.info("Upgrading the database schema");
       liquibase.update(new Contexts()); // Run all migrations - no context filtering
-    } catch (LiquibaseException | SQLException ex) {
+    } catch (@NotNull LiquibaseException | SQLException ex) {
       throw new MigrateException("Failed to migrate database from " + changesetFile, ex);
     }
   }

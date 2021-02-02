@@ -5,6 +5,8 @@ import bio.terra.workspace.integration.common.response.WorkspaceResponse;
 import bio.terra.workspace.model.ErrorReport;
 import java.io.IOException;
 import java.util.Collections;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +26,8 @@ public class WorkspaceManagerTestClient {
 
   @Autowired private TestUtils testUtils;
 
-  private final HttpHeaders headers;
-  private final RestTemplate restTemplate;
+  private final @NotNull HttpHeaders headers;
+  private final @NotNull RestTemplate restTemplate;
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceManagerTestClient.class);
 
   @Autowired
@@ -38,35 +40,37 @@ public class WorkspaceManagerTestClient {
     headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
   }
 
-  public <T> WorkspaceResponse<T> post(
-      String userEmail, String path, String json, Class<T> responseClass) throws Exception {
+  public <T> @NotNull WorkspaceResponse<T> post(
+      String userEmail, @NotNull String path, String json, Class<T> responseClass)
+      throws Exception {
     HttpEntity<String> entity = new HttpEntity<>(json, getHeaders(userEmail));
     return sendRequest(path, HttpMethod.POST, entity, ErrorReport.class, responseClass);
   }
 
-  public <T> WorkspaceResponse<T> get(String userEmail, String path, Class<T> responseClass)
-      throws Exception {
+  public <T> @NotNull WorkspaceResponse<T> get(
+      String userEmail, @NotNull String path, Class<T> responseClass) throws Exception {
     HttpEntity<String> entity = new HttpEntity<>(getHeaders(userEmail));
     return sendRequest(path, HttpMethod.GET, entity, ErrorReport.class, responseClass);
   }
 
-  public <T> WorkspaceResponse<T> delete(String userEmail, String path) throws Exception {
+  public <T> @NotNull WorkspaceResponse<T> delete(String userEmail, @NotNull String path)
+      throws Exception {
     HttpEntity<String> entity = new HttpEntity<>(getHeaders(userEmail));
     return sendRequest(path, HttpMethod.DELETE, entity, ErrorReport.class, null);
   }
 
-  private HttpHeaders getHeaders(String userEmail) throws IOException {
+  private @NotNull HttpHeaders getHeaders(String userEmail) throws IOException {
     HttpHeaders headersCopy = new HttpHeaders(headers);
     headersCopy.setBearerAuth(authService.getAuthToken(userEmail));
     return headersCopy;
   }
 
-  private <S, T> WorkspaceResponse<T> sendRequest(
-      String path,
-      HttpMethod method,
+  private <S, T> @NotNull WorkspaceResponse<T> sendRequest(
+      @NotNull String path,
+      @NotNull HttpMethod method,
       HttpEntity<String> entity,
-      Class<S> errorClass,
-      Class<T> responseClass)
+      @NotNull Class<S> errorClass,
+      @Nullable Class<T> responseClass)
       throws Exception {
 
     logger.info("api request: method={} path={}", method.toString(), path);

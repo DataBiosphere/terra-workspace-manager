@@ -36,6 +36,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.hamcrest.Matchers;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -125,7 +126,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
   }
 
   /** Create the FlightMap input parameters required for the {@link CreateGoogleContextFlight}. */
-  private static FlightMap createInputParameters(
+  private static @NotNull FlightMap createInputParameters(
       UUID workspaceId, String billingAccountId, AuthenticatedUserRequest userReq) {
     FlightMap inputs = new FlightMap();
     inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
@@ -134,7 +135,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
     return inputs;
   }
 
-  private void assertServiceApisEnabled(Project project, List<String> enabledApis)
+  private void assertServiceApisEnabled(@NotNull Project project, @NotNull List<String> enabledApis)
       throws Exception {
     List<String> serviceNames =
         enabledApis.stream()
@@ -156,7 +157,8 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
   }
 
   /** Asserts that Sam groups are granted their appropriate IAM roles on a GCP project. */
-  private void assertPolicyGroupsSynced(UUID workspaceId, Project project) throws Exception {
+  private void assertPolicyGroupsSynced(@NotNull UUID workspaceId, @NotNull Project project)
+      throws Exception {
     Map<IamRole, String> roleToSamGroup =
         Arrays.stream(IamRole.values())
             .collect(
@@ -183,7 +185,8 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
    * @param groupEmail The group we expect roles to be bound to.
    * @param gcpPolicy The GCP policy we're checking for role bindings.
    */
-  private void assertRoleBindingsInPolicy(IamRole role, String groupEmail, Policy gcpPolicy) {
+  private void assertRoleBindingsInPolicy(
+      IamRole role, String groupEmail, @NotNull Policy gcpPolicy) {
     List<String> expectedGcpRoleList = CloudSyncRoleMapping.cloudSyncRoleMap.get(role);
     List<Binding> actualGcpBindingList = gcpPolicy.getBindings();
     List<String> actualGcpRoleList =
@@ -203,7 +206,8 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
    * the flight to always attempt to be rolled back.
    */
   public static class ErrorCreateGoogleContextFlight extends CreateGoogleContextFlight {
-    public ErrorCreateGoogleContextFlight(FlightMap inputParameters, Object applicationContext) {
+    public ErrorCreateGoogleContextFlight(
+        FlightMap inputParameters, @NotNull Object applicationContext) {
       super(inputParameters, applicationContext);
       addStep(new StairwayTestUtils.ErrorDoStep());
     }

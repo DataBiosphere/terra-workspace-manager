@@ -2,6 +2,7 @@ package bio.terra.workspace.service.workspace;
 
 import com.google.auto.value.AutoValue;
 import java.util.Optional;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The cloud contexts associated with a resource.
@@ -14,11 +15,11 @@ public abstract class WorkspaceCloudContext {
   /** The Google Project id for workspaces with Google context. */
   public abstract Optional<String> googleProjectId();
 
-  public static WorkspaceCloudContext createGoogleContext(String projectId) {
+  public static @NotNull WorkspaceCloudContext createGoogleContext(@NotNull String projectId) {
     return new AutoValue_WorkspaceCloudContext(Optional.of(projectId));
   }
 
-  public static WorkspaceCloudContext none() {
+  public static @NotNull WorkspaceCloudContext none() {
     return new AutoValue_WorkspaceCloudContext(Optional.empty());
   }
 }

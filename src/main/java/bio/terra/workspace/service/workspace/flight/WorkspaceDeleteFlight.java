@@ -8,13 +8,15 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import org.jetbrains.annotations.NotNull;
 
 public class WorkspaceDeleteFlight extends Flight {
   private static final int INITIAL_INTERVALS_SECONDS = 1;
   private static final int MAX_INTERVAL_SECONDS = 8;
   private static final int MAX_OPERATION_TIME_SECONDS = 5 * 60;
 
-  public WorkspaceDeleteFlight(FlightMap inputParameters, Object applicationContext) {
+  public WorkspaceDeleteFlight(
+      @NotNull FlightMap inputParameters, @NotNull Object applicationContext) {
     super(inputParameters, applicationContext);
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);

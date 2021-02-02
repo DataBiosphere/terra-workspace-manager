@@ -10,6 +10,7 @@ import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 
 public class DeleteWorkspaceAuthzStep implements Step {
@@ -23,7 +24,7 @@ public class DeleteWorkspaceAuthzStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) throws RetryException {
+  public StepResult doStep(@NotNull FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     try {
@@ -39,7 +40,7 @@ public class DeleteWorkspaceAuthzStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext flightContext) {
+  public @NotNull StepResult undoStep(FlightContext flightContext) {
     // Sam does not allow Workspace ID re-use, so a delete really can't be undone. We retry on Sam
     // API errors in the do-step to try avoiding the undo step, but if we get this far there's
     // nothing to do but tell Stairway we're stuck.

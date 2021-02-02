@@ -11,6 +11,7 @@ import io.opencensus.contrib.spring.aop.CensusSpringAspect;
 import io.opencensus.contrib.spring.instrument.web.client.TracingAsyncClientHttpRequestInterceptor;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -25,18 +26,18 @@ public class BeanConfig {
   }
 
   @Bean // required for opencensus spring contrib, although not mentioned by any documentation
-  public TracingAsyncClientHttpRequestInterceptor requestInterceptor() {
+  public @NotNull TracingAsyncClientHttpRequestInterceptor requestInterceptor() {
     return TracingAsyncClientHttpRequestInterceptor.create(null, null);
   }
 
   @Bean // enables the @Traced annotation
-  public CensusSpringAspect censusAspect() {
+  public @NotNull CensusSpringAspect censusAspect() {
     return new CensusSpringAspect(tracer());
   }
 
   @Bean("jdbcTemplate")
-  public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate(
-      WorkspaceDatabaseConfiguration config) {
+  public @NotNull NamedParameterJdbcTemplate getNamedParameterJdbcTemplate(
+      @NotNull WorkspaceDatabaseConfiguration config) {
     return new NamedParameterJdbcTemplate(config.getDataSource());
   }
 
@@ -55,7 +56,8 @@ public class BeanConfig {
   // bean initialization should avoid database access. If there is additional database work to be
   // done, it should happen inside this method.
   @Bean
-  public SmartInitializingSingleton postSetupInitialization(ApplicationContext applicationContext) {
+  public @NotNull SmartInitializingSingleton postSetupInitialization(
+      @NotNull ApplicationContext applicationContext) {
     return () -> {
       StartupInitializer.initialize(applicationContext);
     };

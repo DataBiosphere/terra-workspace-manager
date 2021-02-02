@@ -11,6 +11,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 
 public class StairwayExceptionSerializer implements ExceptionSerializer {
@@ -21,7 +23,7 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
   }
 
   @Override
-  public String serialize(Exception rawException) {
+  public String serialize(@Nullable Exception rawException) {
     if (rawException == null) {
       return StringUtils.EMPTY;
     }
@@ -57,7 +59,7 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
   }
 
   @Override
-  public Exception deserialize(String serializedException) {
+  public @Nullable Exception deserialize(String serializedException) {
     if (StringUtils.isEmpty(serializedException)) {
       return null;
     }
@@ -96,7 +98,8 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
                 fields.getErrorDetails(),
                 HttpStatus.valueOf(fields.getErrorCode()));
         return (Exception) object;
-      } catch (NoSuchMethodException
+      } catch (@NotNull
+          NoSuchMethodException
           | SecurityException
           | InstantiationException
           | IllegalAccessException
@@ -113,7 +116,8 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
         Constructor<?> ctor = clazz.getConstructor(String.class, List.class);
         Object object = ctor.newInstance(fields.getMessage(), fields.getErrorDetails());
         return (Exception) object;
-      } catch (NoSuchMethodException
+      } catch (@NotNull
+          NoSuchMethodException
           | SecurityException
           | InstantiationException
           | IllegalAccessException
@@ -129,7 +133,8 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
       Constructor<?> ctor = clazz.getConstructor(String.class);
       Object object = ctor.newInstance(fields.getMessage());
       return (Exception) object;
-    } catch (NoSuchMethodException
+    } catch (@NotNull
+        NoSuchMethodException
         | SecurityException
         | InstantiationException
         | IllegalAccessException

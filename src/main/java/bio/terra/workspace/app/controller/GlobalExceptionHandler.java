@@ -3,6 +3,7 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.common.exception.ErrorReportException;
 import bio.terra.workspace.generated.model.ErrorReport;
 import java.util.List;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -24,7 +25,7 @@ public class GlobalExceptionHandler {
 
   // -- Error Report - one of our exceptions --
   @ExceptionHandler(ErrorReportException.class)
-  public ResponseEntity<ErrorReport> errorReportHandler(ErrorReportException ex) {
+  public @NotNull ResponseEntity<ErrorReport> errorReportHandler(@NotNull ErrorReportException ex) {
     return buildErrorReport(ex, ex.getStatusCode(), ex.getCauses());
   }
 
@@ -36,7 +37,7 @@ public class GlobalExceptionHandler {
     IllegalArgumentException.class,
     NoHandlerFoundException.class
   })
-  public ResponseEntity<ErrorReport> validationExceptionHandler(Exception ex) {
+  public @NotNull ResponseEntity<ErrorReport> validationExceptionHandler(@NotNull Exception ex) {
     logger.error("Global exception handler: catch stack", ex);
     // For security reasons, we generally don't want to include the user's invalid (and potentially
     // malicious) input in the error response, which also means we don't include the full exception.
@@ -54,13 +55,13 @@ public class GlobalExceptionHandler {
 
   // -- catchall - log so we can understand what we have missed in the handlers above
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<ErrorReport> catchallHandler(Exception ex) {
+  public @NotNull ResponseEntity<ErrorReport> catchallHandler(@NotNull Exception ex) {
     logger.error("Exception caught by catchall hander", ex);
     return buildErrorReport(ex, HttpStatus.INTERNAL_SERVER_ERROR, null);
   }
 
-  private ResponseEntity<ErrorReport> buildErrorReport(
-      Throwable ex, HttpStatus statusCode, List<String> causes) {
+  private @NotNull ResponseEntity<ErrorReport> buildErrorReport(
+      @NotNull Throwable ex, @NotNull HttpStatus statusCode, List<String> causes) {
     StringBuilder combinedCauseString = new StringBuilder();
     for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
       combinedCauseString.append("cause: " + cause.toString() + ", ");

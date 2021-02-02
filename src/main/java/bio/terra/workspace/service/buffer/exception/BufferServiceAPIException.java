@@ -4,13 +4,14 @@ import bio.terra.buffer.client.ApiException;
 import bio.terra.workspace.common.exception.ErrorReportException;
 import java.util.Collections;
 import java.util.List;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 
 /** Wrapper exception for non-200 responses from calls to Buffer Service. */
 public class BufferServiceAPIException extends ErrorReportException {
   private ApiException apiException;
 
-  public BufferServiceAPIException(ApiException bufferException) {
+  public BufferServiceAPIException(@NotNull ApiException bufferException) {
     super(
         "Error from Buffer Service: ",
         bufferException,

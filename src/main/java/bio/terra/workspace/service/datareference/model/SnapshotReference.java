@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.auto.value.AutoValue;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Representation of a reference to a Data Repo snapshot.
@@ -25,7 +26,7 @@ import com.google.auto.value.AutoValue;
 public abstract class SnapshotReference implements ReferenceObject {
 
   @JsonCreator
-  public static SnapshotReference create(
+  public static @NotNull SnapshotReference create(
       @JsonProperty("instanceName") String instanceName,
       @JsonProperty("snapshot") String snapshot) {
     return new AutoValue_SnapshotReference(instanceName, snapshot);

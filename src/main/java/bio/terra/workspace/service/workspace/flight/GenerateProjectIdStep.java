@@ -6,6 +6,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Generates Project Id and put it in working map.
@@ -19,7 +20,7 @@ public class GenerateProjectIdStep implements Step {
   public GenerateProjectIdStep() {}
 
   @Override
-  public StepResult doStep(FlightContext flightContext) {
+  public StepResult doStep(@NotNull FlightContext flightContext) {
     flightContext.getWorkingMap().put(GOOGLE_PROJECT_ID, randomProjectId());
     return StepResult.getStepResultSuccess();
   }
@@ -30,7 +31,7 @@ public class GenerateProjectIdStep implements Step {
   }
 
   /** Generate a pseudo-random project id. */
-  public static String randomProjectId() {
+  public static @NotNull String randomProjectId() {
     return "wm-" + Long.valueOf(UUID.randomUUID().getMostSignificantBits()).toString();
   }
 }

@@ -38,6 +38,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,11 +49,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class JobService {
 
-  private final Stairway stairway;
+  private final @NotNull Stairway stairway;
   private final SamService samService;
-  private final JobConfiguration jobConfig;
+  private final @NotNull JobConfiguration jobConfig;
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
-  private final ScheduledExecutorService executor;
+  private final @NotNull ScheduledExecutorService executor;
   private final MdcHook mdcHook;
 
   private final Logger logger = LoggerFactory.getLogger(JobService.class);
@@ -59,7 +61,7 @@ public class JobService {
   @Autowired
   public JobService(
       SamService samService,
-      JobConfiguration jobConfig,
+      @NotNull JobConfiguration jobConfig,
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
       FlightBeanBag applicationContext,
       MdcHook mdcHook,
@@ -92,7 +94,7 @@ public class JobService {
       return result;
     }
 
-    public JobResultWithStatus<T> result(T result) {
+    public @NotNull JobResultWithStatus<T> result(T result) {
       this.result = result;
       return this;
     }
@@ -101,19 +103,19 @@ public class JobService {
       return statusCode;
     }
 
-    public JobResultWithStatus<T> statusCode(HttpStatus httpStatus) {
+    public @NotNull JobResultWithStatus<T> statusCode(HttpStatus httpStatus) {
       this.statusCode = httpStatus;
       return this;
     }
   }
 
   // creates a new JobBuilder object and returns it.
-  public JobBuilder newJob(
+  public @NotNull JobBuilder newJob(
       String description,
       String jobId,
       Class<? extends Flight> flightClass,
       Object request,
-      AuthenticatedUserRequest userReq) {
+      @NotNull AuthenticatedUserRequest userReq) {
     return new JobBuilder(description, jobId, flightClass, request, userReq, this)
         .addParameter(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext());
   }
@@ -137,7 +139,7 @@ public class JobService {
       } else {
         throw new InternalStairwayException(ex);
       }
-    } catch (StairwayException | InterruptedException stairwayEx) {
+    } catch (@NotNull StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
     return jobId;
@@ -147,7 +149,7 @@ public class JobService {
   // protected method intended to be called only from JobBuilder
   protected <T> T submitAndWait(
       Class<? extends Flight> flightClass,
-      FlightMap parameterMap,
+      @NotNull FlightMap parameterMap,
       Class<T> resultClass,
       String jobId,
       boolean duplicateFlightOk) {
@@ -176,7 +178,7 @@ public class JobService {
           continue;
         }
       }
-    } catch (InterruptedException | ExecutionException stairwayEx) {
+    } catch (@NotNull InterruptedException | ExecutionException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
     // Indicates we timed out waiting for completion, throw exception
@@ -193,7 +195,7 @@ public class JobService {
     }
 
     @Override
-    public FlightState call() throws Exception {
+    public @Nullable FlightState call() throws Exception {
       FlightState state = stairway.getFlightState(flightId);
       if (!state.isActive()) {
         return state;
@@ -216,22 +218,22 @@ public class JobService {
           stairwayDatabaseConfiguration.isMigrateUpgrade());
       stairway.recoverAndStart(null);
 
-    } catch (StairwayException | InterruptedException stairwayEx) {
+    } catch (@NotNull StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException("Stairway initialization failed", stairwayEx);
     }
   }
 
   @Traced
-  public void releaseJob(String jobId, AuthenticatedUserRequest userReq) {
+  public void releaseJob(String jobId, @NotNull AuthenticatedUserRequest userReq) {
     try {
       verifyUserAccess(jobId, userReq); // jobId=flightId
       stairway.deleteFlight(jobId, false);
-    } catch (StairwayException | InterruptedException stairwayEx) {
+    } catch (@NotNull StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
   }
 
-  public JobModel mapFlightStateToJobModel(FlightState flightState) {
+  public JobModel mapFlightStateToJobModel(@NotNull FlightState flightState) {
     FlightMap inputParameters = flightState.getInputParameters();
     String description = inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class);
     FlightStatus flightStatus = flightState.getFlightStatus();
@@ -265,7 +267,7 @@ public class JobService {
     return jobModel;
   }
 
-  private JobModel.StatusEnum getJobStatus(FlightStatus flightStatus) {
+  private JobModel.@NotNull StatusEnum getJobStatus(@NotNull FlightStatus flightStatus) {
     switch (flightStatus) {
       case RUNNING:
         return JobModel.StatusEnum.RUNNING;
@@ -278,7 +280,8 @@ public class JobService {
     }
   }
 
-  public List<JobModel> enumerateJobs(int offset, int limit, AuthenticatedUserRequest userReq) {
+  public @NotNull List<JobModel> enumerateJobs(
+      int offset, int limit, @NotNull AuthenticatedUserRequest userReq) {
 
     List<FlightState> flightStateList;
     try {
@@ -286,7 +289,7 @@ public class JobService {
       filter.addFilterInputParameter(
           JobMapKeys.SUBJECT_ID.getKeyName(), FlightFilterOp.EQUAL, userReq.getSubjectId());
       flightStateList = stairway.getFlights(offset, limit, filter);
-    } catch (StairwayException | InterruptedException stairwayEx) {
+    } catch (@NotNull StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
 
@@ -299,13 +302,13 @@ public class JobService {
   }
 
   @Traced
-  public JobModel retrieveJob(String jobId, AuthenticatedUserRequest userReq) {
+  public JobModel retrieveJob(String jobId, @NotNull AuthenticatedUserRequest userReq) {
 
     try {
       verifyUserAccess(jobId, userReq); // jobId=flightId
       FlightState flightState = stairway.getFlightState(jobId);
       return mapFlightStateToJobModel(flightState);
-    } catch (StairwayException | InterruptedException stairwayEx) {
+    } catch (@NotNull StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
   }
@@ -334,19 +337,19 @@ public class JobService {
    * @return object of the result class pulled from the result map
    */
   @Traced
-  public <T> JobResultWithStatus<T> retrieveJobResult(
-      String jobId, Class<T> resultClass, AuthenticatedUserRequest userReq) {
+  public <T> @NotNull JobResultWithStatus<T> retrieveJobResult(
+      String jobId, Class<T> resultClass, @NotNull AuthenticatedUserRequest userReq) {
 
     try {
       verifyUserAccess(jobId, userReq); // jobId=flightId
       return retrieveJobResultWorker(jobId, resultClass);
-    } catch (StairwayException | InterruptedException stairwayEx) {
+    } catch (@NotNull StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
   }
 
-  private <T> JobResultWithStatus<T> retrieveJobResultWorker(String jobId, Class<T> resultClass)
-      throws StairwayException, InterruptedException {
+  private <T> @NotNull JobResultWithStatus<T> retrieveJobResultWorker(
+      String jobId, Class<T> resultClass) throws StairwayException, InterruptedException {
     FlightState flightState = stairway.getFlightState(jobId);
     FlightMap resultMap = flightState.getResultMap().orElse(null);
     if (resultMap == null) {
@@ -386,7 +389,7 @@ public class JobService {
     }
   }
 
-  private FlightMap getResultMap(FlightState flightState) {
+  private FlightMap getResultMap(@NotNull FlightState flightState) {
     FlightMap resultMap = flightState.getResultMap().orElse(null);
     if (resultMap == null) {
       throw new InvalidResultStateException("No result map returned from flight");
@@ -394,7 +397,7 @@ public class JobService {
     return resultMap;
   }
 
-  private void verifyUserAccess(String jobId, AuthenticatedUserRequest userReq) {
+  private void verifyUserAccess(String jobId, @NotNull AuthenticatedUserRequest userReq) {
     try {
       FlightState flightState = stairway.getFlightState(jobId);
       FlightMap inputParameters = flightState.getInputParameters();
@@ -403,7 +406,7 @@ public class JobService {
       if (!StringUtils.equals(flightSubjectId, userReq.getSubjectId())) {
         throw new JobUnauthorizedException("Unauthorized");
       }
-    } catch (DatabaseOperationException | InterruptedException ex) {
+    } catch (@NotNull DatabaseOperationException | InterruptedException ex) {
       throw new InternalStairwayException("Stairway exception looking up the job", ex);
     } catch (FlightNotFoundException ex) {
       throw new JobNotFoundException("Job not found", ex);
@@ -411,7 +414,7 @@ public class JobService {
   }
 
   @VisibleForTesting
-  public Stairway getStairway() {
+  public @NotNull Stairway getStairway() {
     return stairway;
   }
 }

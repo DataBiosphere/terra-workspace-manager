@@ -9,6 +9,7 @@ import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,11 +29,11 @@ public class SpendProfileService {
 
   @Autowired
   public SpendProfileService(
-      SamService samService, SpendProfileConfiguration spendProfileConfiguration) {
+      SamService samService, @NotNull SpendProfileConfiguration spendProfileConfiguration) {
     this(samService, parse(spendProfileConfiguration.getSpendProfiles()));
   }
 
-  public SpendProfileService(SamService samService, List<SpendProfile> spendProfiles) {
+  public SpendProfileService(SamService samService, @NotNull List<SpendProfile> spendProfiles) {
     this.samService = samService;
     this.spendProfiles = Maps.uniqueIndex(spendProfiles, SpendProfile::id);
   }
@@ -43,7 +44,7 @@ public class SpendProfileService {
    * SpendUnauthorizedException}.
    */
   public SpendProfile authorizeLinking(
-      SpendProfileId spendProfileId, AuthenticatedUserRequest userRequest) {
+      @NotNull SpendProfileId spendProfileId, @NotNull AuthenticatedUserRequest userRequest) {
     if (!samService.isAuthorized(
         userRequest.getRequiredToken(),
         SamConstants.SPEND_PROFILE_RESOURCE,
@@ -65,7 +66,7 @@ public class SpendProfileService {
   }
 
   private static List<SpendProfile> parse(
-      List<SpendProfileConfiguration.SpendProfileModel> spendModels) {
+      @NotNull List<SpendProfileConfiguration.SpendProfileModel> spendModels) {
     return spendModels.stream()
         .map(
             spendModel ->

@@ -14,6 +14,7 @@ import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 
 /** Stairway step to persist a data reference in WM's database. */
@@ -28,7 +29,7 @@ public class CreateDataReferenceStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) throws RetryException {
+  public StepResult doStep(@NotNull FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
     FlightMap workingMap = flightContext.getWorkingMap();
     UUID referenceId = workingMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
@@ -63,7 +64,7 @@ public class CreateDataReferenceStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext flightContext) {
+  public StepResult undoStep(@NotNull FlightContext flightContext) {
     FlightMap inputMap = flightContext.getInputParameters();
     FlightMap workingMap = flightContext.getWorkingMap();
 

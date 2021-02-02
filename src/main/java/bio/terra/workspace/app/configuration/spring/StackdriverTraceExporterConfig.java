@@ -7,6 +7,7 @@ import io.opencensus.exporter.trace.stackdriver.StackdriverTraceExporter;
 import io.opencensus.trace.AttributeValue;
 import java.io.IOException;
 import java.util.Map;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
@@ -18,7 +19,7 @@ public class StackdriverTraceExporterConfig {
 
   @Autowired
   public StackdriverTraceExporterConfig(
-      TracingConfiguration tracingConfiguration, Environment environment) {
+      @NotNull TracingConfiguration tracingConfiguration, @NotNull Environment environment) {
     try {
       StackdriverTraceExporter.createAndRegister(
           StackdriverTraceConfiguration.builder()

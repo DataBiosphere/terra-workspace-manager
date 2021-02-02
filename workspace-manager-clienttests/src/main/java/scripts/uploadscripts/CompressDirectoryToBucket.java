@@ -9,6 +9,8 @@ import com.google.api.client.util.ByteStreams;
 import com.google.cloud.WriteChannel;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +34,7 @@ public class CompressDirectoryToBucket extends UploadScript {
      *
      * @param parameters list of string parameters supplied by the upload list
      */
-    public void setParameters(List<String> parameters) throws Exception {
+    public void setParameters(@Nullable List<String> parameters) throws Exception {
         if (parameters == null || parameters.size() < 1) {
             throw new IllegalArgumentException("Must provide bucket path in the parameters list");
         }
@@ -47,7 +49,7 @@ public class CompressDirectoryToBucket extends UploadScript {
      * client-side output and any relevant measurements collected.
      */
     public void uploadResults(
-            Path outputDirectory, ServiceAccountSpecification uploaderServiceAccount) throws Exception {
+            @NotNull Path outputDirectory, @NotNull ServiceAccountSpecification uploaderServiceAccount) throws Exception {
         // archive file path will be: outputDirectory parent directory + test run id + .tar.gz
         Path outputDirectoryParent = outputDirectory.getParent();
         if (outputDirectoryParent == null) {
