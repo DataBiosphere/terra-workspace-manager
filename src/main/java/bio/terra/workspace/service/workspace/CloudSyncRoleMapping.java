@@ -16,7 +16,9 @@ public class CloudSyncRoleMapping {
                   // TODO(wchambers): Revise notebooks permissions when there are controlled
                   // resources for notebooks.
                   "roles/notebooks.admin",
-                  "roles/storage.objectAdmin"),
+                  // TODO(marikomedlock): Revise storage permissions when there are controlled
+                  // resources for notebooks
+                  "roles/storage.admin"),
           IamRole.WRITER,
               ImmutableList.of(
                   "roles/viewer",
@@ -25,6 +27,8 @@ public class CloudSyncRoleMapping {
                   // TODO(wchambers): Revise notebooks permissions when there are controlled
                   // resources for notebooks.
                   "roles/notebooks.admin",
-                  "roles/storage.objectAdmin"),
+                  // TODO(marikomedlock): Revise storage permissions when there are controlled
+                  // resources for notebooks
+                  "roles/storage.admin"),
           IamRole.READER, ImmutableList.of("roles/viewer"));
 }
