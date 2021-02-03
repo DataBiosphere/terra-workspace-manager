@@ -50,7 +50,7 @@ public class SamService {
     this.workspaceDao = workspaceDao;
   }
 
-  private Logger logger = LoggerFactory.getLogger(SamService.class);
+  private final Logger logger = LoggerFactory.getLogger(SamService.class);
 
   private ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();
@@ -156,6 +156,7 @@ public class SamService {
   public void grantWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
     workspaceDao.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
+    workspaceAuthzOnly(userReq, workspaceId, samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       resourceApi.addUserToPolicy(
@@ -179,6 +180,7 @@ public class SamService {
   public void removeWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
     workspaceDao.assertMcWorkspace(workspaceId, "removeWorkspaceRole");
+    workspaceAuthzOnly(userReq, workspaceId, samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       resourceApi.removeUserFromPolicy(
@@ -200,6 +202,7 @@ public class SamService {
    */
   public List<RoleBinding> listRoleBindings(UUID workspaceId, AuthenticatedUserRequest userReq) {
     workspaceDao.assertMcWorkspace(workspaceId, "listRoleBindings");
+    workspaceAuthzOnly(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_IAM_ACTION);
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       List<AccessPolicyResponseEntry> samResult =
@@ -310,5 +313,10 @@ public class SamService {
     } catch (ApiException samException) {
       throw new SamApiException(samException);
     }
+  }
+
+  /** Returns the Sam action for modifying a given IAM role. */
+  private String samActionToModifyRole(IamRole role) {
+    return String.format("share_policy::%s", role.toSamRole());
   }
 }

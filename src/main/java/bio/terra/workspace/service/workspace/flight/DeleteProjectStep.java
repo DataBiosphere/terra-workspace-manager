@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 public class DeleteProjectStep implements Step {
   private final CloudResourceManagerCow resourceManager;
   private final WorkspaceDao workspaceDao;
-  private Logger logger = LoggerFactory.getLogger(DeleteProjectStep.class);
+  private final Logger logger = LoggerFactory.getLogger(DeleteProjectStep.class);
 
   public DeleteProjectStep(CloudResourceManagerCow resourceManager, WorkspaceDao workspaceDao) {
     this.resourceManager = resourceManager;

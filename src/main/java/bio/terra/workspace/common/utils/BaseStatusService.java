@@ -19,10 +19,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 */
 public class BaseStatusService {
 
-  private ConcurrentHashMap<String, StatusSubsystem> subsystems;
+  private final ConcurrentHashMap<String, StatusSubsystem> subsystems;
   private long lastUpdatedTimestampMillis;
-  private SystemStatus currentStatus;
-  private long staleThresholdMillis;
+  private final SystemStatus currentStatus;
+  private final long staleThresholdMillis;
 
   public BaseStatusService(long staleThresholdMillis) {
     subsystems = new ConcurrentHashMap<>();

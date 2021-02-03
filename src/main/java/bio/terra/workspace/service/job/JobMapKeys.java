@@ -15,7 +15,7 @@ public enum JobMapKeys {
   // parameter for the job
   FLIGHT_CLASS("flight_class");
 
-  private String keyName;
+  private final String keyName;
 
   JobMapKeys(String keyName) {
     this.keyName = keyName;

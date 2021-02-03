@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class MigrateService {
-  private Logger logger = LoggerFactory.getLogger(MigrateService.class);
+  private final Logger logger = LoggerFactory.getLogger(MigrateService.class);
 
   /**
    * Initialize drops existing tables in the database and reinitializes it with the changeset. This

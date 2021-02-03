@@ -8,10 +8,10 @@ import io.opencensus.contrib.spring.aop.Traced;
 
 public class JobBuilder {
 
-  private JobService jobServiceRef;
-  private Class<? extends Flight> flightClass;
-  private FlightMap jobParameterMap;
-  private String jobId;
+  private final JobService jobServiceRef;
+  private final Class<? extends Flight> flightClass;
+  private final FlightMap jobParameterMap;
+  private final String jobId;
 
   // constructor only takes required parameters
   public JobBuilder(

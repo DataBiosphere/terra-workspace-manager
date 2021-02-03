@@ -11,6 +11,7 @@ import static org.mockito.Mockito.doReturn;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
+import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
@@ -113,7 +114,7 @@ public class SamServiceTest extends BaseConnectedTest {
     // Note that this request uses the secondary user's authentication token, when only the first
     // user is an owner.
     assertThrows(
-        SamApiException.class,
+        SamUnauthorizedException.class,
         () ->
             samService.grantWorkspaceRole(
                 workspaceId,
@@ -184,8 +185,29 @@ public class SamServiceTest extends BaseConnectedTest {
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), IamRole.WRITER, userAccessUtils.getSecondUserEmail());
     assertThrows(
-        SamApiException.class,
+        SamUnauthorizedException.class,
         () -> samService.listRoleBindings(workspaceId, secondaryUserRequest()));
+  }
+
+  @Test
+  public void GrantRoleInMissingWorkspaceThrows() {
+    UUID fakeId = UUID.randomUUID();
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () ->
+            samService.grantWorkspaceRole(
+                fakeId,
+                defaultUserRequest(),
+                IamRole.READER,
+                userAccessUtils.getSecondUserEmail()));
+  }
+
+  @Test
+  public void ReadRolesInMissingWorkspaceThrows() {
+    UUID fakeId = UUID.randomUUID();
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () -> samService.listRoleBindings(fakeId, defaultUserRequest()));
   }
 
   /**

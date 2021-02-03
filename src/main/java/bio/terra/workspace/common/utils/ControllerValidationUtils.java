@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 /** Various utilities for validating requests in Controllers. */
 public final class ControllerValidationUtils {
 
-  private static Logger logger = LoggerFactory.getLogger(ControllerValidationUtils.class);
+  private static final Logger logger = LoggerFactory.getLogger(ControllerValidationUtils.class);
 
   // Pattern shared with Sam, originally from https://www.regular-expressions.info/email.html.
   public static final Pattern EMAIL_VALIDATION_PATTERN =
@@ -56,11 +56,6 @@ public final class ControllerValidationUtils {
     if (body.getReferenceType() == null || body.getReference() == null) {
       throw new InvalidDataReferenceException(
           "Data reference must contain a reference type and a reference description");
-    }
-    // TODO: remove this check when we add support for resource-specific credentials.
-    if (body.getCredentialId() != null) {
-      throw new InvalidDataReferenceException(
-          "Resource-specific credentials are not supported yet.");
     }
   }
 

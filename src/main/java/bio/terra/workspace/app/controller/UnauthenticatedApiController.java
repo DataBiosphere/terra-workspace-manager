@@ -13,8 +13,8 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class UnauthenticatedApiController implements UnauthenticatedApi {
 
-  private WorkspaceManagerStatusService statusService;
-  private SystemVersion currentVersion;
+  private final WorkspaceManagerStatusService statusService;
+  private final SystemVersion currentVersion;
 
   @Autowired
   public UnauthenticatedApiController(
@@ -35,11 +35,11 @@ public class UnauthenticatedApiController implements UnauthenticatedApi {
   public ResponseEntity<SystemStatus> serviceStatus() {
     SystemStatus currentStatus = statusService.getCurrentStatus();
     return new ResponseEntity<>(
-        currentStatus, currentStatus.isOk() ? HttpStatus.valueOf(200) : HttpStatus.valueOf(500));
+        currentStatus, currentStatus.isOk() ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   @Override
   public ResponseEntity<SystemVersion> serviceVersion() {
-    return new ResponseEntity<>(currentVersion, HttpStatus.valueOf(200));
+    return new ResponseEntity<>(currentVersion, HttpStatus.OK);
   }
 }

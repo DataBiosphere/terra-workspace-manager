@@ -6,6 +6,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import java.io.IOException;
 import java.util.Optional;
+import org.springframework.http.HttpStatus;
 
 /** Utilities for interacting with Google Cloud APIs within {@link Step}s. */
 public class GoogleUtils {
@@ -36,7 +37,7 @@ public class GoogleUtils {
     try {
       return Optional.of(resourceManager.projects().get(projectId).execute());
     } catch (GoogleJsonResponseException e) {
-      if (e.getStatusCode() == 403) {
+      if (e.getStatusCode() == HttpStatus.FORBIDDEN.value()) {
         // Google returns 403 for projects we don't have access to and projects that don't exist.
         // We assume in this case that the project does not exist, not that somebody else has
         // created a project with the same id.

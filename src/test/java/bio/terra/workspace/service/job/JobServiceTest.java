@@ -25,7 +25,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 
 public class JobServiceTest extends BaseUnitTest {
-  private AuthenticatedUserRequest testUser =
+  private final AuthenticatedUserRequest testUser =
       new AuthenticatedUserRequest()
           .subjectId("StairwayUnit")
           .email("stairway@unit.com")
