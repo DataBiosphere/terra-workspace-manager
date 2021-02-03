@@ -50,7 +50,11 @@ jobs:
       id: set-env-step
       run: |
         if ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}; then
-          ENV=local
+          if ${{ matrix.gradleTask == 'connectedTest' }}; then
+            ENV=dev
+          else
+            ENV=local
+          fi
           CONFIG_ENV=dev
           LOCAL_SERVER=${{ matrix.gradleTask == 'integrationTest' }}
         elif ${{ github.event_name == 'workflow_dispatch' }}; then
