@@ -16,8 +16,6 @@ import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.storage.StorageException;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -28,8 +26,6 @@ public class DataReferenceValidationUtils {
   private final DataRepoService dataRepoService;
   private final CrlService crlService;
 
-  private static final Logger logger = LoggerFactory.getLogger(DataReferenceValidationUtils.class);
-
   /**
    * Names must be 1-63 characters long, and may consist of alphanumeric characters and underscores
    * (but may not start with an underscore). These restrictions match TDR snapshot name restrictions
@@ -38,10 +34,40 @@ public class DataReferenceValidationUtils {
   public static final Pattern NAME_VALIDATION_PATTERN =
       Pattern.compile("^[a-zA-Z0-9][_a-zA-Z0-9]{0,62}$");
 
+  /**
+   * GCS bucket name validation is somewhat complex due to rules about usage of "." and restricted
+   * names like "goog", but as a baseline they must be 3-222 characters long using lowercase
+   * letters, numbers, dashes, underscores, and dots, and must start and end with a letter or
+   * number. Matching this pattern is necessary but not sufficient for a valid bucket name.
+   */
+  public static final Pattern BUCKET_NAME_VALIDATION_PATTERN =
+      Pattern.compile("^[a-z0-9][-_.a-z0-9]{1,220}[a-z0-9]$");
+
+  /**
+   * BigQuery datasets must be 1-1024 characters, using letters (upper or lowercase), numbers, and
+   * underscores.
+   */
+  public static final Pattern BQ_DATASET_NAME_VALIDATION_PATTERN =
+      Pattern.compile("^[_a-zA-Z0-9]{1,1024}$");
+
   public static void validateReferenceName(String name) {
     if (StringUtils.isEmpty(name) || !NAME_VALIDATION_PATTERN.matcher(name).matches()) {
       throw new InvalidDataReferenceException(
           "Invalid reference name specified. Name must be 1 to 63 alphanumeric characters or underscores, and cannot start with an underscore.");
+    }
+  }
+
+  public static void validateBucketName(String name) {
+    if (StringUtils.isEmpty(name) || !BUCKET_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
+      throw new InvalidDataReferenceException(
+          "Invalid GCS bucket name specified. Names must be 3-222 lowercase letters, numbers, dashes, and underscores. See Google documentation for the full specification.");
+    }
+  }
+
+  public static void validateBqDatasetName(String name) {
+    if (StringUtils.isEmpty(name) || !BQ_DATASET_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
+      throw new InvalidDataReferenceException(
+          "Invalid BQ dataset name specified. Name must be 1 to 1024 alphanumeric characters or underscores.");
     }
   }
 
@@ -84,13 +110,10 @@ public class DataReferenceValidationUtils {
               + "instanceName and snapshot must both be provided.");
     }
     if (!dataRepoService.snapshotExists(ref.instanceName(), ref.snapshot(), userReq)) {
-      logger.warn(
-          String.format(
-              "Snapshot %s not found in data repo instance %s",
-              ref.snapshot(), ref.instanceName()));
       throw new InvalidDataReferenceException(
-          "The given snapshot could not be found in the Data Repo instance provided."
-              + " Verify that your reference was correctly defined and the instance is correct");
+          String.format(
+              "Snapshot %s could not be found in Data Repo instance %s. Verify that your reference was correctly defined and the instance is correct",
+              ref.snapshot(), ref.instanceName()));
     }
   }
 
@@ -99,17 +122,20 @@ public class DataReferenceValidationUtils {
    * assumptions about the bucket.
    */
   private void validateGoogleBucket(GoogleBucketReference ref, AuthenticatedUserRequest userReq) {
+    DataReferenceValidationUtils.validateBucketName(ref.bucketName());
     try {
       // StorageCow.get() returns null if the bucket does not exist or a user does not have access,
       // which fails validation.
       BucketCow bucket = crlService.createStorageCow(userReq).get(ref.bucketName());
       if (bucket == null) {
-        logger.warn(String.format("Bucket %s not found", ref.bucketName()));
         throw new InvalidDataReferenceException(
-            "Could not access specified GCS bucket. Ensure the name is correct and that you have access.");
+            String.format(
+                "Could not access GCS bucket %s. Ensure the name is correct and that you have access.",
+                ref.bucketName()));
       }
     } catch (StorageException e) {
-      throw new InvalidDataReferenceException("Error while trying to access GCS bucket", e);
+      throw new InvalidDataReferenceException(
+          String.format("Error while trying to access GCS bucket %s", ref.bucketName()), e);
     }
   }
 
@@ -119,17 +145,17 @@ public class DataReferenceValidationUtils {
    */
   private void validateBigQueryDataset(
       BigQueryDatasetReference ref, AuthenticatedUserRequest userReq) {
+    DataReferenceValidationUtils.validateBqDatasetName(ref.datasetName());
     try {
       DatasetId datasetId = DatasetId.of(ref.projectId(), ref.datasetName());
       // BigQueryCow.get() returns null if the bucket does not exist or a user does not have access,
       // which fails validation.
       DatasetCow dataset = crlService.createBigQueryCow(userReq).getDataset(datasetId);
       if (dataset == null) {
-        logger.warn(
-            String.format(
-                "Dataset %s not found in project %s", ref.datasetName(), ref.projectId()));
         throw new InvalidDataReferenceException(
-            "Could not access specified BigQuery dataset. Ensure the name and GCP project are correct and that you have access.");
+            String.format(
+                "Could not access BigQuery dataset %s in project %s. Ensure the name and GCP project are correct and that you have access.",
+                ref.datasetName(), ref.projectId()));
       }
     } catch (BigQueryException e) {
       throw new InvalidDataReferenceException("Error while trying to access BigQuery dataset", e);
