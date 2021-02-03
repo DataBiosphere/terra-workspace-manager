@@ -38,7 +38,7 @@ public class GoogleCloudSyncStep implements Step {
 
   CloudResourceManagerCow resourceManagerCow;
 
-  private Logger logger = LoggerFactory.getLogger(GoogleCloudSyncStep.class);
+  private final Logger logger = LoggerFactory.getLogger(GoogleCloudSyncStep.class);
 
   public GoogleCloudSyncStep(CloudResourceManagerCow resourceManagerCow) {
     this.resourceManagerCow = resourceManagerCow;

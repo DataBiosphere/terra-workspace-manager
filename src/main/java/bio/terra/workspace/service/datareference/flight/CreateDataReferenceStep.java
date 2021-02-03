@@ -19,8 +19,8 @@ import org.springframework.http.HttpStatus;
 /** Stairway step to persist a data reference in WM's database. */
 public class CreateDataReferenceStep implements Step {
 
-  private DataReferenceDao dataReferenceDao;
-  private ObjectMapper objectMapper;
+  private final DataReferenceDao dataReferenceDao;
+  private final ObjectMapper objectMapper;
 
   public CreateDataReferenceStep(DataReferenceDao dataReferenceDao, ObjectMapper objectMapper) {
     this.dataReferenceDao = dataReferenceDao;

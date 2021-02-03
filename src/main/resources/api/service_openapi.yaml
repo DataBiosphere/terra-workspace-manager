@@ -250,6 +250,10 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/RoleBindingListResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -612,9 +616,6 @@ components:
           $ref: '#/components/schemas/DataRepoSnapshot'
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
-        credentialId:
-          description: The IDs of the credentials to use with this resource
-          type: string
 
     DataReferenceDescription:
       type: object

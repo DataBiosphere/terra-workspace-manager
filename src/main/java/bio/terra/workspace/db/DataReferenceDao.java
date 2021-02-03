@@ -36,7 +36,7 @@ public class DataReferenceDao {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  private Logger logger = LoggerFactory.getLogger(DataReferenceDao.class);
+  private final Logger logger = LoggerFactory.getLogger(DataReferenceDao.class);
 
   /** Create a data reference in a workspace and return the reference's ID. */
   public String createDataReference(DataReferenceRequest request, UUID referenceId)
