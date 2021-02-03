@@ -1,24 +1,31 @@
 #!/bin/bash
 
-WSM_ENV=${1:-local}
+# This script renders config related information in a file called "rendered".
+# It assumes you have a vault token saved here: "$HOME"/.vault-token, but you can pass in
+#   a vault token explicitly if you'd like
+# Example: If you'd like to render configs for the dev environment you can run:
+#    $ ./render_config.sh
+#   or, more explicitly
+#    $ ./render_config.sh dev
+
+WSM_ENV=${1:-dev}
 VAULT_TOKEN=${2:-$(cat "$HOME"/.vault-token)}
 
 if [ -z "${WSM_ENV}" ]; then
     echo "ENV not defined."
     exit 1
-elif ! [[  "${WSM_ENV}" == "local" || "${WSM_ENV}" == "dev" ||  "${WSM_ENV}" == "alpha" || "${WSM_ENV}" == "staging" ]]; then
-    echo "${WSM_ENV} not supported."
-    exit 1
-elif [ "${WSM_ENV}" == "local" ]; then
-  WSM_ENV=dev
-  WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/integration/wsmtest/workspace/app-sa
+elif [[ "${WSM_ENV}" == "dev" ||  "${WSM_ENV}" == "alpha" || "${WSM_ENV}" == "staging" ]]; then
+    WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/${WSM_ENV}/${WSM_ENV}/workspace/app-sa
+    USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/${WSM_ENV}/common/firecloud-account.json
 else
-  WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/${WSM_ENV}/${WSM_ENV}/workspace/app-sa
+    # All other envs are assumed to be within the 'integration' cluster.
+    # Always use 'dev' for TestRunner user impersonation
+    USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/dev/common/firecloud-account.json
+    WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/integration/wsmtest/workspace/app-sa
 fi
 
 
 WM_APP_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/rendered/service-account.json
-USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/${WSM_ENV}/common/firecloud-account.json
 USER_DELEGATED_SERVICE_ACCOUNT_OUTPUT_PATH=$(dirname "$0")/rendered/user-delegated-service-account.json
 JANITOR_CLIENT_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/integration/tools/crl_janitor/client-sa
 JANITOR_CLIENT_SERVICE_ACCOUNT_OUTPUT_PATH="$(dirname $0)"/rendered/janitor-client-sa-account.json

@@ -51,15 +51,18 @@ jobs:
       run: |
         if ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}; then
           ENV=local
+          CONFIG_ENV=dev
           LOCAL_SERVER=${{ matrix.gradleTask == 'integrationTest' }}
         elif ${{ github.event_name == 'workflow_dispatch' }}; then
           ENV=${{ github.event.inputs.testEnv }}
+          CONFIG_ENV=${{ github.event.inputs.testEnv }}
           LOCAL_SERVER=false
         else
           echo ::error ::${{ github.event_name }} not supported for this workflow
           exit 1
         fi
         echo ::set-output name=test-env::$ENV
+        echo ::set-output name=config-env::$CONFIG_ENV
         echo ::set-output name=local-server::$LOCAL_SERVER
 
     - name: Initialize Postgres DB
@@ -104,7 +107,7 @@ jobs:
       if: matrix.gradleTask != 'unitTest'
       run: |
         chmod +x render_config.sh
-        ./render_config.sh ${{ steps.set-env-step.outputs.test-env }} ${{ steps.vault-token-step.outputs.vault-token }}
+        ./render_config.sh ${{ steps.set-env-step.outputs.config-env }} ${{ steps.vault-token-step.outputs.vault-token }}
         chmod +r rendered
 
       # Only integration tests need a running servers
