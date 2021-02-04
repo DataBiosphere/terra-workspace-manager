@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.workspace.flight;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -26,8 +25,6 @@ import com.google.api.services.cloudresourcemanager.model.Binding;
 import com.google.api.services.cloudresourcemanager.model.GetIamPolicyRequest;
 import com.google.api.services.cloudresourcemanager.model.Policy;
 import com.google.api.services.cloudresourcemanager.model.Project;
-import com.google.api.services.serviceusage.v1.model.GoogleApiServiceusageV1Service;
-import com.google.api.services.serviceusage.v1.model.ListServicesResponse;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -35,13 +32,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class CreateGoogleContextFlightTest extends BaseConnectedTest {
   /** How long to wait for a Stairway flight to complete before timing out the test. */
-  private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(5);
+  private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(3);
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private CrlService crl;
@@ -75,7 +71,6 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
         workspaceService.getCloudContext(workspaceId, userReq));
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());
-    assertServiceApisEnabled(project, CreateProjectStep.ENABLED_SERVICES);
     assertEquals(
         "billingAccounts/" + spendUtils.defaultBillingAccountId(),
         crl.getCloudBillingClientCow()
@@ -132,27 +127,6 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
     inputs.put(WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, billingAccountId);
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userReq);
     return inputs;
-  }
-
-  private void assertServiceApisEnabled(Project project, List<String> enabledApis)
-      throws Exception {
-    List<String> serviceNames =
-        enabledApis.stream()
-            .map(
-                apiName ->
-                    String.format("projects/%d/services/%s", project.getProjectNumber(), apiName))
-            .collect(Collectors.toList());
-    ListServicesResponse servicesList =
-        crl.getServiceUsageCow()
-            .services()
-            .list("projects/" + project.getProjectId())
-            .setFilter("state:ENABLED")
-            .execute();
-    assertThat(
-        servicesList.getServices().stream()
-            .map(GoogleApiServiceusageV1Service::getName)
-            .collect(Collectors.toList()),
-        Matchers.hasItems(serviceNames.toArray()));
   }
 
   /** Asserts that Sam groups are granted their appropriate IAM roles on a GCP project. */

@@ -20,11 +20,9 @@ import org.springframework.http.HttpStatus;
 public class CreateDataReferenceStep implements Step {
 
   private final DataReferenceDao dataReferenceDao;
-  private final ObjectMapper objectMapper;
 
   public CreateDataReferenceStep(DataReferenceDao dataReferenceDao, ObjectMapper objectMapper) {
     this.dataReferenceDao = dataReferenceDao;
-    this.objectMapper = objectMapper;
   }
 
   @Override

@@ -2,7 +2,6 @@ package bio.terra.workspace.service.datareference.model;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,7 +20,7 @@ import org.slf4j.LoggerFactory;
  * class should specify a name using the {@Code JsonTypeName} annotation so that changes to the
  * class name do not break backwards compatibility.
  */
-@JsonTypeInfo(use = Id.NAME, include = As.PROPERTY)
+@JsonTypeInfo(use = Id.NAME)
 @JsonSubTypes({
   @JsonSubTypes.Type(value = SnapshotReference.class, name = "SnapshotReference"),
   @JsonSubTypes.Type(value = GoogleBucketReference.class, name = "GoogleBucketReference"),

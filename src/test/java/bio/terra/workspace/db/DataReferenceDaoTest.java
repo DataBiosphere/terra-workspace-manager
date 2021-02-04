@@ -51,9 +51,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
     DataReferenceRequest referenceRequest = defaultReferenceRequest(UUID.randomUUID()).build();
     assertThrows(
         DataIntegrityViolationException.class,
-        () -> {
-          dataReferenceDao.createDataReference(referenceRequest, UUID.randomUUID());
-        });
+        () -> dataReferenceDao.createDataReference(referenceRequest, UUID.randomUUID()));
   }
 
   @Test
@@ -65,9 +63,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
 
     assertThrows(
         DuplicateDataReferenceException.class,
-        () -> {
-          dataReferenceDao.createDataReference(referenceRequest, referenceId);
-        });
+        () -> dataReferenceDao.createDataReference(referenceRequest, referenceId));
   }
 
   @Test
@@ -114,9 +110,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
     UUID decoyId = workspaceDao.createWorkspace(decoyWorkspace);
     assertThrows(
         DataReferenceNotFoundException.class,
-        () -> {
-          dataReferenceDao.getDataReference(decoyId, referenceId);
-        });
+        () -> dataReferenceDao.getDataReference(decoyId, referenceId));
   }
 
   @Test

@@ -33,7 +33,6 @@ public class DataReferenceService {
   private final DataReferenceDao dataReferenceDao;
   private final JobService jobService;
   private final WorkspaceService workspaceService;
-  private final ObjectMapper objectMapper;
 
   private final Logger logger = LoggerFactory.getLogger(DataReferenceService.class);
 
@@ -46,7 +45,6 @@ public class DataReferenceService {
     this.dataReferenceDao = dataReferenceDao;
     this.jobService = jobService;
     this.workspaceService = workspaceService;
-    this.objectMapper = objectMapper;
   }
 
   /**

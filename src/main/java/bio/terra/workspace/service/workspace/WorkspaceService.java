@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.workspace;
 
-import bio.terra.stairway.Flight;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -141,7 +140,7 @@ public class WorkspaceService {
     Workspace workspace =
         validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     workspaceDao.assertMcWorkspace(workspace, "createGoogleContext");
-    if (!workspaceDao.getCloudContext(workspaceId).googleProjectId().isEmpty()) {
+    if (workspaceDao.getCloudContext(workspaceId).googleProjectId().isPresent()) {
       throw new DuplicateGoogleContextException(workspaceId);
     }
     SpendProfileId spendProfileId =
@@ -151,15 +150,11 @@ public class WorkspaceService {
       throw new NoBillingAccountException(spendProfileId);
     }
     String jobId = UUID.randomUUID().toString();
-    Class<? extends Flight> flightClass = CreateGoogleContextFlight.class;
-    if (bufferServiceConfiguration.getEnabled()) {
-      flightClass = CreateGoogleContextRBSFlight.class;
-    }
     jobService
         .newJob(
             "Create Google Context " + workspaceId,
             jobId,
-            flightClass,
+            CreateGoogleContextFlight.class,
             /* request= */ null,
             userReq)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
