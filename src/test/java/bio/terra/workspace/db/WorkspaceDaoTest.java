@@ -125,6 +125,15 @@ public class WorkspaceDaoTest extends BaseUnitTest {
   }
 
   @Test
+  public void getStageNonExistingWorkspaceFails() throws Exception {
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () -> {
+          workspaceDao.getWorkspaceStage(workspaceId);
+        });
+  }
+
+  @Test
   public void getNonExistingWorkspace() throws Exception {
 
     assertThrows(WorkspaceNotFoundException.class, () -> workspaceDao.getWorkspace(workspaceId));
