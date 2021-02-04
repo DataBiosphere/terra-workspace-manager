@@ -12,29 +12,29 @@ public class CloudSyncRoleMapping {
               ImmutableList.of(
                   "roles/viewer",
                   "roles/bigquery.dataEditor",
-                  // TODO(wchambers): Revise notebooks permissions when there are controlled
-                  // resources for notebooks.
+                  // TODO(wchambers): Revise service account permissions when there are controlled
+                  // resources for service accounts.
                   "roles/iam.serviceAccountUser",
                   "roles/lifesciences.editor",
                   // TODO(wchambers): Revise notebooks permissions when there are controlled
                   // resources for notebooks.
                   "roles/notebooks.admin",
                   // TODO(marikomedlock): Revise storage permissions when there are controlled
-                  // resources for notebooks
+                  // resources for buckets.
                   "roles/storage.admin"),
           IamRole.WRITER,
               ImmutableList.of(
                   "roles/viewer",
                   "roles/bigquery.dataEditor",
-                  // TODO(wchambers): Revise notebooks permissions when there are controlled
-                  // resources for notebooks.
+                  // TODO(wchambers): Revise service account permissions when there are controlled
+                  // resources for service accounts.
                   "roles/iam.serviceAccountUser",
                   "roles/lifesciences.editor",
                   // TODO(wchambers): Revise notebooks permissions when there are controlled
                   // resources for notebooks.
                   "roles/notebooks.admin",
                   // TODO(marikomedlock): Revise storage permissions when there are controlled
-                  // resources for notebooks
+                  // resources for buckets.
                   "roles/storage.admin"),
           IamRole.READER, ImmutableList.of("roles/viewer"));
 }
