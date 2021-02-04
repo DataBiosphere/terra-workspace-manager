@@ -14,14 +14,17 @@ VAULT_TOKEN=${2:-$(cat "$HOME"/.vault-token)}
 if [ -z "${WSM_ENV}" ]; then
     echo "ENV not defined."
     exit 1
-elif [[ "${WSM_ENV}" == "dev" ||  "${WSM_ENV}" == "alpha" || "${WSM_ENV}" == "staging" ]]; then
+elif [[ "${WSM_ENV}" == "alpha" || "${WSM_ENV}" == "staging" ]]; then
     WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/${WSM_ENV}/${WSM_ENV}/workspace/app-sa
     USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/${WSM_ENV}/common/firecloud-account.json
+elif [[ "${WSM_ENV}" == "dev" ]]; then
+    WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/${WSM_ENV}/${WSM_ENV}/workspace/app-sa
+    USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/integration/common/firecloud-account.json
 else
     # All other envs are assumed to be within the 'integration' cluster.
     # Always use 'dev' for TestRunner user impersonation
-    USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/dev/common/firecloud-account.json
     WM_APP_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/integration/wsmtest/workspace/app-sa
+    USER_DELEGATED_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/firecloud/dev/common/firecloud-account.json
 fi
 
 
