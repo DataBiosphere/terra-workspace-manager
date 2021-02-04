@@ -8,6 +8,7 @@ import static org.mockito.Mockito.doReturn;
 import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
+import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.SamService;
 import java.util.Map;
@@ -21,6 +22,7 @@ public class WorkspaceManagerStatusServiceTest extends BaseUnitTest {
   @MockBean private DataRepoService mockDataRepoService;
   @MockBean private DataRepoConfiguration mockDataRepoConfiguration;
   @MockBean private SamService mockSamService;
+  @MockBean private BufferService mockBufferService;
 
   @Autowired private WorkspaceManagerStatusService statusService;
 
@@ -29,6 +31,7 @@ public class WorkspaceManagerStatusServiceTest extends BaseUnitTest {
     SystemStatusSystems passingStatus = new SystemStatusSystems().ok(true);
     doReturn(passingStatus).when(mockDataRepoService).status(any());
     doReturn(new SystemStatusSystems().ok(true)).when(mockSamService).status();
+    doReturn(passingStatus).when(mockBufferService).status();
     // Although we mock out the DataRepoConfig, it's only used in the StatusService's constructor.
     // Beans get autowired (meaning that constructor gets called) before this method, so there's
     // no way to configure the return values of mockDataRepoConfig methods. Instead, they'll just
@@ -53,5 +56,18 @@ public class WorkspaceManagerStatusServiceTest extends BaseUnitTest {
     Map<String, SystemStatusSystems> subsystemStatus =
         statusService.getCurrentStatus().getSystems();
     assertFalse(subsystemStatus.get("Sam").isOk());
+  }
+
+  @Test
+  public void testBufferCriticalFailureNotOk() throws Exception {
+    doReturn(new SystemStatusSystems().ok(false).addMessagesItem("Buffer down"))
+        .when(mockBufferService)
+        .status();
+    // Manually check subsystems, since @Scheduled doesn't work nicely in unit tests.
+    statusService.checkSubsystems();
+    assertFalse(statusService.getCurrentStatus().isOk());
+    Map<String, SystemStatusSystems> subsystemStatus =
+        statusService.getCurrentStatus().getSystems();
+    assertFalse(subsystemStatus.get("Buffer").isOk());
   }
 }

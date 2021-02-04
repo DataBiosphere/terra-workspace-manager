@@ -4,6 +4,7 @@ import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
 import bio.terra.workspace.common.utils.BaseStatusService;
 import bio.terra.workspace.common.utils.StatusSubsystem;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
+import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.SamService;
 import java.sql.Connection;
@@ -26,6 +27,7 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
       DataRepoConfiguration dataRepoConfiguration,
       NamedParameterJdbcTemplate jdbcTemplate,
       SamService samService,
+      BufferService bufferService,
       @Value("${workspace.status-check.staleness-threshold-ms}") long staleThresholdMillis) {
     super(staleThresholdMillis);
     this.jdbcTemplate = jdbcTemplate;
@@ -46,6 +48,9 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
 
     Supplier<SystemStatusSystems> samStatusFn = () -> samService.status();
     registerSubsystem("Sam", new StatusSubsystem(samStatusFn, /*isCritical=*/ true));
+
+    Supplier<SystemStatusSystems> bufferHealthFn = () -> bufferService.status();
+    registerSubsystem("Buffer", new StatusSubsystem(bufferHealthFn, true));
   }
 
   private Boolean isConnectionValid(Connection connection) throws SQLException {
