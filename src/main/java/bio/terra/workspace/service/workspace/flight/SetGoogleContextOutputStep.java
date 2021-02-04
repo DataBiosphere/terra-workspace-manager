@@ -26,6 +26,8 @@ public class SetGoogleContextOutputStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
+  // If the flight is undoing, another step has likely set an exception or error as the result.
+  // To avoid clobbering that result, we do not attempt to clear the result in undo().
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     return StepResult.getStepResultSuccess();

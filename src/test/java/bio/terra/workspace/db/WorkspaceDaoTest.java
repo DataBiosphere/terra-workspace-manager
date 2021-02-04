@@ -162,7 +162,7 @@ public class WorkspaceDaoTest extends BaseUnitTest {
     assertEquals(googleContext1, workspaceDao.getCloudContext(workspaceId));
 
     WorkspaceCloudContext googleContext2 =
-        WorkspaceCloudContext.builder().googleProjectId(("my-project2")).build();
+        WorkspaceCloudContext.builder().googleProjectId("my-project2").build();
     workspaceDao.updateCloudContext(workspaceId, googleContext2);
     assertEquals(googleContext2, workspaceDao.getCloudContext(workspaceId));
   }

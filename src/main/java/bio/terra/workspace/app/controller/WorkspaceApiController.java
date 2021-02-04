@@ -120,7 +120,9 @@ public class WorkspaceApiController implements WorkspaceApi {
     Workspace workspace = workspaceService.getWorkspace(id, userReq);
     WorkspaceCloudContext cloudContext = workspaceService.getCloudContext(id, userReq);
 
-    // null if no context exists.
+    // Note projectId will be null here if no cloud context exists.
+    // TODO: this assumes a GoogleContext is the only cloud context on a workspace. This will
+    // eventually need to change.
     GoogleContext googleContext = new GoogleContext().projectId(cloudContext.googleProjectId());
     WorkspaceDescription desc =
         new WorkspaceDescription()

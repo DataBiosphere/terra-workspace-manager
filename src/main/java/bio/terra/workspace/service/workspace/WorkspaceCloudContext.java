@@ -26,7 +26,7 @@ public abstract class WorkspaceCloudContext {
 
   // Convenience method for quickly creating an empty WorkspaceCloudContext.
   public static WorkspaceCloudContext none() {
-    return builder().googleProjectId(null).build();
+    return builder().build();
   }
 
   public static WorkspaceCloudContext.Builder builder() {
