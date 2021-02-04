@@ -51,7 +51,7 @@ public class AuthenticatedUserRequest {
 
   @JsonIgnore
   public String getRequiredToken() {
-    if (!token.isPresent()) {
+    if (token.isEmpty()) {
       throw new ApiException("Token required");
     }
     return token.get();

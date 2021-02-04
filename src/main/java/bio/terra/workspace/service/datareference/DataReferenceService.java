@@ -31,7 +31,6 @@ public class DataReferenceService {
   private final DataReferenceDao dataReferenceDao;
   private final JobService jobService;
   private final WorkspaceService workspaceService;
-  private final ObjectMapper objectMapper;
 
   @Autowired
   public DataReferenceService(
@@ -42,7 +41,6 @@ public class DataReferenceService {
     this.dataReferenceDao = dataReferenceDao;
     this.jobService = jobService;
     this.workspaceService = workspaceService;
-    this.objectMapper = objectMapper;
   }
 
   /**

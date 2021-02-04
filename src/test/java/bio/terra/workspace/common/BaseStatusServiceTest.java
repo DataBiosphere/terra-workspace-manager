@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 public class BaseStatusServiceTest extends BaseUnitTest {
 
-  private class BaseStatusServiceTestImpl extends BaseStatusService {
+  private static class BaseStatusServiceTestImpl extends BaseStatusService {
     public BaseStatusServiceTestImpl(List<StatusSubsystem> subsystems) {
       super(/*staleThresholdMillis=*/ 600000);
       for (int i = 0; i < subsystems.size(); i++) {
@@ -23,7 +23,7 @@ public class BaseStatusServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void testSingleComponent() throws Exception {
+  public void testSingleComponent() {
     List<StatusSubsystem> subsystems = new ArrayList<>();
     subsystems.add(new StatusSubsystem(() -> new SystemStatusSystems().ok(true), true));
 
