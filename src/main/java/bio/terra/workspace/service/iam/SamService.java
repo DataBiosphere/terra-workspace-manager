@@ -80,6 +80,7 @@ public class SamService {
    * reader and writer policies are also created. Errors from the Sam client will be thrown as
    * SamApiExceptions, which wrap the underlying error and expose its status code.
    */
+  @Traced
   public void createWorkspaceWithDefaults(AuthenticatedUserRequest userReq, UUID id) {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     // Sam will throw an error if no owner is specified, so the caller's email is required. It can
@@ -100,6 +101,7 @@ public class SamService {
     }
   }
 
+  @Traced
   public void deleteWorkspace(String authToken, UUID id) {
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
@@ -110,6 +112,7 @@ public class SamService {
     }
   }
 
+  @Traced
   public boolean isAuthorized(
       String accessToken, String iamResourceType, String resourceId, String action) {
     ResourcesApi resourceApi = samResourcesApi(accessToken);
@@ -153,6 +156,7 @@ public class SamService {
    * @param role The role being granted.
    * @param email The user being granted a role.
    */
+  @Traced
   public void grantWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
     workspaceDao.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
@@ -177,6 +181,7 @@ public class SamService {
    * permissions directly on other workspaces. Trying to remove a role that a user does not have
    * will succeed, though Sam will error if the email is not a registered user.
    */
+  @Traced
   public void removeWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
     workspaceDao.assertMcWorkspace(workspaceId, "removeWorkspaceRole");
@@ -200,6 +205,7 @@ public class SamService {
    * <p>This operation is only available to MC_WORKSPACE stage workspaces, as Rawls manages
    * permissions directly on other workspaces.
    */
+  @Traced
   public List<RoleBinding> listRoleBindings(UUID workspaceId, AuthenticatedUserRequest userReq) {
     workspaceDao.assertMcWorkspace(workspaceId, "listRoleBindings");
     workspaceAuthzOnly(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_IAM_ACTION);
@@ -226,6 +232,7 @@ public class SamService {
    *
    * <p>This operation in Sam is idempotent, so we don't worry about calling this multiple times.
    */
+  @Traced
   public String syncWorkspacePolicy(
       UUID workspaceId, IamRole role, AuthenticatedUserRequest userReq) {
     GoogleApi googleApi = samGoogleApi(userReq.getRequiredToken());

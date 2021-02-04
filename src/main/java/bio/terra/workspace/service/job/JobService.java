@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.job;
 
+import bio.terra.common.stairway.TracingHook;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightFilter;
 import bio.terra.stairway.FlightFilterOp;
@@ -74,7 +75,8 @@ public class JobService {
             .exceptionSerializer(serializer)
             .keepFlightLog(true)
             .enableWorkQueue(false)
-            .stairwayHook(mdcHook);
+            .stairwayHook(mdcHook)
+            .stairwayHook(new TracingHook());
     try {
       stairway = new Stairway(builder);
     } catch (StairwayExecutionException e) {
@@ -113,7 +115,10 @@ public class JobService {
       Object request,
       AuthenticatedUserRequest userReq) {
     return new JobBuilder(description, jobId, flightClass, request, userReq, this)
-        .addParameter(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext());
+        .addParameter(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext())
+        .addParameter(
+            TracingHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY,
+            TracingHook.serializeCurrentTracingContext());
   }
 
   // submit a new job to stairway
