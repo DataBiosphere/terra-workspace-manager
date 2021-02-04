@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.workspace.flight.delete;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -9,6 +9,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 

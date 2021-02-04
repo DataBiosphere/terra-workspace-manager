@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.workspace.flight.delete;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.stairway.FlightContext;
@@ -6,6 +6,8 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.workspace.flight.GoogleUtils;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;

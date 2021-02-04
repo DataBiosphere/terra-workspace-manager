@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.workspace.flight.create;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID;
 
@@ -10,6 +10,7 @@ import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.GoogleWorkspaceConfiguration;
 import bio.terra.workspace.service.workspace.exceptions.RetryableCrlException;
+import bio.terra.workspace.service.workspace.flight.GoogleUtils;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.cloudresourcemanager.model.ResourceId;
 import com.google.api.services.serviceusage.v1.model.BatchEnableServicesRequest;
@@ -26,7 +27,7 @@ import java.util.Optional;
  */
 public class CreateProjectStep implements Step {
   @VisibleForTesting
-  static final ImmutableList<String> ENABLED_SERVICES =
+  public static final ImmutableList<String> ENABLED_SERVICES =
       ImmutableList.of("storage-api.googleapis.com");
 
   private final CloudResourceManagerCow resourceManager;

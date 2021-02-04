@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.workspace.flight.create;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
@@ -6,6 +6,12 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.RetryRuleExponentialBackoff;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.workspace.flight.GenerateResourceIdStep;
+import bio.terra.workspace.service.workspace.flight.GoogleCloudSyncStep;
+import bio.terra.workspace.service.workspace.flight.PullProjectFromPoolStep;
+import bio.terra.workspace.service.workspace.flight.SetProjectBillingStep;
+import bio.terra.workspace.service.workspace.flight.StoreGoogleContextStep;
+import bio.terra.workspace.service.workspace.flight.SyncSamGroupsStep;
 
 /**
  * A {@link Flight} for creating a Google cloud context for a workspace using RBS (Buffer Service)
