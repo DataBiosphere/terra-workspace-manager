@@ -3,6 +3,7 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.common.exception.ErrorReportException;
 import bio.terra.workspace.generated.model.ErrorReport;
 import java.util.List;
+import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -60,10 +61,10 @@ public class GlobalExceptionHandler {
   }
 
   private ResponseEntity<ErrorReport> buildErrorReport(
-      Throwable ex, HttpStatus statusCode, List<String> causes) {
+      @NotNull Throwable ex, HttpStatus statusCode, List<String> causes) {
     StringBuilder combinedCauseString = new StringBuilder();
     for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
-      combinedCauseString.append("cause: " + cause.toString() + ", ");
+      combinedCauseString.append("cause: ").append(cause.toString()).append(", ");
     }
     logger.error("Global exception handler: " + combinedCauseString.toString(), ex);
 

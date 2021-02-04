@@ -15,11 +15,9 @@ import bio.terra.workspace.model.DataReferenceDescription;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
@@ -31,7 +29,6 @@ public class EnumerateDataReferences extends WorkspaceFixtureTestScriptBase {
 
   private static final int DATA_REFERENCE_COUNT = 10;
   private static final int PAGE_SIZE = 4;
-  private List<UUID> dataReferenceIds;
 
   @Override
   public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
@@ -57,7 +54,7 @@ public class EnumerateDataReferences extends WorkspaceFixtureTestScriptBase {
       logger.debug("Created Data Reference Name: {}, ID: {}", dataReferenceDescription.getName(), dataReferenceDescription.getReferenceId().toString());
     }
 
-    dataReferenceIds = referenceIdListBuilder.build();
+    List<UUID> dataReferenceIds = referenceIdListBuilder.build();
     assertThat(dataReferenceIds.size(), equalTo(DATA_REFERENCE_COUNT));
 
     logger.info("Created {} data references", dataReferenceIds.size());

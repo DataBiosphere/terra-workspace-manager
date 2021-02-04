@@ -119,9 +119,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
     return workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
   }
 
-  /**
-   * Create the FlightMap input parameters required for the {@link CreateGoogleContextFlight}.
-   */
+  /** Create the FlightMap input parameters required for the {@link CreateGoogleContextFlight}. */
   private static FlightMap createInputParameters(
       UUID workspaceId, String billingAccountId, AuthenticatedUserRequest userReq) {
     FlightMap inputs = new FlightMap();

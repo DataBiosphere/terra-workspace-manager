@@ -6,7 +6,6 @@ import bio.terra.stairway.*;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.job.JobService;
 import com.google.common.collect.ImmutableMap;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -140,10 +139,6 @@ public class MdcHookTest extends BaseUnitTest {
 
     private void assertMatchesExpectedContext() {
       try {
-        Map<String, String> mdcContext = MDC.getCopyOfContextMap();
-        if (mdcContext == null) {
-          mdcContext = ImmutableMap.of();
-        }
         assertEquals(expectedContext, MDC.getCopyOfContextMap());
       } catch (AssertionError error) {
         // Rethrow an AssertionError as an Exception so that Stairway can handle it
