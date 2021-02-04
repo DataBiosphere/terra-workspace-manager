@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  */
 public class GoogleCloudSyncStep implements Step {
 
-  CloudResourceManagerCow resourceManagerCow;
+  private final CloudResourceManagerCow resourceManagerCow;
 
   private final Logger logger = LoggerFactory.getLogger(GoogleCloudSyncStep.class);
 

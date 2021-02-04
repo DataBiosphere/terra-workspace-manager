@@ -21,12 +21,10 @@ public enum WorkspaceStage {
   }
 
   public static WorkspaceStage fromApiModel(WorkspaceStageModel modelEnum) {
-    WorkspaceStage stage = stageMap.inverse().get(modelEnum);
-    return stage;
+    return stageMap.inverse().get(modelEnum);
   }
 
   public WorkspaceStageModel toApiModel() {
-    WorkspaceStageModel stage = stageMap.get(this);
-    return stage;
+    return stageMap.get(this);
   }
 }

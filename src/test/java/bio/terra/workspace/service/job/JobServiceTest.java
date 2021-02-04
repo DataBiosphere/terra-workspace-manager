@@ -114,20 +114,14 @@ public class JobServiceTest extends BaseUnitTest {
 
   @Test
   public void testBadIdRetrieveJob() {
-    assertThrows(
-        JobNotFoundException.class,
-        () -> {
-          jobService.retrieveJob("abcdef", testUser);
-        });
+    assertThrows(JobNotFoundException.class, () -> jobService.retrieveJob("abcdef", testUser));
   }
 
   @Test
   public void testBadIdRetrieveResult() {
     assertThrows(
         JobNotFoundException.class,
-        () -> {
-          jobService.retrieveJobResult("abcdef", Object.class, testUser);
-        });
+        () -> jobService.retrieveJobResult("abcdef", Object.class, testUser));
   }
 
   private void validateJobReport(JobReport jr, int index, List<String> fids) {
