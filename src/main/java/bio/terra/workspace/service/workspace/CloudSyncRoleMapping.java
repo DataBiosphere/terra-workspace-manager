@@ -12,6 +12,9 @@ public class CloudSyncRoleMapping {
               ImmutableList.of(
                   "roles/viewer",
                   "roles/bigquery.dataEditor",
+                  // TODO(wchambers): Revise notebooks permissions when there are controlled
+                  // resources for notebooks.
+                  "roles/iam.serviceAccountUser",
                   "roles/lifesciences.editor",
                   // TODO(wchambers): Revise notebooks permissions when there are controlled
                   // resources for notebooks.
@@ -23,6 +26,9 @@ public class CloudSyncRoleMapping {
               ImmutableList.of(
                   "roles/viewer",
                   "roles/bigquery.dataEditor",
+                  // TODO(wchambers): Revise notebooks permissions when there are controlled
+                  // resources for notebooks.
+                  "roles/iam.serviceAccountUser",
                   "roles/lifesciences.editor",
                   // TODO(wchambers): Revise notebooks permissions when there are controlled
                   // resources for notebooks.
