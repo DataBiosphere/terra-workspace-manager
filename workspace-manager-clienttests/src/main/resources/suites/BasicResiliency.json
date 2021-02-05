@@ -1,8 +1,8 @@
 {
   "name": "BasicResiliency",
-  "description": "Resiliency tests.",
+  "description": "Basic Resiliency tests.",
   "serverSpecificationFile": "workspace-resiliency.json",
   "testConfigurationFiles": [
-    "resiliency/BasicResiliency.json"
+    "resiliency/DeletePodsDisruption.json"
   ]
 }

@@ -6,10 +6,17 @@
   "datarepoUri": "https://jade.datarepo-dev.broadinstitute.org/",
   "workspaceManagerUri": "https://workspace.ichang.integ.envs.broadinstitute.org/",
 
-  "cluster": {},
+  "cluster": {
+    "clusterName": "gke_terra-kernel-k8s_us-central1-a_terra-integration",
+    "clusterShortName": "terra-integration",
+    "region": "us-central1",
+    "project": "terra-kernel-k8s",
+    "namespace": "terra-ichang",
+    "containerName": "workspacemanager-deployment"
+  },
   "deploymentScript": {},
   "testRunnerServiceAccountFile": "testrunner-k8s-sa.json",
 
   "skipDeployment": true,
-  "skipKubernetes": true
+  "skipKubernetes": false
 }
