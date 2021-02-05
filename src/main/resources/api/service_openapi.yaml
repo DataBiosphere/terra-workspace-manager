@@ -298,7 +298,24 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-
+  /api/workspaces/v1/resources/controlled/google/bucket:
+    post:
+      summary: Create a new controlled Google bucket
+      operationId: createBucket
+      tags: [ControlledGoogleResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledGoogleBucketRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledGoogleBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
   # Job paths, all disabled for now
 #  /api/jobs/v1/{id}:
@@ -739,6 +756,162 @@ components:
         memberEmail:
           type: string
 
+    CreateControlledGoogleBucketRequestBody:
+      description: Payload for requesting a new controlled resource.
+      type: object
+      properties:
+        jobId:
+          description: Asyncronous job ID for this create operation.
+          type: string
+        googleBucket:
+          $ref: '#/components/schemas/GoogleBucketCreationParameters'
+
+    CreatedControlledGoogleBucket:
+      description: Response Payload for requesting a new controlled resource.
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource. Null if not created yet.
+          type: string
+          format: uuid
+        jobId:
+          description: Asyncronous job ID for this create operation.
+          type: string
+        googleBucket:
+          $ref: '#/components/schemas/GoogleBucketCreationParameters' # TODO: should this include all parameters, not just the settable ones we expose?
+
+    GoogleBucketCreationParameters:
+      description: >-
+        Bucket-specific properties to be set on creation. These are a subset of the
+        values accepted by the Google Storage API.
+      type: object
+      properties:
+        name:
+          description: A valid bucket name per https://cloud.google.com/storage/docs/naming-buckets.
+          type: string
+        location:
+          description: A valid bucket location per https://cloud.google.com/storage/docs/locations.
+          type: string
+        defaultStorageClass:
+          $ref: '#/components/schemas/GoogleBucketDefaultStorageClass'
+        lifecycle:
+          $ref: '#/components/schemas/GoogleBucketLifecycle'
+
+    GoogleBucketDefaultStorageClass:
+      description: >-
+        Type and availability of objects in a bucket, described at https://cloud.google.com/storage/docs/storage-classes.
+        This list does not include legacy types that apply to some existing buckets. For those, see
+        GoogleBucketLegacyStorageClass.
+      type: string
+      enum:
+        - STANDARD
+        - NEARLINE
+        - COLDLINE
+        - ARCHIVE
+    GoogleBucketLegacyStorageClass:
+      description: >-
+        Availability of objects in a bucket. Includes values that aren't available
+        for new buckets. https://cloud.google.com/storage/docs/storage-classes#legacy
+      type: string
+      enum:
+        - STANDARD
+        - NEARLINE
+        - COLDLINE
+        - ARCHIVE
+        - MULTI_REGIONAL
+        - REGIONAL
+        - DURABLE_REDUCED_AVAILABILITY
+    GoogleBucketLifecycle:
+      description: >-
+        Options to control automatic deletion or storage class change for a bucket.
+        Described at https://cloud.google.com/storage/docs/lifecycle.
+      type: object
+      properties:
+        rules:
+          description: List of rules for this bucket
+          type: array
+          items:
+            $ref: '#/components/schemas/GoogleBucketLifecycleRule'
+
+    GoogleBucketLifecycleRule:
+      description: A lifecycle rule for a bucket.
+      type: object
+      properties:
+        action:
+          $ref: '#/components/schemas/GoogleBucketLifecycleRuleAction'
+        condition:
+          $ref: '#/components/schemas/GoogleBucketLifecycleRuleCondition'
+
+    GoogleBucketLifecycleRuleAction:
+      description: The lifecycle action to take. See https://cloud.google.com/storage/docs/lifecycle#actions.
+      type: object
+      properties:
+        storageClass:
+          $ref: '#/components/schemas/GoogleBucketDefaultStorageClass'
+        type:
+          $ref: '#/components/schemas/GoogleBucketLifecycleRuleActionType'
+
+    GoogleBucketLifecycleRuleActionType:
+      description: >-
+        Type of action to perform. Formatted like our Java enums, but spelled in Camel case in Google API.
+      type: string
+      enum:
+        - DELETE
+        - SET_STORAGE_CLASS
+
+    GoogleBucketLifecycleRuleCondition:
+      description: The condition(s) under which the action will be taken.
+      type: object
+      properties:
+        age:
+          description: Age of an object (in days). This condition is satisfied when an object reaches the specified age.
+          type: integer
+        createdBefore:
+          description: This condition is satisfied when an object is created before midnight of the specified date in UTC.
+          type: string
+          format: date
+        customTimeBefore:
+          description: >-
+            This condition is satisfied when the customTime metadata for the object is set to an
+            earlier date than the date used in this lifecycle condition.
+          type: string
+          format: date
+        daysSinceCustomTime:
+          description: >-
+            Days since the date set in the customTime metadata for the object. This condition is
+            satisfied when the current date and time is at least the specified number of days after
+            the customTime.
+          type: integer
+        daysSinceNoncurrentTime:
+          description: >-
+            Relevant only for versioned objects. This condition is satisfied when an object has
+            been noncurrent for more than the specified number of days.
+          type: integer
+        isLive:
+          description: >-
+            Relevant only for versioned objects. If the value is true, this condition matches the
+            live version of objects; if the value is false, it matches noncurrent versions of objects.
+          type: boolean
+        matchesStorageClass:
+          description: >-
+            Objects having any of the storage classes specified by this condition will be matched. 
+            Values include "STANDARD", "NEARLINE", "COLDLINE", "ARCHIVE", "MULTI_REGIONAL",
+            "REGIONAL", and "DURABLE_REDUCED_AVAILABILITY".
+          type: array
+          items:
+            $ref: '#/components/schemas/GoogleBucketLegacyStorageClass'
+        noncurrentTimeBefore:
+          description: >-
+            Relevant only for versioned objects. This condition is satisfied for objects that became
+            noncurrent on a date prior to the one specified in this condition.
+          type: string
+          format: date
+        numNewerVersions:
+          description: >-
+            Relevant only for versioned objects. If the value is N, this condition is satisfied
+            when there are at least N versions (including the live version) newer than this version
+            of the object.
+          type: integer
   responses:
     CreatedWorkspaceResponse:
       description: Response to createWorkspace calls
@@ -767,6 +940,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/RoleBindingList'
+
+    CreatedControlledGoogleBucketResponse:
+      description: Response to Create controlled resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledGoogleBucket'
 
     # Error Responses
     BadRequest:
