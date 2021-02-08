@@ -144,15 +144,14 @@ public class DataReferenceServiceTest extends BaseUnitTest {
     DataReferenceRequest request = defaultReferenceRequest(workspaceId).build();
 
     DataReference ref = dataReferenceService.createDataReference(request, USER_REQUEST);
-    UUID referenceId = ref.referenceId();
 
     Supplier<DataReference> currentReference =
-        () -> dataReferenceService.getDataReference(workspaceId, referenceId, USER_REQUEST);
+        () -> dataReferenceService.getDataReference(workspaceId, ref.referenceId(), USER_REQUEST);
 
     Consumer<UpdateDataReferenceRequestBody> updateReference =
         updateBody ->
             dataReferenceService.updateDataReference(
-                workspaceId, referenceId, updateBody, USER_REQUEST);
+                workspaceId, ref.referenceId(), updateBody, USER_REQUEST);
 
     // Validate the reference exists and is readable.
     assertThat(currentReference.get(), equalTo(ref));

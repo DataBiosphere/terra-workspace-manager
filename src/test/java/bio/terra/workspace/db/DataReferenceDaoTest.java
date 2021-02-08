@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -111,6 +113,50 @@ public class DataReferenceDaoTest extends BaseUnitTest {
     assertThrows(
         DataReferenceNotFoundException.class,
         () -> dataReferenceDao.getDataReference(decoyId, referenceId));
+  }
+
+  @Test
+  public void verifyUpdateDataReference() {
+    String updatedName = "rename";
+    String updatedName2 = "rename_again";
+    String updatedDescription = "updated description";
+    String updatedDescription2 = "updated description again";
+
+    UUID workspaceId = createDefaultWorkspace();
+    UUID referenceId = UUID.randomUUID();
+    DataReferenceRequest referenceRequest = defaultReferenceRequest(workspaceId).build();
+
+    dataReferenceDao.createDataReference(referenceRequest, referenceId);
+
+    Supplier<DataReference> currentReference =
+        () -> dataReferenceDao.getDataReference(workspaceId, referenceId);
+
+    BiFunction<String, String, Boolean> updateReference =
+        (String name, String description) ->
+            dataReferenceDao.updateDataReference(workspaceId, referenceId, name, description);
+
+    // Validate the reference exists and is readable.
+    assertThat(currentReference.get().referenceId(), equalTo(referenceId));
+
+    // Update name only
+    updateReference.apply(updatedName, null);
+    DataReference updatedNameReference1 = currentReference.get();
+    assertThat(updatedNameReference1.name(), equalTo(updatedName));
+    assertThat(
+        updatedNameReference1.referenceDescription(),
+        equalTo(referenceRequest.referenceDescription()));
+
+    // Update description only
+    updateReference.apply(null, updatedDescription);
+    DataReference updatedDescriptionReference = currentReference.get();
+    assertThat(updatedDescriptionReference.name(), equalTo(updatedNameReference1.name()));
+    assertThat(updatedDescriptionReference.referenceDescription(), equalTo(updatedDescription));
+
+    // Update both
+    updateReference.apply(updatedName2, updatedDescription2);
+    DataReference updatedBothReference = currentReference.get();
+    assertThat(updatedBothReference.name(), equalTo(updatedName2));
+    assertThat(updatedBothReference.referenceDescription(), equalTo(updatedDescription2));
   }
 
   @Test
