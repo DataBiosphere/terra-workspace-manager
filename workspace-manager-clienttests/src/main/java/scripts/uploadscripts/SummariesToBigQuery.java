@@ -102,6 +102,8 @@ public class SummariesToBigQuery extends UploadScript {
             if (testScriptResultSummaries.containsKey(testScriptSpecification.name)) {
                 insertRequestBuilder.addRow(
                         buildTestScriptResultsRow(testScriptSpecification, testScriptResultSummaries.get(testScriptSpecification.name)));
+            } else {
+                logger.debug("Test name {} not found in result summaries.", testScriptSpecification.name);
             }
         }
         BigQueryUtils.insertAllIntoBigQuery(bigQueryClient, insertRequestBuilder.build());
