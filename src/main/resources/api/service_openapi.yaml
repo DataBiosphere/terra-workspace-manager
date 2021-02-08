@@ -170,7 +170,7 @@ paths:
               $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
       responses:
         '204':
-          $ref: '#/components/responses/DataReferenceResponse'
+          description: OK
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':

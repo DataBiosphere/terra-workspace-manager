@@ -211,8 +211,10 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<DataReferenceDescription> updateDataReference(
-      UUID id, UUID referenceId, @Valid UpdateDataReferenceRequestBody body) {
+  public ResponseEntity<Void> updateDataReference(
+      @PathVariable("id") UUID id,
+      @PathVariable("referenceId") UUID referenceId,
+      @RequestBody UpdateDataReferenceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
 
     if (body.getName() != null) DataReferenceValidationUtils.validateReferenceName(body.getName());
