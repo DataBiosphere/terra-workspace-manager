@@ -8,6 +8,7 @@ public enum JobMapKeys {
   STATUS_CODE("status_code"),
   AUTH_USER_INFO("auth_user_info"),
   SUBJECT_ID("subjectId"),
+  RESULT_PATH("resultPath"),
 
   // parameter for the job
   FLIGHT_CLASS("flight_class");

@@ -44,6 +44,9 @@ spring:
 workspace:
   datarepo.instances:
     terra: ${env.urls.terra-datarepo}
+  ingress:
+    # Default value that's overridden by Helm.
+    domain-name: http://localhost:8080
 
   job:
     max-threads: 4

@@ -6,7 +6,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
-import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,8 +31,8 @@ public class DeleteGoogleContextStep implements Step {
     // context change.
     transactionTemplate.execute(
         status -> {
-          Optional<String> projectId = workspaceDao.getCloudContext(workspaceId).googleProjectId();
-          if (projectId.isPresent()) {
+          String projectId = workspaceDao.getCloudContext(workspaceId).googleProjectId();
+          if (projectId != null) {
             workspaceDao.updateCloudContext(workspaceId, WorkspaceCloudContext.none());
           }
           return null;

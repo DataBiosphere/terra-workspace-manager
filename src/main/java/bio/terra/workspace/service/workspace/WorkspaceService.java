@@ -6,6 +6,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -68,7 +69,7 @@ public class WorkspaceService {
     createJob.addParameter(
         WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceRequest.workspaceStage());
 
-    return createJob.submitAndWait(UUID.class, true);
+    return createJob.submitAndWait(UUID.class);
   }
 
   /**
@@ -118,7 +119,7 @@ public class WorkspaceService {
                 null, // Delete does not have a useful request body
                 userReq)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id);
-    deleteJob.submitAndWait(null, false);
+    deleteJob.submitAndWait(null);
   }
 
   /**
@@ -136,11 +137,12 @@ public class WorkspaceService {
    * workspace existence and write permission before starting the job.
    */
   @Traced
-  public String createGoogleContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
+  public String createGoogleContext(
+      UUID workspaceId, String jobId, String resultPath, AuthenticatedUserRequest userReq) {
     Workspace workspace =
         validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     workspaceDao.assertMcWorkspace(workspace, "createGoogleContext");
-    if (workspaceDao.getCloudContext(workspaceId).googleProjectId().isPresent()) {
+    if (workspaceDao.getCloudContext(workspaceId).googleProjectId() != null) {
       throw new DuplicateGoogleContextException(workspaceId);
     }
     SpendProfileId spendProfileId =
@@ -149,7 +151,6 @@ public class WorkspaceService {
     if (spendProfile.billingAccountId().isEmpty()) {
       throw new NoBillingAccountException(spendProfileId);
     }
-    String jobId = UUID.randomUUID().toString();
     jobService
         .newJob(
             "Create Google Context " + workspaceId,
@@ -160,7 +161,8 @@ public class WorkspaceService {
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
         .addParameter(
             WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendProfile.billingAccountId().get())
-        .submit(false);
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .submit();
     return jobId;
   }
 
@@ -181,6 +183,6 @@ public class WorkspaceService {
             /* request= */ null,
             userReq)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
-        .submitAndWait(null, false);
+        .submitAndWait(null);
   }
 }
