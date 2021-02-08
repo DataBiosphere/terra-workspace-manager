@@ -2,8 +2,7 @@ package bio.terra.workspace.common.utils;
 
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
-import bio.terra.workspace.generated.model.DataReferenceInfo;
-import bio.terra.workspace.generated.model.ReferenceTypeEnum;
+import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,48 +42,20 @@ public final class ControllerValidationUtils {
   /**
    * Utility function for validating a CreateDataReferenceRequestBody.
    *
-   * <p>CreateDataReferenceRequestBody holds one of several types of data reference. This enforces
-   * that exactly one type of reference is present, and that it matches the specified ReferenceType
-   * field.
+   * <p>CreateDataReferenceRequestBody is currently structured to allow several parameters for
+   * controlled and private resources that aren't supported in WM. This function throws exceptions
+   * if any of those fields are set, or if any required fields are missing.
    */
+  // TODO(PF-404): remove this once CreateDataReferenceRequestBody is removed.
   public static void validate(CreateDataReferenceRequestBody body) {
-    ReferenceTypeEnum referenceType = body.getReferenceType();
-    // ReferenceType can be null if the user provides an invalid enum value.
-    if (referenceType == null) {
-      throw new ValidationException("Invalid reference type specified");
+    if (body.getResourceId() != null) {
+      throw new ControlledResourceNotImplementedException(
+          "Unable to create a reference with a resourceId, use a reference type and description"
+              + " instead. This functionality will be implemented in the future.");
     }
-    // TODO(PF-404): requests using the deprecated reference field will not set the referenceInfo
-    // field. referenceInfo can be made required and this check can be removed once clients migrate.
-    DataReferenceInfo info =
-        body.getReferenceInfo() == null ? new DataReferenceInfo() : body.getReferenceInfo();
-    final boolean valid;
-    switch (referenceType) {
-      case DATA_REPO_SNAPSHOT:
-        valid =
-            ((info.getDataRepoSnapshot() != null || body.getReference() != null)
-                && info.getBigQueryDataset() == null
-                && info.getGoogleBucket() == null);
-        break;
-      case GOOGLE_BUCKET:
-        valid =
-            (info.getGoogleBucket() != null
-                && info.getBigQueryDataset() == null
-                && info.getDataRepoSnapshot() == null
-                && body.getReference() == null);
-        break;
-      case BIG_QUERY_DATASET:
-        valid =
-            (info.getBigQueryDataset() != null
-                && info.getGoogleBucket() == null
-                && info.getDataRepoSnapshot() == null
-                && body.getReference() == null);
-        break;
-      default:
-        throw new InvalidDataReferenceException("Unknown reference type specified");
-    }
-    if (!valid) {
+    if (body.getReferenceType() == null || body.getReference() == null) {
       throw new InvalidDataReferenceException(
-          "Exactly one field of ReferenceInfo must be set and it must match ReferenceType");
+          "Data reference must contain a reference type and a reference description");
     }
   }
 

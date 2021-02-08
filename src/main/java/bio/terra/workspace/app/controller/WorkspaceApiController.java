@@ -1,15 +1,14 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.workspace.common.utils.ControllerTranslationUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.datareference.DataReferenceService;
+import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.DataReferenceType;
-import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -148,21 +147,12 @@ public class WorkspaceApiController implements WorkspaceApi {
 
     ControllerValidationUtils.validate(body);
     DataReferenceValidationUtils.validateReferenceName(body.getName());
-    final DataReferenceType referenceType = DataReferenceType.fromApiModel(body.getReferenceType());
-
-    final DataReferenceInfo referenceInfo = body.getReferenceInfo();
-    final ReferenceObject referenceObject;
-    if (body.getReference() != null) {
-      referenceObject =
-          SnapshotReference.create(
-              body.getReference().getInstanceName(), body.getReference().getSnapshot());
-    } else {
-      referenceObject =
-          ControllerTranslationUtils.referenceInfoToReferenceObject(
-              body.getReferenceType(), referenceInfo);
-    }
-
-    dataReferenceValidation.validateReferenceObject(referenceObject, referenceType, userReq);
+    // TODO: this will require more translation when we add additional reference types.
+    DataReferenceType referenceType = DataReferenceType.fromApiModel(body.getReferenceType());
+    SnapshotReference snapshot =
+        SnapshotReference.create(
+            body.getReference().getInstanceName(), body.getReference().getSnapshot());
+    dataReferenceValidation.validateReferenceObject(snapshot, referenceType, userReq);
 
     DataReferenceRequest referenceRequest =
         DataReferenceRequest.builder()
@@ -170,7 +160,7 @@ public class WorkspaceApiController implements WorkspaceApi {
             .name(body.getName())
             .referenceType(referenceType)
             .cloningInstructions(CloningInstructions.fromApiModel(body.getCloningInstructions()))
-            .referenceObject(referenceObject)
+            .referenceObject(snapshot)
             .build();
     DataReference reference = dataReferenceService.createDataReference(referenceRequest, userReq);
     logger.info(
@@ -194,7 +184,12 @@ public class WorkspaceApiController implements WorkspaceApi {
         String.format(
             "Got data reference %s in workspace %s for %s",
             ref.toString(), workspaceId.toString(), userReq.getEmail()));
-
+    // TODO(PF-404): this endpoint's return type does not support reference types beyond snapshots.
+    // Clients should migrate to type-specific endpoints, and this endpoint should be removed.
+    if (ref.referenceType() != DataReferenceType.DATA_REPO_SNAPSHOT) {
+      throw new InvalidDataReferenceException(
+          "This endpoint does not support non-snapshot references. Use the newer type-specific endpoints instead.");
+    }
     return new ResponseEntity<>(ref.toApiModel(), HttpStatus.OK);
   }
 
@@ -204,6 +199,12 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("referenceType") ReferenceTypeEnum referenceType,
       @PathVariable("name") String name) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    // TODO(PF-404): this endpoint's return type does not support reference types beyond snapshots.
+    // Clients should migrate to type-specific endpoints, and this endpoint should be removed.
+    if (referenceType != ReferenceTypeEnum.DATA_REPO_SNAPSHOT) {
+      throw new InvalidDataReferenceException(
+          "This endpoint does not support non-snapshot references. Use the newer type-specific endpoints instead.");
+    }
     logger.info(
         String.format(
             "Getting data reference by name %s and reference type %s in workspace %s for %s",
@@ -245,16 +246,21 @@ public class WorkspaceApiController implements WorkspaceApi {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info(
         String.format(
-            "Getting data references in workspace %s for %s", id.toString(), userReq.getEmail()));
+            "Getting snapshot data references in workspace %s for %s",
+            id.toString(), userReq.getEmail()));
     ControllerValidationUtils.validatePaginationParams(offset, limit);
     List<DataReference> enumerateResult =
         dataReferenceService.enumerateDataReferences(id, offset, limit, userReq);
     logger.info(
         String.format(
-            "Got data references in workspace %s for %s", id.toString(), userReq.getEmail()));
+            "Got snapshot data references in workspace %s for %s",
+            id.toString(), userReq.getEmail()));
     DataReferenceList responseList = new DataReferenceList();
     for (DataReference ref : enumerateResult) {
-      responseList.addResourcesItem(ref.toApiModel());
+      // TODO(PF-404): this is a workaround until clients migrate off this endpoint.
+      if (ref.referenceType() == DataReferenceType.DATA_REPO_SNAPSHOT) {
+        responseList.addResourcesItem(ref.toApiModel());
+      }
     }
     return ResponseEntity.ok(responseList);
   }

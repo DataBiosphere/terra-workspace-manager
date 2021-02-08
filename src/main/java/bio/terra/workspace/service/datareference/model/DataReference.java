@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.datareference.model;
 
 import bio.terra.workspace.generated.model.DataReferenceDescription;
-import bio.terra.workspace.generated.model.DataReferenceInfo;
 import com.google.auto.value.AutoValue;
 import java.util.UUID;
 
@@ -32,36 +31,16 @@ public abstract class DataReference {
   public abstract ReferenceObject referenceObject();
 
   /** Convenience method for translating to an API model DataReferenceDescription object. */
+  // TODO(PF-404): This is only used by the deprecated reference APIs. Remove this when all clients
+  // have migrated.
   public DataReferenceDescription toApiModel() {
-    DataReferenceDescription reference =
-        new DataReferenceDescription()
-            .referenceId(referenceId())
-            .name(name())
-            .workspaceId(workspaceId())
-            .referenceType(referenceType().toApiModel())
-            .referenceInfo(new DataReferenceInfo())
-            .cloningInstructions(cloningInstructions().toApiModel());
-    switch (referenceType()) {
-      case DATA_REPO_SNAPSHOT:
-        // TODO: we populate both the deprecated reference field and the new referenceInfo fields
-        // until all clients have migrated to use the new field.
-        reference
-            .reference(((SnapshotReference) referenceObject()).toApiModel())
-            .getReferenceInfo()
-            .dataRepoSnapshot(((SnapshotReference) referenceObject()).toApiModel());
-        break;
-      case GOOGLE_BUCKET:
-        reference
-            .getReferenceInfo()
-            .googleBucket(((GoogleBucketReference) referenceObject()).toApiModel());
-        break;
-      case BIG_QUERY_DATASET:
-        reference
-            .getReferenceInfo()
-            .bigQueryDataset(((BigQueryDatasetReference) referenceObject()).toApiModel());
-        break;
-    }
-    return reference;
+    return new DataReferenceDescription()
+        .referenceId(referenceId())
+        .name(name())
+        .workspaceId(workspaceId())
+        .referenceType(referenceType().toApiModel())
+        .reference(((SnapshotReference) referenceObject()).toApiModel())
+        .cloningInstructions(cloningInstructions().toApiModel());
   }
 
   public static Builder builder() {
