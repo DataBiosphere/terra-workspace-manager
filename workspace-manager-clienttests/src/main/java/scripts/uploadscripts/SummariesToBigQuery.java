@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SummariesToBigQuery extends UploadScript {
     private static final Logger logger = LoggerFactory.getLogger(SummariesToBigQuery.class);
@@ -44,6 +45,7 @@ public class SummariesToBigQuery extends UploadScript {
      *
      * @param parameters list of string parameters supplied by the upload list
      */
+    @Override
     public void setParameters(List<String> parameters) throws Exception {
         if (parameters == null || parameters.size() < 2) {
             throw new IllegalArgumentException(
@@ -61,6 +63,7 @@ public class SummariesToBigQuery extends UploadScript {
      * Upload the test results saved to the given directory. Results may include Test Runner
      * client-side output and any relevant measurements collected.
      */
+    @Override
     public void uploadResults(
             Path outputDirectory, ServiceAccountSpecification uploaderServiceAccount) throws Exception {
         // get a BigQuery client object
@@ -90,13 +93,16 @@ public class SummariesToBigQuery extends UploadScript {
         // insert into testScriptResults
         tableId = TableId.of(datasetName, testScriptResultsTableName);
         InsertAllRequest.Builder insertRequestBuilder = InsertAllRequest.newBuilder(tableId);
-        for (int ctr = 0; ctr < renderedTestConfiguration.testScripts.size(); ctr++) {
-            TestScriptSpecification testScriptSpecification =
-                    renderedTestConfiguration.testScripts.get(ctr);
-            TestScriptResult.TestScriptResultSummary testScriptResult =
-                    testRunSummary.testScriptResultSummaries.get(ctr);
-            insertRequestBuilder.addRow(
-                    buildTestScriptResultsRow(testScriptSpecification, testScriptResult));
+        Map<String, TestScriptResult.TestScriptResultSummary> testScriptResultSummaries =
+                new ConcurrentHashMap<String, TestScriptResult.TestScriptResultSummary>();
+        testRunSummary.testScriptResultSummaries.stream()
+                .forEach(runSummary -> testScriptResultSummaries.put(runSummary.testScriptDescription, runSummary));
+
+        for (TestScriptSpecification testScriptSpecification : renderedTestConfiguration.testScripts) {
+            if (testScriptResultSummaries.containsKey(testScriptSpecification.name)) {
+                insertRequestBuilder.addRow(
+                        buildTestScriptResultsRow(testScriptSpecification, testScriptResultSummaries.get(testScriptSpecification.name)));
+            }
         }
         BigQueryUtils.insertAllIntoBigQuery(bigQueryClient, insertRequestBuilder.build());
 
