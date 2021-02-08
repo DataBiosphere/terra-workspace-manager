@@ -11,6 +11,7 @@ import static org.mockito.Mockito.doThrow;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
+import bio.terra.workspace.generated.model.UpdateDataReferenceRequestBody;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
@@ -25,6 +26,8 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,6 +134,53 @@ public class DataReferenceServiceTest extends BaseUnitTest {
   }
 
   @Test
+  public void testUpdateDataReference() {
+    String updatedName = "rename";
+    String updatedName2 = "rename_again";
+    String updatedDescription = "updated description";
+    String updatedDescription2 = "updated description again";
+
+    UUID workspaceId = createDefaultWorkspace();
+    DataReferenceRequest request = defaultReferenceRequest(workspaceId).build();
+
+    DataReference ref = dataReferenceService.createDataReference(request, USER_REQUEST);
+    UUID referenceId = ref.referenceId();
+
+    Supplier<DataReference> currentReference =
+        () -> dataReferenceService.getDataReference(workspaceId, referenceId, USER_REQUEST);
+
+    Consumer<UpdateDataReferenceRequestBody> updateReference =
+        updateBody ->
+            dataReferenceService.updateDataReference(
+                workspaceId, referenceId, updateBody, USER_REQUEST);
+
+    // Validate the reference exists and is readable.
+    assertThat(currentReference.get(), equalTo(ref));
+
+    // Update name only
+    updateReference.accept(new UpdateDataReferenceRequestBody().name(updatedName));
+    DataReference updatedNameReference1 = currentReference.get();
+    assertThat(updatedNameReference1.name(), equalTo(updatedName));
+    assertThat(updatedNameReference1.referenceDescription(), equalTo(ref.referenceDescription()));
+
+    // Update description only
+    updateReference.accept(
+        new UpdateDataReferenceRequestBody().referenceDescription(updatedDescription));
+    DataReference updatedDescriptionReference = currentReference.get();
+    assertThat(updatedDescriptionReference.name(), equalTo(updatedNameReference1.name()));
+    assertThat(updatedDescriptionReference.referenceDescription(), equalTo(updatedDescription));
+
+    // Update both
+    updateReference.accept(
+        new UpdateDataReferenceRequestBody()
+            .name(updatedName2)
+            .referenceDescription(updatedDescription2));
+    DataReference updatedBothReference = currentReference.get();
+    assertThat(updatedBothReference.name(), equalTo(updatedName2));
+    assertThat(updatedBothReference.referenceDescription(), equalTo(updatedDescription2));
+  }
+
+  @Test
   public void testDeleteDataReference() {
     UUID workspaceId = createDefaultWorkspace();
     DataReferenceRequest request = defaultReferenceRequest(workspaceId).build();
@@ -183,6 +233,7 @@ public class DataReferenceServiceTest extends BaseUnitTest {
     return DataReferenceRequest.builder()
         .workspaceId(workspaceId)
         .name("some_name")
+        .referenceDescription(null)
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
         .referenceType(DataReferenceType.DATA_REPO_SNAPSHOT)
         .referenceObject(snapshot);
