@@ -1,10 +1,12 @@
 package bio.terra.workspace.service.controlledresource.exception;
 
 import bio.terra.workspace.generated.model.CreateControlledGoogleBucketRequestBody;
+import bio.terra.workspace.generated.model.GoogleBucketCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.flight.CreateControlledGoogleBucketFlight;
+import bio.terra.workspace.service.workspace.flight.GoogleBucketFlightMapKeys;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -20,17 +22,22 @@ public class ControlledGoogleResourceService {
   }
 
   public UUID createBucket(
-      CreateControlledGoogleBucketRequestBody body, AuthenticatedUserRequest userRequest) {
+      CreateControlledGoogleBucketRequestBody requestBody, AuthenticatedUserRequest userRequest) {
     // create a job
     final String description =
-        "Create controlled Google bucket named " + body.getGoogleBucket().getName();
+        "Create controlled Google bucket named " + requestBody.getGoogleBucket().getName();
     final JobBuilder jobBuilder =
         jobService.newJob(
             description,
-            body.getJobId(),
+            requestBody.getJobId(),
             CreateControlledGoogleBucketFlight.class,
-            null,
+            requestBody,
             userRequest);
+    final GoogleBucketCreationParameters params = requestBody.getGoogleBucket();
+    jobBuilder.addParameter(GoogleBucketFlightMapKeys.NAME.getKey(), params.getName());
+    jobBuilder.addParameter(GoogleBucketFlightMapKeys.LOCATION.getKey(), params.getLocation());
+    jobBuilder.addParameter(GoogleBucketFlightMapKeys.DEFAULT_STORAGE_CLASS.getKey(), params.getDefaultStorageClass());
+    jobBuilder.addParameter(GoogleBucketFlightMapKeys.LIFECYCLE.getKey(), params.getLifecycle());
     return jobBuilder.submitAndWait(UUID.class, true);
   }
 }

@@ -16,7 +16,6 @@ public class DeleteWorkspaceStateStep implements Step {
 
   private final WorkspaceDao workspaceDao;
 
-  @Autowired
   public DeleteWorkspaceStateStep(WorkspaceDao workspaceDao) {
     this.workspaceDao = workspaceDao;
   }

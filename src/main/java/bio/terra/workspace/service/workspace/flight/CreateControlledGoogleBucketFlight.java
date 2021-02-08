@@ -7,5 +7,6 @@ public class CreateControlledGoogleBucketFlight extends Flight {
 
   public CreateControlledGoogleBucketFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
+    addStep(new StoreGoogleBucketMetadataStep());
   }
 }
