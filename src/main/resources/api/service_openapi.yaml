@@ -760,11 +760,29 @@ components:
       description: Payload for requesting a new controlled resource.
       type: object
       properties:
-        jobId:
-          description: Asyncronous job ID for this create operation.
-          type: string
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
         googleBucket:
           $ref: '#/components/schemas/GoogleBucketCreationParameters'
+
+    ControlledResourceCommonFields:
+      type: object
+      required: [ name, cloningInstructions, jobControl, accessScope ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+        name:
+          $ref: "#/components/schemas/Name"
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        accessScope:
+          type: string
+          enum: [ 'SHARED', 'PRIVATE' ]
+        managedBy:
+          type: string
+          enum: [ 'USER', 'APPLICATION' ]
+        privateResourceUser:
+          $ref: '#/components/schemas/PrivateResourceUser'
 
     CreatedControlledGoogleBucket:
       description: Response Payload for requesting a new controlled resource.

@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ControlledGoogleResourceService {
 
-  private JobService jobService;
+  private final JobService jobService;
 
   @Autowired
   public ControlledGoogleResourceService(JobService jobService) {
@@ -28,7 +28,7 @@ public class ControlledGoogleResourceService {
     final JobBuilder jobBuilder =
         jobService.newJob(
             description,
-            requestBody.getJobId(),
+            requestBody.getCommon().getJobControl().getJobid(),
             CreateControlledGoogleBucketFlight.class,
             requestBody,
             userRequest);
