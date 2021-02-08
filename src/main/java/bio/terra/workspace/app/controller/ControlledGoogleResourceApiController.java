@@ -3,10 +3,9 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.generated.controller.ControlledGoogleResourceApi;
 import bio.terra.workspace.generated.model.CreateControlledGoogleBucketRequestBody;
 import bio.terra.workspace.generated.model.CreatedControlledGoogleBucket;
-import bio.terra.workspace.service.controlledresource.exception.ControlledGoogleResourceService;
+import bio.terra.workspace.service.controlledresource.ControlledGoogleResourceService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
-import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.slf4j.Logger;
@@ -17,7 +16,8 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 public class ControlledGoogleResourceApiController implements ControlledGoogleResourceApi {
-  private final Logger logger = LoggerFactory.getLogger(ControlledGoogleResourceApiController.class);
+  private final Logger logger =
+      LoggerFactory.getLogger(ControlledGoogleResourceApiController.class);
 
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final ControlledGoogleResourceService controlledResourceService;
@@ -37,7 +37,7 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
   public ResponseEntity<CreatedControlledGoogleBucket> createBucket(
       @Valid CreateControlledGoogleBucketRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final UUID jobId = controlledResourceService.createBucket(body, userRequest);
+    final String jobId = controlledResourceService.createBucket(body, userRequest);
     return null;
   }
 

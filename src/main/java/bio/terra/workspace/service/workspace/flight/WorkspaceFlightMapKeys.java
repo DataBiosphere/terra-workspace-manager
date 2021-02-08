@@ -10,6 +10,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String IAM_WRITER_GROUP_EMAIL = "iamWriterGroupEmail";
   public static final String IAM_READER_GROUP_EMAIL = "iamReaderGroupEmail";
   public static final String RBS_RESOURCE_ID = "rbsResourceId";
+  public static final String CONTROLLED_RESOURCE_ID = "controlledResourceId";
 
   private WorkspaceFlightMapKeys() {}
 }

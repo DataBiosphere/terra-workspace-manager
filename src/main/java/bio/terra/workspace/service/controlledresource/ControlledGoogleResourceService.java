@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.controlledresource.exception;
+package bio.terra.workspace.service.controlledresource;
 
 import bio.terra.workspace.generated.model.CreateControlledGoogleBucketRequestBody;
 import bio.terra.workspace.generated.model.GoogleBucketCreationParameters;
@@ -7,7 +7,6 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.flight.CreateControlledGoogleBucketFlight;
 import bio.terra.workspace.service.workspace.flight.GoogleBucketFlightMapKeys;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +20,7 @@ public class ControlledGoogleResourceService {
     this.jobService = jobService;
   }
 
-  public UUID createBucket(
+  public String createBucket(
       CreateControlledGoogleBucketRequestBody requestBody, AuthenticatedUserRequest userRequest) {
     // create a job
     final String description =
@@ -36,8 +35,13 @@ public class ControlledGoogleResourceService {
     final GoogleBucketCreationParameters params = requestBody.getGoogleBucket();
     jobBuilder.addParameter(GoogleBucketFlightMapKeys.NAME.getKey(), params.getName());
     jobBuilder.addParameter(GoogleBucketFlightMapKeys.LOCATION.getKey(), params.getLocation());
-    jobBuilder.addParameter(GoogleBucketFlightMapKeys.DEFAULT_STORAGE_CLASS.getKey(), params.getDefaultStorageClass());
+    jobBuilder.addParameter(
+        GoogleBucketFlightMapKeys.DEFAULT_STORAGE_CLASS.getKey(), params.getDefaultStorageClass());
     jobBuilder.addParameter(GoogleBucketFlightMapKeys.LIFECYCLE.getKey(), params.getLifecycle());
-    return jobBuilder.submitAndWait(UUID.class, true);
+    return jobBuilder.submit(false);
   }
+
+  //  public CreatedControlledGoogleBucket getCreateBucketResult(String jobId) {
+  //
+  //  }
 }

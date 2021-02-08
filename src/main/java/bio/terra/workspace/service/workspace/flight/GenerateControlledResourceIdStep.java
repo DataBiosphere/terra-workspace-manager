@@ -4,25 +4,21 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.db.WorkspaceDao;
+import java.util.UUID;
 
-public class StoreGoogleBucketMetadataStep implements Step {
-
-  private WorkspaceDao workspaceDao;
-
-  public StoreGoogleBucketMetadataStep(WorkspaceDao workspaceDao) {
-    this.workspaceDao = workspaceDao;
-  }
+public class GenerateControlledResourceIdStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-
-    return null;
+    flightContext
+        .getWorkingMap()
+        .put(WorkspaceFlightMapKeys.CONTROLLED_RESOURCE_ID, UUID.randomUUID());
+    return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    return null;
+    return StepResult.getStepResultSuccess();
   }
 }

@@ -4,7 +4,8 @@ import bio.terra.workspace.generated.model.GoogleBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycle;
 
 /**
- * Keys into the flight parameter map along with their types. Corresponds to GoogleBucketCreationParameters
+ * Keys into the flight parameter map along with their types. Corresponds to
+ * GoogleBucketCreationParameters
  */
 public enum GoogleBucketFlightMapKeys {
   NAME("name", String.class),
