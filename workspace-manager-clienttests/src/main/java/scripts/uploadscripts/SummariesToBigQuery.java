@@ -93,11 +93,12 @@ public class SummariesToBigQuery extends UploadScript {
         // insert into testScriptResults
         tableId = TableId.of(datasetName, testScriptResultsTableName);
         InsertAllRequest.Builder insertRequestBuilder = InsertAllRequest.newBuilder(tableId);
+        // Store test summaries in a Map with test names as keys
         Map<String, TestScriptResult.TestScriptResultSummary> testScriptResultSummaries =
                 new ConcurrentHashMap<String, TestScriptResult.TestScriptResultSummary>();
         testRunSummary.testScriptResultSummaries.stream()
                 .forEach(runSummary -> testScriptResultSummaries.put(runSummary.testScriptDescription, runSummary));
-
+        // Loop through all test summaries
         for (TestScriptSpecification testScriptSpecification : renderedTestConfiguration.testScripts) {
             if (testScriptResultSummaries.containsKey(testScriptSpecification.name)) {
                 insertRequestBuilder.addRow(
