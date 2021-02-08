@@ -189,6 +189,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
     return DataReferenceRequest.builder()
         .workspaceId(workspaceId)
         .name("some_name")
+        .referenceDescription(null)
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
         .referenceType(DataReferenceType.DATA_REPO_SNAPSHOT)
         .referenceObject(snapshot);

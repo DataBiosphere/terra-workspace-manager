@@ -158,6 +158,25 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update name or description of a data reference in a workspace.
+      operationId: updateDataReference
+      tags: [Workspace]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          $ref: '#/components/responses/DataReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
     delete:
       summary: Deletes a data reference from a workspace.
       operationId: deleteDataReference
@@ -606,6 +625,8 @@ components:
       properties:
         name:
           $ref: "#/components/schemas/Name"
+        referenceDescription:
+          type: string
         resourceId:
           description: The ID of the resource
           type: string
@@ -617,6 +638,14 @@ components:
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
 
+    UpdateDataReferenceRequestBody:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/Name"
+        referenceDescription:
+          type: string
+
     DataReferenceDescription:
       type: object
       required: [referenceId, name, workspaceId, cloningInstructions]
@@ -627,6 +656,8 @@ components:
           format: uuid
         name:
           description: The name of the data reference; used to refer to the reference
+          type: string
+        referenceDescription:
           type: string
         workspaceId:
           description: The ID of the workspace containing the reference

@@ -157,6 +157,7 @@ public class WorkspaceApiController implements WorkspaceApi {
         DataReferenceRequest.builder()
             .workspaceId(id)
             .name(body.getName())
+            .referenceDescription(body.getReferenceDescription())
             .referenceType(referenceType)
             .cloningInstructions(CloningInstructions.fromApiModel(body.getCloningInstructions()))
             .referenceObject(snapshot)
@@ -207,6 +208,27 @@ public class WorkspaceApiController implements WorkspaceApi {
             ref.toString(), referenceType.toString(), workspaceId.toString(), userReq.getEmail()));
 
     return new ResponseEntity<>(ref.toApiModel(), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<DataReferenceDescription> updateDataReference(
+      UUID id, UUID referenceId, @Valid UpdateDataReferenceRequestBody body) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+
+    if (body.getName() != null) DataReferenceValidationUtils.validateReferenceName(body.getName());
+
+    logger.info(
+        String.format(
+            "Updating data reference by id %s in workspace %s for %s with body %s",
+            referenceId.toString(), id.toString(), userReq.getEmail(), body.toString()));
+
+    dataReferenceService.updateDataReference(id, referenceId, body, userReq);
+    logger.info(
+        String.format(
+            "Updating data reference by id %s in workspace %s for %s with body %s",
+            referenceId.toString(), id.toString(), userReq.getEmail(), body.toString()));
+
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
