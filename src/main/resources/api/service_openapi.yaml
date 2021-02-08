@@ -102,7 +102,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/Id'
     post:
-      summary: Create a new data reference in a workspace.
+      summary: (DEPRECATED) Create a new data reference in a workspace.
       operationId: createDataReference
       tags: [Workspace]
       requestBody:
@@ -124,7 +124,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     get:
-      summary: Enumerate the data references in a workspace.
+      summary: (DEPRECATED) Enumerate the data references in a workspace.
       operationId: enumerateReferences
       tags: [Workspace]
       parameters:
@@ -148,7 +148,7 @@ paths:
       - $ref: '#/components/parameters/Id'
       - $ref: '#/components/parameters/ReferenceId'
     get:
-      summary: Gets a data reference from a workspace.
+      summary: (DEPRECATED) Gets a data reference from a workspace.
       operationId: getDataReference
       tags: [Workspace]
       responses:
@@ -161,7 +161,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     delete:
-      summary: Deletes a data reference from a workspace.
+      summary: (DEPRECATED) Deletes a data reference from a workspace.
       operationId: deleteDataReference
       tags: [Workspace]
       responses:
@@ -181,7 +181,7 @@ paths:
       - $ref: '#/components/parameters/ReferenceType'
       - $ref: '#/components/parameters/Name'
     get:
-      summary: Gets a data reference from a workspace by name and type.
+      summary: (DEPRECATED) Gets a data reference from a workspace by name and type.
       operationId: getDataReferenceByName
       tags: [Workspace]
       responses:
@@ -250,7 +250,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/datarepo/snapshot/{name}:
+  /api/workspaces/v1/{id}/resources/references/datarepo/snapshot/name/{name}:
     parameters:
     - $ref: '#/components/parameters/Id'
     - $ref: '#/components/parameters/Name'
@@ -324,7 +324,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/google/bucket/{name}:
+  /api/workspaces/v1/{id}/resources/references/google/bucket/name/{name}:
     parameters:
     - $ref: '#/components/parameters/Id'
     - $ref: '#/components/parameters/Name'
@@ -398,7 +398,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/google/bigquerydataset/{name}:
+  /api/workspaces/v1/{id}/resources/references/google/bigquerydataset/name/{name}:
     parameters:
     - $ref: '#/components/parameters/Id'
     - $ref: '#/components/parameters/Name'
