@@ -2,6 +2,7 @@ package bio.terra.workspace.db;
 
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
+import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
@@ -139,6 +140,10 @@ public class DataReferenceDao {
 
   public boolean updateDataReference(
       UUID workspaceId, UUID referenceId, String name, String referenceDescription) {
+    if (name == null && referenceDescription == null) {
+      throw new InvalidDaoRequestException("Must specify name or referenceDescription to update.");
+    }
+
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("id", referenceId.toString())

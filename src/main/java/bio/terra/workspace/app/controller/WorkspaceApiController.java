@@ -4,6 +4,7 @@ import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.datareference.DataReferenceService;
+import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
@@ -217,7 +218,14 @@ public class WorkspaceApiController implements WorkspaceApi {
       @RequestBody UpdateDataReferenceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
 
-    if (body.getName() != null) DataReferenceValidationUtils.validateReferenceName(body.getName());
+    if (body.getName() == null && body.getReferenceDescription() == null) {
+      throw new InvalidDataReferenceException(
+          "Must specify name or referenceDescription to update.");
+    }
+
+    if (body.getName() != null) {
+      DataReferenceValidationUtils.validateReferenceName(body.getName());
+    }
 
     logger.info(
         String.format(
