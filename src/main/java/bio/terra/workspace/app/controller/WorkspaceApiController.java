@@ -315,7 +315,8 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<CreateCloudContextResult> createCloudContextResult(UUID id, String jobId) {
+  public ResponseEntity<CreateCloudContextResult> getCreateCloudContextResult(
+      UUID id, String jobId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     CreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userReq);
     return new ResponseEntity<>(

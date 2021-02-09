@@ -224,7 +224,7 @@ paths:
     - $ref: '#/components/parameters/JobId'
     get:
       summary: Get the result of a async job to create a cloud context.
-      operationId: createCloudContextResult
+      operationId: getCreateCloudContextResult
       tags: [Workspace]
       responses:
         '200':
@@ -370,6 +370,23 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateControlledGoogleBucketRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledGoogleBucketResponse'
+        '202':
+          $ref: '#/components/responses/JobReportResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/resources/controlled/google/bucket/result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a google bucket creation job.
+      operationId: getCreateBucketResults
+      tags: [ControlledGoogleResource]
       responses:
         '200':
           $ref: '#/components/responses/CreatedControlledGoogleBucketResponse'
