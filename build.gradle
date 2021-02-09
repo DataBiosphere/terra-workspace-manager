@@ -111,8 +111,6 @@ dependencies {
 
 	annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
 	annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor"
-
-	developmentOnly group: "org.springframework.boot", name: "spring-boot-devtools"
 }
 
 dependencyLocking {
