@@ -28,7 +28,7 @@ public class ControlledGoogleResourceService {
     final JobBuilder jobBuilder =
         jobService.newJob(
             description,
-            requestBody.getCommon().getJobControl().getJobid(),
+            requestBody.getCommon().getJobControl().getId(),
             CreateControlledGoogleBucketFlight.class,
             requestBody,
             userRequest);
@@ -38,7 +38,7 @@ public class ControlledGoogleResourceService {
     jobBuilder.addParameter(
         GoogleBucketFlightMapKeys.DEFAULT_STORAGE_CLASS.getKey(), params.getDefaultStorageClass());
     jobBuilder.addParameter(GoogleBucketFlightMapKeys.LIFECYCLE.getKey(), params.getLifecycle());
-    return jobBuilder.submit(false);
+    return jobBuilder.submit();
   }
 
   //  public CreatedControlledGoogleBucket getCreateBucketResult(String jobId) {

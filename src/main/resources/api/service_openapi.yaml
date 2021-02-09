@@ -373,6 +373,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/CreatedControlledGoogleBucketResponse'
+        '202':
+          $ref: '#/components/responses/JobReportResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
