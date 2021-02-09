@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -62,20 +63,21 @@ public class ControlledResourceDao {
         new MapSqlParameterSource()
             .addValue("workspaceId", workspaceId.toString())
             .addValue("resourceId", resourceId.toString());
-    final Map<String, Object> columnToValue = jdbcTemplate.queryForMap(sql, params);
-    if (columnToValue.isEmpty()) {
+    final Map<String, Object> columnToValue;
+    try {
+      columnToValue = jdbcTemplate.queryForMap(sql, params);
+    } catch (EmptyResultDataAccessException e) {
       return Optional.empty();
-    } else {
-      final ControlledResourceMetadata.Builder resultBuilder =
-          ControlledResourceMetadata.builder()
-              .workspaceId(UUID.fromString((String) columnToValue.get("workspace_id")))
-              .resourceId(UUID.fromString((String) columnToValue.get("resource_id")))
-              .isVisible((boolean) columnToValue.get("is_visible"))
-              .owner((String) columnToValue.get("owner"));
-      Optional.ofNullable((String) columnToValue.get("associated_app"))
-          .ifPresent(resultBuilder::associatedApp);
-      // TODO: attributes support
-      return Optional.of(resultBuilder.build());
     }
+    final ControlledResourceMetadata.Builder resultBuilder =
+        ControlledResourceMetadata.builder()
+            .workspaceId(UUID.fromString((String) columnToValue.get("workspace_id")))
+            .resourceId(UUID.fromString((String) columnToValue.get("resource_id")))
+            .isVisible((boolean) columnToValue.get("is_visible"))
+            .owner((String) columnToValue.get("owner"));
+    Optional.ofNullable((String) columnToValue.get("associated_app"))
+        .ifPresent(resultBuilder::associatedApp);
+    // TODO: attributes support
+    return Optional.of(resultBuilder.build());
   }
 }
