@@ -110,7 +110,7 @@ jobs:
         ./render_config.sh ${{ steps.set-env-step.outputs.config-env }} ${{ steps.vault-token-step.outputs.vault-token }}
         chmod +r rendered
 
-      # Only integration tests need a running servers
+      # Only integration tests need a running server
     - name: Run local server (in background)
       if: steps.set-env-step.outputs.local-server == 'true'
       run: ./gradlew bootRun &
