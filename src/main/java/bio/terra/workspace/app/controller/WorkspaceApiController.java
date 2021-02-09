@@ -5,6 +5,7 @@ import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.generated.model.JobReport.StatusEnum;
 import bio.terra.workspace.service.datareference.DataReferenceService;
+import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
@@ -167,6 +168,7 @@ public class WorkspaceApiController implements WorkspaceApi {
         DataReferenceRequest.builder()
             .workspaceId(id)
             .name(body.getName())
+            .referenceDescription(body.getReferenceDescription())
             .referenceType(referenceType)
             .cloningInstructions(CloningInstructions.fromApiModel(body.getCloningInstructions()))
             .referenceObject(snapshot)
@@ -217,6 +219,36 @@ public class WorkspaceApiController implements WorkspaceApi {
             ref.toString(), referenceType.toString(), workspaceId.toString(), userReq.getEmail()));
 
     return new ResponseEntity<>(ref.toApiModel(), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> updateDataReference(
+      @PathVariable("id") UUID id,
+      @PathVariable("referenceId") UUID referenceId,
+      @RequestBody UpdateDataReferenceRequestBody body) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+
+    if (body.getName() == null && body.getReferenceDescription() == null) {
+      throw new InvalidDataReferenceException(
+          "Must specify name or referenceDescription to update.");
+    }
+
+    if (body.getName() != null) {
+      DataReferenceValidationUtils.validateReferenceName(body.getName());
+    }
+
+    logger.info(
+        String.format(
+            "Updating data reference by id %s in workspace %s for %s with body %s",
+            referenceId.toString(), id.toString(), userReq.getEmail(), body.toString()));
+
+    dataReferenceService.updateDataReference(id, referenceId, body, userReq);
+    logger.info(
+        String.format(
+            "Updating data reference by id %s in workspace %s for %s with body %s",
+            referenceId.toString(), id.toString(), userReq.getEmail(), body.toString()));
+
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override

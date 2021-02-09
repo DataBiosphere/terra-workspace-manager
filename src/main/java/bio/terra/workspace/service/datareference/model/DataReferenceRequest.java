@@ -2,6 +2,7 @@ package bio.terra.workspace.service.datareference.model;
 
 import com.google.auto.value.AutoValue;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 /**
  * This is an internal representation of a request to create a data reference.
@@ -22,6 +23,10 @@ public abstract class DataReferenceRequest {
    */
   public abstract String name();
 
+  /** Description of the reference. */
+  @Nullable
+  public abstract String referenceDescription();
+
   /** Type of this data reference. */
   public abstract DataReferenceType referenceType();
 
@@ -40,6 +45,8 @@ public abstract class DataReferenceRequest {
     public abstract DataReferenceRequest.Builder workspaceId(UUID value);
 
     public abstract DataReferenceRequest.Builder name(String value);
+
+    public abstract DataReferenceRequest.Builder referenceDescription(String value);
 
     public abstract DataReferenceRequest.Builder referenceType(DataReferenceType value);
 

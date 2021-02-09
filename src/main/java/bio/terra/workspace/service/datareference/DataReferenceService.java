@@ -2,6 +2,7 @@ package bio.terra.workspace.service.datareference;
 
 import bio.terra.workspace.common.exception.*;
 import bio.terra.workspace.db.DataReferenceDao;
+import bio.terra.workspace.generated.model.UpdateDataReferenceRequestBody;
 import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.datareference.flight.CreateDataReferenceFlight;
 import bio.terra.workspace.service.datareference.flight.DataReferenceFlightMapKeys;
@@ -99,6 +100,9 @@ public class DataReferenceService {
             .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, referenceRequest.workspaceId())
             .addParameter(DataReferenceFlightMapKeys.NAME, referenceRequest.name())
             .addParameter(
+                DataReferenceFlightMapKeys.REFERENCE_DESCRIPTION,
+                referenceRequest.referenceDescription())
+            .addParameter(
                 DataReferenceFlightMapKeys.REFERENCE_TYPE, referenceRequest.referenceType())
             .addParameter(
                 DataReferenceFlightMapKeys.CLONING_INSTRUCTIONS,
@@ -126,6 +130,24 @@ public class DataReferenceService {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return dataReferenceDao.enumerateDataReferences(workspaceId, offset, limit);
+  }
+
+  @Traced
+  public void updateDataReference(
+      UUID workspaceId,
+      UUID referenceId,
+      UpdateDataReferenceRequestBody updateRequest,
+      AuthenticatedUserRequest userReq) {
+    workspaceService.validateWorkspaceAndAction(
+        userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+
+    if (!dataReferenceDao.updateDataReference(
+        workspaceId,
+        referenceId,
+        updateRequest.getName(),
+        updateRequest.getReferenceDescription())) {
+      throw new DataReferenceNotFoundException("Data Reference not found.");
+    }
   }
 
   /**
