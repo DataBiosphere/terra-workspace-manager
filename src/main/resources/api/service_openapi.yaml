@@ -194,7 +194,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/datarepo/snapshot:
+  /api/workspaces/v1/{id}/resources/references/datarepo/snapshots:
     parameters:
     - $ref: '#/components/parameters/Id'
     post:
@@ -219,7 +219,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/datarepo/snapshot/{referenceId}:
+  /api/workspaces/v1/{id}/resources/references/datarepo/snapshots/{referenceId}:
     parameters:
     - $ref: '#/components/parameters/Id'
     - $ref: '#/components/parameters/ReferenceId'
@@ -250,7 +250,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/datarepo/snapshot/name/{name}:
+  /api/workspaces/v1/{id}/resources/references/datarepo/snapshots/name/{name}:
     parameters:
     - $ref: '#/components/parameters/Id'
     - $ref: '#/components/parameters/Name'
@@ -268,7 +268,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/google/bucket:
+  /api/workspaces/v1/{id}/resources/references/google/buckets:
     parameters:
     - $ref: '#/components/parameters/Id'
     post:
@@ -293,7 +293,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/google/bucket/{referenceId}:
+  /api/workspaces/v1/{id}/resources/references/google/buckets/{referenceId}:
     parameters:
     - $ref: '#/components/parameters/Id'
     - $ref: '#/components/parameters/ReferenceId'
@@ -324,7 +324,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/google/bucket/name/{name}:
+  /api/workspaces/v1/{id}/resources/references/google/buckets/name/{name}:
     parameters:
     - $ref: '#/components/parameters/Id'
     - $ref: '#/components/parameters/Name'
@@ -342,7 +342,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/google/bigquerydataset:
+  /api/workspaces/v1/{id}/resources/references/google/bigquerydatasets:
     parameters:
     - $ref: '#/components/parameters/Id'
     post:
@@ -367,7 +367,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/google/bigquerydataset/{referenceId}:
+  /api/workspaces/v1/{id}/resources/references/google/bigquerydatasets/{referenceId}:
     parameters:
     - $ref: '#/components/parameters/Id'
     - $ref: '#/components/parameters/ReferenceId'
@@ -398,7 +398,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/google/bigquerydataset/name/{name}:
+  /api/workspaces/v1/{id}/resources/references/google/bigquerydatasets/name/{name}:
     parameters:
     - $ref: '#/components/parameters/Id'
     - $ref: '#/components/parameters/Name'
