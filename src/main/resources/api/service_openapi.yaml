@@ -359,7 +359,7 @@ paths:
         404:
           $ref: '#/components/responses/NotFound'
 
-  /api/workspaces/v1/resources/controlled/google/bucket:
+  /api/workspaces/v1/resources/controlled/google/buckets:
     post:
       summary: Create a new controlled Google bucket
       operationId: createBucket
@@ -380,12 +380,12 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/resources/controlled/google/bucket/result/{jobId}:
+  /api/workspaces/v1/resources/controlled/google/buckets/result/{jobId}:
     parameters:
       - $ref: '#/components/parameters/JobId'
     get:
       summary: Retrieve information about a google bucket creation job.
-      operationId: getCreateBucketResults
+      operationId: getCreateBucketResult
       tags: [ControlledGoogleResource]
       responses:
         '200':
@@ -867,11 +867,12 @@ components:
           description: UUID of a newly-created resource. Null if not created yet.
           type: string
           format: uuid
-        jobId:
-          description: Asyncronous job ID for this create operation.
-          type: string
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
         googleBucket:
           $ref: '#/components/schemas/GoogleBucketCreationParameters' # TODO: should this include all parameters, not just the settable ones we expose?
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
 
     GoogleBucketCreationParameters:
       description: >-
