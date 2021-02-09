@@ -37,11 +37,13 @@ public class ControlledGoogleResourceService {
     final GoogleBucketCreationParameters params = requestBody.getGoogleBucket();
     jobBuilder.addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
     jobBuilder.addParameter(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, userRequest.getEmail()); // IS THIS RIGHT?
-    jobBuilder.addParameter(GoogleBucketFlightMapKeys.NAME.getKey(), params.getName());
-    jobBuilder.addParameter(GoogleBucketFlightMapKeys.LOCATION.getKey(), params.getLocation());
-    jobBuilder.addParameter(
-        GoogleBucketFlightMapKeys.DEFAULT_STORAGE_CLASS.getKey(), params.getDefaultStorageClass());
-    jobBuilder.addParameter(GoogleBucketFlightMapKeys.LIFECYCLE.getKey(), params.getLifecycle());
+    jobBuilder.addParameter(GoogleBucketFlightMapKeys.BUCKET_CREATION_PARAMS.getKey(), params);
+// TODO: may not need these
+//    jobBuilder.addParameter(GoogleBucketFlightMapKeys.NAME.getKey(), params.getName());
+//    jobBuilder.addParameter(GoogleBucketFlightMapKeys.LOCATION.getKey(), params.getLocation());
+//    jobBuilder.addParameter(
+//        GoogleBucketFlightMapKeys.DEFAULT_STORAGE_CLASS.getKey(), params.getDefaultStorageClass());
+//    jobBuilder.addParameter(GoogleBucketFlightMapKeys.LIFECYCLE.getKey(), params.getLifecycle());
     return jobBuilder.submit();
   }
 

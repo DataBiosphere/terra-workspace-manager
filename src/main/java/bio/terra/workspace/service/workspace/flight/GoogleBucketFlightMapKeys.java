@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace.flight;
 
+import bio.terra.workspace.generated.model.GoogleBucketCreationParameters;
 import bio.terra.workspace.generated.model.GoogleBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycle;
 
@@ -11,7 +12,8 @@ public enum GoogleBucketFlightMapKeys {
   NAME("name", String.class),
   LOCATION("location", String.class),
   DEFAULT_STORAGE_CLASS("defaultStorageClass", GoogleBucketDefaultStorageClass.class),
-  LIFECYCLE("lifecycle", GoogleBucketLifecycle.class);
+  LIFECYCLE("lifecycle", GoogleBucketLifecycle.class),
+  BUCKET_CREATION_PARAMS("bucket_creation_params", GoogleBucketCreationParameters.class);
 
   private final String key;
   private final Class<?> klass;
