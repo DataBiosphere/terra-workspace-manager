@@ -12,7 +12,7 @@ public abstract class ControlledResourceMetadata {
 
   public abstract Optional<String> associatedApp();
 
-  public abstract boolean visible();
+  public abstract boolean isVisible();
 
   public abstract Optional<String> owner();
 
@@ -30,7 +30,7 @@ public abstract class ControlledResourceMetadata {
 
     public abstract ControlledResourceMetadata.Builder associatedApp(String value);
 
-    public abstract ControlledResourceMetadata.Builder visible(boolean value);
+    public abstract ControlledResourceMetadata.Builder isVisible(boolean value);
 
     public abstract ControlledResourceMetadata.Builder owner(String value);
 

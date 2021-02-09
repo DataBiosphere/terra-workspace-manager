@@ -45,7 +45,7 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
       UUID id, @Valid CreateControlledGoogleBucketRequestBody body) {
     ControllerValidationUtils.validateGoogleBucket(body.getGoogleBucket());
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final String jobId = controlledResourceService.createBucket(body, userRequest);
+    final String jobId = controlledResourceService.createBucket(id, body, userRequest);
     return getCreateBucketResult(id, jobId);
   }
 

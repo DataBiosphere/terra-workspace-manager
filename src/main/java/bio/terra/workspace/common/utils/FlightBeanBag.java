@@ -81,5 +81,7 @@ public class FlightBeanBag {
     return workspaceDao;
   }
 
-  public ControlledResourceDao getControlledResourceDao() { return controlledResourceDao; }
+  public ControlledResourceDao getControlledResourceDao() {
+    return controlledResourceDao;
+  }
 }
