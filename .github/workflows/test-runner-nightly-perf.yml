@@ -35,7 +35,7 @@ jobs:
         run: |
           cd ${GITHUB_WORKSPACE}/${workingDir}/workspace-manager-clienttests
           chmod +x render-config.sh
-          ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
+          ./render-config.sh dev ${{ steps.vault-token-step.outputs.vault-token }}
           chmod +r rendered
       - name: Cache Gradle packages
         uses: actions/cache@v2
