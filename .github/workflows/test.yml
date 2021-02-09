@@ -8,6 +8,11 @@ on:
     branches: [ dev ]
   pull_request:
     branches: [ '**' ]
+  workflow_dispatch:
+    inputs:
+      testEnv:
+        description: 'Environment in which tests should be run. Currently works on dev, alpha and staging'
+        required: true
 
 jobs:
   test:
@@ -40,14 +45,36 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
+    - name: Set env and whether or not to use a local server
+      id: set-env-step
+      run: |
+        if ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}; then
+          ENV=local
+          CONFIG_ENV=dev
+          LOCAL_SERVER=${{ matrix.gradleTask == 'integrationTest' }}
+        elif ${{ github.event_name == 'workflow_dispatch' }}; then
+          ENV=${{ github.event.inputs.testEnv }}
+          CONFIG_ENV=${{ github.event.inputs.testEnv }}
+          LOCAL_SERVER=false
+        else
+          echo ::error ::${{ github.event_name }} not supported for this workflow
+          exit 1
+        fi
+        echo ::set-output name=test-env::$ENV
+        echo ::set-output name=config-env::$CONFIG_ENV
+        echo ::set-output name=local-server::$LOCAL_SERVER
+
     - name: Initialize Postgres DB
       env:
         PGPASSWORD: postgres
       run: psql -h 127.0.0.1 -U postgres -f ./local-dev/local-postgres-init.sql
+
     - name: Set up AdoptOpenJDK 11
       uses: joschi/setup-jdk@v2
       with:
         java-version: 11
+
     - name: Cache Gradle packages
       uses: actions/cache@v2
       with:
@@ -56,6 +83,7 @@ jobs:
           ~/.gradle/wrapper
         key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
         restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
@@ -74,26 +102,30 @@ jobs:
             secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
         echo ::set-output name=vault-token::$VAULT_TOKEN
         echo ::add-mask::$VAULT_TOKEN
+
     - name: Set permissions and render test configurations
       if: matrix.gradleTask != 'unitTest'
       run: |
         chmod +x render_config.sh
-        ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }} dev
+        ./render_config.sh ${{ steps.set-env-step.outputs.config-env }} ${{ steps.vault-token-step.outputs.vault-token }}
         chmod +r rendered
 
-    # Only integration tests need a running server
+      # Only integration tests need a running server
     - name: Run local server (in background)
-      if: matrix.gradleTask == 'integrationTest'
+      if: steps.set-env-step.outputs.local-server == 'true'
       run: ./gradlew bootRun &
+
     - name: Wait for local server to start
-      if: matrix.gradleTask == 'integrationTest'
+      if: steps.set-env-step.outputs.local-server == 'true'
       # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
       run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
 
+      # Run tests
     - name: Run tests
       env:
-        TEST_ENV: dev
+        TEST_ENV: ${{ steps.set-env-step.outputs.test-env }}
       run: ./gradlew ${{ matrix.gradleTask }} --scan
+
     - name: Upload Test Reports
       uses: actions/upload-artifact@v1
       with:

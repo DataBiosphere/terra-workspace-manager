@@ -58,8 +58,7 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
             CREATION_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
-    String projectId =
-        workspaceService.getCloudContext(workspaceId, userReq).googleProjectId().get();
+    String projectId = workspaceService.getCloudContext(workspaceId, userReq).googleProjectId();
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals("ACTIVE", project.getLifecycleState());
 

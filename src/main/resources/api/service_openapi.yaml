@@ -191,31 +191,46 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/google:
+  /api/workspaces/v1/{id}/cloudcontexts:
     parameters:
       - $ref: '#/components/parameters/Id'
     post:
-      summary: Create a google context for the workspace.
-      operationId: createGoogleContext
+      summary: Create a cloud context for the workspace.
+      operationId: createCloudContext
       tags: [Workspace]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateGoogleContextRequestBody'
+              $ref: '#/components/schemas/CreateCloudContextRequest'
       responses:
+        '200':
+          $ref: '#/components/responses/CreateCloudContextResultResponse'
         '202':
-          description: Redirect for profile successful creation
-          headers:
-            location:
-              description: url for the job result
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JobModel'
+          $ref: '#/components/responses/JobReportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{id}/cloudcontexts/result/{jobId}:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Get the result of a async job to create a cloud context.
+      operationId: createCloudContextResult
+      tags: [Workspace]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateCloudContextResultResponse'
+        '202':
+          $ref: '#/components/responses/CreateCloudContextResultResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -226,9 +241,14 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{id}/cloudcontexts/{cloudContext}:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/CloudContext'
     delete:
-      summary: Deletes the google context and all of its data from a workspace.
-      operationId: deleteGoogleContext
+      summary: Deletes a cloud context and all of its data from a workspace.
+      operationId: deleteCloudContext
       tags: [Workspace]
       responses:
         '204':
@@ -447,6 +467,14 @@ components:
       schema:
         type: string
 
+    CloudContext:
+      name: cloudContext
+      in: path
+      description: A cloud which holds context for a workspace.
+      required: true
+      schema:
+        $ref: '#/components/schemas/CloudContext'
+
   schemas:
     ErrorReport:
       type: object
@@ -461,41 +489,49 @@ components:
           items:
             type: string
 
-    JobControl:
+    JobReport:
       type: object
-      required: [jobid]
-      properties:
-        jobid:
-          type: string
-        pubsub:
-          type: object
-          required: [projectid, topicid]
-          properties:
-            projectid:
-              type: string
-            topicid:
-              type: string
-
-    JobModel:
-      type: object
-      required: [id, status, status_code]
+      required: [id, status, statusCode, resultURL]
       properties:
         id:
+          description: caller-provided unique identifier for the job
           type: string
         description:
+          description: caller-provided description of the job
           type: string
         status:
+          description: status of the job
           type: string
           enum: [RUNNING, SUCCEEDED, FAILED]
         statusCode:
-          description: HTTP code
+          description: >-
+            HTTP code providing completion status of the job. Present if status
+            is SUCCEEDED or FAILED.
           type: integer
         submitted:
+          description: timestamp when the job was submitted; in ISO-8601 format
           type: string
         completed:
+          description: >-
+            timestamp when the job completed - in ISO-8601 format. Present if
+            status is SUCCEEDED or FAILED.
           type: string
-        estimatedRemainingTimeMS:
-          type: integer
+        resultURL:
+          description: >-
+            URL where the result of the job can be retrieved. Equivalent to a
+            Location header in HTTP.
+          type: string
+
+    JobControl:
+      type: object
+      required: [id]
+      properties:
+        id:
+          description: >-
+            Unique identifier for the job. Best practice is for job identifier to be a UUID,
+            a ShortUUID, or other globally unique identifier.
+          type: string
+        # TODO: In the future, notification configuration will also be part of JobControl.
 
     SystemStatus:
       type: object
@@ -609,6 +645,23 @@ components:
       # to use.
       enum: ['DATA_REPO_SNAPSHOT', 'PLACEHOLDER_VALUE'] #eventually include GCS bucket, etc.
 
+    CloudContext:
+      type: string
+      description: Enum representing a cloud with additonal workspace context.
+      enum: ['GOOGLE']
+
+    CreateCloudContextRequest:
+      type: object
+      required: [cloudContext, jobControl]
+      description: |
+        Request body for asynchronously creating a cloud context for a workspace.
+        Contains a CloudContext enum and JobControl object.
+      properties:
+        cloudContext:
+          $ref: '#/components/schemas/CloudContext'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
     GoogleContext:
       type: object
       description: The Google cloud space associated with a workspace.
@@ -616,6 +669,21 @@ components:
         projectId:
           description: The ID of Google Project associated with the workspace.
           type: string
+
+    CreateCloudContextResult:
+      type: object
+      description: |
+        The result of a call to create a cloud context for a workspace. Contains
+        a JobReport detailing the async operation and either a GoogleContext
+        or an ErrorReport detailing an error.
+      required: [jobReport]
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        googleContext:
+          $ref: '#/components/schemas/GoogleContext'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
 
     CreateDataReferenceRequestBody:
       type: object
@@ -712,17 +780,6 @@ components:
       description: Enum for possible stages of a workspace along the Rawls migration path
       type: string
       enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']
-
-    CreateGoogleContextRequestBody:
-      description: Request body object for creating the Google context.
-      type: object
-      properties:
-        jobId:
-          description: |
-            The ID to use for the job of creating the google context. If not specified, a job id
-            will be randomly generated. If specified, the create Google context endpoint can be
-            called idempotently.
-          type: string
 
     IamRole:
       description: Enum containing all valid IAM roles on a Workspace
@@ -964,7 +1021,28 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CreatedControlledGoogleBucket'
+            $ref: '#/components/schemas/RoleBindingList'
+
+    CreateCloudContextResultResponse:
+      description: Job is complete (succeeded or failed)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateCloudContextResult'
+
+    JobReportResponse:
+      description: A response containing a JobReport object. Returned for running jobs.
+      headers:
+        Retry-After:
+          description: >-
+            optional - estimated seconds to wait before polling again. This allows
+            a server to offer a hint as to when the job might be complete.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/JobReport'
 
     # Error Responses
     BadRequest:

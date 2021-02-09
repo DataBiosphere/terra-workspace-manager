@@ -67,7 +67,7 @@ jobs:
       - name: Set permissions and render test configurations
         run: |
           chmod +x render_config.sh
-          ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }} dev
+          ./render_config.sh dev ${{ steps.vault-token-step.outputs.vault-token }}
           chmod +r rendered
 
       # Spin up a local server.
@@ -102,3 +102,10 @@ jobs:
           cd workspace-manager-clienttests
           echo "Upload test results to Google Bucket"
           ./gradlew uploadResults --args="CompressDirectoryToBucket.json /tmp/TestRunnerResults"
+
+      - name: Upload test results to BigQuery Test Runner Dataset
+        if: ${{ always() }}
+        run: |
+          cd workspace-manager-clienttests
+          echo "Upload test results to BigQuery Test Runner Dataset"
+          ./gradlew uploadResults --args="SummariesToBigQuery.json /tmp/TestRunnerResults"

@@ -3,6 +3,7 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.generated.model.JobReport.StatusEnum;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
@@ -14,13 +15,13 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -70,6 +71,13 @@ public class WorkspaceApiController implements WorkspaceApi {
     return authenticatedUserRequestFactory.from(request);
   }
 
+  // Returns the result endpoint corresponding to an async request, prefixed with a / character.
+  // Used to build a JobReport. This assumes the result endpoint is at /result/{jobId} relative to
+  // the async endpoint, which is standard but not enforced.
+  private String getAsyncResultEndpoint(String jobId) {
+    return String.format("%s/result/%s", request.getServletPath(), jobId);
+  }
+
   @Override
   public ResponseEntity<CreatedWorkspace> createWorkspace(
       @RequestBody CreateWorkspaceRequestBody body) {
@@ -112,14 +120,16 @@ public class WorkspaceApiController implements WorkspaceApi {
     Workspace workspace = workspaceService.getWorkspace(id, userReq);
     WorkspaceCloudContext cloudContext = workspaceService.getCloudContext(id, userReq);
 
-    Optional<GoogleContext> googleContext =
-        cloudContext.googleProjectId().map(projectId -> new GoogleContext().projectId(projectId));
+    // Note projectId will be null here if no cloud context exists.
+    // TODO: this assumes a GoogleContext is the only cloud context on a workspace. This will
+    // eventually need to change.
+    GoogleContext googleContext = new GoogleContext().projectId(cloudContext.googleProjectId());
     WorkspaceDescription desc =
         new WorkspaceDescription()
             .id(workspace.workspaceId())
             .spendProfile(workspace.spendProfileId().map(SpendProfileId::id).orElse(null))
             .stage(workspace.workspaceStage().toApiModel())
-            .googleContext(googleContext.orElse(null));
+            .googleContext(googleContext);
     logger.info(String.format("Got workspace %s for %s", desc.toString(), userReq.getEmail()));
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
@@ -248,30 +258,6 @@ public class WorkspaceApiController implements WorkspaceApi {
     return ResponseEntity.ok(responseList);
   }
 
-  /* Job endpoints disabled for now
-  @Override
-  public ResponseEntity<Void> deleteJob(@PathVariable("id") String id) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    jobService.releaseJob(id, userReq);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-  }
-
-  @Override
-  public ResponseEntity<JobModel> pollAsyncJob(@PathVariable("id") String id) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    JobModel job = jobService.retrieveJob(id, userReq);
-    return new ResponseEntity<JobModel>(job, HttpStatus.valueOf(job.getStatusCode()));
-  }
-
-  @Override
-  public ResponseEntity<Object> retrieveJobResult(@PathVariable("id") String id) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    JobResultWithStatus<Object> jobResultHolder =
-        jobService.retrieveJobResult(id, Object.class, userReq);
-    return new ResponseEntity<>(jobResultHolder.getResult(), jobResultHolder.getStatusCode());
-  }
-  */
-
   @Override
   public ResponseEntity<Void> grantRole(
       @PathVariable("id") UUID id,
@@ -315,22 +301,47 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<JobModel> createGoogleContext(
-      UUID id, @Valid CreateGoogleContextRequestBody body) {
+  public ResponseEntity<CreateCloudContextResult> createCloudContext(
+      UUID id, @Valid CreateCloudContextRequest body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    // TODO(PF-153): Use the optional jobId from the body for idempotency instead of always creating
-    // a new job id.
-    String jobId = workspaceService.createGoogleContext(id, userReq);
-    JobModel jobModel = jobService.retrieveJob(jobId, userReq);
-    // TODO(PF-221): Fix the jobs polling location once it exists.
-    return ResponseEntity.status(HttpStatus.ACCEPTED)
-        .location(URI.create(String.format("/api/jobs/v1/%s", jobId)))
-        .body(jobModel);
+    ControllerValidationUtils.validateCloudContext(body.getCloudContext());
+    String jobId = body.getJobControl().getId();
+    String resultPath = getAsyncResultEndpoint(jobId);
+
+    workspaceService.createGoogleContext(id, jobId, resultPath, userReq);
+    CreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userReq);
+    return new ResponseEntity<>(
+        response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));
   }
 
   @Override
-  public ResponseEntity<Void> deleteGoogleContext(UUID id) {
+  public ResponseEntity<CreateCloudContextResult> createCloudContextResult(UUID id, String jobId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    CreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userReq);
+    return new ResponseEntity<>(
+        response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));
+  }
+
+  private CreateCloudContextResult fetchCreateCloudContextResult(
+      String jobId, AuthenticatedUserRequest userReq) {
+    final AsyncJobResult<WorkspaceCloudContext> jobResult =
+        jobService.retrieveAsyncJobResult(jobId, WorkspaceCloudContext.class, userReq);
+    final GoogleContext googleContext;
+    if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
+      googleContext = new GoogleContext().projectId(jobResult.getResult().googleProjectId());
+    } else {
+      googleContext = null;
+    }
+    return new CreateCloudContextResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getErrorReport())
+        .googleContext(googleContext);
+  }
+
+  @Override
+  public ResponseEntity<Void> deleteCloudContext(UUID id, CloudContext cloudContext) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    ControllerValidationUtils.validateCloudContext(cloudContext);
     workspaceService.deleteGoogleContext(id, userReq);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }

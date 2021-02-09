@@ -7,7 +7,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.db.WorkspaceDao;
 import java.io.IOException;
-import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,13 +33,13 @@ public class DeleteProjectStep implements Step {
   public StepResult doStep(FlightContext flightContext) {
     UUID workspaceId =
         flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    Optional<String> projectId = workspaceDao.getCloudContext(workspaceId).googleProjectId();
-    if (projectId.isEmpty()) {
+    String projectId = workspaceDao.getCloudContext(workspaceId).googleProjectId();
+    if (projectId == null) {
       // Nothing to delete.
       return StepResult.getStepResultSuccess();
     }
     try {
-      GoogleUtils.deleteProject(projectId.get(), resourceManager);
+      GoogleUtils.deleteProject(projectId, resourceManager);
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
@@ -51,8 +50,8 @@ public class DeleteProjectStep implements Step {
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     UUID workspaceId =
         flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    Optional<String> projectId = workspaceDao.getCloudContext(workspaceId).googleProjectId();
-    if (projectId.isEmpty()) {
+    String projectId = workspaceDao.getCloudContext(workspaceId).googleProjectId();
+    if (projectId == null) {
       // Nothing to delete, so nothing to undo.
       return StepResult.getStepResultSuccess();
     }

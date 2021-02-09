@@ -13,14 +13,18 @@ import bio.terra.stairway.exception.DuplicateFlightIdSubmittedException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.stairway.exception.StairwayExecutionException;
+import bio.terra.workspace.app.configuration.external.IngressConfiguration;
 import bio.terra.workspace.app.configuration.external.JobConfiguration;
 import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
 import bio.terra.workspace.common.exception.stairway.StairwayInitializationException;
+import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.MdcHook;
-import bio.terra.workspace.generated.model.JobModel;
+import bio.terra.workspace.generated.model.ErrorReport;
+import bio.terra.workspace.generated.model.JobReport;
+import bio.terra.workspace.generated.model.JobReport.StatusEnum;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.job.exception.DuplicateJobIdException;
 import bio.terra.workspace.service.job.exception.InternalStairwayException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.job.exception.JobNotCompleteException;
@@ -30,6 +34,7 @@ import bio.terra.workspace.service.job.exception.JobUnauthorizedException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -50,6 +55,7 @@ public class JobService {
 
   private final Stairway stairway;
   private final JobConfiguration jobConfig;
+  private final IngressConfiguration ingressConfig;
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
   private final ScheduledExecutorService executor;
   private final MdcHook mdcHook;
@@ -58,13 +64,14 @@ public class JobService {
 
   @Autowired
   public JobService(
-      SamService samService,
       JobConfiguration jobConfig,
+      IngressConfiguration ingressConfig,
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
       FlightBeanBag applicationContext,
       MdcHook mdcHook,
       ObjectMapper objectMapper) {
     this.jobConfig = jobConfig;
+    this.ingressConfig = ingressConfig;
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
     this.executor = Executors.newScheduledThreadPool(jobConfig.getMaxThreads());
     this.mdcHook = mdcHook;
@@ -84,25 +91,60 @@ public class JobService {
     }
   }
 
-  public static class JobResultWithStatus<T> {
+  public static class JobResultOrException<T> {
     private T result;
-    private HttpStatus statusCode;
+    private RuntimeException exception;
 
     public T getResult() {
       return result;
     }
 
-    public JobResultWithStatus<T> result(T result) {
+    public JobResultOrException<T> result(T result) {
       this.result = result;
       return this;
     }
 
-    public HttpStatus getStatusCode() {
-      return statusCode;
+    public RuntimeException getException() {
+      return exception;
     }
 
-    public JobResultWithStatus<T> statusCode(HttpStatus httpStatus) {
-      this.statusCode = httpStatus;
+    public JobResultOrException<T> exception(RuntimeException exception) {
+      this.exception = exception;
+      return this;
+    }
+  }
+
+  // The result of an asynchronous job is a JobReport and exactly one of a job result
+  // or an ErrorReport. If the job is incomplete, only jobReport will be present.
+  public static class AsyncJobResult<T> {
+    private JobReport jobReport;
+    private T result;
+    private ErrorReport errorReport;
+
+    public T getResult() {
+      return result;
+    }
+
+    public AsyncJobResult<T> result(T result) {
+      this.result = result;
+      return this;
+    }
+
+    public ErrorReport getErrorReport() {
+      return errorReport;
+    }
+
+    public AsyncJobResult<T> errorReport(ErrorReport errorReport) {
+      this.errorReport = errorReport;
+      return this;
+    }
+
+    public JobReport getJobReport() {
+      return jobReport;
+    }
+
+    public AsyncJobResult<T> jobReport(JobReport jobReport) {
+      this.jobReport = jobReport;
       return this;
     }
   }
@@ -124,42 +166,39 @@ public class JobService {
   // submit a new job to stairway
   // protected method intended to be called only from JobBuilder
   protected String submit(
-      Class<? extends Flight> flightClass,
-      FlightMap parameterMap,
-      String jobId,
-      boolean duplicateFlightOk) {
+      Class<? extends Flight> flightClass, FlightMap parameterMap, String jobId) {
     try {
       stairway.submit(jobId, flightClass, parameterMap);
     } catch (DuplicateFlightIdSubmittedException ex) {
       // DuplicateFlightIdSubmittedException is a more specific StairwayException, and so needs to
       // be checked separately. Allowing duplicate FlightIds is useful for ensuring idempotent
       // behavior of flights.
-      logger.debug("Found duplicate flight ID, duplicateFlightOk = " + duplicateFlightOk);
-      if (duplicateFlightOk) {
-        return jobId;
-      } else {
-        throw new InternalStairwayException(ex);
-      }
+      logger.warn(String.format("Received duplicate job ID: %s", jobId));
+      throw new DuplicateJobIdException("Received duplicate jobId, see logs for details", ex);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
     return jobId;
   }
 
-  // submit a new job to stairway, wait for it to finish, then return the result
+  // Submit a new job to stairway, wait for it to finish, then return the result.
+  // This will throw any exception raised by the flight.
   // protected method intended to be called only from JobBuilder
   protected <T> T submitAndWait(
       Class<? extends Flight> flightClass,
       FlightMap parameterMap,
       Class<T> resultClass,
-      String jobId,
-      boolean duplicateFlightOk) {
-    submit(flightClass, parameterMap, jobId, duplicateFlightOk);
+      String jobId) {
+    submit(flightClass, parameterMap, jobId);
     waitForJob(jobId);
     AuthenticatedUserRequest userReq =
         parameterMap.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    return retrieveJobResult(jobId, resultClass, userReq).getResult();
+    JobResultOrException<T> resultOrException = retrieveJobResult(jobId, resultClass, userReq);
+    if (resultOrException.getException() != null) {
+      throw resultOrException.getException();
+    }
+    return resultOrException.getResult();
   }
 
   @VisibleForTesting
@@ -234,12 +273,12 @@ public class JobService {
     }
   }
 
-  public JobModel mapFlightStateToJobModel(FlightState flightState) {
+  public JobReport mapFlightStateToJobReport(FlightState flightState) {
     FlightMap inputParameters = flightState.getInputParameters();
     String description = inputParameters.get(JobMapKeys.DESCRIPTION.getKeyName(), String.class);
     FlightStatus flightStatus = flightState.getFlightStatus();
     String submittedDate = flightState.getSubmitted().toString();
-    JobModel.StatusEnum jobStatus = getJobStatus(flightStatus);
+    JobReport.StatusEnum jobStatus = getJobStatus(flightStatus);
 
     String completedDate = null;
     HttpStatus statusCode = HttpStatus.ACCEPTED;
@@ -256,29 +295,42 @@ public class JobService {
       completedDate = flightState.getCompleted().get().toString();
     }
 
-    return new JobModel()
-        .id(flightState.getFlightId())
-        .description(description)
-        .status(jobStatus)
-        .statusCode(statusCode.value())
-        .submitted(submittedDate)
-        .completed(completedDate);
+    JobReport jobReport =
+        new JobReport()
+            .id(flightState.getFlightId())
+            .description(description)
+            .status(jobStatus)
+            .statusCode(statusCode.value())
+            .submitted(submittedDate)
+            .completed(completedDate)
+            .resultURL(resultUrlFromFlightState(flightState));
+
+    return jobReport;
   }
 
-  private JobModel.StatusEnum getJobStatus(FlightStatus flightStatus) {
+  private String resultUrlFromFlightState(FlightState flightState) {
+    String resultPath =
+        flightState.getInputParameters().get(JobMapKeys.RESULT_PATH.getKeyName(), String.class);
+    if (resultPath == null) {
+      resultPath = "";
+    }
+    return Path.of(ingressConfig.getDomainName(), resultPath).toString();
+  }
+
+  private JobReport.StatusEnum getJobStatus(FlightStatus flightStatus) {
     switch (flightStatus) {
       case RUNNING:
-        return JobModel.StatusEnum.RUNNING;
+        return JobReport.StatusEnum.RUNNING;
       case SUCCESS:
-        return JobModel.StatusEnum.SUCCEEDED;
+        return JobReport.StatusEnum.SUCCEEDED;
       case ERROR:
       case FATAL:
       default:
-        return JobModel.StatusEnum.FAILED;
+        return JobReport.StatusEnum.FAILED;
     }
   }
 
-  public List<JobModel> enumerateJobs(int offset, int limit, AuthenticatedUserRequest userReq) {
+  public List<JobReport> enumerateJobs(int offset, int limit, AuthenticatedUserRequest userReq) {
 
     List<FlightState> flightStateList;
     try {
@@ -290,21 +342,21 @@ public class JobService {
       throw new InternalStairwayException(stairwayEx);
     }
 
-    List<JobModel> jobModelList = new ArrayList<>();
+    List<JobReport> jobReportList = new ArrayList<>();
     for (FlightState flightState : flightStateList) {
-      JobModel jobModel = mapFlightStateToJobModel(flightState);
-      jobModelList.add(jobModel);
+      JobReport jobReport = mapFlightStateToJobReport(flightState);
+      jobReportList.add(jobReport);
     }
-    return jobModelList;
+    return jobReportList;
   }
 
   @Traced
-  public JobModel retrieveJob(String jobId, AuthenticatedUserRequest userReq) {
+  public JobReport retrieveJob(String jobId, AuthenticatedUserRequest userReq) {
 
     try {
       verifyUserAccess(jobId, userReq); // jobId=flightId
       FlightState flightState = stairway.getFlightState(jobId);
-      return mapFlightStateToJobModel(flightState);
+      return mapFlightStateToJobReport(flightState);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
@@ -315,26 +367,23 @@ public class JobService {
    *
    * <ol>
    *   <li>Flight is still running. Throw an JobNotComplete exception
-   *   <li>Successful flight: extract the resultMap RESPONSE as the target class. If a
-   *       statusContainer is present, we try to retrieve the STATUS_CODE from the resultMap and
-   *       store it in the container. That allows flight steps used in async REST API endpoints to
-   *       set alternate success status codes. The status code defaults to OK, if it is not set in
-   *       the resultMap.
-   *   <li>Failed flight: if there is an exception, throw it. Note that we can only throw
-   *       RuntimeExceptions to be handled by the global exception handler. Non-runtime exceptions
-   *       require throw clauses on the controller methods; those are not present in the
-   *       swagger-generated code, so it introduces a mismatch. Instead, in this code if the caught
-   *       exception is not a runtime exception, then we throw JobResponseException passing in the
-   *       Throwable to the exception. In the global exception handler, we retrieve the Throwable
-   *       and use the error text from that in the error model
-   *   <li>Failed flight: no exception present. We throw InvalidResultState exception
+   *   <li>Successful flight: extract the resultMap RESPONSE as the target class.
+   *   <li>Failed flight: if there is an exception, store it in the returned JobResultOrException.
+   *       Note that we only store RuntimeExceptions to allow higher-level methods to throw these
+   *       exceptions if they choose. Non-runtime exceptions require throw clauses on the controller
+   *       methods; those are not present in the swagger-generated code, so it introduces a
+   *       mismatch. Instead, in this code if the caught exception is not a runtime exception, then
+   *       we store JobResponseException, passing in the Throwable to the exception. In the global
+   *       exception handler, we retrieve the Throwable and use the error text from that in the
+   *       error model.
+   *   <li>Failed flight: no exception present. Throw an InvalidResultState exception
    * </ol>
    *
    * @param jobId to process
    * @return object of the result class pulled from the result map
    */
   @Traced
-  public <T> JobResultWithStatus<T> retrieveJobResult(
+  public <T> JobResultOrException<T> retrieveJobResult(
       String jobId, Class<T> resultClass, AuthenticatedUserRequest userReq) {
 
     try {
@@ -345,7 +394,43 @@ public class JobService {
     }
   }
 
-  private <T> JobResultWithStatus<T> retrieveJobResultWorker(String jobId, Class<T> resultClass)
+  /**
+   * Retrieves the result of an asynchronous job.
+   *
+   * <p>Stairway has no concept of synchronous vs asynchronous flights. However, MC Terra has a
+   * service-level standard result for asynchronous jobs which includes a JobReport and either a
+   * result or error if the job is complete. This is a convenience for callers who would otherwise
+   * need to construct their own AsyncJobResult object.
+   *
+   * <p>Unlike retrieveJobResult, this will not throw for a flight in progress. Instead, it will
+   * return a JobReport without a result or error.
+   */
+  public <T> AsyncJobResult<T> retrieveAsyncJobResult(
+      String jobId, Class<T> resultClass, AuthenticatedUserRequest userReq) {
+    try {
+      verifyUserAccess(jobId, userReq); // jobId=flightId
+      JobReport jobReport = retrieveJob(jobId, userReq);
+      if (jobReport.getStatus().equals(StatusEnum.RUNNING)) {
+        return new AsyncJobResult<T>().jobReport(jobReport);
+      }
+
+      JobResultOrException<T> resultOrException = retrieveJobResultWorker(jobId, resultClass);
+      final ErrorReport errorReport;
+      if (jobReport.getStatus().equals(StatusEnum.FAILED)) {
+        errorReport = ErrorReportUtils.buildErrorReport(resultOrException.getException());
+      } else {
+        errorReport = null;
+      }
+      return new AsyncJobResult<T>()
+          .jobReport(jobReport)
+          .result(resultOrException.getResult())
+          .errorReport(errorReport);
+    } catch (StairwayException | InterruptedException stairwayEx) {
+      throw new InternalStairwayException(stairwayEx);
+    }
+  }
+
+  private <T> JobResultOrException<T> retrieveJobResultWorker(String jobId, Class<T> resultClass)
       throws StairwayException, InterruptedException {
     FlightState flightState = stairway.getFlightState(jobId);
     FlightMap resultMap = flightState.getResultMap().orElse(null);
@@ -359,21 +444,16 @@ public class JobService {
         if (flightState.getException().isPresent()) {
           Exception exception = flightState.getException().get();
           if (exception instanceof RuntimeException) {
-            throw (RuntimeException) exception;
+            return new JobResultOrException<T>().exception((RuntimeException) exception);
           } else {
-            throw new JobResponseException("wrap non-runtime exception", exception);
+            return new JobResultOrException<T>()
+                .exception(new JobResponseException("wrap non-runtime exception", exception));
           }
         }
         throw new InvalidResultStateException("Failed operation with no exception reported");
 
       case SUCCESS:
-        HttpStatus statusCode =
-            resultMap.get(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class);
-        if (statusCode == null) {
-          statusCode = HttpStatus.OK;
-        }
-        return new JobResultWithStatus<T>()
-            .statusCode(statusCode)
+        return new JobResultOrException<T>()
             .result(resultMap.get(JobMapKeys.RESPONSE.getKeyName(), resultClass));
 
       case RUNNING:

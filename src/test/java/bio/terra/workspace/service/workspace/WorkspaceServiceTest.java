@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -25,6 +26,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.job.exception.DuplicateJobIdException;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
@@ -42,7 +44,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpStatus;
 
 public class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private WorkspaceService workspaceService;
@@ -147,14 +148,14 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void duplicateJobIdRequestOk() {
+  public void duplicateJobIdRequestRejected() {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
-    UUID returnedId = workspaceService.createWorkspace(request, USER_REQUEST);
+    workspaceService.createWorkspace(request, USER_REQUEST);
     // Because these calls share the same jobId they're treated as duplicate requests, rather
     // than separate attempts to create the same workspace.
-    UUID duplicateReturnedId = workspaceService.createWorkspace(request, USER_REQUEST);
-    assertEquals(returnedId, duplicateReturnedId);
-    assertEquals(returnedId, request.workspaceId());
+    assertThrows(
+        DuplicateJobIdException.class,
+        () -> workspaceService.createWorkspace(request, USER_REQUEST));
   }
 
   @Test
@@ -293,17 +294,12 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
-
-    String jobId = workspaceService.createGoogleContext(request.workspaceId(), USER_REQUEST);
+    String jobId = UUID.randomUUID().toString();
+    workspaceService.createGoogleContext(request.workspaceId(), jobId, "/fake/value", USER_REQUEST);
     jobService.waitForJob(jobId);
-    assertEquals(
-        HttpStatus.OK,
-        jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getStatusCode());
+    assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
     String projectId =
-        workspaceService
-            .getCloudContext(request.workspaceId(), USER_REQUEST)
-            .googleProjectId()
-            .get();
+        workspaceService.getCloudContext(request.workspaceId(), USER_REQUEST).googleProjectId();
 
     // Verify project exists by retrieving it.
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
@@ -324,16 +320,13 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    String jobId = workspaceService.createGoogleContext(request.workspaceId(), USER_REQUEST);
+    String jobId = UUID.randomUUID().toString();
+    workspaceService.createGoogleContext(request.workspaceId(), jobId, "/fake/value", USER_REQUEST);
     jobService.waitForJob(jobId);
-    assertEquals(
-        HttpStatus.OK,
-        jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getStatusCode());
+    assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
     assertTrue(
-        workspaceService
-            .getCloudContext(request.workspaceId(), USER_REQUEST)
-            .googleProjectId()
-            .isPresent());
+        workspaceService.getCloudContext(request.workspaceId(), USER_REQUEST).googleProjectId()
+            != null);
 
     workspaceService.deleteGoogleContext(request.workspaceId(), USER_REQUEST);
     assertEquals(
@@ -345,10 +338,13 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   public void createGoogleContextRawlsStageThrows() {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
+    String jobId = UUID.randomUUID().toString();
 
     assertThrows(
         StageDisabledException.class,
-        () -> workspaceService.createGoogleContext(request.workspaceId(), USER_REQUEST));
+        () ->
+            workspaceService.createGoogleContext(
+                request.workspaceId(), jobId, "/fake/value", USER_REQUEST));
   }
 
   @Test
@@ -358,10 +354,13 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
+    String jobId = UUID.randomUUID().toString();
 
     assertThrows(
         MissingSpendProfileException.class,
-        () -> workspaceService.createGoogleContext(request.workspaceId(), USER_REQUEST));
+        () ->
+            workspaceService.createGoogleContext(
+                request.workspaceId(), jobId, "/fake/value", USER_REQUEST));
   }
 
   @Test
@@ -372,6 +371,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
+    String jobId = UUID.randomUUID().toString();
 
     Mockito.when(
             mockSamService.isAuthorized(
@@ -382,7 +382,9 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
         .thenReturn(false);
     assertThrows(
         SpendUnauthorizedException.class,
-        () -> workspaceService.createGoogleContext(request.workspaceId(), USER_REQUEST));
+        () ->
+            workspaceService.createGoogleContext(
+                request.workspaceId(), jobId, "/fake/value", USER_REQUEST));
   }
 
   @Test
@@ -393,10 +395,13 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
+    String jobId = UUID.randomUUID().toString();
 
     assertThrows(
         NoBillingAccountException.class,
-        () -> workspaceService.createGoogleContext(request.workspaceId(), USER_REQUEST));
+        () ->
+            workspaceService.createGoogleContext(
+                request.workspaceId(), jobId, "/fake/value", USER_REQUEST));
   }
 
   /**
