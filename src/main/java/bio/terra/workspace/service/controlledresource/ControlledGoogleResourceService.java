@@ -7,6 +7,8 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.flight.CreateControlledGoogleBucketFlight;
 import bio.terra.workspace.service.workspace.flight.GoogleBucketFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +22,7 @@ public class ControlledGoogleResourceService {
     this.jobService = jobService;
   }
 
-  public String createBucket(
+  public String createBucket(UUID workspaceId,
       CreateControlledGoogleBucketRequestBody requestBody, AuthenticatedUserRequest userRequest) {
     // create a job
     final String description =
@@ -33,6 +35,8 @@ public class ControlledGoogleResourceService {
             requestBody,
             userRequest);
     final GoogleBucketCreationParameters params = requestBody.getGoogleBucket();
+    jobBuilder.addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
+    jobBuilder.addParameter(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, userRequest.getEmail()); // IS THIS RIGHT?
     jobBuilder.addParameter(GoogleBucketFlightMapKeys.NAME.getKey(), params.getName());
     jobBuilder.addParameter(GoogleBucketFlightMapKeys.LOCATION.getKey(), params.getLocation());
     jobBuilder.addParameter(

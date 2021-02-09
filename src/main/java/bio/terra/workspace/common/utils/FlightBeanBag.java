@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.utils;
 
+import bio.terra.workspace.db.ControlledResourceDao;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.buffer.BufferService;
@@ -26,6 +27,7 @@ public class FlightBeanBag {
   private final SamService samService;
   private final TransactionTemplate transactionTemplate;
   private final WorkspaceDao workspaceDao;
+  private final ControlledResourceDao controlledResourceDao;
 
   @Autowired
   public FlightBeanBag(
@@ -35,7 +37,8 @@ public class FlightBeanBag {
       ObjectMapper objectMapper,
       SamService samService,
       TransactionTemplate transactionTemplate,
-      WorkspaceDao workspaceDao) {
+      WorkspaceDao workspaceDao,
+      ControlledResourceDao controlledResourceDao) {
     this.bufferService = bufferService;
     this.crlService = crlService;
     this.dataReferenceDao = dataReferenceDao;
@@ -43,6 +46,7 @@ public class FlightBeanBag {
     this.samService = samService;
     this.transactionTemplate = transactionTemplate;
     this.workspaceDao = workspaceDao;
+    this.controlledResourceDao = controlledResourceDao;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -76,4 +80,6 @@ public class FlightBeanBag {
   public WorkspaceDao getWorkspaceDao() {
     return workspaceDao;
   }
+
+  public ControlledResourceDao getControlledResourceDao() { return controlledResourceDao; }
 }

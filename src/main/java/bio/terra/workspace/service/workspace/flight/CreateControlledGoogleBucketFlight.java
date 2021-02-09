@@ -9,11 +9,11 @@ public class CreateControlledGoogleBucketFlight extends Flight {
   public CreateControlledGoogleBucketFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
+    // Step 0: Generate a new resource UUID
     addStep(new GenerateControlledResourceIdStep());
-    addStep(new StoreGoogleBucketMetadataStep(flightBeanBag.getWorkspaceDao()));
-    // create bucket in the cloud
     // Step 1: store the resource metadata in CloudSQL
-    //
+    addStep(new StoreGoogleBucketMetadataStep(flightBeanBag.getControlledResourceDao()));
+
     // Step 2: create the bucket via CRL
     //
     // Step 3: create the Sam resource associated with the bucket

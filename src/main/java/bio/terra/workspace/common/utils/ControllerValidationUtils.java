@@ -3,6 +3,7 @@ package bio.terra.workspace.common.utils;
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.CloudContext;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
+import bio.terra.workspace.generated.model.GoogleBucketCreationParameters;
 import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import java.util.ArrayList;
@@ -77,6 +78,12 @@ public final class ControllerValidationUtils {
     if (context != CloudContext.GOOGLE) {
       throw new ValidationException(
           "Invalid cloud context. Currently, only Google contexts are supported.");
+    }
+  }
+
+  public static void validateGoogleBucket(GoogleBucketCreationParameters params) {
+    if (params.getName() == null) {
+      throw new ValidationException("Name is required.");
     }
   }
 }

@@ -359,7 +359,9 @@ paths:
         404:
           $ref: '#/components/responses/NotFound'
 
-  /api/workspaces/v1/resources/controlled/google/buckets:
+  /api/workspaces/v1/{id}/resources/controlled/google/buckets:
+    parameters:
+      - $ref: '#/components/parameters/Id'
     post:
       summary: Create a new controlled Google bucket
       operationId: createBucket
@@ -380,8 +382,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/resources/controlled/google/buckets/result/{jobId}:
+  /api/workspaces/v1/{id}/resources/controlled/google/buckets/result/{jobId}:
     parameters:
+      - $ref: '#/components/parameters/Id'
       - $ref: '#/components/parameters/JobId'
     get:
       summary: Retrieve information about a google bucket creation job.

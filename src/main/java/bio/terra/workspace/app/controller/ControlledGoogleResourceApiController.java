@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledGoogleResourceApi;
 import bio.terra.workspace.generated.model.CreateControlledGoogleBucketRequestBody;
 import bio.terra.workspace.generated.model.CreatedControlledGoogleBucket;
@@ -8,6 +9,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
+import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.slf4j.Logger;
@@ -31,35 +33,37 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
   public ControlledGoogleResourceApiController(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ControlledGoogleResourceService controlledResourceService,
-      HttpServletRequest request,
       JobService jobService) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.controlledResourceService = controlledResourceService;
-    this.request = request;
+    this.request = getRequest().orElse(null);
     this.jobService = jobService;
   }
 
   @Override
   public ResponseEntity<CreatedControlledGoogleBucket> createBucket(
-      @Valid CreateControlledGoogleBucketRequestBody body) {
+      UUID id, @Valid CreateControlledGoogleBucketRequestBody body) {
+    ControllerValidationUtils.validateGoogleBucket(body.getGoogleBucket());
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final String jobId = controlledResourceService.createBucket(body, userRequest);
-    final CreatedControlledGoogleBucket result = fetchGoogleBucketResult(jobId);
-    return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()))
+    return getCreateBucketResult(id, jobId);
   }
 
   @Override
-  public ResponseEntity<CreatedControlledGoogleBucket> getCreateBucketResult(String jobId) {
+  public ResponseEntity<CreatedControlledGoogleBucket> getCreateBucketResult(
+      UUID id, String jobId) {
     final CreatedControlledGoogleBucket response = fetchGoogleBucketResult(jobId);
-    return new ResponseEntity<>(response, HttpStatus.valueOf(response.getJobReport().getStatusCode()))
+    return new ResponseEntity<>(
+        response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));
   }
 
   private CreatedControlledGoogleBucket fetchGoogleBucketResult(String jobId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final AsyncJobResult<CreatedControlledGoogleBucket> jobResult =
         jobService.retrieveAsyncJobResult(jobId, CreatedControlledGoogleBucket.class, userRequest);
-
+    return jobResult.getResult();
   }
+
   private AuthenticatedUserRequest getAuthenticatedInfo() {
     return authenticatedUserRequestFactory.from(request);
   }
