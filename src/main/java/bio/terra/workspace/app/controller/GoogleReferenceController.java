@@ -217,29 +217,4 @@ public class GoogleReferenceController implements GoogleReferenceApi {
             .metadata(ControllerTranslationUtils.metadataFromDataReference(ref));
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
-
-  @Override
-  public ResponseEntity<Void> deleteGoogleBucketReference(UUID id, UUID referenceId) {
-    deleteDataReference(id, referenceId);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-  }
-
-  @Override
-  public ResponseEntity<Void> deleteBigQueryDatasetReference(UUID id, UUID referenceId) {
-    deleteDataReference(id, referenceId);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-  }
-
-  private void deleteDataReference(UUID workspaceId, UUID referenceId) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info(
-        String.format(
-            "Deleting data reference by id %s in workspace %s for %s",
-            referenceId.toString(), workspaceId.toString(), userReq.getEmail()));
-    dataReferenceService.deleteDataReference(workspaceId, referenceId, userReq);
-    logger.info(
-        String.format(
-            "Deleted data reference by id %s in workspace %s for %s",
-            referenceId.toString(), workspaceId.toString(), userReq.getEmail()));
-  }
 }

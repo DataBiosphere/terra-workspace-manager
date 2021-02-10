@@ -128,19 +128,4 @@ public class DataRepoReferenceController implements DataRepoReferenceApi {
             .metadata(ControllerTranslationUtils.metadataFromDataReference(ref));
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
-
-  @Override
-  public ResponseEntity<Void> deleteDataRepoSnapshotReference(UUID id, UUID referenceId) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info(
-        String.format(
-            "Deleting data reference by id %s in workspace %s for %s",
-            referenceId.toString(), id.toString(), userReq.getEmail()));
-    dataReferenceService.deleteDataReference(id, referenceId, userReq);
-    logger.info(
-        String.format(
-            "Deleted data reference by id %s in workspace %s for %s",
-            referenceId.toString(), id.toString(), userReq.getEmail()));
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-  }
 }
