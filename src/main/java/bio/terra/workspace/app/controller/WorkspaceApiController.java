@@ -83,8 +83,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<CreatedWorkspace> createWorkspace(
       @RequestBody CreateWorkspaceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info(
-        String.format("Creating workspace %s for %s", body.getId().toString(), userReq.getEmail()));
+    logger.info("Creating workspace {} for {}", body.getId(), userReq.getEmail());
 
     // Existing client libraries should not need to know about the stage, as they won't use any of
     // the features it gates. If stage isn't specified in a create request, we default to
@@ -107,9 +106,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     UUID createdId = workspaceService.createWorkspace(internalRequest, userReq);
 
     CreatedWorkspace responseWorkspace = new CreatedWorkspace().id(createdId);
-    logger.info(
-        String.format(
-            "Created workspace %s for %s", responseWorkspace.toString(), userReq.getEmail()));
+    logger.info("Created workspace {} for {}", responseWorkspace, userReq.getEmail());
 
     return new ResponseEntity<>(responseWorkspace, HttpStatus.OK);
   }
@@ -117,7 +114,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("id") UUID id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info(String.format("Getting workspace %s for %s", id.toString(), userReq.getEmail()));
+    logger.info("Getting workspace {} for {}", id, userReq.getEmail());
     Workspace workspace = workspaceService.getWorkspace(id, userReq);
     WorkspaceCloudContext cloudContext = workspaceService.getCloudContext(id, userReq);
 
@@ -131,7 +128,7 @@ public class WorkspaceApiController implements WorkspaceApi {
             .spendProfile(workspace.spendProfileId().map(SpendProfileId::id).orElse(null))
             .stage(workspace.workspaceStage().toApiModel())
             .googleContext(googleContext);
-    logger.info(String.format("Got workspace %s for %s", desc.toString(), userReq.getEmail()));
+    logger.info("Got workspace {} for {}", desc, userReq.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
   }
@@ -139,9 +136,9 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<Void> deleteWorkspace(@PathVariable("id") UUID id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info(String.format("Deleting workspace %s for %s", id.toString(), userReq.getEmail()));
+    logger.info("Deleting workspace {} for {}", id, userReq.getEmail());
     workspaceService.deleteWorkspace(id, userReq);
-    logger.info(String.format("Deleted workspace %s for %s", id.toString(), userReq.getEmail()));
+    logger.info("Deleted workspace {} for {}", id, userReq.getEmail());
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -151,9 +148,10 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("id") UUID id, @RequestBody CreateDataReferenceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info(
-        String.format(
-            "Creating data reference in workspace %s for %s with body %s",
-            id.toString(), userReq.getEmail(), body.toString()));
+        "Creating data reference in workspace {} for {} with body {}",
+        id,
+        userReq.getEmail(),
+        body);
 
     ControllerValidationUtils.validate(body);
     DataReferenceValidationUtils.validateReferenceName(body.getName());
@@ -175,9 +173,7 @@ public class WorkspaceApiController implements WorkspaceApi {
             .build();
     DataReference reference = dataReferenceService.createDataReference(referenceRequest, userReq);
     logger.info(
-        String.format(
-            "Created data reference %s in workspace %s for %s ",
-            reference.toString(), id.toString(), userReq.getEmail()));
+        "Created data reference {} in workspace {} for {} ", reference, id, userReq.getEmail());
 
     return new ResponseEntity<>(reference.toApiModel(), HttpStatus.OK);
   }
@@ -187,14 +183,13 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("id") UUID workspaceId, @PathVariable("referenceId") UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info(
-        String.format(
-            "Getting data reference by id %s in workspace %s for %s",
-            referenceId.toString(), workspaceId.toString(), userReq.getEmail()));
+        "Getting data reference by id {} in workspace {} for {}",
+        referenceId,
+        workspaceId,
+        userReq.getEmail());
     DataReference ref = dataReferenceService.getDataReference(workspaceId, referenceId, userReq);
     logger.info(
-        String.format(
-            "Got data reference %s in workspace %s for %s",
-            ref.toString(), workspaceId.toString(), userReq.getEmail()));
+        "Got data reference {} in workspace {} for {}", ref, workspaceId, userReq.getEmail());
 
     return new ResponseEntity<>(ref.toApiModel(), HttpStatus.OK);
   }
@@ -206,17 +201,21 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("name") String name) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info(
-        String.format(
-            "Getting data reference by name %s and reference type %s in workspace %s for %s",
-            name, referenceType, workspaceId.toString(), userReq.getEmail()));
+        "Getting data reference by name {} and reference type {} in workspace {} for {}",
+        name,
+        referenceType,
+        workspaceId,
+        userReq.getEmail());
     DataReferenceValidationUtils.validateReferenceName(name);
     DataReference ref =
         dataReferenceService.getDataReferenceByName(
             workspaceId, DataReferenceType.fromApiModel(referenceType), name, userReq);
     logger.info(
-        String.format(
-            "Got data reference %s of type %s in workspace %s for %s",
-            ref.toString(), referenceType.toString(), workspaceId.toString(), userReq.getEmail()));
+        "Got data reference {} of type {} in workspace {} for {}",
+        ref,
+        referenceType,
+        workspaceId,
+        userReq.getEmail());
 
     return new ResponseEntity<>(ref.toApiModel(), HttpStatus.OK);
   }
@@ -238,15 +237,19 @@ public class WorkspaceApiController implements WorkspaceApi {
     }
 
     logger.info(
-        String.format(
-            "Updating data reference by id %s in workspace %s for %s with body %s",
-            referenceId.toString(), id.toString(), userReq.getEmail(), body.toString()));
+        "Updating data reference by id {} in workspace {} for {} with body {}",
+        referenceId,
+        id,
+        userReq.getEmail(),
+        body);
 
     dataReferenceService.updateDataReference(id, referenceId, body, userReq);
     logger.info(
-        String.format(
-            "Updating data reference by id %s in workspace %s for %s with body %s",
-            referenceId.toString(), id.toString(), userReq.getEmail(), body.toString()));
+        "Updating data reference by id {} in workspace {} for {} with body {}",
+        referenceId,
+        id,
+        userReq.getEmail(),
+        body);
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -256,14 +259,16 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("id") UUID workspaceId, @PathVariable("referenceId") UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info(
-        String.format(
-            "Deleting data reference by id %s in workspace %s for %s",
-            referenceId.toString(), workspaceId.toString(), userReq.getEmail()));
+        "Deleting data reference by id {} in workspace {} for {}",
+        referenceId,
+        workspaceId,
+        userReq.getEmail());
     dataReferenceService.deleteDataReference(workspaceId, referenceId, userReq);
     logger.info(
-        String.format(
-            "Deleted data reference by id %s in workspace %s for %s",
-            referenceId.toString(), workspaceId.toString(), userReq.getEmail()));
+        "Deleted data reference by id {} in workspace {} for {}",
+        referenceId,
+        workspaceId,
+        userReq.getEmail());
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -274,15 +279,11 @@ public class WorkspaceApiController implements WorkspaceApi {
       @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
       @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info(
-        String.format(
-            "Getting data references in workspace %s for %s", id.toString(), userReq.getEmail()));
+    logger.info("Getting data references in workspace {} for {}", id, userReq.getEmail());
     ControllerValidationUtils.validatePaginationParams(offset, limit);
     List<DataReference> enumerateResult =
         dataReferenceService.enumerateDataReferences(id, offset, limit, userReq);
-    logger.info(
-        String.format(
-            "Got data references in workspace %s for %s", id.toString(), userReq.getEmail()));
+    logger.info("Got data references in workspace {} for {}", id, userReq.getEmail());
     DataReferenceList responseList = new DataReferenceList();
     for (DataReference ref : enumerateResult) {
       responseList.addResourcesItem(ref.toApiModel());

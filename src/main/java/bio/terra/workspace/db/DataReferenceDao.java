@@ -61,9 +61,9 @@ public class DataReferenceDao {
     try {
       jdbcTemplate.update(sql, params);
       logger.info(
-          String.format(
-              "Inserted record for data reference %s for workspace %s",
-              referenceId, request.workspaceId()));
+          "Inserted record for data reference {} for workspace {}",
+          referenceId,
+          request.workspaceId());
       return referenceId.toString();
     } catch (DuplicateKeyException e) {
       throw new DuplicateDataReferenceException(
@@ -84,9 +84,9 @@ public class DataReferenceDao {
     try {
       DataReference ref = jdbcTemplate.queryForObject(sql, params, DATA_REFERENCE_ROW_MAPPER);
       logger.info(
-          String.format(
-              "Retrieved record for data reference by id %s for workspace %s",
-              referenceId, workspaceId));
+          "Retrieved record for data reference by id {} for workspace {}",
+          referenceId,
+          workspaceId);
       return ref;
     } catch (EmptyResultDataAccessException e) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
@@ -111,9 +111,10 @@ public class DataReferenceDao {
     try {
       DataReference ref = jdbcTemplate.queryForObject(sql, params, DATA_REFERENCE_ROW_MAPPER);
       logger.info(
-          String.format(
-              "Retrieved record for data reference by name %s and reference type %s for workspace %s",
-              name, type, workspaceId));
+          "Retrieved record for data reference by name {} and reference type {} for workspace {}",
+          name,
+          type,
+          workspaceId);
       return ref;
     } catch (EmptyResultDataAccessException e) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
@@ -167,16 +168,14 @@ public class DataReferenceDao {
     int rowsAffected = jdbcTemplate.update(updateStatement.toString(), params);
     boolean updated = rowsAffected > 0;
 
-    if (updated)
+    if (updated) {
+      logger.info("Updated record for data reference {} in workspace {}", referenceId, workspaceId);
+    } else {
       logger.info(
-          String.format(
-              "Updated record for data reference %s in workspace %s",
-              referenceId.toString(), workspaceId.toString()));
-    else
-      logger.info(
-          String.format(
-              "Failed to update record for data reference %s in workspace %s",
-              referenceId.toString(), workspaceId.toString()));
+          "Failed to update record for data reference {} in workspace {}",
+          referenceId,
+          workspaceId);
+    }
 
     return updated;
   }
@@ -192,16 +191,14 @@ public class DataReferenceDao {
             params);
     boolean deleted = rowsAffected > 0;
 
-    if (deleted)
+    if (deleted) {
+      logger.info("Deleted record for data reference {} in workspace {}", referenceId, workspaceId);
+    } else {
       logger.info(
-          String.format(
-              "Deleted record for data reference %s in workspace %s",
-              referenceId.toString(), workspaceId.toString()));
-    else
-      logger.info(
-          String.format(
-              "Failed to delete record for data reference %s in workspace %s",
-              referenceId.toString(), workspaceId.toString()));
+          "Failed to delete record for data reference {} in workspace {}",
+          referenceId,
+          workspaceId);
+    }
 
     return deleted;
   }
@@ -222,7 +219,7 @@ public class DataReferenceDao {
             .addValue("offset", offset)
             .addValue("limit", limit);
     List<DataReference> resultList = jdbcTemplate.query(sql, params, DATA_REFERENCE_ROW_MAPPER);
-    logger.info(String.format("Retrieved data references in workspace %s", workspaceId.toString()));
+    logger.info("Retrieved data references in workspace {}", workspaceId);
     return resultList;
   }
 
