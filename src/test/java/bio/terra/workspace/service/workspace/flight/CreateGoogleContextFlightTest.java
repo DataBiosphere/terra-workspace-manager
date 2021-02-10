@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class CreateGoogleContextFlightTest extends BaseConnectedTest {
+class CreateGoogleContextFlightTest extends BaseConnectedTest {
   /** How long to wait for a Stairway flight to complete before timing out the test. */
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(3);
 
@@ -47,7 +47,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
   @Autowired private UserAccessUtils userAccessUtils;
 
   @Test
-  public void successCreatesProjectAndContext() throws Exception {
+  void successCreatesProjectAndContext() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
     assertEquals(
@@ -80,7 +80,7 @@ public class CreateGoogleContextFlightTest extends BaseConnectedTest {
   }
 
   @Test
-  public void errorRevertsChanges() throws Exception {
+  void errorRevertsChanges() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
     assertEquals(

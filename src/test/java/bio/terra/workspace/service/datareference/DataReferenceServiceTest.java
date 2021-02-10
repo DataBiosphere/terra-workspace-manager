@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class DataReferenceServiceTest extends BaseUnitTest {
+class DataReferenceServiceTest extends BaseUnitTest {
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private DataReferenceService dataReferenceService;
@@ -60,7 +60,7 @@ public class DataReferenceServiceTest extends BaseUnitTest {
           dataReferenceService.getDataReference(workspaceId, reference.referenceId(), USER_REQUEST);
 
   @BeforeEach
-  public void setup() {
+  void setup() {
     doReturn(true).when(mockDataRepoService).snapshotExists(any(), any(), any());
 
     workspaceId = createDefaultWorkspace();
@@ -69,7 +69,7 @@ public class DataReferenceServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void testCreateDataReference() {
+  void testCreateDataReference() {
     assertThat(reference.workspaceId(), equalTo(workspaceId));
     assertThat(reference.name(), equalTo(request.name()));
   }
@@ -78,7 +78,7 @@ public class DataReferenceServiceTest extends BaseUnitTest {
   class GetDataReference {
 
     @Test
-    public void testGetDataReference() {
+    void testGetDataReference() {
       DataReference ref = currentReference.get();
 
       assertThat(ref.workspaceId(), equalTo(workspaceId));
@@ -86,7 +86,7 @@ public class DataReferenceServiceTest extends BaseUnitTest {
     }
 
     @Test
-    public void testGetDataReferenceByName() {
+    void testGetDataReferenceByName() {
       DataReference ref =
           dataReferenceService.getDataReferenceByName(
               workspaceId, request.referenceType(), request.name(), USER_REQUEST);
@@ -96,7 +96,7 @@ public class DataReferenceServiceTest extends BaseUnitTest {
     }
 
     @Test
-    public void testGetMissingDataReference() {
+    void testGetMissingDataReference() {
       assertThrows(
           DataReferenceNotFoundException.class,
           () ->
@@ -108,7 +108,7 @@ public class DataReferenceServiceTest extends BaseUnitTest {
   class EnumerateDataReferences {
 
     @Test
-    public void enumerateDataReferences() {
+    void enumerateDataReferences() {
       // Uses a different name because names are unique per reference type, per workspace.
       DataReferenceRequest secondRequest =
           defaultReferenceRequest(workspaceId).name("different_name").build();
@@ -123,7 +123,7 @@ public class DataReferenceServiceTest extends BaseUnitTest {
     }
 
     @Test
-    public void enumerateFailsUnauthorized() {
+    void enumerateFailsUnauthorized() {
       String samMessage = "Fake Sam unauthorized message";
       doThrow(new SamUnauthorizedException(samMessage))
           .when(mockSamService)
@@ -144,7 +144,7 @@ public class DataReferenceServiceTest extends BaseUnitTest {
                 workspaceId, reference.referenceId(), updateBody, USER_REQUEST);
 
     @Test
-    public void testUpdateName() {
+    void testUpdateName() {
       String updatedName = "rename";
 
       updateReference.accept(new UpdateDataReferenceRequestBody().name(updatedName));
@@ -188,7 +188,7 @@ public class DataReferenceServiceTest extends BaseUnitTest {
   class DeleteDataReference {
 
     @Test
-    public void testDeleteDataReference() {
+    void testDeleteDataReference() {
       // Validate the reference exists and is readable.
       assertThat(currentReference.get(), equalTo(reference));
 
@@ -198,7 +198,7 @@ public class DataReferenceServiceTest extends BaseUnitTest {
     }
 
     @Test
-    public void testDeleteMissingDataReference() {
+    void testDeleteMissingDataReference() {
       assertThrows(
           DataReferenceNotFoundException.class,
           () ->

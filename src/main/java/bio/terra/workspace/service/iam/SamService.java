@@ -95,7 +95,7 @@ public class SamService {
             .policies(defaultWorkspacePolicies(callerEmail));
     try {
       resourceApi.createResource(SamConstants.SAM_WORKSPACE_RESOURCE, workspaceRequest);
-      logger.info(String.format("Created Sam resource for workspace %s", id.toString()));
+      logger.info("Created Sam resource for workspace {}", id);
     } catch (ApiException apiException) {
       throw new SamApiException(apiException);
     }
@@ -106,7 +106,7 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
       resourceApi.deleteResource(SamConstants.SAM_WORKSPACE_RESOURCE, id.toString());
-      logger.info(String.format("Deleted Sam resource for workspace %s", id.toString()));
+      logger.info("Deleted Sam resource for workspace {}", id);
     } catch (ApiException apiException) {
       throw new SamApiException(apiException);
     }
@@ -139,9 +139,7 @@ public class SamService {
               userReq.getEmail(), action, workspaceId));
     else
       logger.info(
-          String.format(
-              "User %s is authorized to %s workspace %s",
-              userReq.getEmail(), action, workspaceId.toString()));
+          "User {} is authorized to {} workspace {}", userReq.getEmail(), action, workspaceId);
   }
 
   /**
@@ -166,9 +164,7 @@ public class SamService {
       resourceApi.addUserToPolicy(
           SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), email);
       logger.info(
-          String.format(
-              "Granted role %s to user %s in workspace %s",
-              role.toSamRole(), email, workspaceId.toString()));
+          "Granted role {} to user {} in workspace {}", role.toSamRole(), email, workspaceId);
     } catch (ApiException e) {
       throw new SamApiException(e);
     }
@@ -191,9 +187,7 @@ public class SamService {
       resourceApi.removeUserFromPolicy(
           SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), email);
       logger.info(
-          String.format(
-              "Removed role %s from user %s in workspace %s",
-              role.toSamRole(), email, workspaceId.toString()));
+          "Removed role {} from user {} in workspace {}", role.toSamRole(), email, workspaceId);
     } catch (ApiException e) {
       throw new SamApiException(e);
     }
@@ -247,9 +241,10 @@ public class SamService {
                   SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole())
               .getEmail();
       logger.info(
-          String.format(
-              "Synced role %s to google group %s in workspace %s",
-              role.toSamRole(), groupEmail, workspaceId.toString()));
+          "Synced role {} to google group {} in workspace {}",
+          role.toSamRole(),
+          groupEmail,
+          workspaceId);
       return groupEmail;
     } catch (ApiException e) {
       throw new SamApiException(e);

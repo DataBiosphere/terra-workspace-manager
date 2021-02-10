@@ -12,7 +12,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import java.util.UUID;
 
 /**
- * A {@Code Step} which synchronizes Sam policies with google groups and stores the group names in
+ * A {@code Step} which synchronizes Sam policies with google groups and stores the group names in
  * the Stairway working map.
  */
 public class SyncSamGroupsStep implements Step {

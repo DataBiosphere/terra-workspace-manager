@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 
-import bio.terra.stairway.exception.StairwayException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.JobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -24,7 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 
-public class JobServiceTest extends BaseUnitTest {
+class JobServiceTest extends BaseUnitTest {
   private final AuthenticatedUserRequest testUser =
       new AuthenticatedUserRequest()
           .subjectId("StairwayUnit")
@@ -36,7 +35,7 @@ public class JobServiceTest extends BaseUnitTest {
   @MockBean private SamService mockSamService;
 
   @BeforeEach
-  public void setup() {
+  void setup() {
     try {
       Mockito.doReturn(true).when(mockSamService.isAuthorized(any(), any(), any(), any()));
     } catch (Exception e) {
@@ -45,7 +44,7 @@ public class JobServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void retrieveTest() throws Exception {
+  void retrieveTest() throws Exception {
     // We perform 7 flights and then retrieve and enumerate them.
     // The fids list should be in exactly the same order as the database ordered by submit time.
 
@@ -113,12 +112,12 @@ public class JobServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void testBadIdRetrieveJob() {
+  void testBadIdRetrieveJob() {
     assertThrows(JobNotFoundException.class, () -> jobService.retrieveJob("abcdef", testUser));
   }
 
   @Test
-  public void testBadIdRetrieveResult() {
+  void testBadIdRetrieveResult() {
     assertThrows(
         JobNotFoundException.class,
         () -> jobService.retrieveJobResult("abcdef", Object.class, testUser));
@@ -132,7 +131,7 @@ public class JobServiceTest extends BaseUnitTest {
   }
 
   // Submit a flight; wait for it to finish; return the flight id
-  private String runFlight(String description) throws StairwayException {
+  private String runFlight(String description) {
     String jobId = UUID.randomUUID().toString();
     jobService.newJob(description, jobId, JobServiceTestFlight.class, null, testUser).submit();
     jobService.waitForJob(jobId);

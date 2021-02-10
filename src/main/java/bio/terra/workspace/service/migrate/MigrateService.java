@@ -57,9 +57,11 @@ public class MigrateService {
       DatabaseChangeLogLock[] locks = liquibase.listLocks();
       for (DatabaseChangeLogLock lock : locks) {
         logger.info(
-            String.format(
-                "DatabaseChangeLogLock changeSet: %s, id: %s, lockedBy: %s, granted: %s",
-                changesetFile, lock.getId(), lock.getLockedBy(), lock.getLockGranted()));
+            "DatabaseChangeLogLock changeSet: {}, id: {}, lockedBy: {}, granted: {}",
+            changesetFile,
+            lock.getId(),
+            lock.getLockedBy(),
+            lock.getLockGranted());
 
         // We can get into this state where one of the APIs is running migrations and gets shut down
         // so that another API container can run. It will result in a lock that doesn't get

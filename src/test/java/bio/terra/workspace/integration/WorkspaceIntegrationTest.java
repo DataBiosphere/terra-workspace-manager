@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
-public class WorkspaceIntegrationTest extends BaseIntegrationTest {
+class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   // TODO: As this class grows, consider if it's worth breaking down these workspace tests into
   //  different class files based on the the type of workspace action (Create, Get, Delete, etc).
@@ -57,7 +57,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
    *  Doc: https://docs.google.com/document/d/13mYVJML_fOLsX1gxQxRJgECUNT27dAMKzEJxUEvtQqM/edit#heading=h.x06ofvfgp7wt
    */
   @AfterEach
-  public void tearDown(TestInfo testInfo) throws Exception {
+  void tearDown(TestInfo testInfo) throws Exception {
     Set<String> tags = testInfo.getTags();
     if (tags != null && tags.contains(TAG_NEEDS_CLEANUP)) {
       List<UUID> uuidList = testToWorkspaceIdsMap.get(testInfo.getDisplayName());
@@ -69,7 +69,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void createWorkspace(TestInfo testInfo) throws Exception {
+  void createWorkspace(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -83,7 +83,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void getWorkspace(TestInfo testInfo) throws Exception {
+  void getWorkspace(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -103,7 +103,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void deleteWorkspace(TestInfo testInfo) throws Exception {
+  void deleteWorkspace(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
     WorkspaceResponse<CreatedWorkspace> workspaceResponse = createDefaultWorkspace(workspaceId);
@@ -131,7 +131,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void createDataReference(TestInfo testInfo) throws Exception {
+  void createDataReference(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -151,7 +151,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void deleteDataReference(TestInfo testInfo) throws Exception {
+  void deleteDataReference(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -171,7 +171,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void listDataReference(TestInfo testInfo) throws Exception {
+  void listDataReference(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -204,7 +204,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void getDataReferenceById(TestInfo testInfo) throws Exception {
+  void getDataReferenceById(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -233,7 +233,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void getDataReferenceByNameAndType(TestInfo testInfo) throws Exception {
+  void getDataReferenceByNameAndType(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -266,7 +266,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void testDefaultWorkspaceStageIsRawls() throws Exception {
+  void testDefaultWorkspaceStageIsRawls() throws Exception {
     UUID workspaceId = UUID.randomUUID();
     createDefaultWorkspace(workspaceId);
 

@@ -119,8 +119,8 @@ public class DataReferenceService {
   /**
    * List data references in a workspace.
    *
-   * <p>References are in ascending order by reference ID. At most {@Code limit} results will be
-   * returned, with the first being {@Code offset} entries from the start of the database.
+   * <p>References are in ascending order by reference ID. At most {@code limit} results will be
+   * returned, with the first being {@code offset} entries from the start of the database.
    *
    * <p>Verifies workspace existence and read permission before listing the references.
    */
