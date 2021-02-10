@@ -161,7 +161,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     patch:
-      summary: Update name or description of a data reference in a workspace.
+      summary: (DEPRECATED) Update name or description of a data reference in a workspace.
       operationId: updateDataReference
       tags: [Workspace]
       requestBody:
@@ -255,6 +255,25 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update name or description of a snapshot reference in a workspace.
+      operationId: updateDataRepoSnapshotReference
+      tags: [DataRepoReference]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
   /api/workspaces/v1/{id}/resources/references/datarepo/snapshots/name/{name}:
     parameters:
@@ -310,6 +329,25 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/GoogleBucketReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update name or description of a bucket reference in a workspace.
+      operationId: updateGoogleBucketReference
+      tags: [GoogleReference]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -377,6 +415,25 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update name or description of a BigQuery dataset reference in a workspace.
+      operationId: updateBigQueryDatasetReference
+      tags: [GoogleReference]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
   /api/workspaces/v1/{id}/resources/references/google/bigquerydatasets/name/{name}:
     parameters:
@@ -396,9 +453,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/google:
+  /api/workspaces/v1/{id}/cloudcontexts:
     parameters:
-      - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/Id'
     post:
       summary: Create a cloud context for the workspace.
       operationId: createCloudContext
@@ -889,6 +946,8 @@ components:
           $ref: "#/components/schemas/Name"
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
+        referenceDescription:
+          type: string
 
     CreateDataRepoSnapshotReferenceRequestBody:
       type: object
@@ -994,6 +1053,8 @@ components:
           format: uuid
         name:
           description: The name of the data reference; used to refer to the reference
+          type: string
+        referenceDescription:
           type: string
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
