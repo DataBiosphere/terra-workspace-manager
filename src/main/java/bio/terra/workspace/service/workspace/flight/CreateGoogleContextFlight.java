@@ -49,5 +49,6 @@ public class CreateGoogleContextFlight extends Flight {
         retryRule);
     addStep(new SyncSamGroupsStep(appContext.getSamService()), retryRule);
     addStep(new GoogleCloudSyncStep(crl.getCloudResourceManagerCow()), retryRule);
+    addStep(new SetGoogleContextOutputStep());
   }
 }

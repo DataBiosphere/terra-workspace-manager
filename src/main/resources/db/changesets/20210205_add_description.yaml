@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: addDescriptionColumn
+      author: zarsky-broad
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: reference_description
+                  type: text
+            tableName: workspace_data_reference

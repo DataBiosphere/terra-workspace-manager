@@ -12,6 +12,8 @@ import static org.mockito.Mockito.doThrow;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
+import bio.terra.workspace.db.exception.InvalidDaoRequestException;
+import bio.terra.workspace.generated.model.UpdateDataReferenceRequestBody;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.model.BigQueryDatasetReference;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
@@ -30,7 +32,10 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -51,173 +56,213 @@ public class DataReferenceServiceTest extends BaseUnitTest {
           .email("fake@email.com")
           .subjectId("fakeID123");
 
+  UUID workspaceId;
+  DataReferenceRequest request;
+  DataReference reference;
+
+  Supplier<DataReference> currentReference =
+      () ->
+          dataReferenceService.getDataReference(workspaceId, reference.referenceId(), USER_REQUEST);
+
   @BeforeEach
   public void setup() {
     doReturn(true).when(mockDataRepoService).snapshotExists(any(), any(), any());
+    workspaceId = createDefaultWorkspace();
+    request = defaultReferenceRequest(workspaceId, DataReferenceType.DATA_REPO_SNAPSHOT).build();
+    reference = dataReferenceService.createDataReference(request, USER_REQUEST);
   }
 
-  @Test
-  public void testCreateDataReference() {
-    UUID workspaceId = createDefaultWorkspace();
-    DataReferenceRequest request =
-        defaultReferenceRequest(workspaceId, DataReferenceType.DATA_REPO_SNAPSHOT).build();
-    DataReference ref = dataReferenceService.createDataReference(request, USER_REQUEST);
+  @Nested
+  class CreateDataReference {
 
-    assertThat(ref.workspaceId(), equalTo(workspaceId));
-    assertThat(ref.name(), equalTo(request.name()));
+    @Test
+    public void testCreateDataReference() {
+      assertThat(reference.workspaceId(), equalTo(workspaceId));
+      assertThat(reference.name(), equalTo(request.name()));
+    }
+
+    @Test
+    public void testCreateGoogleBucketReference() {
+      UUID workspaceId = createDefaultWorkspace();
+      DataReferenceRequest request =
+          defaultReferenceRequest(workspaceId, DataReferenceType.GOOGLE_BUCKET).build();
+      GoogleBucketReference requestReference = (GoogleBucketReference) request.referenceObject();
+      DataReference ref = dataReferenceService.createDataReference(request, USER_REQUEST);
+
+      assertThat(ref.workspaceId(), equalTo(workspaceId));
+      assertThat(ref.name(), equalTo(request.name()));
+      assertThat(ref.referenceType(), equalTo(DataReferenceType.GOOGLE_BUCKET));
+      assertTrue(ref.referenceObject() instanceof GoogleBucketReference);
+      GoogleBucketReference bucketReference = (GoogleBucketReference) ref.referenceObject();
+      assertThat(bucketReference.bucketName(), equalTo(requestReference.bucketName()));
+    }
+
+    @Test
+    public void testCreateBigQueryDatasetReference() {
+      UUID workspaceId = createDefaultWorkspace();
+      DataReferenceRequest request =
+          defaultReferenceRequest(workspaceId, DataReferenceType.BIG_QUERY_DATASET).build();
+      BigQueryDatasetReference requestReference =
+          (BigQueryDatasetReference) request.referenceObject();
+      DataReference ref = dataReferenceService.createDataReference(request, USER_REQUEST);
+
+      assertThat(ref.workspaceId(), equalTo(workspaceId));
+      assertThat(ref.name(), equalTo(request.name()));
+      assertThat(ref.referenceType(), equalTo(DataReferenceType.BIG_QUERY_DATASET));
+      assertTrue(ref.referenceObject() instanceof BigQueryDatasetReference);
+      BigQueryDatasetReference datasetReference = (BigQueryDatasetReference) ref.referenceObject();
+
+      assertThat(datasetReference.projectId(), equalTo(requestReference.projectId()));
+      assertThat(datasetReference.datasetName(), equalTo(requestReference.datasetName()));
+    }
   }
 
-  @Test
-  public void testCreateGoogleBucketReference() {
-    UUID workspaceId = createDefaultWorkspace();
-    DataReferenceRequest request =
-        defaultReferenceRequest(workspaceId, DataReferenceType.GOOGLE_BUCKET).build();
-    GoogleBucketReference requestReference = (GoogleBucketReference) request.referenceObject();
-    DataReference ref = dataReferenceService.createDataReference(request, USER_REQUEST);
+  @Nested
+  class GetDataReference {
 
-    assertThat(ref.workspaceId(), equalTo(workspaceId));
-    assertThat(ref.name(), equalTo(request.name()));
-    assertThat(ref.referenceType(), equalTo(DataReferenceType.GOOGLE_BUCKET));
-    assertTrue(ref.referenceObject() instanceof GoogleBucketReference);
-    GoogleBucketReference bucketReference = (GoogleBucketReference) ref.referenceObject();
-    assertThat(bucketReference.bucketName(), equalTo(requestReference.bucketName()));
+    @Test
+    public void testGetDataReference() {
+      DataReference ref = currentReference.get();
+
+      assertThat(ref.workspaceId(), equalTo(workspaceId));
+      assertThat(ref.name(), equalTo(request.name()));
+    }
+
+    @Test
+    public void testGetDataReferenceByWrongTypeMissing() {
+      DataReference ref = currentReference.get();
+
+      // Names are unique per reference type within a workspace.
+      // This call looks up a GCS bucket with the snapshot's name, which should not exist.
+      assertThrows(
+          DataReferenceNotFoundException.class,
+          () ->
+              dataReferenceService.getDataReferenceByName(
+                  workspaceId, DataReferenceType.GOOGLE_BUCKET, ref.name(), USER_REQUEST));
+    }
+
+    @Test
+    public void testGetDataReferenceByName() {
+      DataReference ref =
+          dataReferenceService.getDataReferenceByName(
+              workspaceId, request.referenceType(), request.name(), USER_REQUEST);
+
+      assertThat(ref.workspaceId(), equalTo(workspaceId));
+      assertThat(ref.name(), equalTo(request.name()));
+    }
+
+    @Test
+    public void testGetMissingDataReference() {
+      assertThrows(
+          DataReferenceNotFoundException.class,
+          () ->
+              dataReferenceService.getDataReference(workspaceId, UUID.randomUUID(), USER_REQUEST));
+    }
   }
 
-  @Test
-  public void testCreateBigQueryDatasetReference() {
-    UUID workspaceId = createDefaultWorkspace();
-    DataReferenceRequest request =
-        defaultReferenceRequest(workspaceId, DataReferenceType.BIG_QUERY_DATASET).build();
-    BigQueryDatasetReference requestReference =
-        (BigQueryDatasetReference) request.referenceObject();
-    DataReference ref = dataReferenceService.createDataReference(request, USER_REQUEST);
+  @Nested
+  class EnumerateDataReferences {
 
-    assertThat(ref.workspaceId(), equalTo(workspaceId));
-    assertThat(ref.name(), equalTo(request.name()));
-    assertThat(ref.referenceType(), equalTo(DataReferenceType.BIG_QUERY_DATASET));
-    assertTrue(ref.referenceObject() instanceof BigQueryDatasetReference);
-    BigQueryDatasetReference datasetReference = (BigQueryDatasetReference) ref.referenceObject();
+    @Test
+    public void enumerateDataReferences() {
+      // Uses a different name because names are unique per reference type, per workspace.
+      DataReferenceRequest secondRequest =
+          defaultReferenceRequest(workspaceId, DataReferenceType.DATA_REPO_SNAPSHOT)
+              .name("different_name")
+              .build();
 
-    assertThat(datasetReference.projectId(), equalTo(requestReference.projectId()));
-    assertThat(datasetReference.datasetName(), equalTo(requestReference.datasetName()));
+      DataReference secondReference =
+          dataReferenceService.createDataReference(secondRequest, USER_REQUEST);
+
+      List<DataReference> result =
+          dataReferenceService.enumerateDataReferences(workspaceId, 0, 10, USER_REQUEST);
+      assertThat(result.size(), equalTo(2));
+      assertThat(result, containsInAnyOrder(equalTo(reference), equalTo(secondReference)));
+    }
+
+    @Test
+    public void enumerateFailsUnauthorized() {
+      String samMessage = "Fake Sam unauthorized message";
+      doThrow(new SamUnauthorizedException(samMessage))
+          .when(mockSamService)
+          .workspaceAuthzOnly(any(), any(), any());
+
+      assertThrows(
+          SamUnauthorizedException.class,
+          () -> dataReferenceService.enumerateDataReferences(workspaceId, 0, 10, USER_REQUEST));
+    }
   }
 
-  @Test
-  public void testGetDataReference() {
-    UUID workspaceId = createDefaultWorkspace();
-    DataReferenceRequest request =
-        defaultReferenceRequest(workspaceId, DataReferenceType.DATA_REPO_SNAPSHOT).build();
-    UUID referenceId =
-        dataReferenceService.createDataReference(request, USER_REQUEST).referenceId();
-    DataReference ref =
-        dataReferenceService.getDataReference(workspaceId, referenceId, USER_REQUEST);
+  @Nested
+  class UpdateDataReference {
 
-    assertThat(ref.workspaceId(), equalTo(workspaceId));
-    assertThat(ref.name(), equalTo(request.name()));
+    Consumer<UpdateDataReferenceRequestBody> updateReference =
+        updateBody ->
+            dataReferenceService.updateDataReference(
+                workspaceId, reference.referenceId(), updateBody, USER_REQUEST);
+
+    @Test
+    public void testUpdateName() {
+      String updatedName = "rename";
+
+      updateReference.accept(new UpdateDataReferenceRequestBody().name(updatedName));
+      assertThat(currentReference.get().name(), equalTo(updatedName));
+      assertThat(
+          currentReference.get().referenceDescription(), equalTo(reference.referenceDescription()));
+    }
+
+    @Test
+    void testUpdateDescription() {
+      String updatedDescription = "updated description";
+
+      updateReference.accept(
+          new UpdateDataReferenceRequestBody().referenceDescription(updatedDescription));
+      assertThat(currentReference.get().name(), equalTo(reference.name()));
+      assertThat(currentReference.get().referenceDescription(), equalTo(updatedDescription));
+    }
+
+    @Test
+    void testUpdateAllFields() {
+      String updatedName2 = "rename_again";
+      String updatedDescription2 = "updated description again";
+
+      updateReference.accept(
+          new UpdateDataReferenceRequestBody()
+              .name(updatedName2)
+              .referenceDescription(updatedDescription2));
+      assertThat(currentReference.get().name(), equalTo(updatedName2));
+      assertThat(currentReference.get().referenceDescription(), equalTo(updatedDescription2));
+    }
+
+    @Test
+    void updateNothingFails() {
+      assertThrows(
+          InvalidDaoRequestException.class,
+          () -> updateReference.accept(new UpdateDataReferenceRequestBody()));
+    }
   }
 
-  @Test
-  public void testGetDataReferenceByName() {
-    UUID workspaceId = createDefaultWorkspace();
-    DataReferenceRequest request =
-        defaultReferenceRequest(workspaceId, DataReferenceType.DATA_REPO_SNAPSHOT).build();
-    dataReferenceService.createDataReference(request, USER_REQUEST);
+  @Nested
+  class DeleteDataReference {
 
-    DataReference ref =
-        dataReferenceService.getDataReferenceByName(
-            workspaceId, request.referenceType(), request.name(), USER_REQUEST);
+    @Test
+    public void testDeleteDataReference() {
+      // Validate the reference exists and is readable.
+      assertThat(currentReference.get(), equalTo(reference));
 
-    assertThat(ref.workspaceId(), equalTo(workspaceId));
-    assertThat(ref.name(), equalTo(request.name()));
-  }
+      dataReferenceService.deleteDataReference(workspaceId, reference.referenceId(), USER_REQUEST);
+      // Validate that reference is now deleted.
+      assertThrows(DataReferenceNotFoundException.class, () -> currentReference.get());
+    }
 
-  @Test
-  public void testGetDataReferenceByWrongTypeMissing() {
-    UUID workspaceId = createDefaultWorkspace();
-    DataReferenceRequest request =
-        defaultReferenceRequest(workspaceId, DataReferenceType.DATA_REPO_SNAPSHOT).build();
-    String snapshotName = request.name();
-    dataReferenceService.createDataReference(request, USER_REQUEST);
-
-    // Names are unique per reference type within a workspace.
-    // This call looks up a GCS bucket with the snapshot's name, which should not exist.
-    assertThrows(
-        DataReferenceNotFoundException.class,
-        () ->
-            dataReferenceService.getDataReferenceByName(
-                workspaceId, DataReferenceType.GOOGLE_BUCKET, snapshotName, USER_REQUEST));
-  }
-
-  @Test
-  public void testGetMissingDataReference() {
-    UUID workspaceId = createDefaultWorkspace();
-    assertThrows(
-        DataReferenceNotFoundException.class,
-        () -> dataReferenceService.getDataReference(workspaceId, UUID.randomUUID(), USER_REQUEST));
-  }
-
-  @Test
-  public void enumerateDataReferences() {
-    UUID workspaceId = createDefaultWorkspace();
-    DataReferenceRequest firstRequest =
-        defaultReferenceRequest(workspaceId, DataReferenceType.DATA_REPO_SNAPSHOT).build();
-
-    DataReference firstReference =
-        dataReferenceService.createDataReference(firstRequest, USER_REQUEST);
-
-    // Uses a different name because names are unique per reference type, per workspace.
-    DataReferenceRequest secondRequest =
-        defaultReferenceRequest(workspaceId, DataReferenceType.DATA_REPO_SNAPSHOT)
-            .name("different_name")
-            .build();
-
-    DataReference secondReference =
-        dataReferenceService.createDataReference(secondRequest, USER_REQUEST);
-
-    List<DataReference> result =
-        dataReferenceService.enumerateDataReferences(workspaceId, 0, 10, USER_REQUEST);
-    assertThat(result.size(), equalTo(2));
-    assertThat(result, containsInAnyOrder(equalTo(firstReference), equalTo(secondReference)));
-  }
-
-  @Test
-  public void enumerateFailsUnauthorized() {
-    String samMessage = "Fake Sam unauthorized message";
-    doThrow(new SamUnauthorizedException(samMessage))
-        .when(mockSamService)
-        .workspaceAuthzOnly(any(), any(), any());
-    UUID workspaceId = createDefaultWorkspace();
-    assertThrows(
-        SamUnauthorizedException.class,
-        () -> dataReferenceService.enumerateDataReferences(workspaceId, 0, 10, USER_REQUEST));
-  }
-
-  @Test
-  public void testDeleteDataReference() {
-    UUID workspaceId = createDefaultWorkspace();
-    DataReferenceRequest request =
-        defaultReferenceRequest(workspaceId, DataReferenceType.DATA_REPO_SNAPSHOT).build();
-
-    DataReference ref = dataReferenceService.createDataReference(request, USER_REQUEST);
-    // Validate the reference exists and is readable.
-    DataReference getReference =
-        dataReferenceService.getDataReference(workspaceId, ref.referenceId(), USER_REQUEST);
-    assertThat(getReference, equalTo(ref));
-
-    dataReferenceService.deleteDataReference(workspaceId, ref.referenceId(), USER_REQUEST);
-    // Validate that reference is now deleted.
-    assertThrows(
-        DataReferenceNotFoundException.class,
-        () -> dataReferenceService.getDataReference(workspaceId, ref.referenceId(), USER_REQUEST));
-  }
-
-  @Test
-  public void testDeleteMissingDataReference() {
-    UUID workspaceId = createDefaultWorkspace();
-    assertThrows(
-        DataReferenceNotFoundException.class,
-        () ->
-            dataReferenceService.deleteDataReference(workspaceId, UUID.randomUUID(), USER_REQUEST));
+    @Test
+    public void testDeleteMissingDataReference() {
+      assertThrows(
+          DataReferenceNotFoundException.class,
+          () ->
+              dataReferenceService.deleteDataReference(
+                  workspaceId, UUID.randomUUID(), USER_REQUEST));
+    }
   }
 
   /**
@@ -260,6 +305,7 @@ public class DataReferenceServiceTest extends BaseUnitTest {
     return DataReferenceRequest.builder()
         .workspaceId(workspaceId)
         .name("some_name")
+        .referenceDescription("some description, too")
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
         .referenceType(type)
         .referenceObject(referenceObject);
