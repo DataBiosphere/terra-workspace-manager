@@ -9,18 +9,18 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class DataRepoServiceTest extends BaseUnitTest {
+class DataRepoServiceTest extends BaseUnitTest {
 
   @Autowired private DataRepoService dataRepoService;
 
   @Test
-  public void testValidateInvalidDataRepoInstance() throws Exception {
+  void testValidateInvalidDataRepoInstance() {
     assertThrows(
         ValidationException.class, () -> dataRepoService.getInstanceUrl("fake-invalid-test"));
   }
 
   @Test
-  public void testValidateValidDataRepoInstance() throws Exception {
+  void testValidateValidDataRepoInstance() {
     try {
       // the valid k/v is set in test/resources/application.properties
       // we trim and toLowerCase the string, so this verifies that too

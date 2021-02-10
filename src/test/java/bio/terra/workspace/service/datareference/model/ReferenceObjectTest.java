@@ -5,14 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import bio.terra.workspace.common.BaseUnitTest;
 import org.junit.jupiter.api.Test;
 
-public class ReferenceObjectTest extends BaseUnitTest {
+class ReferenceObjectTest extends BaseUnitTest {
 
   /**
    * This is a simple test for verifying that SnapshotReference's toJson() and fromJson() are
    * compatible. If this failing, you've likely broken one or both of those methods.
    */
   @Test
-  public void SnapshotReferenceSerializationWorks() {
+  void SnapshotReferenceSerializationWorks() {
     SnapshotReference snapshot =
         SnapshotReference.create(/* instanceName= */ "foo", /* snapshot= */ "bar");
     assertEquals(snapshot, ReferenceObject.fromJson(snapshot.toJson()));
@@ -23,7 +23,7 @@ public class ReferenceObjectTest extends BaseUnitTest {
    * stored JSON values. If this test fails, your change may not work with existing databases.
    */
   @Test
-  public void SnapshotReferenceSerializationBackwardsCompatible() {
+  void SnapshotReferenceSerializationBackwardsCompatible() {
     SnapshotReference snapshotReference =
         (SnapshotReference)
             ReferenceObject.fromJson(
