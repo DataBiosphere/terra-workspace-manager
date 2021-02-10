@@ -96,11 +96,10 @@ public class DataReferenceService {
           referenceRequest.referenceType(),
           referenceRequest.name());
       logger.warn(
-          String.format(
-              "Duplicate reference requested in workspace %s with name %s and type %s",
+              "Duplicate reference requested in workspace {} with name {} and type {}",
               referenceRequest.workspaceId(),
               referenceRequest.name(),
-              referenceRequest.referenceType().toString()));
+              referenceRequest.referenceType().toString());
       throw new DuplicateDataReferenceException(
           "A reference with the specified name and type already exists in this workspace.");
     } catch (DataReferenceNotFoundException expected) {
