@@ -3,6 +3,15 @@ package scripts.disruptivescripts;
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.common.utils.ProcessUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.container.Container;
+import com.google.api.services.container.model.Cluster;
+import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.gson.reflect.TypeToken;
@@ -25,12 +34,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
 
 public final class K8sClientUtils {
     private static final Logger logger = LoggerFactory.getLogger(K8sClientUtils.class);
@@ -62,26 +73,7 @@ public final class K8sClientUtils {
     }
 
     public static void buildKubernetesClientObject(ServerSpecification server) throws Exception {
-        logger.debug("Calling the fetchGKECredentials script that uses gcloud to generate the kubeconfig file");
-        List<String> scriptArgs = new ArrayList();
-        scriptArgs.add("tools/fetchGKECredentials.sh");
-        scriptArgs.add(server.cluster.clusterShortName);
-        scriptArgs.add(server.cluster.region);
-        scriptArgs.add(server.cluster.project);
-        Process fetchCredentialsProc = ProcessUtils.executeCommand("sh", scriptArgs);
-        List<String> cmdOutputLines = ProcessUtils.waitForTerminateAndReadStdout(fetchCredentialsProc);
-        Iterator var4 = cmdOutputLines.iterator();
-
-        while(var4.hasNext()) {
-            String cmdOutputLine = (String)var4.next();
-            logger.debug(cmdOutputLine);
-        }
-
-        String kubeConfigPath = System.getenv("HOME") + "/.kube/config";
-        logger.debug("Kube config path: {}", kubeConfigPath);
         namespace = server.cluster.namespace;
-        InputStreamReader filereader = new InputStreamReader(new FileInputStream(kubeConfigPath), StandardCharsets.UTF_8);
-        KubeConfig kubeConfig = KubeConfig.loadKubeConfig(filereader);
         logger.debug("Getting a refreshed service account access token and its expiration time");
         GoogleCredentials applicationDefaultCredentials = AuthenticationUtils.getServiceAccountCredential(server.testRunnerServiceAccount, AuthenticationUtils.cloudPlatformScope);
         AccessToken accessToken = AuthenticationUtils.getAccessToken(applicationDefaultCredentials);
@@ -108,8 +100,23 @@ public final class K8sClientUtils {
         contextWrapper.put("context", context);
         ArrayList<Object> contextsList = new ArrayList();
         contextsList.add(contextWrapper);
-        ArrayList<Object> clusters = kubeConfig.getClusters();
-        kubeConfig = new KubeConfig(contextsList, clusters, usersList);
+        Container containerService = createContainerService(applicationDefaultCredentials);
+        Container.Projects.Zones.Clusters.Get request =
+                containerService.projects().zones().clusters()
+                        .get(server.cluster.project, server.cluster.region + "-a", server.cluster.clusterShortName);
+        Cluster response = request.execute();
+        //System.out.println(response.getMasterAuth().getClusterCaCertificate());
+        //System.out.println(response.getEndpoint());
+
+        LinkedHashMap<String, Object> cluster = new LinkedHashMap();
+        cluster.put("certificate-authority-data", response.getMasterAuth().getClusterCaCertificate());
+        cluster.put("server", String.format("https://%s", response.getEndpoint()));
+        LinkedHashMap<String, Object> clusterWrapper = new LinkedHashMap();
+        clusterWrapper.put("cluster", cluster);
+        clusterWrapper.put("name", server.cluster.clusterName);
+        ArrayList<Object> clustersList = new ArrayList();
+        clustersList.add(clusterWrapper);
+        KubeConfig kubeConfig = new KubeConfig(contextsList, clustersList, usersList);
         kubeConfig.setContext(server.cluster.clusterName);
         logger.debug("Building the client objects from the config");
         ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
@@ -260,6 +267,20 @@ public final class K8sClientUtils {
         });
     }
 
+    public static Container createContainerService(GoogleCredentials credentials) throws IOException, GeneralSecurityException {
+        HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+        JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+
+        //if (credentials.createScopedRequired()) {
+        //    credentials =
+        //            credentials.createScoped(Arrays.asList("https://www.googleapis.com/auth/cloud-platform"));
+        //}
+        HttpRequestInitializer httpRequestInitializer = new HttpCredentialsAdapter(credentials);
+        return new Container.Builder(httpTransport, jsonFactory, httpRequestInitializer)
+                .setApplicationName("Google-ContainerSample/0.1")
+                .build();
+    }
+
     public static void main(String[] args) {
         try {
             String serverPath = "workspace-resiliency.json";
@@ -268,19 +289,19 @@ public final class K8sClientUtils {
             buildKubernetesClientObject(server);
 
             List<V1Namespace> namespaces = listNamespace();
-            System.out.println(namespaces.size());
+            //System.out.println(namespaces.size());
             List<V1Pod> pods = listPodForAllNamespaces();
             List<V1Pod> terraPods = pods.stream().filter(p -> p.getMetadata().getNamespace().startsWith("terra-i"))
                     .collect(Collectors.toList());
-            System.out.println(terraPods.size());
+            //System.out.println(terraPods.size());
             List<V1Deployment> deployments = listDeploymentForAllNamespaces();
             List<V1Deployment> terraDeployments = deployments.stream().filter(p -> p.getMetadata().getNamespace().startsWith("terra-i"))
                     .collect(Collectors.toList());
-            System.out.println(terraDeployments.size());
+            //System.out.println(terraDeployments.size());
             List<V1Deployment> terraNamespacedDeployments = listNamespacedDeployment("terra-ichang");
             System.out.println(terraNamespacedDeployments.size());
             List<V1Deployment> myDeployments = listDeployments();
-            System.out.println(myDeployments.size());
+            //System.out.println(myDeployments.size());
             V1Deployment deployment = getApiDeployment();
             System.out.println(deployment.getMetadata().getLabels().get("app.kubernetes.io/component"));
         } catch (Exception e) {

@@ -36,6 +36,7 @@ dependencies {
         googleApi = "1.23.0"
         googleCloud = "1.108.0"
         googleOauth2 = "0.20.0"
+        googleContainer = "v1-rev93-1.25.0"
 
         workspacemanagerClient = "0.9.0-SNAPSHOT"
         datarepoClient = "1.0.155-SNAPSHOT"
@@ -56,6 +57,7 @@ dependencies {
     compile "com.google.auth:google-auth-library-oauth2-http:${googleOauth2}"
     compile "com.google.cloud:google-cloud-bigquery:${googleCloud}"
     compile "com.google.cloud:google-cloud-storage:${googleCloud}"
+    compile "com.google.apis:google-api-services-container:${googleContainer}"
 
     // Data Repo client library
     implementation "bio.terra:datarepo-client:${datarepoClient}"
