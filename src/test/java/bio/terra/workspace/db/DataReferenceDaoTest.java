@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 
-public class DataReferenceDaoTest extends BaseUnitTest {
+class DataReferenceDaoTest extends BaseUnitTest {
 
   @Autowired private WorkspaceDatabaseConfiguration workspaceDatabaseConfiguration;
 
@@ -58,12 +58,12 @@ public class DataReferenceDaoTest extends BaseUnitTest {
   class CreateDataReference {
 
     @Test
-    public void verifyCreatedDataReferenceExists() {
+    void verifyCreatedDataReferenceExists() {
       assertThat(currentReference.get().referenceId(), equalTo(referenceId));
     }
 
     @Test
-    public void createReferenceWithoutWorkspaceFails() {
+    void createReferenceWithoutWorkspaceFails() {
       // This reference uses a random workspaceID, so the corresponding workspace does not exist.
       DataReferenceRequest referenceRequest = defaultReferenceRequest(UUID.randomUUID()).build();
       assertThrows(
@@ -72,7 +72,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
     }
 
     @Test
-    public void verifyCreateDuplicateNameFails() {
+    void verifyCreateDuplicateNameFails() {
       assertThrows(
           DuplicateDataReferenceException.class,
           () -> dataReferenceDao.createDataReference(referenceRequest, referenceId));
@@ -83,7 +83,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
   class GetDataReference {
 
     @Test
-    public void verifyGetDataReferenceByName() {
+    void verifyGetDataReferenceByName() {
       DataReference ref =
           dataReferenceDao.getDataReferenceByName(
               workspaceId, referenceRequest.referenceType(), referenceRequest.name());
@@ -91,7 +91,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
     }
 
     @Test
-    public void verifyGetDataReference() {
+    void verifyGetDataReference() {
       DataReference result = currentReference.get();
 
       assertThat(result.workspaceId(), equalTo(workspaceId));
@@ -102,7 +102,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
     }
 
     @Test
-    public void verifyGetDataReferenceNotInWorkspaceNotFound() {
+    void verifyGetDataReferenceNotInWorkspaceNotFound() {
       Workspace decoyWorkspace =
           Workspace.builder()
               .workspaceId(UUID.randomUUID())
@@ -123,7 +123,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
             dataReferenceDao.updateDataReference(workspaceId, referenceId, name, description);
 
     @Test
-    public void verifyUpdateName() {
+    void verifyUpdateName() {
       String updatedName = "rename";
 
       updateReference.apply(updatedName, null);
@@ -134,7 +134,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
     }
 
     @Test
-    public void verifyUpdateReferenceDescription() {
+    void verifyUpdateReferenceDescription() {
       String updatedDescription = "updated description";
 
       updateReference.apply(null, updatedDescription);
@@ -143,7 +143,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
     }
 
     @Test
-    public void verifyUpdateAllFields() {
+    void verifyUpdateAllFields() {
       String updatedName2 = "rename_again";
       String updatedDescription2 = "updated description again";
 
@@ -153,7 +153,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
     }
 
     @Test
-    public void updateNothingFails() {
+    void updateNothingFails() {
       assertThrows(InvalidDaoRequestException.class, () -> updateReference.apply(null, null));
     }
   }
@@ -162,7 +162,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
   class DeleteDataReference {
 
     @Test
-    public void verifyDeleteDataReference() {
+    void verifyDeleteDataReference() {
       assertTrue(dataReferenceDao.deleteDataReference(workspaceId, referenceId));
 
       // try to delete again to make sure it's not there
@@ -170,7 +170,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
     }
 
     @Test
-    public void deleteNonExistentWorkspaceFails() {
+    void deleteNonExistentWorkspaceFails() {
       assertFalse(dataReferenceDao.deleteDataReference(UUID.randomUUID(), UUID.randomUUID()));
     }
   }
@@ -179,7 +179,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
   class EnumerateDataReferences {
 
     @Test
-    public void enumerateWorkspaceReferences() {
+    void enumerateWorkspaceReferences() {
       // Create two references in the same workspace.
       DataReference firstReference = currentReference.get();
 
@@ -199,7 +199,7 @@ public class DataReferenceDaoTest extends BaseUnitTest {
     }
 
     @Test
-    public void enumerateEmptyReferenceList() {
+    void enumerateEmptyReferenceList() {
       UUID newWorkspaceId = createDefaultWorkspace();
 
       List<DataReference> result = dataReferenceDao.enumerateDataReferences(newWorkspaceId, 0, 10);

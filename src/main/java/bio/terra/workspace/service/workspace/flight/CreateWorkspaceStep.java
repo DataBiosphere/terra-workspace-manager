@@ -47,7 +47,7 @@ public class CreateWorkspaceStep implements Step {
     workspaceDao.createWorkspace(workspaceToCreate);
 
     FlightUtils.setResponse(flightContext, workspaceId, HttpStatus.OK);
-    logger.info(String.format("Workspace created with id %s", workspaceId));
+    logger.info("Workspace created with id {}", workspaceId);
 
     return StepResult.getStepResultSuccess();
   }

@@ -23,7 +23,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
+class DeleteGoogleContextFlightTest extends BaseConnectedTest {
   /**
    * How long to wait for a delete context Stairway flight to complete before timing out the test.
    */
@@ -40,7 +40,7 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
   @Autowired private UserAccessUtils userAccessUtils;
 
   @Test
-  public void deleteContext() throws Exception {
+  void deleteContext() throws Exception {
     UUID workspaceId = createWorkspace();
     FlightMap createParameters = new FlightMap();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
@@ -80,7 +80,7 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
   }
 
   @Test
-  public void deleteNonExistentContextIsOk() throws Exception {
+  void deleteNonExistentContextIsOk() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
     assertEquals(

@@ -65,9 +65,9 @@ public class BufferService {
       BufferApi bufferApi = bufferApi(bufferServiceConfiguration.getInstanceUrl());
       PoolInfo info = bufferApi.getPoolInfo(bufferServiceConfiguration.getPoolId());
       logger.info(
-          String.format(
-              "Retrieved pool %s on Buffer Service instance %s",
-              bufferServiceConfiguration.getPoolId(), bufferServiceConfiguration.getInstanceUrl()));
+          "Retrieved pool {} on Buffer Service instance {}",
+          bufferServiceConfiguration.getPoolId(),
+          bufferServiceConfiguration.getInstanceUrl());
       return info;
     } catch (IOException e) {
       throw new BufferServiceAuthorizationException(
@@ -95,9 +95,9 @@ public class BufferService {
       ResourceInfo info =
           bufferApi.handoutResource(requestBody, bufferServiceConfiguration.getPoolId());
       logger.info(
-          String.format(
-              "Retrieved resource from pool %s on Buffer Service instance %s",
-              bufferServiceConfiguration.getPoolId(), bufferServiceConfiguration.getInstanceUrl()));
+          "Retrieved resource from pool {} on Buffer Service instance {}",
+          bufferServiceConfiguration.getPoolId(),
+          bufferServiceConfiguration.getInstanceUrl());
       return info;
     } catch (IOException e) {
       throw new BufferServiceAuthorizationException(

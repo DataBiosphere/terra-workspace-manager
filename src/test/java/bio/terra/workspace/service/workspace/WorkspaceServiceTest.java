@@ -1,9 +1,9 @@
 package bio.terra.workspace.service.workspace;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -45,7 +45,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class WorkspaceServiceTest extends BaseConnectedTest {
+class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private DataReferenceService dataReferenceService;
   @Autowired private JobService jobService;
@@ -66,7 +66,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
           .subjectId("fakeID123");
 
   @BeforeEach
-  public void setup() {
+  void setup() {
     doReturn(true).when(dataRepoService).snapshotExists(any(), any(), any());
     // By default, allow all spend link calls as authorized. (All other isAuthorized calls return
     // false by Mockito default.
@@ -83,14 +83,14 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void testGetMissingWorkspace() {
+  void testGetMissingWorkspace() {
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> workspaceService.getWorkspace(UUID.randomUUID(), USER_REQUEST));
   }
 
   @Test
-  public void testGetExistingWorkspace() {
+  void testGetExistingWorkspace() {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
@@ -100,7 +100,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void testGetForbiddenMissingWorkspace() {
+  void testGetForbiddenMissingWorkspace() {
     doThrow(new SamUnauthorizedException("forbid!"))
         .when(mockSamService)
         .workspaceAuthzOnly(any(), any(), any());
@@ -110,7 +110,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void testGetForbiddenExistingWorkspace() {
+  void testGetForbiddenExistingWorkspace() {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
@@ -123,7 +123,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void testWorkspaceStagePersists() {
+  void testWorkspaceStagePersists() {
     WorkspaceRequest mcWorkspaceRequest =
         defaultRequestBuilder(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
@@ -136,7 +136,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void duplicateWorkspaceIdRequestsRejected() {
+  void duplicateWorkspaceIdRequestsRejected() {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     // Note that the two calls use different jobIds for the same Workspace ID, making them
@@ -148,7 +148,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void duplicateJobIdRequestRejected() {
+  void duplicateJobIdRequestRejected() {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     // Because these calls share the same jobId they're treated as duplicate requests, rather
@@ -159,7 +159,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void duplicateOperationSharesFailureResponse() {
+  void duplicateOperationSharesFailureResponse() {
     String errorMsg = "fake SAM error message";
     doThrow(new SamApiException(errorMsg))
         .when(mockSamService)
@@ -180,7 +180,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void testWithSpendProfile() {
+  void testWithSpendProfile() {
     Optional<SpendProfileId> spendProfileId = Optional.of(SpendProfileId.create("foo"));
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
@@ -192,7 +192,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void testHandlesSamError() {
+  void testHandlesSamError() {
     String errorMsg = "fake SAM error message";
 
     doThrow(new SamApiException(errorMsg))
@@ -209,7 +209,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void createAndDeleteWorkspace() {
+  void createAndDeleteWorkspace() {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
@@ -220,7 +220,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void deleteForbiddenMissingWorkspace() {
+  void deleteForbiddenMissingWorkspace() {
     doThrow(new SamUnauthorizedException("forbid!"))
         .when(mockSamService)
         .workspaceAuthzOnly(any(), any(), any());
@@ -231,7 +231,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void deleteForbiddenExistingWorkspace() {
+  void deleteForbiddenExistingWorkspace() {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
@@ -245,7 +245,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void deleteWorkspaceWithDataReference() {
+  void deleteWorkspaceWithDataReference() {
     // First, create a workspace.
     UUID workspaceId = UUID.randomUUID();
     WorkspaceRequest request = defaultRequestBuilder(workspaceId).build();
@@ -287,7 +287,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void deleteWorkspaceWithGoogleContext() throws Exception {
+  void deleteWorkspaceWithGoogleContext() throws Exception {
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())
             .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
@@ -302,17 +302,17 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
         workspaceService.getCloudContext(request.workspaceId(), USER_REQUEST).googleProjectId();
 
     // Verify project exists by retrieving it.
-    Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
+    crl.getCloudResourceManagerCow().projects().get(projectId).execute();
 
     workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
 
     // Check that project is now being deleted.
-    project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
+    Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals("DELETE_REQUESTED", project.getLifecycleState());
   }
 
   @Test
-  public void createGetDeleteGoogleContext() {
+  void createGetDeleteGoogleContext() {
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())
             .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
@@ -324,9 +324,8 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createGoogleContext(request.workspaceId(), jobId, "/fake/value", USER_REQUEST);
     jobService.waitForJob(jobId);
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
-    assertTrue(
-        workspaceService.getCloudContext(request.workspaceId(), USER_REQUEST).googleProjectId()
-            != null);
+    assertNotNull(
+        workspaceService.getCloudContext(request.workspaceId(), USER_REQUEST).googleProjectId());
 
     workspaceService.deleteGoogleContext(request.workspaceId(), USER_REQUEST);
     assertEquals(
@@ -335,7 +334,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void createGoogleContextRawlsStageThrows() {
+  void createGoogleContextRawlsStageThrows() {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     String jobId = UUID.randomUUID().toString();
@@ -348,7 +347,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void createGoogleContextNoSpendProfileIdThrows() {
+  void createGoogleContextNoSpendProfileIdThrows() {
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
@@ -364,7 +363,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void createGoogleContextSpendLinkingUnauthorizedThrows() {
+  void createGoogleContextSpendLinkingUnauthorizedThrows() {
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())
             .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
@@ -388,7 +387,7 @@ public class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void createGoogleContextSpendWithoutBillingAccountThrows() {
+  void createGoogleContextSpendWithoutBillingAccountThrows() {
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())
             .spendProfileId(Optional.of(spendUtils.noBillingAccount()))

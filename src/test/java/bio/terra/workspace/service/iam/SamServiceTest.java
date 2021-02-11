@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class SamServiceTest extends BaseConnectedTest {
+class SamServiceTest extends BaseConnectedTest {
 
   @Autowired private SamService samService;
   @Autowired private WorkspaceService workspaceService;
@@ -51,7 +51,7 @@ public class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void AddedReaderCanRead() {
+  void AddedReaderCanRead() {
     UUID workspaceId = createWorkspaceDefaultUser();
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
@@ -65,7 +65,7 @@ public class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void AddedWriterCanWrite() {
+  void AddedWriterCanWrite() {
     UUID workspaceId = createWorkspaceDefaultUser();
     DataReferenceRequest referenceRequest =
         DataReferenceRequest.builder()
@@ -89,7 +89,7 @@ public class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void RemovedReaderCannotRead() {
+  void RemovedReaderCannotRead() {
     UUID workspaceId = createWorkspaceDefaultUser();
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
@@ -109,7 +109,7 @@ public class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void NonOwnerCannotAddReader() {
+  void NonOwnerCannotAddReader() {
     UUID workspaceId = createWorkspaceDefaultUser();
     // Note that this request uses the secondary user's authentication token, when only the first
     // user is an owner.
@@ -124,7 +124,7 @@ public class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void PermissionsApiFailsInRawlsWorkspace() {
+  void PermissionsApiFailsInRawlsWorkspace() {
     WorkspaceRequest rawlsRequest =
         WorkspaceRequest.builder()
             .workspaceId(UUID.randomUUID())
@@ -143,7 +143,7 @@ public class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void InvalidUserEmailRejected() {
+  void InvalidUserEmailRejected() {
     UUID workspaceId = createWorkspaceDefaultUser();
     assertThrows(
         SamApiException.class,
@@ -153,7 +153,7 @@ public class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void ListPermissionsIncludesAddedUsers() {
+  void ListPermissionsIncludesAddedUsers() {
     UUID workspaceId = createWorkspaceDefaultUser();
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), IamRole.READER, userAccessUtils.getSecondUserEmail());
@@ -180,7 +180,7 @@ public class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void WriterCannotListPermissions() {
+  void WriterCannotListPermissions() {
     UUID workspaceId = createWorkspaceDefaultUser();
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), IamRole.WRITER, userAccessUtils.getSecondUserEmail());
@@ -190,7 +190,7 @@ public class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void GrantRoleInMissingWorkspaceThrows() {
+  void GrantRoleInMissingWorkspaceThrows() {
     UUID fakeId = UUID.randomUUID();
     assertThrows(
         WorkspaceNotFoundException.class,
@@ -203,7 +203,7 @@ public class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void ReadRolesInMissingWorkspaceThrows() {
+  void ReadRolesInMissingWorkspaceThrows() {
     UUID fakeId = UUID.randomUUID();
     assertThrows(
         WorkspaceNotFoundException.class,
