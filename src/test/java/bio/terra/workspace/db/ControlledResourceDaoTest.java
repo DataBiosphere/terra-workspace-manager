@@ -42,14 +42,14 @@ public class ControlledResourceDaoTest extends BaseUnitTest {
     controlledResourceDao.createControlledResource(metadata);
 
     final Optional<ControlledResourceMetadata> retrieved =
-        controlledResourceDao.getControlledResource(WORKSPACE_ID, RESOURCE_ID);
+        controlledResourceDao.getControlledResource(RESOURCE_ID);
     assertTrue(retrieved.isPresent());
   }
 
   @Test
   public void testNoMatchIsEmptyOptional() {
     final Optional<ControlledResourceMetadata> retrieved =
-        controlledResourceDao.getControlledResource(UUID.randomUUID(), UUID.randomUUID());
+        controlledResourceDao.getControlledResource(UUID.randomUUID());
     assertTrue(retrieved.isEmpty());
   }
 }

@@ -6,6 +6,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ControlledResourceDao;
+import bio.terra.workspace.generated.model.GoogleBucketCreationParameters;
 import bio.terra.workspace.service.controlledresource.model.ControlledResourceMetadata;
 import java.util.UUID;
 
@@ -20,18 +21,19 @@ public class StoreGoogleBucketMetadataStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final FlightMap workingMap = flightContext.getWorkingMap();
+    final FlightMap inputMap = flightContext.getInputParameters();
     final ControlledResourceMetadata controlledResourceMetadata =
         ControlledResourceMetadata.builder()
-            .workspaceId(workingMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class))
-            .resourceId(workingMap.get(WorkspaceFlightMapKeys.CONTROLLED_RESOURCE_ID, UUID.class))
-            .owner(workingMap.get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class))
+            .workspaceId(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class))
+            .resourceId(inputMap.get(WorkspaceFlightMapKeys.CONTROLLED_RESOURCE_ID, UUID.class))
+            .owner(
+                inputMap.get(WorkspaceFlightMapKeys.CONTROLLED_RESOURCE_OWNER_EMAIL, String.class))
             .isVisible(true)
             // TODO: we may not need to permanently store the bucket parameters in the DB
             .attributes(
-                workingMap.get(
+                inputMap.get(
                     GoogleBucketFlightMapKeys.BUCKET_CREATION_PARAMS.getKey(),
-                    GoogleBucketFlightMapKeys.BUCKET_CREATION_PARAMS.getKlass()))
+                    GoogleBucketCreationParameters.class))
             .build();
     controlledResourceDao.createControlledResource(controlledResourceMetadata);
     return StepResult.getStepResultSuccess();

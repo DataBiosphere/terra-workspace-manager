@@ -53,16 +53,13 @@ public class ControlledResourceDao {
     }
   }
 
-  public Optional<ControlledResourceMetadata> getControlledResource(
-      UUID workspaceId, UUID resourceId) {
+  public Optional<ControlledResourceMetadata> getControlledResource(UUID resourceId) {
     final String sql =
         "SELECT workspace_id, resource_id, associated_app, is_visible, owner, attributes "
             + "FROM workspace_resource "
-            + "WHERE workspace_id = :workspaceId AND resource_id = :resourceId";
+            + "WHERE resource_id = :resourceId";
     final MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("workspaceId", workspaceId.toString())
-            .addValue("resourceId", resourceId.toString());
+        new MapSqlParameterSource().addValue("resourceId", resourceId.toString());
     final Map<String, Object> columnToValue;
     try {
       columnToValue = jdbcTemplate.queryForMap(sql, params);

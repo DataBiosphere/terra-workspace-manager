@@ -376,7 +376,7 @@ paths:
         '200':
           $ref: '#/components/responses/CreatedControlledGoogleBucketResponse'
         '202':
-          $ref: '#/components/responses/JobReportResponse'
+          $ref: '#/components/responses/CreatedControlledGoogleBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -394,7 +394,7 @@ paths:
         '200':
           $ref: '#/components/responses/CreatedControlledGoogleBucketResponse'
         '202':
-          $ref: '#/components/responses/JobReportResponse'
+          $ref: '#/components/responses/CreatedControlledGoogleBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -841,6 +841,8 @@ components:
           $ref: '#/components/schemas/JobControl'
         name:
           $ref: "#/components/schemas/Name"
+        description:
+          type: string
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
         accessScope:
@@ -873,7 +875,7 @@ components:
         jobReport:
           $ref: '#/components/schemas/JobReport'
         googleBucket:
-          $ref: '#/components/schemas/GoogleBucketCreationParameters' # TODO: should this include all parameters, not just the settable ones we expose?
+          $ref: '#/components/schemas/GoogleBucketCreationParameters'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
@@ -905,19 +907,6 @@ components:
         - NEARLINE
         - COLDLINE
         - ARCHIVE
-    GoogleBucketLegacyStorageClass:
-      description: >-
-        Availability of objects in a bucket. Includes values that aren't available
-        for new buckets. https://cloud.google.com/storage/docs/storage-classes#legacy
-      type: string
-      enum:
-        - STANDARD
-        - NEARLINE
-        - COLDLINE
-        - ARCHIVE
-        - MULTI_REGIONAL
-        - REGIONAL
-        - DURABLE_REDUCED_AVAILABILITY
     GoogleBucketLifecycle:
       description: >-
         Options to control automatic deletion or storage class change for a bucket.
@@ -996,7 +985,7 @@ components:
             "REGIONAL", and "DURABLE_REDUCED_AVAILABILITY".
           type: array
           items:
-            $ref: '#/components/schemas/GoogleBucketLegacyStorageClass'
+            $ref: '#/components/schemas/GoogleBucketDefaultStorageClass'
         noncurrentTimeBefore:
           description: >-
             Relevant only for versioned objects. This condition is satisfied for objects that became

@@ -33,10 +33,11 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
   public ControlledGoogleResourceApiController(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ControlledGoogleResourceService controlledResourceService,
-      JobService jobService) {
+      JobService jobService,
+      HttpServletRequest request) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.controlledResourceService = controlledResourceService;
-    this.request = getRequest().orElse(null);
+    this.request = request;
     this.jobService = jobService;
   }
 

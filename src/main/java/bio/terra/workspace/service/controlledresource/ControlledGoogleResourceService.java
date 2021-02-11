@@ -39,7 +39,7 @@ public class ControlledGoogleResourceService {
     final GoogleBucketCreationParameters params = requestBody.getGoogleBucket();
     jobBuilder.addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
     jobBuilder.addParameter(
-        WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, userRequest.getEmail()); // IS THIS RIGHT?
+        WorkspaceFlightMapKeys.CONTROLLED_RESOURCE_OWNER_EMAIL, userRequest.getEmail());
     jobBuilder.addParameter(GoogleBucketFlightMapKeys.BUCKET_CREATION_PARAMS.getKey(), params);
     // TODO: may not need these
     //    jobBuilder.addParameter(GoogleBucketFlightMapKeys.NAME.getKey(), params.getName());

@@ -8,7 +8,7 @@ import bio.terra.workspace.generated.model.GoogleBucketLifecycle;
  * Keys into the flight parameter map along with their types. Corresponds to
  * GoogleBucketCreationParameters
  */
-public enum GoogleBucketFlightMapKeys {
+public enum GoogleBucketFlightMapKeys implements FlightMapKey {
   NAME("name", String.class),
   LOCATION("location", String.class),
   DEFAULT_STORAGE_CLASS("defaultStorageClass", GoogleBucketDefaultStorageClass.class),
@@ -23,11 +23,13 @@ public enum GoogleBucketFlightMapKeys {
     this.klass = klass;
   }
 
+  @Override
   public String getKey() {
     return key;
   }
 
-  public Class<? extends Object> getKlass() {
+  @Override
+  public Class<?> getKlass() {
     return klass;
   }
 }
