@@ -139,7 +139,7 @@ task unzipCloudResourceSchema(type: Copy) {
 	from zipTree(configurations.cloudResourceSchema.singleFile).matching {
 		include 'cloud_resources_uid.yaml'
 	}
-	into "${buildDir}/crlSchema"
+	into "${resourceDir}/api/common"
 }
 
 // Defs
@@ -247,10 +247,12 @@ jib {
 	}
 }
 
+sourceSets.main.java.srcDir "${swaggerOutputDir}/src/main/java"
+
 // Internal dependencies
 // Note The Open API schema depends on an external library - cloud-resource-schema, so need to unzip it first.
 swaggerSources.server.code.dependsOn tasks.unzipCloudResourceSchema
-sourceSets.main.java.srcDir "${swaggerOutputDir}/src/main/java"
+swaggerSources.server.ui.dependsOn tasks.unzipCloudResourceSchema
 compileJava.dependsOn swaggerSources.server.code, spotlessApply, setGitVersion
 
 clean.dependsOn cleanSetGitVersion

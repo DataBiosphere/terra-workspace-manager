@@ -86,7 +86,13 @@ public class DataRepoReferenceController extends ReferenceController
   @Override
   public ResponseEntity<DataRepoSnapshotReference> getDataRepoSnapshotReferenceByName(
       UUID id, String name) {
-    DataReference ref = getReferenceByName(id, DataReferenceType.DATA_REPO_SNAPSHOT, name, getAuthenticatedInfo(), dataReferenceService);
+    DataReference ref =
+        getReferenceByName(
+            id,
+            DataReferenceType.DATA_REPO_SNAPSHOT,
+            name,
+            getAuthenticatedInfo(),
+            dataReferenceService);
     DataRepoSnapshotReference response =
         new DataRepoSnapshotReference()
             .snapshot(((SnapshotReference) ref.referenceObject()).toApiModel())

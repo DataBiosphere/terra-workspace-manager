@@ -967,7 +967,7 @@ components:
         metadata:
           $ref: '#/components/schemas/DataReferenceRequestMetadata'
         bucket:
-          $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/GoogleBucketUid'
+          $ref: 'common/cloud_resources_uid.yaml#/components/schemas/GoogleBucketUid'
 
     CreateBigQueryDatasetReferenceRequestBody:
       type: object
@@ -977,7 +977,7 @@ components:
         metadata:
           $ref: '#/components/schemas/DataReferenceRequestMetadata'
         dataset:
-          $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/GoogleBigQueryDatasetUid'
+          $ref: 'common/cloud_resources_uid.yaml#/components/schemas/GoogleBigQueryDatasetUid'
 
     UpdateDataReferenceRequestBody:
       type: object
@@ -1081,7 +1081,7 @@ components:
         metadata:
           $ref: '#/components/schemas/DataReferenceMetadata'
         bucket:
-          $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/GoogleBucketUid'
+          $ref: 'common/cloud_resources_uid.yaml#/components/schemas/GoogleBucketUid'
 
     BigQueryDatasetReference:
       type: object
@@ -1091,7 +1091,7 @@ components:
         metadata:
           $ref: '#/components/schemas/DataReferenceMetadata'
         dataset:
-          $ref: '../../../../build/crlSchema/cloud_resources_uid.yaml#/components/schemas/GoogleBigQueryDatasetUid'
+          $ref: 'common/cloud_resources_uid.yaml#/components/schemas/GoogleBigQueryDatasetUid'
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceList:

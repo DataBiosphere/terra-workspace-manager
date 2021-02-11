@@ -117,7 +117,13 @@ public class GoogleReferenceController extends ReferenceController implements Go
   @Override
   public ResponseEntity<GoogleBucketReference> getGoogleBucketReferenceByName(
       UUID id, String name) {
-    DataReference ref = getReferenceByName(id, DataReferenceType.GOOGLE_BUCKET, name, getAuthenticatedInfo(), dataReferenceService);
+    DataReference ref =
+        getReferenceByName(
+            id,
+            DataReferenceType.GOOGLE_BUCKET,
+            name,
+            getAuthenticatedInfo(),
+            dataReferenceService);
     GoogleBucketReference response =
         new GoogleBucketReference()
             .bucket(
@@ -145,7 +151,13 @@ public class GoogleReferenceController extends ReferenceController implements Go
   @Override
   public ResponseEntity<BigQueryDatasetReference> getBigQueryDatasetReferenceByName(
       UUID id, String name) {
-    DataReference ref = getReferenceByName(id, DataReferenceType.BIG_QUERY_DATASET, name, getAuthenticatedInfo(), dataReferenceService);
+    DataReference ref =
+        getReferenceByName(
+            id,
+            DataReferenceType.BIG_QUERY_DATASET,
+            name,
+            getAuthenticatedInfo(),
+            dataReferenceService);
     BigQueryDatasetReference response =
         new BigQueryDatasetReference()
             .dataset(

@@ -34,8 +34,10 @@ public abstract class ReferenceController {
       DataReferenceValidationUtils dataReferenceValidation,
       DataReferenceService dataReferenceService) {
     logger.info(
-            "Creating data reference in workspace {} for {} with metadata {}",
-            workspaceId.toString(), userReq.getEmail(), requestMetadata.toString());
+        "Creating data reference in workspace {} for {} with metadata {}",
+        workspaceId.toString(),
+        userReq.getEmail(),
+        requestMetadata.toString());
     DataReferenceValidationUtils.validateReferenceName(requestMetadata.getName());
     dataReferenceValidation.validateReferenceObject(referenceObject, referenceType, userReq);
 
@@ -52,33 +54,51 @@ public abstract class ReferenceController {
     DataReference reference = dataReferenceService.createDataReference(referenceRequest, userReq);
 
     logger.info(
-            "Created data reference {} in workspace {} for {}",
-            reference.toString(), workspaceId.toString(), userReq.getEmail());
+        "Created data reference {} in workspace {} for {}",
+        reference.toString(),
+        workspaceId.toString(),
+        userReq.getEmail());
     return reference;
   }
 
-  protected DataReference getReference(UUID workspaceId, UUID referenceId, AuthenticatedUserRequest userReq, DataReferenceService dataReferenceService) {
+  protected DataReference getReference(
+      UUID workspaceId,
+      UUID referenceId,
+      AuthenticatedUserRequest userReq,
+      DataReferenceService dataReferenceService) {
     logger.info(
-            "Getting data reference by id {} in workspace {} for {}",
-            referenceId.toString(), workspaceId.toString(), userReq.getEmail());
+        "Getting data reference by id {} in workspace {} for {}",
+        referenceId.toString(),
+        workspaceId.toString(),
+        userReq.getEmail());
     DataReference ref = dataReferenceService.getDataReference(workspaceId, referenceId, userReq);
     logger.info(
-            "Got data reference {} in workspace {} for {}",
-            ref.toString(), workspaceId.toString(), userReq.getEmail());
+        "Got data reference {} in workspace {} for {}",
+        ref.toString(),
+        workspaceId.toString(),
+        userReq.getEmail());
     return ref;
-    }
+  }
 
-  protected DataReference getReferenceByName(UUID workspaceId, DataReferenceType type, String name, AuthenticatedUserRequest userReq, DataReferenceService dataReferenceService) {
+  protected DataReference getReferenceByName(
+      UUID workspaceId,
+      DataReferenceType type,
+      String name,
+      AuthenticatedUserRequest userReq,
+      DataReferenceService dataReferenceService) {
     logger.info(
-            "Getting data reference by name {} in workspace {} for {}",
-            name, workspaceId.toString(), userReq.getEmail());
+        "Getting data reference by name {} in workspace {} for {}",
+        name,
+        workspaceId.toString(),
+        userReq.getEmail());
     DataReferenceValidationUtils.validateReferenceName(name);
     DataReference ref =
-        dataReferenceService.getDataReferenceByName(
-            workspaceId, type, name, userReq);
+        dataReferenceService.getDataReferenceByName(workspaceId, type, name, userReq);
     logger.info(
-            "Got data reference by name {} in workspace {} for {}",
-            ref.toString(), workspaceId.toString(), userReq.getEmail());
+        "Got data reference by name {} in workspace {} for {}",
+        ref.toString(),
+        workspaceId.toString(),
+        userReq.getEmail());
     return ref;
   }
 
