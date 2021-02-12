@@ -118,14 +118,18 @@ public abstract class ReferenceController {
     }
 
     logger.info(
-        String.format(
-            "Updating data reference by id %s in workspace %s for %s with body %s",
-            referenceId.toString(), workspaceId.toString(), userReq.getEmail(), body.toString()));
+        "Updating data reference by id {} in workspace {} for {} with body {}",
+        referenceId.toString(),
+        workspaceId.toString(),
+        userReq.getEmail(),
+        body.toString());
 
     dataReferenceService.updateDataReference(workspaceId, referenceId, body, userReq);
     logger.info(
-        String.format(
-            "Updating data reference by id %s in workspace %s for %s with body %s",
-            referenceId.toString(), workspaceId.toString(), userReq.getEmail(), body.toString()));
+        "Updating data reference by id {} in workspace {} for {} with body {}",
+        referenceId.toString(),
+        workspaceId.toString(),
+        userReq.getEmail(),
+        body.toString());
   }
 }

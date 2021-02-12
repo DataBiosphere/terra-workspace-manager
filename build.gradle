@@ -15,7 +15,7 @@ sourceCompatibility = JavaVersion.VERSION_11
 
 allprojects {
 	group = "bio.terra"
-	version = "0.11.0-SNAPSHOT"
+	version = "0.12.0-SNAPSHOT"
 	ext {
 		artifactGroup = "${group}.workspace"
 		swaggerOutputDir = "${buildDir}/swagger-code"
@@ -254,5 +254,4 @@ sourceSets.main.java.srcDir "${swaggerOutputDir}/src/main/java"
 swaggerSources.server.code.dependsOn tasks.unzipCloudResourceSchema
 swaggerSources.server.ui.dependsOn tasks.unzipCloudResourceSchema
 compileJava.dependsOn swaggerSources.server.code, spotlessApply, setGitVersion
-
 clean.dependsOn cleanSetGitVersion

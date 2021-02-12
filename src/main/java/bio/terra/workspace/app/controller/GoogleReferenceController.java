@@ -51,7 +51,7 @@ public class GoogleReferenceController extends ReferenceController implements Go
   }
 
   @Override
-  public ResponseEntity<GoogleBucketReference> createGoogleBucketReference(
+  public ResponseEntity<GoogleBucketReference> createBucketReference(
       UUID id, @Valid CreateGoogleBucketReferenceRequestBody body) {
     bio.terra.workspace.service.datareference.model.GoogleBucketReference referenceObject =
         bio.terra.workspace.service.datareference.model.GoogleBucketReference.create(
@@ -102,7 +102,7 @@ public class GoogleReferenceController extends ReferenceController implements Go
   }
 
   @Override
-  public ResponseEntity<GoogleBucketReference> getGoogleBucketReference(UUID id, UUID referenceId) {
+  public ResponseEntity<GoogleBucketReference> getBucketReference(UUID id, UUID referenceId) {
     DataReference ref = getReference(id, referenceId, getAuthenticatedInfo(), dataReferenceService);
     GoogleBucketReference response =
         new GoogleBucketReference()
@@ -115,8 +115,7 @@ public class GoogleReferenceController extends ReferenceController implements Go
   }
 
   @Override
-  public ResponseEntity<GoogleBucketReference> getGoogleBucketReferenceByName(
-      UUID id, String name) {
+  public ResponseEntity<GoogleBucketReference> getBucketReferenceByName(UUID id, String name) {
     DataReference ref =
         getReferenceByName(
             id,
@@ -169,7 +168,7 @@ public class GoogleReferenceController extends ReferenceController implements Go
   }
 
   @Override
-  public ResponseEntity<Void> updateGoogleBucketReference(
+  public ResponseEntity<Void> updateBucketReference(
       UUID id, UUID referenceId, UpdateDataReferenceRequestBody body) {
     updateReference(id, referenceId, body, getAuthenticatedInfo(), dataReferenceService);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);

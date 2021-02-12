@@ -298,7 +298,7 @@ paths:
     - $ref: '#/components/parameters/Id'
     post:
       summary: Create a new Google bucket reference in a workspace.
-      operationId: createGoogleBucketReference
+      operationId: createBucketReference
       tags: [GoogleReference]
       requestBody:
         required: true
@@ -324,7 +324,7 @@ paths:
     - $ref: '#/components/parameters/ReferenceId'
     get:
       summary: Gets a reference to a Google bucket from a workspace.
-      operationId: getGoogleBucketReference
+      operationId: getBucketReference
       tags: [GoogleReference]
       responses:
         '200':
@@ -337,7 +337,7 @@ paths:
           $ref: '#/components/responses/ServerError'
     patch:
       summary: Update name or description of a bucket reference in a workspace.
-      operationId: updateGoogleBucketReference
+      operationId: updateBucketReference
       tags: [GoogleReference]
       requestBody:
         required: true
@@ -361,7 +361,7 @@ paths:
     - $ref: '#/components/parameters/Name'
     get:
       summary: Gets a reference to a Google bucket by name.
-      operationId: getGoogleBucketReferenceByName
+      operationId: getBucketReferenceByName
       tags: [GoogleReference]
       responses:
         '200':
