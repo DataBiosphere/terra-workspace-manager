@@ -90,6 +90,8 @@ public class WorkspaceApiController implements WorkspaceApi {
     // RAWLS_WORKSPACE.
     WorkspaceStageModel requestStage = body.getStage();
     requestStage = (requestStage == null ? WorkspaceStageModel.RAWLS_WORKSPACE : requestStage);
+    boolean isSamResourceOwner =
+        (body.isSamResourceOwner() == null ? false : body.isSamResourceOwner());
     WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::create);
@@ -102,6 +104,7 @@ public class WorkspaceApiController implements WorkspaceApi {
             .jobId(jobId)
             .spendProfileId(spendProfileId)
             .workspaceStage(internalStage)
+            .isSamResourceOwner(isSamResourceOwner)
             .build();
     UUID createdId = workspaceService.createWorkspace(internalRequest, userReq);
 

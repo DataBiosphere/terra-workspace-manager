@@ -414,6 +414,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .workspaceId(workspaceId)
         .jobId(UUID.randomUUID().toString())
         .spendProfileId(Optional.empty())
-        .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE);
+        .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+        .isSamResourceOwner(true);
   }
 }

@@ -36,6 +36,12 @@ public abstract class WorkspaceRequest {
   /** Temporary feature flag indicating whether this workspace uses MC Terra features. */
   public abstract WorkspaceStage workspaceStage();
 
+  /**
+   * Whether this workspace owns its Sam resource or not. Used for compatibility with Rawls
+   * workspaces, where Rawls owns the Sam resource rather than WSM.
+   */
+  public abstract boolean isSamResourceOwner();
+
   public static WorkspaceRequest.Builder builder() {
     return new AutoValue_WorkspaceRequest.Builder();
   }
@@ -49,6 +55,8 @@ public abstract class WorkspaceRequest {
     public abstract WorkspaceRequest.Builder spendProfileId(Optional<SpendProfileId> value);
 
     public abstract WorkspaceRequest.Builder workspaceStage(WorkspaceStage value);
+
+    public abstract WorkspaceRequest.Builder isSamResourceOwner(boolean value);
 
     public abstract WorkspaceRequest build();
   }

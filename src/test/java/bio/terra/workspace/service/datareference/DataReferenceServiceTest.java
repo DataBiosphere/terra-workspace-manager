@@ -276,6 +276,7 @@ class DataReferenceServiceTest extends BaseUnitTest {
             .jobId(UUID.randomUUID().toString())
             .spendProfileId(Optional.empty())
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .isSamResourceOwner(true)
             .build();
     return workspaceService.createWorkspace(request, USER_REQUEST);
   }

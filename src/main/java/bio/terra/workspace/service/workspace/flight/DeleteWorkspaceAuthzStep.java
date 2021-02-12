@@ -26,6 +26,13 @@ public class DeleteWorkspaceAuthzStep implements Step {
   public StepResult doStep(FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    boolean isSamResourceOwner =
+        inputMap.get(WorkspaceFlightMapKeys.IS_SAM_RESOURCE_OWNER, Boolean.class);
+    // Nothing required for this step if this Sam resource is not owned by WSM.
+    if (!isSamResourceOwner) {
+      return StepResult.getStepResultSuccess();
+    }
+
     try {
       samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);
     } catch (SamApiException e) {

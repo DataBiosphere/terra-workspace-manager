@@ -5,6 +5,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String SPEND_PROFILE_ID = "spendProfileId";
   public static final String GOOGLE_PROJECT_ID = "googleProjectId";
   public static final String WORKSPACE_STAGE = "workspaceStage";
+  public static final String IS_SAM_RESOURCE_OWNER = "samResourceOwner";
   public static final String BILLING_ACCOUNT_ID = "billingAccountId";
   public static final String IAM_OWNER_GROUP_EMAIL = "iamOwnerGroupEmail";
   public static final String IAM_WRITER_GROUP_EMAIL = "iamWriterGroupEmail";

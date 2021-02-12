@@ -115,6 +115,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
             .workspaceId(UUID.randomUUID())
             .jobId(UUID.randomUUID().toString())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .isSamResourceOwner(true)
             .build();
     return workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
   }

@@ -49,15 +49,16 @@ public class WorkspaceDao {
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public UUID createWorkspace(Workspace workspace) {
     String sql =
-        "INSERT INTO workspace (workspace_id, spend_profile, profile_settable, workspace_stage) values "
-            + "(:id, :spend_profile, :spend_profile_settable, :workspace_stage)";
+        "INSERT INTO workspace (workspace_id, spend_profile, profile_settable, workspace_stage, is_sam_resource_owner) values "
+            + "(:id, :spend_profile, :spend_profile_settable, :workspace_stage, :is_sam_resource_owner)";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("id", workspace.workspaceId().toString())
             .addValue(
                 "spend_profile", workspace.spendProfileId().map(SpendProfileId::id).orElse(null))
             .addValue("spend_profile_settable", workspace.spendProfileId().isEmpty())
-            .addValue("workspace_stage", workspace.workspaceStage().toString());
+            .addValue("workspace_stage", workspace.workspaceStage().toString())
+            .addValue("is_sam_resource_owner", workspace.isSamResourceOwner());
     try {
       jdbcTemplate.update(sql, params);
       logger.info("Inserted record for workspace {}", workspace.workspaceId());
@@ -105,6 +106,7 @@ public class WorkspaceDao {
                               Optional.ofNullable(rs.getString("spend_profile"))
                                   .map(SpendProfileId::create))
                           .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
+                          .isSamResourceOwner(rs.getBoolean("is_sam_resource_owner"))
                           .build()));
       logger.info("Retrieved workspace record {}", result);
       return result;

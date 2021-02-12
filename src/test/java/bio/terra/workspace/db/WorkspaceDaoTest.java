@@ -47,6 +47,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
             .workspaceId(workspaceId)
             .spendProfileId(spendProfileId)
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .isSamResourceOwner(true)
             .build();
     workspaceDao.createWorkspace(workspace);
 
@@ -103,6 +104,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
           Workspace.builder()
               .workspaceId(workspaceId)
               .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+              .isSamResourceOwner(true)
               .build();
       workspaceDao.createWorkspace(mcWorkspace);
     }
@@ -225,6 +227,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     return Workspace.builder()
         .workspaceId(workspaceId)
         .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+        .isSamResourceOwner(true)
         .build();
   }
 }

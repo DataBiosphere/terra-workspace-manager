@@ -107,6 +107,7 @@ class DataReferenceDaoTest extends BaseUnitTest {
           Workspace.builder()
               .workspaceId(UUID.randomUUID())
               .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+              .isSamResourceOwner(true)
               .build();
       UUID decoyId = workspaceDao.createWorkspace(decoyWorkspace);
       assertThrows(
@@ -217,6 +218,7 @@ class DataReferenceDaoTest extends BaseUnitTest {
             .workspaceId(UUID.randomUUID())
             .spendProfileId(Optional.empty())
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .isSamResourceOwner(true)
             .build();
     return workspaceDao.createWorkspace(workspace);
   }

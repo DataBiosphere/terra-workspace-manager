@@ -107,6 +107,7 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
             .workspaceId(UUID.randomUUID())
             .jobId(UUID.randomUUID().toString())
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .isSamResourceOwner(true)
             .build();
     return workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
   }

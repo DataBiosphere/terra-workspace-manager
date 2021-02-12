@@ -68,6 +68,8 @@ public class WorkspaceService {
 
     createJob.addParameter(
         WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceRequest.workspaceStage());
+    createJob.addParameter(
+        WorkspaceFlightMapKeys.IS_SAM_RESOURCE_OWNER, workspaceRequest.isSamResourceOwner());
 
     return createJob.submitAndWait(UUID.class);
   }
@@ -107,7 +109,8 @@ public class WorkspaceService {
   /** Delete an existing workspace by ID. */
   @Traced
   public void deleteWorkspace(UUID id, AuthenticatedUserRequest userReq) {
-    validateWorkspaceAndAction(userReq, id, SamConstants.SAM_WORKSPACE_DELETE_ACTION);
+    Workspace workspace =
+        validateWorkspaceAndAction(userReq, id, SamConstants.SAM_WORKSPACE_DELETE_ACTION);
 
     String description = "Delete workspace " + id;
     JobBuilder deleteJob =
@@ -118,7 +121,9 @@ public class WorkspaceService {
                 WorkspaceDeleteFlight.class,
                 null, // Delete does not have a useful request body
                 userReq)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id);
+            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id)
+            .addParameter(
+                WorkspaceFlightMapKeys.IS_SAM_RESOURCE_OWNER, workspace.isSamResourceOwner());
     deleteJob.submitAndWait(null);
   }
 

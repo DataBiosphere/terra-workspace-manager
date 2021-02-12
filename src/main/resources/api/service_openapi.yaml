@@ -837,6 +837,13 @@ components:
           type: string
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
+        samResourceOwner:
+          description: |
+            Whether this workspace should attempt to create its own Sam workspace
+            resource, or use one that already exists. Defaults to false. This is used solely for compatibility with
+            Rawls workspaces, and should be deleted when WSM manages workspaces
+            instead.
+          type: boolean
 
     CreatedWorkspace:
       type: object

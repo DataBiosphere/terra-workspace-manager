@@ -37,11 +37,14 @@ public class CreateWorkspaceStep implements Step {
             .map(SpendProfileId::create);
     WorkspaceStage workspaceStage =
         inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStage.class);
+    boolean isSamResourceOwner =
+        inputMap.get(WorkspaceFlightMapKeys.IS_SAM_RESOURCE_OWNER, Boolean.class);
     Workspace workspaceToCreate =
         Workspace.builder()
             .workspaceId(workspaceId)
             .spendProfileId(spendProfileId)
             .workspaceStage(workspaceStage)
+            .isSamResourceOwner(isSamResourceOwner)
             .build();
 
     workspaceDao.createWorkspace(workspaceToCreate);

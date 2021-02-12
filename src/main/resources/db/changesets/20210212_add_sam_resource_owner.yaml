@@ -1,0 +1,12 @@
+databaseChangeLog:
+- changeSet:
+    id: addSamResourceOwner
+    author: zloery
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: is_sam_resource_owner
+            type: boolean
+            value: true
+        tableName: workspace

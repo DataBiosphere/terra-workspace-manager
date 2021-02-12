@@ -287,7 +287,8 @@ class WorkspaceIntegrationTest extends BaseIntegrationTest {
       throws Exception {
     String path = testConfig.getWsmWorkspacesBaseUrl();
     String userEmail = testConfig.getUserEmail();
-    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(workspaceId);
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody().id(workspaceId).samResourceOwner(true);
     String jsonBody = testUtils.mapToJson(body);
 
     return workspaceManagerTestClient.post(userEmail, path, jsonBody, CreatedWorkspace.class);
