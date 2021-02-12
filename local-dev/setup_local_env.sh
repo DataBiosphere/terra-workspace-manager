@@ -15,8 +15,8 @@ TERRA_HELMFILE_BRANCH=${3:-master}
 # Clone Helm chart and helmfile repos
 rm -rf terra-helm
 rm -rf terra-helmfile
-git clone -b "$TERRA_HELM_BRANCH" --single-branch https://github.com/broadinstitute/terra-helm
-git clone -b "$TERRA_HELMFILE_BRANCH" --single-branch https://github.com/broadinstitute/terra-helmfile
+git clone -b "$TERRA_HELM_BRANCH" --single-branch git@github.com:broadinstitute/terra-helm.git
+git clone -b "$TERRA_HELMFILE_BRANCH" --single-branch git@github.com:broadinstitute/terra-helmfile.git
 
 # Template in environment
 sed "s|ENV|${ENV}|g" skaffold.yaml.template > skaffold.yaml

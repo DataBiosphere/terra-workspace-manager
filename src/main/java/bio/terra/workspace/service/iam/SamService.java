@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.iam;
 
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
-import bio.terra.workspace.app.configuration.spring.TraceInterceptorConfig;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -32,7 +31,6 @@ import org.broadinstitute.dsde.workbench.client.sam.model.SubsystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -54,9 +52,9 @@ public class SamService {
 
   private ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();
-    client.addDefaultHeader(
-        TraceInterceptorConfig.MDC_REQUEST_ID_HEADER,
-        MDC.get(TraceInterceptorConfig.MDC_REQUEST_ID_KEY));
+    //    client.addDefaultHeader(
+    //        TraceInterceptorConfig.MDC_REQUEST_ID_HEADER,
+    //        MDC.get(TraceInterceptorConfig.MDC_REQUEST_ID_KEY));
     client.setAccessToken(accessToken);
     return client.setBasePath(samConfig.getBasePath());
   }
