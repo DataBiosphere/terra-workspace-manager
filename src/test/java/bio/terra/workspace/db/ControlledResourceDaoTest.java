@@ -34,10 +34,10 @@ public class ControlledResourceDaoTest extends BaseUnitTest {
 
     final ControlledResourceMetadata metadata =
         ControlledResourceMetadata.builder()
-            .workspaceId(WORKSPACE_ID)
-            .resourceId(RESOURCE_ID)
-            .isVisible(true)
-            .owner("johndoe@biz.dev")
+            .setWorkspaceId(WORKSPACE_ID)
+            .setResourceId(RESOURCE_ID)
+            .setIsVisible(true)
+            .setOwner("johndoe@biz.dev")
             .build();
     controlledResourceDao.createControlledResource(metadata);
 

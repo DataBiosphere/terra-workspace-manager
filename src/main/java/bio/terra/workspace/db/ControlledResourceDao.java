@@ -31,24 +31,24 @@ public class ControlledResourceDao {
             + "(:workspaceId, :resourceId, :associatedApp, :isVisible, :owner, :attributes)";
     final var params =
         new MapSqlParameterSource()
-            .addValue("workspaceId", controlledResource.workspaceId())
-            .addValue("resourceId", controlledResource.resourceId())
+            .addValue("workspaceId", controlledResource.getWorkspaceId())
+            .addValue("resourceId", controlledResource.getResourceId())
             .addValue("isVisible", controlledResource.isVisible())
-            .addValue("associatedApp", controlledResource.associatedApp().orElse(null))
-            .addValue("owner", controlledResource.owner().orElse(null))
-            .addValue("attributes", controlledResource.attributes().orElse(null));
+            .addValue("associatedApp", controlledResource.getAssociatedApp().orElse(null))
+            .addValue("owner", controlledResource.getOwner().orElse(null))
+            .addValue("attributes", controlledResource.getAttributes());
 
     try {
       jdbcTemplate.update(sql, params);
       logger.info(
           String.format(
               "Inserted record for workspaceResource %s",
-              controlledResource.resourceId().toString()));
+              controlledResource.getResourceId().toString()));
     } catch (DuplicateKeyException e) {
       throw new DuplicateControlledResourceException(
           String.format(
               "Resource %s already exists in workspace %s",
-              controlledResource.resourceId(), controlledResource.workspaceId()),
+              controlledResource.getResourceId(), controlledResource.getWorkspaceId()),
           e);
     }
   }
@@ -68,12 +68,12 @@ public class ControlledResourceDao {
     }
     final ControlledResourceMetadata.Builder resultBuilder =
         ControlledResourceMetadata.builder()
-            .workspaceId(UUID.fromString((String) columnToValue.get("workspace_id")))
-            .resourceId(UUID.fromString((String) columnToValue.get("resource_id")))
-            .isVisible((boolean) columnToValue.get("is_visible"))
-            .owner((String) columnToValue.get("owner"));
+            .setWorkspaceId(UUID.fromString((String) columnToValue.get("workspace_id")))
+            .setResourceId(UUID.fromString((String) columnToValue.get("resource_id")))
+            .setIsVisible((boolean) columnToValue.get("is_visible"))
+            .setOwner((String) columnToValue.get("owner"));
     Optional.ofNullable((String) columnToValue.get("associated_app"))
-        .ifPresent(resultBuilder::associatedApp);
+        .ifPresent(resultBuilder::setAssociatedApp);
     // TODO: attributes support
     return Optional.of(resultBuilder.build());
   }

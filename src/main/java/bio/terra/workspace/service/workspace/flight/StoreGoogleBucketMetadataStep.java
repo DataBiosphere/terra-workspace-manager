@@ -8,6 +8,8 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ControlledResourceDao;
 import bio.terra.workspace.generated.model.GoogleBucketCreationParameters;
 import bio.terra.workspace.service.controlledresource.model.ControlledResourceMetadata;
+import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class StoreGoogleBucketMetadataStep implements Step {
@@ -22,18 +24,19 @@ public class StoreGoogleBucketMetadataStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     final FlightMap inputMap = flightContext.getInputParameters();
+    final GoogleBucketCreationParameters bucketParams =
+        inputMap.get(
+            GoogleBucketFlightMapKeys.BUCKET_CREATION_PARAMS.getKey(),
+            GoogleBucketCreationParameters.class);
+    final Map<String, Object> attributeMap = ImmutableMap.of("bucketName", bucketParams.getName());
     final ControlledResourceMetadata controlledResourceMetadata =
         ControlledResourceMetadata.builder()
-            .workspaceId(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class))
-            .resourceId(inputMap.get(WorkspaceFlightMapKeys.CONTROLLED_RESOURCE_ID, UUID.class))
-            .owner(
+            .setWorkspaceId(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class))
+            .setResourceId(inputMap.get(WorkspaceFlightMapKeys.CONTROLLED_RESOURCE_ID, UUID.class))
+            .setOwner(
                 inputMap.get(WorkspaceFlightMapKeys.CONTROLLED_RESOURCE_OWNER_EMAIL, String.class))
-            .isVisible(true)
-            // TODO: we may not need to permanently store the bucket parameters in the DB
-            .attributes(
-                inputMap.get(
-                    GoogleBucketFlightMapKeys.BUCKET_CREATION_PARAMS.getKey(),
-                    GoogleBucketCreationParameters.class))
+            .setIsVisible(true)
+            .setAttributes(attributeMap)
             .build();
     controlledResourceDao.createControlledResource(controlledResourceMetadata);
     return StepResult.getStepResultSuccess();

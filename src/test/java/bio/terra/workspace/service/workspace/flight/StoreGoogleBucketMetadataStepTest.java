@@ -82,10 +82,9 @@ public class StoreGoogleBucketMetadataStepTest extends BaseUnitTest {
         .createControlledResource(controlledResourceMetadataCaptor.capture());
 
     final ControlledResourceMetadata metadata = controlledResourceMetadataCaptor.getValue();
-    assertThat(metadata.workspaceId(), equalTo(WORKSPACE_ID));
-    assertThat(metadata.resourceId(), equalTo(RESOURCE_ID));
-    assertThat(metadata.owner(), equalTo(OWNER_EMAIL));
-    assertThat(metadata.associatedApp(), equalTo(null));
-
+    assertThat(metadata.getWorkspaceId(), equalTo(WORKSPACE_ID));
+    assertThat(metadata.getResourceId(), equalTo(RESOURCE_ID));
+    assertThat(metadata.getOwner(), equalTo(OWNER_EMAIL));
+    assertThat(metadata.getAssociatedApp(), equalTo(null));
   }
 }
