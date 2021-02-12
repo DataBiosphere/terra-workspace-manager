@@ -129,7 +129,7 @@ class SamServiceTest extends BaseConnectedTest {
         WorkspaceRequest.builder()
             .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
-            .isSamResourceOwner(false)
+            .isSamResourceOwner(true)
             .jobId(UUID.randomUUID().toString())
             .build();
     UUID workspaceId = workspaceService.createWorkspace(rawlsRequest, defaultUserRequest());
