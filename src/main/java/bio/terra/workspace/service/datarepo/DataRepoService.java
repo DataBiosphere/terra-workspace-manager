@@ -32,9 +32,6 @@ public class DataRepoService {
 
   private ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();
-    //    client.addDefaultHeader(
-    //        TraceInterceptorConfig.MDC_REQUEST_ID_HEADER,
-    //        MDC.get(TraceInterceptorConfig.MDC_REQUEST_ID_KEY));
     client.setAccessToken(accessToken);
     return client;
   }
