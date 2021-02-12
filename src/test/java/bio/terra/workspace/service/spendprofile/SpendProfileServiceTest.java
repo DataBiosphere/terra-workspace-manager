@@ -12,14 +12,14 @@ import com.google.common.collect.ImmutableList;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class SpendProfileServiceTest extends BaseConnectedTest {
+class SpendProfileServiceTest extends BaseConnectedTest {
   @Autowired SamService samService;
   @Autowired SpendProfileConfiguration spendProfileConfiguration;
   @Autowired SpendConnectedTestUtils spendUtils;
   @Autowired UserAccessUtils userAccessUtils;
 
   @Test
-  public void authorizeLinkingSuccess() {
+  void authorizeLinkingSuccess() {
     SpendProfileId id = spendUtils.defaultSpendId();
     SpendProfile profile = SpendProfile.builder().id(id).build();
     SpendProfileService service = new SpendProfileService(samService, ImmutableList.of(profile));
@@ -28,7 +28,7 @@ public class SpendProfileServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void authorizeLinkingSamUnauthorizedThrowsUnauthorized() {
+  void authorizeLinkingSamUnauthorizedThrowsUnauthorized() {
     SpendProfileId id = spendUtils.defaultSpendId();
     SpendProfile profile = SpendProfile.builder().id(id).build();
     SpendProfileService service = new SpendProfileService(samService, ImmutableList.of(profile));
@@ -39,7 +39,7 @@ public class SpendProfileServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void authorizeLinkingUnknownIdThrowsUnauthorized() {
+  void authorizeLinkingUnknownIdThrowsUnauthorized() {
     SpendProfileService service = new SpendProfileService(samService, ImmutableList.of());
     assertThrows(
         SpendUnauthorizedException.class,
@@ -49,7 +49,7 @@ public class SpendProfileServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  public void parseSpendProfileConfiguration() {
+  void parseSpendProfileConfiguration() {
     SpendProfileService service = new SpendProfileService(samService, spendProfileConfiguration);
     assertEquals(
         SpendProfile.builder()

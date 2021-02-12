@@ -37,7 +37,7 @@ dependencies {
         googleCloud = "1.108.0"
         googleOauth2 = "0.20.0"
 
-        workspacemanagerClient = "0.9.0-SNAPSHOT"
+        workspacemanagerClient = "0.11.0-SNAPSHOT"
         datarepoClient = "1.0.155-SNAPSHOT"
         testRunner = "0.0.1-SNAPSHOT"
     }

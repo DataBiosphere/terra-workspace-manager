@@ -2,6 +2,7 @@ package bio.terra.workspace.service.datareference;
 
 import bio.terra.workspace.common.exception.*;
 import bio.terra.workspace.db.DataReferenceDao;
+import bio.terra.workspace.generated.model.UpdateDataReferenceRequestBody;
 import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.datareference.flight.CreateDataReferenceFlight;
 import bio.terra.workspace.service.datareference.flight.DataReferenceFlightMapKeys;
@@ -17,6 +18,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +34,8 @@ public class DataReferenceService {
   private final DataReferenceDao dataReferenceDao;
   private final JobService jobService;
   private final WorkspaceService workspaceService;
+
+  private final Logger logger = LoggerFactory.getLogger(DataReferenceService.class);
 
   @Autowired
   public DataReferenceService(
@@ -85,6 +90,21 @@ public class DataReferenceService {
 
     workspaceService.validateWorkspaceAndAction(
         userReq, referenceRequest.workspaceId(), SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+    try {
+      dataReferenceDao.getDataReferenceByName(
+          referenceRequest.workspaceId(),
+          referenceRequest.referenceType(),
+          referenceRequest.name());
+      logger.warn(
+          "Duplicate reference requested in workspace {} with name {} and type {}",
+          referenceRequest.workspaceId(),
+          referenceRequest.name(),
+          referenceRequest.referenceType().toString());
+      throw new DuplicateDataReferenceException(
+          "A reference with the specified name and type already exists in this workspace.");
+    } catch (DataReferenceNotFoundException expected) {
+      // Expected case, do nothing.
+    }
 
     String description = "Create data reference in workspace " + referenceRequest.workspaceId();
 
@@ -98,6 +118,9 @@ public class DataReferenceService {
                 userReq)
             .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, referenceRequest.workspaceId())
             .addParameter(DataReferenceFlightMapKeys.NAME, referenceRequest.name())
+            .addParameter(
+                DataReferenceFlightMapKeys.REFERENCE_DESCRIPTION,
+                referenceRequest.referenceDescription())
             .addParameter(
                 DataReferenceFlightMapKeys.REFERENCE_TYPE, referenceRequest.referenceType())
             .addParameter(
@@ -115,8 +138,8 @@ public class DataReferenceService {
   /**
    * List data references in a workspace.
    *
-   * <p>References are in ascending order by reference ID. At most {@Code limit} results will be
-   * returned, with the first being {@Code offset} entries from the start of the database.
+   * <p>References are in ascending order by reference ID. At most {@code limit} results will be
+   * returned, with the first being {@code offset} entries from the start of the database.
    *
    * <p>Verifies workspace existence and read permission before listing the references.
    */
@@ -126,6 +149,24 @@ public class DataReferenceService {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return dataReferenceDao.enumerateDataReferences(workspaceId, offset, limit);
+  }
+
+  @Traced
+  public void updateDataReference(
+      UUID workspaceId,
+      UUID referenceId,
+      UpdateDataReferenceRequestBody updateRequest,
+      AuthenticatedUserRequest userReq) {
+    workspaceService.validateWorkspaceAndAction(
+        userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+
+    if (!dataReferenceDao.updateDataReference(
+        workspaceId,
+        referenceId,
+        updateRequest.getName(),
+        updateRequest.getReferenceDescription())) {
+      throw new DataReferenceNotFoundException("Data Reference not found.");
+    }
   }
 
   /**

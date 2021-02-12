@@ -67,9 +67,7 @@ public class DataRepoService {
 
     try {
       repositoryApi.retrieveSnapshot(snapshotId);
-      logger.info(
-          String.format(
-              "Retrieved snapshot %s on Data Repo instance %s", snapshotId, instanceName));
+      logger.info("Retrieved snapshot {} on Data Repo instance {}", snapshotId, instanceName);
       return true;
     } catch (ApiException e) {
       if (e.getCode() == HttpStatus.NOT_FOUND.value()) {

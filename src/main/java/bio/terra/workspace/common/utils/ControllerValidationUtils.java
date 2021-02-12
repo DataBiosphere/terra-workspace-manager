@@ -48,6 +48,7 @@ public final class ControllerValidationUtils {
    * controlled and private resources that aren't supported in WM. This function throws exceptions
    * if any of those fields are set, or if any required fields are missing.
    */
+  // TODO(PF-404): remove this once CreateDataReferenceRequestBody is removed.
   public static void validate(CreateDataReferenceRequestBody body) {
     if (body.getResourceId() != null) {
       throw new ControlledResourceNotImplementedException(

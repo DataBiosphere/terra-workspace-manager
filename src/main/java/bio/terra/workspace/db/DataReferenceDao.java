@@ -2,6 +2,7 @@ package bio.terra.workspace.db;
 
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
+import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
@@ -10,6 +11,7 @@ import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,14 +45,15 @@ public class DataReferenceDao {
   public String createDataReference(DataReferenceRequest request, UUID referenceId)
       throws DuplicateDataReferenceException {
     String sql =
-        "INSERT INTO workspace_data_reference (workspace_id, reference_id, name, cloning_instructions, reference_type, reference) VALUES "
-            + "(:workspace_id, :reference_id, :name, :cloning_instructions, :reference_type, cast(:reference AS json))";
+        "INSERT INTO workspace_data_reference (workspace_id, reference_id, name, reference_description, cloning_instructions, reference_type, reference) VALUES "
+            + "(:workspace_id, :reference_id, :name, :reference_description, :cloning_instructions, :reference_type, cast(:reference AS json))";
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", request.workspaceId().toString())
             .addValue("reference_id", referenceId.toString())
             .addValue("name", request.name())
+            .addValue("reference_description", request.referenceDescription())
             .addValue("cloning_instructions", request.cloningInstructions().toSql())
             .addValue("reference_type", request.referenceType().toSql())
             .addValue("reference", request.referenceObject().toJson());
@@ -58,9 +61,9 @@ public class DataReferenceDao {
     try {
       jdbcTemplate.update(sql, params);
       logger.info(
-          String.format(
-              "Inserted record for data reference %s for workspace %s",
-              referenceId, request.workspaceId()));
+          "Inserted record for data reference {} for workspace {}",
+          referenceId,
+          request.workspaceId());
       return referenceId.toString();
     } catch (DuplicateKeyException e) {
       throw new DuplicateDataReferenceException(
@@ -71,7 +74,7 @@ public class DataReferenceDao {
   /** Retrieve a data reference by ID from the DB. */
   public DataReference getDataReference(UUID workspaceId, UUID referenceId) {
     String sql =
-        "SELECT workspace_id, reference_id, name, cloning_instructions, reference_type, reference from workspace_data_reference where workspace_id = :workspace_id AND reference_id = :reference_id";
+        "SELECT workspace_id, reference_id, name, reference_description, cloning_instructions, reference_type, reference from workspace_data_reference where workspace_id = :workspace_id AND reference_id = :reference_id";
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
@@ -81,9 +84,9 @@ public class DataReferenceDao {
     try {
       DataReference ref = jdbcTemplate.queryForObject(sql, params, DATA_REFERENCE_ROW_MAPPER);
       logger.info(
-          String.format(
-              "Retrieved record for data reference by id %s for workspace %s",
-              referenceId, workspaceId));
+          "Retrieved record for data reference by id {} for workspace {}",
+          referenceId,
+          workspaceId);
       return ref;
     } catch (EmptyResultDataAccessException e) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
@@ -97,7 +100,7 @@ public class DataReferenceDao {
   public DataReference getDataReferenceByName(
       UUID workspaceId, DataReferenceType type, String name) {
     String sql =
-        "SELECT workspace_id, reference_id, name, cloning_instructions, reference_type, reference from workspace_data_reference where workspace_id = :id AND reference_type = :type AND name = :name";
+        "SELECT workspace_id, reference_id, name, reference_description, cloning_instructions, reference_type, reference from workspace_data_reference where workspace_id = :id AND reference_type = :type AND name = :name";
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
@@ -108,9 +111,10 @@ public class DataReferenceDao {
     try {
       DataReference ref = jdbcTemplate.queryForObject(sql, params, DATA_REFERENCE_ROW_MAPPER);
       logger.info(
-          String.format(
-              "Retrieved record for data reference by name %s and reference type %s for workspace %s",
-              name, type, workspaceId));
+          "Retrieved record for data reference by name {} and reference type {} for workspace {}",
+          name,
+          type,
+          workspaceId);
       return ref;
     } catch (EmptyResultDataAccessException e) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
@@ -135,6 +139,47 @@ public class DataReferenceDao {
     }
   }
 
+  public boolean updateDataReference(
+      UUID workspaceId, UUID referenceId, String name, String referenceDescription) {
+    if (name == null && referenceDescription == null) {
+      throw new InvalidDaoRequestException("Must specify name or referenceDescription to update.");
+    }
+
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("id", referenceId.toString())
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("name", name)
+            .addValue("reference_description", referenceDescription);
+
+    StringJoiner updateStatement =
+        new StringJoiner(
+            ", ",
+            "UPDATE workspace_data_reference SET ",
+            " WHERE reference_id = :id AND workspace_id = :workspace_id");
+
+    if (name != null) {
+      updateStatement.add("name = :name");
+    }
+    if (referenceDescription != null) {
+      updateStatement.add("reference_description = :reference_description");
+    }
+
+    int rowsAffected = jdbcTemplate.update(updateStatement.toString(), params);
+    boolean updated = rowsAffected > 0;
+
+    if (updated) {
+      logger.info("Updated record for data reference {} in workspace {}", referenceId, workspaceId);
+    } else {
+      logger.info(
+          "Failed to update record for data reference {} in workspace {}",
+          referenceId,
+          workspaceId);
+    }
+
+    return updated;
+  }
+
   public boolean deleteDataReference(UUID workspaceId, UUID referenceId) {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
@@ -146,16 +191,14 @@ public class DataReferenceDao {
             params);
     boolean deleted = rowsAffected > 0;
 
-    if (deleted)
+    if (deleted) {
+      logger.info("Deleted record for data reference {} in workspace {}", referenceId, workspaceId);
+    } else {
       logger.info(
-          String.format(
-              "Deleted record for data reference %s in workspace %s",
-              referenceId.toString(), workspaceId.toString()));
-    else
-      logger.info(
-          String.format(
-              "Failed to delete record for data reference %s in workspace %s",
-              referenceId.toString(), workspaceId.toString()));
+          "Failed to delete record for data reference {} in workspace {}",
+          referenceId,
+          workspaceId);
+    }
 
     return deleted;
   }
@@ -164,7 +207,7 @@ public class DataReferenceDao {
   // should consider joining and listing those entries here.
   public List<DataReference> enumerateDataReferences(UUID workspaceId, int offset, int limit) {
     String sql =
-        "SELECT workspace_id, reference_id, name, cloning_instructions, reference_type, reference"
+        "SELECT workspace_id, reference_id, name, reference_description, cloning_instructions, reference_type, reference"
             + " FROM workspace_data_reference"
             + " WHERE workspace_id = :id"
             + " ORDER BY reference_id"
@@ -176,7 +219,7 @@ public class DataReferenceDao {
             .addValue("offset", offset)
             .addValue("limit", limit);
     List<DataReference> resultList = jdbcTemplate.query(sql, params, DATA_REFERENCE_ROW_MAPPER);
-    logger.info(String.format("Retrieved data references in workspace %s", workspaceId.toString()));
+    logger.info("Retrieved data references in workspace {}", workspaceId);
     return resultList;
   }
 
@@ -189,6 +232,7 @@ public class DataReferenceDao {
             .workspaceId(UUID.fromString(rs.getString("workspace_id")))
             .referenceId(UUID.fromString(rs.getString("reference_id")))
             .name(rs.getString("name"))
+            .referenceDescription(rs.getString("reference_description"))
             .referenceType(referenceType)
             .cloningInstructions(CloningInstructions.fromSql(rs.getString("cloning_instructions")))
             .referenceObject(deserializedReferenceObject)

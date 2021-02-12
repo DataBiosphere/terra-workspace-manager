@@ -23,7 +23,7 @@ public class BaseStatusServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void testSingleComponent() {
+  void testSingleComponent() {
     List<StatusSubsystem> subsystems = new ArrayList<>();
     subsystems.add(new StatusSubsystem(() -> new SystemStatusSystems().ok(true), true));
 
@@ -33,7 +33,7 @@ public class BaseStatusServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void testPassesWithNonCriticalFailure() throws Exception {
+  void testPassesWithNonCriticalFailure() {
     List<StatusSubsystem> subsystems = new ArrayList<>();
     subsystems.add(new StatusSubsystem(() -> new SystemStatusSystems().ok(true), true));
     subsystems.add(new StatusSubsystem(() -> new SystemStatusSystems().ok(false), false));
@@ -44,7 +44,7 @@ public class BaseStatusServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void testNotOkWithCriticalFailure() throws Exception {
+  void testNotOkWithCriticalFailure() {
     List<StatusSubsystem> subsystems = new ArrayList<>();
     subsystems.add(new StatusSubsystem(() -> new SystemStatusSystems().ok(false), true));
     subsystems.add(new StatusSubsystem(() -> new SystemStatusSystems().ok(true), false));
@@ -55,7 +55,7 @@ public class BaseStatusServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void testNotOkWithCriticalException() throws Exception {
+  void testNotOkWithCriticalException() {
     List<StatusSubsystem> subsystems = new ArrayList<>();
     Supplier<SystemStatusSystems> exceptionSupplier =
         () -> {
@@ -69,7 +69,7 @@ public class BaseStatusServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void testOkWithNonCriticalException() throws Exception {
+  void testOkWithNonCriticalException() {
     List<StatusSubsystem> subsystems = new ArrayList<>();
     Supplier<SystemStatusSystems> exceptionSupplier =
         () -> {

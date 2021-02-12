@@ -60,8 +60,7 @@ public class WorkspaceDao {
             .addValue("workspace_stage", workspace.workspaceStage().toString());
     try {
       jdbcTemplate.update(sql, params);
-      logger.info(
-          String.format("Inserted record for workspace %s", workspace.workspaceId().toString()));
+      logger.info("Inserted record for workspace {}", workspace.workspaceId());
     } catch (DuplicateKeyException e) {
       throw new DuplicateWorkspaceException(
           "Workspace " + workspace.workspaceId().toString() + " already exists.", e);
@@ -80,11 +79,11 @@ public class WorkspaceDao {
 
     boolean deleted = rowsAffected > 0;
 
-    if (deleted)
-      logger.info(String.format("Deleted record for workspace %s", workspaceId.toString()));
-    else
-      logger.info(
-          String.format("Failed to delete record for workspace %s", workspaceId.toString()));
+    if (deleted) {
+      logger.info("Deleted record for workspace {}", workspaceId);
+    } else {
+      logger.info("Failed to delete record for workspace {}", workspaceId);
+    }
 
     return deleted;
   }
@@ -107,7 +106,7 @@ public class WorkspaceDao {
                                   .map(SpendProfileId::create))
                           .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
                           .build()));
-      logger.info(String.format("Retrieved workspace record %s", result.toString()));
+      logger.info("Retrieved workspace record {}", result);
       return result;
     } catch (EmptyResultDataAccessException e) {
       throw new WorkspaceNotFoundException(String.format("Workspace %s not found.", id.toString()));

@@ -98,4 +98,5 @@ artifactory {
 // Internal dependencies
 
 sourceSets.main.java.srcDir "${swaggerOutputDir}/src/main/java"
+swaggerSources.client.code.dependsOn (":unzipCloudResourceSchema")
 compileJava.dependsOn swaggerSources.client.code

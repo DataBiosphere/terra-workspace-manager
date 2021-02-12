@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class WorkspaceManagerStatusServiceTest extends BaseUnitTest {
+class WorkspaceManagerStatusServiceTest extends BaseUnitTest {
 
   @MockBean private DataRepoService mockDataRepoService;
   @MockBean private DataRepoConfiguration mockDataRepoConfiguration;
@@ -39,14 +39,14 @@ public class WorkspaceManagerStatusServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void testStatusWithWorkingEndpoints() throws Exception {
+  void testStatusWithWorkingEndpoints() {
     // Manually check subsystems, since @Scheduled doesn't work nicely in unit tests.
     statusService.checkSubsystems();
     assertTrue(statusService.getCurrentStatus().isOk());
   }
 
   @Test
-  public void testCriticalFailureNotOk() throws Exception {
+  void testCriticalFailureNotOk() {
     doReturn(new SystemStatusSystems().ok(false).addMessagesItem("Sam is kill"))
         .when(mockSamService)
         .status();
@@ -59,7 +59,7 @@ public class WorkspaceManagerStatusServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void testBufferCriticalFailureNotOk() throws Exception {
+  void testBufferCriticalFailureNotOk() {
     doReturn(new SystemStatusSystems().ok(false).addMessagesItem("Buffer down"))
         .when(mockBufferService)
         .status();

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.datareference.model;
 
+import bio.terra.workspace.common.exception.SerializationException;
 import bio.terra.workspace.generated.model.DataRepoSnapshot;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -14,8 +15,8 @@ import com.google.auto.value.AutoValue;
  * instance this reference is stored in. The list of allowed names is a configuration property)
  * snapshot (the ID of the snapshot inside Data Repo)
  *
- * <p>The {@Code JsonTypeName} annotation specifies the class name used for serialization (see the
- * {@Code JsonSubTypes} annotation in {@Code ReferenceObject} for corresponding deserialization). By
+ * <p>The {@code JsonTypeName} annotation specifies the class name used for serialization (see the
+ * {@code JsonSubTypes} annotation in {@code ReferenceObject} for corresponding deserialization). By
  * using a constant string instead of the actual class name, changing the name of this class will
  * not break backwards compatibility with existing serialized objects. This string does not need to
  * match the class name - it only matches for clarity.
@@ -42,7 +43,7 @@ public abstract class SnapshotReference implements ReferenceObject {
     try {
       return objectMapper.writeValueAsString(this);
     } catch (JsonProcessingException e) {
-      throw new RuntimeException("Error serializing SnapshotReference", e);
+      throw new SerializationException("Error serializing SnapshotReference", e);
     }
   }
 

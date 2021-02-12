@@ -32,6 +32,8 @@ public class CreateDataReferenceStep implements Step {
     UUID referenceId = workingMap.get(DataReferenceFlightMapKeys.REFERENCE_ID, UUID.class);
     UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.class);
     String name = inputMap.get(DataReferenceFlightMapKeys.NAME, String.class);
+    String referenceDescription =
+        inputMap.get(DataReferenceFlightMapKeys.REFERENCE_DESCRIPTION, String.class);
     DataReferenceType type =
         inputMap.get(DataReferenceFlightMapKeys.REFERENCE_TYPE, DataReferenceType.class);
     CloningInstructions cloningInstructions =
@@ -43,6 +45,7 @@ public class CreateDataReferenceStep implements Step {
         DataReferenceRequest.builder()
             .workspaceId(workspaceId)
             .name(name)
+            .referenceDescription(referenceDescription)
             .referenceType(type)
             .cloningInstructions(cloningInstructions)
             .referenceObject(referenceObject)

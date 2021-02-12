@@ -16,12 +16,16 @@ import org.slf4j.LoggerFactory;
  * rules. ReferenceObject implementations must be fully serializable by the output of getProperties.
  *
  * <p>In order to properly deserialize implementations of this class, the implementation classes
- * must be added to the list inside the {@Code JsonSubTypes} annotation below. The implementation
- * class should specify a name using the {@Code JsonTypeName} annotation so that changes to the
+ * must be added to the list inside the {@code JsonSubTypes} annotation below. The implementation
+ * class should specify a name using the {@code JsonTypeName} annotation so that changes to the
  * class name do not break backwards compatibility.
  */
 @JsonTypeInfo(use = Id.NAME)
-@JsonSubTypes({@JsonSubTypes.Type(value = SnapshotReference.class, name = "SnapshotReference")})
+@JsonSubTypes({
+  @JsonSubTypes.Type(value = SnapshotReference.class, name = "SnapshotReference"),
+  @JsonSubTypes.Type(value = GoogleBucketReference.class, name = "GoogleBucketReference"),
+  @JsonSubTypes.Type(value = BigQueryDatasetReference.class, name = "BigQueryDatasetReference")
+})
 public interface ReferenceObject {
 
   /**
@@ -43,8 +47,8 @@ public interface ReferenceObject {
    * Method for deserializing a ReferenceObject from a json string.
    *
    * <p>This method is used for Stairway and database deserialization. This makes use of type
-   * information stored via the {@Code JsonTypeInfo} annotation, and parses that information using
-   * the {@Code JsonSubTypes} annotation.
+   * information stored via the {@code JsonTypeInfo} annotation, and parses that information using
+   * the {@code JsonSubTypes} annotation.
    */
   static ReferenceObject fromJson(String jsonString) {
     try {
