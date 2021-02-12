@@ -2,6 +2,7 @@ package bio.terra.workspace.service.workspace.flight;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
@@ -84,7 +85,7 @@ public class StoreGoogleBucketMetadataStepTest extends BaseUnitTest {
     final ControlledResourceMetadata metadata = controlledResourceMetadataCaptor.getValue();
     assertThat(metadata.getWorkspaceId(), equalTo(WORKSPACE_ID));
     assertThat(metadata.getResourceId(), equalTo(RESOURCE_ID));
-    assertThat(metadata.getOwner(), equalTo(OWNER_EMAIL));
-    assertThat(metadata.getAssociatedApp(), equalTo(null));
+    assertThat(metadata.getOwner().get(), equalTo(OWNER_EMAIL));
+    assertTrue(metadata.getAssociatedApp().isEmpty());
   }
 }
