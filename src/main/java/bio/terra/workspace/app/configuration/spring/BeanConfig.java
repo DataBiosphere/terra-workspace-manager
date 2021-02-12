@@ -17,12 +17,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 @Configuration
 public class BeanConfig {
-  //  // For logging stack traces, make the global tracer available as a bean
-  //  @Bean
-  //  public Tracer tracer() {
-  //    return Tracing.getTracer();
-  //  }
-
   // Enable the @Traced annotation for use within the application
   @Bean
   public CensusSpringAspect censusAspect() {
