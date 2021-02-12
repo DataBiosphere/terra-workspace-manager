@@ -36,6 +36,8 @@ public abstract class DataReference {
   public abstract ReferenceObject referenceObject();
 
   /** Convenience method for translating to an API model DataReferenceDescription object. */
+  // TODO(PF-404): This is only used by the deprecated reference APIs. Remove this when all clients
+  // have migrated.
   public DataReferenceDescription toApiModel() {
     return new DataReferenceDescription()
         .referenceId(referenceId())

@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -13,10 +14,14 @@ import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.generated.model.UpdateDataReferenceRequestBody;
+import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
+import bio.terra.workspace.service.datareference.model.BigQueryDatasetReference;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.DataReferenceType;
+import bio.terra.workspace.service.datareference.model.GoogleBucketReference;
+import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -62,16 +67,54 @@ class DataReferenceServiceTest extends BaseUnitTest {
   @BeforeEach
   void setup() {
     doReturn(true).when(mockDataRepoService).snapshotExists(any(), any(), any());
-
     workspaceId = createDefaultWorkspace();
-    request = defaultReferenceRequest(workspaceId).build();
+    request = defaultReferenceRequest(workspaceId, DataReferenceType.DATA_REPO_SNAPSHOT).build();
     reference = dataReferenceService.createDataReference(request, USER_REQUEST);
   }
 
-  @Test
-  void testCreateDataReference() {
-    assertThat(reference.workspaceId(), equalTo(workspaceId));
-    assertThat(reference.name(), equalTo(request.name()));
+  @Nested
+  class CreateDataReference {
+
+    @Test
+    public void testCreateDataReference() {
+      assertThat(reference.workspaceId(), equalTo(workspaceId));
+      assertThat(reference.name(), equalTo(request.name()));
+    }
+
+    @Test
+    public void testCreateGoogleBucketReference() {
+      UUID workspaceId = createDefaultWorkspace();
+      DataReferenceRequest request =
+          defaultReferenceRequest(workspaceId, DataReferenceType.GOOGLE_BUCKET).build();
+      GoogleBucketReference requestReference = (GoogleBucketReference) request.referenceObject();
+      DataReference ref = dataReferenceService.createDataReference(request, USER_REQUEST);
+
+      assertThat(ref.workspaceId(), equalTo(workspaceId));
+      assertThat(ref.name(), equalTo(request.name()));
+      assertThat(ref.referenceType(), equalTo(DataReferenceType.GOOGLE_BUCKET));
+      assertTrue(ref.referenceObject() instanceof GoogleBucketReference);
+      GoogleBucketReference bucketReference = (GoogleBucketReference) ref.referenceObject();
+      assertThat(bucketReference.bucketName(), equalTo(requestReference.bucketName()));
+    }
+
+    @Test
+    public void testCreateBigQueryDatasetReference() {
+      UUID workspaceId = createDefaultWorkspace();
+      DataReferenceRequest request =
+          defaultReferenceRequest(workspaceId, DataReferenceType.BIG_QUERY_DATASET).build();
+      BigQueryDatasetReference requestReference =
+          (BigQueryDatasetReference) request.referenceObject();
+      DataReference ref = dataReferenceService.createDataReference(request, USER_REQUEST);
+
+      assertThat(ref.workspaceId(), equalTo(workspaceId));
+      assertThat(ref.name(), equalTo(request.name()));
+      assertThat(ref.referenceType(), equalTo(DataReferenceType.BIG_QUERY_DATASET));
+      assertTrue(ref.referenceObject() instanceof BigQueryDatasetReference);
+      BigQueryDatasetReference datasetReference = (BigQueryDatasetReference) ref.referenceObject();
+
+      assertThat(datasetReference.projectId(), equalTo(requestReference.projectId()));
+      assertThat(datasetReference.datasetName(), equalTo(requestReference.datasetName()));
+    }
   }
 
   @Nested
@@ -86,7 +129,20 @@ class DataReferenceServiceTest extends BaseUnitTest {
     }
 
     @Test
-    void testGetDataReferenceByName() {
+    public void testGetDataReferenceByWrongTypeMissing() {
+      DataReference ref = currentReference.get();
+
+      // Names are unique per reference type within a workspace.
+      // This call looks up a GCS bucket with the snapshot's name, which should not exist.
+      assertThrows(
+          DataReferenceNotFoundException.class,
+          () ->
+              dataReferenceService.getDataReferenceByName(
+                  workspaceId, DataReferenceType.GOOGLE_BUCKET, ref.name(), USER_REQUEST));
+    }
+
+    @Test
+    public void testGetDataReferenceByName() {
       DataReference ref =
           dataReferenceService.getDataReferenceByName(
               workspaceId, request.referenceType(), request.name(), USER_REQUEST);
@@ -111,7 +167,9 @@ class DataReferenceServiceTest extends BaseUnitTest {
     void enumerateDataReferences() {
       // Uses a different name because names are unique per reference type, per workspace.
       DataReferenceRequest secondRequest =
-          defaultReferenceRequest(workspaceId).name("different_name").build();
+          defaultReferenceRequest(workspaceId, DataReferenceType.DATA_REPO_SNAPSHOT)
+              .name("different_name")
+              .build();
 
       DataReference secondReference =
           dataReferenceService.createDataReference(secondRequest, USER_REQUEST);
@@ -225,17 +283,31 @@ class DataReferenceServiceTest extends BaseUnitTest {
   /**
    * Test utility providing a pre-filled ReferenceRequest.Builder with the provided workspaceId.
    *
-   * <p>This gives a constant name, cloning instructions, and SnapshotReference as a reference
-   * object.
+   * <p>This gives a constant name, cloning instructions, and referenceObject of specified type.
    */
-  private DataReferenceRequest.Builder defaultReferenceRequest(UUID workspaceId) {
-    SnapshotReference snapshot = SnapshotReference.create("foo", "bar");
+  private DataReferenceRequest.Builder defaultReferenceRequest(
+      UUID workspaceId, DataReferenceType type) {
+    final ReferenceObject referenceObject;
+    switch (type) {
+      case DATA_REPO_SNAPSHOT:
+        referenceObject = SnapshotReference.create("fake-instance-name", "snapshot-name");
+        break;
+      case GOOGLE_BUCKET:
+        referenceObject = GoogleBucketReference.create("my-bucket-name");
+        break;
+      case BIG_QUERY_DATASET:
+        referenceObject = BigQueryDatasetReference.create("my-project", "dataset_id");
+        break;
+      default:
+        throw new InvalidDataReferenceException(
+            "Invalid reference type specified in DataReferenceServiceTest");
+    }
     return DataReferenceRequest.builder()
         .workspaceId(workspaceId)
         .name("some_name")
         .referenceDescription("some description, too")
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
-        .referenceType(DataReferenceType.DATA_REPO_SNAPSHOT)
-        .referenceObject(snapshot);
+        .referenceType(type)
+        .referenceObject(referenceObject);
   }
 }

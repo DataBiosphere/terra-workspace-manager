@@ -190,7 +190,12 @@ public class WorkspaceApiController implements WorkspaceApi {
     DataReference ref = dataReferenceService.getDataReference(workspaceId, referenceId, userReq);
     logger.info(
         "Got data reference {} in workspace {} for {}", ref, workspaceId, userReq.getEmail());
-
+    // TODO(PF-404): this endpoint's return type does not support reference types beyond snapshots.
+    // Clients should migrate to type-specific endpoints, and this endpoint should be removed.
+    if (ref.referenceType() != DataReferenceType.DATA_REPO_SNAPSHOT) {
+      throw new InvalidDataReferenceException(
+          "This endpoint does not support non-snapshot references. Use the newer type-specific endpoints instead.");
+    }
     return new ResponseEntity<>(ref.toApiModel(), HttpStatus.OK);
   }
 
@@ -200,6 +205,12 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("referenceType") ReferenceTypeEnum referenceType,
       @PathVariable("name") String name) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    // TODO(PF-404): this endpoint's return type does not support reference types beyond snapshots.
+    // Clients should migrate to type-specific endpoints, and this endpoint should be removed.
+    if (referenceType != ReferenceTypeEnum.DATA_REPO_SNAPSHOT) {
+      throw new InvalidDataReferenceException(
+          "This endpoint does not support non-snapshot references. Use the newer type-specific endpoints instead.");
+    }
     logger.info(
         "Getting data reference by name {} and reference type {} in workspace {} for {}",
         name,
@@ -279,14 +290,17 @@ public class WorkspaceApiController implements WorkspaceApi {
       @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
       @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info("Getting data references in workspace {} for {}", id, userReq.getEmail());
+    logger.info("Getting snapshot data references in workspace {} for {}", id, userReq.getEmail());
     ControllerValidationUtils.validatePaginationParams(offset, limit);
     List<DataReference> enumerateResult =
         dataReferenceService.enumerateDataReferences(id, offset, limit, userReq);
-    logger.info("Got data references in workspace {} for {}", id, userReq.getEmail());
+    logger.info("Got snapshot data references in workspace {} for {}", id, userReq.getEmail());
     DataReferenceList responseList = new DataReferenceList();
     for (DataReference ref : enumerateResult) {
-      responseList.addResourcesItem(ref.toApiModel());
+      // TODO(PF-404): this is a workaround until clients migrate off this endpoint.
+      if (ref.referenceType() == DataReferenceType.DATA_REPO_SNAPSHOT) {
+        responseList.addResourcesItem(ref.toApiModel());
+      }
     }
     return ResponseEntity.ok(responseList);
   }

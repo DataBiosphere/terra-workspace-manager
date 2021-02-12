@@ -97,11 +97,12 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  # TODO(PF-404): remove this in favor of reference-type specific objects.
   /api/workspaces/v1/{id}/datareferences:
     parameters:
       - $ref: '#/components/parameters/Id'
     post:
-      summary: Create a new data reference in a workspace.
+      summary: (DEPRECATED) Create a new data reference in a workspace.
       operationId: createDataReference
       tags: [Workspace]
       requestBody:
@@ -123,7 +124,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     get:
-      summary: Enumerate the data references in a workspace.
+      summary: (DEPRECATED) Enumerate the data references in a workspace.
       operationId: enumerateReferences
       tags: [Workspace]
       parameters:
@@ -141,12 +142,13 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  # TODO(PF-404): remove this in favor of reference-type specific objects.
   /api/workspaces/v1/{id}/datareferences/{referenceId}:
     parameters:
       - $ref: '#/components/parameters/Id'
       - $ref: '#/components/parameters/ReferenceId'
     get:
-      summary: Gets a data reference from a workspace.
+      summary: (DEPRECATED) Gets a data reference from a workspace.
       operationId: getDataReference
       tags: [Workspace]
       responses:
@@ -159,7 +161,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     patch:
-      summary: Update name or description of a data reference in a workspace.
+      summary: (DEPRECATED) Update name or description of a data reference in a workspace.
       operationId: updateDataReference
       tags: [Workspace]
       requestBody:
@@ -178,7 +180,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     delete:
-      summary: Deletes a data reference from a workspace.
+      summary: (DEPRECATED) Deletes a data reference from a workspace.
       operationId: deleteDataReference
       tags: [Workspace]
       responses:
@@ -191,13 +193,14 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  # TODO(PF-404): remove this in favor of reference-type specific objects.
   /api/workspaces/v1/{id}/datareferences/{referenceType}/{name}:
     parameters:
       - $ref: '#/components/parameters/Id'
       - $ref: '#/components/parameters/ReferenceType'
       - $ref: '#/components/parameters/Name'
     get:
-      summary: Gets a data reference from a workspace by name and type.
+      summary: (DEPRECATED) Gets a data reference from a workspace by name and type.
       operationId: getDataReferenceByName
       tags: [Workspace]
       responses:
@@ -210,9 +213,249 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{id}/resources/references/datarepo/snapshots:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    post:
+      summary: Create a new data repo snapshot reference in a workspace.
+      operationId: createDataRepoSnapshotReference
+      tags: [DataRepoReference]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDataRepoSnapshotReferenceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/DataRepoSnapshotReferenceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{id}/resources/references/datarepo/snapshots/{referenceId}:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/ReferenceId'
+    get:
+      summary: Gets a reference to a snapshot from a workspace.
+      operationId: getDataRepoSnapshotReference
+      tags: [DataRepoReference]
+      responses:
+        '200':
+          $ref: '#/components/responses/DataRepoSnapshotReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update name or description of a snapshot reference in a workspace.
+      operationId: updateDataRepoSnapshotReference
+      tags: [DataRepoReference]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{id}/resources/references/datarepo/snapshots/name/{name}:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/Name'
+    get:
+      summary: Gets a reference to a snapshot by name.
+      operationId: getDataRepoSnapshotReferenceByName
+      tags: [DataRepoReference]
+      responses:
+        '200':
+          $ref: '#/components/responses/DataRepoSnapshotReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{id}/resources/references/google/buckets:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    post:
+      summary: Create a new Google bucket reference in a workspace.
+      operationId: createBucketReference
+      tags: [GoogleReference]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGoogleBucketReferenceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/GoogleBucketReferenceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{id}/resources/references/google/buckets/{referenceId}:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/ReferenceId'
+    get:
+      summary: Gets a reference to a Google bucket from a workspace.
+      operationId: getBucketReference
+      tags: [GoogleReference]
+      responses:
+        '200':
+          $ref: '#/components/responses/GoogleBucketReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update name or description of a bucket reference in a workspace.
+      operationId: updateBucketReference
+      tags: [GoogleReference]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{id}/resources/references/google/buckets/name/{name}:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/Name'
+    get:
+      summary: Gets a reference to a Google bucket by name.
+      operationId: getBucketReferenceByName
+      tags: [GoogleReference]
+      responses:
+        '200':
+          $ref: '#/components/responses/GoogleBucketReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{id}/resources/references/google/bigquerydatasets:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    post:
+      summary: Create a new BigQuery dataset reference in a workspace.
+      operationId: createBigQueryDatasetReference
+      tags: [GoogleReference]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBigQueryDatasetReferenceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/BigQueryDatasetReferenceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{id}/resources/references/google/bigquerydatasets/{referenceId}:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/ReferenceId'
+    get:
+      summary: Gets a reference to a BigQuery dataset from a workspace.
+      operationId: getBigQueryDatasetReference
+      tags: [GoogleReference]
+      responses:
+        '200':
+          $ref: '#/components/responses/BigQueryDatasetReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update name or description of a BigQuery dataset reference in a workspace.
+      operationId: updateBigQueryDatasetReference
+      tags: [GoogleReference]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{id}/resources/references/google/bigquerydatasets/name/{name}:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/Name'
+    get:
+      summary: Gets a reference to a BigQuery dataset by name.
+      operationId: getBigQueryDatasetReferenceByName
+      tags: [GoogleReference]
+      responses:
+        '200':
+          $ref: '#/components/responses/BigQueryDatasetReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{id}/cloudcontexts:
     parameters:
-      - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/Id'
     post:
       summary: Create a cloud context for the workspace.
       operationId: createCloudContext
@@ -674,6 +917,7 @@ components:
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
+    # TODO(PF-404): remove this in favor of reference-type specific objects.
     CreateDataReferenceRequestBody:
       type: object
       required: [name, cloningInstructions]
@@ -693,6 +937,48 @@ components:
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
 
+    DataReferenceRequestMetadata:
+      type: object
+      required: [name, cloningInstructions]
+      description: Common information shared across all types of data reference requests.
+      properties:
+        name:
+          $ref: "#/components/schemas/Name"
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        referenceDescription:
+          type: string
+
+    CreateDataRepoSnapshotReferenceRequestBody:
+      type: object
+      description: A request to create a reference to a Data Repo snapshot.
+      required: [metadata, snapshot]
+      properties:
+        metadata:
+          $ref: '#/components/schemas/DataReferenceRequestMetadata'
+        snapshot:
+          $ref: '#/components/schemas/DataRepoSnapshot'
+
+    CreateGoogleBucketReferenceRequestBody:
+      type: object
+      description: A request to create a reference to a GCS bucket.
+      required: [metadata, bucket]
+      properties:
+        metadata:
+          $ref: '#/components/schemas/DataReferenceRequestMetadata'
+        bucket:
+          $ref: 'common/cloud_resources_uid.yaml#/components/schemas/GoogleBucketUid'
+
+    CreateBigQueryDatasetReferenceRequestBody:
+      type: object
+      description: A request to create a reference to a BigQuery dataset.
+      required: [metadata, dataset]
+      properties:
+        metadata:
+          $ref: '#/components/schemas/DataReferenceRequestMetadata'
+        dataset:
+          $ref: 'common/cloud_resources_uid.yaml#/components/schemas/GoogleBigQueryDatasetUid'
+
     UpdateDataReferenceRequestBody:
       type: object
       properties:
@@ -701,6 +987,7 @@ components:
         referenceDescription:
           type: string
 
+    # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceDescription:
       type: object
       required: [referenceId, name, workspaceId, cloningInstructions]
@@ -755,6 +1042,58 @@ components:
           description: JSON map of user-provided attributes
           type: string
 
+    DataReferenceMetadata:
+      type: object
+      required: [referenceId, name, workspaceId, cloningInstructions]
+      description: Information common across all types of data references.
+      properties:
+        referenceId:
+          description: The ID of the data reference
+          type: string
+          format: uuid
+        name:
+          description: The name of the data reference; used to refer to the reference
+          type: string
+        referenceDescription:
+          type: string
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        workspaceId:
+          description: The ID of the workspace containing the reference
+          type: string
+          format: uuid
+
+    DataRepoSnapshotReference:
+      type: object
+      description: A reference to a Data Repo snapshot.
+      required: [metadata, snapshot]
+      properties:
+        metadata:
+          $ref: '#/components/schemas/DataReferenceMetadata'
+        snapshot:
+          $ref: '#/components/schemas/DataRepoSnapshot'
+
+    GoogleBucketReference:
+      type: object
+      description: A reference to a GCS bucket.
+      required: [metadata, bucket]
+      properties:
+        metadata:
+          $ref: '#/components/schemas/DataReferenceMetadata'
+        bucket:
+          $ref: 'common/cloud_resources_uid.yaml#/components/schemas/GoogleBucketUid'
+
+    BigQueryDatasetReference:
+      type: object
+      description: A reference to a BigQuery dataset.
+      required: [metadata, dataset]
+      properties:
+        metadata:
+          $ref: '#/components/schemas/DataReferenceMetadata'
+        dataset:
+          $ref: 'common/cloud_resources_uid.yaml#/components/schemas/GoogleBigQueryDatasetUid'
+
+    # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceList:
       type: object
       required: [resources]
@@ -766,7 +1105,7 @@ components:
             $ref: '#/components/schemas/DataReferenceDescription'
 
     DataRepoSnapshot:
-      description: Currently, the only supported uncontrolled reference type.
+      description: A reference to a snapshot in Data Repo.
       type: object
       required: [instanceName, snapshot]
       properties:
@@ -828,6 +1167,27 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/DataReferenceDescription'
+
+    DataRepoSnapshotReferenceResponse:
+      description: Response containing a reference to a Data Repo snapshot.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DataRepoSnapshotReference'
+
+    GoogleBucketReferenceResponse:
+      description: Response containing a reference to a Google bucket.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GoogleBucketReference'
+
+    BigQueryDatasetReferenceResponse:
+      description: Response containing a reference to a BiqQuery dataset.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BigQueryDatasetReference'
 
     ReferenceListResponse:
       description: Response to list resource calls

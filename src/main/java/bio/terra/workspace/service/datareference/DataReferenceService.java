@@ -18,6 +18,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +34,8 @@ public class DataReferenceService {
   private final DataReferenceDao dataReferenceDao;
   private final JobService jobService;
   private final WorkspaceService workspaceService;
+
+  private final Logger logger = LoggerFactory.getLogger(DataReferenceService.class);
 
   @Autowired
   public DataReferenceService(
@@ -86,6 +90,21 @@ public class DataReferenceService {
 
     workspaceService.validateWorkspaceAndAction(
         userReq, referenceRequest.workspaceId(), SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+    try {
+      dataReferenceDao.getDataReferenceByName(
+          referenceRequest.workspaceId(),
+          referenceRequest.referenceType(),
+          referenceRequest.name());
+      logger.warn(
+          "Duplicate reference requested in workspace {} with name {} and type {}",
+          referenceRequest.workspaceId(),
+          referenceRequest.name(),
+          referenceRequest.referenceType().toString());
+      throw new DuplicateDataReferenceException(
+          "A reference with the specified name and type already exists in this workspace.");
+    } catch (DataReferenceNotFoundException expected) {
+      // Expected case, do nothing.
+    }
 
     String description = "Create data reference in workspace " + referenceRequest.workspaceId();
 
