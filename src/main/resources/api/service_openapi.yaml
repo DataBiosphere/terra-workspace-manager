@@ -926,6 +926,7 @@ components:
           $ref: "#/components/schemas/Name"
         description:
           type: string
+          default: ""
         resourceId:
           description: The ID of the resource
           type: string
@@ -948,6 +949,7 @@ components:
           $ref: '#/components/schemas/CloningInstructionsEnum'
         description:
           type: string
+          default: ""
 
     CreateDataRepoSnapshotReferenceRequestBody:
       type: object
