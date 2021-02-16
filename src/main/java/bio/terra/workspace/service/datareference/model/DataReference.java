@@ -3,7 +3,6 @@ package bio.terra.workspace.service.datareference.model;
 import bio.terra.workspace.generated.model.DataReferenceDescription;
 import com.google.auto.value.AutoValue;
 import java.util.UUID;
-import javax.annotation.Nullable;
 
 /**
  * Internal representation of an uncontrolled data reference.
@@ -23,8 +22,7 @@ public abstract class DataReference {
   public abstract String name();
 
   /** Description of the data reference. */
-  @Nullable
-  public abstract String referenceDescription();
+  public abstract String description();
 
   /** Type of this data reference. */
   public abstract DataReferenceType referenceType();
@@ -42,7 +40,7 @@ public abstract class DataReference {
     return new DataReferenceDescription()
         .referenceId(referenceId())
         .name(name())
-        .referenceDescription(referenceDescription())
+        .description(description())
         .workspaceId(workspaceId())
         .referenceType(referenceType().toApiModel())
         .reference(((SnapshotReference) referenceObject()).toApiModel())
@@ -61,7 +59,7 @@ public abstract class DataReference {
 
     public abstract DataReference.Builder name(String value);
 
-    public abstract DataReference.Builder referenceDescription(String value);
+    public abstract DataReference.Builder description(String value);
 
     public abstract DataReference.Builder referenceType(DataReferenceType value);
 

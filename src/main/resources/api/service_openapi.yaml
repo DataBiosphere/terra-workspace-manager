@@ -924,7 +924,7 @@ components:
       properties:
         name:
           $ref: "#/components/schemas/Name"
-        referenceDescription:
+        description:
           type: string
         resourceId:
           description: The ID of the resource
@@ -946,7 +946,7 @@ components:
           $ref: "#/components/schemas/Name"
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
-        referenceDescription:
+        description:
           type: string
 
     CreateDataRepoSnapshotReferenceRequestBody:
@@ -984,13 +984,13 @@ components:
       properties:
         name:
           $ref: "#/components/schemas/Name"
-        referenceDescription:
+        description:
           type: string
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceDescription:
       type: object
-      required: [referenceId, name, workspaceId, cloningInstructions]
+      required: [referenceId, name, description, workspaceId, cloningInstructions]
       properties:
         referenceId:
           description: The ID of the data reference
@@ -999,7 +999,7 @@ components:
         name:
           description: The name of the data reference; used to refer to the reference
           type: string
-        referenceDescription:
+        description:
           type: string
         workspaceId:
           description: The ID of the workspace containing the reference
@@ -1054,7 +1054,7 @@ components:
         name:
           description: The name of the data reference; used to refer to the reference
           type: string
-        referenceDescription:
+        description:
           type: string
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'

@@ -99,7 +99,7 @@ public class DataReferenceService {
           "Duplicate reference requested in workspace {} with name {} and type {}",
           referenceRequest.workspaceId(),
           referenceRequest.name(),
-          referenceRequest.referenceType().toString());
+          referenceRequest.referenceType());
       throw new DuplicateDataReferenceException(
           "A reference with the specified name and type already exists in this workspace.");
     } catch (DataReferenceNotFoundException expected) {
@@ -118,9 +118,7 @@ public class DataReferenceService {
                 userReq)
             .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, referenceRequest.workspaceId())
             .addParameter(DataReferenceFlightMapKeys.NAME, referenceRequest.name())
-            .addParameter(
-                DataReferenceFlightMapKeys.REFERENCE_DESCRIPTION,
-                referenceRequest.referenceDescription())
+            .addParameter(DataReferenceFlightMapKeys.DESCRIPTION, referenceRequest.description())
             .addParameter(
                 DataReferenceFlightMapKeys.REFERENCE_TYPE, referenceRequest.referenceType())
             .addParameter(
@@ -161,10 +159,7 @@ public class DataReferenceService {
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
 
     if (!dataReferenceDao.updateDataReference(
-        workspaceId,
-        referenceId,
-        updateRequest.getName(),
-        updateRequest.getReferenceDescription())) {
+        workspaceId, referenceId, updateRequest.getName(), updateRequest.getDescription())) {
       throw new DataReferenceNotFoundException("Data Reference not found.");
     }
   }
