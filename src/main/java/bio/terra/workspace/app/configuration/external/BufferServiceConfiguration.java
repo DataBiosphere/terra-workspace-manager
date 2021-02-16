@@ -16,12 +16,22 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "workspace.buffer")
 public class BufferServiceConfiguration {
 
+  // TODO(PF-302): Clean up once fully using Buffer Service in all environments.
+  private boolean enabled = false;
   private String instanceUrl;
   private String poolId;
   private String clientCredentialFilePath;
 
   private static final ImmutableList<String> BUFFER_SCOPES =
       ImmutableList.of("openid", "email", "profile");
+
+  public boolean getEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
+  }
 
   public String getInstanceUrl() {
     return instanceUrl;
