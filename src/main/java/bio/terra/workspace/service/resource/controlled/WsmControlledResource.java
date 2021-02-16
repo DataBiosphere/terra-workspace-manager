@@ -2,10 +2,11 @@ package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.service.resource.StewardshipType;
 import bio.terra.workspace.service.resource.WsmResource;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.UUID;
 
-public abstract class WsmControlledResource<API_MODEL_T> extends WsmResource {
+public abstract class WsmControlledResource<API_IN_T, API_OUT_T> extends WsmResource {
+
+  private final API_IN_T apiInputModel;
 
   public WsmControlledResource(
       String resourceName,
@@ -13,8 +14,11 @@ public abstract class WsmControlledResource<API_MODEL_T> extends WsmResource {
       UUID resourceId,
       UUID workspaceId,
       boolean isVisible,
-      String associatedApp) {
-    super(resourceName, description, resourceId, workspaceId, isVisible, associatedApp);
+      String associatedApp,
+      API_IN_T apiInputModel,
+      String owner) {
+    super(resourceName, description, resourceId, workspaceId, isVisible, associatedApp, owner);
+    this.apiInputModel = apiInputModel;
   }
 
   @Override
@@ -26,17 +30,26 @@ public abstract class WsmControlledResource<API_MODEL_T> extends WsmResource {
 
   public abstract WsmResourceType getResourceType();
 
-  public ControlledResourceDbModel getDbModel() {
+  public ControlledResourceDbModel toDbModel() {
     return ControlledResourceDbModel.builder()
-        .setResourceId(getResourceId())
+        .setResourceId(
+            getResourceId()
+                .orElseThrow(
+                    () ->
+                        new IllegalStateException("Required field Resource ID has not been set.")))
         .setWorkspaceId(getWorkspaceId())
         .setAssociatedApp(getAssociatedApp())
         .setIsVisible(isVisible())
+        .setOwner(getOwner())
         .setAttributes(getJsonAttributes())
         .build();
   }
 
   public abstract String getJsonAttributes();
 
-  public abstract API_MODEL_T toOutputApiModel();
+  public API_IN_T getApiInputModel() {
+    return apiInputModel;
+  }
+
+  public abstract API_OUT_T toOutputApiModel();
 }

@@ -1,14 +1,17 @@
 package bio.terra.workspace.service.resource;
 
+import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public abstract class WsmResource {
   private String name;
   private String description;
-  private UUID resourceId;
+  @Nullable private UUID resourceId;
   private UUID workspaceId;
   private boolean isVisible;
   private String associatedApp;
+  private String owner;
 
   public WsmResource(
       String name,
@@ -16,13 +19,15 @@ public abstract class WsmResource {
       UUID resourceId,
       UUID workspaceId,
       boolean isVisible,
-      String associatedApp) {
+      String associatedApp,
+      String owner) {
     this.name = name;
     this.description = description;
     this.resourceId = resourceId;
     this.workspaceId = workspaceId;
     this.isVisible = isVisible;
     this.associatedApp = associatedApp;
+    this.owner = owner;
   }
 
   public void setName(String name) {
@@ -57,8 +62,8 @@ public abstract class WsmResource {
     return description;
   }
 
-  public UUID getResourceId() {
-    return resourceId;
+  public Optional<UUID> getResourceId() {
+    return Optional.ofNullable(resourceId);
   }
 
   public UUID getWorkspaceId() {
@@ -74,4 +79,12 @@ public abstract class WsmResource {
   }
 
   public abstract StewardshipType getStewardshipType();
+
+  public String getOwner() {
+    return owner;
+  }
+
+  public void setOwner(String owner) {
+    this.owner = owner;
+  }
 }

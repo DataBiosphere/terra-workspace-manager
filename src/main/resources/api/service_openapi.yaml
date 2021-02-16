@@ -1223,6 +1223,10 @@ components:
           enum: [ 'USER', 'APPLICATION' ]
         privateResourceUser:
           $ref: '#/components/schemas/PrivateResourceUser'
+        visible:
+          type: boolean
+        owner:
+          type: string
 
     PrivateResourceUser:
       description: A user and role pair for a user of a private resource.

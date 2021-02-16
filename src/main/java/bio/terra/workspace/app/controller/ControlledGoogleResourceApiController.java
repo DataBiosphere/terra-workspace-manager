@@ -48,15 +48,18 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
     ControllerValidationUtils.validateGoogleBucket(body.getGoogleBucket());
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledGcsBucketResource resource =
-      new ControlledGcsBucketResource(
-          body.getCommon().getName(),
-          body.getCommon().getDescription(),
-          null, // created by flight
-          workspaceId,
-          true,
-          null,
-          body.getGoogleBucket());
-    final String jobId = controlledResourceService.createBucket(resource, body.getCommon().getJobControl(), userRequest);
+        new ControlledGcsBucketResource(
+            body.getCommon().getName(),
+            body.getCommon().getDescription(),
+            null, // created by flight
+            workspaceId,
+            true,
+            null,
+            body.getCommon().getOwner(),
+            body.getGoogleBucket());
+    final String jobId =
+        controlledResourceService.createBucket(
+            resource, body.getCommon().getJobControl(), userRequest);
     return getCreateBucketResult(workspaceId, jobId);
   }
 

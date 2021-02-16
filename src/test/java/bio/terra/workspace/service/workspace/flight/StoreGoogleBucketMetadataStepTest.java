@@ -19,7 +19,9 @@ import bio.terra.workspace.generated.model.GoogleBucketLifecycleRule;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleAction;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleActionType;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleCondition;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceDbModel;
+import bio.terra.workspace.service.resource.controlled.gcp.ControlledGcsBucketResource;
 import com.google.common.collect.ImmutableList;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,10 +55,22 @@ public class StoreGoogleBucketMetadataStepTest extends BaseUnitTest {
                                       .matchesStorageClass(
                                           ImmutableList.of(
                                               GoogleBucketDefaultStorageClass.ARCHIVE))))));
+
   public static final String OWNER_EMAIL = "jay@all-the-bits-thats-fit-to-blit.dev";
+  private static final ControlledGcsBucketResource BUCKET_RESOURCE =
+      new ControlledGcsBucketResource(
+          "The Red Bucket",
+          "A bucket that's red.",
+          RESOURCE_ID,
+          WORKSPACE_ID,
+          true,
+          null,
+          OWNER_EMAIL,
+          GOOGLE_BUCKET_CREATION_PARAMETERS);
+
   @Mock private ControlledResourceDao mockControlledResourceDao;
   @Mock private FlightContext mockFlightContext;
-  @Captor private ArgumentCaptor<ControlledResourceDbModel> controlledResourceMetadataCaptor;
+  @Captor private ArgumentCaptor<ControlledResourceDbModel> dbModelArgumentCaptor;
   private StoreGoogleBucketMetadataStep storeGoogleBucketMetadataStep;
 
   @BeforeEach
@@ -64,12 +78,10 @@ public class StoreGoogleBucketMetadataStepTest extends BaseUnitTest {
     storeGoogleBucketMetadataStep = new StoreGoogleBucketMetadataStep(mockControlledResourceDao);
 
     final FlightMap inputFlightMap = new FlightMap();
+    inputFlightMap.put(JobMapKeys.REQUEST.getKeyName(), BUCKET_RESOURCE);
     inputFlightMap.put(WorkspaceFlightMapKeys.WORKSPACE_ID, WORKSPACE_ID);
     inputFlightMap.put(WorkspaceFlightMapKeys.CONTROLLED_RESOURCE_ID, RESOURCE_ID);
     inputFlightMap.put(WorkspaceFlightMapKeys.CONTROLLED_RESOURCE_OWNER_EMAIL, OWNER_EMAIL);
-    inputFlightMap.put(
-        GoogleBucketFlightMapKeys.BUCKET_CREATION_PARAMS.getKey(),
-        GOOGLE_BUCKET_CREATION_PARAMETERS);
     inputFlightMap.makeImmutable();
 
     doReturn(inputFlightMap).when(mockFlightContext).getInputParameters();
@@ -79,10 +91,9 @@ public class StoreGoogleBucketMetadataStepTest extends BaseUnitTest {
   public void testEntersInfo() throws InterruptedException, RetryException {
     final StepResult result = storeGoogleBucketMetadataStep.doStep(mockFlightContext);
     assertThat(result, equalTo(StepResult.getStepResultSuccess()));
-    verify(mockControlledResourceDao)
-        .createControlledResource(controlledResourceMetadataCaptor.capture());
+    verify(mockControlledResourceDao).createControlledResource(dbModelArgumentCaptor.capture());
 
-    final ControlledResourceDbModel metadata = controlledResourceMetadataCaptor.getValue();
+    final ControlledResourceDbModel metadata = dbModelArgumentCaptor.getValue();
     assertThat(metadata.getWorkspaceId(), equalTo(WORKSPACE_ID));
     assertThat(metadata.getResourceId(), equalTo(RESOURCE_ID));
     assertThat(metadata.getOwner().get(), equalTo(OWNER_EMAIL));
