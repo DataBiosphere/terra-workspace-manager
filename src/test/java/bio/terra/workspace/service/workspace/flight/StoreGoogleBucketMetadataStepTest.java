@@ -19,7 +19,7 @@ import bio.terra.workspace.generated.model.GoogleBucketLifecycleRule;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleAction;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleActionType;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleCondition;
-import bio.terra.workspace.service.controlledresource.model.ControlledResourceMetadata;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceDbModel;
 import com.google.common.collect.ImmutableList;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +56,7 @@ public class StoreGoogleBucketMetadataStepTest extends BaseUnitTest {
   public static final String OWNER_EMAIL = "jay@all-the-bits-thats-fit-to-blit.dev";
   @Mock private ControlledResourceDao mockControlledResourceDao;
   @Mock private FlightContext mockFlightContext;
-  @Captor private ArgumentCaptor<ControlledResourceMetadata> controlledResourceMetadataCaptor;
+  @Captor private ArgumentCaptor<ControlledResourceDbModel> controlledResourceMetadataCaptor;
   private StoreGoogleBucketMetadataStep storeGoogleBucketMetadataStep;
 
   @BeforeEach
@@ -82,7 +82,7 @@ public class StoreGoogleBucketMetadataStepTest extends BaseUnitTest {
     verify(mockControlledResourceDao)
         .createControlledResource(controlledResourceMetadataCaptor.capture());
 
-    final ControlledResourceMetadata metadata = controlledResourceMetadataCaptor.getValue();
+    final ControlledResourceDbModel metadata = controlledResourceMetadataCaptor.getValue();
     assertThat(metadata.getWorkspaceId(), equalTo(WORKSPACE_ID));
     assertThat(metadata.getResourceId(), equalTo(RESOURCE_ID));
     assertThat(metadata.getOwner().get(), equalTo(OWNER_EMAIL));

@@ -1245,7 +1245,7 @@ components:
         jobReport:
           $ref: '#/components/schemas/JobReport'
         googleBucket:
-          $ref: '#/components/schemas/GoogleBucketCreationParameters'
+          $ref: '#/components/schemas/GoogleBucketStoredAttributes'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
@@ -1265,7 +1265,15 @@ components:
           $ref: '#/components/schemas/GoogleBucketDefaultStorageClass'
         lifecycle:
           $ref: '#/components/schemas/GoogleBucketLifecycle'
-
+    GoogleBucketStoredAttributes:
+      description: >-
+        Bucket properties included in post-creation, get, and update. Others must be
+        retrieved from GCS using the name.
+      type: object
+      properties:
+        bucketName:
+          description: Name of created bucket (not the resource nmae).
+          type: string
     GoogleBucketDefaultStorageClass:
       description: >-
         Type and availability of objects in a bucket, described at https://cloud.google.com/storage/docs/storage-classes.

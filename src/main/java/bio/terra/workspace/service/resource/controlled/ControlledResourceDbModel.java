@@ -1,28 +1,27 @@
-package bio.terra.workspace.service.controlledresource.model;
+package bio.terra.workspace.service.resource.controlled;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
-public class ControlledResourceMetadata {
+public class ControlledResourceDbModel {
   private final UUID workspaceId;
   private final UUID resourceId;
   @Nullable private final String associatedApp;
   private final boolean isVisible;
 
   @Nullable private final String owner;
-  private final Map<String, Object> attributes;
+  private final String attributes;
 
   // use builder instead
-  private ControlledResourceMetadata(
+  private ControlledResourceDbModel(
       UUID workspaceId,
       UUID resourceId,
       @Nullable String associatedApp,
       boolean isVisible,
       @Nullable String owner,
-      Map<String, Object> attributes) {
+      String attributes) {
     this.workspaceId = workspaceId;
     this.resourceId = resourceId;
     this.associatedApp = associatedApp;
@@ -51,7 +50,7 @@ public class ControlledResourceMetadata {
     return Optional.ofNullable(owner);
   }
 
-  public Map<String, Object> getAttributes() {
+  public String getAttributes() {
     return attributes;
   }
 
@@ -64,10 +63,10 @@ public class ControlledResourceMetadata {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof ControlledResourceMetadata)) {
+    if (!(o instanceof ControlledResourceDbModel)) {
       return false;
     }
-    ControlledResourceMetadata metadata = (ControlledResourceMetadata) o;
+    ControlledResourceDbModel metadata = (ControlledResourceDbModel) o;
     return isVisible() == metadata.isVisible()
         && Objects.equals(getWorkspaceId(), metadata.getWorkspaceId())
         && Objects.equals(getResourceId(), metadata.getResourceId())
@@ -94,7 +93,7 @@ public class ControlledResourceMetadata {
     private String associatedApp;
     private boolean isVisible;
     private String owner;
-    private Map<String, Object> attributes;
+    private String attributes;
 
     public Builder setWorkspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
@@ -121,13 +120,13 @@ public class ControlledResourceMetadata {
       return this;
     }
 
-    public Builder setAttributes(Map<String, Object> attributes) {
+    public Builder setAttributes(String attributes) {
       this.attributes = attributes;
       return this;
     }
 
-    public ControlledResourceMetadata build() {
-      return new ControlledResourceMetadata(
+    public ControlledResourceDbModel build() {
+      return new ControlledResourceDbModel(
           workspaceId, resourceId, associatedApp, isVisible, owner, attributes);
     }
   }

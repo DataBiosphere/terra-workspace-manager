@@ -1,7 +1,9 @@
 package bio.terra.workspace.db;
 
-import bio.terra.workspace.service.controlledresource.exception.DuplicateControlledResourceException;
-import bio.terra.workspace.service.controlledresource.model.ControlledResourceMetadata;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceDbModel;
+import bio.terra.workspace.service.resource.controlled.exception.DuplicateControlledResourceException;
+import com.google.common.annotations.VisibleForTesting;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,7 +26,7 @@ public class ControlledResourceDao {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  public void createControlledResource(ControlledResourceMetadata controlledResource) {
+  public void createControlledResource(ControlledResourceDbModel controlledResource) {
     final String sql =
         "INSERT INTO workspace_resource "
             + "(workspace_id, resource_id, associated_app, is_visible, owner, attributes) values "
@@ -53,7 +55,7 @@ public class ControlledResourceDao {
     }
   }
 
-  public Optional<ControlledResourceMetadata> getControlledResource(UUID resourceId) {
+  public Optional<ControlledResourceDbModel> getControlledResource(UUID resourceId) {
     final String sql =
         "SELECT workspace_id, resource_id, associated_app, is_visible, owner, attributes "
             + "FROM workspace_resource "
@@ -66,8 +68,8 @@ public class ControlledResourceDao {
     } catch (EmptyResultDataAccessException e) {
       return Optional.empty();
     }
-    final ControlledResourceMetadata.Builder resultBuilder =
-        ControlledResourceMetadata.builder()
+    final ControlledResourceDbModel.Builder resultBuilder =
+        ControlledResourceDbModel.builder()
             .setWorkspaceId(UUID.fromString((String) columnToValue.get("workspace_id")))
             .setResourceId(UUID.fromString((String) columnToValue.get("resource_id")))
             .setIsVisible((boolean) columnToValue.get("is_visible"))
@@ -76,5 +78,19 @@ public class ControlledResourceDao {
         .ifPresent(resultBuilder::setAssociatedApp);
     // TODO: attributes support
     return Optional.of(resultBuilder.build());
+  }
+
+  public boolean deleteControlledResource(UUID resourceId) {
+    final String sql = "DELETE FROM workspace_resource WHERE resource_id = :resourceId";
+    final MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("resourceId", resourceId.toString());
+    return jdbcTemplate.update(sql, params) == 1;
+  }
+
+  /** Truncate the table. For testing only. */
+  @VisibleForTesting
+  public void truncate() {
+    final String sql = "TRUNCATE TABLE workspace_resource";
+    jdbcTemplate.update(sql, Collections.emptyMap());
   }
 }

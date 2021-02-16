@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.controlledresource.exception;
+package bio.terra.workspace.service.resource.controlled.exception;
 
 import bio.terra.workspace.common.exception.ConflictException;
 import java.util.List;

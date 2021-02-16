@@ -4,11 +4,11 @@ import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledGoogleResourceApi;
 import bio.terra.workspace.generated.model.CreateControlledGoogleBucketRequestBody;
 import bio.terra.workspace.generated.model.CreatedControlledGoogleBucket;
-import bio.terra.workspace.service.controlledresource.ControlledGoogleResourceService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
+import bio.terra.workspace.service.resource.controlled.gcp.ControlledGoogleResourceService;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -46,6 +46,7 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
       UUID id, @Valid CreateControlledGoogleBucketRequestBody body) {
     ControllerValidationUtils.validateGoogleBucket(body.getGoogleBucket());
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
     final String jobId = controlledResourceService.createBucket(id, body, userRequest);
     return getCreateBucketResult(id, jobId);
   }

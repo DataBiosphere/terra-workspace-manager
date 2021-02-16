@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.controlledresource;
+package bio.terra.workspace.service.resource.controlled.gcp;
 
 import bio.terra.workspace.generated.model.CreateControlledGoogleBucketRequestBody;
 import bio.terra.workspace.generated.model.GoogleBucketCreationParameters;
