@@ -97,6 +97,8 @@ public class StoreGoogleBucketMetadataStepTest extends BaseUnitTest {
     assertThat(metadata.getWorkspaceId(), equalTo(WORKSPACE_ID));
     assertThat(metadata.getResourceId(), equalTo(RESOURCE_ID));
     assertThat(metadata.getOwner().get(), equalTo(OWNER_EMAIL));
+    assertTrue(metadata.isVisible());
     assertTrue(metadata.getAssociatedApp().isEmpty());
+    assertThat(metadata.getAttributes(), equalTo("{\"bucketName\":\"my-bucket\"}"));
   }
 }
