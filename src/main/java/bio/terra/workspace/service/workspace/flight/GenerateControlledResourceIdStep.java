@@ -19,6 +19,7 @@ public class GenerateControlledResourceIdStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    flightContext.getWorkingMap().put(WorkspaceFlightMapKeys.CONTROLLED_RESOURCE_ID, null);
     return StepResult.getStepResultSuccess();
   }
 }

@@ -8,6 +8,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
+import bio.terra.workspace.service.resource.controlled.gcp.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.gcp.ControlledGoogleResourceService;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -43,12 +44,20 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
 
   @Override
   public ResponseEntity<CreatedControlledGoogleBucket> createBucket(
-      UUID id, @Valid CreateControlledGoogleBucketRequestBody body) {
+      UUID workspaceId, @Valid CreateControlledGoogleBucketRequestBody body) {
     ControllerValidationUtils.validateGoogleBucket(body.getGoogleBucket());
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-
-    final String jobId = controlledResourceService.createBucket(id, body, userRequest);
-    return getCreateBucketResult(id, jobId);
+    final ControlledGcsBucketResource resource =
+      new ControlledGcsBucketResource(
+          body.getCommon().getName(),
+          body.getCommon().getDescription(),
+          null, // created by flight
+          workspaceId,
+          true,
+          null,
+          body.getGoogleBucket());
+    final String jobId = controlledResourceService.createBucket(resource, body.getCommon().getJobControl(), userRequest);
+    return getCreateBucketResult(workspaceId, jobId);
   }
 
   @Override

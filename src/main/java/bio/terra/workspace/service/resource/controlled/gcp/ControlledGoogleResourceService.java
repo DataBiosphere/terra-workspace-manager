@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.gcp;
 
 import bio.terra.workspace.generated.model.CreateControlledGoogleBucketRequestBody;
 import bio.terra.workspace.generated.model.GoogleBucketCreationParameters;
+import bio.terra.workspace.generated.model.JobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
@@ -23,33 +24,19 @@ public class ControlledGoogleResourceService {
   }
 
   public String createBucket(
-      UUID workspaceId,
-      CreateControlledGoogleBucketRequestBody requestBody,
+      ControlledGcsBucketResource resource,
+      JobControl jobControl,
       AuthenticatedUserRequest userRequest) {
-    // create a job
-    final String description =
-        "Create controlled Google bucket named " + requestBody.getGoogleBucket().getName();
-    final JobBuilder jobBuilder =
+   final JobBuilder jobBuilder =
         jobService.newJob(
-            description,
-            requestBody.getCommon().getJobControl().getId(),
+            resource.getDescription(),
+            jobControl.getId(),
             CreateControlledGoogleBucketFlight.class,
-            requestBody,
+            resource,
             userRequest);
-    final GoogleBucketCreationParameters params = requestBody.getGoogleBucket();
-    jobBuilder.addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
+    jobBuilder.addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, resource.getWorkspaceId());
     jobBuilder.addParameter(
         WorkspaceFlightMapKeys.CONTROLLED_RESOURCE_OWNER_EMAIL, userRequest.getEmail());
-    jobBuilder.addParameter(GoogleBucketFlightMapKeys.BUCKET_CREATION_PARAMS.getKey(), params);
-    // TODO: may not need these
-    //    jobBuilder.addParameter(GoogleBucketFlightMapKeys.NAME.getKey(), params.getName());
-    //    jobBuilder.addParameter(GoogleBucketFlightMapKeys.LOCATION.getKey(),
-    // params.getLocation());
-    //    jobBuilder.addParameter(
-    //        GoogleBucketFlightMapKeys.DEFAULT_STORAGE_CLASS.getKey(),
-    // params.getDefaultStorageClass());
-    //    jobBuilder.addParameter(GoogleBucketFlightMapKeys.LIFECYCLE.getKey(),
-    // params.getLifecycle());
     return jobBuilder.submit();
   }
 }

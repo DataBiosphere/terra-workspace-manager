@@ -4,6 +4,9 @@ import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 
+// TODO: generalize this to a generic controlled resource create flight, passing in
+//     resource-type-specific steps as needed. This might as well wait until we finish the
+//     current flight.
 public class CreateControlledGoogleBucketFlight extends Flight {
 
   public CreateControlledGoogleBucketFlight(FlightMap inputParameters, Object applicationContext) {
