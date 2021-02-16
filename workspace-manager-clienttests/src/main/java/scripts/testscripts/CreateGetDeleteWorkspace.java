@@ -24,6 +24,7 @@ public class CreateGetDeleteWorkspace extends WorkspaceTestScriptBase {
     UUID workspaceId = UUID.randomUUID();
     CreateWorkspaceRequestBody requestBody = new CreateWorkspaceRequestBody();
     requestBody.setId(workspaceId);
+    requestBody.setSamResourceOwner(true);
     workspaceApi.createWorkspace(requestBody);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "CREATE workspace");
 

@@ -47,7 +47,8 @@ public abstract class WorkspaceFixtureTestScriptBase extends WorkspaceTestScript
     workspaceId = UUID.randomUUID();
     final var requestBody = new CreateWorkspaceRequestBody()
         .id(workspaceId)
-        .stage(getStageModel());
+        .stage(getStageModel())
+        .samResourceOwner(true);
     final CreatedWorkspace workspace = workspaceApi.createWorkspace(requestBody);
     assertThat(workspace.getId(), equalTo(workspaceId));
   }
