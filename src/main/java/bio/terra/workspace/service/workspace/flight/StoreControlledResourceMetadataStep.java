@@ -8,14 +8,14 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ControlledResourceDao;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.gcp.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.WsmControlledResource;
 import java.util.UUID;
 
-public class StoreGoogleBucketMetadataStep implements Step {
+public class StoreControlledResourceMetadataStep implements Step {
 
   private final ControlledResourceDao controlledResourceDao;
 
-  public StoreGoogleBucketMetadataStep(ControlledResourceDao controlledResourceDao) {
+  public StoreControlledResourceMetadataStep(ControlledResourceDao controlledResourceDao) {
     this.controlledResourceDao = controlledResourceDao;
   }
 
@@ -24,8 +24,9 @@ public class StoreGoogleBucketMetadataStep implements Step {
       throws InterruptedException, RetryException {
     final FlightMap inputMap = flightContext.getInputParameters();
 
-    final ControlledGcsBucketResource resource =
-        inputMap.get(JobMapKeys.REQUEST.getKeyName(), ControlledGcsBucketResource.class);
+    // We don't need any of the generic methods for this function.
+    final WsmControlledResource<?, ?> resource =
+        inputMap.get(JobMapKeys.REQUEST.getKeyName(), WsmControlledResource.class);
     controlledResourceDao.createControlledResource(resource.toDbModel());
     return StepResult.getStepResultSuccess();
   }

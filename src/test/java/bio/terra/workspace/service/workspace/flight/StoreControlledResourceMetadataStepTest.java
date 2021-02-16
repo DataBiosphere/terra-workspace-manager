@@ -30,7 +30,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
-public class StoreGoogleBucketMetadataStepTest extends BaseUnitTest {
+public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
 
   private static final UUID WORKSPACE_ID = UUID.fromString("00000000-fcf0-4981-bb96-6b8dd634e7c0");
   private static final UUID RESOURCE_ID = UUID.fromString("11111111-fcf0-4981-bb96-6b8dd634e7c0");
@@ -71,11 +71,12 @@ public class StoreGoogleBucketMetadataStepTest extends BaseUnitTest {
   @Mock private ControlledResourceDao mockControlledResourceDao;
   @Mock private FlightContext mockFlightContext;
   @Captor private ArgumentCaptor<ControlledResourceDbModel> dbModelArgumentCaptor;
-  private StoreGoogleBucketMetadataStep storeGoogleBucketMetadataStep;
+  private StoreControlledResourceMetadataStep storeGoogleBucketMetadataStep;
 
   @BeforeEach
   public void setup() {
-    storeGoogleBucketMetadataStep = new StoreGoogleBucketMetadataStep(mockControlledResourceDao);
+    storeGoogleBucketMetadataStep =
+        new StoreControlledResourceMetadataStep(mockControlledResourceDao);
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(JobMapKeys.REQUEST.getKeyName(), BUCKET_RESOURCE);

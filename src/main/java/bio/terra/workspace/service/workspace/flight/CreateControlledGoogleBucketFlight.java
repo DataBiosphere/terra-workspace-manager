@@ -15,7 +15,7 @@ public class CreateControlledGoogleBucketFlight extends Flight {
     // Step 0: Generate a new resource UUID
     addStep(new GenerateControlledResourceIdStep());
     // Step 1: store the resource metadata in CloudSQL
-    addStep(new StoreGoogleBucketMetadataStep(flightBeanBag.getControlledResourceDao()));
+    addStep(new StoreControlledResourceMetadataStep(flightBeanBag.getControlledResourceDao()));
 
     // Step 2: create the bucket via CRL
     //
