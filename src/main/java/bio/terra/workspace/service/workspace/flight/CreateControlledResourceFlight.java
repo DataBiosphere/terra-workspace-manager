@@ -4,6 +4,7 @@ import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 
 /**
  * Flight for creation of a controlled resource. Some steps are resource-type-agnostic, and others
@@ -23,12 +24,12 @@ public class CreateControlledResourceFlight extends Flight {
 
     // Step 2: create the cloud resource via CRL
     final Step createResourceStep =
-        inputParameters.get(WorkspaceFlightMapKeys.CREATE_CLOUD_RESOURCE_STEP, Step.class);
+        inputParameters.get(ControlledResourceKeys.CREATE_CLOUD_RESOURCE_STEP, Step.class);
     addStep(createResourceStep);
 
     // Step 3: create the Sam resource associated with the resource
     final Step createSamResourceStep =
-        inputParameters.get(WorkspaceFlightMapKeys.CREATE_SAM_RESOURCE_STEP, Step.class);
+        inputParameters.get(ControlledResourceKeys.CREATE_SAM_RESOURCE_STEP, Step.class);
 
     // Step 4: assign custom roles to the resource based on Sam policies
     // TODO: can this step be the same for all resource types?

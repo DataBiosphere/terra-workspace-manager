@@ -4,21 +4,24 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import java.util.UUID;
+import bio.terra.workspace.service.iam.SamService;
 
-public class GenerateControlledResourceIdStep implements Step {
+public class CreateSamResourceStep implements Step {
+
+  private final SamService samService;
+
+  public CreateSamResourceStep(SamService samService) {
+    this.samService = samService;
+  }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    flightContext.getWorkingMap().put(ControlledResourceKeys.RESOURCE_ID, UUID.randomUUID());
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    flightContext.getWorkingMap().put(ControlledResourceKeys.RESOURCE_ID, null);
     return StepResult.getStepResultSuccess();
   }
 }

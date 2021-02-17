@@ -22,6 +22,7 @@ import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleCondition;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceDbModel;
 import bio.terra.workspace.service.resource.controlled.gcp.ControlledGcsBucketResource;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.common.collect.ImmutableList;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,8 +82,8 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(JobMapKeys.REQUEST.getKeyName(), BUCKET_RESOURCE);
     inputFlightMap.put(WorkspaceFlightMapKeys.WORKSPACE_ID, WORKSPACE_ID);
-    inputFlightMap.put(WorkspaceFlightMapKeys.CONTROLLED_RESOURCE_ID, RESOURCE_ID);
-    inputFlightMap.put(WorkspaceFlightMapKeys.CONTROLLED_RESOURCE_OWNER_EMAIL, OWNER_EMAIL);
+    inputFlightMap.put(ControlledResourceKeys.RESOURCE_ID, RESOURCE_ID);
+    inputFlightMap.put(ControlledResourceKeys.OWNER_EMAIL, OWNER_EMAIL);
     inputFlightMap.makeImmutable();
 
     doReturn(inputFlightMap).when(mockFlightContext).getInputParameters();

@@ -11,11 +11,15 @@ public final class WorkspaceFlightMapKeys {
   public static final String IAM_READER_GROUP_EMAIL = "iamReaderGroupEmail";
   public static final String RBS_RESOURCE_ID = "rbsResourceId";
 
-  // TODO: move these to their own class
-  public static final String CONTROLLED_RESOURCE_ID = "controlledResourceId";
-  public static final String CONTROLLED_RESOURCE_OWNER_EMAIL = "controlledResourceOwnerEmail";
-  public static final String CREATE_CLOUD_RESOURCE_STEP = "createCloudResourceStep";
-  public static final String CREATE_SAM_RESOURCE_STEP = "createCloudResourceStep";
-
   private WorkspaceFlightMapKeys() {}
+
+  /** Use inner class for new set of keys so it's easy to spot duplicates */
+  public static class ControlledResourceKeys {
+    public static final String RESOURCE_ID = "controlledResourceId";
+    public static final String OWNER_EMAIL = "controlledResourceOwnerEmail";
+    public static final String CREATE_CLOUD_RESOURCE_STEP = "createCloudResourceStep";
+    public static final String CREATE_SAM_RESOURCE_STEP = "createCloudResourceStep";
+
+    private ControlledResourceKeys() {}
+  }
 }

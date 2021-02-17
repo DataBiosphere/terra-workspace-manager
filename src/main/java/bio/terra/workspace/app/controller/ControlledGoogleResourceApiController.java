@@ -9,8 +9,8 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
+import bio.terra.workspace.service.resource.controlled.gcp.ControlledGcpResourceService;
 import bio.terra.workspace.service.resource.controlled.gcp.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.gcp.ControlledGoogleResourceService;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -27,14 +27,14 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
       LoggerFactory.getLogger(ControlledGoogleResourceApiController.class);
 
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
-  private final ControlledGoogleResourceService controlledResourceService;
+  private final ControlledGcpResourceService controlledResourceService;
   private final HttpServletRequest request;
   private final JobService jobService;
 
   @Autowired
   public ControlledGoogleResourceApiController(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      ControlledGoogleResourceService controlledResourceService,
+      ControlledGcpResourceService controlledResourceService,
       JobService jobService,
       HttpServletRequest request) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
