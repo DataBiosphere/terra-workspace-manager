@@ -16,6 +16,10 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
+/**
+ * DAO for the workspace_resource table TODO: migrate the table to include all fields necessary,
+ * e.g. name and description.
+ */
 @Component
 public class ControlledResourceDao {
   private final Logger logger = LoggerFactory.getLogger(ControlledResourceDao.class);
@@ -64,6 +68,7 @@ public class ControlledResourceDao {
         new MapSqlParameterSource().addValue("resourceId", resourceId.toString());
     final Map<String, Object> columnToValue;
     try {
+      // TODO: move away from queryForMap() to avoid catch and casting
       columnToValue = jdbcTemplate.queryForMap(sql, params);
     } catch (EmptyResultDataAccessException e) {
       return Optional.empty();

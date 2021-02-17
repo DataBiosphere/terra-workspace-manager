@@ -4,6 +4,10 @@ import bio.terra.workspace.service.resource.StewardshipType;
 import bio.terra.workspace.service.resource.WsmResource;
 import java.util.UUID;
 
+/**
+ * Class for all controlled resource fields that are not common to all resource stewardship types
+ * and are not specific to any particular resource type.
+ */
 public abstract class WsmControlledResource extends WsmResource {
 
   public WsmControlledResource(
@@ -26,6 +30,12 @@ public abstract class WsmControlledResource extends WsmResource {
 
   public abstract WsmResourceType getResourceType();
 
+  /**
+   * Generate a model suitable for serialization into the workspace_resource table, via the
+   * ControlledResourceDao.
+   *
+   * @return
+   */
   public ControlledResourceDbModel toDbModel() {
     return ControlledResourceDbModel.builder()
         .setResourceId(
