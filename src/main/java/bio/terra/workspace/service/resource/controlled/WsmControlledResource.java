@@ -4,9 +4,7 @@ import bio.terra.workspace.service.resource.StewardshipType;
 import bio.terra.workspace.service.resource.WsmResource;
 import java.util.UUID;
 
-public abstract class WsmControlledResource<API_IN_T, API_OUT_T> extends WsmResource {
-
-  private final API_IN_T apiInputModel;
+public abstract class WsmControlledResource extends WsmResource {
 
   public WsmControlledResource(
       String resourceName,
@@ -15,10 +13,8 @@ public abstract class WsmControlledResource<API_IN_T, API_OUT_T> extends WsmReso
       UUID workspaceId,
       boolean isVisible,
       String associatedApp,
-      API_IN_T apiInputModel,
       String owner) {
     super(resourceName, description, resourceId, workspaceId, isVisible, associatedApp, owner);
-    this.apiInputModel = apiInputModel;
   }
 
   @Override
@@ -46,10 +42,4 @@ public abstract class WsmControlledResource<API_IN_T, API_OUT_T> extends WsmReso
   }
 
   public abstract String getJsonAttributes();
-
-  public API_IN_T getApiInputModel() {
-    return apiInputModel;
-  }
-
-  public abstract API_OUT_T toOutputApiModel();
 }

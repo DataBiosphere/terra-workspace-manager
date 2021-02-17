@@ -24,8 +24,7 @@ public class StoreControlledResourceMetadataStep implements Step {
       throws InterruptedException, RetryException {
     final FlightMap inputMap = flightContext.getInputParameters();
 
-    // We don't need any of the generic methods for this function.
-    final WsmControlledResource<?, ?> resource =
+    final WsmControlledResource resource =
         inputMap.get(JobMapKeys.REQUEST.getKeyName(), WsmControlledResource.class);
     controlledResourceDao.createControlledResource(resource.toDbModel());
     return StepResult.getStepResultSuccess();

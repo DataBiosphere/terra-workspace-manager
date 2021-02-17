@@ -5,14 +5,15 @@ import bio.terra.workspace.generated.model.GoogleBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycle;
 import bio.terra.workspace.generated.model.GoogleBucketStoredAttributes;
 import bio.terra.workspace.service.resource.controlled.CloudPlatform;
-import bio.terra.workspace.service.resource.controlled.WsmControlledResource;
+import bio.terra.workspace.service.resource.controlled.WsmControlledResourceWithApiModels;
 import bio.terra.workspace.service.resource.controlled.WsmResourceType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 
 public class ControlledGcsBucketResource
-    extends WsmControlledResource<GoogleBucketCreationParameters, GoogleBucketStoredAttributes> {
+    extends WsmControlledResourceWithApiModels<
+        GoogleBucketCreationParameters, GoogleBucketStoredAttributes> {
   private final String bucketName;
   private final String location;
   private final GoogleBucketDefaultStorageClass defaultStorageClass;
@@ -27,7 +28,7 @@ public class ControlledGcsBucketResource
       boolean isVisible,
       String associatedApp,
       String owner,
-      GoogleBucketCreationParameters params) {
+      GoogleBucketCreationParameters inputModel) {
     super(
         resourceName,
         description,
@@ -35,12 +36,12 @@ public class ControlledGcsBucketResource
         workspaceId,
         isVisible,
         associatedApp,
-        params,
-        owner);
-    this.bucketName = params.getName();
-    this.location = params.getLocation();
-    this.defaultStorageClass = params.getDefaultStorageClass();
-    this.lifecycle = params.getLifecycle();
+        owner,
+        inputModel);
+    this.bucketName = inputModel.getName();
+    this.location = inputModel.getLocation();
+    this.defaultStorageClass = inputModel.getDefaultStorageClass();
+    this.lifecycle = inputModel.getLifecycle();
   }
 
   @Override
