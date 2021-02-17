@@ -29,7 +29,7 @@ public class ControlledGcpResourceService {
     this.samService = samService;
   }
 
-  public String createBucket(
+  public String createGcsBucket(
       ControlledGcsBucketResource resource,
       JobControl jobControl,
       AuthenticatedUserRequest userRequest) {

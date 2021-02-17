@@ -14,10 +14,7 @@ import java.util.UUID;
 public class ControlledGcsBucketResource
     extends WsmControlledResourceWithApiModels<
         GoogleBucketCreationParameters, GoogleBucketStoredAttributes> {
-  private final String bucketName;
-  private final String location;
-  private final GoogleBucketDefaultStorageClass defaultStorageClass;
-  private final GoogleBucketLifecycle lifecycle;
+
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   public ControlledGcsBucketResource(
@@ -38,10 +35,6 @@ public class ControlledGcsBucketResource
         associatedApp,
         owner,
         inputModel);
-    this.bucketName = inputModel.getName();
-    this.location = inputModel.getLocation();
-    this.defaultStorageClass = inputModel.getDefaultStorageClass();
-    this.lifecycle = inputModel.getLifecycle();
   }
 
   @Override
@@ -55,24 +48,24 @@ public class ControlledGcsBucketResource
   }
 
   public String getBucketName() {
-    return bucketName;
+    return getApiInputModel().getName();
   }
 
   public String getLocation() {
-    return location;
+    return getApiInputModel().getLocation();
   }
 
   public GoogleBucketDefaultStorageClass getDefaultStorageClass() {
-    return defaultStorageClass;
+    return getApiInputModel().getDefaultStorageClass();
   }
 
   public GoogleBucketLifecycle getLifecycle() {
-    return lifecycle;
+    return getApiInputModel().getLifecycle();
   }
 
   @Override
   public String getJsonAttributes() {
-    // In this case, the attributes and outdput model match exactly. I'm
+    // In this case, the attributes and output model match exactly. I'm
     // not yet sure I wan† to enforce that constraint at the top level.
     try {
       return objectMapper.writeValueAsString(toOutputApiModel());
@@ -83,6 +76,6 @@ public class ControlledGcsBucketResource
 
   @Override
   public GoogleBucketStoredAttributes toOutputApiModel() {
-    return new GoogleBucketStoredAttributes().bucketName(this.bucketName);
+    return new GoogleBucketStoredAttributes().bucketName(getApiInputModel().getName());
   }
 }

@@ -32,9 +32,10 @@ public abstract class WsmControlledResource extends WsmResource {
 
   /**
    * Generate a model suitable for serialization into the workspace_resource table, via the
-   * ControlledResourceDao.
+   * ControlledResourceDao. Note that this method should not be called before the resource
+   * ID has been created and set, as it is the primary key for this table.
    *
-   * @return
+   * @return model to be saved in the database.
    */
   public ControlledResourceDbModel toDbModel() {
     return ControlledResourceDbModel.builder()
@@ -51,5 +52,10 @@ public abstract class WsmControlledResource extends WsmResource {
         .build();
   }
 
+  /**
+   * Attributes string, serialized as JSON. Includes only those attributes of the cloud
+   * resource that are necessary for identification.
+   * @return json string
+   */
   public abstract String getJsonAttributes();
 }
