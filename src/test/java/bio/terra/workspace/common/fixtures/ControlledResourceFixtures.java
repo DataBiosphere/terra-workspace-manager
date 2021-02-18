@@ -18,6 +18,7 @@ public class ControlledResourceFixtures {
 
   public static final UUID WORKSPACE_ID = UUID.fromString("00000000-fcf0-4981-bb96-6b8dd634e7c0");
   public static final UUID RESOURCE_ID = UUID.fromString("11111111-fcf0-4981-bb96-6b8dd634e7c0");
+  public static final UUID DATA_REFERENCE_ID = UUID.fromString("33333333-fcf0-4981-bb96-6b8dd634e7c0");
   public static final String OWNER_EMAIL = "jay@all-the-bits-thats-fit-to-blit.dev";
   public static final GoogleBucketLifecycleRule LIFECYCLE_RULE_1 =
       new GoogleBucketLifecycleRule()

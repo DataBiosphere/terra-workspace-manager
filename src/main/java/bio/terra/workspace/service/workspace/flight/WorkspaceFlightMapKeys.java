@@ -17,8 +17,6 @@ public final class WorkspaceFlightMapKeys {
   public static class ControlledResourceKeys {
     public static final String RESOURCE_ID = "controlledResourceId";
     public static final String OWNER_EMAIL = "controlledResourceOwnerEmail";
-    public static final String CREATE_CLOUD_RESOURCE_STEP = "createCloudResourceStep";
-    public static final String CREATE_SAM_RESOURCE_STEP = "createCloudResourceStep";
 
     private ControlledResourceKeys() {}
   }

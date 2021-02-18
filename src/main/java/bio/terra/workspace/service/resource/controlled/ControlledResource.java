@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.resource.StewardshipType;
 import bio.terra.workspace.service.resource.WsmResource;
 import java.util.UUID;
@@ -35,7 +36,7 @@ public abstract class ControlledResource extends WsmResource {
    *
    * @return model to be saved in the database.
    */
-  public ControlledResourceDbModel toDbModel(UUID resourceId) {
+  public ControlledResourceDbModel toResourceDbModel(UUID resourceId) {
     return ControlledResourceDbModel.builder()
         .setResourceId(resourceId)
         .setWorkspaceId(getWorkspaceId())
@@ -44,6 +45,21 @@ public abstract class ControlledResource extends WsmResource {
         .build();
   }
 
+  /**
+   * Build a request for the data reference dao to store that portion of the thing.
+   *
+   * @return
+   */
+  public DataReferenceRequest toDataReferenceRequest(UUID resourceId) {
+    return DataReferenceRequest.builder()
+        .workspaceId(getWorkspaceId())
+        .name(getName())
+        .referenceDescription(getDescription())
+        .resourceId(resourceId)
+        .cloningInstructions(getCloningInstructions())
+        .referenceType(getResourceType().toDataReferenceType())
+        .build();
+  }
   /**
    * Attributes string, serialized as JSON. Includes only those attributes of the cloud resource
    * that are necessary for identification.

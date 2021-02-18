@@ -2,9 +2,11 @@ package bio.terra.workspace.service.workspace.flight;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
-import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.datareference.flight.GenerateReferenceIdStep;
+import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.gcp.CreateGcsBucketStep;
 
 /**
  * Flight for creation of a controlled resource. Some steps are resource-type-agnostic, and others
@@ -16,22 +18,38 @@ public class CreateControlledResourceFlight extends Flight {
     super(inputParameters, applicationContext);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
 
-    // Step 0: Generate a new resource UUID
+    // Generate a new resource UUID
     addStep(new GenerateControlledResourceIdStep());
+    // Genderate reference ID for the workspace_data_reference table
+    addStep(new GenerateReferenceIdStep());
 
-    // Step 1: store the resource metadata in CloudSQL
-    addStep(new StoreControlledResourceMetadataStep(flightBeanBag.getControlledResourceDao()));
+    // store the resource metadata in CloudSQL
+    addStep(
+        new StoreControlledResourceMetadataStep(
+            flightBeanBag.getControlledResourceDao(), flightBeanBag.getDataReferenceDao()));
 
-    // TODO: DON'T. Just switch on resource type. This class will know all types and have all beans
-    // in the bag.
+    final ControlledResource resource =
+        inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
+
+    switch (resource.getCloudPlatform()) {
+      case GCP:
+        switch (resource.getResourceType()) {
+          case BUCKET:
+            addStep(new CreateGcsBucketStep(flightBeanBag.getCrlService()));
+            break;
+          case BIGQUERY_DATASET:
+          default:
+            throw new IllegalStateException(
+                String.format("Unrecognized resource type %s", resource.getResourceType()));
+        }
+        break;
+      case AZURE:
+      default:
+        throw new IllegalStateException(
+            String.format("Unrecognized cloud platform %s", resource.getCloudPlatform()));
+    }
     // Step 2: create the cloud resource via CRL
-    final Step createResourceStep =
-        inputParameters.get(ControlledResourceKeys.CREATE_CLOUD_RESOURCE_STEP, Step.class);
-    addStep(createResourceStep);
-
     // Step 3: create the Sam resource associated with the resource
-    final Step createSamResourceStep =
-        inputParameters.get(ControlledResourceKeys.CREATE_SAM_RESOURCE_STEP, Step.class);
 
     // Step 4: assign custom roles to the resource based on Sam policies
     // TODO: can this step be the same for all resource types?
