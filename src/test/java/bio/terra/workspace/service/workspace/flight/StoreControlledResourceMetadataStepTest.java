@@ -2,6 +2,7 @@ package bio.terra.workspace.service.workspace.flight;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
@@ -16,6 +17,8 @@ import bio.terra.workspace.db.ControlledResourceDao;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.service.datareference.flight.DataReferenceFlightMapKeys;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
+import bio.terra.workspace.service.datareference.model.DataReferenceType;
+import bio.terra.workspace.service.datareference.model.GoogleBucketReference;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceDbModel;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -70,6 +73,17 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     assertThat(metadata.getAttributes(), equalTo("{\"bucketName\":\"my-bucket\"}"));
 
     final DataReferenceRequest request = dataReferenceRequestCaptor.getValue();
+    assertThat(request.workspaceId(), equalTo(ControlledResourceFixtures.WORKSPACE_ID));
     assertThat(request.name(), equalTo(ControlledResourceFixtures.RESOURCE_NAME));
+    assertThat(
+        request.referenceDescription(), equalTo(ControlledResourceFixtures.RESOURCE_DESCRIPTION));
+    assertThat(request.resourceId(), equalTo(ControlledResourceFixtures.RESOURCE_ID));
+    assertThat(
+        request.cloningInstructions(), equalTo(ControlledResourceFixtures.CLONING_INSTRUCTIONS));
+    assertThat(request.referenceType(), equalTo(DataReferenceType.GOOGLE_BUCKET));
+    assertTrue(request.referenceObject() instanceof GoogleBucketReference);
+    assertThat(
+        ((GoogleBucketReference) request.referenceObject()).bucketName(),
+        equalTo(ControlledResourceFixtures.BUCKET_RESOURCE.getBucketName()));
   }
 }
