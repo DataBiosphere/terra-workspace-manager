@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.workspace.flight;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DATA_REFERENCE_ID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
@@ -19,7 +19,6 @@ import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceDbModel;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -47,7 +46,8 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     inputFlightMap.put(
         WorkspaceFlightMapKeys.WORKSPACE_ID, ControlledResourceFixtures.WORKSPACE_ID);
     inputFlightMap.put(ControlledResourceKeys.RESOURCE_ID, ControlledResourceFixtures.RESOURCE_ID);
-    inputFlightMap.put(DataReferenceFlightMapKeys.REFERENCE_ID, ControlledResourceFixtures.DATA_REFERENCE_ID);
+    inputFlightMap.put(
+        DataReferenceFlightMapKeys.REFERENCE_ID, ControlledResourceFixtures.DATA_REFERENCE_ID);
     inputFlightMap.put(ControlledResourceKeys.OWNER_EMAIL, ControlledResourceFixtures.OWNER_EMAIL);
     inputFlightMap.makeImmutable();
 
@@ -59,7 +59,9 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     final StepResult result = storeGoogleBucketMetadataStep.doStep(mockFlightContext);
     assertThat(result, equalTo(StepResult.getStepResultSuccess()));
     verify(mockControlledResourceDao).createControlledResource(dbModelArgumentCaptor.capture());
-    verify(mockDataReferenceDao).createDataReference(dataReferenceRequestCaptor.capture(), ControlledResourceFixtures.DATA_REFERENCE_ID);
+    verify(mockDataReferenceDao)
+        .createDataReference(
+            dataReferenceRequestCaptor.capture(), eq(ControlledResourceFixtures.DATA_REFERENCE_ID));
 
     final ControlledResourceDbModel metadata = dbModelArgumentCaptor.getValue();
     assertThat(metadata.getWorkspaceId(), equalTo(ControlledResourceFixtures.WORKSPACE_ID));
@@ -67,6 +69,7 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     assertThat(metadata.getOwner().get(), equalTo(ControlledResourceFixtures.OWNER_EMAIL));
     assertThat(metadata.getAttributes(), equalTo("{\"bucketName\":\"my-bucket\"}"));
 
-//    final DataReferenceRequest
+    final DataReferenceRequest request = dataReferenceRequestCaptor.getValue();
+    assertThat(request.name(), equalTo(ControlledResourceFixtures.RESOURCE_NAME));
   }
 }

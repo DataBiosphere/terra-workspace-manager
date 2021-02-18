@@ -5,6 +5,8 @@ import bio.terra.workspace.generated.model.GoogleBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycle;
 import bio.terra.workspace.generated.model.GoogleBucketStoredAttributes;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import bio.terra.workspace.service.datareference.model.GoogleBucketReference;
+import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import bio.terra.workspace.service.resource.controlled.CloudPlatform;
 import bio.terra.workspace.service.resource.controlled.WsmControlledResourceWithApiModels;
 import bio.terra.workspace.service.resource.controlled.WsmResourceType;
@@ -71,5 +73,10 @@ public class ControlledGcsBucketResource
   @Override
   public GoogleBucketStoredAttributes toOutputApiModel() {
     return new GoogleBucketStoredAttributes().bucketName(getApiInputModel().getName());
+  }
+
+  @Override
+  public ReferenceObject getReferenceObject() {
+    return GoogleBucketReference.create(getBucketName());
   }
 }

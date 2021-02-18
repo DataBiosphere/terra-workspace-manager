@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
+import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import bio.terra.workspace.service.resource.StewardshipType;
 import bio.terra.workspace.service.resource.WsmResource;
 import java.util.UUID;
@@ -58,6 +59,7 @@ public abstract class ControlledResource extends WsmResource {
         .resourceId(resourceId)
         .cloningInstructions(getCloningInstructions())
         .referenceType(getResourceType().toDataReferenceType())
+        .referenceObject(getReferenceObject())
         .build();
   }
   /**
@@ -67,4 +69,12 @@ public abstract class ControlledResource extends WsmResource {
    * @return json string
    */
   public abstract String getJsonAttributes();
+
+  /**
+   * Provide something to satisfy the requiremenet of the reference object column in the
+   * workspace_data_reference table. TODO: can we get rid of this?
+   *
+   * @return
+   */
+  public abstract ReferenceObject getReferenceObject();
 }
