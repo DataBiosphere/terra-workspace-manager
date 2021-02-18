@@ -76,13 +76,25 @@ class DataReferenceServiceTest extends BaseUnitTest {
   class CreateDataReference {
 
     @Test
-    public void testCreateDataReference() {
+    void testCreateDataReference() {
       assertThat(reference.workspaceId(), equalTo(workspaceId));
       assertThat(reference.name(), equalTo(request.name()));
     }
 
     @Test
-    public void testCreateGoogleBucketReference() {
+    void testDefaultDataReferenceDescription() {
+      DataReferenceRequest request =
+          defaultReferenceRequest(workspaceId, DataReferenceType.DATA_REPO_SNAPSHOT)
+              .name("another_name")
+              .description(null)
+              .build();
+      DataReference reference = dataReferenceService.createDataReference(request, USER_REQUEST);
+
+      assertThat(reference.description(), equalTo(""));
+    }
+
+    @Test
+    void testCreateGoogleBucketReference() {
       UUID workspaceId = createDefaultWorkspace();
       DataReferenceRequest request =
           defaultReferenceRequest(workspaceId, DataReferenceType.GOOGLE_BUCKET).build();
@@ -98,7 +110,7 @@ class DataReferenceServiceTest extends BaseUnitTest {
     }
 
     @Test
-    public void testCreateBigQueryDatasetReference() {
+    void testCreateBigQueryDatasetReference() {
       UUID workspaceId = createDefaultWorkspace();
       DataReferenceRequest request =
           defaultReferenceRequest(workspaceId, DataReferenceType.BIG_QUERY_DATASET).build();
@@ -129,7 +141,7 @@ class DataReferenceServiceTest extends BaseUnitTest {
     }
 
     @Test
-    public void testGetDataReferenceByWrongTypeMissing() {
+    void testGetDataReferenceByWrongTypeMissing() {
       DataReference ref = currentReference.get();
 
       // Names are unique per reference type within a workspace.
@@ -142,7 +154,7 @@ class DataReferenceServiceTest extends BaseUnitTest {
     }
 
     @Test
-    public void testGetDataReferenceByName() {
+    void testGetDataReferenceByName() {
       DataReference ref =
           dataReferenceService.getDataReferenceByName(
               workspaceId, request.referenceType(), request.name(), USER_REQUEST);
@@ -207,18 +219,16 @@ class DataReferenceServiceTest extends BaseUnitTest {
 
       updateReference.accept(new UpdateDataReferenceRequestBody().name(updatedName));
       assertThat(currentReference.get().name(), equalTo(updatedName));
-      assertThat(
-          currentReference.get().referenceDescription(), equalTo(reference.referenceDescription()));
+      assertThat(currentReference.get().description(), equalTo(reference.description()));
     }
 
     @Test
     void testUpdateDescription() {
       String updatedDescription = "updated description";
 
-      updateReference.accept(
-          new UpdateDataReferenceRequestBody().referenceDescription(updatedDescription));
+      updateReference.accept(new UpdateDataReferenceRequestBody().description(updatedDescription));
       assertThat(currentReference.get().name(), equalTo(reference.name()));
-      assertThat(currentReference.get().referenceDescription(), equalTo(updatedDescription));
+      assertThat(currentReference.get().description(), equalTo(updatedDescription));
     }
 
     @Test
@@ -227,11 +237,9 @@ class DataReferenceServiceTest extends BaseUnitTest {
       String updatedDescription2 = "updated description again";
 
       updateReference.accept(
-          new UpdateDataReferenceRequestBody()
-              .name(updatedName2)
-              .referenceDescription(updatedDescription2));
+          new UpdateDataReferenceRequestBody().name(updatedName2).description(updatedDescription2));
       assertThat(currentReference.get().name(), equalTo(updatedName2));
-      assertThat(currentReference.get().referenceDescription(), equalTo(updatedDescription2));
+      assertThat(currentReference.get().description(), equalTo(updatedDescription2));
     }
 
     @Test
@@ -305,7 +313,7 @@ class DataReferenceServiceTest extends BaseUnitTest {
     return DataReferenceRequest.builder()
         .workspaceId(workspaceId)
         .name("some_name")
-        .referenceDescription("some description, too")
+        .description("some description, too")
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
         .referenceType(type)
         .referenceObject(referenceObject);

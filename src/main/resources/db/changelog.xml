@@ -7,4 +7,5 @@
     <include file="changesets/20201104_reference_index.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20201204_json_to_jsonb.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20210205_add_description.yaml" relativeToChangelogFile="true"/>
+    <include file="changesets/20210212_rename_description.yaml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
