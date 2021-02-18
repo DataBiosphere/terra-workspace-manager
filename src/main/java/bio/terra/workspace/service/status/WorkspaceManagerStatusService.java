@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.status;
 
+import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
 import bio.terra.workspace.common.utils.BaseStatusService;
 import bio.terra.workspace.common.utils.StatusSubsystem;
@@ -25,6 +26,7 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
       DataRepoConfiguration dataRepoConfiguration,
       NamedParameterJdbcTemplate jdbcTemplate,
       SamService samService,
+      BufferServiceConfiguration bufferServiceConfiguration,
       BufferService bufferService,
       @Value("${workspace.status-check.staleness-threshold-ms}") long staleThresholdMillis) {
     super(staleThresholdMillis);
@@ -43,7 +45,9 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
           new StatusSubsystem(checkDataRepoInstanceFn, /*isCritical=*/ false));
     }
 
-    registerSubsystem("Buffer", new StatusSubsystem(bufferService::status, /*isCritical=*/ true));
+    if (bufferServiceConfiguration.getEnabled()) {
+      registerSubsystem("Buffer", new StatusSubsystem(bufferService::status, /*isCritical=*/ true));
+    }
     registerSubsystem("Sam", new StatusSubsystem(samService::status, /*isCritical=*/ true));
   }
 
