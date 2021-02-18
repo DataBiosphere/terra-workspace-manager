@@ -15,7 +15,6 @@ import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledExc
 import bio.terra.workspace.service.workspace.exceptions.DuplicateGoogleContextException;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
-import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.flight.*;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
