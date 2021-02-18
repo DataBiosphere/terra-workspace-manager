@@ -4,6 +4,7 @@ import bio.terra.workspace.generated.model.GoogleBucketCreationParameters;
 import bio.terra.workspace.generated.model.GoogleBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycle;
 import bio.terra.workspace.generated.model.GoogleBucketStoredAttributes;
+import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.resource.controlled.CloudPlatform;
 import bio.terra.workspace.service.resource.controlled.WsmControlledResourceWithApiModels;
 import bio.terra.workspace.service.resource.controlled.WsmResourceType;
@@ -22,18 +23,12 @@ public class ControlledGcsBucketResource
   @JsonCreator
   public ControlledGcsBucketResource(
       @JsonProperty("resourceName") String resourceName,
+      @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("description") String description,
       @JsonProperty("workspaceId") UUID workspaceId,
-      @JsonProperty("isVisible") boolean isVisible,
       @JsonProperty("owner") String owner,
       @JsonProperty("inputModel") GoogleBucketCreationParameters inputModel) {
-    super(
-        resourceName,
-        description,
-        workspaceId,
-        isVisible,
-        owner,
-        inputModel);
+    super(resourceName, cloningInstructions, description, workspaceId, owner, inputModel);
   }
 
   @Override

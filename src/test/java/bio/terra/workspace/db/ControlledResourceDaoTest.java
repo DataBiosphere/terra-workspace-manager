@@ -27,11 +27,10 @@ public class ControlledResourceDaoTest extends BaseUnitTest {
           .spendProfileId(Optional.of(SPEND_PROFILE_ID))
           .workspaceStage(WorkspaceStage.MC_WORKSPACE)
           .build();
-  public static final ControlledResourceDbModel METADATA =
+  public static final ControlledResourceDbModel DB_MODEL =
       ControlledResourceDbModel.builder()
           .setWorkspaceId(WORKSPACE_ID)
           .setResourceId(RESOURCE_ID)
-          .setIsVisible(true)
           .setOwner("johndoe@biz.dev")
           .build();
 
@@ -43,7 +42,7 @@ public class ControlledResourceDaoTest extends BaseUnitTest {
     // relational prerequisites
     workspaceDao.createWorkspace(WORKSPACE);
 
-    controlledResourceDao.createControlledResource(METADATA);
+    controlledResourceDao.createControlledResource(DB_MODEL);
 
     final Optional<ControlledResourceDbModel> retrieved =
         controlledResourceDao.getControlledResource(RESOURCE_ID);
@@ -65,7 +64,7 @@ public class ControlledResourceDaoTest extends BaseUnitTest {
     // relational prerequisites
     workspaceDao.createWorkspace(WORKSPACE);
 
-    controlledResourceDao.createControlledResource(METADATA);
+    controlledResourceDao.createControlledResource(DB_MODEL);
 
     final Optional<ControlledResourceDbModel> retrieved =
         controlledResourceDao.getControlledResource(RESOURCE_ID);

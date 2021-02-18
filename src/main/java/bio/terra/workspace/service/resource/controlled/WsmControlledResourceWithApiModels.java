@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import java.util.UUID;
 
 /**
@@ -16,12 +17,12 @@ public abstract class WsmControlledResourceWithApiModels<T, U> extends Controlle
 
   public WsmControlledResourceWithApiModels(
       String resourceName,
+      CloningInstructions cloningInstructions,
       String description,
       UUID workspaceId,
-      boolean isVisible,
       String owner,
       T apiInputModel) {
-    super(resourceName, description, workspaceId, isVisible, owner);
+    super(resourceName, cloningInstructions, description, workspaceId, owner);
     this.apiInputModel = apiInputModel;
   }
 

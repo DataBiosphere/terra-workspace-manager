@@ -8,24 +8,14 @@ import javax.annotation.Nullable;
 public class ControlledResourceDbModel {
   private final UUID workspaceId;
   private final UUID resourceId;
-  @Nullable private final String associatedApp;
-  private final boolean isVisible;
-
   @Nullable private final String owner;
   private final String attributes;
 
   // use builder instead
   private ControlledResourceDbModel(
-      UUID workspaceId,
-      UUID resourceId,
-      @Nullable String associatedApp,
-      boolean isVisible,
-      @Nullable String owner,
-      String attributes) {
+      UUID workspaceId, UUID resourceId, @Nullable String owner, String attributes) {
     this.workspaceId = workspaceId;
     this.resourceId = resourceId;
-    this.associatedApp = associatedApp;
-    this.isVisible = isVisible;
     this.owner = owner;
     this.attributes = attributes;
   }
@@ -36,14 +26,6 @@ public class ControlledResourceDbModel {
 
   public UUID getResourceId() {
     return resourceId;
-  }
-
-  public Optional<String> getAssociatedApp() {
-    return Optional.ofNullable(associatedApp);
-  }
-
-  public boolean isVisible() {
-    return isVisible;
   }
 
   public Optional<String> getOwner() {
@@ -66,32 +48,22 @@ public class ControlledResourceDbModel {
     if (!(o instanceof ControlledResourceDbModel)) {
       return false;
     }
-    ControlledResourceDbModel metadata = (ControlledResourceDbModel) o;
-    return isVisible() == metadata.isVisible()
-        && Objects.equals(getWorkspaceId(), metadata.getWorkspaceId())
-        && Objects.equals(getResourceId(), metadata.getResourceId())
-        && Objects.equals(getAssociatedApp(), metadata.getAssociatedApp())
-        && Objects.equals(getOwner(), metadata.getOwner())
-        && Objects.equals(getAttributes(), metadata.getAttributes());
+    ControlledResourceDbModel that = (ControlledResourceDbModel) o;
+    return getWorkspaceId().equals(that.getWorkspaceId())
+        && getResourceId().equals(that.getResourceId())
+        && Objects.equals(getOwner(), that.getOwner())
+        && Objects.equals(getAttributes(), that.getAttributes());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(
-        getWorkspaceId(),
-        getResourceId(),
-        getAssociatedApp(),
-        isVisible(),
-        getOwner(),
-        getAttributes());
+    return Objects.hash(getWorkspaceId(), getResourceId(), getOwner(), getAttributes());
   }
 
   public static class Builder {
 
     private UUID workspaceId;
     private UUID resourceId;
-    private String associatedApp;
-    private boolean isVisible;
     private String owner;
     private String attributes;
 
@@ -102,16 +74,6 @@ public class ControlledResourceDbModel {
 
     public Builder setResourceId(UUID resourceId) {
       this.resourceId = resourceId;
-      return this;
-    }
-
-    public Builder setAssociatedApp(String associatedApp) {
-      this.associatedApp = associatedApp;
-      return this;
-    }
-
-    public Builder setIsVisible(boolean isVisible) {
-      this.isVisible = isVisible;
       return this;
     }
 
@@ -126,8 +88,7 @@ public class ControlledResourceDbModel {
     }
 
     public ControlledResourceDbModel build() {
-      return new ControlledResourceDbModel(
-          workspaceId, resourceId, associatedApp, isVisible, owner, attributes);
+      return new ControlledResourceDbModel(workspaceId, resourceId, owner, attributes);
     }
   }
 }

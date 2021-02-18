@@ -5,6 +5,7 @@ import bio.terra.workspace.generated.controller.ControlledGoogleResourceApi;
 import bio.terra.workspace.generated.model.CreateControlledGoogleBucketRequestBody;
 import bio.terra.workspace.generated.model.CreatedControlledGoogleBucket;
 import bio.terra.workspace.generated.model.GoogleBucketStoredAttributes;
+import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
@@ -52,9 +53,9 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
     final ControlledGcsBucketResource resource =
         new ControlledGcsBucketResource(
             body.getCommon().getName(),
+            CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()),
             body.getCommon().getDescription(),
             workspaceId,
-            true, // TODO: add to the API
             body.getCommon().getOwner(),
             body.getGoogleBucket());
     final String jobId =

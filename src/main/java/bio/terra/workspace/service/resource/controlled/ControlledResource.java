@@ -1,23 +1,22 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import bio.terra.workspace.service.resource.ResourceInput;
+import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.resource.StewardshipType;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import bio.terra.workspace.service.resource.WsmResource;
 import java.util.UUID;
 
 /**
  * Class for all controlled resource fields that are not common to all resource stewardship types
  * and are not specific to any particular resource type.
  */
-public abstract class ControlledResource extends ResourceInput {
+public abstract class ControlledResource extends WsmResource {
   public ControlledResource(
       String resourceName,
+      CloningInstructions cloningInstructions,
       String description,
       UUID workspaceId,
-      boolean isVisible,
       String owner) {
-    super(resourceName, description, workspaceId, isVisible, owner);
+    super(resourceName, cloningInstructions, description, workspaceId, owner);
   }
 
   @Override
@@ -40,8 +39,6 @@ public abstract class ControlledResource extends ResourceInput {
     return ControlledResourceDbModel.builder()
         .setResourceId(resourceId)
         .setWorkspaceId(getWorkspaceId())
-        .setAssociatedApp(getAssociatedApp())
-        .setIsVisible(isVisible())
         .setOwner(getOwner())
         .setAttributes(getJsonAttributes())
         .build();

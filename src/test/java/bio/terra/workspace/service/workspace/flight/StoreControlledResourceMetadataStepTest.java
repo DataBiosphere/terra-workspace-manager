@@ -2,7 +2,6 @@ package bio.terra.workspace.service.workspace.flight;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
@@ -36,7 +35,8 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(JobMapKeys.REQUEST.getKeyName(), ControlledResourceFixtures.BUCKET_RESOURCE);
-    inputFlightMap.put(WorkspaceFlightMapKeys.WORKSPACE_ID, ControlledResourceFixtures.WORKSPACE_ID);
+    inputFlightMap.put(
+        WorkspaceFlightMapKeys.WORKSPACE_ID, ControlledResourceFixtures.WORKSPACE_ID);
     inputFlightMap.put(ControlledResourceKeys.RESOURCE_ID, ControlledResourceFixtures.RESOURCE_ID);
     inputFlightMap.put(ControlledResourceKeys.OWNER_EMAIL, ControlledResourceFixtures.OWNER_EMAIL);
     inputFlightMap.makeImmutable();
@@ -54,8 +54,6 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     assertThat(metadata.getWorkspaceId(), equalTo(ControlledResourceFixtures.WORKSPACE_ID));
     assertThat(metadata.getResourceId(), equalTo(ControlledResourceFixtures.RESOURCE_ID));
     assertThat(metadata.getOwner().get(), equalTo(ControlledResourceFixtures.OWNER_EMAIL));
-    assertTrue(metadata.isVisible());
-    assertTrue(metadata.getAssociatedApp().isEmpty());
     assertThat(metadata.getAttributes(), equalTo("{\"bucketName\":\"my-bucket\"}"));
   }
 }

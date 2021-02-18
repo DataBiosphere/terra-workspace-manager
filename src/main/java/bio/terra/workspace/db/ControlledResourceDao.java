@@ -2,8 +2,6 @@ package bio.terra.workspace.db;
 
 import bio.terra.workspace.service.resource.controlled.ControlledResourceDbModel;
 import bio.terra.workspace.service.resource.controlled.exception.DuplicateControlledResourceException;
-import com.google.common.annotations.VisibleForTesting;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,14 +31,12 @@ public class ControlledResourceDao {
   public void createControlledResource(ControlledResourceDbModel controlledResource) {
     final String sql =
         "INSERT INTO workspace_resource "
-            + "(workspace_id, resource_id, associated_app, is_visible, owner, attributes) values "
-            + "(:workspaceId, :resourceId, :associatedApp, :isVisible, :owner, :attributes)";
+            + "(workspace_id, resource_id, owner, attributes, is_visible) values "
+            + "(:workspaceId, :resourceId, :owner, :attributes, true)";
     final var params =
         new MapSqlParameterSource()
             .addValue("workspaceId", controlledResource.getWorkspaceId())
             .addValue("resourceId", controlledResource.getResourceId())
-            .addValue("isVisible", controlledResource.isVisible())
-            .addValue("associatedApp", controlledResource.getAssociatedApp().orElse(null))
             .addValue("owner", controlledResource.getOwner().orElse(null))
             .addValue("attributes", controlledResource.getAttributes());
 
@@ -61,7 +57,7 @@ public class ControlledResourceDao {
 
   public Optional<ControlledResourceDbModel> getControlledResource(UUID resourceId) {
     final String sql =
-        "SELECT workspace_id, resource_id, associated_app, is_visible, owner, attributes "
+        "SELECT workspace_id, resource_id, owner, attributes "
             + "FROM workspace_resource "
             + "WHERE resource_id = :resourceId";
     final MapSqlParameterSource params =
@@ -77,11 +73,8 @@ public class ControlledResourceDao {
         ControlledResourceDbModel.builder()
             .setWorkspaceId(UUID.fromString((String) columnToValue.get("workspace_id")))
             .setResourceId(UUID.fromString((String) columnToValue.get("resource_id")))
-            .setIsVisible((boolean) columnToValue.get("is_visible"))
-            .setOwner((String) columnToValue.get("owner"));
-    Optional.ofNullable((String) columnToValue.get("associated_app"))
-        .ifPresent(resultBuilder::setAssociatedApp);
-    // TODO: attributes support
+            .setOwner((String) columnToValue.get("owner"))
+            .setAttributes((String) columnToValue.get("attributes"));
     return Optional.of(resultBuilder.build());
   }
 
@@ -90,12 +83,5 @@ public class ControlledResourceDao {
     final MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("resourceId", resourceId.toString());
     return jdbcTemplate.update(sql, params) == 1;
-  }
-
-  /** Truncate the table. For testing only. */
-  @VisibleForTesting
-  public void truncate() {
-    final String sql = "TRUNCATE TABLE workspace_resource";
-    jdbcTemplate.update(sql, Collections.emptyMap());
   }
 }
