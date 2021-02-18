@@ -22,6 +22,8 @@ public class CreateControlledResourceFlight extends Flight {
     // Step 1: store the resource metadata in CloudSQL
     addStep(new StoreControlledResourceMetadataStep(flightBeanBag.getControlledResourceDao()));
 
+    // TODO: DON'T. Just switch on resource type. This class will know all types and have all beans
+    // in the bag.
     // Step 2: create the cloud resource via CRL
     final Step createResourceStep =
         inputParameters.get(ControlledResourceKeys.CREATE_CLOUD_RESOURCE_STEP, Step.class);

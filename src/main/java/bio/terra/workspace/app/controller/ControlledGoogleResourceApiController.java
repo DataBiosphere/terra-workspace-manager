@@ -48,15 +48,13 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
       UUID workspaceId, @Valid CreateControlledGoogleBucketRequestBody body) {
     ControllerValidationUtils.validateGoogleBucket(body.getGoogleBucket());
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // TODO: should I store cloning instructions somewhere? Should visible always default to true?
+    // TODO:store cloning instructions Should visible always default to true?
     final ControlledGcsBucketResource resource =
         new ControlledGcsBucketResource(
             body.getCommon().getName(),
             body.getCommon().getDescription(),
-            null, // created by flight
             workspaceId,
-            true,
-            null, // not implemented
+            true, // TODO: add to the API
             body.getCommon().getOwner(),
             body.getGoogleBucket());
     final String jobId =

@@ -7,6 +7,8 @@ import bio.terra.workspace.generated.model.GoogleBucketStoredAttributes;
 import bio.terra.workspace.service.resource.controlled.CloudPlatform;
 import bio.terra.workspace.service.resource.controlled.WsmControlledResourceWithApiModels;
 import bio.terra.workspace.service.resource.controlled.WsmResourceType;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
@@ -17,22 +19,19 @@ public class ControlledGcsBucketResource
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
+  @JsonCreator
   public ControlledGcsBucketResource(
-      String resourceName,
-      String description,
-      UUID resourceId,
-      UUID workspaceId,
-      boolean isVisible,
-      String associatedApp,
-      String owner,
-      GoogleBucketCreationParameters inputModel) {
+      @JsonProperty("resourceName") String resourceName,
+      @JsonProperty("description") String description,
+      @JsonProperty("workspaceId") UUID workspaceId,
+      @JsonProperty("isVisible") boolean isVisible,
+      @JsonProperty("owner") String owner,
+      @JsonProperty("inputModel") GoogleBucketCreationParameters inputModel) {
     super(
         resourceName,
         description,
-        resourceId,
         workspaceId,
         isVisible,
-        associatedApp,
         owner,
         inputModel);
   }

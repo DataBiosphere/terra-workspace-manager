@@ -8,7 +8,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ControlledResourceDao;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.WsmControlledResource;
+import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.UUID;
 
@@ -25,9 +25,10 @@ public class StoreControlledResourceMetadataStep implements Step {
       throws InterruptedException, RetryException {
     final FlightMap inputMap = flightContext.getInputParameters();
 
-    final WsmControlledResource resource =
-        inputMap.get(JobMapKeys.REQUEST.getKeyName(), WsmControlledResource.class);
-    controlledResourceDao.createControlledResource(resource.toDbModel());
+    final ControlledResource resource =
+        inputMap.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
+    final UUID resourceId = inputMap.get(ControlledResourceKeys.RESOURCE_ID, UUID.class);
+    controlledResourceDao.createControlledResource(resource.toDbModel(resourceId));
     return StepResult.getStepResultSuccess();
   }
 

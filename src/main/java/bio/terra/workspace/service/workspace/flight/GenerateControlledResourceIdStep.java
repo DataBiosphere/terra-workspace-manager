@@ -5,8 +5,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.WsmResource;
-import bio.terra.workspace.service.resource.controlled.WsmControlledResource;
+import bio.terra.workspace.service.resource.ResourceInput;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.UUID;
 
@@ -19,8 +18,11 @@ public class GenerateControlledResourceIdStep implements Step {
     flightContext.getWorkingMap().put(ControlledResourceKeys.RESOURCE_ID, resourceId);
 
     // update the request object
-    final WsmResource resource = flightContext.getInputParameters().get(
-        JobMapKeys.REQUEST.getKeyName(), WsmResource.class);
+    final ResourceInput resource =
+        flightContext
+            .getInputParameters()
+            .get(JobMapKeys.REQUEST.getKeyName(), ResourceInput.class);
+    // TODO: THIS won't work -- map is immutable
     resource.setResourceId(resourceId);
     return StepResult.getStepResultSuccess();
   }

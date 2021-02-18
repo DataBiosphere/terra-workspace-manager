@@ -11,19 +11,17 @@ import java.util.UUID;
  * @param <T> input API model type. This class stores an instance of this type for use in flights
  * @param <U> output (response) API model type. Conversion must be specified in a subclass
  */
-public abstract class WsmControlledResourceWithApiModels<T, U> extends WsmControlledResource {
+public abstract class WsmControlledResourceWithApiModels<T, U> extends ControlledResource {
   private final T apiInputModel;
 
   public WsmControlledResourceWithApiModels(
       String resourceName,
       String description,
-      UUID resourceId,
       UUID workspaceId,
       boolean isVisible,
-      String associatedApp,
       String owner,
       T apiInputModel) {
-    super(resourceName, description, resourceId, workspaceId, isVisible, associatedApp, owner);
+    super(resourceName, description, workspaceId, isVisible, owner);
     this.apiInputModel = apiInputModel;
   }
 

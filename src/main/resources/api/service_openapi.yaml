@@ -1269,7 +1269,7 @@ components:
           $ref: '#/components/schemas/GoogleBucketDefaultStorageClass'
         lifecycle:
           $ref: '#/components/schemas/GoogleBucketLifecycle'
-    GoogleBucketStoredAttributes:
+    GoogleBucketStoredAttributes: # todo: use bucket UID type here
       description: >-
         Bucket properties included in post-creation, get, and update. Others must be
         retrieved from GCS using the name.
