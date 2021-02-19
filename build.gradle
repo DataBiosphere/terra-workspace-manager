@@ -1,4 +1,4 @@
-plugins {
+ plugins {
 	id "idea"
 	id "java"
 
@@ -69,7 +69,7 @@ dependencies {
 	// Terra deps
 	implementation group: "bio.terra", name: "datarepo-client", version: "1.0.1-SNAPSHOT"
 	implementation group: "bio.terra", name: "stairway", version: "0.0.36-SNAPSHOT"
-	implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.13-SNAPSHOT"
+	implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.17-SNAPSHOT"
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-billing', version: '0.4.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery', version: '0.4.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager', version: '0.4.0'
@@ -116,6 +116,7 @@ dependencies {
 	annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor"
 }
 
+// To update the lock file, the command is ./gradlew  dependencies --write-locks
 dependencyLocking {
 	lockAllConfigurations() // see https://docs.gradle.org/current/userguide/dependency_locking.html
 }
@@ -184,8 +185,11 @@ tasks.withType(Test) {
 	]
 }
 
+ // default test to unit tests so the build target succeeds
 test {
-	useJUnitPlatform()
+	useJUnitPlatform {
+		includeTags "unit"
+	}
 }
 
 task unitTest(type: Test) {
