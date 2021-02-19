@@ -8,16 +8,17 @@ import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.GoogleBucketReference;
 import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import bio.terra.workspace.service.resource.controlled.CloudPlatform;
-import bio.terra.workspace.service.resource.controlled.WsmControlledResourceWithApiModels;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceWithApiModels;
 import bio.terra.workspace.service.resource.controlled.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
 import java.util.UUID;
 
 public class ControlledGcsBucketResource
-    extends WsmControlledResourceWithApiModels<
+    extends ControlledResourceWithApiModels<
         GoogleBucketCreationParameters, GoogleBucketStoredAttributes> {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
@@ -78,5 +79,16 @@ public class ControlledGcsBucketResource
   @Override
   public ReferenceObject getReferenceObject() {
     return GoogleBucketReference.create(getBucketName());
+  }
+
+  @Override
+  public void validate() {
+    super.validate();
+    if (Strings.isNullOrEmpty(getBucketName())
+        || getDefaultStorageClass() == null
+        || getLifecycle() == null
+        || getJsonAttributes() == null) {
+      throw new IllegalStateException("Missing required field for ControlledGcsBucketResource.");
+    }
   }
 }

@@ -1,6 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledGoogleResourceApi;
 import bio.terra.workspace.generated.model.CreateControlledGoogleBucketRequestBody;
 import bio.terra.workspace.generated.model.CreatedControlledGoogleBucket;
@@ -47,7 +46,6 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
   @Override
   public ResponseEntity<CreatedControlledGoogleBucket> createBucket(
       UUID workspaceId, @Valid CreateControlledGoogleBucketRequestBody body) {
-    ControllerValidationUtils.validateGoogleBucket(body.getGoogleBucket());
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // TODO:store cloning instructions Should visible always default to true?
     final ControlledGcsBucketResource resource =
@@ -58,6 +56,8 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
             workspaceId,
             body.getCommon().getOwner(),
             body.getGoogleBucket());
+    // run all self-validation checks
+    resource.validate();
     final String jobId =
         controlledResourceService.createGcsBucket(
             resource, body.getCommon().getJobControl(), userRequest);

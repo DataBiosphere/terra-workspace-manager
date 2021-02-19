@@ -12,10 +12,10 @@ import java.util.UUID;
  * @param <T> input API model type. This class stores an instance of this type for use in flights
  * @param <U> output (response) API model type. Conversion must be specified in a subclass
  */
-public abstract class WsmControlledResourceWithApiModels<T, U> extends ControlledResource {
+public abstract class ControlledResourceWithApiModels<T, U> extends ControlledResource {
   private final T apiInputModel;
 
-  public WsmControlledResourceWithApiModels(
+  public ControlledResourceWithApiModels(
       String resourceName,
       CloningInstructions cloningInstructions,
       String description,
@@ -38,4 +38,13 @@ public abstract class WsmControlledResourceWithApiModels<T, U> extends Controlle
    * @return API model object
    */
   public abstract U toOutputApiModel();
+
+  @Override
+  public void validate() {
+    super.validate();
+    if (getApiInputModel() == null || toOutputApiModel() == null) {
+      throw new IllegalStateException(
+          "Missing required field for ControlledResourceWithApiModels.");
+    }
+  }
 }

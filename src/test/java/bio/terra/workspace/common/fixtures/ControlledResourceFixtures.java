@@ -67,5 +67,15 @@ public class ControlledResourceFixtures {
           OWNER_EMAIL,
           GOOGLE_BUCKET_CREATION_PARAMETERS);
 
+  /** Flawed resource missing owner email. */
+  public static final ControlledGcsBucketResource INVALID_BUCKET_RESOURCE =
+      new ControlledGcsBucketResource(
+          RESOURCE_NAME,
+          CLONING_INSTRUCTIONS,
+          RESOURCE_DESCRIPTION,
+          WORKSPACE_ID,
+          "",
+          GOOGLE_BUCKET_CREATION_PARAMETERS);
+
   private ControlledResourceFixtures() {}
 }
