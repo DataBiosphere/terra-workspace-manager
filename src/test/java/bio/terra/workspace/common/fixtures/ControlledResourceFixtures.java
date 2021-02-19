@@ -9,8 +9,9 @@ import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleActionType;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleCondition;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.resource.controlled.gcp.ControlledGcsBucketResource;
-import com.google.common.collect.ImmutableList;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /** A series of static objects useful for testing controlled resources. */
@@ -31,7 +32,7 @@ public class ControlledResourceFixtures {
               new GoogleBucketLifecycleRuleCondition()
                   .age(64)
                   .isLive(true)
-                  .matchesStorageClass(ImmutableList.of(GoogleBucketDefaultStorageClass.ARCHIVE)));
+                  .addMatchesStorageClassItem(GoogleBucketDefaultStorageClass.ARCHIVE));
 
   public static final GoogleBucketLifecycleRule LIFECYCLE_RULE_2 =
       new GoogleBucketLifecycleRule()
@@ -43,15 +44,15 @@ public class ControlledResourceFixtures {
               new GoogleBucketLifecycleRuleCondition()
                   .createdBefore(LocalDate.of(2017, 2, 18))
                   .addMatchesStorageClassItem(GoogleBucketDefaultStorageClass.STANDARD));
-
+  // list must not be immutable if deserialization is to work
+  public static final List<GoogleBucketLifecycleRule> LIFECYCLE_RULES =
+      new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
   public static final GoogleBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS =
       new GoogleBucketCreationParameters()
           .name("my-bucket")
           .location("US-CENTRAL1")
           .defaultStorageClass(GoogleBucketDefaultStorageClass.STANDARD)
-          .lifecycle(
-              new GoogleBucketLifecycle()
-                  .rules(ImmutableList.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2)));
+          .lifecycle(new GoogleBucketLifecycle().rules(LIFECYCLE_RULES));
 
   public static final String RESOURCE_NAME = "my_first_bucket";
 

@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -46,5 +47,25 @@ public abstract class ControlledResourceWithApiModels<T, U> extends ControlledRe
       throw new IllegalStateException(
           "Missing required field for ControlledResourceWithApiModels.");
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ControlledResourceWithApiModels)) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+    ControlledResourceWithApiModels<?, ?> that = (ControlledResourceWithApiModels<?, ?>) o;
+    return Objects.equals(getApiInputModel(), that.getApiInputModel());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), getApiInputModel());
   }
 }

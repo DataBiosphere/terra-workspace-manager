@@ -15,13 +15,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
+import java.util.Objects;
 import java.util.UUID;
 
 public class ControlledGcsBucketResource
     extends ControlledResourceWithApiModels<
         GoogleBucketCreationParameters, GoogleBucketStoredAttributes> {
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   @JsonCreator
   public ControlledGcsBucketResource(
@@ -44,6 +45,7 @@ public class ControlledGcsBucketResource
     return WsmResourceType.BUCKET;
   }
 
+  // TODO: these may not be strictly needed yet, but it seems reasonable to expose them here.
   public String getBucketName() {
     return getApiInputModel().getName();
   }
@@ -65,7 +67,7 @@ public class ControlledGcsBucketResource
     // In this case, the attributes and output model match exactly. I'm
     // not yet sure I wan† to enforce that constraint at the top level.
     try {
-      return objectMapper.writeValueAsString(toOutputApiModel());
+      return OBJECT_MAPPER.writeValueAsString(toOutputApiModel());
     } catch (JsonProcessingException e) {
       throw new RuntimeException("Failed to write to JSON");
     }
@@ -87,8 +89,25 @@ public class ControlledGcsBucketResource
     if (Strings.isNullOrEmpty(getBucketName())
         || getDefaultStorageClass() == null
         || getLifecycle() == null
+        || getLocation() == null
         || getJsonAttributes() == null) {
       throw new IllegalStateException("Missing required field for ControlledGcsBucketResource.");
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ControlledGcsBucketResource)) {
+      return false;
+    }
+    return super.equals(o); // no fields in this class
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode());
   }
 }

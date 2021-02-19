@@ -15,8 +15,8 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
 /**
- * DAO for the workspace_resource table TODO: migrate the table to include all fields necessary,
- * e.g. name and description.
+ * DAO for the workspace_resource table. It shoudl be used in conjunction with the DataReferenceDao,
+ * as that table is the primary entry point to workspace_resource.
  */
 @Component
 public class ControlledResourceDao {
@@ -29,6 +29,7 @@ public class ControlledResourceDao {
   }
 
   public void createControlledResource(ControlledResourceDbModel controlledResource) {
+    // the is_visible column is deprecated, but required
     final String sql =
         "INSERT INTO workspace_resource "
             + "(workspace_id, resource_id, owner, attributes, is_visible) values "

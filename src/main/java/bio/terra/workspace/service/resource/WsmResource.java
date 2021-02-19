@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import com.google.common.base.Strings;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -73,5 +74,27 @@ public abstract class WsmResource {
         || getReferenceObject() == null) {
       throw new IllegalStateException("Missing required field for WsmResource.");
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof WsmResource)) {
+      return false;
+    }
+    WsmResource that = (WsmResource) o;
+    return Objects.equals(getName(), that.getName())
+        && getCloningInstructions() == that.getCloningInstructions()
+        && Objects.equals(getDescription(), that.getDescription())
+        && Objects.equals(getWorkspaceId(), that.getWorkspaceId())
+        && Objects.equals(getOwner(), that.getOwner());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        getName(), getCloningInstructions(), getDescription(), getWorkspaceId(), getOwner());
   }
 }
