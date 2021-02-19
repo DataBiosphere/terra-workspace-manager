@@ -24,11 +24,12 @@ public class CreateCustomGcpRolesStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
-    for (var entry : CustomIamRoleMapping.customIamRoleMap.entrySet()) {
-      for (var innerEntry : entry.getValue().entrySet()) {
+    for (var resourceRoleMap : CustomIamRoleMapping.customIamRoleMap.entrySet()) {
+      for (var customRoleEntry : resourceRoleMap.getValue().entrySet()) {
         try {
-          String roleName = entry.getKey().name() + "_" + innerEntry.getKey().name();
-          Role customRole = new Role().setIncludedPermissions(innerEntry.getValue());
+          // Role ids will have the form (resource type)_(role), e.g. GOOGLE_BUCKET_READER.
+          String roleName = resourceRoleMap.getKey().name() + "_" + customRoleEntry.getKey().name();
+          Role customRole = new Role().setIncludedPermissions(customRoleEntry.getValue());
           CreateRoleRequest request =
               new CreateRoleRequest().setRole(customRole).setRoleId(roleName);
           System.out.println(
