@@ -79,9 +79,9 @@ To run unit tests:
 ```
   
 To run connected tests:
-**DO YOU HAVE TO RUN render_config.sh for connected tests??**
 
 ```shell script
+./render_config.sh # First time only
 ./gradlew connectedTest
 ```
 To run integration tests: (see **NOTE** below)
