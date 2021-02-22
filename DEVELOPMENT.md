@@ -78,6 +78,12 @@ To run unit tests:
 ./gradlew unitTest
 ```
   
+To run connected tests:
+
+```shell script
+./render_config.sh # First time only
+./gradlew connectedTest
+```
 To run integration tests: (see **NOTE** below)
 
 ```sh
