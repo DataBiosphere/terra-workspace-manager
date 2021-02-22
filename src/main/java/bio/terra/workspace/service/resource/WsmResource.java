@@ -4,7 +4,6 @@ import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import com.google.common.base.Strings;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -16,19 +15,13 @@ public abstract class WsmResource {
   private final CloningInstructions cloningInstructions;
   private final String description;
   private final UUID workspaceId;
-  private final String owner;
 
   public WsmResource(
-      String name,
-      CloningInstructions cloningInstructions,
-      String description,
-      UUID workspaceId,
-      String owner) {
+      String name, CloningInstructions cloningInstructions, String description, UUID workspaceId) {
     this.name = name;
     this.cloningInstructions = cloningInstructions;
     this.description = description;
     this.workspaceId = workspaceId;
-    this.owner = owner;
   }
 
   public String getName() {
@@ -48,10 +41,6 @@ public abstract class WsmResource {
   }
 
   public abstract StewardshipType getStewardshipType();
-
-  public Optional<String> getOwner() {
-    return Optional.ofNullable(owner);
-  }
 
   /**
    * Provide something to satisfy the requiremenet of the reference object column in the
@@ -88,13 +77,11 @@ public abstract class WsmResource {
     return Objects.equals(getName(), that.getName())
         && getCloningInstructions() == that.getCloningInstructions()
         && Objects.equals(getDescription(), that.getDescription())
-        && Objects.equals(getWorkspaceId(), that.getWorkspaceId())
-        && Objects.equals(getOwner(), that.getOwner());
+        && Objects.equals(getWorkspaceId(), that.getWorkspaceId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(
-        getName(), getCloningInstructions(), getDescription(), getWorkspaceId(), getOwner());
+    return Objects.hash(getName(), getCloningInstructions(), getDescription(), getWorkspaceId());
   }
 }

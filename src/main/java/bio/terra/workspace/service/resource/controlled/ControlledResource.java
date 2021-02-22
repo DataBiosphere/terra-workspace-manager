@@ -4,6 +4,8 @@ import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.resource.StewardshipType;
 import bio.terra.workspace.service.resource.WsmResource;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -11,18 +13,25 @@ import java.util.UUID;
  * and are not specific to any particular resource type.
  */
 public abstract class ControlledResource extends WsmResource {
+  private final String owner;
+
   public ControlledResource(
       String resourceName,
       CloningInstructions cloningInstructions,
       String description,
       UUID workspaceId,
       String owner) {
-    super(resourceName, cloningInstructions, description, workspaceId, owner);
+    super(resourceName, cloningInstructions, description, workspaceId);
+    this.owner = owner;
   }
 
   @Override
   public StewardshipType getStewardshipType() {
     return StewardshipType.CONTROLLED_RESOURCE;
+  }
+
+  public Optional<String> getOwner() {
+    return Optional.ofNullable(owner);
   }
 
   @Override
@@ -73,4 +82,24 @@ public abstract class ControlledResource extends WsmResource {
    * @return json string
    */
   public abstract String getJsonAttributes();
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ControlledResource)) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+    ControlledResource that = (ControlledResource) o;
+    return Objects.equals(getOwner(), that.getOwner());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), getOwner());
+  }
 }
