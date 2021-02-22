@@ -33,6 +33,7 @@ public abstract class ControlledResourceWithApiModels<T, U> extends ControlledRe
 
   /**
    * Create an instance of the response API model.
+   *
    * @return API model object
    */
   public abstract U toOutputApiModel();
