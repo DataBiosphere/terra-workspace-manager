@@ -4,7 +4,7 @@ import bio.terra.workspace.generated.model.JobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.workspace.flight.CreateControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.CreateControlledResourceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -21,6 +21,7 @@ import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.GoogleBucketReference;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceDbModel;
+import bio.terra.workspace.service.resource.controlled.flight.StoreControlledResourceMetadataStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

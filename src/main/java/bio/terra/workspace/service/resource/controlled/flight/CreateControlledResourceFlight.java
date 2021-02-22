@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.resource.controlled.flight;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
@@ -6,7 +6,7 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.datareference.flight.GenerateReferenceIdStep;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.gcp.CreateGcsBucketStep;
+import bio.terra.workspace.service.workspace.flight.CreateSamResourceStep;
 
 /**
  * Flight for creation of a controlled resource. Some steps are resource-type-agnostic, and others
@@ -23,11 +23,12 @@ public class CreateControlledResourceFlight extends Flight {
     // Genderate reference ID for the workspace_data_reference table
     addStep(new GenerateReferenceIdStep());
 
-    // store the resource metadata in CloudSQL
+    // store the resource metadata in the WSM database
     addStep(
         new StoreControlledResourceMetadataStep(
             flightBeanBag.getControlledResourceDao(), flightBeanBag.getDataReferenceDao()));
 
+    // create the cloud resource via CRL
     final ControlledResource resource =
         inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
 
@@ -48,10 +49,11 @@ public class CreateControlledResourceFlight extends Flight {
         throw new IllegalStateException(
             String.format("Unrecognized cloud platform %s", resource.getCloudPlatform()));
     }
-    // Step 2: create the cloud resource via CRL
-    // Step 3: create the Sam resource associated with the resource
 
-    // Step 4: assign custom roles to the resource based on Sam policies
+    // create the Sam resource associated with the resource
+    addStep(new CreateSamResourceStep(flightBeanBag.getSamService()));
+
+    // assign custom roles to the resource based on Sam policies
     // TODO: can this step be the same for all resource types?
   }
 }

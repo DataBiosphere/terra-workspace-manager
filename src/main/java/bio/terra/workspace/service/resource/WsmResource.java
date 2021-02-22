@@ -4,11 +4,12 @@ import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import com.google.common.base.Strings;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Top-level class for a Resource, also known as a Data Reference. Children of this class can be
- * controlled resources, references, or (future) monitored resources.
+ * Top-level class for a Resource. Children of this class can be controlled resources, references,
+ * or (future) monitored resources.
  */
 public abstract class WsmResource {
   private final String name;
@@ -48,13 +49,13 @@ public abstract class WsmResource {
 
   public abstract StewardshipType getStewardshipType();
 
-  public String getOwner() {
-    return owner;
+  public Optional<String> getOwner() {
+    return Optional.ofNullable(owner);
   }
 
   /**
    * Provide something to satisfy the requiremenet of the reference object column in the
-   * workspace_data_reference table. TODO: can we get rid of this?
+   * workspace_data_reference table.
    *
    * @return
    */
@@ -70,7 +71,6 @@ public abstract class WsmResource {
         || getWorkspaceId() == null
         || getCloningInstructions() == null
         || getStewardshipType() == null
-        || Strings.isNullOrEmpty(getOwner())
         || getReferenceObject() == null) {
       throw new IllegalStateException("Missing required field for WsmResource.");
     }

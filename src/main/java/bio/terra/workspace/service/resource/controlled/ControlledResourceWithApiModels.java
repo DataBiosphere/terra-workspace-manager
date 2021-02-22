@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * Intermediate controlled resource class specialized for input and output API model types. This is
  * the lowest-level non-type-specific class in the hierarchy. It was split out from
- * WsmControlledResource to allow that class's use where appropriate without specifying template
+ * ControlledResource to allow that class's use where appropriate without specifying template
  * arguments.
  *
  * @param <T> input API model type. This class stores an instance of this type for use in flights
@@ -32,10 +32,7 @@ public abstract class ControlledResourceWithApiModels<T, U> extends ControlledRe
   }
 
   /**
-   * Create an instance of the response API model. Calling this method too early could be
-   * problematic. TODO: come up with a tighter policy here; there's semantic coupling going on, as
-   * this instance exists before all outupts are necessarily known.
-   *
+   * Create an instance of the response API model.
    * @return API model object
    */
   public abstract U toOutputApiModel();

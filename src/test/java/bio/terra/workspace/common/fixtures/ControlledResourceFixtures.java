@@ -74,8 +74,8 @@ public class ControlledResourceFixtures {
           RESOURCE_NAME,
           CLONING_INSTRUCTIONS,
           RESOURCE_DESCRIPTION,
-          WORKSPACE_ID,
-          "",
+          null,
+          OWNER_EMAIL,
           GOOGLE_BUCKET_CREATION_PARAMETERS);
 
   private ControlledResourceFixtures() {}

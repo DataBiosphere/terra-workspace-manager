@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.resource.controlled.flight;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -46,9 +46,7 @@ public class StoreControlledResourceMetadataStep implements Step {
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     final FlightMap workingMap = flightContext.getWorkingMap();
     final UUID resourceId = workingMap.get(ControlledResourceKeys.RESOURCE_ID, UUID.class);
-    final boolean deleted = controlledResourceDao.deleteControlledResource(resourceId);
-    return deleted
-        ? StepResult.getStepResultSuccess()
-        : new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
+    controlledResourceDao.deleteControlledResource(resourceId);
+    return StepResult.getStepResultSuccess();
   }
 }

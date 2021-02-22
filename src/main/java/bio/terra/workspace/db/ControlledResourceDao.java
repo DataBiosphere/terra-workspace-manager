@@ -2,7 +2,6 @@ package bio.terra.workspace.db;
 
 import bio.terra.workspace.service.resource.controlled.ControlledResourceDbModel;
 import bio.terra.workspace.service.resource.controlled.exception.DuplicateControlledResourceException;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -13,9 +12,10 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
- * DAO for the workspace_resource table. It shoudl be used in conjunction with the DataReferenceDao,
+ * DAO for the workspace_resource table. It should be used in conjunction with the DataReferenceDao,
  * as that table is the primary entry point to workspace_resource.
  */
 @Component
@@ -28,6 +28,13 @@ public class ControlledResourceDao {
     this.jdbcTemplate = jdbcTemplate;
   }
 
+  /**
+   * Create a controlled resource. Calls to this method Should be followed by calls to
+   * bio.terra.workspace.db.DataReferenceDao#createDataReference()
+   *
+   * @param controlledResource database model to be created.
+   */
+  @Transactional
   public void createControlledResource(ControlledResourceDbModel controlledResource) {
     // the is_visible column is deprecated, but required
     final String sql =
@@ -56,6 +63,12 @@ public class ControlledResourceDao {
     }
   }
 
+  /**
+   * Retrieve a controlled resource by its unique ID, if present.
+   *
+   * @param resourceId ID for this controlled resource
+   * @return Optional - present if found
+   */
   public Optional<ControlledResourceDbModel> getControlledResource(UUID resourceId) {
     final String sql =
         "SELECT workspace_id, resource_id, owner, attributes "
@@ -63,22 +76,32 @@ public class ControlledResourceDao {
             + "WHERE resource_id = :resourceId";
     final MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("resourceId", resourceId.toString());
-    final Map<String, Object> columnToValue;
+    final ControlledResourceDbModel controlledResourceDbModel;
     try {
-      // TODO: move away from queryForMap() to avoid catch and casting
-      columnToValue = jdbcTemplate.queryForMap(sql, params);
+      controlledResourceDbModel =
+          jdbcTemplate.queryForObject(
+              sql,
+              params,
+              (rs, rowNum) ->
+                  ControlledResourceDbModel.builder()
+                      .setWorkspaceId(UUID.fromString(rs.getString("workspace_id")))
+                      .setResourceId(UUID.fromString(rs.getString("resource_id")))
+                      .setOwner(rs.getString("owner"))
+                      .setAttributes(rs.getString("attributes"))
+                      .build());
     } catch (EmptyResultDataAccessException e) {
       return Optional.empty();
     }
-    final ControlledResourceDbModel.Builder resultBuilder =
-        ControlledResourceDbModel.builder()
-            .setWorkspaceId(UUID.fromString((String) columnToValue.get("workspace_id")))
-            .setResourceId(UUID.fromString((String) columnToValue.get("resource_id")))
-            .setOwner((String) columnToValue.get("owner"))
-            .setAttributes((String) columnToValue.get("attributes"));
-    return Optional.of(resultBuilder.build());
+    return Optional.ofNullable(controlledResourceDbModel);
   }
 
+  /**
+   * Delete a controlled resource
+   *
+   * @param resourceId - unidque ID of resource
+   * @return true if delete occurred, false otherwise (for example if not found)
+   */
+  @Transactional
   public boolean deleteControlledResource(UUID resourceId) {
     final String sql = "DELETE FROM workspace_resource WHERE resource_id = :resourceId";
     final MapSqlParameterSource params =

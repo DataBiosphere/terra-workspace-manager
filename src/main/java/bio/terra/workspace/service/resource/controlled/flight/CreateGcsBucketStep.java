@@ -1,20 +1,23 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.service.resource.controlled.flight;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import java.util.UUID;
+import bio.terra.workspace.service.crl.CrlService;
 
-public class GenerateControlledResourceIdStep implements Step {
+// TODO: implement in PF-415
+public class CreateGcsBucketStep implements Step {
+
+  private final CrlService crlService;
+
+  public CreateGcsBucketStep(CrlService crlService) {
+    this.crlService = crlService;
+  }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final UUID resourceId = UUID.randomUUID();
-    flightContext.getWorkingMap().put(ControlledResourceKeys.RESOURCE_ID, resourceId);
-
     return StepResult.getStepResultSuccess();
   }
 

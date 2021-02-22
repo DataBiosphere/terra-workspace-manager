@@ -47,7 +47,6 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
   public ResponseEntity<CreatedControlledGoogleBucket> createBucket(
       UUID workspaceId, @Valid CreateControlledGoogleBucketRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // TODO:store cloning instructions Should visible always default to true?
     final ControlledGcsBucketResource resource =
         new ControlledGcsBucketResource(
             body.getCommon().getName(),

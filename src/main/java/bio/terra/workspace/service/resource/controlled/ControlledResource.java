@@ -36,8 +36,7 @@ public abstract class ControlledResource extends WsmResource {
 
   /**
    * Generate a model suitable for serialization into the workspace_resource table, via the
-   * ControlledResourceDao. Note that this method should not be called before the resource ID has
-   * been created and set, as it is the primary key for this table.
+   * ControlledResourceDao.
    *
    * @return model to be saved in the database.
    */
@@ -45,16 +44,12 @@ public abstract class ControlledResource extends WsmResource {
     return ControlledResourceDbModel.builder()
         .setResourceId(resourceId)
         .setWorkspaceId(getWorkspaceId())
-        .setOwner(getOwner())
+        .setOwner(getOwner().orElse(null))
         .setAttributes(getJsonAttributes())
         .build();
   }
 
-  /**
-   * Build a request for the data reference dao to store that portion of the thing.
-   *
-   * @return
-   */
+  /** Build a request for the data reference dao to store that portion of the thing. */
   public DataReferenceRequest toDataReferenceRequest(UUID resourceId) {
     return DataReferenceRequest.builder()
         .workspaceId(getWorkspaceId())
