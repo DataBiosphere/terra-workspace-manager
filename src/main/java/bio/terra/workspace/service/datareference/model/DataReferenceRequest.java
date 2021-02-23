@@ -60,6 +60,15 @@ public abstract class DataReferenceRequest {
 
     public abstract DataReferenceRequest.Builder resourceId(UUID value);
 
-    public abstract DataReferenceRequest build();
+    protected abstract String description();
+
+    protected abstract DataReferenceRequest autoBuild();
+
+    public DataReferenceRequest build() {
+      if (description() == null) {
+        description("");
+      }
+      return autoBuild();
+    }
   }
 }
