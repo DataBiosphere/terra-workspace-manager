@@ -32,22 +32,14 @@ public class CreateControlledResourceFlight extends Flight {
     final ControlledResource resource =
         inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
 
-    switch (resource.getCloudPlatform()) {
-      case GCP:
-        switch (resource.getResourceType()) {
-          case BUCKET:
-            addStep(new CreateGcsBucketStep(flightBeanBag.getCrlService()));
-            break;
-          case BIGQUERY_DATASET:
-          default:
-            throw new IllegalStateException(
-                String.format("Unrecognized resource type %s", resource.getResourceType()));
-        }
+    switch (resource.getResourceType()) {
+      case GCS_BUCKET:
+        addStep(new CreateGcsBucketStep(flightBeanBag.getCrlService()));
         break;
-      case AZURE:
+      case BIGQUERY_DATASET:
       default:
         throw new IllegalStateException(
-            String.format("Unrecognized cloud platform %s", resource.getCloudPlatform()));
+            String.format("Unrecognized resource type %s", resource.getResourceType()));
     }
 
     // create the Sam resource associated with the resource

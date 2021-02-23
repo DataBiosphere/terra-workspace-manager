@@ -12,7 +12,6 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * DAO for the workspace_resource table. It should be used in conjunction with the DataReferenceDao,
@@ -34,7 +33,6 @@ public class ControlledResourceDao {
    *
    * @param controlledResource database model to be created.
    */
-  @Transactional
   public void createControlledResource(ControlledResourceDbModel controlledResource) {
     // the is_visible column is deprecated, but required
     final String sql =
@@ -101,7 +99,6 @@ public class ControlledResourceDao {
    * @param resourceId - unidque ID of resource
    * @return true if delete occurred, false otherwise (for example if not found)
    */
-  @Transactional
   public boolean deleteControlledResource(UUID resourceId) {
     final String sql = "DELETE FROM workspace_resource WHERE resource_id = :resourceId";
     final MapSqlParameterSource params =

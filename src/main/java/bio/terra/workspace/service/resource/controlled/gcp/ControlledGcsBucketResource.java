@@ -7,7 +7,6 @@ import bio.terra.workspace.generated.model.GoogleBucketStoredAttributes;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.GoogleBucketReference;
 import bio.terra.workspace.service.datareference.model.ReferenceObject;
-import bio.terra.workspace.service.resource.controlled.CloudPlatform;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceWithApiModels;
 import bio.terra.workspace.service.resource.controlled.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -36,13 +35,8 @@ public class ControlledGcsBucketResource
   }
 
   @Override
-  public CloudPlatform getCloudPlatform() {
-    return CloudPlatform.GCP;
-  }
-
-  @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.BUCKET;
+    return WsmResourceType.GCS_BUCKET;
   }
 
   // TODO: these may not be strictly needed yet, but it seems reasonable to expose them here.

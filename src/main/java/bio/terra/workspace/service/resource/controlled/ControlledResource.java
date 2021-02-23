@@ -38,7 +38,7 @@ public abstract class ControlledResource extends WsmResource {
   public void validate() {
     super.validate();
 
-    if (getCloudPlatform() == null || getResourceType() == null || getJsonAttributes() == null) {
+    if (getResourceType() == null || getJsonAttributes() == null) {
       throw new IllegalStateException("Missing required field for ControlledResource.");
     }
   }
@@ -70,8 +70,6 @@ public abstract class ControlledResource extends WsmResource {
         .referenceObject(getReferenceObject())
         .build();
   }
-
-  public abstract CloudPlatform getCloudPlatform();
 
   public abstract WsmResourceType getResourceType();
 
