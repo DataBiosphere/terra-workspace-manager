@@ -8,6 +8,8 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import io.opencensus.contrib.spring.aop.CensusSpringAspect;
+import io.opencensus.contrib.spring.instrument.web.client.TracingAsyncClientHttpRequestInterceptor;
+import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
@@ -17,6 +19,16 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 @Configuration
 public class BeanConfig {
+  @Bean // for logging stack traces, making the global tracer available as a bean
+  public Tracer tracer() {
+    return Tracing.getTracer();
+  }
+
+  @Bean // required for opencensus spring contrib, although not mentioned by any documentation
+  public TracingAsyncClientHttpRequestInterceptor requestInterceptor() {
+    return TracingAsyncClientHttpRequestInterceptor.create(null, null);
+  }
+
   // Enable the @Traced annotation for use within the application
   @Bean
   public CensusSpringAspect censusAspect() {
