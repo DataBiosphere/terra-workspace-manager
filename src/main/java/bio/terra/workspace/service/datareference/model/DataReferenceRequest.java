@@ -25,7 +25,7 @@ public abstract class DataReferenceRequest {
 
   /** Description of the reference. */
   @Nullable
-  public abstract String referenceDescription();
+  public abstract String description();
 
   /** Type of this data reference. */
   public abstract DataReferenceType referenceType();
@@ -50,7 +50,7 @@ public abstract class DataReferenceRequest {
 
     public abstract DataReferenceRequest.Builder name(String value);
 
-    public abstract DataReferenceRequest.Builder referenceDescription(String value);
+    public abstract DataReferenceRequest.Builder description(String value);
 
     public abstract DataReferenceRequest.Builder referenceType(DataReferenceType value);
 
@@ -60,6 +60,11 @@ public abstract class DataReferenceRequest {
 
     public abstract DataReferenceRequest.Builder resourceId(UUID value);
 
-    public abstract DataReferenceRequest build();
+    public DataReferenceRequest build() {
+      if (description() == null) {
+        description("");
+      }
+      return autoBuild();
+    }
   }
 }

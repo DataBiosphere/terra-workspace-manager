@@ -45,7 +45,7 @@ public abstract class ReferenceController {
         DataReferenceRequest.builder()
             .workspaceId(workspaceId)
             .name(requestMetadata.getName())
-            .referenceDescription(requestMetadata.getReferenceDescription())
+            .description(requestMetadata.getDescription())
             .referenceType(referenceType)
             .cloningInstructions(
                 CloningInstructions.fromApiModel(requestMetadata.getCloningInstructions()))
@@ -108,9 +108,8 @@ public abstract class ReferenceController {
       UpdateDataReferenceRequestBody body,
       AuthenticatedUserRequest userReq,
       DataReferenceService dataReferenceService) {
-    if (body.getName() == null && body.getReferenceDescription() == null) {
-      throw new InvalidDataReferenceException(
-          "Must specify name or referenceDescription to update.");
+    if (body.getName() == null && body.getDescription() == null) {
+      throw new InvalidDataReferenceException("Must specify name or description to update.");
     }
 
     if (body.getName() != null) {

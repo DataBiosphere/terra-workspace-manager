@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: renameDescriptionColumn
+      author: zarsky-broad
+      changes:
+        - renameColumn:
+            newColumnName: description
+            oldColumnName: reference_description
+            tableName: workspace_data_reference
+        - update:
+            columns:
+              - column:
+                  name: description
+                  value: ""
+            where: description is null
+            tableName: workspace_data_reference

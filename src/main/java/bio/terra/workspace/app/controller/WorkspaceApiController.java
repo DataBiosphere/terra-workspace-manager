@@ -166,7 +166,7 @@ public class WorkspaceApiController implements WorkspaceApi {
         DataReferenceRequest.builder()
             .workspaceId(id)
             .name(body.getName())
-            .referenceDescription(body.getReferenceDescription())
+            .description(body.getDescription())
             .referenceType(referenceType)
             .cloningInstructions(CloningInstructions.fromApiModel(body.getCloningInstructions()))
             .referenceObject(snapshot)
@@ -238,9 +238,8 @@ public class WorkspaceApiController implements WorkspaceApi {
       @RequestBody UpdateDataReferenceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
 
-    if (body.getName() == null && body.getReferenceDescription() == null) {
-      throw new InvalidDataReferenceException(
-          "Must specify name or referenceDescription to update.");
+    if (body.getName() == null && body.getDescription() == null) {
+      throw new InvalidDataReferenceException("Must specify name or description to update.");
     }
 
     if (body.getName() != null) {

@@ -11,6 +11,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
+import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateGoogleContextException;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
@@ -139,6 +140,10 @@ public class WorkspaceService {
   @Traced
   public String createGoogleContext(
       UUID workspaceId, String jobId, String resultPath, AuthenticatedUserRequest userReq) {
+    if (!bufferServiceConfiguration.getEnabled()) {
+      throw new BufferServiceDisabledException(
+          "Cannot create a google context in an environment where buffer service is disabled or not configured.");
+    }
     Workspace workspace =
         validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     workspaceDao.assertMcWorkspace(workspace, "createGoogleContext");

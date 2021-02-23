@@ -1,8 +1,8 @@
 package bio.terra.workspace.app;
 
+import bio.terra.common.migrate.LiquibaseMigrator;
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.migrate.MigrateService;
 import org.springframework.context.ApplicationContext;
 
 public final class StartupInitializer {
@@ -10,7 +10,7 @@ public final class StartupInitializer {
 
   public static void initialize(ApplicationContext applicationContext) {
     // Initialize or upgrade the database depending on the configuration
-    MigrateService migrateService = applicationContext.getBean(MigrateService.class);
+    LiquibaseMigrator migrateService = applicationContext.getBean(LiquibaseMigrator.class);
     WorkspaceDatabaseConfiguration workspaceDatabaseConfiguration =
         applicationContext.getBean(WorkspaceDatabaseConfiguration.class);
     JobService jobService = applicationContext.getBean(JobService.class);
