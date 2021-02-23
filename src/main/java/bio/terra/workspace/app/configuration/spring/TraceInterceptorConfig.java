@@ -1,12 +1,16 @@
 package bio.terra.workspace.app.configuration.spring;
 
+import bio.terra.workspace.app.configuration.external.TracingConfiguration;
 import io.opencensus.trace.AttributeValue;
 import io.opencensus.trace.Tracing;
+import io.opencensus.trace.config.TraceConfig;
+import io.opencensus.trace.samplers.Samplers;
 import java.util.Arrays;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +23,16 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 @ConditionalOnProperty("workspace.tracing.enabled")
 public class TraceInterceptorConfig implements WebMvcConfigurer {
+
+  @Autowired
+  public TraceInterceptorConfig(TracingConfiguration tracingConfiguration) {
+
+    TraceConfig globalTraceConfig = Tracing.getTraceConfig();
+    globalTraceConfig.updateActiveTraceParams(
+        globalTraceConfig.getActiveTraceParams().toBuilder()
+            .setSampler(Samplers.probabilitySampler(tracingConfiguration.getProbability()))
+            .build());
+  }
 
   @Override
   public void addInterceptors(InterceptorRegistry registry) {
