@@ -78,11 +78,6 @@ dependencies {
 	implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.12", version: "0.1-61135c7"
 	implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
 
-	// TODO: remove me, hacks from using local jar
-	implementation group: 'ch.qos.logback.contrib', name: 'logback-json-classic', version: '0.1.5'
-	implementation group: 'ch.qos.logback.contrib', name: 'logback-jackson', version: '0.1.5'
-	implementation group: 'com.google.apis', name: 'google-api-services-logging', version: 'v2-rev662-1.18.0-rc'
-
 	// Versioned direct deps
 	implementation group: "com.google.auto.value", name: "auto-value-annotations", version: "1.7.4"
 	implementation group: "com.google.guava", name:"guava", version: "30.0-jre"

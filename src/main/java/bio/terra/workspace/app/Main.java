@@ -6,6 +6,7 @@ import io.opencensus.contrib.spring.autoconfig.TraceWebAsyncClientAutoConfigurat
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication(
@@ -19,18 +20,16 @@ import org.springframework.context.annotation.ComponentScan;
     })
 @ComponentScan(
     basePackages = {
+      // Load logging configs from terra-common-lib
+      "bio.terra.common.logging",
       // Scan all service-specific packages beneath the workspace namespace
-      "bio.terra.workspace",
-      // Load logging-related components and configs from the Terra common library
-      "bio.terra.common.logging"
+      "bio.terra.workspace"
     })
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 @ComponentScan(basePackages = {"bio.terra.workspace", "bio.terra.common.migrate"})
 @EnableScheduling
 public class Main {
   public static void main(String[] args) {
-    SpringApplication app = new SpringApplication(Main.class);
-    app.addInitializers(new LoggingInitializer());
-    app.run(args);
+    new SpringApplicationBuilder(Main.class).initializers(new LoggingInitializer()).run(args);
   }
 }
