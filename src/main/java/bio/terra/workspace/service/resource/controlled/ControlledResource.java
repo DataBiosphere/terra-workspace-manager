@@ -63,7 +63,7 @@ public abstract class ControlledResource extends WsmResource {
     return DataReferenceRequest.builder()
         .workspaceId(getWorkspaceId())
         .name(getName())
-        .referenceDescription(getDescription())
+        .description(getDescription())
         .resourceId(resourceId)
         .cloningInstructions(getCloningInstructions())
         .referenceType(getResourceType().toDataReferenceType())

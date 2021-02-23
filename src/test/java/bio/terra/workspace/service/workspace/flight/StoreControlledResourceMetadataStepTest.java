@@ -76,8 +76,7 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     final DataReferenceRequest request = dataReferenceRequestCaptor.getValue();
     assertThat(request.workspaceId(), equalTo(ControlledResourceFixtures.WORKSPACE_ID));
     assertThat(request.name(), equalTo(ControlledResourceFixtures.RESOURCE_NAME));
-    assertThat(
-        request.referenceDescription(), equalTo(ControlledResourceFixtures.RESOURCE_DESCRIPTION));
+    assertThat(request.description(), equalTo(ControlledResourceFixtures.RESOURCE_DESCRIPTION));
     assertThat(request.resourceId(), equalTo(ControlledResourceFixtures.RESOURCE_ID));
     assertThat(
         request.cloningInstructions(), equalTo(ControlledResourceFixtures.CLONING_INSTRUCTIONS));
