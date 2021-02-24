@@ -37,7 +37,17 @@ public class CreateWorkspaceAuthzStep implements Step {
     boolean isSamResourceOwner =
         inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStage.class)
             == WorkspaceStage.MC_WORKSPACE;
-    if (!isSamResourceOwner) {
+    if (isSamResourceOwner) {
+      // Even though WSM should own this resource, Stairway steps can run multiple times, so it's
+      // possible this step already created the resource. If WSM can either read the existing Sam
+      // resource or create a new one, this is considered successful.
+      if (!canReadExistingWorkspace(workspaceID)) {
+        samService.createWorkspaceWithDefaults(userReq, workspaceID);
+      }
+      return StepResult.getStepResultSuccess();
+    } else {
+      // When WSM does not own the Sam resource, we still verify that the calling user has read
+      // access.
       if (canReadExistingWorkspace(workspaceID)) {
         return StepResult.getStepResultSuccess();
       } else {
@@ -47,13 +57,6 @@ public class CreateWorkspaceAuthzStep implements Step {
                 workspaceID));
       }
     }
-    // Even though WSM should own this resource, Stairway steps can run multiple times, so it's
-    // possible this step already created the resource. If WSM can either read the existing Sam
-    // resource or create a new one, this is considered successful.
-    if (!canReadExistingWorkspace(workspaceID)) {
-      samService.createWorkspaceWithDefaults(userReq, workspaceID);
-    }
-    return StepResult.getStepResultSuccess();
   }
 
   private boolean canReadExistingWorkspace(UUID workspaceID) {

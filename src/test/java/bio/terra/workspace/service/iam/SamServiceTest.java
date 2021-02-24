@@ -125,13 +125,17 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void PermissionsApiFailsInRawlsWorkspace() {
+    UUID workspaceId = UUID.randomUUID();
+    // RAWLS_WORKSPACEs do not own their own Sam resources, so we need to manage them separately.
+    samService.createWorkspaceWithDefaults(defaultUserRequest(), workspaceId);
+
     WorkspaceRequest rawlsRequest =
         WorkspaceRequest.builder()
-            .workspaceId(UUID.randomUUID())
+            .workspaceId(workspaceId)
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .jobId(UUID.randomUUID().toString())
             .build();
-    UUID workspaceId = workspaceService.createWorkspace(rawlsRequest, defaultUserRequest());
+    workspaceService.createWorkspace(rawlsRequest, defaultUserRequest());
     assertThrows(
         StageDisabledException.class,
         () ->
@@ -140,6 +144,8 @@ class SamServiceTest extends BaseConnectedTest {
                 defaultUserRequest(),
                 IamRole.READER,
                 userAccessUtils.getSecondUserEmail()));
+
+    samService.deleteWorkspace(defaultUserRequest().getRequiredToken(), workspaceId);
   }
 
   @Test

@@ -335,6 +335,15 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void createGoogleContextRawlsStageThrows() {
+    // RAWLS_WORKSPACE stage workspaces use existing Sam resources instead of owning them, so the
+    // mock pretends our user has access to any workspace we ask about.
+    Mockito.when(
+            mockSamService.isAuthorized(
+                Mockito.any(),
+                Mockito.eq(SamConstants.SAM_WORKSPACE_RESOURCE),
+                Mockito.any(),
+                Mockito.eq(SamConstants.SAM_WORKSPACE_READ_ACTION)))
+        .thenReturn(true);
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
