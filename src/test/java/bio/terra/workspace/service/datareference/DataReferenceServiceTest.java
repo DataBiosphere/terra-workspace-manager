@@ -275,7 +275,7 @@ class DataReferenceServiceTest extends BaseUnitTest {
 
   /**
    * Test utility which creates a workspace with a random ID, no spend profile, and stage
-   * RAWLS_WORKSPACE. Returns the generated workspace ID.
+   * MC_WORKSPACE. Returns the generated workspace ID.
    */
   private UUID createDefaultWorkspace() {
     WorkspaceRequest request =
@@ -283,7 +283,7 @@ class DataReferenceServiceTest extends BaseUnitTest {
             .workspaceId(UUID.randomUUID())
             .jobId(UUID.randomUUID().toString())
             .spendProfileId(Optional.empty())
-            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     return workspaceService.createWorkspace(request, USER_REQUEST);
   }

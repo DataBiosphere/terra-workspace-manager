@@ -9,6 +9,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
@@ -26,6 +27,13 @@ public class DeleteWorkspaceAuthzStep implements Step {
   public StepResult doStep(FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    boolean isSamResourceOwner =
+        inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStage.class)
+            == WorkspaceStage.MC_WORKSPACE;
+    // Nothing required for this step if this Sam resource is not owned by WSM.
+    if (!isSamResourceOwner) {
+      return StepResult.getStepResultSuccess();
+    }
     try {
       samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);
     } catch (SamApiException e) {

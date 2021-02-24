@@ -6,9 +6,11 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.SamApiException;
+import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,29 +32,50 @@ public class CreateWorkspaceAuthzStep implements Step {
   public StepResult doStep(FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-
-    // This may seem a bit counterintuitive, but in many of the existing use-cases, the workspace
-    // resource already exists
-    // If the user has access to the workspace, it means that we can skip the case of trying (and
-    // failing) to create
-    // the Sam resource. If the user doesn't have access, we'll default to the existing behavior and
-    // return the following
-    // error or success message from Sam.
-    if (!samService.isAuthorized(
-        userReq.getRequiredToken(),
-        SamConstants.SAM_WORKSPACE_RESOURCE,
-        workspaceID.toString(),
-        SamConstants.SAM_WORKSPACE_READ_ACTION)) {
+    // Note that for RAWLS_WORKSPACE stage workspaces, Rawls manages the Sam resource instead of
+    // WSM.
+    boolean isSamResourceOwner =
+        inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStage.class)
+            == WorkspaceStage.MC_WORKSPACE;
+    if (!isSamResourceOwner) {
+      if (canReadExistingWorkspace(workspaceID)) {
+        return StepResult.getStepResultSuccess();
+      } else {
+        throw new WorkspaceNotFoundException(
+            String.format(
+                "Could not find pre-existing Sam resource for workspace %s. WSM will not create Sam resources for RAWLS_WORKSPACE stage workspaces.",
+                workspaceID));
+      }
+    }
+    // Even though WSM should own this resource, Stairway steps can run multiple times, so it's
+    // possible this step already created the resource. If WSM can either read the existing Sam
+    // resource or create a new one, this is considered successful.
+    if (!canReadExistingWorkspace(workspaceID)) {
       samService.createWorkspaceWithDefaults(userReq, workspaceID);
     }
     return StepResult.getStepResultSuccess();
   }
 
+  private boolean canReadExistingWorkspace(UUID workspaceID) {
+    return samService.isAuthorized(
+        userReq.getRequiredToken(),
+        SamConstants.SAM_WORKSPACE_RESOURCE,
+        workspaceID.toString(),
+        SamConstants.SAM_WORKSPACE_READ_ACTION);
+  }
+
   @Override
   public StepResult undoStep(FlightContext flightContext) {
     FlightMap inputMap = flightContext.getInputParameters();
-    // Only delete the Sam resource if we actually created it in the do step.
     UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    boolean isSamResourceOwner =
+        inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStage.class)
+            == WorkspaceStage.MC_WORKSPACE;
+    // If WSM does not own this Sam resource, there's nothing to undo.
+    if (!isSamResourceOwner) {
+      return StepResult.getStepResultSuccess();
+    }
+    // If WSM does own this Sam resource, it should be deleted here.
     try {
       samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);
     } catch (SamApiException ex) {
