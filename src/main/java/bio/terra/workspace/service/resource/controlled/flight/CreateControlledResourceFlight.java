@@ -33,14 +33,16 @@ public class CreateControlledResourceFlight extends Flight {
     // create the cloud resource via CRL
     final ControlledResource resource =
         inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
-    final AuthenticatedUserRequest userRequest = inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    final AuthenticatedUserRequest userRequest =
+        inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     switch (resource.getResourceType()) {
       case GCS_BUCKET:
-        addStep(new CreateGcsBucketStep(
-            flightBeanBag.getCrlService(),
-            (ControlledGcsBucketResource) resource,
-            userRequest));
+        addStep(
+            new CreateGcsBucketStep(
+                flightBeanBag.getCrlService(),
+                (ControlledGcsBucketResource) resource,
+                userRequest));
         break;
       case BIGQUERY_DATASET:
       default:

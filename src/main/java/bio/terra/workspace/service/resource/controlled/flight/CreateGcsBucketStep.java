@@ -32,7 +32,8 @@ public class CreateGcsBucketStep implements Step {
   private final ControlledGcsBucketResource resource;
   private final AuthenticatedUserRequest userRequest;
 
-  public CreateGcsBucketStep(CrlService crlService,
+  public CreateGcsBucketStep(
+      CrlService crlService,
       ControlledGcsBucketResource resource,
       AuthenticatedUserRequest userRequest) {
     this.crlService = crlService;
@@ -44,11 +45,12 @@ public class CreateGcsBucketStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
 
-    final BucketInfo bucketInfo = BucketInfo.newBuilder(resource.getBucketName())
-        .setLocation(resource.getLocation())
-        .setStorageClass(ApiConversions.toGcsApi(resource.getDefaultStorageClass()))
-        .setLifecycleRules(ApiConversions.toGcsApi(resource.getLifecycle()))
-        .build();
+    final BucketInfo bucketInfo =
+        BucketInfo.newBuilder(resource.getBucketName())
+            .setLocation(resource.getLocation())
+            .setStorageClass(ApiConversions.toGcsApi(resource.getDefaultStorageClass()))
+            .setLifecycleRules(ApiConversions.toGcsApi(resource.getLifecycle()))
+            .build();
 
     final StorageCow storageCow = crlService.createStorageCow(userRequest);
     final BucketCow bucketCow = storageCow.create(bucketInfo);
@@ -60,14 +62,13 @@ public class CreateGcsBucketStep implements Step {
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     final StorageCow storageCow = crlService.createStorageCow(userRequest);
     final boolean deleted = storageCow.delete(resource.getBucketName());
-    
+
     return StepResult.getStepResultSuccess();
   }
 
   private static class ApiConversions {
 
-    private ApiConversions() {
-    }
+    private ApiConversions() {}
 
     private static StorageClass toGcsApi(GoogleBucketDefaultStorageClass storageClass) {
       switch (storageClass) {
@@ -91,7 +92,8 @@ public class CreateGcsBucketStep implements Step {
     }
 
     private static LifecycleRule toGcsApi(GoogleBucketLifecycleRule lifecycleRule) {
-      return new LifecycleRule(toGcsApi(lifecycleRule.getAction()), toGcsApi(lifecycleRule.getCondition()));
+      return new LifecycleRule(
+          toGcsApi(lifecycleRule.getAction()), toGcsApi(lifecycleRule.getCondition()));
     }
 
     private static LifecycleAction toGcsApi(GoogleBucketLifecycleRuleAction lifecycleRuleAction) {
@@ -99,37 +101,36 @@ public class CreateGcsBucketStep implements Step {
         case DELETE:
           return LifecycleAction.newDeleteAction();
         case SET_STORAGE_CLASS:
-          return LifecycleAction.newSetStorageClassAction(toGcsApi(lifecycleRuleAction.getStorageClass()));
+          return LifecycleAction.newSetStorageClassAction(
+              toGcsApi(lifecycleRuleAction.getStorageClass()));
         default:
-          throw new IllegalStateException("Unrecognized lifecycle action type " + lifecycleRuleAction.getType());
+          throw new IllegalStateException(
+              "Unrecognized lifecycle action type " + lifecycleRuleAction.getType());
       }
     }
 
     private static LifecycleCondition toGcsApi(GoogleBucketLifecycleRuleCondition condition) {
       final LifecycleCondition.Builder resultBuilder = LifecycleCondition.newBuilder();
 
-  // TODO: some conditions aren't on the Google api object
+      // TODO: some conditions aren't on the Google api object
       Optional.ofNullable(condition.getAge()).ifPresent(resultBuilder::setAge);
       Optional.ofNullable(condition.getCreatedBefore())
           .ifPresent(t -> resultBuilder.setCreatedBefore(toDateTime(t)));
       Optional.ofNullable(condition.getNumNewerVersions())
           .ifPresent(resultBuilder::setNumberOfNewerVersions);
       Optional.ofNullable(condition.isLive()).ifPresent(resultBuilder::setIsLive);
-      final List<StorageClass> storageClasses = condition.getMatchesStorageClass().stream()
-          .map(ApiConversions::toGcsApi)
-          .collect(Collectors.toList());
+      final List<StorageClass> storageClasses =
+          condition.getMatchesStorageClass().stream()
+              .map(ApiConversions::toGcsApi)
+              .collect(Collectors.toList());
       resultBuilder.setMatchesStorageClass(storageClasses);
 
       return resultBuilder.build();
     }
 
     private static DateTime toDateTime(LocalDate localDate) {
-      return new DateTime(localDate
-          .atStartOfDay()
-          .atOffset(ZoneOffset.UTC)
-          .toInstant()
-          .toEpochMilli());
+      return new DateTime(
+          localDate.atStartOfDay().atOffset(ZoneOffset.UTC).toInstant().toEpochMilli());
     }
   }
-
 }
