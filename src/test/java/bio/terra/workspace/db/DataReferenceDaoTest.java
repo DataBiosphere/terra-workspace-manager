@@ -19,7 +19,6 @@ import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,7 +36,6 @@ class DataReferenceDaoTest extends BaseUnitTest {
 
   @Autowired private DataReferenceDao dataReferenceDao;
   @Autowired private WorkspaceDao workspaceDao;
-  @Autowired private ObjectMapper objectMapper;
 
   UUID workspaceId;
   UUID referenceId;

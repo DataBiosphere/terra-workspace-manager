@@ -34,7 +34,7 @@ public class CreateGoogleContextFlight extends Flight {
             BUFFER_MAX_INTERVAL_SECONDS,
             BUFFER_MAX_OPERATION_TIME_SECONDS);
 
-    addStep(new GenerateResourceIdStep());
+    addStep(new GenerateProjectIdStep());
     addStep(
         new PullProjectFromPoolStep(
             appContext.getBufferService(), crl.getCloudResourceManagerCow()),

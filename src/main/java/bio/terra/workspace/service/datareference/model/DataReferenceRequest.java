@@ -36,6 +36,10 @@ public abstract class DataReferenceRequest {
   /** The actual object being referenced. */
   public abstract ReferenceObject referenceObject();
 
+  /** For controlled resources, FK to the workspace_resource table */
+  @Nullable
+  public abstract UUID resourceId();
+
   public static DataReferenceRequest.Builder builder() {
     return new AutoValue_DataReferenceRequest.Builder();
   }
@@ -54,9 +58,11 @@ public abstract class DataReferenceRequest {
 
     public abstract DataReferenceRequest.Builder referenceObject(ReferenceObject value);
 
-    abstract String description();
+    public abstract DataReferenceRequest.Builder resourceId(UUID value);
 
-    abstract DataReferenceRequest autoBuild();
+    protected abstract String description();
+
+    protected abstract DataReferenceRequest autoBuild();
 
     public DataReferenceRequest build() {
       if (description() == null) {
