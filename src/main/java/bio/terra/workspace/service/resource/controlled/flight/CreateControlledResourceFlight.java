@@ -4,8 +4,10 @@ import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.datareference.flight.GenerateReferenceIdStep;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.gcp.ControlledGcsBucketResource;
 import bio.terra.workspace.service.workspace.flight.CreateSamResourceStep;
 
 /**
@@ -20,7 +22,7 @@ public class CreateControlledResourceFlight extends Flight {
 
     // Generate a new resource UUID
     addStep(new GenerateControlledResourceIdStep());
-    // Genderate reference ID for the workspace_data_reference table
+    // Generate reference ID for the workspace_data_reference table
     addStep(new GenerateReferenceIdStep());
 
     // store the resource metadata in the WSM database
@@ -31,10 +33,14 @@ public class CreateControlledResourceFlight extends Flight {
     // create the cloud resource via CRL
     final ControlledResource resource =
         inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
+    final AuthenticatedUserRequest userRequest = inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     switch (resource.getResourceType()) {
       case GCS_BUCKET:
-        addStep(new CreateGcsBucketStep(flightBeanBag.getCrlService()));
+        addStep(new CreateGcsBucketStep(
+            flightBeanBag.getCrlService(),
+            (ControlledGcsBucketResource) resource,
+            userRequest));
         break;
       case BIGQUERY_DATASET:
       default:
