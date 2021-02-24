@@ -13,9 +13,10 @@ public class CloudSyncRoleMapping {
                   "roles/viewer",
                   "roles/bigquery.dataEditor",
                   // TODO(wchambers): Revise service account permissions when there are controlled
-                  // resources for service accounts.
+                  // resources for service accounts. (Also used by NextFlow)
                   "roles/iam.serviceAccountUser",
                   "roles/lifesciences.editor",
+                  "roles/serviceusage.serviceUsageConsumer",
                   // TODO(wchambers): Revise notebooks permissions when there are controlled
                   // resources for notebooks.
                   "roles/notebooks.admin",
@@ -27,9 +28,10 @@ public class CloudSyncRoleMapping {
                   "roles/viewer",
                   "roles/bigquery.dataEditor",
                   // TODO(wchambers): Revise service account permissions when there are controlled
-                  // resources for service accounts.
+                  // resources for service accounts. (Also used by NextFlow)
                   "roles/iam.serviceAccountUser",
                   "roles/lifesciences.editor",
+                  "roles/serviceusage.serviceUsageConsumer",
                   // TODO(wchambers): Revise notebooks permissions when there are controlled
                   // resources for notebooks.
                   "roles/notebooks.admin",
