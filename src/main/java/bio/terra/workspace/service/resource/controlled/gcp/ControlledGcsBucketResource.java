@@ -104,4 +104,12 @@ public class ControlledGcsBucketResource
   public int hashCode() {
     return Objects.hash(super.hashCode());
   }
+
+  public static GoogleBucketStoredAttributes attributesToOutputApiModel(String jsonAttributes) {
+    try {
+      return OBJECT_MAPPER.readValue(jsonAttributes, GoogleBucketStoredAttributes.class);
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException(String.format("Could not parse JSON attributes string %s", jsonAttributes));
+    }
+  }
 }
