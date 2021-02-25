@@ -19,7 +19,6 @@ import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,7 +36,6 @@ class DataReferenceDaoTest extends BaseUnitTest {
 
   @Autowired private DataReferenceDao dataReferenceDao;
   @Autowired private WorkspaceDao workspaceDao;
-  @Autowired private ObjectMapper objectMapper;
 
   UUID workspaceId;
   UUID referenceId;
@@ -128,18 +126,16 @@ class DataReferenceDaoTest extends BaseUnitTest {
 
       updateReference.apply(updatedName, null);
       assertThat(currentReference.get().name(), equalTo(updatedName));
-      assertThat(
-          currentReference.get().referenceDescription(),
-          equalTo(referenceRequest.referenceDescription()));
+      assertThat(currentReference.get().description(), equalTo(referenceRequest.description()));
     }
 
     @Test
-    void verifyUpdateReferenceDescription() {
+    void verifyUpdateDescription() {
       String updatedDescription = "updated description";
 
       updateReference.apply(null, updatedDescription);
       assertThat(currentReference.get().name(), equalTo(referenceRequest.name()));
-      assertThat(currentReference.get().referenceDescription(), equalTo(updatedDescription));
+      assertThat(currentReference.get().description(), equalTo(updatedDescription));
     }
 
     @Test
@@ -149,7 +145,7 @@ class DataReferenceDaoTest extends BaseUnitTest {
 
       updateReference.apply(updatedName2, updatedDescription2);
       assertThat(currentReference.get().name(), equalTo(updatedName2));
-      assertThat(currentReference.get().referenceDescription(), equalTo(updatedDescription2));
+      assertThat(currentReference.get().description(), equalTo(updatedDescription2));
     }
 
     @Test
@@ -232,7 +228,7 @@ class DataReferenceDaoTest extends BaseUnitTest {
     return DataReferenceRequest.builder()
         .workspaceId(workspaceId)
         .name("some_name")
-        .referenceDescription("some description, too")
+        .description("some description, too")
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
         .referenceType(DataReferenceType.DATA_REPO_SNAPSHOT)
         .referenceObject(snapshot);

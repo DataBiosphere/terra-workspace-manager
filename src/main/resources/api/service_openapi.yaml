@@ -486,7 +486,7 @@ paths:
     - $ref: '#/components/parameters/JobId'
     get:
       summary: Get the result of a async job to create a cloud context.
-      operationId: createCloudContextResult
+      operationId: getCreateCloudContextResult
       tags: [Workspace]
       responses:
         '200':
@@ -620,6 +620,47 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         404:
           $ref: '#/components/responses/NotFound'
+
+  /api/workspaces/v1/{id}/resources/controlled/google/buckets:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      summary: Create a new controlled Google bucket
+      operationId: createBucket
+      tags: [ControlledGoogleResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledGoogleBucketRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledGoogleBucketResponse'
+        '202':
+          $ref: '#/components/responses/CreatedControlledGoogleBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{id}/resources/controlled/google/buckets/result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a google bucket creation job.
+      operationId: getCreateBucketResult
+      tags: [ControlledGoogleResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledGoogleBucketResponse'
+        '202':
+          $ref: '#/components/responses/CreatedControlledGoogleBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
 components:
   parameters:
@@ -924,8 +965,9 @@ components:
       properties:
         name:
           $ref: "#/components/schemas/Name"
-        referenceDescription:
+        description:
           type: string
+          default: ""
         resourceId:
           description: The ID of the resource
           type: string
@@ -946,8 +988,9 @@ components:
           $ref: "#/components/schemas/Name"
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
-        referenceDescription:
+        description:
           type: string
+          default: ""
 
     CreateDataRepoSnapshotReferenceRequestBody:
       type: object
@@ -984,13 +1027,13 @@ components:
       properties:
         name:
           $ref: "#/components/schemas/Name"
-        referenceDescription:
+        description:
           type: string
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceDescription:
       type: object
-      required: [referenceId, name, workspaceId, cloningInstructions]
+      required: [referenceId, name, description, workspaceId, cloningInstructions]
       properties:
         referenceId:
           description: The ID of the data reference
@@ -999,7 +1042,7 @@ components:
         name:
           description: The name of the data reference; used to refer to the reference
           type: string
-        referenceDescription:
+        description:
           type: string
         workspaceId:
           description: The ID of the workspace containing the reference
@@ -1054,7 +1097,7 @@ components:
         name:
           description: The name of the data reference; used to refer to the reference
           type: string
-        referenceDescription:
+        description:
           type: string
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
@@ -1153,6 +1196,192 @@ components:
         memberEmail:
           type: string
 
+    CreateControlledGoogleBucketRequestBody:
+      description: Payload for requesting a new controlled resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        googleBucket:
+          $ref: '#/components/schemas/GoogleBucketCreationParameters'
+
+    ControlledResourceCommonFields:
+      type: object
+      required: [ name, cloningInstructions, jobControl, accessScope ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        accessScope:
+          type: string
+          enum: [ 'SHARED', 'PRIVATE' ]
+        managedBy:
+          type: string
+          enum: [ 'USER', 'APPLICATION' ]
+        privateResourceUser:
+          $ref: '#/components/schemas/PrivateResourceUser'
+        visible:
+          type: boolean
+        owner:
+          type: string
+
+    PrivateResourceUser:
+      description: A user and role pair for a user of a private resource.
+      type: object
+      properties:
+        userName:
+          description: Email address for the user of the resource
+          type: string
+        iamRole:
+          $ref: '#/components/schemas/IamRole'
+
+    CreatedControlledGoogleBucket:
+      description: Response Payload for requesting a new controlled resource.
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource. Null if not created yet.
+          type: string
+          format: uuid
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        googleBucket:
+          $ref: '#/components/schemas/GoogleBucketStoredAttributes'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    GoogleBucketCreationParameters:
+      description: >-
+        Bucket-specific properties to be set on creation. These are a subset of the
+        values accepted by the Google Storage API.
+      type: object
+      properties:
+        name:
+          description: A valid bucket name per https://cloud.google.com/storage/docs/naming-buckets.
+          type: string
+        location:
+          description: A valid bucket location per https://cloud.google.com/storage/docs/locations.
+          type: string
+        defaultStorageClass:
+          $ref: '#/components/schemas/GoogleBucketDefaultStorageClass'
+        lifecycle:
+          $ref: '#/components/schemas/GoogleBucketLifecycle'
+    GoogleBucketStoredAttributes:
+      description: >-
+        Bucket properties included in post-creation, get, and update. Others must be
+        retrieved from GCS using the name.
+      type: object
+      properties:
+        bucketName:
+          description: Name of created bucket (not the resource nmae).
+          type: string
+    GoogleBucketDefaultStorageClass:
+      description: >-
+        Type and availability of objects in a bucket, described at https://cloud.google.com/storage/docs/storage-classes.
+        This list does not include legacy types that apply to some existing buckets. For those, see
+        GoogleBucketLegacyStorageClass.
+      type: string
+      enum:
+        - STANDARD
+        - NEARLINE
+        - COLDLINE
+        - ARCHIVE
+    GoogleBucketLifecycle:
+      description: >-
+        Options to control automatic deletion or storage class change for a bucket.
+        Described at https://cloud.google.com/storage/docs/lifecycle.
+      type: object
+      properties:
+        rules:
+          description: List of rules for this bucket
+          type: array
+          items:
+            $ref: '#/components/schemas/GoogleBucketLifecycleRule'
+
+    GoogleBucketLifecycleRule:
+      description: A lifecycle rule for a bucket.
+      type: object
+      properties:
+        action:
+          $ref: '#/components/schemas/GoogleBucketLifecycleRuleAction'
+        condition:
+          $ref: '#/components/schemas/GoogleBucketLifecycleRuleCondition'
+
+    GoogleBucketLifecycleRuleAction:
+      description: The lifecycle action to take. See https://cloud.google.com/storage/docs/lifecycle#actions.
+      type: object
+      properties:
+        storageClass:
+          $ref: '#/components/schemas/GoogleBucketDefaultStorageClass'
+        type:
+          $ref: '#/components/schemas/GoogleBucketLifecycleRuleActionType'
+
+    GoogleBucketLifecycleRuleActionType:
+      description: >-
+        Type of action to perform. Formatted like our Java enums, but spelled in Camel case in Google API.
+      type: string
+      enum:
+        - DELETE
+        - SET_STORAGE_CLASS
+
+    GoogleBucketLifecycleRuleCondition:
+      description: The condition(s) under which the action will be taken.
+      type: object
+      properties:
+        age:
+          description: Age of an object (in days). This condition is satisfied when an object reaches the specified age.
+          type: integer
+        createdBefore:
+          description: This condition is satisfied when an object is created before midnight of the specified date in UTC.
+          type: string
+          format: date
+        customTimeBefore:
+          description: >-
+            This condition is satisfied when the customTime metadata for the object is set to an
+            earlier date than the date used in this lifecycle condition.
+          type: string
+          format: date
+        daysSinceCustomTime:
+          description: >-
+            Days since the date set in the customTime metadata for the object. This condition is
+            satisfied when the current date and time is at least the specified number of days after
+            the customTime.
+          type: integer
+        daysSinceNoncurrentTime:
+          description: >-
+            Relevant only for versioned objects. This condition is satisfied when an object has
+            been noncurrent for more than the specified number of days.
+          type: integer
+        isLive:
+          description: >-
+            Relevant only for versioned objects. If the value is true, this condition matches the
+            live version of objects; if the value is false, it matches noncurrent versions of objects.
+          type: boolean
+        matchesStorageClass:
+          description: >-
+            Objects having any of the storage classes specified by this condition will be matched. 
+            Values include "STANDARD", "NEARLINE", "COLDLINE", "ARCHIVE", "MULTI_REGIONAL",
+            "REGIONAL", and "DURABLE_REDUCED_AVAILABILITY".
+          type: array
+          items:
+            $ref: '#/components/schemas/GoogleBucketDefaultStorageClass'
+        noncurrentTimeBefore:
+          description: >-
+            Relevant only for versioned objects. This condition is satisfied for objects that became
+            noncurrent on a date prior to the one specified in this condition.
+          type: string
+          format: date
+        numNewerVersions:
+          description: >-
+            Relevant only for versioned objects. If the value is N, this condition is satisfied
+            when there are at least N versions (including the live version) newer than this version
+            of the object.
+          type: integer
   responses:
     CreatedWorkspaceResponse:
       description: Response to createWorkspace calls
@@ -1202,6 +1431,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/RoleBindingList'
+
+    CreatedControlledGoogleBucketResponse:
+      description: Response to Create controlled resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledGoogleBucket'
 
     CreateCloudContextResultResponse:
       description: Job is complete (succeeded or failed)

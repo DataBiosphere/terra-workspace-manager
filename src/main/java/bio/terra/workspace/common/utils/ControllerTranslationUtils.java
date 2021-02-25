@@ -15,7 +15,7 @@ public class ControllerTranslationUtils {
         .referenceId(dataReference.referenceId())
         .workspaceId(dataReference.workspaceId())
         .name(dataReference.name())
-        .referenceDescription(dataReference.referenceDescription())
+        .description(dataReference.description())
         .cloningInstructions(dataReference.cloningInstructions().toApiModel());
   }
 }

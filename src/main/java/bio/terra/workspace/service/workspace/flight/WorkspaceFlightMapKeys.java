@@ -12,4 +12,12 @@ public final class WorkspaceFlightMapKeys {
   public static final String RBS_RESOURCE_ID = "rbsResourceId";
 
   private WorkspaceFlightMapKeys() {}
+
+  /** Use inner class for new set of keys so it's easy to spot duplicates */
+  public static class ControlledResourceKeys {
+    public static final String RESOURCE_ID = "controlledResourceId";
+    public static final String OWNER_EMAIL = "controlledResourceOwnerEmail";
+
+    private ControlledResourceKeys() {}
+  }
 }

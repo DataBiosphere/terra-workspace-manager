@@ -5,6 +5,8 @@ import bio.terra.workspace.generated.model.SystemStatusSystems;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 
 /*
@@ -23,6 +25,8 @@ public class BaseStatusService {
   private long lastUpdatedTimestampMillis;
   private final SystemStatus currentStatus;
   private final long staleThresholdMillis;
+
+  private static final Logger logger = LoggerFactory.getLogger(BaseStatusService.class);
 
   public BaseStatusService(long staleThresholdMillis) {
     subsystems = new ConcurrentHashMap<>();
@@ -70,6 +74,9 @@ public class BaseStatusService {
             .ok(true)
             .addMessagesItem("Systems last checked " + lastUpdatedDate.toString()));
     currentStatus.ok(systemOk.get()).setSystems(tmpSubsystemStatusMap);
+    if (!systemOk.get()) {
+      logger.warn("WSM status is not ok: {}", currentStatus);
+    }
   }
 
   public SystemStatus getCurrentStatus() {
