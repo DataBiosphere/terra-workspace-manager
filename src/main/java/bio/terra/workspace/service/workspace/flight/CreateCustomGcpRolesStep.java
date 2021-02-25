@@ -7,8 +7,8 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.service.workspace.CustomGcpIamRole;
-import bio.terra.workspace.service.workspace.CustomGcpIamRoleMapping;
+import bio.terra.workspace.service.iam.CustomGcpIamRole;
+import bio.terra.workspace.service.iam.CustomGcpIamRoleMapping;
 import com.google.api.services.iam.v1.model.CreateRoleRequest;
 import com.google.api.services.iam.v1.model.Role;
 import java.io.IOException;
@@ -31,14 +31,11 @@ public class CreateCustomGcpRolesStep implements Step {
     String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
     for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.customIamRoles) {
       try {
-        // Role ids will have the form (resource type)_(role), e.g. GCS_BUCKET_READER.
-        String roleName =
-            customRole.getResourceType().name() + "_" + customRole.getIamRole().name();
         Role gcpRole = new Role().setIncludedPermissions(customRole.getIncludedPermissions());
-        CreateRoleRequest request = new CreateRoleRequest().setRole(gcpRole).setRoleId(roleName);
+        CreateRoleRequest request = new CreateRoleRequest().setRole(gcpRole).setRoleId(customRole.getRoleName());
         logger.info(
             "Creating role {} with permissions {} in project {}",
-            roleName,
+            customRole.getRoleName(),
             customRole.getIncludedPermissions(),
             projectId);
         iamCow.projects().roles().create("projects/" + projectId, request).execute();

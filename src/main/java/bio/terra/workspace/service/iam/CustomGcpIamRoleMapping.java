@@ -1,5 +1,6 @@
-package bio.terra.workspace.service.workspace;
+package bio.terra.workspace.service.iam;
 
+import bio.terra.workspace.service.iam.CustomGcpIamRole;
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.resource.controlled.WsmResourceType;
 import com.google.common.collect.ImmutableList;

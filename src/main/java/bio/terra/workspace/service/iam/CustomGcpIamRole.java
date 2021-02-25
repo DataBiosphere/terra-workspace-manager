@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace;
+package bio.terra.workspace.service.iam;
 
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.resource.controlled.WsmResourceType;
@@ -8,28 +8,22 @@ import java.util.List;
  * A CustomRole is a POJO value class representing a GCP custom IAM role.
  *
  * <p>Each custom role is the application of a workspace IAM role to a specific resource type. A
- * CustomRole object holds this IAM role, resource type, and a list of GCP cloud permissions that
- * are granted.
+ * CustomRole object holds a name made by combining the IAM role and resource type, and also holds a
+ * list of GCP cloud permissions that are granted.
+ *
+ * The role name is the combination of resource type + IamRole name in SNAKE_CASE, e.g. GCS_BUCKET_READER.
  */
 public class CustomGcpIamRole {
-  private WsmResourceType resourceType;
-  private IamRole iamRole;
+  private String roleName;
   private List<String> includedPermissions;
 
   public CustomGcpIamRole(
       WsmResourceType resourceType, IamRole iamRole, List<String> includedPermissions) {
-    this.resourceType = resourceType;
-    this.iamRole = iamRole;
+    this.roleName = resourceType.name() + "_" + iamRole.name();
     this.includedPermissions = includedPermissions;
   }
 
-  public WsmResourceType getResourceType() {
-    return resourceType;
-  }
-
-  public IamRole getIamRole() {
-    return iamRole;
-  }
+  public String getRoleName() { return roleName; }
 
   public List<String> getIncludedPermissions() {
     return includedPermissions;
