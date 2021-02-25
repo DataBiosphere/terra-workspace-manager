@@ -11,4 +11,7 @@ import org.springframework.test.context.ActiveProfiles;
  */
 @Tag("connected")
 @ActiveProfiles("connected-test")
-public class BaseConnectedTest extends BaseTest {}
+public class BaseConnectedTest extends BaseTest {
+
+  public static final String bufferServiceDisabledEnvsRegEx = "alpha|staging|prod";
+}

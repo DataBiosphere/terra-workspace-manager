@@ -21,7 +21,7 @@ import com.google.api.services.cloudresourcemanager.model.Project;
 import java.time.Duration;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class DeleteGoogleContextFlightTest extends BaseConnectedTest {
@@ -41,7 +41,7 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
   @Autowired private UserAccessUtils userAccessUtils;
 
   @Test
-  @EnabledIfEnvironmentVariable(named = "TEST_ENV", matches = "dev")
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
   void deleteContext() throws Exception {
     UUID workspaceId = createWorkspace();
     FlightMap createParameters = new FlightMap();
