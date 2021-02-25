@@ -29,10 +29,9 @@ public class BeanConfig {
     return TracingAsyncClientHttpRequestInterceptor.create(null, null);
   }
 
-  // Enable the @Traced annotation for use within the application
-  @Bean
+  @Bean // enables the @Traced annotation
   public CensusSpringAspect censusAspect() {
-    return new CensusSpringAspect(Tracing.getTracer());
+    return new CensusSpringAspect(tracer());
   }
 
   @Bean("jdbcTemplate")

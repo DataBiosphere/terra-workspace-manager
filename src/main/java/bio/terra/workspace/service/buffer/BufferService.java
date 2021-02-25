@@ -9,6 +9,7 @@ import bio.terra.buffer.model.PoolInfo;
 import bio.terra.buffer.model.ResourceInfo;
 import bio.terra.buffer.model.SystemStatus;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
+import bio.terra.workspace.app.configuration.spring.TraceInterceptorConfig;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAPIException;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAuthorizationException;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -38,6 +40,9 @@ public class BufferService {
 
   private ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();
+    client.addDefaultHeader(
+        TraceInterceptorConfig.MDC_REQUEST_ID_HEADER,
+        MDC.get(TraceInterceptorConfig.MDC_REQUEST_ID_KEY));
     client.setAccessToken(accessToken);
     return client;
   }
