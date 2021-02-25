@@ -23,7 +23,6 @@ import com.google.cloud.storage.StorageClass;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class CreateGcsBucketStep implements Step {
@@ -112,17 +111,17 @@ public class CreateGcsBucketStep implements Step {
     private static LifecycleCondition toGcsApi(GoogleBucketLifecycleRuleCondition condition) {
       final LifecycleCondition.Builder resultBuilder = LifecycleCondition.newBuilder();
 
-      // TODO: some conditions aren't on the Google api object
+      /* TODO(PF-506): some conditions aren't in the version of the Google Storage API in the
+       *    latest version of the CRL. */
       resultBuilder.setAge(condition.getAge());
       resultBuilder.setCreatedBefore(toDateTime(condition.getCreatedBefore()));
-      resultBuilder.setCustomTimeBefore()
       resultBuilder.setNumberOfNewerVersions(condition.getNumNewerVersions());
       resultBuilder.setIsLive(condition.isLive());
 
       resultBuilder.setMatchesStorageClass(
           condition.getMatchesStorageClass().stream()
-          .map(ApiConversions::toGcsApi)
-          .collect(Collectors.toList()));
+              .map(ApiConversions::toGcsApi)
+              .collect(Collectors.toList()));
 
       return resultBuilder.build();
     }
