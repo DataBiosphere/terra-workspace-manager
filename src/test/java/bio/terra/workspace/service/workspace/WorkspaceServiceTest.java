@@ -41,6 +41,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -287,7 +288,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  // @EnabledIfEnvironmentVariable(named = "TEST_ENV", matches = "dev")
   void deleteWorkspaceWithGoogleContext() throws Exception {
+    System.out.println("TEST_ENV");
+    System.out.println(System.getenv("TEST_ENV"));
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())
             .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
@@ -312,6 +316,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  @EnabledIfEnvironmentVariable(named = "TEST_ENV", matches = "dev")
   void createGetDeleteGoogleContext() {
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())

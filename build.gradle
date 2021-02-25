@@ -203,6 +203,10 @@ task unitTest(type: Test) {
 }
 
 task connectedTest(type: Test) {
+	environment = [
+			'TEST_ENV': System.getenv("TEST_ENV"),
+			'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
+	]
 	useJUnitPlatform {
 		includeTags "connected"
 	}
@@ -212,7 +216,12 @@ task connectedTest(type: Test) {
 	outputs.upToDateWhen { false }
 }
 
+
 task integrationTest(type: Test) {
+	environment = [
+			'TEST_ENV': System.getenv("TEST_ENV"),
+			'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
+	]
 	useJUnitPlatform {
 		includeTags "integration"
 	}

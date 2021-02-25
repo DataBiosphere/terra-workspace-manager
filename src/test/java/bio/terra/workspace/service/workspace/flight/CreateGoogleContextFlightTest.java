@@ -33,6 +33,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class CreateGoogleContextFlightTest extends BaseConnectedTest {
@@ -47,6 +48,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   @Autowired private UserAccessUtils userAccessUtils;
 
   @Test
+  @EnabledIfEnvironmentVariable(named = "TEST_ENV", matches = "dev")
   void successCreatesProjectAndContext() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
@@ -80,6 +82,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   }
 
   @Test
+  @EnabledIfEnvironmentVariable(named = "TEST_ENV", matches = "dev")
   void errorRevertsChanges() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
