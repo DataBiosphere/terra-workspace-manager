@@ -32,7 +32,8 @@ public class CreateCustomGcpRolesStep implements Step {
     for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.customIamRoles) {
       try {
         Role gcpRole = new Role().setIncludedPermissions(customRole.getIncludedPermissions());
-        CreateRoleRequest request = new CreateRoleRequest().setRole(gcpRole).setRoleId(customRole.getRoleName());
+        CreateRoleRequest request =
+            new CreateRoleRequest().setRole(gcpRole).setRoleId(customRole.getRoleName());
         logger.info(
             "Creating role {} with permissions {} in project {}",
             customRole.getRoleName(),

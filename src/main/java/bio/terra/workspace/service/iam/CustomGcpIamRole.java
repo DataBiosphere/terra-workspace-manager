@@ -11,7 +11,8 @@ import java.util.List;
  * CustomRole object holds a name made by combining the IAM role and resource type, and also holds a
  * list of GCP cloud permissions that are granted.
  *
- * The role name is the combination of resource type + IamRole name in SNAKE_CASE, e.g. GCS_BUCKET_READER.
+ * <p>The role name is the combination of resource type + IamRole name with an underscore separator,
+ * e.g. GCS_BUCKET_READER.
  */
 public class CustomGcpIamRole {
   private String roleName;
@@ -23,7 +24,9 @@ public class CustomGcpIamRole {
     this.includedPermissions = includedPermissions;
   }
 
-  public String getRoleName() { return roleName; }
+  public String getRoleName() {
+    return roleName;
+  }
 
   public List<String> getIncludedPermissions() {
     return includedPermissions;
