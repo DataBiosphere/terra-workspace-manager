@@ -112,7 +112,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("id") UUID id) {
+  public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("workspaceId") UUID id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info("Getting workspace {} for {}", id, userReq.getEmail());
     Workspace workspace = workspaceService.getWorkspace(id, userReq);
@@ -134,7 +134,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<Void> deleteWorkspace(@PathVariable("id") UUID id) {
+  public ResponseEntity<Void> deleteWorkspace(@PathVariable("workspaceId") UUID id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info("Deleting workspace {} for {}", id, userReq.getEmail());
     workspaceService.deleteWorkspace(id, userReq);
@@ -145,7 +145,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<DataReferenceDescription> createDataReference(
-      @PathVariable("id") UUID id, @RequestBody CreateDataReferenceRequestBody body) {
+      @PathVariable("workspaceId") UUID id, @RequestBody CreateDataReferenceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info(
         "Creating data reference in workspace {} for {} with body {}",
@@ -180,7 +180,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<DataReferenceDescription> getDataReference(
-      @PathVariable("id") UUID workspaceId, @PathVariable("referenceId") UUID referenceId) {
+      @PathVariable("workspaceId") UUID workspaceId, @PathVariable("referenceId") UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info(
         "Getting data reference by id {} in workspace {} for {}",
@@ -201,7 +201,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<DataReferenceDescription> getDataReferenceByName(
-      @PathVariable("id") UUID workspaceId,
+      @PathVariable("workspaceId") UUID workspaceId,
       @PathVariable("referenceType") ReferenceTypeEnum referenceType,
       @PathVariable("name") String name) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
@@ -233,7 +233,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<Void> updateDataReference(
-      @PathVariable("id") UUID id,
+      @PathVariable("workspaceId") UUID id,
       @PathVariable("referenceId") UUID referenceId,
       @RequestBody UpdateDataReferenceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
@@ -266,7 +266,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<Void> deleteDataReference(
-      @PathVariable("id") UUID workspaceId, @PathVariable("referenceId") UUID referenceId) {
+      @PathVariable("workspaceId") UUID workspaceId, @PathVariable("referenceId") UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info(
         "Deleting data reference by id {} in workspace {} for {}",
@@ -285,7 +285,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<DataReferenceList> enumerateReferences(
-      @PathVariable("id") UUID id,
+      @PathVariable("workspaceId") UUID id,
       @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
       @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
@@ -306,7 +306,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<Void> grantRole(
-      @PathVariable("id") UUID id,
+      @PathVariable("workspaceId") UUID id,
       @PathVariable("role") IamRole role,
       @RequestBody GrantRoleRequestBody body) {
     ControllerValidationUtils.validateEmail(body.getMemberEmail());
@@ -320,7 +320,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<Void> removeRole(
-      @PathVariable("id") UUID id,
+      @PathVariable("workspaceId") UUID id,
       @PathVariable("role") IamRole role,
       @PathVariable("memberEmail") String memberEmail) {
     ControllerValidationUtils.validateEmail(memberEmail);
@@ -333,7 +333,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<RoleBindingList> getRoles(@PathVariable("id") UUID id) {
+  public ResponseEntity<RoleBindingList> getRoles(@PathVariable("workspaceId") UUID id) {
     List<bio.terra.workspace.service.iam.model.RoleBinding> bindingList =
         samService.listRoleBindings(id, getAuthenticatedInfo());
     RoleBindingList responseList = new RoleBindingList();
