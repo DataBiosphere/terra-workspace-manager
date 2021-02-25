@@ -6,25 +6,12 @@ name: Test Runner Nightly Integration Tests
 on:
   workflow_dispatch: {}
   schedule:
-  - cron: '0 6 * * *' # run at 6 AM UTC, 1 AM ET.
+  - cron: '0 7 * * *' # run at 7 AM UTC, 2 AM ET.
 
 jobs:
   test-runner-integration:
 
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:12.3
-        env:
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
 
     steps:
       - uses: actions/checkout@v2
