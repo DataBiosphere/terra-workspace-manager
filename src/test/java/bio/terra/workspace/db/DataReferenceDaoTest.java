@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
+import bio.terra.workspace.common.exception.ResourceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
@@ -108,7 +108,7 @@ class DataReferenceDaoTest extends BaseUnitTest {
               .build();
       UUID decoyId = workspaceDao.createWorkspace(decoyWorkspace);
       assertThrows(
-          DataReferenceNotFoundException.class,
+          ResourceNotFoundException.class,
           () -> dataReferenceDao.getDataReference(decoyId, referenceId));
     }
   }

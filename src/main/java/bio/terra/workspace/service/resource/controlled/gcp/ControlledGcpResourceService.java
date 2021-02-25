@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.gcp;
 
-import bio.terra.workspace.common.exception.ControlledResourceNotFoundException;
+import bio.terra.workspace.common.exception.ResourceNotFoundException;
 import bio.terra.workspace.db.ControlledResourceDao;
 import bio.terra.workspace.generated.model.GoogleBucketStoredAttributes;
 import bio.terra.workspace.generated.model.JobControl;
@@ -59,7 +59,7 @@ public class ControlledGcpResourceService {
             .getControlledResource(resourceId)
             .orElseThrow(
                 () ->
-                    new ControlledResourceNotFoundException(
+                    new ResourceNotFoundException(
                         String.format("Resource with ID %s not found", resourceId.toString())));
     return ControlledGcsBucketResource.attributesToOutputApiModel(model.getAttributes());
   }

@@ -10,7 +10,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
+import bio.terra.workspace.common.exception.ResourceNotFoundException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.generated.model.UpdateDataReferenceRequestBody;
@@ -147,7 +147,7 @@ class DataReferenceServiceTest extends BaseUnitTest {
       // Names are unique per reference type within a workspace.
       // This call looks up a GCS bucket with the snapshot's name, which should not exist.
       assertThrows(
-          DataReferenceNotFoundException.class,
+          ResourceNotFoundException.class,
           () ->
               dataReferenceService.getDataReferenceByName(
                   workspaceId, DataReferenceType.GOOGLE_BUCKET, ref.name(), USER_REQUEST));
@@ -166,7 +166,7 @@ class DataReferenceServiceTest extends BaseUnitTest {
     @Test
     void testGetMissingDataReference() {
       assertThrows(
-          DataReferenceNotFoundException.class,
+          ResourceNotFoundException.class,
           () ->
               dataReferenceService.getDataReference(workspaceId, UUID.randomUUID(), USER_REQUEST));
     }
@@ -260,13 +260,13 @@ class DataReferenceServiceTest extends BaseUnitTest {
 
       dataReferenceService.deleteDataReference(workspaceId, reference.referenceId(), USER_REQUEST);
       // Validate that reference is now deleted.
-      assertThrows(DataReferenceNotFoundException.class, () -> currentReference.get());
+      assertThrows(ResourceNotFoundException.class, () -> currentReference.get());
     }
 
     @Test
     void testDeleteMissingDataReference() {
       assertThrows(
-          DataReferenceNotFoundException.class,
+          ResourceNotFoundException.class,
           () ->
               dataReferenceService.deleteDataReference(
                   workspaceId, UUID.randomUUID(), USER_REQUEST));

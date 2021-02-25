@@ -102,7 +102,7 @@ public class DataReferenceService {
           referenceRequest.referenceType());
       throw new DuplicateDataReferenceException(
           "A reference with the specified name and type already exists in this workspace.");
-    } catch (DataReferenceNotFoundException expected) {
+    } catch (ResourceNotFoundException expected) {
       // Expected case, do nothing.
     }
 
@@ -160,7 +160,7 @@ public class DataReferenceService {
 
     if (!dataReferenceDao.updateDataReference(
         workspaceId, referenceId, updateRequest.getName(), updateRequest.getDescription())) {
-      throw new DataReferenceNotFoundException("Data Reference not found.");
+      throw new ResourceNotFoundException("Data Reference not found.");
     }
   }
 
@@ -181,7 +181,7 @@ public class DataReferenceService {
     }
 
     if (!dataReferenceDao.deleteDataReference(workspaceId, referenceId)) {
-      throw new DataReferenceNotFoundException("Data Reference not found.");
+      throw new ResourceNotFoundException("Data Reference not found.");
     }
   }
 }
