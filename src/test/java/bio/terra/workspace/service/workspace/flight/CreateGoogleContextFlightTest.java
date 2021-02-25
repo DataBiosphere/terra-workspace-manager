@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.workspace.flight;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -17,7 +19,8 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
-import bio.terra.workspace.service.workspace.CustomIamRoleMapping;
+import bio.terra.workspace.service.workspace.CustomGcpIamRole;
+import bio.terra.workspace.service.workspace.CustomGcpIamRoleMapping;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
@@ -134,19 +137,17 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   }
 
   /**
-   * Asserts that a provided project has custom roles matching {@link
-   * bio.terra.workspace.service.workspace.CustomIamRoleMapping}
+   * Asserts that a provided project has every custom role specified in {@link
+   * CustomGcpIamRoleMapping}
    */
   private void assertRolesExist(Project project) throws IOException {
-    for (var resourceRoleMap : CustomIamRoleMapping.customIamRoleMap.entrySet()) {
-      for (var customRoleEntry : resourceRoleMap.getValue().entrySet()) {
-        String roleId = resourceRoleMap.getKey().name() + "_" + customRoleEntry.getKey().name();
-        String fullRoleName = "projects/" + project.getProjectId() + "/roles/" + roleId;
-        Role customRole = crl.getIamCow().projects().roles().get(fullRoleName).execute();
-        // Assert the two lists are exactly equal (ignoring order).
-        assertTrue(customRole.getIncludedPermissions().containsAll(customRoleEntry.getValue()));
-        assertTrue(customRoleEntry.getValue().containsAll(customRole.getIncludedPermissions()));
-      }
+    for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.customIamRoles) {
+      String roleId = customRole.getResourceType().name() + "_" + customRole.getIamRole().name();
+      String fullRoleName = "projects/" + project.getProjectId() + "/roles/" + roleId;
+      Role gcpRole = crl.getIamCow().projects().roles().get(fullRoleName).execute();
+      assertThat(
+          gcpRole.getIncludedPermissions(),
+          containsInAnyOrder(customRole.getIncludedPermissions().toArray()));
     }
   }
 

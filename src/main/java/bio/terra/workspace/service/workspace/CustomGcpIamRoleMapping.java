@@ -1,12 +1,20 @@
 package bio.terra.workspace.service.workspace;
 
-import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.service.resource.controlled.WsmResourceType;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 
-public class CustomIamRoleMapping {
-  // TODO: Top-level key should be controlled type, not reference type.
+/**
+ * This class specifies a static list of all GCP custom IAM roles that will be created in Workspace
+ * contexts. To modify a role's permission, edit the appropriate list here. Note that currently
+ * OWNER roles also receive all WRITER permissions, and WRITER roles also receive all READER
+ * permissions.
+ *
+ * <p>We expect this mapping to change over time. There is currently no migration infrastructure for
+ * these roles in existing projects. Editing these lists will affect newly created workspace
+ * contexts, but WSM will not retroactively apply changes to existing projects.
+ */
+public class CustomGcpIamRoleMapping {
   private static final ImmutableList<String> gcsBucketReaderPermissions =
       ImmutableList.of("storage.objects.list", "storage.objects.get");
   private static final ImmutableList<String> gcsBucketWriterPermissions =
@@ -19,11 +27,6 @@ public class CustomIamRoleMapping {
           .addAll(gcsBucketWriterPermissions)
           .add("storage.buckets.get")
           .build();
-  private static final ImmutableMap<IamRole, ImmutableList<String>> gcsBucketRoleMap =
-      ImmutableMap.of(
-          IamRole.READER, gcsBucketReaderPermissions,
-          IamRole.WRITER, gcsBucketWriterPermissions,
-          IamRole.OWNER, gcsBucketOwnerPermissions);
 
   private static final ImmutableList<String> bigqueryDatasetReaderPermissions =
       ImmutableList.of(
@@ -60,15 +63,19 @@ public class CustomIamRoleMapping {
               "bigquery.tables.delete",
               "bigquery.tables.update")
           .build();
-  private static final ImmutableMap<IamRole, ImmutableList<String>> bigqueryDatasetRoleMap =
-      ImmutableMap.of(
-          IamRole.READER, bigqueryDatasetReaderPermissions,
-          IamRole.WRITER, bigqueryDatasetWriterPermissions,
-          IamRole.OWNER, bigqueryDatasetOwnerPermissions);
 
-  public static final ImmutableMap<DataReferenceType, ImmutableMap<IamRole, ImmutableList<String>>>
-      customIamRoleMap =
-          ImmutableMap.of(
-              DataReferenceType.GOOGLE_BUCKET, gcsBucketRoleMap,
-              DataReferenceType.BIG_QUERY_DATASET, bigqueryDatasetRoleMap);
+  public static final ImmutableList<CustomGcpIamRole> customIamRoles =
+      ImmutableList.of(
+          new CustomGcpIamRole(
+              WsmResourceType.GCS_BUCKET, IamRole.READER, gcsBucketReaderPermissions),
+          new CustomGcpIamRole(
+              WsmResourceType.GCS_BUCKET, IamRole.WRITER, gcsBucketWriterPermissions),
+          new CustomGcpIamRole(
+              WsmResourceType.GCS_BUCKET, IamRole.OWNER, gcsBucketOwnerPermissions),
+          new CustomGcpIamRole(
+              WsmResourceType.BIGQUERY_DATASET, IamRole.READER, bigqueryDatasetReaderPermissions),
+          new CustomGcpIamRole(
+              WsmResourceType.BIGQUERY_DATASET, IamRole.WRITER, bigqueryDatasetWriterPermissions),
+          new CustomGcpIamRole(
+              WsmResourceType.BIGQUERY_DATASET, IamRole.OWNER, bigqueryDatasetOwnerPermissions));
 }
