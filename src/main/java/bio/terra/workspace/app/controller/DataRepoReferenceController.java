@@ -102,7 +102,7 @@ public class DataRepoReferenceController extends ReferenceController
 
   @Override
   public ResponseEntity<Void> updateDataRepoSnapshotReference(
-      @PathVariable("id") UUID id,
+      @PathVariable("workspaceId") UUID id,
       @PathVariable("referenceId") UUID referenceId,
       @RequestBody UpdateDataReferenceRequestBody body) {
     updateReference(id, referenceId, body, getAuthenticatedInfo(), dataReferenceService);
