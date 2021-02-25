@@ -20,8 +20,7 @@ public class ResourceNotFoundException extends NotFoundException {
     super(message, causes);
   }
 
-  public ResourceNotFoundException(String message, Throwable cause,
-      List<String> causes) {
+  public ResourceNotFoundException(String message, Throwable cause, List<String> causes) {
     super(message, cause, causes);
   }
 }

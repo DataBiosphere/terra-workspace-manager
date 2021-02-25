@@ -9,8 +9,8 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.exception.ResourceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
+import bio.terra.workspace.common.exception.ResourceNotFoundException;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
