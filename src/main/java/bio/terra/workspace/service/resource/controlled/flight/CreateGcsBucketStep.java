@@ -113,17 +113,16 @@ public class CreateGcsBucketStep implements Step {
       final LifecycleCondition.Builder resultBuilder = LifecycleCondition.newBuilder();
 
       // TODO: some conditions aren't on the Google api object
-      Optional.ofNullable(condition.getAge()).ifPresent(resultBuilder::setAge);
-      Optional.ofNullable(condition.getCreatedBefore())
-          .ifPresent(t -> resultBuilder.setCreatedBefore(toDateTime(t)));
-      Optional.ofNullable(condition.getNumNewerVersions())
-          .ifPresent(resultBuilder::setNumberOfNewerVersions);
-      Optional.ofNullable(condition.isLive()).ifPresent(resultBuilder::setIsLive);
-      final List<StorageClass> storageClasses =
+      resultBuilder.setAge(condition.getAge());
+      resultBuilder.setCreatedBefore(toDateTime(condition.getCreatedBefore()));
+      resultBuilder.setCustomTimeBefore()
+      resultBuilder.setNumberOfNewerVersions(condition.getNumNewerVersions());
+      resultBuilder.setIsLive(condition.isLive());
+
+      resultBuilder.setMatchesStorageClass(
           condition.getMatchesStorageClass().stream()
-              .map(ApiConversions::toGcsApi)
-              .collect(Collectors.toList());
-      resultBuilder.setMatchesStorageClass(storageClasses);
+          .map(ApiConversions::toGcsApi)
+          .collect(Collectors.toList()));
 
       return resultBuilder.build();
     }
