@@ -584,7 +584,7 @@ paths:
 
   /api/job/v1/jobs/{workspaceId}:
     parameters:
-    - name: id
+    - name: workspaceId
       in: path
       description: The unique id provided in JobControl to the async endpoint
       required: true
@@ -665,7 +665,7 @@ paths:
 components:
   parameters:
     WorkspaceId:
-      name: id
+      name: workspaceId
       in: path
       description: A UUID to used to identify an object in the workspace manager
       required: true
