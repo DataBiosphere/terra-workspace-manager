@@ -26,13 +26,15 @@ public class ControlledResourceFixtures {
       new GoogleBucketLifecycleRule()
           .action(
               new GoogleBucketLifecycleRuleAction()
-                  .storageClass(GoogleBucketDefaultStorageClass.COLDLINE)
-                  .type(GoogleBucketLifecycleRuleActionType.DELETE))
+                  .type(
+                      GoogleBucketLifecycleRuleActionType
+                          .DELETE)) // no storage class require for delete actions
           .condition(
               new GoogleBucketLifecycleRuleCondition()
                   .age(64)
-                  .isLive(true)
-                  .addMatchesStorageClassItem(GoogleBucketDefaultStorageClass.ARCHIVE));
+                  .live(true)
+                  .addMatchesStorageClassItem(GoogleBucketDefaultStorageClass.ARCHIVE)
+                  .numNewerVersions(2));
 
   public static final GoogleBucketLifecycleRule LIFECYCLE_RULE_2 =
       new GoogleBucketLifecycleRule()
@@ -47,10 +49,12 @@ public class ControlledResourceFixtures {
   // list must not be immutable if deserialization is to work
   public static final List<GoogleBucketLifecycleRule> LIFECYCLE_RULES =
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
+  public static final String BUCKET_NAME = "my-bucket";
+  public static final String BUCKET_LOCATION = "US-CENTRAL1";
   public static final GoogleBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS =
       new GoogleBucketCreationParameters()
-          .name("my-bucket")
-          .location("US-CENTRAL1")
+          .name(BUCKET_NAME)
+          .location(BUCKET_LOCATION)
           .defaultStorageClass(GoogleBucketDefaultStorageClass.STANDARD)
           .lifecycle(new GoogleBucketLifecycle().rules(LIFECYCLE_RULES));
 

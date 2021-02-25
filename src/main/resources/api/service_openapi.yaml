@@ -1357,7 +1357,7 @@ components:
             Relevant only for versioned objects. This condition is satisfied when an object has
             been noncurrent for more than the specified number of days.
           type: integer
-        isLive:
+        live:
           description: >-
             Relevant only for versioned objects. If the value is true, this condition matches the
             live version of objects; if the value is false, it matches noncurrent versions of objects.
