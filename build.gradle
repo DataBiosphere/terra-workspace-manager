@@ -1,4 +1,4 @@
-plugins {
+ plugins {
 	id "idea"
 	id "java"
 
@@ -15,7 +15,7 @@ sourceCompatibility = JavaVersion.VERSION_11
 
 allprojects {
 	group = "bio.terra"
-	version = "0.13.0-SNAPSHOT"
+	version = "0.14.0-SNAPSHOT"
 	ext {
 		artifactGroup = "${group}.workspace"
 		swaggerOutputDir = "${buildDir}/swagger-code"
@@ -29,7 +29,7 @@ allprojects {
 			mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
 		}
 		dependencies {
-			dependencySet(group: "io.opencensus", version: "0.28.+") {
+			dependencySet(group: "io.opencensus", version: "0.28.2") {
 				entry "opencensus-exporter-trace-stackdriver"
 				entry "opencensus-api"
 				entry "opencensus-contrib-spring"
@@ -69,7 +69,7 @@ dependencies {
 	// Terra deps
 	implementation group: "bio.terra", name: "datarepo-client", version: "1.0.1-SNAPSHOT"
 	implementation group: "bio.terra", name: "stairway", version: "0.0.40-SNAPSHOT"
-	implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.18-SNAPSHOT"
+	implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.17-SNAPSHOT"
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-billing', version: '0.4.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery', version: '0.4.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager', version: '0.4.0'
@@ -83,6 +83,7 @@ dependencies {
 	implementation group: "com.google.guava", name:"guava", version: "30.0-jre"
 	implementation group: "org.hashids", name: "hashids", version: "1.0.3"
 	implementation group: "org.liquibase", name: "liquibase-core", version: "4.2.1"
+	implementation group: "org.springframework.cloud", name: "spring-cloud-gcp-starter-logging", version: "1.2.6.RELEASE"
 	implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
 	runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.2.18"
 
