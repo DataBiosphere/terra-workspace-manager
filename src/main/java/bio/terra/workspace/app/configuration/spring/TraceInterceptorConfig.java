@@ -6,6 +6,7 @@ import io.opencensus.trace.Tracing;
 import io.opencensus.trace.config.TraceConfig;
 import io.opencensus.trace.samplers.Samplers;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -41,20 +42,30 @@ public class TraceInterceptorConfig implements WebMvcConfigurer {
           @Override
           public boolean preHandle(
               HttpServletRequest httpRequest, HttpServletResponse httpResponse, Object handler) {
-            Tracing.getTracer()
-                .getCurrentSpan()
-                .putAttributes(
-                    Map.of(
-                        "requestId",
-                        AttributeValue.stringAttributeValue(MDC.get("requestId")),
-                        "route",
-                        AttributeValue.stringAttributeValue(
-                            Arrays.stream(
-                                    ((HandlerMethod) handler)
-                                        .getMethodAnnotation(RequestMapping.class)
-                                        .path())
-                                .findFirst()
-                                .orElse("unknown"))));
+
+            Map<String, AttributeValue> attributes = new HashMap<>();
+            if (MDC.get("requestId") != null) {
+              // requestId is placed into the MDC context via RequestIdFilter from terra-common-lib.
+              attributes.put(
+                  "requestId", AttributeValue.stringAttributeValue(MDC.get("requestId")));
+            }
+            if (handler instanceof HandlerMethod) {
+              // Spring controller methods will have a HandlerMethod handler with a more meaningful
+              // route value.
+              attributes.put(
+                  "route",
+                  AttributeValue.stringAttributeValue(
+                      Arrays.stream(
+                              ((HandlerMethod) handler)
+                                  .getMethodAnnotation(RequestMapping.class)
+                                  .path())
+                          .findFirst()
+                          .orElse("unknown")));
+            }
+
+            // Apply all custom attributes to the current span, which is typically the HTTP request
+            // span auto-created by OpenCensus' Spring Tracing module.
+            Tracing.getTracer().getCurrentSpan().putAttributes(attributes);
             return true;
           }
         });
