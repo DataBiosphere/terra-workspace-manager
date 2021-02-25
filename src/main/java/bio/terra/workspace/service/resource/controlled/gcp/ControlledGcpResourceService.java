@@ -11,7 +11,6 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceDbModel
 import bio.terra.workspace.service.resource.controlled.flight.CreateControlledResourceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -24,8 +23,8 @@ public class ControlledGcpResourceService {
   private final ControlledResourceDao controlledResourceDao;
 
   @Autowired
-  public ControlledGcpResourceService(JobService jobService,
-      ControlledResourceDao controlledResourceDao) {
+  public ControlledGcpResourceService(
+      JobService jobService, ControlledResourceDao controlledResourceDao) {
     this.jobService = jobService;
     this.controlledResourceDao = controlledResourceDao;
   }
@@ -49,13 +48,19 @@ public class ControlledGcpResourceService {
 
   /**
    * Retrieve the bucket metadata from the DAO(s)
+   *
    * @param workspaceId - workspace containing this bucket
    * @param resourceId - resource ID for the bucket
    * @return attributes we store about this bucket (i.e. its name)
    */
   public GoogleBucketStoredAttributes getBucket(UUID workspaceId, UUID resourceId) {
-    final ControlledResourceDbModel model = controlledResourceDao.getControlledResource(resourceId)
-        .orElseThrow(() -> new ControlledResourceNotFoundException(String.format("Resource with ID %s not found", resourceId.toString())));
+    final ControlledResourceDbModel model =
+        controlledResourceDao
+            .getControlledResource(resourceId)
+            .orElseThrow(
+                () ->
+                    new ControlledResourceNotFoundException(
+                        String.format("Resource with ID %s not found", resourceId.toString())));
     return ControlledGcsBucketResource.attributesToOutputApiModel(model.getAttributes());
   }
 }
