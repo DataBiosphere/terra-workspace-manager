@@ -288,10 +288,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  // @EnabledIfEnvironmentVariable(named = "TEST_ENV", matches = "dev")
+  @EnabledIfEnvironmentVariable(named = "TEST_ENV", matches = "dev")
   void deleteWorkspaceWithGoogleContext() throws Exception {
-    System.out.println("TEST_ENV");
-    System.out.println(System.getenv("TEST_ENV"));
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())
             .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
