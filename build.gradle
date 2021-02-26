@@ -203,10 +203,7 @@ task unitTest(type: Test) {
 }
 
 task connectedTest(type: Test) {
-	environment = [
-			'TEST_ENV': System.getenv("TEST_ENV"),
-			'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
-	]
+	environment.put('TEST_ENV', System.getenv("TEST_ENV"))
 	useJUnitPlatform {
 		includeTags "connected"
 	}
@@ -218,10 +215,7 @@ task connectedTest(type: Test) {
 
 
 task integrationTest(type: Test) {
-	environment = [
-			'TEST_ENV': System.getenv("TEST_ENV"),
-			'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
-	]
+	environment.put('TEST_ENV', System.getenv("TEST_ENV"))
 	useJUnitPlatform {
 		includeTags "integration"
 	}
