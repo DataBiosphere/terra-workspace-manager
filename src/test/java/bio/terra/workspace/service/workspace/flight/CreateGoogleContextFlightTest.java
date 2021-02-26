@@ -141,7 +141,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
    * CustomGcpIamRoleMapping}
    */
   private void assertRolesExist(Project project) throws IOException {
-    for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.customIamRoles) {
+    for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES) {
       String fullRoleName =
           "projects/" + project.getProjectId() + "/roles/" + customRole.getRoleName();
       Role gcpRole = crl.getIamCow().projects().roles().get(fullRoleName).execute();

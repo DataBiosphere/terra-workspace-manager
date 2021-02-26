@@ -3,6 +3,7 @@ package bio.terra.workspace.service.iam;
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.resource.controlled.WsmResourceType;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * This class specifies a static list of all GCP custom IAM roles that will be created in Workspace
@@ -15,20 +16,20 @@ import com.google.common.collect.ImmutableList;
  * contexts, but WSM will not retroactively apply changes to existing projects.
  */
 public class CustomGcpIamRoleMapping {
-  private static final ImmutableList<String> gcsBucketReaderPermissions =
+  private static final ImmutableList<String> GCS_BUCKET_READER_PERMISSIONS =
       ImmutableList.of("storage.objects.list", "storage.objects.get");
-  private static final ImmutableList<String> gcsBucketWriterPermissions =
+  private static final ImmutableList<String> GCS_BUCKET_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
-          .addAll(gcsBucketReaderPermissions)
+          .addAll(GCS_BUCKET_READER_PERMISSIONS)
           .add("storage.objects.create", "storage.objects.delete")
           .build();
-  private static final ImmutableList<String> gcsBucketOwnerPermissions =
+  private static final ImmutableList<String> GCS_BUCKET_OWNER_PERMISSIONS =
       new ImmutableList.Builder<String>()
-          .addAll(gcsBucketWriterPermissions)
+          .addAll(GCS_BUCKET_WRITER_PERMISSIONS)
           .add("storage.buckets.get")
           .build();
 
-  private static final ImmutableList<String> bigqueryDatasetReaderPermissions =
+  private static final ImmutableList<String> BIGQUERY_DATASET_READER_PERMISSIONS =
       ImmutableList.of(
           "bigquery.datasets.get",
           "bigquery.jobs.create",
@@ -41,9 +42,9 @@ public class CustomGcpIamRoleMapping {
           "bigquery.tables.export",
           "bigquery.tables.getData",
           "bigquery.tables.list");
-  private static final ImmutableList<String> bigqueryDatasetWriterPermissions =
+  private static final ImmutableList<String> BIGQUERY_DATASET_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
-          .addAll(bigqueryDatasetReaderPermissions)
+          .addAll(BIGQUERY_DATASET_READER_PERMISSIONS)
           .add(
               "bigquery.models.create",
               "bigquery.models.delete",
@@ -54,9 +55,9 @@ public class CustomGcpIamRoleMapping {
               "bigquery.routines.update",
               "bigquery.tables.updateData")
           .build();
-  private static final ImmutableList<String> bigqueryDatasetOwnerPermissions =
+  private static final ImmutableList<String> BIGQUERY_DATASET_OWNER_PERMISSIONS =
       new ImmutableList.Builder<String>()
-          .addAll(bigqueryDatasetWriterPermissions)
+          .addAll(BIGQUERY_DATASET_WRITER_PERMISSIONS)
           .add(
               "bigquery.datasets.getIamPolicy",
               "bigquery.tables.create",
@@ -64,18 +65,22 @@ public class CustomGcpIamRoleMapping {
               "bigquery.tables.update")
           .build();
 
-  public static final ImmutableList<CustomGcpIamRole> customIamRoles =
-      ImmutableList.of(
+  public static final ImmutableSet<CustomGcpIamRole> CUSTOM_GCP_IAM_ROLES =
+      ImmutableSet.of(
           new CustomGcpIamRole(
-              WsmResourceType.GCS_BUCKET, IamRole.READER, gcsBucketReaderPermissions),
+              WsmResourceType.GCS_BUCKET, IamRole.READER, GCS_BUCKET_READER_PERMISSIONS),
           new CustomGcpIamRole(
-              WsmResourceType.GCS_BUCKET, IamRole.WRITER, gcsBucketWriterPermissions),
+              WsmResourceType.GCS_BUCKET, IamRole.WRITER, GCS_BUCKET_WRITER_PERMISSIONS),
           new CustomGcpIamRole(
-              WsmResourceType.GCS_BUCKET, IamRole.OWNER, gcsBucketOwnerPermissions),
+              WsmResourceType.GCS_BUCKET, IamRole.OWNER, GCS_BUCKET_OWNER_PERMISSIONS),
           new CustomGcpIamRole(
-              WsmResourceType.BIGQUERY_DATASET, IamRole.READER, bigqueryDatasetReaderPermissions),
+              WsmResourceType.BIGQUERY_DATASET,
+              IamRole.READER,
+              BIGQUERY_DATASET_READER_PERMISSIONS),
           new CustomGcpIamRole(
-              WsmResourceType.BIGQUERY_DATASET, IamRole.WRITER, bigqueryDatasetWriterPermissions),
+              WsmResourceType.BIGQUERY_DATASET,
+              IamRole.WRITER,
+              BIGQUERY_DATASET_WRITER_PERMISSIONS),
           new CustomGcpIamRole(
-              WsmResourceType.BIGQUERY_DATASET, IamRole.OWNER, bigqueryDatasetOwnerPermissions));
+              WsmResourceType.BIGQUERY_DATASET, IamRole.OWNER, BIGQUERY_DATASET_OWNER_PERMISSIONS));
 }

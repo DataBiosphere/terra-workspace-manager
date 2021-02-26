@@ -29,7 +29,7 @@ public class CreateCustomGcpRolesStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
-    for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.customIamRoles) {
+    for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES) {
       try {
         Role gcpRole = new Role().setIncludedPermissions(customRole.getIncludedPermissions());
         CreateRoleRequest request =
