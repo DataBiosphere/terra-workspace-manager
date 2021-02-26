@@ -47,8 +47,9 @@ public class ControlledGcpResourceService {
   }
 
   /**
-   * Retrieve the bucket metadata from the DAO(s) TODO(PF-413) - check with SAM for readability on
-   * this resource
+   * Retrieve the bucket metadata from the DAO(s)
+   *
+   * <p>TODO(PF-413) - check with SAM for readability on this resource
    *
    * @param workspaceId - workspace containing this bucket
    * @param resourceId - resource ID for the bucket
