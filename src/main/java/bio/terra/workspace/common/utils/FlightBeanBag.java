@@ -9,7 +9,6 @@ import bio.terra.workspace.service.iam.SamService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * The purpose of FlightBeanBag is to provide a clean interface for flights to get access to
@@ -25,7 +24,6 @@ public class FlightBeanBag {
   private final DataReferenceDao dataReferenceDao;
   private final ObjectMapper objectMapper;
   private final SamService samService;
-  private final TransactionTemplate transactionTemplate;
   private final WorkspaceDao workspaceDao;
   private final ControlledResourceDao controlledResourceDao;
 
@@ -36,7 +34,6 @@ public class FlightBeanBag {
       DataReferenceDao dataReferenceDao,
       ObjectMapper objectMapper,
       SamService samService,
-      TransactionTemplate transactionTemplate,
       WorkspaceDao workspaceDao,
       ControlledResourceDao controlledResourceDao) {
     this.bufferService = bufferService;
@@ -44,7 +41,6 @@ public class FlightBeanBag {
     this.dataReferenceDao = dataReferenceDao;
     this.objectMapper = objectMapper;
     this.samService = samService;
-    this.transactionTemplate = transactionTemplate;
     this.workspaceDao = workspaceDao;
     this.controlledResourceDao = controlledResourceDao;
   }
@@ -71,10 +67,6 @@ public class FlightBeanBag {
 
   public SamService getSamService() {
     return samService;
-  }
-
-  public TransactionTemplate getTransactionTemplate() {
-    return transactionTemplate;
   }
 
   public WorkspaceDao getWorkspaceDao() {
