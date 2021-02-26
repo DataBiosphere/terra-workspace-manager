@@ -1,7 +1,7 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.workspace.common.exception.ValidationException;
-import bio.terra.workspace.generated.model.CloudContextType;
+import bio.terra.workspace.generated.model.CloudContext;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
@@ -74,8 +74,8 @@ public final class ControllerValidationUtils {
   }
 
   /** Validate that a user is requesting a valid cloud for adding workspace context. */
-  public static void validateCloudType(CloudContextType context) {
-    if (context != CloudContextType.GOOGLE) {
+  public static void validateCloudType(CloudContext context) {
+    if (context != CloudContext.GOOGLE) {
       throw new ValidationException(
           "Invalid cloud context. Currently, only Google contexts are supported.");
     }

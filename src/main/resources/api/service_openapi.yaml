@@ -504,10 +504,10 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/cloudcontexts/{cloudContextType}:
+  /api/workspaces/v1/{id}/cloudcontexts/{cloudContext}:
     parameters:
     - $ref: '#/components/parameters/Id'
-    - $ref: '#/components/parameters/CloudContextType'
+    - $ref: '#/components/parameters/CloudContext'
     delete:
       summary: Deletes a cloud context and all of its data from a workspace.
       operationId: deleteCloudContext
@@ -740,13 +740,13 @@ components:
       schema:
         type: string
 
-    CloudContextType:
-      name: cloudContextType
+    CloudContext:
+      name: cloudContext
       in: path
       description: A cloud which holds context for a workspace.
       required: true
       schema:
-        $ref: '#/components/schemas/CloudContextType'
+        $ref: '#/components/schemas/CloudContext'
 
   schemas:
     ErrorReport:
@@ -921,7 +921,7 @@ components:
       # to use.
       enum: ['DATA_REPO_SNAPSHOT', 'PLACEHOLDER_VALUE'] #eventually include GCS bucket, etc.
 
-    CloudContextType:
+    CloudContext:
       type: string
       description: Enum representing a cloud type.
       enum: ['GOOGLE']
@@ -934,7 +934,7 @@ components:
         Contains the requested CloudContext enum and JobControl object.
       properties:
         cloudType:
-          $ref: '#/components/schemas/CloudContextType'
+          $ref: '#/components/schemas/CloudContext'
         jobControl:
           $ref: '#/components/schemas/JobControl'
 

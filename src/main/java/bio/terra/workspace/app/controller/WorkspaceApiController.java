@@ -2,7 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
-import bio.terra.workspace.generated.model.CloudContextType;
+import bio.terra.workspace.generated.model.CloudContext;
 import bio.terra.workspace.generated.model.CreateCloudContextRequest;
 import bio.terra.workspace.generated.model.CreateCloudContextResult;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
@@ -405,7 +405,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<Void> deleteCloudContext(UUID id, CloudContextType cloudContext) {
+  public ResponseEntity<Void> deleteCloudContext(UUID id, CloudContext cloudContext) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ControllerValidationUtils.validateCloudType(cloudContext);
     workspaceService.deleteGcpCloudContext(id, userReq);

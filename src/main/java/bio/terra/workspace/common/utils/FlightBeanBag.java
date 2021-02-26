@@ -8,7 +8,6 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -18,9 +17,6 @@ import org.springframework.transaction.support.TransactionTemplate;
  * the lookup result. Instead, flights make calls to accessors in this class. Spring will wire up
  * the underlying methods once at startup avoiding the bean lookup. The objects will be properly
  * types without casting.
- *
- * <p>We mark the component @Lazy, otherwise it becomes a source of cyclical dependencies as Spring
- * tries to start up the application.
  */
 @Component
 public class FlightBeanBag {
@@ -35,14 +31,14 @@ public class FlightBeanBag {
 
   @Autowired
   public FlightBeanBag(
-      @Lazy BufferService bufferService,
-      @Lazy CrlService crlService,
-      @Lazy DataReferenceDao dataReferenceDao,
-      @Lazy ObjectMapper objectMapper,
-      @Lazy SamService samService,
-      @Lazy TransactionTemplate transactionTemplate,
-      @Lazy WorkspaceDao workspaceDao,
-      @Lazy ControlledResourceDao controlledResourceDao) {
+      BufferService bufferService,
+      CrlService crlService,
+      DataReferenceDao dataReferenceDao,
+      ObjectMapper objectMapper,
+      SamService samService,
+      TransactionTemplate transactionTemplate,
+      WorkspaceDao workspaceDao,
+      ControlledResourceDao controlledResourceDao) {
     this.bufferService = bufferService;
     this.crlService = crlService;
     this.dataReferenceDao = dataReferenceDao;
