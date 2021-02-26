@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 /**
  * Internal representation of a Workspace.
@@ -80,6 +82,38 @@ public class Workspace {
   /** Optional GCP cloud context */
   public Optional<GcpCloudContext> getGcpCloudContext() {
     return Optional.ofNullable(gcpCloudContext);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+
+    if (o == null || getClass() != o.getClass()) return false;
+
+    Workspace workspace = (Workspace) o;
+
+    return new EqualsBuilder()
+        .append(workspaceId, workspace.workspaceId)
+        .append(displayName, workspace.displayName)
+        .append(description, workspace.description)
+        .append(spendProfileId, workspace.spendProfileId)
+        .append(properties, workspace.properties)
+        .append(workspaceStage, workspace.workspaceStage)
+        .append(gcpCloudContext, workspace.gcpCloudContext)
+        .isEquals();
+  }
+
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder(17, 37)
+        .append(workspaceId)
+        .append(displayName)
+        .append(description)
+        .append(spendProfileId)
+        .append(properties)
+        .append(workspaceStage)
+        .append(gcpCloudContext)
+        .toHashCode();
   }
 
   public static Builder builder() {

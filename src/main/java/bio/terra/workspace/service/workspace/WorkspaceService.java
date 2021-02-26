@@ -12,7 +12,6 @@ import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
-import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
@@ -21,7 +20,6 @@ import bio.terra.workspace.service.workspace.flight.DeleteGoogleContextFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.model.CloudType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -133,25 +131,14 @@ public class WorkspaceService {
   /**
    * Start a job to create a Google cloud context for the workspace. Returns the job id. Verifies
    * workspace existence and write permission before starting the job.
-   *
-   * <p>This method is setup to dispatch by cloud type, but the only cloud type that makes it
-   * through the controller validation is GCP.
    */
   @Traced
-  public void createCloudContext(
-      UUID workspaceId,
-      CloudType cloudType,
-      String jobId,
-      String resultPath,
-      AuthenticatedUserRequest userReq) {
-
-    if (cloudType != CloudType.GCP) {
-      throw new InternalLogicException("Should be unreachable");
-    }
+  public void createGcpCloudContext(
+      UUID workspaceId, String jobId, String resultPath, AuthenticatedUserRequest userReq) {
 
     if (!bufferServiceConfiguration.getEnabled()) {
       throw new BufferServiceDisabledException(
-          "Cannot create a gcp context in an environment where buffer service is disabled or not configured.");
+          "Cannot create a GCP context in an environment where buffer service is disabled or not configured.");
     }
 
     Workspace workspace =
@@ -185,29 +172,23 @@ public class WorkspaceService {
   }
 
   /**
-   * Delete a cloud context for the workspace. Verifies workspace existence and write permission
-   * before deleting the cloud context.
+   * Delete the GCP cloud context for the workspace. Verifies workspace existence and write
+   * permission before deleting the cloud context.
    */
   @Traced
-  public void deleteCloudContext(
-      UUID workspaceId, CloudType cloudType, AuthenticatedUserRequest userReq) {
+  public void deleteGcpCloudContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     Workspace workspace =
         validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
-    assertMcWorkspace(workspace, "deleteGoogleContext");
+    assertMcWorkspace(workspace, "deleteGcpCloudContext");
     jobService
         .newJob(
-            "Delete Google Context " + workspaceId,
+            "Delete GCP Context " + workspaceId,
             UUID.randomUUID().toString(),
             DeleteGoogleContextFlight.class,
             /* request= */ null,
             userReq)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
         .submitAndWait(null);
-  }
-
-  public void assertMcWorkspace(UUID workspaceId, String actionMessage) {
-    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
-    assertMcWorkspace(workspace, actionMessage);
   }
 
   private void assertMcWorkspace(Workspace workspace, String actionMessage) {

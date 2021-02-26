@@ -4,11 +4,14 @@ import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.app.configuration.spring.TraceInterceptorConfig;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,14 +43,14 @@ import org.springframework.stereotype.Component;
 public class SamService {
   private final SamConfiguration samConfig;
   private final ObjectMapper objectMapper;
-  private final WorkspaceService workspaceService;
+  private final WorkspaceDao workspaceDao;
 
   @Autowired
   public SamService(
-      SamConfiguration samConfig, ObjectMapper objectMapper, WorkspaceService workspaceService) {
+      SamConfiguration samConfig, ObjectMapper objectMapper, WorkspaceDao workspaceDao) {
     this.samConfig = samConfig;
     this.objectMapper = objectMapper;
-    this.workspaceService = workspaceService;
+    this.workspaceDao = workspaceDao;
   }
 
   private final Logger logger = LoggerFactory.getLogger(SamService.class);
@@ -157,7 +160,7 @@ public class SamService {
   @Traced
   public void grantWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
-    workspaceService.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
+    assertMcWorkspace(workspaceId, "grantWorkspaceRole");
     workspaceAuthzOnly(userReq, workspaceId, samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
@@ -180,7 +183,7 @@ public class SamService {
   @Traced
   public void removeWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
-    workspaceService.assertMcWorkspace(workspaceId, "removeWorkspaceRole");
+    assertMcWorkspace(workspaceId, "removeWorkspaceRole");
     workspaceAuthzOnly(userReq, workspaceId, samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
@@ -201,7 +204,7 @@ public class SamService {
    */
   @Traced
   public List<RoleBinding> listRoleBindings(UUID workspaceId, AuthenticatedUserRequest userReq) {
-    workspaceService.assertMcWorkspace(workspaceId, "listRoleBindings");
+    assertMcWorkspace(workspaceId, "listRoleBindings");
     workspaceAuthzOnly(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_IAM_ACTION);
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
@@ -319,5 +322,15 @@ public class SamService {
   /** Returns the Sam action for modifying a given IAM role. */
   private String samActionToModifyRole(IamRole role) {
     return String.format("share_policy::%s", role.toSamRole());
+  }
+
+  // You might think this method should live in WorkspaceService. You would be wrong, though,
+  // because that causes a cycle in the autowire dependencies and the application doesn't start.
+  private void assertMcWorkspace(UUID workspaceId, String actionMessage) {
+    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
+    if (!WorkspaceStage.MC_WORKSPACE.equals(workspace.getWorkspaceStage())) {
+      throw new StageDisabledException(
+          workspace.getWorkspaceId(), workspace.getWorkspaceStage(), actionMessage);
+    }
   }
 }

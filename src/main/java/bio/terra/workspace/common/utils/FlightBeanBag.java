@@ -6,9 +6,9 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -18,6 +18,9 @@ import org.springframework.transaction.support.TransactionTemplate;
  * the lookup result. Instead, flights make calls to accessors in this class. Spring will wire up
  * the underlying methods once at startup avoiding the bean lookup. The objects will be properly
  * types without casting.
+ *
+ * <p>We mark the component @Lazy, otherwise it becomes a source of cyclical dependencies as Spring
+ * tries to start up the application.
  */
 @Component
 public class FlightBeanBag {
@@ -28,20 +31,18 @@ public class FlightBeanBag {
   private final SamService samService;
   private final TransactionTemplate transactionTemplate;
   private final WorkspaceDao workspaceDao;
-  private final WorkspaceService workspaceService;
   private final ControlledResourceDao controlledResourceDao;
 
   @Autowired
   public FlightBeanBag(
-      BufferService bufferService,
-      CrlService crlService,
-      DataReferenceDao dataReferenceDao,
-      ObjectMapper objectMapper,
-      SamService samService,
-      TransactionTemplate transactionTemplate,
-      WorkspaceDao workspaceDao,
-      WorkspaceService workspaceService,
-      ControlledResourceDao controlledResourceDao) {
+      @Lazy BufferService bufferService,
+      @Lazy CrlService crlService,
+      @Lazy DataReferenceDao dataReferenceDao,
+      @Lazy ObjectMapper objectMapper,
+      @Lazy SamService samService,
+      @Lazy TransactionTemplate transactionTemplate,
+      @Lazy WorkspaceDao workspaceDao,
+      @Lazy ControlledResourceDao controlledResourceDao) {
     this.bufferService = bufferService;
     this.crlService = crlService;
     this.dataReferenceDao = dataReferenceDao;
@@ -49,7 +50,6 @@ public class FlightBeanBag {
     this.samService = samService;
     this.transactionTemplate = transactionTemplate;
     this.workspaceDao = workspaceDao;
-    this.workspaceService = workspaceService;
     this.controlledResourceDao = controlledResourceDao;
   }
 
@@ -83,10 +83,6 @@ public class FlightBeanBag {
 
   public WorkspaceDao getWorkspaceDao() {
     return workspaceDao;
-  }
-
-  public WorkspaceService getWorkspaceService() {
-    return workspaceService;
   }
 
   public ControlledResourceDao getControlledResourceDao() {

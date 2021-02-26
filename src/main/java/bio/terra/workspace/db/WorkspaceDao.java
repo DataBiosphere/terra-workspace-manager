@@ -13,6 +13,7 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
@@ -37,8 +38,9 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Component
 public class WorkspaceDao {
-  // Serializing format of the GCP cloud context
-  private static final long GCP_CLOUD_CONTEXT_DB_VERSION = 1;
+  /** Serializing format of the GCP cloud context */
+  @VisibleForTesting static final long GCP_CLOUD_CONTEXT_DB_VERSION = 1;
+
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final ObjectMapper persistenceObjectMapper;
   private final DbUtil dbUtil;
@@ -130,8 +132,9 @@ public class WorkspaceDao {
     String sql =
         "SELECT W.workspace_id, W.display_name, W.description, W.spend_profile,"
             + " W.properties, W.workspace_stage, C.context"
-            + " FROM workspace W LEFT OUTER cloud_context C"
-            + " OVER W.workspace_id = :id AND W.workspace_id = C.workspace_id AND C.cloud_type = 'GCP'";
+            + " FROM workspace W LEFT JOIN cloud_context C"
+            + " ON W.workspace_id = C.workspace_id"
+            + " WHERE W.workspace_id = :id AND (C.cloud_type = 'GCP' OR C.cloud_type IS NULL)";
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id.toString());
     try {
       Workspace result =
@@ -177,7 +180,7 @@ public class WorkspaceDao {
       readOnly = true)
   public Optional<GcpCloudContext> getGcpCloudContext(UUID workspaceId) {
     String sql =
-        "SELECT context FROM workspace_cloud_context "
+        "SELECT context FROM cloud_context "
             + "WHERE workspace_id = :workspace_id AND cloud_type = :cloud_type";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
@@ -204,8 +207,8 @@ public class WorkspaceDao {
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public void createGcpCloudContext(UUID workspaceId, GcpCloudContext cloudContext) {
     final String sql =
-        "INSERT INTO workspace_cloud_context (workspace_id, cloud_type, context)"
-            + " VALUES (:context_id, :workspace_id, :cloud_type, :context::json)";
+        "INSERT INTO cloud_context (workspace_id, cloud_type, context)"
+            + " VALUES (:workspace_id, :cloud_type, :context::json)";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
@@ -247,15 +250,17 @@ public class WorkspaceDao {
     }
   }
 
+  // -- serdes for GcpCloudContext --
+
   private void deleteGcpCloudContextWorker(UUID workspaceId) {
     final String sql =
-        "DELETE FROM workspace_cloud_context "
+        "DELETE FROM cloud_context "
             + "WHERE workspace_id = :workspace_id AND cloud_type = :cloud_type";
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_type", CloudType.GCP);
+            .addValue("cloud_type", CloudType.GCP.toString());
 
     int rowsAffected = jdbcTemplate.update(sql, params);
     boolean deleted = rowsAffected > 0;
@@ -267,24 +272,24 @@ public class WorkspaceDao {
     }
   }
 
-  // -- serdes for GcpCloudContext --
-
-  private String serializeGcpCloudContext(GcpCloudContext gcpCloudContext) {
+  @VisibleForTesting
+  String serializeGcpCloudContext(GcpCloudContext gcpCloudContext) {
     GcpCloudContextV1 dbContext = GcpCloudContextV1.from(gcpCloudContext.getGcpProjectId());
     try {
-      return persistenceObjectMapper.writeValueAsString(this);
+      return persistenceObjectMapper.writeValueAsString(dbContext);
     } catch (JsonProcessingException e) {
       throw new SerializationException("Failed to serialize GcpCloudContextV1", e);
     }
   }
 
-  private GcpCloudContext deserializeGcpCloudContext(String json) {
+  @VisibleForTesting
+  GcpCloudContext deserializeGcpCloudContext(String json) {
     try {
       GcpCloudContextV1 result = persistenceObjectMapper.readValue(json, GcpCloudContextV1.class);
       if (result.version != GCP_CLOUD_CONTEXT_DB_VERSION) {
         throw new InvalidSerializedVersionException("Invalid serialized version");
       }
-      return new GcpCloudContext(result.googleProjectId);
+      return new GcpCloudContext(result.gcpProjectId);
     } catch (JsonProcessingException e) {
       throw new SerializationException("Failed to serialize GcpCloudContextV1", e);
     }
@@ -294,11 +299,11 @@ public class WorkspaceDao {
     /** Version marker to store in the db so that we can update the format later if we need to. */
     @JsonProperty final long version = GCP_CLOUD_CONTEXT_DB_VERSION;
 
-    @JsonProperty String googleProjectId;
+    @JsonProperty String gcpProjectId;
 
     public static GcpCloudContextV1 from(String googleProjectId) {
       GcpCloudContextV1 result = new GcpCloudContextV1();
-      result.googleProjectId = googleProjectId;
+      result.gcpProjectId = googleProjectId;
       return result;
     }
   }

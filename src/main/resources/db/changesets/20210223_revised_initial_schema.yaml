@@ -50,15 +50,6 @@ databaseChangeLog:
         tableName: cloud_context
         columns:
           - column:
-              name: context_id
-              type: text
-              constraints:
-                nullable: false
-                unique: true
-              remarks: |
-                We give each cloud context a unique id. That lets us prevent an undo of a
-                context creation from deleting an existing cloud context.
-          - column:
               name: workspace_id
               type: text
               constraints:
@@ -82,13 +73,65 @@ databaseChangeLog:
               remarks: |
                 JSON form of the information for the specific cloud context
                 
-
     - addPrimaryKey:
         columnNames: workspace_id, cloud_type
         tableName: cloud_context
         constraintName: pk_cloud_context
         remarks: |
           Define the PK separately so that we control the order of the columns
+
+    - createTable:
+        tableName: application
+        remarks: |
+          The application table lists all integrated applications configured in the
+          current Terra deployment.
+        columns:
+          - column:
+              name: application_id
+              type: text
+              constraints:
+                primaryKey: true
+                nullable: false
+          - column:
+              name: name
+              type: text
+          - column:
+              name: description
+              type: text
+          - column:
+              name: service_account
+              type: text
+              constraints:
+                nullable: false
+                unique: true
+              remarks: |
+                Each application must have a unique service account. That SA is used to
+                grant the application access to a specific workspace.
+
+    - createTable:
+        tableName: enabled_application
+        remarks: |
+          Workspaces may enable a subset of the available applications. This table maps
+          a workspace to and application it has enabled.
+        columns:
+          - column:
+              name: workspace_id
+              type: text
+              constraints:
+                references: workspace(workspace_id)
+                foreignKeyName: fk_enabled_application_workspace_id
+                nullable: false
+                deleteCascade: true
+              remarks: |
+                Deletion of a workspace will cascade to delete the mapping to the
+                workspace's enabled applications.
+          - column:
+              name: application_id
+              type: text
+              constraints:
+                references: application(application_id)
+                foreignKeyName: fk_enabled_application_application_id
+                nullable: false
 
     - createTable:
         tableName: resource
@@ -163,6 +206,7 @@ databaseChangeLog:
                 metadata.
 
     - addForeignKeyConstraint:
+        constraintName: fk_resource_cloud_context
         baseColumnNames: workspace_id, cloud_type
         baseTableName: resource
         referencedColumnNames: workspace_id, cloud_type
@@ -177,7 +221,7 @@ databaseChangeLog:
     - addUniqueConstraint:
         constraintName: unique_resource_name
         tableName: resource
-        columnNames: workspaceId, name
+        columnNames: workspace_id, name
         deferrable: true
         remarks: |
           Resource names must be unique within a workspace
@@ -191,7 +235,8 @@ databaseChangeLog:
               name: resource_id
               type: text
               constraints:
-                references: resource(workspace_id)
+                primaryKey: true
+                references: resource(resource_id)
                 foreignKeyName: fk_controlled_resource_id
                 nullable: false
                 deleteCascade: true
@@ -223,58 +268,6 @@ databaseChangeLog:
                 It MAY be filled in, if a user is currently assigned, for USER_PRIVATE
                 and APP_PRIVATE access.
 
-    - createTable:
-        tableName: application
-        remarks: |
-          The application table lists all integrated applications configured in the
-          current Terra deployment.
-        columns:
-          - column:
-              name: application_id
-              type: text
-              constraints:
-                primaryKey: true
-                nullable: false
-          - column:
-              name: name
-              type: text
-          - column:
-              name: description
-              type: text
-          - column:
-              name: service_account
-              type: text
-              constraints:
-                nullable: false
-                unique: true
-              remarks: |
-                Each application must have a unique service account. That SA is used to
-                grant the application access to a specific workspace.
-
-    - createTable:
-        tableName: enabled_application
-        remarks: |
-          Workspaces may enable a subset of the available applications. This table maps
-          a workspace to and application it has enabled.
-        columns:
-          - column:
-              name: workspace_id
-              type: text
-              constraints:
-                references: workspace(workspace_id)
-                foreignKeyName: fk_enabled_application_workspace_id
-                nullable: false
-                deleteCascade: true
-              remarks: |
-                Deletion of a workspace will cascade to delete the mapping to the
-                workspace's enabled applications.
-          - column:
-              name: application_id
-              type: text
-              constraints:
-                references: application(application_id)
-                foreignKeyName: fk_enabled_application_application_id
-                nullable: false
 
 
 

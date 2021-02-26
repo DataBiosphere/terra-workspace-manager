@@ -12,10 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.annotation.DirtiesContext.ClassMode;
 
-@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 public class ControlledResourceDaoTest extends BaseUnitTest {
   private static final UUID WORKSPACE_ID = UUID.fromString("00000000-fcf0-4981-bb96-6b8dd634e7c0");
   private static final UUID RESOURCE_ID = UUID.fromString("11111111-fcf0-4981-bb96-6b8dd634e7c0");
@@ -24,7 +21,7 @@ public class ControlledResourceDaoTest extends BaseUnitTest {
   public static final Workspace WORKSPACE =
       Workspace.builder()
           .workspaceId(WORKSPACE_ID)
-          .spendProfileId(Optional.of(SPEND_PROFILE_ID))
+          .spendProfileId(SPEND_PROFILE_ID)
           .workspaceStage(WorkspaceStage.MC_WORKSPACE)
           .build();
   public static final ControlledResourceDbModel DB_MODEL =
@@ -35,7 +32,7 @@ public class ControlledResourceDaoTest extends BaseUnitTest {
           .build();
 
   @Autowired private ControlledResourceDao controlledResourceDao;
-  @Autowired private WorkspaceDaoOld workspaceDao;
+  @Autowired private WorkspaceDao workspaceDao;
 
   @Test
   public void verifyCreatedGoogleBucketExists() {
