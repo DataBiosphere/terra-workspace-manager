@@ -39,11 +39,11 @@ public class CreateGoogleContextFlight extends Flight {
         new PullProjectFromPoolStep(
             appContext.getBufferService(), crl.getCloudResourceManagerCow()),
         bufferRetryRule);
+
     RetryRule retryRule =
         new RetryRuleExponentialBackoff(
             INITIAL_INTERVAL_SECONDS, MAX_INTERVAL_SECONDS, MAX_OPERATION_TIME_SECONDS);
     addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()));
-    addStep(new MakeCloudContextIdStep());
     addStep(new StoreGoogleContextStep(appContext.getWorkspaceDao()), retryRule);
     addStep(new SyncSamGroupsStep(appContext.getSamService()), retryRule);
     addStep(new GoogleCloudSyncStep(crl.getCloudResourceManagerCow()), retryRule);

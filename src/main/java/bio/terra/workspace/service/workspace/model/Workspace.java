@@ -22,6 +22,7 @@ public class Workspace {
   private final SpendProfileId spendProfileId;
   private final Map<String, String> properties;
   private final WorkspaceStage workspaceStage;
+  private final GcpCloudContext gcpCloudContext;
 
   public Workspace(
       UUID workspaceId,
@@ -29,13 +30,15 @@ public class Workspace {
       String description,
       SpendProfileId spendProfileId,
       Map<String, String> properties,
-      WorkspaceStage workspaceStage) {
+      WorkspaceStage workspaceStage,
+      GcpCloudContext gcpCloudContext) {
     this.workspaceId = workspaceId;
     this.displayName = displayName;
     this.description = description;
     this.spendProfileId = spendProfileId;
     this.properties = properties;
     this.workspaceStage = workspaceStage;
+    this.gcpCloudContext = gcpCloudContext;
   }
 
   /** The globally unique identifier of this workspace */
@@ -74,6 +77,11 @@ public class Workspace {
     return workspaceStage;
   }
 
+  /** Optional GCP cloud context */
+  public Optional<GcpCloudContext> getGcpCloudContext() {
+    return Optional.ofNullable(gcpCloudContext);
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -86,6 +94,7 @@ public class Workspace {
     private SpendProfileId spendProfileId;
     private Map<String, String> properties;
     private WorkspaceStage workspaceStage;
+    private GcpCloudContext gcpCloudContext;
 
     public Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
@@ -117,9 +126,20 @@ public class Workspace {
       return this;
     }
 
+    public Builder gcpCloudContext(GcpCloudContext gcpCloudContext) {
+      this.gcpCloudContext = gcpCloudContext;
+      return this;
+    }
+
     public Workspace build() {
       return new Workspace(
-          workspaceId, displayName, description, spendProfileId, properties, workspaceStage);
+          workspaceId,
+          displayName,
+          description,
+          spendProfileId,
+          properties,
+          workspaceStage,
+          gcpCloudContext);
     }
     ;
   }

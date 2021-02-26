@@ -5,7 +5,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import java.io.IOException;
 import java.util.Optional;
@@ -23,13 +23,12 @@ import org.slf4j.LoggerFactory;
  */
 public class DeleteProjectStep implements Step {
   private final CloudResourceManagerCow resourceManager;
-  private final WorkspaceService workspaceService;
+  private final WorkspaceDao workspaceDao;
   private final Logger logger = LoggerFactory.getLogger(DeleteProjectStep.class);
 
-  public DeleteProjectStep(
-      CloudResourceManagerCow resourceManager, WorkspaceService workspaceService) {
+  public DeleteProjectStep(CloudResourceManagerCow resourceManager, WorkspaceDao workspaceDao) {
     this.resourceManager = resourceManager;
-    this.workspaceService = workspaceService;
+    this.workspaceDao = workspaceDao;
   }
 
   @Override
@@ -64,6 +63,6 @@ public class DeleteProjectStep implements Step {
   private Optional<GcpCloudContext> getContext(FlightContext flightContext) {
     UUID workspaceId =
         flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    return workspaceService.getGcpCloudContext(workspaceId);
+    return workspaceDao.getGcpCloudContext(workspaceId);
   }
 }

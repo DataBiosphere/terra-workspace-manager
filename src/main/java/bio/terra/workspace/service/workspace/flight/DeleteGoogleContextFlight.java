@@ -24,7 +24,7 @@ public class DeleteGoogleContextFlight extends Flight {
             INITIAL_INTERVALS_SECONDS, MAX_INTERVAL_SECONDS, MAX_OPERATION_TIME_SECONDS);
 
     addStep(
-        new DeleteProjectStep(crl.getCloudResourceManagerCow(), appContext.getWorkspaceService()),
+        new DeleteProjectStep(crl.getCloudResourceManagerCow(), appContext.getWorkspaceDao()),
         retryRule);
     addStep(new DeleteGoogleContextStep(appContext.getWorkspaceDao()), retryRule);
   }

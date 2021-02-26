@@ -5,10 +5,10 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.service.workspace.model.CloudType;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
 
 /** Deletes a workspace's Google cloud context from the DAO. */
 public class DeleteGoogleContextStep implements Step {
@@ -23,7 +23,7 @@ public class DeleteGoogleContextStep implements Step {
   public StepResult doStep(FlightContext flightContext) {
     UUID workspaceId =
         flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    workspaceDao.deleteCloudContext(workspaceId, CloudType.GCP);
+    workspaceDao.deleteGcpCloudContext(workspaceId);
     return StepResult.getStepResultSuccess();
   }
 

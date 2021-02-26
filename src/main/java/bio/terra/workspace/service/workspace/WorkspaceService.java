@@ -2,7 +2,6 @@ package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.db.exception.WorkspaceCloudContextNotFoundException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
@@ -23,13 +22,10 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.CloudType;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -132,38 +128,6 @@ public class WorkspaceService {
                 userReq)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id);
     deleteJob.submitAndWait(null);
-  }
-
-  /**
-   * Retrieves the cloud context of a workspace. Verifies workspace existence and read permission
-   * before retrieving the cloud context.
-   */
-  @Traced
-  public WorkspaceCloudContext getCloudContext(
-      UUID workspaceId, CloudType cloudType, AuthenticatedUserRequest userReq) {
-    validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
-    return workspaceDao.getCloudContext(workspaceId, cloudType);
-  }
-
-  /**
-   * This helper method method looks up the GCP cloud context. It handles the not found exception to
-   * make it simpler for other parts of WSM to get the info. NOTE: it assumes that the permission
-   * check has been done.
-   *
-   * @param workspaceId unique workspace id to check
-   * @return optional GcpCloudContext - not present if not found
-   */
-  @Traced
-  public Optional<GcpCloudContext> getGcpCloudContext(UUID workspaceId) {
-    try {
-      WorkspaceCloudContext cloudContext = workspaceDao.getCloudContext(workspaceId, CloudType.GCP);
-      if (cloudContext instanceof GcpCloudContext) {
-        return Optional.of((GcpCloudContext) cloudContext);
-      }
-    } catch (WorkspaceCloudContextNotFoundException e) {
-      // Not found
-    }
-    return Optional.empty();
   }
 
   /**
