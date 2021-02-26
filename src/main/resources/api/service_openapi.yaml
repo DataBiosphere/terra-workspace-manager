@@ -61,9 +61,9 @@ paths:
         '500':
           $ref: '#/components/responses/NotFound'
 
-  /api/workspaces/v1/{id}:
+  /api/workspaces/v1/{workspaceId}:
     parameters:
-      - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/WorkspaceId'
     get:
       summary: Get an existing Workspace.
       operationId: getWorkspace
@@ -98,9 +98,9 @@ paths:
           $ref: '#/components/responses/ServerError'
 
   # TODO(PF-404): remove this in favor of reference-type specific objects.
-  /api/workspaces/v1/{id}/datareferences:
+  /api/workspaces/v1/{workspaceId}/datareferences:
     parameters:
-      - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: (DEPRECATED) Create a new data reference in a workspace.
       operationId: createDataReference
@@ -143,9 +143,9 @@ paths:
           $ref: '#/components/responses/ServerError'
 
   # TODO(PF-404): remove this in favor of reference-type specific objects.
-  /api/workspaces/v1/{id}/datareferences/{referenceId}:
+  /api/workspaces/v1/{workspaceId}/datareferences/{referenceId}:
     parameters:
-      - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ReferenceId'
     get:
       summary: (DEPRECATED) Gets a data reference from a workspace.
@@ -194,9 +194,9 @@ paths:
           $ref: '#/components/responses/ServerError'
 
   # TODO(PF-404): remove this in favor of reference-type specific objects.
-  /api/workspaces/v1/{id}/datareferences/{referenceType}/{name}:
+  /api/workspaces/v1/{workspaceId}/datareferences/{referenceType}/{name}:
     parameters:
-      - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ReferenceType'
       - $ref: '#/components/parameters/Name'
     get:
@@ -213,9 +213,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/datarepo/snapshots:
+  /api/workspaces/v1/{workspaceId}/resources/references/datarepo/snapshots:
     parameters:
-    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new data repo snapshot reference in a workspace.
       operationId: createDataRepoSnapshotReference
@@ -238,9 +238,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/datarepo/snapshots/{referenceId}:
+  /api/workspaces/v1/{workspaceId}/resources/references/datarepo/snapshots/{referenceId}:
     parameters:
-    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/ReferenceId'
     get:
       summary: Gets a reference to a snapshot from a workspace.
@@ -275,9 +275,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/datarepo/snapshots/name/{name}:
+  /api/workspaces/v1/{workspaceId}/resources/references/datarepo/snapshots/name/{name}:
     parameters:
-    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/Name'
     get:
       summary: Gets a reference to a snapshot by name.
@@ -293,9 +293,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/google/buckets:
+  /api/workspaces/v1/{workspaceId}/resources/references/google/buckets:
     parameters:
-    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new Google bucket reference in a workspace.
       operationId: createBucketReference
@@ -318,9 +318,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/google/buckets/{referenceId}:
+  /api/workspaces/v1/{workspaceId}/resources/references/google/buckets/{referenceId}:
     parameters:
-    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/ReferenceId'
     get:
       summary: Gets a reference to a Google bucket from a workspace.
@@ -355,9 +355,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/google/buckets/name/{name}:
+  /api/workspaces/v1/{workspaceId}/resources/references/google/buckets/name/{name}:
     parameters:
-    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/Name'
     get:
       summary: Gets a reference to a Google bucket by name.
@@ -373,9 +373,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/google/bigquerydatasets:
+  /api/workspaces/v1/{workspaceId}/resources/references/google/bigquerydatasets:
     parameters:
-    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new BigQuery dataset reference in a workspace.
       operationId: createBigQueryDatasetReference
@@ -398,9 +398,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/google/bigquerydatasets/{referenceId}:
+  /api/workspaces/v1/{workspaceId}/resources/references/google/bigquerydatasets/{referenceId}:
     parameters:
-    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/ReferenceId'
     get:
       summary: Gets a reference to a BigQuery dataset from a workspace.
@@ -435,9 +435,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/references/google/bigquerydatasets/name/{name}:
+  /api/workspaces/v1/{workspaceId}/resources/references/google/bigquerydatasets/name/{name}:
     parameters:
-    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/Name'
     get:
       summary: Gets a reference to a BigQuery dataset by name.
@@ -453,9 +453,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/cloudcontexts:
+  /api/workspaces/v1/{workspaceId}/cloudcontexts:
     parameters:
-    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a cloud context for the workspace.
       operationId: createCloudContext
@@ -480,9 +480,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/cloudcontexts/result/{jobId}:
+  /api/workspaces/v1/{workspaceId}/cloudcontexts/result/{jobId}:
     parameters:
-    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/JobId'
     get:
       summary: Get the result of a async job to create a cloud context.
@@ -504,9 +504,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/cloudcontexts/{cloudContext}:
+  /api/workspaces/v1/{workspaceId}/cloudcontexts/{cloudContext}:
     parameters:
-    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/CloudContext'
     delete:
       summary: Deletes a cloud context and all of its data from a workspace.
@@ -522,9 +522,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/roles:
+  /api/workspaces/v1/{workspaceId}/roles:
     parameters:
-    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/WorkspaceId'
     get:
       summary: Read all IAM roles and their members in a workspace.
       operationId: getRoles
@@ -539,9 +539,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/roles/{role}/members:
+  /api/workspaces/v1/{workspaceId}/roles/{role}/members:
     parameters:
-    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/Role'
     post:
       summary: Grant an IAM role to a user or group.
@@ -562,9 +562,9 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-  /api/workspaces/v1/{id}/roles/{role}/members/{memberEmail}:
+  /api/workspaces/v1/{workspaceId}/roles/{role}/members/{memberEmail}:
     parameters:
-    - $ref: '#/components/parameters/Id'
+    - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/Role'
     - $ref: '#/components/parameters/MemberEmail'
     delete:
@@ -582,9 +582,9 @@ paths:
           $ref: '#/components/responses/ServerError'
 
 
-  /api/job/v1/jobs/{id}:
+  /api/job/v1/jobs/{workspaceId}:
     parameters:
-    - name: id
+    - name: workspaceId
       in: path
       description: The unique id provided in JobControl to the async endpoint
       required: true
@@ -621,9 +621,9 @@ paths:
         404:
           $ref: '#/components/responses/NotFound'
 
-  /api/workspaces/v1/{id}/resources/controlled/google/buckets:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/google/buckets:
     parameters:
-      - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new controlled Google bucket
       operationId: createBucket
@@ -644,9 +644,9 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{id}/resources/controlled/google/buckets/result/{jobId}:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/google/buckets/result/{jobId}:
     parameters:
-      - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/JobId'
     get:
       summary: Retrieve information about a google bucket creation job.
@@ -664,8 +664,8 @@ paths:
 
 components:
   parameters:
-    Id:
-      name: id
+    WorkspaceId:
+      name: workspaceId
       in: path
       description: A UUID to used to identify an object in the workspace manager
       required: true
@@ -1360,7 +1360,7 @@ components:
             Relevant only for versioned objects. This condition is satisfied when an object has
             been noncurrent for more than the specified number of days.
           type: integer
-        isLive:
+        live:
           description: >-
             Relevant only for versioned objects. If the value is true, this condition matches the
             live version of objects; if the value is false, it matches noncurrent versions of objects.
