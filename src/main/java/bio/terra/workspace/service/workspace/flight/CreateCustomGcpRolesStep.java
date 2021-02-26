@@ -50,7 +50,8 @@ public class CreateCustomGcpRolesStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    // No need to delete roles if the project is being deleted.
+    // No need to delete roles if the project is being deleted by other steps in
+    // CreateGoogleContextFlight.
     return StepResult.getStepResultSuccess();
   }
 }
