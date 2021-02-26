@@ -7,10 +7,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
-import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
-import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Map;
 import java.util.Optional;
@@ -27,7 +27,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Autowired private WorkspaceDatabaseConfiguration workspaceDatabaseConfiguration;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
-  @Autowired private WorkspaceDao workspaceDao;
+  @Autowired private WorkspaceDaoOld workspaceDao;
 
   private UUID workspaceId;
   private Optional<SpendProfileId> spendProfileId;
@@ -206,8 +206,8 @@ class WorkspaceDaoTest extends BaseUnitTest {
      */
     @Test
     void googleCloudContextBackwardsCompatibility() throws Exception {
-      WorkspaceDao.GoogleCloudContextV1 googleDeserialized =
-          WorkspaceDao.GoogleCloudContextV1.deserialize(
+      WorkspaceDaoOld.GoogleCloudContextV1 googleDeserialized =
+          WorkspaceDaoOld.GoogleCloudContextV1.deserialize(
               "{\"version\":1,\"googleProjectId\":\"foo\"}");
       assertEquals(1, googleDeserialized.version);
       assertEquals("foo", googleDeserialized.googleProjectId);
@@ -216,9 +216,9 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void cloudTypeBackwardsCompatibility() {
-    assertEquals(WorkspaceDao.CloudType.GOOGLE, WorkspaceDao.CloudType.valueOf("GOOGLE"));
-    assertEquals("GOOGLE", WorkspaceDao.CloudType.GOOGLE.toString());
-    assertEquals(1, WorkspaceDao.CloudType.values().length);
+    assertEquals(WorkspaceDaoOld.CloudType.GOOGLE, WorkspaceDaoOld.CloudType.valueOf("GOOGLE"));
+    assertEquals("GOOGLE", WorkspaceDaoOld.CloudType.GOOGLE.toString());
+    assertEquals(1, WorkspaceDaoOld.CloudType.values().length);
   }
 
   private Workspace defaultWorkspace() {

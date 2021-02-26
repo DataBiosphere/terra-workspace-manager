@@ -49,6 +49,17 @@ public class BeanConfig {
         .setDefaultPropertyInclusion(Include.NON_ABSENT);
   }
 
+  // Object mapper for use in the DAO modules. This mapper must stay constant over time
+  // to ensure that older versions of obvious can be read. Change here must be accompanied by an
+  // upgrade process to ensure that all data is rewritten in the new form.
+  @Bean("persistenceObjectMapper")
+  public ObjectMapper persistenceObjectMapper() {
+    return new ObjectMapper()
+        .registerModule(new ParameterNamesModule())
+        .registerModule(new Jdk8Module())
+        .registerModule(new JavaTimeModule())
+        .setDefaultPropertyInclusion(Include.NON_ABSENT);
+  }
   // This is a "magic bean": It supplies a method that Spring calls after the application is setup,
   // but before the port is opened for business. That lets us do database migration and stairway
   // initialization on a system that is otherwise fully configured. The rule of thumb is that all

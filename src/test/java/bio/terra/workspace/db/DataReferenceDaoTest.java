@@ -35,7 +35,7 @@ class DataReferenceDaoTest extends BaseUnitTest {
   @Autowired private WorkspaceDatabaseConfiguration workspaceDatabaseConfiguration;
 
   @Autowired private DataReferenceDao dataReferenceDao;
-  @Autowired private WorkspaceDao workspaceDao;
+  @Autowired private WorkspaceDaoOld workspaceDao;
 
   UUID workspaceId;
   UUID referenceId;

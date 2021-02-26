@@ -13,8 +13,8 @@ import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
-import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.db.DataReferenceDao;
+import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
@@ -34,6 +34,7 @@ import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileExcep
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.model.Project;

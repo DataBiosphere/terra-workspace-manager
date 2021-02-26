@@ -35,7 +35,7 @@ public class ControlledResourceDaoTest extends BaseUnitTest {
           .build();
 
   @Autowired private ControlledResourceDao controlledResourceDao;
-  @Autowired private WorkspaceDao workspaceDao;
+  @Autowired private WorkspaceDaoOld workspaceDao;
 
   @Test
   public void verifyCreatedGoogleBucketExists() {

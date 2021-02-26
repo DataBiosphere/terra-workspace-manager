@@ -1,7 +1,9 @@
 package bio.terra.workspace.service.workspace.model;
 
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
-import com.google.auto.value.AutoValue;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -12,11 +14,44 @@ import java.util.UUID;
  * context. In general, a workspace is the fundamental unit of analysis in Terra. Workspaces may
  * have an associated billing account and may have zero or one associated GCP projects.
  */
-@AutoValue
-public abstract class Workspace {
+@JsonDeserialize(builder = Workspace.Builder.class)
+public class Workspace {
+  private final UUID workspaceId;
+  private final String displayName;
+  private final String description;
+  private final SpendProfileId spendProfileId;
+  private final Map<String, String> properties;
+  private final WorkspaceStage workspaceStage;
+
+  public Workspace(
+      UUID workspaceId,
+      String displayName,
+      String description,
+      SpendProfileId spendProfileId,
+      Map<String, String> properties,
+      WorkspaceStage workspaceStage) {
+    this.workspaceId = workspaceId;
+    this.displayName = displayName;
+    this.description = description;
+    this.spendProfileId = spendProfileId;
+    this.properties = properties;
+    this.workspaceStage = workspaceStage;
+  }
 
   /** The globally unique identifier of this workspace */
-  public abstract UUID workspaceId();
+  public UUID getWorkspaceId() {
+    return workspaceId;
+  }
+
+  /** Optional display name for the workspace. Omitted for RAWLS workspaces. */
+  public Optional<String> getDisplayName() {
+    return Optional.ofNullable(displayName);
+  }
+
+  /** Optional description of the workspace. Omitted for RAWLS workspaces. */
+  public Optional<String> getDescription() {
+    return Optional.ofNullable(description);
+  }
 
   /**
    * The spend profile ID associated with this project, if one exists.
@@ -25,23 +60,67 @@ public abstract class Workspace {
    * it's just a unique identifier. To associate a GCP project with a workspace, the workspace must
    * have a spend profile. They are not needed otherwise.
    */
-  public abstract Optional<SpendProfileId> spendProfileId();
-
-  /** Temporary feature flag indicating whether this workspace uses MC Terra features. */
-  public abstract WorkspaceStage workspaceStage();
-
-  public static Builder builder() {
-    return new AutoValue_Workspace.Builder();
+  public Optional<SpendProfileId> getSpendProfileId() {
+    return Optional.ofNullable(spendProfileId);
   }
 
-  @AutoValue.Builder
-  public abstract static class Builder {
-    public abstract Builder workspaceId(UUID value);
+  /** Caller-specified set of key-value pairs */
+  public Optional<Map<String, String>> getProperties() {
+    return Optional.ofNullable(properties);
+  }
 
-    public abstract Builder spendProfileId(Optional<SpendProfileId> value);
+  /** Feature flag indicating whether this workspace uses MC Terra features. */
+  public WorkspaceStage getWorkspaceStage() {
+    return workspaceStage;
+  }
 
-    public abstract Builder workspaceStage(WorkspaceStage value);
+  public static Builder builder() {
+    return new Builder();
+  }
 
-    public abstract Workspace build();
+  @JsonPOJOBuilder(withPrefix = "")
+  public static class Builder {
+    private UUID workspaceId;
+    private String displayName;
+    private String description;
+    private SpendProfileId spendProfileId;
+    private Map<String, String> properties;
+    private WorkspaceStage workspaceStage;
+
+    public Builder workspaceId(UUID workspaceId) {
+      this.workspaceId = workspaceId;
+      return this;
+    }
+
+    public Builder displayName(String displayName) {
+      this.displayName = displayName;
+      return this;
+    }
+
+    public Builder description(String description) {
+      this.description = description;
+      return this;
+    }
+
+    public Builder spendProfileId(SpendProfileId spendProfileId) {
+      this.spendProfileId = spendProfileId;
+      return this;
+    }
+
+    public Builder properties(Map<String, String> properties) {
+      this.properties = properties;
+      return this;
+    }
+
+    public Builder workspaceStage(WorkspaceStage workspaceStage) {
+      this.workspaceStage = workspaceStage;
+      return this;
+    }
+
+    public Workspace build() {
+      return new Workspace(
+          workspaceId, displayName, description, spendProfileId, properties, workspaceStage);
+    }
+    ;
   }
 }

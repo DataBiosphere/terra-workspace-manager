@@ -2,8 +2,23 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
-import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.generated.model.CloudContextType;
+import bio.terra.workspace.generated.model.CreateCloudContextRequest;
+import bio.terra.workspace.generated.model.CreateCloudContextResult;
+import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
+import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
+import bio.terra.workspace.generated.model.CreatedWorkspace;
+import bio.terra.workspace.generated.model.DataReferenceDescription;
+import bio.terra.workspace.generated.model.DataReferenceList;
+import bio.terra.workspace.generated.model.GcpContext;
+import bio.terra.workspace.generated.model.GrantRoleRequestBody;
+import bio.terra.workspace.generated.model.IamRole;
 import bio.terra.workspace.generated.model.JobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ReferenceTypeEnum;
+import bio.terra.workspace.generated.model.RoleBindingList;
+import bio.terra.workspace.generated.model.UpdateDataReferenceRequestBody;
+import bio.terra.workspace.generated.model.WorkspaceDescription;
+import bio.terra.workspace.generated.model.WorkspaceStageModel;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
@@ -18,8 +33,9 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
-import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.CloudType;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -116,18 +132,19 @@ public class WorkspaceApiController implements WorkspaceApi {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info("Getting workspace {} for {}", id, userReq.getEmail());
     Workspace workspace = workspaceService.getWorkspace(id, userReq);
-    WorkspaceCloudContext cloudContext = workspaceService.getCloudContext(id, userReq);
+    Optional<GcpCloudContext> gcpCloudContext = workspaceService.getGcpCloudContext(id);
 
-    // Note projectId will be null here if no cloud context exists.
-    // TODO: this assumes a GoogleContext is the only cloud context on a workspace. This will
-    // eventually need to change.
-    GoogleContext googleContext = new GoogleContext().projectId(cloudContext.googleProjectId());
+    GcpContext gcpContext =
+        gcpCloudContext.map(g -> new GcpContext().projectId(g.getGcpProjectId())).orElse(null);
+
+    // Note projectId will be null here if no GCP cloud context exists.
+    // When we have another cloud context, we will need to do a similar retrieval for it.
     WorkspaceDescription desc =
         new WorkspaceDescription()
-            .id(workspace.workspaceId())
-            .spendProfile(workspace.spendProfileId().map(SpendProfileId::id).orElse(null))
-            .stage(workspace.workspaceStage().toApiModel())
-            .googleContext(googleContext);
+            .id(workspace.getWorkspaceId())
+            .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))
+            .stage(workspace.getWorkspaceStage().toApiModel())
+            .gcpContext(gcpContext);
     logger.info("Got workspace {} for {}", desc, userReq.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
@@ -350,11 +367,12 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<CreateCloudContextResult> createCloudContext(
       UUID id, @Valid CreateCloudContextRequest body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    ControllerValidationUtils.validateCloudContext(body.getCloudContext());
+    ControllerValidationUtils.validateCloudType(body.getCloudType());
     String jobId = body.getJobControl().getId();
     String resultPath = getAsyncResultEndpoint(jobId);
 
-    workspaceService.createGoogleContext(id, jobId, resultPath, userReq);
+    // For now, the cloud type is always GCP and that is guaranteed in the validate.
+    workspaceService.createCloudContext(id, CloudType.GCP, jobId, resultPath, userReq);
     CreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userReq);
     return new ResponseEntity<>(
         response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));
@@ -371,25 +389,26 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   private CreateCloudContextResult fetchCreateCloudContextResult(
       String jobId, AuthenticatedUserRequest userReq) {
-    final AsyncJobResult<WorkspaceCloudContext> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, WorkspaceCloudContext.class, userReq);
-    final GoogleContext googleContext;
+    final AsyncJobResult<GcpCloudContext> jobResult =
+        jobService.retrieveAsyncJobResult(jobId, GcpCloudContext.class, userReq);
+
+    final GcpContext gcpContext;
     if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
-      googleContext = new GoogleContext().projectId(jobResult.getResult().googleProjectId());
+      gcpContext = new GcpContext().projectId(jobResult.getResult().getGcpProjectId());
     } else {
-      googleContext = null;
+      gcpContext = null;
     }
     return new CreateCloudContextResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getErrorReport())
-        .googleContext(googleContext);
+        .gcpContext(gcpContext);
   }
 
   @Override
-  public ResponseEntity<Void> deleteCloudContext(UUID id, CloudContext cloudContext) {
+  public ResponseEntity<Void> deleteCloudContext(UUID id, CloudContextType cloudContext) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    ControllerValidationUtils.validateCloudContext(cloudContext);
-    workspaceService.deleteGoogleContext(id, userReq);
+    ControllerValidationUtils.validateCloudType(cloudContext);
+    workspaceService.deleteCloudContext(id, CloudType.GCP, userReq);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 }
