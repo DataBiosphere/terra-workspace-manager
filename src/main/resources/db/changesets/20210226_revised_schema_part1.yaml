@@ -1,0 +1,29 @@
+# "Rebasing" the schema to a single changeset prior to production
+databaseChangeLog:
+- changeSet:
+    id: schema revision 2021 part 1
+    author: dd
+    changes:
+    - addColumn:
+        columns:
+          - column:
+              name: display_name
+              type: text
+              remarks: |
+                A user-friendly name for the workspace. There is no guarantee of uniqueness across workspaces.
+                Can be null. Omitted for Rawls workspaces, since Rawls maintains its own name
+          - column:
+              name: description
+              type: text
+              remarks: |
+                Free-form text describing the workspace. Can be null. Omitted for Rawls workspaces, since Rawls
+                maintains its own name.
+        tableName: workspace
+
+    - dropColumn:
+        columnName: profile_settable
+        tableName: workspace
+
+    - renameTable:
+        newTableName: cloud_context
+        oldTableName: workspace_cloud_context
