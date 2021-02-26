@@ -656,6 +656,8 @@ paths:
           $ref: '#/components/responses/GetControlledGoogleBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
+        404:
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{workspaceId}/resources/controlled/google/buckets/result/{jobId}:
@@ -723,7 +725,7 @@ components:
         format: uuid
 
     ResourceId:
-      name: referenceId
+      name: resourceId
       in: path
       description: A UUID used to identify a controlled resource in a workspace. Will be merged with ReferenceId soon.
       required: true

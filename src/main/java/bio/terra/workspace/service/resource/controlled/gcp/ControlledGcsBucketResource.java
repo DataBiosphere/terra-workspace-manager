@@ -105,6 +105,12 @@ public class ControlledGcsBucketResource
     return Objects.hash(super.hashCode());
   }
 
+  /**
+   * Convert the attributes' JSON representation back into GoogleBucketSotredAttributes. This
+   * method is the inverse of getJsonAttributes() above.
+   * @param jsonAttributes JSON string for attributes for this resource
+   * @return
+   */
   public static GoogleBucketStoredAttributes attributesToOutputApiModel(String jsonAttributes) {
     try {
       return OBJECT_MAPPER.readValue(jsonAttributes, GoogleBucketStoredAttributes.class);
