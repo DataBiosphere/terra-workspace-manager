@@ -203,6 +203,7 @@ task unitTest(type: Test) {
 }
 
 task connectedTest(type: Test) {
+	environment.put('TEST_ENV', System.getenv("TEST_ENV"))
 	useJUnitPlatform {
 		includeTags "connected"
 	}
@@ -212,7 +213,9 @@ task connectedTest(type: Test) {
 	outputs.upToDateWhen { false }
 }
 
+
 task integrationTest(type: Test) {
+	environment.put('TEST_ENV', System.getenv("TEST_ENV"))
 	useJUnitPlatform {
 		includeTags "integration"
 	}
