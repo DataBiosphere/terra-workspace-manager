@@ -1,8 +1,11 @@
 # This workflow will build a Java project with Gradle
 # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
 
-name: Test Runner PR Integration Tests
-
+name: PR Client Library Integration Tests
+description: >-
+  Action for running client integration tests against PRs. This test uses local
+  server changes but runs a published version of the client, so it will not pick
+  up local client changes.
 on:
   push:
     branches: [ dev ]
@@ -10,7 +13,7 @@ on:
     branches: [ '**' ]
 
 jobs:
-  test-runner-integration:
+  integration-test:
 
     runs-on: ubuntu-latest
 
@@ -76,9 +79,6 @@ jobs:
       # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
       run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
 
-    # We can also set the env var in the GH action script to specify which server we are testing against.
-    # This will be particularly helpful once we switch over to testing against any test env -- then it's just a change to the env var.
-    # Please refer to https://github.com/DataBiosphere/terra-test-runner#override-the-server-from-the-command-line for more information.
     - name: Run the Basic Integration test suite
       run: |
         cd workspace-manager-clienttests
