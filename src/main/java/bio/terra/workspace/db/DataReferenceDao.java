@@ -1,7 +1,7 @@
 package bio.terra.workspace.db;
 
-import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
+import bio.terra.workspace.common.exception.ResourceNotFoundException;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
@@ -89,7 +89,7 @@ public class DataReferenceDao {
           workspaceId);
       return ref;
     } catch (EmptyResultDataAccessException e) {
-      throw new DataReferenceNotFoundException("Data Reference not found.");
+      throw new ResourceNotFoundException("Data Reference not found.");
     }
   }
 
@@ -117,7 +117,7 @@ public class DataReferenceDao {
           workspaceId);
       return ref;
     } catch (EmptyResultDataAccessException e) {
-      throw new DataReferenceNotFoundException("Data Reference not found.");
+      throw new ResourceNotFoundException("Data Reference not found.");
     }
   }
 
@@ -135,7 +135,7 @@ public class DataReferenceDao {
       return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, Boolean.class))
           .orElse(false);
     } catch (EmptyResultDataAccessException e) {
-      throw new DataReferenceNotFoundException("Data Reference not found.");
+      throw new ResourceNotFoundException("Data Reference not found.");
     }
   }
 

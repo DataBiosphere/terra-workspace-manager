@@ -9,8 +9,8 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
+import bio.terra.workspace.common.exception.ResourceNotFoundException;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
@@ -274,7 +274,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Verify the data ref rows in question were also deleted; this is a direct call to the SQL
     // table
     assertThrows(
-        DataReferenceNotFoundException.class,
+        ResourceNotFoundException.class,
         () -> dataReferenceDao.getDataReference(request.workspaceId(), referenceId));
 
     // Verify that attempting to retrieve the reference via DataReferenceService fails; this
