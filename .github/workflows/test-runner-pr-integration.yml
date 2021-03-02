@@ -1,11 +1,8 @@
-# This workflow will build a Java project with Gradle
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
+# Action for running client integration tests against PRs. This test uses local
+# server changes but runs a published version of the client, so it will not pick
+# up local client changes.
 
 name: PR Client Library Integration Tests
-description: >-
-  Action for running client integration tests against PRs. This test uses local
-  server changes but runs a published version of the client, so it will not pick
-  up local client changes.
 on:
   push:
     branches: [ dev ]
