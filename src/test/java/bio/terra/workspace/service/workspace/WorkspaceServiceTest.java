@@ -20,8 +20,8 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
-import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
+import bio.terra.workspace.service.datareference.model.WsmResourceType;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -261,7 +261,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .workspaceId(workspaceId)
             .name("fake_data_reference")
             .cloningInstructions(CloningInstructions.COPY_NOTHING)
-            .referenceType(DataReferenceType.DATA_REPO_SNAPSHOT)
+            .referenceType(WsmResourceType.DATA_REPO_SNAPSHOT)
             .referenceObject(snapshot)
             .build();
 

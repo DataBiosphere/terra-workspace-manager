@@ -10,7 +10,7 @@ import bio.terra.workspace.generated.model.GoogleBucketReference;
 import bio.terra.workspace.generated.model.UpdateDataReferenceRequestBody;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.datareference.model.DataReference;
-import bio.terra.workspace.service.datareference.model.DataReferenceType;
+import bio.terra.workspace.service.datareference.model.WsmResourceType;
 import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -60,7 +60,7 @@ public class GoogleReferenceController extends ReferenceController implements Go
         createDataReference(
             id,
             body.getMetadata(),
-            DataReferenceType.GOOGLE_BUCKET,
+            WsmResourceType.GCS_BUCKET,
             referenceObject,
             getAuthenticatedInfo(),
             dataReferenceValidation,
@@ -85,7 +85,7 @@ public class GoogleReferenceController extends ReferenceController implements Go
         createDataReference(
             id,
             body.getMetadata(),
-            DataReferenceType.BIG_QUERY_DATASET,
+            WsmResourceType.BIG_QUERY_DATASET,
             referenceObject,
             getAuthenticatedInfo(),
             dataReferenceValidation,
@@ -118,11 +118,7 @@ public class GoogleReferenceController extends ReferenceController implements Go
   public ResponseEntity<GoogleBucketReference> getBucketReferenceByName(UUID id, String name) {
     DataReference ref =
         getReferenceByName(
-            id,
-            DataReferenceType.GOOGLE_BUCKET,
-            name,
-            getAuthenticatedInfo(),
-            dataReferenceService);
+            id, WsmResourceType.GCS_BUCKET, name, getAuthenticatedInfo(), dataReferenceService);
     GoogleBucketReference response =
         new GoogleBucketReference()
             .bucket(
@@ -153,7 +149,7 @@ public class GoogleReferenceController extends ReferenceController implements Go
     DataReference ref =
         getReferenceByName(
             id,
-            DataReferenceType.BIG_QUERY_DATASET,
+            WsmResourceType.BIG_QUERY_DATASET,
             name,
             getAuthenticatedInfo(),
             dataReferenceService);

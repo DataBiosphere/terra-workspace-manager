@@ -7,8 +7,8 @@ import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceE
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
-import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.ReferenceObject;
+import bio.terra.workspace.service.datareference.model.WsmResourceType;
 import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import java.util.UUID;
@@ -28,7 +28,7 @@ public abstract class ReferenceController {
   protected DataReference createDataReference(
       UUID workspaceId,
       DataReferenceRequestMetadata requestMetadata,
-      DataReferenceType referenceType,
+      WsmResourceType referenceType,
       ReferenceObject referenceObject,
       AuthenticatedUserRequest userReq,
       DataReferenceValidationUtils dataReferenceValidation,
@@ -82,7 +82,7 @@ public abstract class ReferenceController {
 
   protected DataReference getReferenceByName(
       UUID workspaceId,
-      DataReferenceType type,
+      WsmResourceType type,
       String name,
       AuthenticatedUserRequest userReq,
       DataReferenceService dataReferenceService) {

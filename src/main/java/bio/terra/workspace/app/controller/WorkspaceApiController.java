@@ -24,7 +24,6 @@ import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceE
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
-import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -32,17 +31,13 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
+import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +47,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Controller
 public class WorkspaceApiController implements WorkspaceApi {
@@ -172,19 +173,19 @@ public class WorkspaceApiController implements WorkspaceApi {
 
     ControllerValidationUtils.validate(body);
     DataReferenceValidationUtils.validateReferenceName(body.getName());
-    // TODO: this will require more translation when we add additional reference types.
-    DataReferenceType referenceType = DataReferenceType.fromApiModel(body.getReferenceType());
+    // This code is going away and only supports TDR snapshots, so we just set that.
+    WsmResourceType resourceType = WsmResourceType.DATA_REPO_SNAPSHOT;
     SnapshotReference snapshot =
         SnapshotReference.create(
             body.getReference().getInstanceName(), body.getReference().getSnapshot());
-    dataReferenceValidation.validateReferenceObject(snapshot, referenceType, userReq);
+    dataReferenceValidation.validateReferenceObject(snapshot, resourceType, userReq);
 
     DataReferenceRequest referenceRequest =
         DataReferenceRequest.builder()
             .workspaceId(id)
             .name(body.getName())
             .description(body.getDescription())
-            .referenceType(referenceType)
+            .referenceType(resourceType)
             .cloningInstructions(CloningInstructions.fromApiModel(body.getCloningInstructions()))
             .referenceObject(snapshot)
             .build();
@@ -210,7 +211,7 @@ public class WorkspaceApiController implements WorkspaceApi {
         "Got data reference {} in workspace {} for {}", ref, workspaceId, userReq.getEmail());
     // TODO(PF-404): this endpoint's return type does not support reference types beyond snapshots.
     // Clients should migrate to type-specific endpoints, and this endpoint should be removed.
-    if (ref.referenceType() != DataReferenceType.DATA_REPO_SNAPSHOT) {
+    if (ref.referenceType() != WsmResourceType.DATA_REPO_SNAPSHOT) {
       throw new InvalidDataReferenceException(
           "This endpoint does not support non-snapshot references. Use the newer type-specific endpoints instead.");
     }
@@ -238,7 +239,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     DataReferenceValidationUtils.validateReferenceName(name);
     DataReference ref =
         dataReferenceService.getDataReferenceByName(
-            workspaceId, DataReferenceType.fromApiModel(referenceType), name, userReq);
+            workspaceId, WsmResourceType.DATA_REPO_SNAPSHOT, name, userReq);
     logger.info(
         "Got data reference {} of type {} in workspace {} for {}",
         ref,
@@ -316,7 +317,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     DataReferenceList responseList = new DataReferenceList();
     for (DataReference ref : enumerateResult) {
       // TODO(PF-404): this is a workaround until clients migrate off this endpoint.
-      if (ref.referenceType() == DataReferenceType.DATA_REPO_SNAPSHOT) {
+      if (ref.referenceType() == WsmResourceType.DATA_REPO_SNAPSHOT) {
         responseList.addResourcesItem(ref.toApiModel());
       }
     }

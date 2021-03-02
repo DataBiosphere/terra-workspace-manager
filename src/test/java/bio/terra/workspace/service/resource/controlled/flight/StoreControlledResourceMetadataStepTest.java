@@ -17,8 +17,8 @@ import bio.terra.workspace.db.ControlledResourceDao;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.service.datareference.flight.DataReferenceFlightMapKeys;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
-import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.GoogleBucketReference;
+import bio.terra.workspace.service.datareference.model.WsmResourceType;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceDbModel;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -80,7 +80,7 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     assertThat(request.resourceId(), equalTo(ControlledResourceFixtures.RESOURCE_ID));
     assertThat(
         request.cloningInstructions(), equalTo(ControlledResourceFixtures.CLONING_INSTRUCTIONS));
-    assertThat(request.referenceType(), equalTo(DataReferenceType.GOOGLE_BUCKET));
+    assertThat(request.referenceType(), equalTo(WsmResourceType.GOOGLE_BUCKET));
     assertTrue(request.referenceObject() instanceof GoogleBucketReference);
     assertThat(
         ((GoogleBucketReference) request.referenceObject()).bucketName(),

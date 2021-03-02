@@ -5,19 +5,22 @@ import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
 import bio.terra.workspace.service.datareference.model.BigQueryDatasetReference;
-import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.GoogleBucketReference;
 import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.WsmResourceType;
 import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.storage.StorageException;
-import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.regex.Pattern;
+
+import static bio.terra.workspace.service.resource.WsmResourceType.DATA_REPO_SNAPSHOT;
 
 /** A collection of validation functions for data references. */
 @Component
@@ -82,15 +85,13 @@ public class DataReferenceValidationUtils {
    * the object.
    */
   public void validateReferenceObject(
-      ReferenceObject reference,
-      DataReferenceType referenceType,
-      AuthenticatedUserRequest userReq) {
+          ReferenceObject reference, WsmResourceType resourceType, AuthenticatedUserRequest userReq) {
 
-    switch (referenceType) {
+    switch (resourceType) {
       case DATA_REPO_SNAPSHOT:
         validateSnapshotReference((SnapshotReference) reference, userReq);
         return;
-      case GOOGLE_BUCKET:
+      case GCS_BUCKET:
         validateGoogleBucket((GoogleBucketReference) reference, userReq);
         return;
       case BIG_QUERY_DATASET:
@@ -99,7 +100,7 @@ public class DataReferenceValidationUtils {
       default:
         throw new InvalidDataReferenceException(
             "Invalid reference type specified. Valid types include: "
-                + DataReferenceType.DATA_REPO_SNAPSHOT.toString());
+                + DATA_REPO_SNAPSHOT.toString());
     }
   }
 

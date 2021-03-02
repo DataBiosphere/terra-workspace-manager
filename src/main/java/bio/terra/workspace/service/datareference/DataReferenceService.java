@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.datareference;
 
-import bio.terra.workspace.common.exception.*;
+import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
+import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.generated.model.UpdateDataReferenceRequestBody;
 import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
@@ -8,20 +9,21 @@ import bio.terra.workspace.service.datareference.flight.CreateDataReferenceFligh
 import bio.terra.workspace.service.datareference.flight.DataReferenceFlightMapKeys;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
-import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.List;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Service for all operations on references to data.
@@ -71,7 +73,7 @@ public class DataReferenceService {
   @Traced
   public DataReference getDataReferenceByName(
       UUID workspaceId,
-      DataReferenceType referenceType,
+      WsmResourceType referenceType,
       String name,
       AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(

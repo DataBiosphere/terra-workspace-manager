@@ -4,6 +4,8 @@ import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.resource.StewardshipType;
 import bio.terra.workspace.service.resource.WsmResource;
+import bio.terra.workspace.service.resource.WsmResourceType;
+
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,7 +29,7 @@ public abstract class ControlledResource extends WsmResource {
 
   @Override
   public StewardshipType getStewardshipType() {
-    return StewardshipType.CONTROLLED_RESOURCE;
+    return StewardshipType.CONTROLLED;
   }
 
   public Optional<String> getOwner() {
@@ -66,7 +68,7 @@ public abstract class ControlledResource extends WsmResource {
         .description(getDescription())
         .resourceId(resourceId)
         .cloningInstructions(getCloningInstructions())
-        .referenceType(getResourceType().toDataReferenceType())
+        .referenceType(getResourceType())
         .referenceObject(getReferenceObject())
         .build();
   }

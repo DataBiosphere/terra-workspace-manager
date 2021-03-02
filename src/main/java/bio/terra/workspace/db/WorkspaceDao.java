@@ -6,7 +6,7 @@ import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextException;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
-import bio.terra.workspace.service.workspace.model.CloudType;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -185,7 +185,7 @@ public class WorkspaceDao {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_type", CloudType.GCP.toString());
+            .addValue("cloud_type", CloudPlatform.GCP.toString());
     try {
       return Optional.ofNullable(
           DataAccessUtils.singleResult(
@@ -212,7 +212,7 @@ public class WorkspaceDao {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_type", CloudType.GCP.toString())
+            .addValue("cloud_type", CloudPlatform.GCP.toString())
             .addValue("context", serializeGcpCloudContext(cloudContext));
     try {
       jdbcTemplate.update(sql, params);
@@ -260,7 +260,7 @@ public class WorkspaceDao {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_type", CloudType.GCP.toString());
+            .addValue("cloud_type", CloudPlatform.GCP.toString());
 
     int rowsAffected = jdbcTemplate.update(sql, params);
     boolean deleted = rowsAffected > 0;

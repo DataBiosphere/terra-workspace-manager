@@ -12,7 +12,7 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
-import bio.terra.workspace.service.workspace.model.CloudType;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -214,8 +214,8 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void cloudTypeBackwardsCompatibility() {
-    assertEquals(CloudType.GCP, CloudType.valueOf("GCP"));
-    assertEquals("GCP", CloudType.GCP.toString());
+    assertEquals(CloudPlatform.GCP, CloudPlatform.valueOf("GCP"));
+    assertEquals("GCP", CloudPlatform.GCP.toString());
   }
 
   private Workspace defaultWorkspace() {

@@ -15,8 +15,8 @@ import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
-import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
+import bio.terra.workspace.service.datareference.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.List;
@@ -229,7 +229,7 @@ class DataReferenceDaoTest extends BaseUnitTest {
         .name("some_name")
         .description("some description, too")
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
-        .referenceType(DataReferenceType.DATA_REPO_SNAPSHOT)
+        .referenceType(WsmResourceType.DATA_REPO_SNAPSHOT)
         .referenceObject(snapshot);
   }
 

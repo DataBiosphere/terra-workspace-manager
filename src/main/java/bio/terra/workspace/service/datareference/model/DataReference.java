@@ -1,7 +1,10 @@
 package bio.terra.workspace.service.datareference.model;
 
 import bio.terra.workspace.generated.model.DataReferenceDescription;
+import bio.terra.workspace.generated.model.ReferenceTypeEnum;
+import bio.terra.workspace.service.resource.WsmResourceType;
 import com.google.auto.value.AutoValue;
+
 import java.util.UUID;
 
 /**
@@ -25,7 +28,7 @@ public abstract class DataReference {
   public abstract String description();
 
   /** Type of this data reference. */
-  public abstract DataReferenceType referenceType();
+  public abstract WsmResourceType referenceType();
 
   /** Instructions for how to clone this reference (if at all). */
   public abstract CloningInstructions cloningInstructions();
@@ -35,14 +38,14 @@ public abstract class DataReference {
 
   /** Convenience method for translating to an API model DataReferenceDescription object. */
   // TODO(PF-404): This is only used by the deprecated reference APIs. Remove this when all clients
-  // have migrated.
+  //  have migrated. That is why we can hard code the reference type.
   public DataReferenceDescription toApiModel() {
     return new DataReferenceDescription()
         .referenceId(referenceId())
         .name(name())
         .description(description())
         .workspaceId(workspaceId())
-        .referenceType(referenceType().toApiModel())
+        .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
         .reference(((SnapshotReference) referenceObject()).toApiModel())
         .cloningInstructions(cloningInstructions().toApiModel());
   }
@@ -61,7 +64,7 @@ public abstract class DataReference {
 
     public abstract DataReference.Builder description(String value);
 
-    public abstract DataReference.Builder referenceType(DataReferenceType value);
+    public abstract DataReference.Builder referenceType(WsmResourceType value);
 
     public abstract DataReference.Builder cloningInstructions(CloningInstructions value);
 

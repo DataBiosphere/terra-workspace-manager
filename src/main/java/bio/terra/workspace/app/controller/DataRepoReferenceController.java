@@ -8,8 +8,8 @@ import bio.terra.workspace.generated.model.DataRepoSnapshotReference;
 import bio.terra.workspace.generated.model.UpdateDataReferenceRequestBody;
 import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.datareference.model.DataReference;
-import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
+import bio.terra.workspace.service.datareference.model.WsmResourceType;
 import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -58,7 +58,7 @@ public class DataRepoReferenceController extends ReferenceController
         createDataReference(
             id,
             body.getMetadata(),
-            DataReferenceType.DATA_REPO_SNAPSHOT,
+            WsmResourceType.DATA_REPO_SNAPSHOT,
             referenceObject,
             getAuthenticatedInfo(),
             dataReferenceValidation,
@@ -89,7 +89,7 @@ public class DataRepoReferenceController extends ReferenceController
     DataReference ref =
         getReferenceByName(
             id,
-            DataReferenceType.DATA_REPO_SNAPSHOT,
+            WsmResourceType.DATA_REPO_SNAPSHOT,
             name,
             getAuthenticatedInfo(),
             dataReferenceService);

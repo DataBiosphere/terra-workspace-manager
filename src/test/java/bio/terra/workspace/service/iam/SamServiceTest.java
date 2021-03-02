@@ -17,8 +17,8 @@ import bio.terra.workspace.service.datareference.DataReferenceService;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
-import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
+import bio.terra.workspace.service.datareference.model.WsmResourceType;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
@@ -71,7 +71,7 @@ class SamServiceTest extends BaseConnectedTest {
         DataReferenceRequest.builder()
             .workspaceId(workspaceId)
             .name("valid_name")
-            .referenceType(DataReferenceType.DATA_REPO_SNAPSHOT)
+            .referenceType(WsmResourceType.DATA_REPO_SNAPSHOT)
             .cloningInstructions(CloningInstructions.COPY_NOTHING)
             // We mock TDR in this test so all snapshots are considered valid.
             .referenceObject(SnapshotReference.create("fakeInstance", "fakeSnapshot"))

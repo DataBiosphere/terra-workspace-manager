@@ -10,8 +10,8 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
-import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.ReferenceObject;
+import bio.terra.workspace.service.datareference.model.WsmResourceType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -33,8 +33,8 @@ public class CreateDataReferenceStep implements Step {
     UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.class);
     String name = inputMap.get(DataReferenceFlightMapKeys.NAME, String.class);
     String description = inputMap.get(DataReferenceFlightMapKeys.DESCRIPTION, String.class);
-    DataReferenceType type =
-        inputMap.get(DataReferenceFlightMapKeys.REFERENCE_TYPE, DataReferenceType.class);
+    WsmResourceType type =
+        inputMap.get(DataReferenceFlightMapKeys.REFERENCE_TYPE, WsmResourceType.class);
     CloningInstructions cloningInstructions =
         inputMap.get(DataReferenceFlightMapKeys.CLONING_INSTRUCTIONS, CloningInstructions.class);
     ReferenceObject referenceObject =

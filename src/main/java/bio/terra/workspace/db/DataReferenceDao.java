@@ -6,13 +6,9 @@ import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.service.datareference.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
-import bio.terra.workspace.service.datareference.model.DataReferenceType;
 import bio.terra.workspace.service.datareference.model.ReferenceObject;
+import bio.terra.workspace.service.resource.WsmResourceType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.List;
-import java.util.Optional;
-import java.util.StringJoiner;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +18,11 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.StringJoiner;
+import java.util.UUID;
 
 @Component
 public class DataReferenceDao {
@@ -97,8 +98,7 @@ public class DataReferenceDao {
    * Retrieve a data reference by name from the DB. Names are unique per workspace, per reference
    * type.
    */
-  public DataReference getDataReferenceByName(
-      UUID workspaceId, DataReferenceType type, String name) {
+  public DataReference getDataReferenceByName(UUID workspaceId, WsmResourceType type, String name) {
     String sql =
         "SELECT workspace_id, reference_id, name, description, cloning_instructions, reference_type, reference from workspace_data_reference where workspace_id = :id AND reference_type = :type AND name = :name";
 
@@ -225,7 +225,7 @@ public class DataReferenceDao {
 
   private static final RowMapper<DataReference> DATA_REFERENCE_ROW_MAPPER =
       (rs, rowNum) -> {
-        DataReferenceType referenceType = DataReferenceType.fromSql(rs.getString("reference_type"));
+        WsmResourceType referenceType = WsmResourceType.fromSql(rs.getString("reference_type"));
         ReferenceObject deserializedReferenceObject =
             ReferenceObject.fromJson(rs.getString("reference"));
         return DataReference.builder()

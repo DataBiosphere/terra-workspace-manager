@@ -1,12 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
-    <include file="changesets/20200227_initial_schema.yaml" relativeToChangelogFile="true"/>
-    <include file="changesets/20200512_reference_unique_index.yaml" relativeToChangelogFile="true"/>
-    <include file="changesets/20201016_fk_cloud_context.yaml" relativeToChangelogFile="true"/>
-    <include file="changesets/20201028_feature_toggle.yaml" relativeToChangelogFile="true"/>
-    <include file="changesets/20201104_reference_index.yaml" relativeToChangelogFile="true"/>
-    <include file="changesets/20201204_json_to_jsonb.yaml" relativeToChangelogFile="true"/>
-    <include file="changesets/20210205_add_description.yaml" relativeToChangelogFile="true"/>
-    <include file="changesets/20210212_rename_description.yaml" relativeToChangelogFile="true"/>
-    <include file="changesets/20210226_revised_schema_part1.yaml" relativeToChangelogFile="true"/>
+    <include file="changesets/20210301_revised_initial_schema.yaml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

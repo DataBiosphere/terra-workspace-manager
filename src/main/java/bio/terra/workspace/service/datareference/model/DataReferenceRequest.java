@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.datareference.model;
 
+import bio.terra.workspace.service.resource.WsmResourceType;
 import com.google.auto.value.AutoValue;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -28,8 +29,7 @@ public abstract class DataReferenceRequest {
   public abstract String description();
 
   /** Type of this data reference. */
-  public abstract DataReferenceType referenceType();
-
+  public abstract WsmResourceType referenceType();
   /** Instructions for how to clone this reference (if at all). */
   public abstract CloningInstructions cloningInstructions();
 
@@ -52,7 +52,7 @@ public abstract class DataReferenceRequest {
 
     public abstract DataReferenceRequest.Builder description(String value);
 
-    public abstract DataReferenceRequest.Builder referenceType(DataReferenceType value);
+    public abstract DataReferenceRequest.Builder referenceType(WsmResourceType value);
 
     public abstract DataReferenceRequest.Builder cloningInstructions(CloningInstructions value);
 
