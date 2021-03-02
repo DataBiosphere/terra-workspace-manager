@@ -9,8 +9,8 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
+import bio.terra.workspace.common.exception.ResourceNotFoundException;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
@@ -41,6 +41,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -273,7 +274,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Verify the data ref rows in question were also deleted; this is a direct call to the SQL
     // table
     assertThrows(
-        DataReferenceNotFoundException.class,
+        ResourceNotFoundException.class,
         () -> dataReferenceDao.getDataReference(request.workspaceId(), referenceId));
 
     // Verify that attempting to retrieve the reference via DataReferenceService fails; this
@@ -287,6 +288,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
   void deleteWorkspaceWithGoogleContext() throws Exception {
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())
@@ -312,6 +314,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
   void createGetDeleteGoogleContext() {
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())

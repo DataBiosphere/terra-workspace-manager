@@ -71,6 +71,11 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
         response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));
   }
 
+  @Override
+  public ResponseEntity<GoogleBucketStoredAttributes> getBucket(UUID id, UUID resourceId) {
+    return new ResponseEntity<>(controlledResourceService.getBucket(id, resourceId), HttpStatus.OK);
+  }
+
   private CreatedControlledGoogleBucket fetchGoogleBucketResult(String jobId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final AsyncJobResult<GoogleBucketStoredAttributes> jobResult =
