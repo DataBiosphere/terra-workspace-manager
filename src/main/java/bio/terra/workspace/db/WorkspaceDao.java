@@ -66,7 +66,8 @@ public class WorkspaceDao {
   public UUID createWorkspace(Workspace workspace) {
     final String sql =
         "INSERT INTO workspace (workspace_id, display_name, description, spend_profile, properties, workspace_stage) "
-            + "values (:workspace_id, :display_name, :description, :spend_profile, :properties, :workspace_stage)";
+            + "values (:workspace_id, :display_name, :description, :spend_profile,"
+            + " cast(:properties AS json), :workspace_stage)";
 
     final String workspaceId = workspace.getWorkspaceId().toString();
 
@@ -77,9 +78,7 @@ public class WorkspaceDao {
             .addValue("description", workspace.getDescription().orElse(null))
             .addValue(
                 "spend_profile", workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))
-            .addValue(
-                "properties",
-                workspace.getProperties().map(dbUtil::toJsonFromProperties).orElse(null))
+            .addValue("properties", dbUtil.toJsonFromProperties(workspace.getProperties()))
             .addValue("workspace_stage", workspace.getWorkspaceStage().toString());
     try {
       jdbcTemplate.update(sql, params);
@@ -121,7 +120,7 @@ public class WorkspaceDao {
   /**
    * Retrieves a workspace from database by ID.
    *
-   * @param id unique idea of the workspace
+   * @param id unique identifier of the workspace
    * @return workspace value object
    */
   @Transactional(
@@ -229,6 +228,7 @@ public class WorkspaceDao {
    *
    * @param workspaceId workspace of the cloud context
    */
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public void deleteGcpCloudContext(UUID workspaceId) {
     deleteGcpCloudContextWorker(workspaceId);
   }
@@ -250,8 +250,6 @@ public class WorkspaceDao {
     }
   }
 
-  // -- serdes for GcpCloudContext --
-
   private void deleteGcpCloudContextWorker(UUID workspaceId) {
     final String sql =
         "DELETE FROM cloud_context "
@@ -271,6 +269,8 @@ public class WorkspaceDao {
       logger.info("No record to delete for GCP cloud context for workspace {}", workspaceId);
     }
   }
+
+  // -- serdes for GcpCloudContext --
 
   @VisibleForTesting
   String serializeGcpCloudContext(GcpCloudContext gcpCloudContext) {

@@ -2,6 +2,7 @@ package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.StageService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
@@ -14,7 +15,6 @@ import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
-import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.flight.CreateGoogleContextFlight;
 import bio.terra.workspace.service.workspace.flight.DeleteGoogleContextFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
@@ -22,7 +22,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +41,7 @@ public class WorkspaceService {
   private final SamService samService;
   private final SpendProfileService spendProfileService;
   private final BufferServiceConfiguration bufferServiceConfiguration;
+  private final StageService stageService;
 
   @Autowired
   public WorkspaceService(
@@ -49,12 +49,14 @@ public class WorkspaceService {
       WorkspaceDao workspaceDao,
       SamService samService,
       SpendProfileService spendProfileService,
-      BufferServiceConfiguration bufferServiceConfiguration) {
+      BufferServiceConfiguration bufferServiceConfiguration,
+      StageService stageService) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
     this.spendProfileService = spendProfileService;
     this.bufferServiceConfiguration = bufferServiceConfiguration;
+    this.stageService = stageService;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
@@ -129,8 +131,12 @@ public class WorkspaceService {
   }
 
   /**
-   * Start a job to create a Google cloud context for the workspace. Returns the job id. Verifies
-   * workspace existence and write permission before starting the job.
+   * Process the request to create a GCP cloud context
+   *
+   * @param workspaceId workspace in which to create the context
+   * @param jobId called-supplied job it of the async job
+   * @param resultPath endpoint where the result of the completed job can be retrieved
+   * @param userReq user authentication info
    */
   @Traced
   public void createGcpCloudContext(
@@ -143,7 +149,7 @@ public class WorkspaceService {
 
     Workspace workspace =
         validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
-    assertMcWorkspace(workspace, "createCloudContext");
+    stageService.assertMcWorkspace(workspace, "createCloudContext");
 
     // TODO: We should probably do this in a step of the job. It will be talking to another
     //  service and that may require retrying. It also may be slow, so getting it off of this
@@ -179,7 +185,7 @@ public class WorkspaceService {
   public void deleteGcpCloudContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     Workspace workspace =
         validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
-    assertMcWorkspace(workspace, "deleteGcpCloudContext");
+    stageService.assertMcWorkspace(workspace, "deleteGcpCloudContext");
     jobService
         .newJob(
             "Delete GCP Context " + workspaceId,
@@ -189,12 +195,5 @@ public class WorkspaceService {
             userReq)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
         .submitAndWait(null);
-  }
-
-  private void assertMcWorkspace(Workspace workspace, String actionMessage) {
-    if (!WorkspaceStage.MC_WORKSPACE.equals(workspace.getWorkspaceStage())) {
-      throw new StageDisabledException(
-          workspace.getWorkspaceId(), workspace.getWorkspaceStage(), actionMessage);
-    }
   }
 }

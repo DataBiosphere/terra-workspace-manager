@@ -1,8 +1,10 @@
 package bio.terra.workspace.service.workspace.model;
 
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -70,8 +72,8 @@ public class Workspace {
   }
 
   /** Caller-specified set of key-value pairs */
-  public Optional<Map<String, String>> getProperties() {
-    return Optional.ofNullable(properties);
+  public Map<String, String> getProperties() {
+    return properties;
   }
 
   /** Feature flag indicating whether this workspace uses MC Terra features. */
@@ -166,6 +168,13 @@ public class Workspace {
     }
 
     public Workspace build() {
+      // Always have a map, even if it is empty
+      if (properties == null) {
+        properties = new HashMap<>();
+      }
+      if (workspaceId == null || workspaceStage == null) {
+        throw new MissingRequiredFieldsException("Workspace requires id and stage");
+      }
       return new Workspace(
           workspaceId,
           displayName,

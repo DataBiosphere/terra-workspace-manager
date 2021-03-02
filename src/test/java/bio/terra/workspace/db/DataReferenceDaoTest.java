@@ -210,7 +210,6 @@ class DataReferenceDaoTest extends BaseUnitTest {
     Workspace workspace =
         Workspace.builder()
             .workspaceId(UUID.randomUUID())
-            .spendProfileId(null)
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
     return workspaceDao.createWorkspace(workspace);
