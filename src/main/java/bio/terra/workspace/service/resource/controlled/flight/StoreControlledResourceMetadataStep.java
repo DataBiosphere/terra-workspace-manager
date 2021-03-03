@@ -6,8 +6,6 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ControlledResourceDao;
-import bio.terra.workspace.db.DataReferenceDao;
-import bio.terra.workspace.service.datareference.flight.DataReferenceFlightMapKeys;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;

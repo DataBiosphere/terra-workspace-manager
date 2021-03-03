@@ -8,7 +8,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.service.datareference.flight.DataReferenceFlightMapKeys;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.reference.ReferenceResource;
@@ -55,7 +54,7 @@ public class CreateReferenceMetadataStep implements Step {
     FlightMap workingMap = flightContext.getWorkingMap();
 
     UUID resourceId = workingMap.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, UUID.class);
-    UUID workspaceId = inputMap.get(DataReferenceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
 
     // Ignore return value, as we don't care whether a reference was deleted or just not found.
     resourceDao.deleteResource(workspaceId, resourceId);

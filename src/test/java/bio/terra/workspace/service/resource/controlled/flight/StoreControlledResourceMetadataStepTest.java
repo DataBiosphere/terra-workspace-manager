@@ -14,8 +14,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.db.ControlledResourceDao;
-import bio.terra.workspace.db.DataReferenceDao;
-import bio.terra.workspace.service.datareference.flight.DataReferenceFlightMapKeys;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.GoogleBucketReference;
 import bio.terra.workspace.service.datareference.model.WsmResourceType;

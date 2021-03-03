@@ -20,20 +20,18 @@ import bio.terra.workspace.generated.model.RoleBindingList;
 import bio.terra.workspace.generated.model.UpdateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.WorkspaceDescription;
 import bio.terra.workspace.generated.model.WorkspaceStageModel;
-import bio.terra.workspace.service.datareference.DataReferenceService;
-import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
-import bio.terra.workspace.service.datareference.model.DataReference;
-import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
+import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.reference.ReferenceDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.reference.ReferenceResource;
 import bio.terra.workspace.service.resource.reference.ReferenceResourceService;
+import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -59,7 +57,6 @@ import java.util.UUID;
 @Controller
 public class WorkspaceApiController implements WorkspaceApi {
   private final WorkspaceService workspaceService;
-  private final DataReferenceService dataReferenceService;
   private final JobService jobService;
   private final SamService samService;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
@@ -69,14 +66,12 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Autowired
   public WorkspaceApiController(
       WorkspaceService workspaceService,
-      DataReferenceService dataReferenceService,
       JobService jobService,
       SamService samService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       ReferenceResourceService referenceResourceService) {
     this.workspaceService = workspaceService;
-    this.dataReferenceService = dataReferenceService;
     this.jobService = jobService;
     this.samService = samService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
@@ -287,14 +282,14 @@ public class WorkspaceApiController implements WorkspaceApi {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info("Getting snapshot data references in workspace {} for {}", id, userReq.getEmail());
     ControllerValidationUtils.validatePaginationParams(offset, limit);
-    List<DataReference> enumerateResult =
-        dataReferenceService.enumerateDataReferences(id, offset, limit, userReq);
-    logger.info("Got snapshot data references in workspace {} for {}", id, userReq.getEmail());
+    List<ReferenceResource> enumerateResult =
+        referenceResourceService.enumerateReferences(id, offset, limit, userReq);
+
+    // TODO(PF-404): this is a workaround until clients migrate off this endpoint.
     DataReferenceList responseList = new DataReferenceList();
-    for (DataReference ref : enumerateResult) {
-      // TODO(PF-404): this is a workaround until clients migrate off this endpoint.
-      if (ref.referenceType() == WsmResourceType.DATA_REPO_SNAPSHOT) {
-        responseList.addResourcesItem(ref.toApiModel());
+    for (ReferenceResource resource : enumerateResult) {
+      if (resource.getResourceType() == WsmResourceType.DATA_REPO_SNAPSHOT) {
+        responseList.addResourcesItem(makeDataReferenceDescription(resource));
       }
     }
     return ResponseEntity.ok(responseList);

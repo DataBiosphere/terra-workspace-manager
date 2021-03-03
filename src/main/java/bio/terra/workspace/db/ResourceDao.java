@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -26,8 +27,10 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static bio.terra.workspace.service.resource.StewardshipType.CONTROLLED;
 import static bio.terra.workspace.service.resource.StewardshipType.REFERENCE;
@@ -38,20 +41,36 @@ public class ResourceDao {
   private static final Logger logger = LoggerFactory.getLogger(ResourceDao.class);
 
   /** SQL query for reading all columns from the resource table */
-  private static final String resourceSelectSql =
+  private static final String RESOURCE_SELECT_SQL =
       "SELECT workspace_id, cloud_platform, resource_id, name, description, "
           + "stewardship_type, resource_type, cloning_instructions, attributes,"
           + " access, associated_app, assigned_user"
           + " FROM resource WHERE workspace_id = :workspace_id ";
 
+  private static final RowMapper<DbResource> DB_RESOURCE_ROW_MAPPER =
+      (rs, rowNum) -> {
+        return new DbResource()
+            .workspaceId(UUID.fromString(rs.getString("workspace_id")))
+            .cloudPlatform(CloudPlatform.fromSql(rs.getString("cloud_platform")))
+            .resourceId(UUID.fromString(rs.getString("resource_id")))
+            .name(rs.getString("name"))
+            .description(rs.getString("description"))
+            .stewardshipType(fromSql(rs.getString("stewardship_type")))
+            .resourceType(WsmResourceType.fromSql(rs.getString("resource_type")))
+            .cloningInstructions(CloningInstructions.fromSql(rs.getString("cloning_instructions")))
+            .attributes(rs.getString("attributes"))
+            .accessType(ControlledAccessType.fromSql(rs.getString("access")))
+            .associatedApp(UUID.fromString(rs.getString("associated_app")))
+            .assignedUser(rs.getString("assigned_user"));
+      };
   private final NamedParameterJdbcTemplate jdbcTemplate;
+
+  // -- Common Resource Methods -- //
 
   @Autowired
   public ResourceDao(NamedParameterJdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
   }
-
-  // -- Common Resource Methods -- //
 
   public boolean deleteResource(UUID workspaceId, UUID resourceId) {
     final String sql =
@@ -73,6 +92,33 @@ public class ResourceDao {
   }
 
   /**
+   * enumerateReferences - temporary This is a temporary implementation to support the old
+   * DataReference model. It also does not filter by what is visible to the user. I think we will
+   * probably change to use a single enumerate across all resources.
+   *
+   * @param workspaceId workspace of interest
+   * @param offset paging support
+   * @param limit paging support
+   * @return list of reference resources
+   */
+  public List<ReferenceResource> enumerateReferences(UUID workspaceId, int offset, int limit) {
+    String sql =
+        RESOURCE_SELECT_SQL
+            + " AND stewardship_type = 'REFERENCE' ORDER BY name OFFSET :offset LIMIT :limit";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("offset", offset)
+            .addValue("limit", limit);
+    List<DbResource> dbResourceList = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
+
+    return dbResourceList.stream()
+        .map(this::constructResource)
+        .map(ReferenceResource.class::cast)
+        .collect(Collectors.toList());
+  }
+
+  /**
    * Retrieve a resource by ID
    *
    * @param workspaceId identifier of workspace for the lookup
@@ -80,12 +126,14 @@ public class ResourceDao {
    * @return WsmResource object
    */
   @Transactional(
-          propagation = Propagation.REQUIRED,
-          isolation = Isolation.SERIALIZABLE,
-          readOnly = true)
+      propagation = Propagation.REQUIRED,
+      isolation = Isolation.SERIALIZABLE,
+      readOnly = true)
   public WsmResource getResource(UUID workspaceId, UUID resourceId) {
     return getResourceWithId(workspaceId, resourceId);
   }
+
+  // -- Reference Methods -- //
 
   /**
    * Retrieve a data reference by name. Names are unique per workspace.
@@ -95,14 +143,12 @@ public class ResourceDao {
    * @return WsmResource object
    */
   @Transactional(
-          propagation = Propagation.REQUIRED,
-          isolation = Isolation.SERIALIZABLE,
-          readOnly = true)
+      propagation = Propagation.REQUIRED,
+      isolation = Isolation.SERIALIZABLE,
+      readOnly = true)
   public WsmResource getResourceByName(UUID workspaceId, String name) {
     return getResourceWithName(workspaceId, name);
   }
-
-  // -- Reference Methods -- //
 
   /**
    * Create a reference in the database
@@ -127,6 +173,8 @@ public class ResourceDao {
         Optional.empty());
   }
 
+  // -- Controlled Resource Methods -- //
+
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public boolean updateReferenceResource(
       UUID workspaceId, UUID referenceId, String name, String description) {
@@ -147,7 +195,7 @@ public class ResourceDao {
     return updateResource(workspaceId, referenceId, params);
   }
 
-  // -- Controlled Resource Methods -- //
+  // -- Private Methods -- //
 
   /**
    * Create a controlled resource in the database
@@ -176,8 +224,6 @@ public class ResourceDao {
         // TODO: rename this
         controlledResource.getOwner());
   }
-
-  // -- Private Methods -- //
 
   private void storeResource(
       UUID workspaceId,
@@ -223,7 +269,7 @@ public class ResourceDao {
   }
 
   private WsmResource getResourceWithId(UUID workspaceId, UUID resourceId) {
-    final String sql = resourceSelectSql + " AND resource_id = :resource_id";
+    final String sql = RESOURCE_SELECT_SQL + " AND resource_id = :resource_id";
 
     final var params =
         new MapSqlParameterSource()
@@ -234,7 +280,7 @@ public class ResourceDao {
   }
 
   private WsmResource getResourceWithName(UUID workspaceId, String name) {
-    final String sql = resourceSelectSql + " AND name = :name";
+    final String sql = RESOURCE_SELECT_SQL + " AND name = :name";
 
     final var params =
         new MapSqlParameterSource()
@@ -260,48 +306,30 @@ public class ResourceDao {
           case BIG_QUERY_DATASET:
           case DATA_REPO_SNAPSHOT:
           default:
-            throw new InvalidMetadataException("Invalid reference resource type" + dbResource.getResourceType().toString());
+            throw new InvalidMetadataException(
+                "Invalid reference resource type" + dbResource.getResourceType().toString());
         }
 
       case CONTROLLED:
         switch (dbResource.getResourceType()) {
           case GCS_BUCKET:
-
-
             break;
 
           default:
-            throw new InvalidMetadataException("Invalid controlled resource type" + dbResource.getResourceType().toString());
+            throw new InvalidMetadataException(
+                "Invalid controlled resource type" + dbResource.getResourceType().toString());
         }
 
       case MONITORED:
       default:
-        throw new InvalidMetadataException("Invalid stewardship type" + dbResource.getStewardshipType().toString());
+        throw new InvalidMetadataException(
+            "Invalid stewardship type" + dbResource.getStewardshipType().toString());
     }
-
   }
 
   private DbResource getDbResource(String sql, MapSqlParameterSource params) {
     try {
-      return jdbcTemplate.queryForObject(
-          sql,
-          params,
-          (rs, rowNum) -> {
-            return new DbResource()
-                .workspaceId(UUID.fromString(rs.getString("workspace_id")))
-                .cloudPlatform(CloudPlatform.fromSql(rs.getString("cloud_platform")))
-                .resourceId(UUID.fromString(rs.getString("resource_id")))
-                .name(rs.getString("name"))
-                .description(rs.getString("description"))
-                .stewardshipType(fromSql(rs.getString("stewardship_type")))
-                .resourceType(WsmResourceType.fromSql(rs.getString("resource_type")))
-                .cloningInstructions(
-                    CloningInstructions.fromSql(rs.getString("cloning_instructions")))
-                .attributes(rs.getString("attributes"))
-                .accessType(ControlledAccessType.fromSql(rs.getString("access")))
-                .associatedApp(UUID.fromString(rs.getString("associated_app")))
-                .assignedUser(rs.getString("assigned_user"));
-          });
+      return jdbcTemplate.queryForObject(sql, params, DB_RESOURCE_ROW_MAPPER);
     } catch (EmptyResultDataAccessException e) {
       throw new ResourceNotFoundException("Resource not found.");
     }
