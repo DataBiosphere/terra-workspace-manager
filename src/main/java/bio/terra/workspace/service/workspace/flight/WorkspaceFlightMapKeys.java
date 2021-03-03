@@ -15,13 +15,14 @@ public final class WorkspaceFlightMapKeys {
 
   /** Use inner class for new set of keys so it's easy to spot duplicates */
   public static class ControlledResourceKeys {
-    public static final String OWNER_EMAIL = "controlledResourceOwnerEmail";
+    public static final String CREATION_PARAMETERS = "creationParameters";
+    public static final String IAM_ROLE = "iamRole";
 
     private ControlledResourceKeys() {}
   }
 
   /** Common resource keys */
-  public final class ResourceKeys {
+  public static class ResourceKeys {
     public static final String RESOURCE_ID = "resourceId";
     public static final String RESOURCE_TYPE = "resourceType";
 

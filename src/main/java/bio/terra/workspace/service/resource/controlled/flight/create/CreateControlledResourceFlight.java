@@ -1,13 +1,11 @@
-package bio.terra.workspace.service.resource.controlled.flight;
+package bio.terra.workspace.service.resource.controlled.flight.create;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.service.resource.flight.GenerateResourceIdStep;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.gcp.ControlledGcsBucketResource;
 import bio.terra.workspace.service.workspace.flight.CreateSamResourceStep;
 
 /**
@@ -20,15 +18,9 @@ public class CreateControlledResourceFlight extends Flight {
     super(inputParameters, applicationContext);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
 
-    // Generate a new resource UUID
-    addStep(new GenerateControlledResourceIdStep());
-    // Generate reference ID for the workspace_data_reference table
-    addStep(new GenerateResourceIdStep());
-
     // store the resource metadata in the WSM database
     addStep(
-        new StoreControlledResourceMetadataStep(
-            flightBeanBag.getControlledResourceDao(), flightBeanBag.getResourceDao()));
+        new StoreMetadataStep(flightBeanBag.getResourceDao()));
 
     // create the cloud resource via CRL
     final ControlledResource resource =
@@ -41,7 +33,7 @@ public class CreateControlledResourceFlight extends Flight {
         addStep(
             new CreateGcsBucketStep(
                 flightBeanBag.getCrlService(),
-                (ControlledGcsBucketResource) resource,
+                resource.castToGcsBucketResource(),
                 userRequest));
         break;
       case BIG_QUERY_DATASET:

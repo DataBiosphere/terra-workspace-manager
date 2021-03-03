@@ -3,10 +3,13 @@ package bio.terra.workspace.db;
 import bio.terra.workspace.common.exception.SerializationException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+
+import java.util.Map;
 
 /**
  * Object mapper for use in the DAO modules. This mapper must stay constant over time
@@ -33,6 +36,19 @@ public class DbSerDes {
             return serdesMapper.readValue(json, classType);
         } catch (JsonProcessingException e) {
             throw new SerializationException("Failed fromJson", e);
+        }
+    }
+
+    // Specific mappers for key-value properties
+    public static String toJsonFromProperties(Map<String, String> kvmap) {
+        return toJson(kvmap);
+    }
+
+    public static Map<String, String> toPropertiesFromJson(String json) {
+        try {
+            return serdesMapper.readValue(json, new TypeReference<Map<String, String>>() {});
+        } catch (JsonProcessingException ex) {
+            throw new SerializationException("Failed to deserialize properties", ex);
         }
     }
 }

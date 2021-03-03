@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.resource.reference;
 
+import bio.terra.workspace.common.exception.InconsistentFieldsException;
 import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
-import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.GoogleBucketReference;
 import bio.terra.workspace.generated.model.GoogleBucketUid;
@@ -36,6 +36,7 @@ public class ReferenceGcsBucketResource extends ReferenceResource {
       @JsonProperty("bucketName") String bucketName) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
     this.attributes = new ReferenceGcsBucketAttributes(bucketName);
+    validate();
   }
 
   /**
@@ -49,13 +50,9 @@ public class ReferenceGcsBucketResource extends ReferenceResource {
         dbResource.getName().orElse(null),
         dbResource.getDescription().orElse(null),
         dbResource.getCloningInstructions());
-
-    if (dbResource.getResourceType() != WsmResourceType.GCS_BUCKET) {
-      throw new InvalidMetadataException("Expected GCS_BUCKET");
-    }
-
     this.attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ReferenceGcsBucketAttributes.class);
+    validate();
   }
 
   public ReferenceGcsBucketAttributes getAttributes() {
@@ -81,6 +78,9 @@ public class ReferenceGcsBucketResource extends ReferenceResource {
   @Override
   public void validate() {
     super.validate();
+    if (getResourceType() != WsmResourceType.GCS_BUCKET) {
+      throw new InconsistentFieldsException("Expected GCS_BUCKET");
+    }
     if (getAttributes() == null || getAttributes().getBucketName() == null) {
       throw new MissingRequiredFieldException("Missing required field for ReferenceGcsBucket.");
     }

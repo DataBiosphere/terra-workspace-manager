@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource;
 import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import com.google.common.base.Strings;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;

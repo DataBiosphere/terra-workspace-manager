@@ -1,12 +1,16 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
-import bio.terra.workspace.service.resource.StewardshipType;
+import bio.terra.workspace.common.exception.InconsistentFieldsException;
+import bio.terra.workspace.common.exception.MissingRequiredFieldException;
+import bio.terra.workspace.db.exception.InvalidMetadataException;
+import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,16 +19,29 @@ import java.util.UUID;
  * and are not specific to any particular resource type.
  */
 public abstract class ControlledResource extends WsmResource {
-  private final String owner;
+  private final String assignedUser;
+  private final ControlledAccessType controlledAccessType;
 
   public ControlledResource(
-      String resourceName,
-      CloningInstructions cloningInstructions,
-      String description,
       UUID workspaceId,
-      String owner) {
-    super(resourceName, cloningInstructions, description, workspaceId);
-    this.owner = owner;
+      UUID resourceId,
+      String name,
+      String description,
+      CloningInstructions cloningInstructions,
+      String assignedUser,
+      ControlledAccessType controlledAccessType) {
+    super(workspaceId, resourceId, name, description, cloningInstructions);
+    this.assignedUser = assignedUser;
+    this.controlledAccessType = controlledAccessType;
+  }
+
+  public ControlledResource(DbResource dbResource) {
+    super(dbResource);
+    if (dbResource.getStewardshipType() != StewardshipType.CONTROLLED) {
+      throw new InvalidMetadataException("Expected CONTROLLED");
+    }
+    this.assignedUser = dbResource.getAssignedUser().orElse(null);
+    this.controlledAccessType = dbResource.getAccessType().orElse(null);
   }
 
   @Override
@@ -32,66 +49,63 @@ public abstract class ControlledResource extends WsmResource {
     return StewardshipType.CONTROLLED;
   }
 
-  public Optional<String> getOwner() {
-    return Optional.ofNullable(owner);
+  public Optional<String> getAssignedUser() {
+    return Optional.ofNullable(assignedUser);
+  }
+
+  public ControlledAccessType getControlledAccessType() {
+    return controlledAccessType;
   }
 
   @Override
   public void validate() {
     super.validate();
-
-    if (getResourceType() == null || getJsonAttributes() == null) {
-      throw new IllegalStateException("Missing required field for ControlledResource.");
+    if (getResourceType() == null
+        || getJsonAttributes() == null
+        || getControlledAccessType() == null) {
+      throw new MissingRequiredFieldException("Missing required field for ControlledResource.");
+    }
+    if (getAssignedUser().isPresent()
+        && (getControlledAccessType() == ControlledAccessType.APP_SHARED
+            || getControlledAccessType() == ControlledAccessType.USER_SHARED)) {
+      throw new InconsistentFieldsException("Assigned user on SHARED resource");
     }
   }
 
-  /**
-   * Generate a model suitable for serialization into the workspace_resource table, via the
-   * ControlledResourceDao.
-   *
-   * @return model to be saved in the database.
-   */
-  public ControlledResourceDbModel toResourceDbModel(UUID resourceId) {
-    return ControlledResourceDbModel.builder()
-        .setResourceId(resourceId)
-        .setWorkspaceId(getWorkspaceId())
-        .setOwner(getOwner().orElse(null))
-        .setAttributes(getJsonAttributes())
-        .build();
+  // Double-checked down casts when we need to re-specialize from a ControlledResource
+  public ControlledGcsBucketResource castToGcsBucketResource() {
+    validateSubclass(WsmResourceType.GCS_BUCKET);
+    return (ControlledGcsBucketResource) this;
   }
 
-  /** Build a request for the data reference dao to store that portion of the thing. */
-  public DataReferenceRequest toDataReferenceRequest(UUID resourceId) {
-    return DataReferenceRequest.builder()
-        .workspaceId(getWorkspaceId())
-        .name(getName())
-        .description(getDescription())
-        .resourceId(resourceId)
-        .cloningInstructions(getCloningInstructions())
-        .referenceType(getResourceType())
-        .referenceObject(getReferenceObject())
-        .build();
+  private void validateSubclass(WsmResourceType expectedType) {
+    if (getResourceType() != expectedType) {
+      throw new InvalidMetadataException(
+              String.format("Expected %s, found %s", expectedType, getResourceType()));
+    }
   }
-
-  public abstract WsmResourceType getResourceType();
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof ControlledResource)) {
-      return false;
-    }
-    if (!super.equals(o)) {
-      return false;
-    }
+    if (this == o) return true;
+
+    if (o == null || getClass() != o.getClass()) return false;
+
     ControlledResource that = (ControlledResource) o;
-    return Objects.equals(getOwner(), that.getOwner());
+
+    return new EqualsBuilder()
+        .appendSuper(super.equals(o))
+        .append(assignedUser, that.assignedUser)
+        .append(controlledAccessType, that.controlledAccessType)
+        .isEquals();
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), getOwner());
+    return new HashCodeBuilder(17, 37)
+        .appendSuper(super.hashCode())
+        .append(assignedUser)
+        .append(controlledAccessType)
+        .toHashCode();
   }
 }

@@ -14,6 +14,7 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.controlled.flight.create.CreateGcsBucketStep;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;

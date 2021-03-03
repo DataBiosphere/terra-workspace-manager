@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource;
+package bio.terra.workspace.service.resource.model;
 
 import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;

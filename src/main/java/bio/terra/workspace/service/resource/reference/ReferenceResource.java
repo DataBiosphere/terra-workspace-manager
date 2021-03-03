@@ -3,7 +3,7 @@ package bio.terra.workspace.service.resource.reference;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.DataReferenceMetadata;
-import bio.terra.workspace.service.resource.StewardshipType;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -63,5 +63,4 @@ public abstract class ReferenceResource extends WsmResource {
                     String.format("Expected %s, found %s", expectedType, getResourceType()));
         }
     }
-
 }

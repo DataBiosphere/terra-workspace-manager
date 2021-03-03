@@ -1,7 +1,6 @@
 package bio.terra.workspace.db;
 
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
-import bio.terra.workspace.common.exception.SerializationException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextException;
@@ -11,11 +10,7 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
-import java.util.Optional;
-import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +25,9 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+import java.util.UUID;
+
 /**
  * WorkspaceDao includes operations on the workspace and cloud_context tables. Each cloud context
  * has separate methods - well, will have. The types and their contents are different. We anticipate
@@ -42,18 +40,11 @@ public class WorkspaceDao {
   @VisibleForTesting static final long GCP_CLOUD_CONTEXT_DB_VERSION = 1;
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
-  private final ObjectMapper persistenceObjectMapper;
-  private final DbUtil dbUtil;
   private final Logger logger = LoggerFactory.getLogger(WorkspaceDao.class);
 
   @Autowired
-  public WorkspaceDao(
-      NamedParameterJdbcTemplate jdbcTemplate,
-      ObjectMapper persistenceObjectMapper,
-      DbUtil dbUtil) {
+  public WorkspaceDao(NamedParameterJdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
-    this.persistenceObjectMapper = persistenceObjectMapper;
-    this.dbUtil = dbUtil;
   }
 
   /**
@@ -79,7 +70,7 @@ public class WorkspaceDao {
                 "spend_profile", workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))
             .addValue(
                 "properties",
-                workspace.getProperties().map(dbUtil::toJsonFromProperties).orElse(null))
+                workspace.getProperties().map(DbSerDes::toJsonFromProperties).orElse(null))
             .addValue("workspace_stage", workspace.getWorkspaceStage().toString());
     try {
       jdbcTemplate.update(sql, params);
@@ -153,7 +144,7 @@ public class WorkspaceDao {
                                   .orElse(null))
                           .properties(
                               Optional.ofNullable(rs.getString("properties"))
-                                  .map(dbUtil::toPropertiesFromJson)
+                                  .map(DbSerDes::toPropertiesFromJson)
                                   .orElse(null))
                           .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
                           .gcpCloudContext(
@@ -275,24 +266,16 @@ public class WorkspaceDao {
   @VisibleForTesting
   String serializeGcpCloudContext(GcpCloudContext gcpCloudContext) {
     GcpCloudContextV1 dbContext = GcpCloudContextV1.from(gcpCloudContext.getGcpProjectId());
-    try {
-      return persistenceObjectMapper.writeValueAsString(dbContext);
-    } catch (JsonProcessingException e) {
-      throw new SerializationException("Failed to serialize GcpCloudContextV1", e);
-    }
+    return DbSerDes.toJson(dbContext);
   }
 
   @VisibleForTesting
   GcpCloudContext deserializeGcpCloudContext(String json) {
-    try {
-      GcpCloudContextV1 result = persistenceObjectMapper.readValue(json, GcpCloudContextV1.class);
+      GcpCloudContextV1 result = DbSerDes.fromJson(json, GcpCloudContextV1.class);
       if (result.version != GCP_CLOUD_CONTEXT_DB_VERSION) {
         throw new InvalidSerializedVersionException("Invalid serialized version");
       }
       return new GcpCloudContext(result.gcpProjectId);
-    } catch (JsonProcessingException e) {
-      throw new SerializationException("Failed to serialize GcpCloudContextV1", e);
-    }
   }
 
   static class GcpCloudContextV1 {

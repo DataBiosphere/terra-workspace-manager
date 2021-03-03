@@ -13,12 +13,11 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.db.ControlledResourceDao;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.GoogleBucketReference;
 import bio.terra.workspace.service.datareference.model.WsmResourceType;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceDbModel;
+import bio.terra.workspace.service.resource.controlled.flight.create.StoreMetadataStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,12 +34,12 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
   @Mock private FlightContext mockFlightContext;
   @Captor private ArgumentCaptor<ControlledResourceDbModel> dbModelArgumentCaptor;
   @Captor private ArgumentCaptor<DataReferenceRequest> dataReferenceRequestCaptor;
-  private StoreControlledResourceMetadataStep storeGoogleBucketMetadataStep;
+  private StoreMetadataStep storeGoogleBucketMetadataStep;
 
   @BeforeEach
   public void setup() {
     storeGoogleBucketMetadataStep =
-        new StoreControlledResourceMetadataStep(mockControlledResourceDao, mockDataReferenceDao);
+        new StoreMetadataStep(mockControlledResourceDao, mockDataReferenceDao);
 
     // Stub the flight map as of this step
     final FlightMap inputFlightMap = new FlightMap();

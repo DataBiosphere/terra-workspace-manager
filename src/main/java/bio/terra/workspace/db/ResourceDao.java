@@ -4,7 +4,7 @@ import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.service.resource.StewardshipType;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledAccessType;
@@ -32,9 +32,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static bio.terra.workspace.service.resource.StewardshipType.CONTROLLED;
-import static bio.terra.workspace.service.resource.StewardshipType.REFERENCE;
-import static bio.terra.workspace.service.resource.StewardshipType.fromSql;
+import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
+import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCE;
+import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
 
 @Component
 public class ResourceDao {
@@ -63,6 +63,7 @@ public class ResourceDao {
             .associatedApp(UUID.fromString(rs.getString("associated_app")))
             .assignedUser(rs.getString("assigned_user"));
       };
+
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   // -- Common Resource Methods -- //
@@ -133,8 +134,6 @@ public class ResourceDao {
     return getResourceWithId(workspaceId, resourceId);
   }
 
-  // -- Reference Methods -- //
-
   /**
    * Retrieve a data reference by name. Names are unique per workspace.
    *
@@ -149,6 +148,8 @@ public class ResourceDao {
   public WsmResource getResourceByName(UUID workspaceId, String name) {
     return getResourceWithName(workspaceId, name);
   }
+
+  // -- Reference Methods -- //
 
   /**
    * Create a reference in the database
@@ -201,16 +202,15 @@ public class ResourceDao {
    * Create a controlled resource in the database
    *
    * @param controlledResource controlled resource to create
-   * @param resourceId resourceId to use for the resource
    * @throws DuplicateDataReferenceException on a duplicate resource_id or (workspace_id, name)
    */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public void createControlledResource(ControlledResource controlledResource, UUID resourceId)
+  public void createControlledResource(ControlledResource controlledResource)
       throws DuplicateDataReferenceException {
 
     storeResource(
         controlledResource.getWorkspaceId(),
-        resourceId,
+        controlledResource.getResourceId(),
         controlledResource.getName(),
         controlledResource.getDescription(),
         CONTROLLED,
@@ -222,7 +222,7 @@ public class ResourceDao {
         // TODO: add associated app to ControlledResource
         Optional.empty(),
         // TODO: rename this
-        controlledResource.getOwner());
+        controlledResource.getAssignedUser());
   }
 
   private void storeResource(
