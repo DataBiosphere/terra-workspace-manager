@@ -3,7 +3,7 @@ package bio.terra.workspace.service.resource.controlled.flight;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.service.datareference.flight.GenerateReferenceIdStep;
+import bio.terra.workspace.service.resource.flight.GenerateResourceIdStep;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -23,12 +23,12 @@ public class CreateControlledResourceFlight extends Flight {
     // Generate a new resource UUID
     addStep(new GenerateControlledResourceIdStep());
     // Generate reference ID for the workspace_data_reference table
-    addStep(new GenerateReferenceIdStep());
+    addStep(new GenerateResourceIdStep());
 
     // store the resource metadata in the WSM database
     addStep(
         new StoreControlledResourceMetadataStep(
-            flightBeanBag.getControlledResourceDao(), flightBeanBag.getDataReferenceDao()));
+            flightBeanBag.getControlledResourceDao(), flightBeanBag.getResourceDao()));
 
     // create the cloud resource via CRL
     final ControlledResource resource =
@@ -44,7 +44,7 @@ public class CreateControlledResourceFlight extends Flight {
                 (ControlledGcsBucketResource) resource,
                 userRequest));
         break;
-      case BIGQUERY_DATASET:
+      case BIG_QUERY_DATASET:
       default:
         throw new IllegalStateException(
             String.format("Unrecognized resource type %s", resource.getResourceType()));

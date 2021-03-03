@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.datareference.model;
 
 import bio.terra.workspace.service.resource.WsmResourceType;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.google.auto.value.AutoValue;
 import java.util.UUID;
 import javax.annotation.Nullable;

@@ -18,7 +18,7 @@ import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datareference.DataReferenceService;
-import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datareference.model.WsmResourceType;

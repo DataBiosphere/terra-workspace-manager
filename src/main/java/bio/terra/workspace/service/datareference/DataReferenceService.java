@@ -5,7 +5,7 @@ import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.db.DataReferenceDao;
 import bio.terra.workspace.generated.model.UpdateDataReferenceRequestBody;
 import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
-import bio.terra.workspace.service.datareference.flight.CreateDataReferenceFlight;
+import bio.terra.workspace.service.resource.reference.flight.create.CreateReferenceResourceFlight;
 import bio.terra.workspace.service.datareference.flight.DataReferenceFlightMapKeys;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
@@ -115,7 +115,7 @@ public class DataReferenceService {
             .newJob(
                 description,
                 UUID.randomUUID().toString(),
-                CreateDataReferenceFlight.class,
+                CreateReferenceResourceFlight.class,
                 /* request = */ null,
                 userReq)
             .addParameter(DataReferenceFlightMapKeys.WORKSPACE_ID, referenceRequest.workspaceId())

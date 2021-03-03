@@ -14,9 +14,9 @@ import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.generated.model.UpdateDataReferenceRequestBody;
-import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
+import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
 import bio.terra.workspace.service.datareference.model.BigQueryDatasetReference;
-import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.GoogleBucketReference;
@@ -307,7 +307,7 @@ class DataReferenceServiceTest extends BaseUnitTest {
         referenceObject = BigQueryDatasetReference.create("my-project", "dataset_id");
         break;
       default:
-        throw new InvalidDataReferenceException(
+        throw new InvalidReferenceException(
             "Invalid reference type specified in DataReferenceServiceTest");
     }
     return DataReferenceRequest.builder()

@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.datareference.model;
+package bio.terra.workspace.service.resource.model;
 
 import bio.terra.workspace.generated.model.CloningInstructionsEnum;
 import com.google.common.collect.BiMap;

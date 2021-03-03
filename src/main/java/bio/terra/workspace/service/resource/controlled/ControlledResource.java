@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.resource.StewardshipType;
 import bio.terra.workspace.service.resource.WsmResource;
@@ -74,14 +74,6 @@ public abstract class ControlledResource extends WsmResource {
   }
 
   public abstract WsmResourceType getResourceType();
-
-  /**
-   * Attributes string, serialized as JSON. Includes only those attributes of the cloud resource
-   * that are necessary for identification.
-   *
-   * @return json string
-   */
-  public abstract String getJsonAttributes();
 
   @Override
   public boolean equals(Object o) {

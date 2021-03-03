@@ -1,10 +1,12 @@
-package bio.terra.workspace.service.datareference.flight;
+package bio.terra.workspace.service.resource.flight;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+
 import java.util.UUID;
 
 /**
@@ -14,15 +16,14 @@ import java.util.UUID;
  * step, we ensure that both do and undo methods of future steps will always have access to the same
  * ID. In general, generating and storing IDs this way is a best practice in Stairway flights.
  */
-public class GenerateReferenceIdStep implements Step {
+public class GenerateResourceIdStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     FlightMap workingMap = flightContext.getWorkingMap();
 
-    UUID referenceId = UUID.randomUUID();
-    workingMap.put(DataReferenceFlightMapKeys.REFERENCE_ID, referenceId);
+    workingMap.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, UUID.randomUUID());
 
     return StepResult.getStepResultSuccess();
   }

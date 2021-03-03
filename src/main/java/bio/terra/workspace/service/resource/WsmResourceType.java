@@ -1,27 +1,31 @@
 package bio.terra.workspace.service.resource;
 
+import bio.terra.workspace.service.resource.reference.ReferenceBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.reference.ReferenceDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.reference.ReferenceGcsBucketResource;
+import bio.terra.workspace.service.resource.reference.ReferenceResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;
 
 public enum WsmResourceType {
-  DATA_REPO_SNAPSHOT(CloudPlatform.GCP, "DATA_REPO_SNAPSHOT", true, false),
-  GCS_BUCKET(CloudPlatform.GCP, "GCS_BUCKET", true, true),
-  BIG_QUERY_DATASET(CloudPlatform.GCP, "BIG_QUERY_DATASET", true, true);
+  DATA_REPO_SNAPSHOT(CloudPlatform.GCP, "DATA_REPO_SNAPSHOT", ReferenceDataRepoSnapshotResource.class, false),
+  GCS_BUCKET(CloudPlatform.GCP, "GCS_BUCKET", ReferenceGcsBucketResource.class, true),
+  BIG_QUERY_DATASET(CloudPlatform.GCP, "BIG_QUERY_DATASET", ReferenceBigQueryDatasetResource.class, true);
 
   private final CloudPlatform cloudPlatform;
   private final String dbString; // serialized form of the resource type
-  private final boolean referenceSupported;
+  private final Class<? extends ReferenceResource> referenceClass;
   private final boolean controlledSupported;
 
   WsmResourceType(
       CloudPlatform cloudPlatform,
       String dbString,
-      boolean referenceSupported,
+      Class<? extends ReferenceResource> referenceClass,
       boolean controlledSupported) {
     this.cloudPlatform = cloudPlatform;
     this.dbString = dbString;
-    this.referenceSupported = referenceSupported;
+    this.referenceClass = referenceClass;
     this.controlledSupported = controlledSupported;
   }
 
@@ -29,8 +33,8 @@ public enum WsmResourceType {
     return cloudPlatform;
   }
 
-  public boolean supportsReference() {
-    return referenceSupported;
+  public Class<? extends ReferenceResource> getReferenceClass() {
+    return referenceClass;
   }
 
   public boolean supportsControlled() {

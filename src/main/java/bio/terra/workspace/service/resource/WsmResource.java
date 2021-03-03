@@ -1,9 +1,12 @@
 package bio.terra.workspace.service.resource;
 
-import bio.terra.workspace.service.datareference.model.CloningInstructions;
-import bio.terra.workspace.service.datareference.model.ReferenceObject;
+import bio.terra.workspace.common.exception.MissingRequiredFieldException;
+import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.google.common.base.Strings;
-import java.util.Objects;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import java.util.UUID;
 
 /**
@@ -11,17 +14,41 @@ import java.util.UUID;
  * or (future) monitored resources.
  */
 public abstract class WsmResource {
-  private final String name;
-  private final CloningInstructions cloningInstructions;
-  private final String description;
   private final UUID workspaceId;
+  private final UUID resourceId;
+  private final String name;
+  private final String description;
+  private final CloningInstructions cloningInstructions;
 
   public WsmResource(
-      String name, CloningInstructions cloningInstructions, String description, UUID workspaceId) {
-    this.name = name;
-    this.cloningInstructions = cloningInstructions;
-    this.description = description;
+      UUID workspaceId,
+      UUID resourceId,
+      String name,
+      String description,
+      CloningInstructions cloningInstructions) {
     this.workspaceId = workspaceId;
+    this.resourceId = resourceId;
+    this.name = name;
+    this.description = description;
+    this.cloningInstructions = cloningInstructions;
+  }
+
+  /** construct from database data */
+  public WsmResource(DbResource dbResource) {
+    this(
+        dbResource.getWorkspaceId(),
+        dbResource.getResourceId(),
+        dbResource.getName().orElse(null),
+        dbResource.getDescription().orElse(null),
+        dbResource.getCloningInstructions());
+  }
+
+  public UUID getWorkspaceId() {
+    return workspaceId;
+  }
+
+  public UUID getResourceId() {
+    return resourceId;
   }
 
   public String getName() {
@@ -32,23 +59,31 @@ public abstract class WsmResource {
     return description;
   }
 
-  public UUID getWorkspaceId() {
-    return workspaceId;
-  }
-
   public CloningInstructions getCloningInstructions() {
     return cloningInstructions;
   }
 
+  /**
+   * Sub-classes must identify their stewardship type
+   *
+   * @return stewardship type
+   */
   public abstract StewardshipType getStewardshipType();
 
   /**
-   * Provide something to satisfy the requiremenet of the reference object column in the
-   * workspace_data_reference table.
+   * Sub-classes must identify their resource type
    *
-   * @return
+   * @return resource type
    */
-  public abstract ReferenceObject getReferenceObject();
+  public abstract WsmResourceType getResourceType();
+
+  /**
+   * Attributes string, serialized as JSON. Includes only those attributes of the cloud resource
+   * that are necessary for identification.
+   *
+   * @return json string
+   */
+  public abstract String getJsonAttributes();
 
   /**
    * Validate the state of to this object. Subclasses should override this method, calling super()
@@ -60,28 +95,36 @@ public abstract class WsmResource {
         || getWorkspaceId() == null
         || getCloningInstructions() == null
         || getStewardshipType() == null
-        || getReferenceObject() == null) {
-      throw new IllegalStateException("Missing required field for WsmResource.");
+        || getResourceId() == null) {
+      throw new MissingRequiredFieldException("Missing required field for WsmResource.");
     }
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof WsmResource)) {
-      return false;
-    }
+    if (this == o) return true;
+
+    if (o == null || getClass() != o.getClass()) return false;
+
     WsmResource that = (WsmResource) o;
-    return Objects.equals(getName(), that.getName())
-        && getCloningInstructions() == that.getCloningInstructions()
-        && Objects.equals(getDescription(), that.getDescription())
-        && Objects.equals(getWorkspaceId(), that.getWorkspaceId());
+
+    return new EqualsBuilder()
+            .append(workspaceId, that.workspaceId)
+            .append(resourceId, that.resourceId)
+            .append(name, that.name)
+            .append(description, that.description)
+            .append(cloningInstructions, that.cloningInstructions)
+            .isEquals();
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getName(), getCloningInstructions(), getDescription(), getWorkspaceId());
+    return new HashCodeBuilder(17, 37)
+            .append(workspaceId)
+            .append(resourceId)
+            .append(name)
+            .append(description)
+            .append(cloningInstructions)
+            .toHashCode();
   }
 }

@@ -1,6 +1,6 @@
 package bio.terra.workspace.db.model;
 
-import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.StewardshipType;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledAccessType;

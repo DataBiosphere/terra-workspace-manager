@@ -7,7 +7,7 @@ import bio.terra.workspace.generated.model.GoogleBucketLifecycleRule;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleAction;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleActionType;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleCondition;
-import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.controlled.gcp.ControlledGcsBucketResource;
 import java.time.LocalDate;
 import java.util.ArrayList;

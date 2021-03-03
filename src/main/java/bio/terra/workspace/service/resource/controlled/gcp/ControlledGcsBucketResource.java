@@ -4,7 +4,7 @@ import bio.terra.workspace.generated.model.GoogleBucketCreationParameters;
 import bio.terra.workspace.generated.model.GoogleBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycle;
 import bio.terra.workspace.generated.model.GoogleBucketStoredAttributes;
-import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.GoogleBucketReference;
 import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceWithApiModels;

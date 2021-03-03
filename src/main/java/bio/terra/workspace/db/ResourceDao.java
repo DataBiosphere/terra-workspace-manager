@@ -2,17 +2,17 @@ package bio.terra.workspace.db;
 
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
+import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.service.datareference.model.CloningInstructions;
-import bio.terra.workspace.service.datareference.model.DataReference;
-import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
-import bio.terra.workspace.service.datareference.model.ReferenceObject;
 import bio.terra.workspace.service.resource.StewardshipType;
+import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledAccessType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
-import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.reference.ReferenceGcsBucketResource;
+import bio.terra.workspace.service.resource.reference.ReferenceResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +26,12 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
+
+import static bio.terra.workspace.service.resource.StewardshipType.CONTROLLED;
+import static bio.terra.workspace.service.resource.StewardshipType.REFERENCE;
+import static bio.terra.workspace.service.resource.StewardshipType.fromSql;
 
 @Component
 public class ResourceDao {
@@ -67,78 +72,64 @@ public class ResourceDao {
     return deleted;
   }
 
+  /**
+   * Retrieve a resource by ID
+   *
+   * @param workspaceId identifier of workspace for the lookup
+   * @param resourceId identifer of the resource for the lookup
+   * @return WsmResource object
+   */
+  @Transactional(
+          propagation = Propagation.REQUIRED,
+          isolation = Isolation.SERIALIZABLE,
+          readOnly = true)
+  public WsmResource getResource(UUID workspaceId, UUID resourceId) {
+    return getResourceWithId(workspaceId, resourceId);
+  }
+
+  /**
+   * Retrieve a data reference by name. Names are unique per workspace.
+   *
+   * @param workspaceId identifier of workspace for the lookup
+   * @param name name of the resource
+   * @return WsmResource object
+   */
+  @Transactional(
+          propagation = Propagation.REQUIRED,
+          isolation = Isolation.SERIALIZABLE,
+          readOnly = true)
+  public WsmResource getResourceByName(UUID workspaceId, String name) {
+    return getResourceWithName(workspaceId, name);
+  }
+
   // -- Reference Methods -- //
 
   /**
    * Create a reference in the database
    *
-   * @param request data reference request
-   * @param resourceId resourceId to use for the resource
+   * @param resource a filled in reference resource
    * @throws DuplicateDataReferenceException on a duplicate resource_id or (workspace_id, name)
    */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public void createDataReference(DataReferenceRequest request, UUID resourceId)
+  public void createReferenceResource(ReferenceResource resource)
       throws DuplicateDataReferenceException {
     storeResource(
-        request.workspaceId(),
-        resourceId,
-        request.name(),
-        request.description(),
-        StewardshipType.REFERENCE,
-        request.referenceType(),
-        request.cloningInstructions(),
-        request.referenceObject().toJson());
-  }
-
-  /**
-   * Retrieve a data reference by ID
-   * @param workspaceId identifier of workspace for the lookup
-   * @param resourceId identifer of the resource for the lookup
-   * @return DataReference object
-   */
-  @Transactional(
-      propagation = Propagation.REQUIRED,
-      isolation = Isolation.SERIALIZABLE,
-      readOnly = true)
-  public DataReference getDataReference(UUID workspaceId, UUID resourceId) {
-    DbResource dbResource = getResourceById(workspaceId, resourceId);
-
-    return DataReference.builder()
-        .workspaceId(dbResource.getWorkspaceId())
-        .referenceId(dbResource.getResourceId())
-        .name(dbResource.getName().orElse(null))
-        .description(dbResource.getDescription().orElse(null))
-        .referenceType(dbResource.getResourceType())
-        .cloningInstructions(dbResource.getCloningInstructions())
-        .referenceObject(ReferenceObject.fromJson(dbResource.getAttributes()))
-        .build();
-  }
-
-  /**
-   * Retrieve a data reference by name. Names are unique per workspace.
-   * @param workspaceId identifier of workspace for the lookup
-   * @param name name of the resource
-   * @return DataReference object
-   */
-  @Transactional(
-      propagation = Propagation.REQUIRED,
-      isolation = Isolation.SERIALIZABLE,
-      readOnly = true)
-  public DataReference getDataReferenceByName(UUID workspaceId, String name) {
-    DbResource dbResource = getResourceByName(workspaceId, name);
-    return DataReference.builder()
-        .workspaceId(dbResource.getWorkspaceId())
-        .referenceId(dbResource.getResourceId())
-        .name(dbResource.getName().orElse(null))
-        .description(dbResource.getDescription().orElse(null))
-        .referenceType(dbResource.getResourceType())
-        .cloningInstructions(dbResource.getCloningInstructions())
-        .referenceObject(ReferenceObject.fromJson(dbResource.getAttributes()))
-        .build();
+        resource.getWorkspaceId(),
+        resource.getResourceId(),
+        resource.getName(),
+        resource.getDescription(),
+        REFERENCE,
+        resource.getResourceType(),
+        resource.getCloningInstructions(),
+        resource.getJsonAttributes(),
+        Optional.empty(),
+        Optional.empty(),
+        Optional.empty());
   }
 
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public boolean updateDataReference(UUID workspaceId, UUID referenceId, String name, String description) {
+  public boolean updateReferenceResource(
+      UUID workspaceId, UUID referenceId, String name, String description) {
     if (name == null && description == null) {
       throw new InvalidDaoRequestException("Must specify name or description to update.");
     }
@@ -174,35 +165,16 @@ public class ResourceDao {
         resourceId,
         controlledResource.getName(),
         controlledResource.getDescription(),
-        StewardshipType.CONTROLLED,
+        CONTROLLED,
         controlledResource.getResourceType(),
         controlledResource.getCloningInstructions(),
-        controlledResource.getJsonAttributes());
-
-    // Store the extra stuff for controlled resources
-    final String sql =
-        "INSERT INTO controlled_resource "
-            + "(resource_id, access, associated_app, assigned_user) "
-            + " VALUES (:resourceId, :access, :associated_app, :assigned_user)";
-
-    // TODO: the access type needs to be plumbed through from the REST API
-    // TODO: we will also need to plumb in associated app when we implement applications
-    final var params =
-        new MapSqlParameterSource()
-            .addValue("resourceId", resourceId)
-            .addValue("access", ControlledAccessType.USER_SHARED.toSql())
-            .addValue("associated_app", null)
-            .addValue("assigned_user", controlledResource.getOwner().orElse(null));
-
-    try {
-      jdbcTemplate.update(sql, params);
-      logger.info("Inserted controlled_resource record for resource {}", resourceId);
-    } catch (DuplicateKeyException e) {
-      // This should not be possible. Would have failed on the resource table
-      throw new InternalLogicException(
-          String.format("Resource %s already exists in the controlled_resource table", resourceId),
-          e);
-    }
+        controlledResource.getJsonAttributes(),
+        // TODO: add this to ControlledResource
+        Optional.of(ControlledAccessType.USER_SHARED),
+        // TODO: add associated app to ControlledResource
+        Optional.empty(),
+        // TODO: rename this
+        controlledResource.getOwner());
   }
 
   // -- Private Methods -- //
@@ -215,12 +187,16 @@ public class ResourceDao {
       StewardshipType stewardshipType,
       WsmResourceType resourceType,
       CloningInstructions cloningInstructions,
-      String attributes) {
+      String attributes,
+      Optional<ControlledAccessType> accessType,
+      Optional<UUID> associatedApp,
+      Optional<String> assignedUser) {
     final String sql =
         "INSERT resource (workspace_id, cloud_type, resource_id, name, description, stewardship_type,"
-            + " resource_type, cloning_instructions, attributes) VALUES "
-            + "(:workspace_id, :cloud_type, :resource_id, :name, :description, :stewardship_type,"
-            + " :resource_type, :cloning_instructions, cast(:attributes AS json))";
+            + " resource_type, cloning_instructions, attributes, access, associated_app, assigned_user)"
+            + " VALUES (:workspace_id, :cloud_type, :resource_id, :name, :description, :stewardship_type,"
+            + " :resource_type, :cloning_instructions, cast(:attributes AS json),"
+            + " :access, :associated_app, :assigned_user)";
 
     final var params =
         new MapSqlParameterSource()
@@ -229,9 +205,13 @@ public class ResourceDao {
             .addValue("resource_id", resourceId.toString())
             .addValue("name", name)
             .addValue("description", description)
+            .addValue("stewardship_type", stewardshipType.toSql())
             .addValue("resource_type", resourceType.toSql())
             .addValue("cloning_instructions", cloningInstructions.toSql())
-            .addValue("attributes", attributes);
+            .addValue("attributes", attributes)
+            .addValue("access", accessType.map(ControlledAccessType::toSql).orElse(null))
+            .addValue("associated_app", associatedApp.map(UUID::toString).orElse(null))
+            .addValue("assigned_user", assignedUser.orElse(null));
 
     try {
       jdbcTemplate.update(sql, params);
@@ -242,7 +222,7 @@ public class ResourceDao {
     }
   }
 
-  private DbResource getResourceById(UUID workspaceId, UUID resourceId) {
+  private WsmResource getResourceWithId(UUID workspaceId, UUID resourceId) {
     final String sql = resourceSelectSql + " AND resource_id = :resource_id";
 
     final var params =
@@ -250,10 +230,10 @@ public class ResourceDao {
             .addValue("workspace_id", workspaceId.toString())
             .addValue("resource_id", resourceId.toString());
 
-    return getResource(sql, params);
+    return constructResource(getDbResource(sql, params));
   }
 
-  private DbResource getResourceByName(UUID workspaceId, String name) {
+  private WsmResource getResourceWithName(UUID workspaceId, String name) {
     final String sql = resourceSelectSql + " AND name = :name";
 
     final var params =
@@ -261,10 +241,47 @@ public class ResourceDao {
             .addValue("workspace_id", workspaceId.toString())
             .addValue("name", name);
 
-    return getResource(sql, params);
+    return constructResource(getDbResource(sql, params));
   }
 
-  private DbResource getResource(String sql, MapSqlParameterSource params) {
+  /**
+   * Dispatch by stewardship and resource type to call the correct constructor for the WsmResource
+   *
+   * @param dbResource Resource data from the database
+   * @return WsmResource
+   */
+  private WsmResource constructResource(DbResource dbResource) {
+    switch (dbResource.getStewardshipType()) {
+      case REFERENCE:
+        switch (dbResource.getResourceType()) {
+          case GCS_BUCKET:
+            return new ReferenceGcsBucketResource(dbResource);
+
+          case BIG_QUERY_DATASET:
+          case DATA_REPO_SNAPSHOT:
+          default:
+            throw new InvalidMetadataException("Invalid reference resource type" + dbResource.getResourceType().toString());
+        }
+
+      case CONTROLLED:
+        switch (dbResource.getResourceType()) {
+          case GCS_BUCKET:
+
+
+            break;
+
+          default:
+            throw new InvalidMetadataException("Invalid controlled resource type" + dbResource.getResourceType().toString());
+        }
+
+      case MONITORED:
+      default:
+        throw new InvalidMetadataException("Invalid stewardship type" + dbResource.getStewardshipType().toString());
+    }
+
+  }
+
+  private DbResource getDbResource(String sql, MapSqlParameterSource params) {
     try {
       return jdbcTemplate.queryForObject(
           sql,
@@ -276,7 +293,7 @@ public class ResourceDao {
                 .resourceId(UUID.fromString(rs.getString("resource_id")))
                 .name(rs.getString("name"))
                 .description(rs.getString("description"))
-                .stewardshipType(StewardshipType.fromSql(rs.getString("stewardship_type")))
+                .stewardshipType(fromSql(rs.getString("stewardship_type")))
                 .resourceType(WsmResourceType.fromSql(rs.getString("resource_type")))
                 .cloningInstructions(
                     CloningInstructions.fromSql(rs.getString("cloning_instructions")))

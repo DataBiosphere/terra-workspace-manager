@@ -4,7 +4,7 @@ import bio.terra.workspace.generated.controller.ControlledGoogleResourceApi;
 import bio.terra.workspace.generated.model.CreateControlledGoogleBucketRequestBody;
 import bio.terra.workspace.generated.model.CreatedControlledGoogleBucket;
 import bio.terra.workspace.generated.model.GoogleBucketStoredAttributes;
-import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;

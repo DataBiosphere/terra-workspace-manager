@@ -12,7 +12,7 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.DataReferenceNotFoundException;
 import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
-import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;

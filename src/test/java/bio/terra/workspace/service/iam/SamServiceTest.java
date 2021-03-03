@@ -14,7 +14,7 @@ import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.datareference.DataReferenceService;
-import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.datareference.model.DataReference;
 import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
 import bio.terra.workspace.service.datareference.model.SnapshotReference;

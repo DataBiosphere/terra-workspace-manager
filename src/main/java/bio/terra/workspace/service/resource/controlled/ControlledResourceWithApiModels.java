@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import java.util.Objects;
 import java.util.UUID;
 

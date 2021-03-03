@@ -1,10 +1,11 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.workspace.db.ControlledResourceDao;
-import bio.terra.workspace.db.DataReferenceDao;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.SamService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,28 +22,31 @@ import org.springframework.stereotype.Component;
 public class FlightBeanBag {
   private final BufferService bufferService;
   private final CrlService crlService;
-  private final DataReferenceDao dataReferenceDao;
+  private final ResourceDao resourceDao;
   private final ObjectMapper objectMapper;
   private final SamService samService;
   private final WorkspaceDao workspaceDao;
   private final ControlledResourceDao controlledResourceDao;
+  private final DataRepoService dataRepoService;
 
   @Autowired
   public FlightBeanBag(
       BufferService bufferService,
       CrlService crlService,
-      DataReferenceDao dataReferenceDao,
+      ResourceDao resourceDao,
       ObjectMapper objectMapper,
       SamService samService,
       WorkspaceDao workspaceDao,
-      ControlledResourceDao controlledResourceDao) {
+      ControlledResourceDao controlledResourceDao,
+      DataRepoService dataRepoService) {
     this.bufferService = bufferService;
     this.crlService = crlService;
-    this.dataReferenceDao = dataReferenceDao;
+    this.resourceDao = resourceDao;
     this.objectMapper = objectMapper;
     this.samService = samService;
     this.workspaceDao = workspaceDao;
     this.controlledResourceDao = controlledResourceDao;
+    this.dataRepoService = dataRepoService;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -57,8 +61,8 @@ public class FlightBeanBag {
     return crlService;
   }
 
-  public DataReferenceDao getDataReferenceDao() {
-    return dataReferenceDao;
+  public ResourceDao getResourceDao() {
+    return resourceDao;
   }
 
   public ObjectMapper getObjectMapper() {
@@ -75,5 +79,9 @@ public class FlightBeanBag {
 
   public ControlledResourceDao getControlledResourceDao() {
     return controlledResourceDao;
+  }
+
+  public DataRepoService getDataRepoService() {
+    return dataRepoService;
   }
 }
