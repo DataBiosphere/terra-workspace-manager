@@ -1,5 +1,3 @@
 package bio.terra.workspace.service.resource.model;
 
-
-public enum IamRole {
-}
+public enum IamRole {}

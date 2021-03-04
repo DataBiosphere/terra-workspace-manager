@@ -31,7 +31,7 @@ public class StoreMetadataStep implements Step {
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     final FlightMap inputMap = flightContext.getInputParameters();
     final ControlledResource resource =
-            inputMap.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
+        inputMap.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
 
     resourceDao.deleteResource(resource.getWorkspaceId(), resource.getResourceId());
     return StepResult.getStepResultSuccess();

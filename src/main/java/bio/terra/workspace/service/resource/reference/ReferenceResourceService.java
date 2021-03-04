@@ -9,11 +9,10 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.reference.flight.create.CreateReferenceResourceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 // TODO: Every method in here needs authz added!
 

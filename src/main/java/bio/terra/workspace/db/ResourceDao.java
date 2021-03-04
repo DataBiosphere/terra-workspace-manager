@@ -1,16 +1,16 @@
 package bio.terra.workspace.db;
 
-import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledAccessType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.reference.ReferenceGcsBucketResource;
 import bio.terra.workspace.service.resource.reference.ReferenceResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -155,11 +155,11 @@ public class ResourceDao {
    * Create a reference in the database
    *
    * @param resource a filled in reference resource
-   * @throws DuplicateDataReferenceException on a duplicate resource_id or (workspace_id, name)
+   * @throws DuplicateResourceException on a duplicate resource_id or (workspace_id, name)
    */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public void createReferenceResource(ReferenceResource resource)
-      throws DuplicateDataReferenceException {
+      throws DuplicateResourceException {
     storeResource(
         resource.getWorkspaceId(),
         resource.getResourceId(),
@@ -202,11 +202,11 @@ public class ResourceDao {
    * Create a controlled resource in the database
    *
    * @param controlledResource controlled resource to create
-   * @throws DuplicateDataReferenceException on a duplicate resource_id or (workspace_id, name)
+   * @throws DuplicateResourceException on a duplicate resource_id or (workspace_id, name)
    */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public void createControlledResource(ControlledResource controlledResource)
-      throws DuplicateDataReferenceException {
+      throws DuplicateResourceException {
 
     storeResource(
         controlledResource.getWorkspaceId(),
@@ -263,7 +263,7 @@ public class ResourceDao {
       jdbcTemplate.update(sql, params);
       logger.info("Inserted record for resource {} for workspace {}", resourceId, workspaceId);
     } catch (DuplicateKeyException e) {
-      throw new DuplicateDataReferenceException(
+      throw new DuplicateResourceException(
           "A resource named " + name + " already exists in the workspace");
     }
   }

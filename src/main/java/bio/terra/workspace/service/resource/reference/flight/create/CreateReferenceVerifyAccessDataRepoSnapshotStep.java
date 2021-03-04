@@ -5,11 +5,11 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.reference.ReferenceDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
 
 public class CreateReferenceVerifyAccessDataRepoSnapshotStep implements Step {
   private final DataRepoService dataRepoService;

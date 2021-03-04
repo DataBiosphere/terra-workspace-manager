@@ -9,9 +9,11 @@ import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;
 
 public enum WsmResourceType {
-  DATA_REPO_SNAPSHOT(CloudPlatform.GCP, "DATA_REPO_SNAPSHOT", ReferenceDataRepoSnapshotResource.class, false),
+  DATA_REPO_SNAPSHOT(
+      CloudPlatform.GCP, "DATA_REPO_SNAPSHOT", ReferenceDataRepoSnapshotResource.class, false),
   GCS_BUCKET(CloudPlatform.GCP, "GCS_BUCKET", ReferenceGcsBucketResource.class, true),
-  BIG_QUERY_DATASET(CloudPlatform.GCP, "BIG_QUERY_DATASET", ReferenceBigQueryDatasetResource.class, true);
+  BIG_QUERY_DATASET(
+      CloudPlatform.GCP, "BIG_QUERY_DATASET", ReferenceBigQueryDatasetResource.class, true);
 
   private final CloudPlatform cloudPlatform;
   private final String dbString; // serialized form of the resource type

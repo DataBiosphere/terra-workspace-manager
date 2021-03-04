@@ -5,10 +5,9 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import com.google.common.base.Strings;
+import java.util.UUID;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-
-import java.util.UUID;
 
 /**
  * Top-level class for a Resource. Children of this class can be controlled resources, references,
@@ -110,22 +109,22 @@ public abstract class WsmResource {
     WsmResource that = (WsmResource) o;
 
     return new EqualsBuilder()
-            .append(workspaceId, that.workspaceId)
-            .append(resourceId, that.resourceId)
-            .append(name, that.name)
-            .append(description, that.description)
-            .append(cloningInstructions, that.cloningInstructions)
-            .isEquals();
+        .append(workspaceId, that.workspaceId)
+        .append(resourceId, that.resourceId)
+        .append(name, that.name)
+        .append(description, that.description)
+        .append(cloningInstructions, that.cloningInstructions)
+        .isEquals();
   }
 
   @Override
   public int hashCode() {
     return new HashCodeBuilder(17, 37)
-            .append(workspaceId)
-            .append(resourceId)
-            .append(name)
-            .append(description)
-            .append(cloningInstructions)
-            .toHashCode();
+        .append(workspaceId)
+        .append(resourceId)
+        .append(name)
+        .append(description)
+        .append(cloningInstructions)
+        .toHashCode();
   }
 }

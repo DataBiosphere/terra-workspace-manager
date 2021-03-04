@@ -19,8 +19,7 @@ public class CreateControlledResourceFlight extends Flight {
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
 
     // store the resource metadata in the WSM database
-    addStep(
-        new StoreMetadataStep(flightBeanBag.getResourceDao()));
+    addStep(new StoreMetadataStep(flightBeanBag.getResourceDao()));
 
     // create the cloud resource via CRL
     final ControlledResource resource =
@@ -32,9 +31,7 @@ public class CreateControlledResourceFlight extends Flight {
       case GCS_BUCKET:
         addStep(
             new CreateGcsBucketStep(
-                flightBeanBag.getCrlService(),
-                resource.castToGcsBucketResource(),
-                userRequest));
+                flightBeanBag.getCrlService(), resource.castToGcsBucketResource(), userRequest));
         break;
       case BIG_QUERY_DATASET:
       default:

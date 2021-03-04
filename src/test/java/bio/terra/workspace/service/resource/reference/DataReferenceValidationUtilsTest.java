@@ -1,10 +1,10 @@
-package bio.terra.workspace.service.datareference;
+package bio.terra.workspace.service.resource.reference;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
 import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
 import org.junit.jupiter.api.Test;
 
 public class DataReferenceValidationUtilsTest extends BaseUnitTest {
@@ -47,8 +47,6 @@ public class DataReferenceValidationUtilsTest extends BaseUnitTest {
 
   @Test
   public void testEmptyReferenceName() {
-    assertThrows(
-        InvalidReferenceException.class,
-        () -> ValidationUtils.validateReferenceName(""));
+    assertThrows(InvalidReferenceException.class, () -> ValidationUtils.validateReferenceName(""));
   }
 }

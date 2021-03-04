@@ -1,5 +1,8 @@
 package bio.terra.workspace.common.fixtures;
 
+import static bio.terra.workspace.service.resource.controlled.ControlledAccessType.USER_PRIVATE;
+import static bio.terra.workspace.service.resource.controlled.ControlledAccessType.USER_SHARED;
+
 import bio.terra.workspace.generated.model.GoogleBucketCreationParameters;
 import bio.terra.workspace.generated.model.GoogleBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycle;
@@ -7,8 +10,8 @@ import bio.terra.workspace.generated.model.GoogleBucketLifecycleRule;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleAction;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleActionType;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleCondition;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,22 +68,28 @@ public class ControlledResourceFixtures {
   public static final CloningInstructions CLONING_INSTRUCTIONS = CloningInstructions.COPY_REFERENCE;
   public static final ControlledGcsBucketResource BUCKET_RESOURCE =
       new ControlledGcsBucketResource(
-          RESOURCE_NAME,
-          CLONING_INSTRUCTIONS,
-          RESOURCE_DESCRIPTION,
           WORKSPACE_ID,
+          RESOURCE_ID,
+          RESOURCE_NAME,
+          RESOURCE_DESCRIPTION,
+          CLONING_INSTRUCTIONS,
           OWNER_EMAIL,
-          GOOGLE_BUCKET_CREATION_PARAMETERS);
+          USER_SHARED,
+          BUCKET_NAME);
 
   /** Flawed resource missing owner email. */
-  public static final ControlledGcsBucketResource INVALID_BUCKET_RESOURCE =
-      new ControlledGcsBucketResource(
-          RESOURCE_NAME,
-          CLONING_INSTRUCTIONS,
-          RESOURCE_DESCRIPTION,
-          null,
-          OWNER_EMAIL,
-          GOOGLE_BUCKET_CREATION_PARAMETERS);
+  public static ControlledGcsBucketResource makeControlledGcsBucketResource() {
+    UUID resourceId = UUID.randomUUID();
+    return new ControlledGcsBucketResource(
+        WORKSPACE_ID,
+        resourceId,
+        "testgcs-" + resourceId,
+        RESOURCE_DESCRIPTION,
+        CLONING_INSTRUCTIONS,
+        OWNER_EMAIL,
+        USER_PRIVATE,
+        BUCKET_NAME);
+  }
 
   private ControlledResourceFixtures() {}
 }

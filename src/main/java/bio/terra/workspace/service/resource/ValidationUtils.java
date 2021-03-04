@@ -1,13 +1,10 @@
 package bio.terra.workspace.service.resource;
 
 import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.regex.Pattern;
-
-/**
- *  A collection of static validation functions
- */
+/** A collection of static validation functions */
 public class ValidationUtils {
   /**
    * Names must be 1-63 characters long, and may consist of alphanumeric characters and underscores

@@ -8,6 +8,7 @@ public class MissingRequiredFieldException extends InternalServerErrorException 
   public MissingRequiredFieldException(String message) {
     super(message);
   }
+
   public MissingRequiredFieldException(String message, Throwable cause) {
     super(message, cause);
   }

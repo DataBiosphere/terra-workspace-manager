@@ -8,6 +8,7 @@ public class InconsistentFieldsException extends InternalServerErrorException {
   public InconsistentFieldsException(String message) {
     super(message);
   }
+
   public InconsistentFieldsException(String message, Throwable cause) {
     super(message, cause);
   }

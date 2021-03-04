@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.datareference;
+package bio.terra.workspace.service.resource.reference;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;

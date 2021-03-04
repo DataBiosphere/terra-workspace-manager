@@ -5,16 +5,15 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.exception.DuplicateDataReferenceException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.WsmResourceType;
+import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.reference.ReferenceResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import org.springframework.http.HttpStatus;
-
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 
 /** Stairway step to persist a data reference in WM's database. */
 public class CreateReferenceMetadataStep implements Step {
@@ -30,15 +29,15 @@ public class CreateReferenceMetadataStep implements Step {
     FlightMap inputMap = flightContext.getInputParameters();
 
     WsmResourceType resourceType =
-            inputMap.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, WsmResourceType.class);
+        inputMap.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, WsmResourceType.class);
 
     // Use the resource type to deserialize the right class
     ReferenceResource referenceResource =
-            inputMap.get(JobMapKeys.REQUEST.getKeyName(), resourceType.getReferenceClass());
+        inputMap.get(JobMapKeys.REQUEST.getKeyName(), resourceType.getReferenceClass());
 
     try {
       resourceDao.createReferenceResource(referenceResource);
-    } catch (DuplicateDataReferenceException e) {
+    } catch (DuplicateResourceException e) {
       // Stairway can call the same step multiple times as part of a flight, so finding a duplicate
       // reference here is fine.
     }
@@ -61,7 +60,4 @@ public class CreateReferenceMetadataStep implements Step {
 
     return StepResult.getStepResultSuccess();
   }
-
-
-
 }

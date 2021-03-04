@@ -11,7 +11,7 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.google.common.base.Strings;
 import java.util.UUID;
 
 public class ReferenceGcsBucketResource extends ReferenceResource {
@@ -19,6 +19,7 @@ public class ReferenceGcsBucketResource extends ReferenceResource {
 
   /**
    * Constructor for serialized form for Stairway use
+   *
    * @param workspaceId workspace unique identifier
    * @param resourceId resource unique identifier
    * @param name name - may be null
@@ -41,6 +42,7 @@ public class ReferenceGcsBucketResource extends ReferenceResource {
 
   /**
    * Constructor from database metadata
+   *
    * @param dbResource database form of resources
    */
   public ReferenceGcsBucketResource(DbResource dbResource) {
@@ -61,8 +63,8 @@ public class ReferenceGcsBucketResource extends ReferenceResource {
 
   public GoogleBucketReference toApiModel() {
     return new GoogleBucketReference()
-            .metadata(super.toApiMetadata())
-            .bucket(new GoogleBucketUid().bucketName(getAttributes().getBucketName()));
+        .metadata(super.toApiMetadata())
+        .bucket(new GoogleBucketUid().bucketName(getAttributes().getBucketName()));
   }
 
   @Override
@@ -81,7 +83,7 @@ public class ReferenceGcsBucketResource extends ReferenceResource {
     if (getResourceType() != WsmResourceType.GCS_BUCKET) {
       throw new InconsistentFieldsException("Expected GCS_BUCKET");
     }
-    if (getAttributes() == null || getAttributes().getBucketName() == null) {
+    if (getAttributes() == null || Strings.isNullOrEmpty(getAttributes().getBucketName())) {
       throw new MissingRequiredFieldException("Missing required field for ReferenceGcsBucket.");
     }
     ValidationUtils.validateBucketName(getAttributes().getBucketName());

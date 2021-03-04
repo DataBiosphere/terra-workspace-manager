@@ -38,6 +38,11 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,12 +52,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @Controller
 public class WorkspaceApiController implements WorkspaceApi {
@@ -174,21 +173,20 @@ public class WorkspaceApiController implements WorkspaceApi {
     ValidationUtils.validateReferenceName(body.getName());
 
     var resource =
-            new ReferenceDataRepoSnapshotResource(
-                    id,
-                    UUID.randomUUID(), // mint a resource id for this bucket
-                    body.getName(),
-                    body.getDescription(),
-                    CloningInstructions.fromApiModel(body.getCloningInstructions()),
-                    body.getReference().getInstanceName(),
-                    body.getReference().getSnapshot());
+        new ReferenceDataRepoSnapshotResource(
+            id,
+            UUID.randomUUID(), // mint a resource id for this bucket
+            body.getName(),
+            body.getDescription(),
+            CloningInstructions.fromApiModel(body.getCloningInstructions()),
+            body.getReference().getInstanceName(),
+            body.getReference().getSnapshot());
 
     ReferenceResource referenceResource =
-            referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
+        referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
     DataReferenceDescription response = makeDataReferenceDescription(referenceResource);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
-
 
   @Override
   public ResponseEntity<DataReferenceDescription> getDataReference(
@@ -201,13 +199,14 @@ public class WorkspaceApiController implements WorkspaceApi {
         workspaceId,
         userReq.getEmail());
 
-    ReferenceResource referenceResource = referenceResourceService.getReferenceResource(workspaceId, referenceId, userReq);
+    ReferenceResource referenceResource =
+        referenceResourceService.getReferenceResource(workspaceId, referenceId, userReq);
 
     // TODO(PF-404): this endpoint's return type does not support reference types beyond snapshots.
     // Clients should migrate to type-specific endpoints, and this endpoint should be removed.
     if (referenceResource.getResourceType() != WsmResourceType.DATA_REPO_SNAPSHOT) {
       throw new InvalidReferenceException(
-              "This endpoint does not support non-snapshot references. Use the newer type-specific endpoints instead.");
+          "This endpoint does not support non-snapshot references. Use the newer type-specific endpoints instead.");
     }
 
     DataReferenceDescription response = makeDataReferenceDescription(referenceResource);
@@ -228,7 +227,8 @@ public class WorkspaceApiController implements WorkspaceApi {
     }
     ValidationUtils.validateReferenceName(name);
 
-    ReferenceResource referenceResource = referenceResourceService.getReferenceResourceByName(workspaceId, name, userReq);
+    ReferenceResource referenceResource =
+        referenceResourceService.getReferenceResourceByName(workspaceId, name, userReq);
     DataReferenceDescription response = makeDataReferenceDescription(referenceResource);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
@@ -248,7 +248,8 @@ public class WorkspaceApiController implements WorkspaceApi {
       ValidationUtils.validateReferenceName(body.getName());
     }
 
-    referenceResourceService.updateReferenceResource(id, referenceId, body.getName(), body.getDescription(), userReq);
+    referenceResourceService.updateReferenceResource(
+        id, referenceId, body.getName(), body.getDescription(), userReq);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -296,20 +297,21 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   private DataReferenceDescription makeDataReferenceDescription(
-          ReferenceResource referenceResource) {
-    ReferenceDataRepoSnapshotResource snapshotResource = referenceResource.castToDataRepoSnapshotResource();
+      ReferenceResource referenceResource) {
+    ReferenceDataRepoSnapshotResource snapshotResource =
+        referenceResource.castToDataRepoSnapshotResource();
     var reference =
-            new DataRepoSnapshot()
-                    .instanceName(snapshotResource.getAttributes().getInstanceName())
-                    .snapshot(snapshotResource.getAttributes().getSnapshot());
+        new DataRepoSnapshot()
+            .instanceName(snapshotResource.getAttributes().getInstanceName())
+            .snapshot(snapshotResource.getAttributes().getSnapshot());
     return new DataReferenceDescription()
-                    .referenceId(referenceResource.getResourceId())
-                    .name(referenceResource.getName())
-                    .description(referenceResource.getDescription())
-                    .workspaceId(referenceResource.getWorkspaceId())
-                    .cloningInstructions(referenceResource.getCloningInstructions().toApiModel())
-                    .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-                    .reference(reference);
+        .referenceId(referenceResource.getResourceId())
+        .name(referenceResource.getName())
+        .description(referenceResource.getDescription())
+        .workspaceId(referenceResource.getWorkspaceId())
+        .cloningInstructions(referenceResource.getCloningInstructions().toApiModel())
+        .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
+        .reference(reference);
   }
 
   @Override

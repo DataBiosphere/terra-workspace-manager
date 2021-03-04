@@ -7,6 +7,7 @@ public class InternalLogicException extends InternalServerErrorException {
   public InternalLogicException(String message) {
     super(message);
   }
+
   public InternalLogicException(String message, Throwable e) {
     super(message, e);
   }

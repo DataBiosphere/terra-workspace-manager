@@ -11,7 +11,7 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.google.common.base.Strings;
 import java.util.UUID;
 
 public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
@@ -19,6 +19,7 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
 
   /**
    * Constructor for serialized form for Stairway use
+   *
    * @param workspaceId workspace unique identifier
    * @param resourceId resource unique identifier
    * @param name name - may be null
@@ -42,6 +43,7 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
 
   /**
    * Constructor from database metadata
+   *
    * @param dbResource database form of resources
    */
   public ReferenceDataRepoSnapshotResource(DbResource dbResource) {
@@ -66,10 +68,11 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
 
   public DataRepoSnapshotReference toApiModel() {
     return new DataRepoSnapshotReference()
-            .metadata(super.toApiMetadata())
-            .snapshot(new DataRepoSnapshot()
-                    .instanceName(getAttributes().getInstanceName())
-                    .snapshot(getAttributes().getSnapshot()));
+        .metadata(super.toApiMetadata())
+        .snapshot(
+            new DataRepoSnapshot()
+                .instanceName(getAttributes().getInstanceName())
+                .snapshot(getAttributes().getSnapshot()));
   }
 
   @Override
@@ -85,11 +88,12 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
   @Override
   public void validate() {
     super.validate();
-    ValidationUtils.validateReferenceName(getAttributes().getSnapshot());
     if (getAttributes() == null
-            || getAttributes().getInstanceName() == null
-            || getAttributes().getSnapshot() == null) {
-      throw new MissingRequiredFieldException("Missing required field for ReferenceDataRepoSnapshotAttributes.");
+        || Strings.isNullOrEmpty(getAttributes().getInstanceName())
+        || Strings.isNullOrEmpty(getAttributes().getSnapshot())) {
+      throw new MissingRequiredFieldException(
+          "Missing required field for ReferenceDataRepoSnapshotAttributes.");
     }
+    ValidationUtils.validateReferenceName(getAttributes().getSnapshot());
   }
 }

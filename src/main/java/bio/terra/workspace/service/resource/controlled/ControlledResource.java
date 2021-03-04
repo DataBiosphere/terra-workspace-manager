@@ -8,11 +8,10 @@ import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 /**
  * Class for all controlled resource fields that are not common to all resource stewardship types
@@ -81,7 +80,7 @@ public abstract class ControlledResource extends WsmResource {
   private void validateSubclass(WsmResourceType expectedType) {
     if (getResourceType() != expectedType) {
       throw new InvalidMetadataException(
-              String.format("Expected %s, found %s", expectedType, getResourceType()));
+          String.format("Expected %s, found %s", expectedType, getResourceType()));
     }
   }
 

@@ -11,7 +11,7 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.google.common.base.Strings;
 import java.util.UUID;
 
 public class ReferenceBigQueryDatasetResource extends ReferenceResource {
@@ -19,6 +19,7 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
 
   /**
    * Constructor for serialized form for Stairway use
+   *
    * @param workspaceId workspace unique identifier
    * @param resourceId resource unique identifier
    * @param name name - may be null
@@ -42,6 +43,7 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
 
   /**
    * Constructor from database metadata
+   *
    * @param dbResource database form of resources
    */
   public ReferenceBigQueryDatasetResource(DbResource dbResource) {
@@ -66,10 +68,11 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
 
   public BigQueryDatasetReference toApiModel() {
     return new BigQueryDatasetReference()
-            .metadata(super.toApiMetadata())
-            .dataset(new GoogleBigQueryDatasetUid()
-                    .projectId(getAttributes().getProjectId())
-                    .datasetId(getAttributes().getDatasetName()));
+        .metadata(super.toApiMetadata())
+        .dataset(
+            new GoogleBigQueryDatasetUid()
+                .projectId(getAttributes().getProjectId())
+                .datasetId(getAttributes().getDatasetName()));
   }
 
   @Override
@@ -86,9 +89,10 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
   public void validate() {
     super.validate();
     if (getAttributes() == null
-            || getAttributes().getProjectId() == null
-            || getAttributes().getDatasetName() == null) {
-      throw new MissingRequiredFieldException("Missing required field for ReferenceBigQueryDatasetAttributes.");
+        || Strings.isNullOrEmpty(getAttributes().getProjectId())
+        || Strings.isNullOrEmpty(getAttributes().getDatasetName())) {
+      throw new MissingRequiredFieldException(
+          "Missing required field for ReferenceBigQueryDatasetAttributes.");
     }
     ValidationUtils.validateBqDatasetName(getAttributes().getDatasetName());
   }

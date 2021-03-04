@@ -11,6 +11,8 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
+import java.util.Optional;
+import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +26,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
-import java.util.UUID;
 
 /**
  * WorkspaceDao includes operations on the workspace and cloud_context tables. Each cloud context
@@ -271,11 +270,11 @@ public class WorkspaceDao {
 
   @VisibleForTesting
   GcpCloudContext deserializeGcpCloudContext(String json) {
-      GcpCloudContextV1 result = DbSerDes.fromJson(json, GcpCloudContextV1.class);
-      if (result.version != GCP_CLOUD_CONTEXT_DB_VERSION) {
-        throw new InvalidSerializedVersionException("Invalid serialized version");
-      }
-      return new GcpCloudContext(result.gcpProjectId);
+    GcpCloudContextV1 result = DbSerDes.fromJson(json, GcpCloudContextV1.class);
+    if (result.version != GCP_CLOUD_CONTEXT_DB_VERSION) {
+      throw new InvalidSerializedVersionException("Invalid serialized version");
+    }
+    return new GcpCloudContext(result.gcpProjectId);
   }
 
   static class GcpCloudContextV1 {

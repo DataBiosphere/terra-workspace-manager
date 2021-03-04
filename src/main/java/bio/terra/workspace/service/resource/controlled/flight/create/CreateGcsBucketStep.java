@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.create;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS;
+
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightContext;
@@ -22,8 +24,6 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
 import com.google.cloud.storage.StorageClass;
-
-import javax.annotation.Nullable;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -31,8 +31,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS;
+import javax.annotation.Nullable;
 
 public class CreateGcsBucketStep implements Step {
 
@@ -53,7 +52,8 @@ public class CreateGcsBucketStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
-    GoogleBucketCreationParameters creationParameters = inputMap.get(CREATION_PARAMETERS, GoogleBucketCreationParameters.class);
+    GoogleBucketCreationParameters creationParameters =
+        inputMap.get(CREATION_PARAMETERS, GoogleBucketCreationParameters.class);
 
     final BucketInfo bucketInfo =
         BucketInfo.newBuilder(resource.getAttributes().getBucketName())

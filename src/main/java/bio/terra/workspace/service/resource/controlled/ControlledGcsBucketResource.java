@@ -10,7 +10,6 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Objects;
 import java.util.UUID;
 
@@ -19,30 +18,38 @@ public class ControlledGcsBucketResource extends ControlledResource {
 
   @JsonCreator
   public ControlledGcsBucketResource(
-          @JsonProperty("workspaceId") UUID workspaceId,
-          @JsonProperty("resourceId") UUID resourceId,
-          @JsonProperty("name") String name,
-          @JsonProperty("description") String description,
-          @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
-          @JsonProperty("assignedUser") String assignedUser,
-          @JsonProperty("controlledAccessType") ControlledAccessType controlledAccessType,
-          @JsonProperty("bucketName") String bucketName) {
+      @JsonProperty("workspaceId") UUID workspaceId,
+      @JsonProperty("resourceId") UUID resourceId,
+      @JsonProperty("name") String name,
+      @JsonProperty("description") String description,
+      @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
+      @JsonProperty("assignedUser") String assignedUser,
+      @JsonProperty("controlledAccessType") ControlledAccessType controlledAccessType,
+      @JsonProperty("bucketName") String bucketName) {
 
-    super(workspaceId, resourceId, name, description, cloningInstructions, assignedUser, controlledAccessType);
+    super(
+        workspaceId,
+        resourceId,
+        name,
+        description,
+        cloningInstructions,
+        assignedUser,
+        controlledAccessType);
     this.attributes = new ControlledGcsBucketAttributes(bucketName);
     validate();
   }
 
   public ControlledGcsBucketResource(DbResource dbResource) {
     super(
-            dbResource.getWorkspaceId(),
-            dbResource.getResourceId(),
-            dbResource.getName().orElse(null),
-            dbResource.getDescription().orElse(null),
-            dbResource.getCloningInstructions(),
-            dbResource.getAssignedUser().orElse(null),
-            dbResource.getAccessType().orElse(null));
-    this.attributes = DbSerDes.fromJson(dbResource.getAttributes(), ControlledGcsBucketAttributes.class);
+        dbResource.getWorkspaceId(),
+        dbResource.getResourceId(),
+        dbResource.getName().orElse(null),
+        dbResource.getDescription().orElse(null),
+        dbResource.getCloningInstructions(),
+        dbResource.getAssignedUser().orElse(null),
+        dbResource.getAccessType().orElse(null));
+    this.attributes =
+        DbSerDes.fromJson(dbResource.getAttributes(), ControlledGcsBucketAttributes.class);
     validate();
   }
 

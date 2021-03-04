@@ -7,10 +7,10 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.reference.ReferenceGcsBucketResource;
+import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
 import com.google.cloud.storage.StorageException;
 
 public class CreateReferenceVerifyAccessGcsBucketStep implements Step {
