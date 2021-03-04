@@ -161,7 +161,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
    * @param gcpPolicy The GCP policy we're checking for role bindings.
    */
   private void assertRoleBindingsInPolicy(IamRole role, String groupEmail, Policy gcpPolicy) {
-    List<String> expectedGcpRoleList = CloudSyncRoleMapping.cloudSyncRoleMap.get(role);
+    List<String> expectedGcpRoleList = CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(role);
     List<Binding> actualGcpBindingList = gcpPolicy.getBindings();
     List<String> actualGcpRoleList =
         actualGcpBindingList.stream().map(Binding::getRole).collect(Collectors.toList());

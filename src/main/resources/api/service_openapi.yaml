@@ -1192,7 +1192,7 @@ components:
     IamRole:
       description: Enum containing all valid IAM roles on a Workspace
       type: string
-      enum: ['READER', 'WRITER', 'OWNER']
+      enum: ['READER', 'WRITER', 'EDITOR', 'APPLICATION', 'OWNER']
 
     RoleBinding:
       description: A binding between an IAM role and users with that role

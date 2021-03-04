@@ -62,11 +62,18 @@ public class GoogleCloudSyncStep implements Step {
           "group:" + workingMap.get(WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL, String.class);
       String writerGroup =
           "group:" + workingMap.get(WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL, String.class);
+      String applicationGroup =
+          "group:"
+              + workingMap.get(WorkspaceFlightMapKeys.IAM_APPLICATION_GROUP_EMAIL, String.class);
+      String editorGroup =
+          "group:" + workingMap.get(WorkspaceFlightMapKeys.IAM_EDITOR_GROUP_EMAIL, String.class);
       String ownerGroup =
           "group:" + workingMap.get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class);
       List<Binding> newBindings = new ArrayList<>();
       newBindings.addAll(bindingsForRole(IamRole.READER, readerGroup));
       newBindings.addAll(bindingsForRole(IamRole.WRITER, writerGroup));
+      newBindings.addAll(bindingsForRole(IamRole.APPLICATION, applicationGroup));
+      newBindings.addAll(bindingsForRole(IamRole.EDITOR, editorGroup));
       newBindings.addAll(bindingsForRole(IamRole.OWNER, ownerGroup));
 
       // Add all existing bindings to ensure we don't accidentally clobber existing permissions.
@@ -94,7 +101,7 @@ public class GoogleCloudSyncStep implements Step {
    */
   private List<Binding> bindingsForRole(IamRole role, String group) {
     List<Binding> bindings = new ArrayList<>();
-    for (String gcpRole : CloudSyncRoleMapping.cloudSyncRoleMap.get(role)) {
+    for (String gcpRole : CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(role)) {
       bindings.add(new Binding().setRole(gcpRole).setMembers(Collections.singletonList(group)));
     }
     return bindings;

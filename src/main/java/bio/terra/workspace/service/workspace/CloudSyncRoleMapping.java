@@ -6,37 +6,31 @@ import com.google.common.collect.ImmutableMap;
 import java.util.List;
 
 public class CloudSyncRoleMapping {
-  public static final ImmutableMap<IamRole, List<String>> cloudSyncRoleMap =
+  private static final List<String> READER_PERMISSIONS = ImmutableList.of("roles/viewer");
+  private static final List<String> WRITER_PERMISSIONS =
+      new ImmutableList.Builder<String>()
+          .addAll(READER_PERMISSIONS)
+          .add(
+              "roles/bigquery.dataEditor",
+              // TODO(wchambers): Revise service account permissions when there are controlled
+              // resources for service accounts. (Also used by NextFlow)
+              "roles/iam.serviceAccountUser",
+              "roles/lifesciences.editor",
+              "roles/serviceusage.serviceUsageConsumer",
+              // TODO(wchambers): Revise notebooks permissions when there are controlled
+              // resources for notebooks.
+              "roles/notebooks.admin",
+              // TODO(marikomedlock): Revise storage permissions when there are controlled
+              // resources for buckets.
+              "roles/storage.admin")
+          .build();
+  // Currently, workspace editors, applications and owners have the sam cloud permissions as
+  // writers. If that changes, create a new list and modify the map below.
+  public static final ImmutableMap<IamRole, List<String>> CLOUD_SYNC_ROLE_MAP =
       ImmutableMap.of(
-          IamRole.OWNER,
-              ImmutableList.of(
-                  "roles/viewer",
-                  "roles/bigquery.dataEditor",
-                  // TODO(wchambers): Revise service account permissions when there are controlled
-                  // resources for service accounts. (Also used by NextFlow)
-                  "roles/iam.serviceAccountUser",
-                  "roles/lifesciences.editor",
-                  "roles/serviceusage.serviceUsageConsumer",
-                  // TODO(wchambers): Revise notebooks permissions when there are controlled
-                  // resources for notebooks.
-                  "roles/notebooks.admin",
-                  // TODO(marikomedlock): Revise storage permissions when there are controlled
-                  // resources for buckets.
-                  "roles/storage.admin"),
-          IamRole.WRITER,
-              ImmutableList.of(
-                  "roles/viewer",
-                  "roles/bigquery.dataEditor",
-                  // TODO(wchambers): Revise service account permissions when there are controlled
-                  // resources for service accounts. (Also used by NextFlow)
-                  "roles/iam.serviceAccountUser",
-                  "roles/lifesciences.editor",
-                  "roles/serviceusage.serviceUsageConsumer",
-                  // TODO(wchambers): Revise notebooks permissions when there are controlled
-                  // resources for notebooks.
-                  "roles/notebooks.admin",
-                  // TODO(marikomedlock): Revise storage permissions when there are controlled
-                  // resources for buckets.
-                  "roles/storage.admin"),
-          IamRole.READER, ImmutableList.of("roles/viewer"));
+          IamRole.OWNER, WRITER_PERMISSIONS,
+          IamRole.EDITOR, WRITER_PERMISSIONS,
+          IamRole.APPLICATION, WRITER_PERMISSIONS,
+          IamRole.WRITER, WRITER_PERMISSIONS,
+          IamRole.READER, READER_PERMISSIONS);
 }

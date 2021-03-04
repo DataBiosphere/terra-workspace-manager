@@ -7,6 +7,8 @@ import java.util.Optional;
 public enum IamRole {
   READER("reader", bio.terra.workspace.generated.model.IamRole.READER),
   WRITER("writer", bio.terra.workspace.generated.model.IamRole.WRITER),
+  EDITOR("editor", bio.terra.workspace.generated.model.IamRole.EDITOR),
+  APPLICATION("application", bio.terra.workspace.generated.model.IamRole.APPLICATION),
   OWNER("owner", bio.terra.workspace.generated.model.IamRole.OWNER);
 
   private final String samRole;
