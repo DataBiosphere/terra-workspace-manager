@@ -16,6 +16,7 @@ import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.StoreMetadataStep;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,7 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
 
     // Stub the flight map as of this step
     ControlledGcsBucketResource bucketResource =
-        ControlledResourceFixtures.makeControlledGcsBucketResource();
+        ControlledResourceFixtures.makeControlledGcsBucketResource(UUID.randomUUID());
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(JobMapKeys.REQUEST.getKeyName(), bucketResource);

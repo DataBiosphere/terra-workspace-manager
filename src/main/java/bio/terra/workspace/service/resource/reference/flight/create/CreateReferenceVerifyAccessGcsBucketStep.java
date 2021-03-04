@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.reference.flight.create;
 
-import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -11,7 +10,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.reference.ReferenceGcsBucketResource;
 import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
-import com.google.cloud.storage.StorageException;
 
 public class CreateReferenceVerifyAccessGcsBucketStep implements Step {
   private final CrlService crlService;
@@ -29,21 +27,15 @@ public class CreateReferenceVerifyAccessGcsBucketStep implements Step {
         inputMap.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     ReferenceGcsBucketResource referenceResource =
         inputMap.get(JobMapKeys.REQUEST.getKeyName(), ReferenceGcsBucketResource.class);
-    String bucketName = referenceResource.getAttributes().getBucketName();
+    String bucketName = referenceResource.getBucketName();
 
-    try {
-      // StorageCow.get() returns null if the bucket does not exist or a user does not have access,
-      // which fails validation.
-      BucketCow bucket = crlService.createStorageCow(userReq).get(bucketName);
-      if (bucket == null) {
-        throw new InvalidReferenceException(
-            String.format(
-                "Could not access GCS bucket %s. Ensure the name is correct and that you have access.",
-                bucketName));
-      }
-    } catch (StorageException e) {
+    // StorageCow.get() returns null if the bucket does not exist or a user does not have access,
+    // which fails validation.
+    if (!crlService.gcsBucketExists(bucketName, userReq)) {
       throw new InvalidReferenceException(
-          String.format("Error while trying to access GCS bucket %s", bucketName), e);
+          String.format(
+              "Could not access GCS bucket %s. Ensure the name is correct and that you have access.",
+              bucketName));
     }
 
     return StepResult.getStepResultSuccess();

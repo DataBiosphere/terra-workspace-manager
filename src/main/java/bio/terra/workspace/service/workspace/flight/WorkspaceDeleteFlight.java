@@ -5,7 +5,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.RetryRuleExponentialBackoff;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 
@@ -18,7 +17,6 @@ public class WorkspaceDeleteFlight extends Flight {
     super(inputParameters, applicationContext);
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
-    CrlService crl = appContext.getCrlService();
 
     AuthenticatedUserRequest userReq =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
@@ -32,8 +30,7 @@ public class WorkspaceDeleteFlight extends Flight {
             INITIAL_INTERVALS_SECONDS, MAX_INTERVAL_SECONDS, MAX_OPERATION_TIME_SECONDS);
 
     addStep(
-        new DeleteProjectStep(crl.getCloudResourceManagerCow(), appContext.getWorkspaceDao()),
-        retryRule);
+        new DeleteProjectStep(appContext.getCrlService(), appContext.getWorkspaceDao()), retryRule);
     addStep(new DeleteWorkspaceAuthzStep(appContext.getSamService(), userReq));
     addStep(new DeleteWorkspaceStateStep(appContext.getWorkspaceDao()));
   }

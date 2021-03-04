@@ -15,7 +15,8 @@ import com.google.common.base.Strings;
 import java.util.UUID;
 
 public class ReferenceBigQueryDatasetResource extends ReferenceResource {
-  private final ReferenceBigQueryDatasetAttributes attributes;
+  private final String projectId;
+  private final String datasetName;
 
   /**
    * Constructor for serialized form for Stairway use
@@ -38,7 +39,8 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
       @JsonProperty("projectId") String projectId,
       @JsonProperty("datasetName") String datasetName) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
-    this.attributes = new ReferenceBigQueryDatasetAttributes(projectId, datasetName);
+    this.projectId = projectId;
+    this.datasetName = datasetName;
   }
 
   /**
@@ -54,25 +56,29 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
         dbResource.getDescription().orElse(null),
         dbResource.getCloningInstructions());
 
-    if (dbResource.getResourceType() != WsmResourceType.GCS_BUCKET) {
-      throw new InvalidMetadataException("Expected GCS_BUCKET");
+    if (dbResource.getResourceType() != WsmResourceType.BIG_QUERY_DATASET) {
+      throw new InvalidMetadataException("Expected BIG_QUERY_DATASET");
     }
 
-    this.attributes =
+    ReferenceBigQueryDatasetAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ReferenceBigQueryDatasetAttributes.class);
+    this.projectId = attributes.getProjectId();
+    this.datasetName = attributes.getDatasetName();
   }
 
-  public ReferenceBigQueryDatasetAttributes getAttributes() {
-    return attributes;
+  public String getProjectId() {
+    return projectId;
+  }
+
+  public String getDatasetName() {
+    return datasetName;
   }
 
   public BigQueryDatasetReference toApiModel() {
     return new BigQueryDatasetReference()
         .metadata(super.toApiMetadata())
         .dataset(
-            new GoogleBigQueryDatasetUid()
-                .projectId(getAttributes().getProjectId())
-                .datasetId(getAttributes().getDatasetName()));
+            new GoogleBigQueryDatasetUid().projectId(getProjectId()).datasetId(getDatasetName()));
   }
 
   @Override
@@ -81,19 +87,18 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
   }
 
   @Override
-  public String getJsonAttributes() {
-    return DbSerDes.toJson(attributes);
+  public String attributesToJson() {
+    return DbSerDes.toJson(
+        new ReferenceBigQueryDatasetAttributes(getProjectId(), getDatasetName()));
   }
 
   @Override
   public void validate() {
     super.validate();
-    if (getAttributes() == null
-        || Strings.isNullOrEmpty(getAttributes().getProjectId())
-        || Strings.isNullOrEmpty(getAttributes().getDatasetName())) {
+    if (Strings.isNullOrEmpty(getProjectId()) || Strings.isNullOrEmpty(getDatasetName())) {
       throw new MissingRequiredFieldException(
           "Missing required field for ReferenceBigQueryDatasetAttributes.");
     }
-    ValidationUtils.validateBqDatasetName(getAttributes().getDatasetName());
+    ValidationUtils.validateBqDatasetName(getDatasetName());
   }
 }

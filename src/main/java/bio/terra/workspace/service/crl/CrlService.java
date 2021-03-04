@@ -3,19 +3,25 @@ package bio.terra.workspace.service.crl;
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.common.cleanup.CleanupConfig;
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
+import bio.terra.cloudres.google.bigquery.DatasetCow;
 import bio.terra.cloudres.google.billing.CloudBillingClientCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
+import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.workspace.app.configuration.external.CrlConfiguration;
 import bio.terra.workspace.service.crl.exception.CrlInternalException;
 import bio.terra.workspace.service.crl.exception.CrlNotInUseException;
 import bio.terra.workspace.service.crl.exception.CrlSecurityException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.BigQueryOptions;
+import com.google.cloud.bigquery.DatasetId;
+import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -87,6 +93,28 @@ public class CrlService {
         BigQueryOptions.newBuilder().setCredentials(googleCredentialsFromUserReq(userReq)).build());
   }
 
+  /**
+   * Wrap the BigQuery existence check in its own method. That allows unit tests to mock this
+   * service and generate an answer without actually touching BigQuery.
+   *
+   * @param projectId Google project id where the dataset is
+   * @param datasetId name of the dataset
+   * @param userRequest auth info
+   * @return true if the dataset exists
+   */
+  public boolean bigQueryDatasetExists(
+      String projectId, String datasetName, AuthenticatedUserRequest userRequest) {
+    try {
+      DatasetId datasetId = DatasetId.of(projectId, datasetName);
+      // BigQueryCow.get() returns null if the bucket does not exist or a user does not have access,
+      // which fails validation.
+      DatasetCow dataset = createBigQueryCow(userRequest).getDataset(datasetId);
+      return (dataset != null);
+    } catch (BigQueryException e) {
+      throw new InvalidReferenceException("Error while trying to access BigQuery dataset", e);
+    }
+  }
+
   /** @return CRL {@link StorageCow} which wraps Google Cloud Storage API */
   public StorageCow createStorageCow(AuthenticatedUserRequest userReq) {
     assertCrlInUse();
@@ -94,6 +122,24 @@ public class CrlService {
     return new StorageCow(
         clientConfig,
         StorageOptions.newBuilder().setCredentials(googleCredentialsFromUserReq(userReq)).build());
+  }
+
+  /**
+   * Wrap the GcsBucket existence check in its own method. That allows unit tests to mock this
+   * service and generate an answer without actually touching CRL
+   *
+   * @param bucketName bucket of interest
+   * @param userRequest auth info
+   * @return true if the bucket exists
+   */
+  public boolean gcsBucketExists(String bucketName, AuthenticatedUserRequest userRequest) {
+    try {
+      BucketCow bucket = createStorageCow(userRequest).get(bucketName);
+      return (bucket != null);
+    } catch (StorageException e) {
+      throw new InvalidReferenceException(
+          String.format("Error while trying to access GCS bucket %s", bucketName), e);
+    }
   }
 
   private ServiceAccountCredentials getJanitorCredentials(String serviceAccountPath) {

@@ -1,28 +1,24 @@
 package bio.terra.workspace.service.resource.reference;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.MissingRequiredFieldException;
+import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.WsmResourceType;
-import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
+import bio.terra.workspace.service.resource.exception.DuplicateResourceNameException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -32,9 +28,20 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+
 class ReferenceResourceServiceTest extends BaseUnitTest {
   private static final Logger logger = LoggerFactory.getLogger(ReferenceResourceServiceTest.class);
   private static final String DATA_REPO_INSTANCE_NAME = "terra";
+  private static final String FAKE_PROJECT_ID = "fakeprojecctid";
+
   /** A fake authenticated user request. */
   private static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest()
@@ -43,11 +50,14 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
           .subjectId("fakeID123");
 
   @Autowired private WorkspaceService workspaceService;
+  @Autowired private WorkspaceDao workspaceDao;
   @Autowired private ReferenceResourceService referenceResourceService;
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
   @MockBean private SamService mockSamService;
 
   @MockBean private DataRepoService mockDataRepoService;
+  @MockBean private CrlService mockCrlService;
+
   private UUID workspaceId;
   private ReferenceResource referenceResource;
 
@@ -55,6 +65,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
   void setup() {
     doReturn(true).when(mockDataRepoService).snapshotExists(any(), any(), any());
     workspaceId = createRawlsTestWorkspace();
+    workspaceDao.createGcpCloudContext(workspaceId, new GcpCloudContext(FAKE_PROJECT_ID));
     referenceResource = null;
   }
 
@@ -68,7 +79,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
         logger.warn("Failed to delete reference resource " + referenceResource.getResourceId());
       }
     }
-    workspaceService.deleteWorkspace(workspaceId, USER_REQUEST);
+    workspaceDao.deleteWorkspace(workspaceId);
   }
 
   @Nested
@@ -140,7 +151,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
 
     @Test
     void testDataRepoReference() {
-      referenceResource = makeDataRepoSnapshotResource();
+      referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
       assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCE));
 
       ReferenceDataRepoSnapshotResource resource =
@@ -182,7 +193,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
               "polaroid");
       assertThrows(
           MissingRequiredFieldException.class,
-          () -> referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST));
+          () -> referenceResourceService.createReferenceResource(resource, USER_REQUEST));
     }
 
     @Test
@@ -201,7 +212,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
               null);
       assertThrows(
           MissingRequiredFieldException.class,
-          () -> referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST));
+          () -> referenceResourceService.createReferenceResource(resource, USER_REQUEST));
     }
 
     @Test
@@ -220,7 +231,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
               "Snapshots don't accept * in the names");
       assertThrows(
           InvalidReferenceException.class,
-          () -> referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST));
+          () -> referenceResourceService.createReferenceResource(resource, USER_REQUEST));
     }
   }
 
@@ -305,9 +316,17 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
 
   @Nested
   class BigQueryReference {
+    private static final String DATASET_NAME = "testbq-datasetname";
+
+    @BeforeEach
+    void setup() throws Exception {
+      // Make the Verify step always succeed
+      doReturn(true).when(mockCrlService).bigQueryDatasetExists(any(), any(), any());
+    }
+
     private ReferenceBigQueryDatasetResource makeBigQueryResource() {
       UUID resourceId = UUID.randomUUID();
-      String resourceName = "testbq-" + resourceId.toString();
+      String resourceName = "testbq_" + resourceId.toString();
 
       return new ReferenceBigQueryDatasetResource(
           workspaceId,
@@ -315,8 +334,8 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
           resourceName,
           "description of " + resourceName,
           CloningInstructions.COPY_REFERENCE,
-          "testbq-projectid",
-          "testbq-datasetname");
+          FAKE_PROJECT_ID,
+          DATASET_NAME);
     }
 
     @Test
@@ -362,7 +381,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
               "testbq-datasetname");
       assertThrows(
           MissingRequiredFieldException.class,
-          () -> referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST));
+          () -> referenceResourceService.createReferenceResource(resource, USER_REQUEST));
     }
 
     @Test
@@ -381,7 +400,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
               "");
       assertThrows(
           MissingRequiredFieldException.class,
-          () -> referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST));
+          () -> referenceResourceService.createReferenceResource(resource, USER_REQUEST));
     }
 
     @Test
@@ -437,13 +456,13 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
 
     @Test
     void testDuplicateResourceName() {
-      referenceResource = makeDataRepoSnapshotResource();
-
+      referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
       assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCE));
 
       ReferenceDataRepoSnapshotResource resource =
           referenceResource.castToDataRepoSnapshotResource();
       assertThat(resource.getResourceType(), equalTo(WsmResourceType.DATA_REPO_SNAPSHOT));
+      referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
 
       UUID resourceId = UUID.randomUUID();
 
@@ -458,7 +477,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
               "polaroid");
 
       assertThrows(
-          DuplicateResourceException.class,
+          DuplicateResourceNameException.class,
           () ->
               referenceResourceService.createReferenceResource(
                   duplicateNameResource, USER_REQUEST));
@@ -467,7 +486,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
 
   @Test
   void testUpdate() {
-    referenceResource = makeDataRepoSnapshotResource();
+    referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
     referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
 
     // Change the name
@@ -485,7 +504,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
     String updatedDescription = "updated" + referenceResource.getDescription();
 
     referenceResourceService.updateReferenceResource(
-        workspaceId, referenceResource.getResourceId(), updatedName, null, USER_REQUEST);
+        workspaceId, referenceResource.getResourceId(), null, updatedDescription, USER_REQUEST);
     referenceResource =
         referenceResourceService.getReferenceResource(
             workspaceId, referenceResource.getResourceId(), USER_REQUEST);

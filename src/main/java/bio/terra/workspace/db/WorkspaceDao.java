@@ -124,7 +124,7 @@ public class WorkspaceDao {
             + " W.properties, W.workspace_stage, C.context"
             + " FROM workspace W LEFT JOIN cloud_context C"
             + " ON W.workspace_id = C.workspace_id"
-            + " WHERE W.workspace_id = :id AND (C.cloud_type = 'GCP' OR C.cloud_type IS NULL)";
+            + " WHERE W.workspace_id = :id AND (C.cloud_platform = 'GCP' OR C.cloud_platform IS NULL)";
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id.toString());
     try {
       Workspace result =
@@ -171,11 +171,11 @@ public class WorkspaceDao {
   public Optional<GcpCloudContext> getGcpCloudContext(UUID workspaceId) {
     String sql =
         "SELECT context FROM cloud_context "
-            + "WHERE workspace_id = :workspace_id AND cloud_type = :cloud_type";
+            + "WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_type", CloudPlatform.GCP.toString());
+            .addValue("cloud_platform", CloudPlatform.GCP.toString());
     try {
       return Optional.ofNullable(
           DataAccessUtils.singleResult(
@@ -197,12 +197,12 @@ public class WorkspaceDao {
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public void createGcpCloudContext(UUID workspaceId, GcpCloudContext cloudContext) {
     final String sql =
-        "INSERT INTO cloud_context (workspace_id, cloud_type, context)"
-            + " VALUES (:workspace_id, :cloud_type, :context::json)";
+        "INSERT INTO cloud_context (workspace_id, cloud_platform, context)"
+            + " VALUES (:workspace_id, :cloud_platform, :context::json)";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_type", CloudPlatform.GCP.toString())
+            .addValue("cloud_platform", CloudPlatform.GCP.toString())
             .addValue("context", serializeGcpCloudContext(cloudContext));
     try {
       jdbcTemplate.update(sql, params);
@@ -245,12 +245,12 @@ public class WorkspaceDao {
   private void deleteGcpCloudContextWorker(UUID workspaceId) {
     final String sql =
         "DELETE FROM cloud_context "
-            + "WHERE workspace_id = :workspace_id AND cloud_type = :cloud_type";
+            + "WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_type", CloudPlatform.GCP.toString());
+            .addValue("cloud_platform", CloudPlatform.GCP.toString());
 
     int rowsAffected = jdbcTemplate.update(sql, params);
     boolean deleted = rowsAffected > 0;

@@ -32,6 +32,7 @@ public class ReferenceResourceService {
 
   public ReferenceResource createReferenceResource(
       ReferenceResource resource, AuthenticatedUserRequest userReq) {
+    resource.validate();
     String jobDescription =
         String.format(
             "Create reference %s; id %s; name %s",

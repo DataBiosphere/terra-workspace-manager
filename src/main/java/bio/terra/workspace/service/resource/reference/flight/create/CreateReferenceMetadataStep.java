@@ -12,7 +12,6 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.reference.ReferenceResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
 /** Stairway step to persist a data reference in WM's database. */
@@ -26,15 +25,7 @@ public class CreateReferenceMetadataStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws RetryException {
-    FlightMap inputMap = flightContext.getInputParameters();
-
-    WsmResourceType resourceType =
-        inputMap.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, WsmResourceType.class);
-
-    // Use the resource type to deserialize the right class
-    ReferenceResource referenceResource =
-        inputMap.get(JobMapKeys.REQUEST.getKeyName(), resourceType.getReferenceClass());
-
+    ReferenceResource referenceResource = getReferenceResource(flightContext);
     try {
       resourceDao.createReferenceResource(referenceResource);
     } catch (DuplicateResourceException e) {
@@ -49,15 +40,21 @@ public class CreateReferenceMetadataStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    FlightMap inputMap = flightContext.getInputParameters();
-    FlightMap workingMap = flightContext.getWorkingMap();
-
-    UUID resourceId = workingMap.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, UUID.class);
-    UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    ReferenceResource referenceResource = getReferenceResource(flightContext);
 
     // Ignore return value, as we don't care whether a reference was deleted or just not found.
-    resourceDao.deleteResource(workspaceId, resourceId);
+    resourceDao.deleteResource(
+        referenceResource.getWorkspaceId(), referenceResource.getResourceId());
 
     return StepResult.getStepResultSuccess();
+  }
+
+  private ReferenceResource getReferenceResource(FlightContext flightContext) {
+    FlightMap inputMap = flightContext.getInputParameters();
+    WsmResourceType resourceType =
+        inputMap.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, WsmResourceType.class);
+
+    // Use the resource type to deserialize the right class
+    return inputMap.get(JobMapKeys.REQUEST.getKeyName(), resourceType.getReferenceClass());
   }
 }

@@ -1,5 +1,9 @@
 package bio.terra.workspace.db;
 
+import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
+import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCE;
+import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
+
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
@@ -8,12 +12,19 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledAccessType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
+import bio.terra.workspace.service.resource.exception.DuplicateResourceNameException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.reference.ReferenceBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.reference.ReferenceDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.reference.ReferenceGcsBucketResource;
 import bio.terra.workspace.service.resource.reference.ReferenceResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,15 +37,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
-import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCE;
-import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
 
 @Component
 public class ResourceDao {
@@ -59,8 +61,14 @@ public class ResourceDao {
             .resourceType(WsmResourceType.fromSql(rs.getString("resource_type")))
             .cloningInstructions(CloningInstructions.fromSql(rs.getString("cloning_instructions")))
             .attributes(rs.getString("attributes"))
-            .accessType(ControlledAccessType.fromSql(rs.getString("access")))
-            .associatedApp(UUID.fromString(rs.getString("associated_app")))
+            .accessType(
+                Optional.ofNullable(rs.getString("access"))
+                    .map(ControlledAccessType::fromSql)
+                    .orElse(null))
+            .associatedApp(
+                Optional.ofNullable(rs.getString("associated_app"))
+                    .map(UUID::fromString)
+                    .orElse(null))
             .assignedUser(rs.getString("assigned_user"));
       };
 
@@ -168,7 +176,7 @@ public class ResourceDao {
         REFERENCE,
         resource.getResourceType(),
         resource.getCloningInstructions(),
-        resource.getJsonAttributes(),
+        resource.attributesToJson(),
         Optional.empty(),
         Optional.empty(),
         Optional.empty());
@@ -216,7 +224,7 @@ public class ResourceDao {
         CONTROLLED,
         controlledResource.getResourceType(),
         controlledResource.getCloningInstructions(),
-        controlledResource.getJsonAttributes(),
+        controlledResource.attributesToJson(),
         // TODO: add this to ControlledResource
         Optional.of(ControlledAccessType.USER_SHARED),
         // TODO: add associated app to ControlledResource
@@ -225,6 +233,15 @@ public class ResourceDao {
         controlledResource.getAssignedUser());
   }
 
+  // Interesting catch-22 I just came across. The schema has a unique constraint on
+  // resource(workspace_id, name) to make sure a name is unique within a workspace. So Postgres will
+  // throw a DuplicateKeyException which we re-throw as a DuplicateResourceException. However, the
+  // flight that stores resources ignore that exception, because the step might be re-run so it
+  // shouldn’t fail if the resource is already there. And we want it to do that if the failure is
+  // due to the resourceId being a duplicate!
+  // For the time being, I will code the name uniqueness check ahead of the insert and throw a
+  // different exception. If we implement “locks” during resource creation, then we can use that
+  // indicator in the flight itself to eliminate the duplicate store.
   private void storeResource(
       UUID workspaceId,
       UUID resourceId,
@@ -237,17 +254,26 @@ public class ResourceDao {
       Optional<ControlledAccessType> accessType,
       Optional<UUID> associatedApp,
       Optional<String> assignedUser) {
+
+    // Check for duplicate name
+    try {
+      getResourceWithName(workspaceId, name);
+      throw new DuplicateResourceNameException("Workspace already has a resource named " + name);
+    } catch (ResourceNotFoundException ex) {
+      // Not found is a good thing!
+    }
+
     final String sql =
-        "INSERT resource (workspace_id, cloud_type, resource_id, name, description, stewardship_type,"
+        "INSERT INTO resource (workspace_id, cloud_platform, resource_id, name, description, stewardship_type,"
             + " resource_type, cloning_instructions, attributes, access, associated_app, assigned_user)"
-            + " VALUES (:workspace_id, :cloud_type, :resource_id, :name, :description, :stewardship_type,"
+            + " VALUES (:workspace_id, :cloud_platform, :resource_id, :name, :description, :stewardship_type,"
             + " :resource_type, :cloning_instructions, cast(:attributes AS json),"
             + " :access, :associated_app, :assigned_user)";
 
     final var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_type", resourceType.getCloudPlatform().toString())
+            .addValue("cloud_platform", resourceType.getCloudPlatform().toString())
             .addValue("resource_id", resourceId.toString())
             .addValue("name", name)
             .addValue("description", description)
@@ -304,7 +330,11 @@ public class ResourceDao {
             return new ReferenceGcsBucketResource(dbResource);
 
           case BIG_QUERY_DATASET:
+            return new ReferenceBigQueryDatasetResource(dbResource);
+
           case DATA_REPO_SNAPSHOT:
+            return new ReferenceDataRepoSnapshotResource(dbResource);
+
           default:
             throw new InvalidMetadataException(
                 "Invalid reference resource type" + dbResource.getResourceType().toString());

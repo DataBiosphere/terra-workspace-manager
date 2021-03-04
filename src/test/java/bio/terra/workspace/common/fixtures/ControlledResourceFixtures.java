@@ -74,20 +74,19 @@ public class ControlledResourceFixtures {
           RESOURCE_DESCRIPTION,
           CLONING_INSTRUCTIONS,
           OWNER_EMAIL,
-          USER_SHARED,
+          USER_PRIVATE,
           BUCKET_NAME);
 
-  /** Flawed resource missing owner email. */
-  public static ControlledGcsBucketResource makeControlledGcsBucketResource() {
+  public static ControlledGcsBucketResource makeControlledGcsBucketResource(UUID workspaceId) {
     UUID resourceId = UUID.randomUUID();
     return new ControlledGcsBucketResource(
-        WORKSPACE_ID,
+        workspaceId,
         resourceId,
         "testgcs-" + resourceId,
         RESOURCE_DESCRIPTION,
         CLONING_INSTRUCTIONS,
-        OWNER_EMAIL,
-        USER_PRIVATE,
+        null,
+        USER_SHARED,
         BUCKET_NAME);
   }
 

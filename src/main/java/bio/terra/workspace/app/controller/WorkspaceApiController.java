@@ -302,8 +302,8 @@ public class WorkspaceApiController implements WorkspaceApi {
         referenceResource.castToDataRepoSnapshotResource();
     var reference =
         new DataRepoSnapshot()
-            .instanceName(snapshotResource.getAttributes().getInstanceName())
-            .snapshot(snapshotResource.getAttributes().getSnapshot());
+            .instanceName(snapshotResource.getInstanceName())
+            .snapshot(snapshotResource.getSnapshot());
     return new DataReferenceDescription()
         .referenceId(referenceResource.getResourceId())
         .name(referenceResource.getName())

@@ -15,7 +15,8 @@ import com.google.common.base.Strings;
 import java.util.UUID;
 
 public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
-  private final ReferenceDataRepoSnapshotAttributes attributes;
+  private final String instanceName;
+  private final String snapshot;
 
   /**
    * Constructor for serialized form for Stairway use
@@ -38,7 +39,8 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
       @JsonProperty("instanceName") String instanceName,
       @JsonProperty("snapshot") String snapshot) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
-    this.attributes = new ReferenceDataRepoSnapshotAttributes(instanceName, snapshot);
+    this.instanceName = instanceName;
+    this.snapshot = snapshot;
   }
 
   /**
@@ -57,22 +59,24 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
     if (dbResource.getResourceType() != WsmResourceType.DATA_REPO_SNAPSHOT) {
       throw new InvalidMetadataException("Expected DATA_REPO_SNAPSHOT");
     }
-
-    this.attributes =
+    ReferenceDataRepoSnapshotAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ReferenceDataRepoSnapshotAttributes.class);
+    this.instanceName = attributes.getInstanceName();
+    this.snapshot = attributes.getSnapshot();
   }
 
-  public ReferenceDataRepoSnapshotAttributes getAttributes() {
-    return attributes;
+  public String getInstanceName() {
+    return instanceName;
+  }
+
+  public String getSnapshot() {
+    return snapshot;
   }
 
   public DataRepoSnapshotReference toApiModel() {
     return new DataRepoSnapshotReference()
         .metadata(super.toApiMetadata())
-        .snapshot(
-            new DataRepoSnapshot()
-                .instanceName(getAttributes().getInstanceName())
-                .snapshot(getAttributes().getSnapshot()));
+        .snapshot(new DataRepoSnapshot().instanceName(getInstanceName()).snapshot(getSnapshot()));
   }
 
   @Override
@@ -81,19 +85,18 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
   }
 
   @Override
-  public String getJsonAttributes() {
-    return DbSerDes.toJson(attributes);
+  public String attributesToJson() {
+    return DbSerDes.toJson(
+        new ReferenceDataRepoSnapshotAttributes(getInstanceName(), getSnapshot()));
   }
 
   @Override
   public void validate() {
     super.validate();
-    if (getAttributes() == null
-        || Strings.isNullOrEmpty(getAttributes().getInstanceName())
-        || Strings.isNullOrEmpty(getAttributes().getSnapshot())) {
+    if (Strings.isNullOrEmpty(getInstanceName()) || Strings.isNullOrEmpty(getSnapshot())) {
       throw new MissingRequiredFieldException(
           "Missing required field for ReferenceDataRepoSnapshotAttributes.");
     }
-    ValidationUtils.validateReferenceName(getAttributes().getSnapshot());
+    ValidationUtils.validateReferenceName(getSnapshot());
   }
 }

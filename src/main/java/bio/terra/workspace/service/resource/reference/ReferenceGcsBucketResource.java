@@ -15,7 +15,7 @@ import com.google.common.base.Strings;
 import java.util.UUID;
 
 public class ReferenceGcsBucketResource extends ReferenceResource {
-  private final ReferenceGcsBucketAttributes attributes;
+  private final String bucketName;
 
   /**
    * Constructor for serialized form for Stairway use
@@ -36,7 +36,7 @@ public class ReferenceGcsBucketResource extends ReferenceResource {
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("bucketName") String bucketName) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
-    this.attributes = new ReferenceGcsBucketAttributes(bucketName);
+    this.bucketName = bucketName;
     validate();
   }
 
@@ -52,19 +52,21 @@ public class ReferenceGcsBucketResource extends ReferenceResource {
         dbResource.getName().orElse(null),
         dbResource.getDescription().orElse(null),
         dbResource.getCloningInstructions());
-    this.attributes =
+
+    ReferenceGcsBucketAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ReferenceGcsBucketAttributes.class);
+    this.bucketName = attributes.getBucketName();
     validate();
   }
 
-  public ReferenceGcsBucketAttributes getAttributes() {
-    return attributes;
+  public String getBucketName() {
+    return bucketName;
   }
 
   public GoogleBucketReference toApiModel() {
     return new GoogleBucketReference()
         .metadata(super.toApiMetadata())
-        .bucket(new GoogleBucketUid().bucketName(getAttributes().getBucketName()));
+        .bucket(new GoogleBucketUid().bucketName(getBucketName()));
   }
 
   @Override
@@ -73,8 +75,8 @@ public class ReferenceGcsBucketResource extends ReferenceResource {
   }
 
   @Override
-  public String getJsonAttributes() {
-    return DbSerDes.toJson(attributes);
+  public String attributesToJson() {
+    return DbSerDes.toJson(new ReferenceGcsBucketAttributes(bucketName));
   }
 
   @Override
@@ -83,9 +85,9 @@ public class ReferenceGcsBucketResource extends ReferenceResource {
     if (getResourceType() != WsmResourceType.GCS_BUCKET) {
       throw new InconsistentFieldsException("Expected GCS_BUCKET");
     }
-    if (getAttributes() == null || Strings.isNullOrEmpty(getAttributes().getBucketName())) {
+    if (Strings.isNullOrEmpty(getBucketName())) {
       throw new MissingRequiredFieldException("Missing required field for ReferenceGcsBucket.");
     }
-    ValidationUtils.validateBucketName(getAttributes().getBucketName());
+    ValidationUtils.validateBucketName(getBucketName());
   }
 }

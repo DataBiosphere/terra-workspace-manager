@@ -61,7 +61,7 @@ databaseChangeLog:
                 Foreign key will cause cloud_context to be deleted when its associated
                 workspace is deleted.
           - column:
-              name: cloud_type
+              name: cloud_platform
               type: text
               constraints:
                 nullable: false
@@ -74,7 +74,7 @@ databaseChangeLog:
                 JSON form of the information for the specific cloud context
                 
     - addPrimaryKey:
-        columnNames: workspace_id, cloud_type
+        columnNames: workspace_id, cloud_platform
         tableName: cloud_context
         constraintName: pk_cloud_context
         remarks: |
@@ -232,9 +232,9 @@ databaseChangeLog:
 
     - addForeignKeyConstraint:
         constraintName: fk_resource_cloud_context
-        baseColumnNames: workspace_id, cloud_type
+        baseColumnNames: workspace_id, cloud_platform
         baseTableName: resource
-        referencedColumnNames: workspace_id, cloud_type
+        referencedColumnNames: workspace_id, cloud_platform
         referencedTableName: cloud_context
         onDelete: CASCADE
         onUpdate: RESTRICT

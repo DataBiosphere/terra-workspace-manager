@@ -14,7 +14,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class ControlledGcsBucketResource extends ControlledResource {
-  private final ControlledGcsBucketAttributes attributes;
+  private final String bucketName;
 
   @JsonCreator
   public ControlledGcsBucketResource(
@@ -35,7 +35,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
         cloningInstructions,
         assignedUser,
         controlledAccessType);
-    this.attributes = new ControlledGcsBucketAttributes(bucketName);
+    this.bucketName = bucketName;
     validate();
   }
 
@@ -48,17 +48,18 @@ public class ControlledGcsBucketResource extends ControlledResource {
         dbResource.getCloningInstructions(),
         dbResource.getAssignedUser().orElse(null),
         dbResource.getAccessType().orElse(null));
-    this.attributes =
+    ControlledGcsBucketAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledGcsBucketAttributes.class);
+    this.bucketName = attributes.getBucketName();
     validate();
   }
 
-  public ControlledGcsBucketAttributes getAttributes() {
-    return attributes;
+  public String getBucketName() {
+    return bucketName;
   }
 
   public GoogleBucketStoredAttributes toApiModel() {
-    return new GoogleBucketStoredAttributes().bucketName(attributes.getBucketName());
+    return new GoogleBucketStoredAttributes().bucketName(getBucketName());
   }
 
   @Override
@@ -67,8 +68,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
   }
 
   @Override
-  public String getJsonAttributes() {
-    return DbSerDes.toJson(attributes);
+  public String attributesToJson() {
+    return DbSerDes.toJson(new ControlledGcsBucketAttributes(getBucketName()));
   }
 
   @Override
@@ -77,10 +78,10 @@ public class ControlledGcsBucketResource extends ControlledResource {
     if (getResourceType() != WsmResourceType.GCS_BUCKET) {
       throw new InconsistentFieldsException("Expected GCS_BUCKET");
     }
-    if (getAttributes() == null || getAttributes().getBucketName() == null) {
+    if (getBucketName() == null) {
       throw new MissingRequiredFieldException("Missing required field for ControlledGcsBucket.");
     }
-    ValidationUtils.validateBucketName(getAttributes().getBucketName());
+    ValidationUtils.validateBucketName(getBucketName());
   }
 
   @Override

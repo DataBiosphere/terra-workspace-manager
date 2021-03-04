@@ -83,7 +83,7 @@ public abstract class WsmResource {
    *
    * @return json string
    */
-  public abstract String getJsonAttributes();
+  public abstract String attributesToJson();
 
   /**
    * Validate the state of to this object. Subclasses should override this method, calling super()

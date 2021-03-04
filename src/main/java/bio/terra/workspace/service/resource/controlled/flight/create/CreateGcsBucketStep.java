@@ -56,7 +56,7 @@ public class CreateGcsBucketStep implements Step {
         inputMap.get(CREATION_PARAMETERS, GoogleBucketCreationParameters.class);
 
     final BucketInfo bucketInfo =
-        BucketInfo.newBuilder(resource.getAttributes().getBucketName())
+        BucketInfo.newBuilder(resource.getBucketName())
             .setLocation(creationParameters.getLocation())
             .setStorageClass(ApiConversions.toGcsApi(creationParameters.getDefaultStorageClass()))
             .setLifecycleRules(ApiConversions.toGcsApi(creationParameters.getLifecycle()))
@@ -70,7 +70,7 @@ public class CreateGcsBucketStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     final StorageCow storageCow = crlService.createStorageCow(userRequest);
-    final boolean deleted = storageCow.delete(resource.getAttributes().getBucketName());
+    final boolean deleted = storageCow.delete(resource.getBucketName());
     return StepResult.getStepResultSuccess();
   }
 

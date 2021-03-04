@@ -28,8 +28,8 @@ public class CreateReferenceVerifyAccessDataRepoSnapshotStep implements Step {
     ReferenceDataRepoSnapshotResource referenceResource =
         inputMap.get(JobMapKeys.REQUEST.getKeyName(), ReferenceDataRepoSnapshotResource.class);
 
-    String instanceName = referenceResource.getAttributes().getInstanceName();
-    String snapshot = referenceResource.getAttributes().getSnapshot();
+    String instanceName = referenceResource.getInstanceName();
+    String snapshot = referenceResource.getSnapshot();
 
     if (!dataRepoService.snapshotExists(instanceName, snapshot, userReq)) {
       throw new InvalidReferenceException(

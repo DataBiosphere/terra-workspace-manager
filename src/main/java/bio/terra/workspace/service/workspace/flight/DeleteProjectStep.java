@@ -6,6 +6,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import java.io.IOException;
 import java.util.Optional;
@@ -22,12 +23,12 @@ import org.slf4j.LoggerFactory;
  * <p>Undo always fails for this step.
  */
 public class DeleteProjectStep implements Step {
-  private final CloudResourceManagerCow resourceManager;
+  private final CrlService crl;
   private final WorkspaceDao workspaceDao;
   private final Logger logger = LoggerFactory.getLogger(DeleteProjectStep.class);
 
-  public DeleteProjectStep(CloudResourceManagerCow resourceManager, WorkspaceDao workspaceDao) {
-    this.resourceManager = resourceManager;
+  public DeleteProjectStep(CrlService crl, WorkspaceDao workspaceDao) {
+    this.crl = crl;
     this.workspaceDao = workspaceDao;
   }
 
@@ -35,6 +36,7 @@ public class DeleteProjectStep implements Step {
   public StepResult doStep(FlightContext flightContext) {
     Optional<GcpCloudContext> cloudContext = getContext(flightContext);
     if (cloudContext.isPresent()) {
+      CloudResourceManagerCow resourceManager = crl.getCloudResourceManagerCow();
       try {
         String projectId = cloudContext.get().getGcpProjectId();
         GoogleUtils.deleteProject(projectId, resourceManager);

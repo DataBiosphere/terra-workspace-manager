@@ -60,7 +60,7 @@ public abstract class ControlledResource extends WsmResource {
   public void validate() {
     super.validate();
     if (getResourceType() == null
-        || getJsonAttributes() == null
+        || attributesToJson() == null
         || getControlledAccessType() == null) {
       throw new MissingRequiredFieldException("Missing required field for ControlledResource.");
     }
