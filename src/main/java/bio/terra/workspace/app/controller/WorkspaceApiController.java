@@ -15,6 +15,7 @@ import bio.terra.workspace.service.datareference.utils.DataReferenceValidationUt
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.exception.InvalidRoleException;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -312,6 +313,10 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("role") IamRole role,
       @RequestBody GrantRoleRequestBody body) {
     ControllerValidationUtils.validateEmail(body.getMemberEmail());
+    if (role == IamRole.APPLICATION) {
+      throw new InvalidRoleException(
+          "Users cannot grant role APPLICATION. Use application registration instead.");
+    }
     samService.grantWorkspaceRole(
         id,
         getAuthenticatedInfo(),
@@ -326,6 +331,10 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("role") IamRole role,
       @PathVariable("memberEmail") String memberEmail) {
     ControllerValidationUtils.validateEmail(memberEmail);
+    if (role == IamRole.APPLICATION) {
+      throw new InvalidRoleException(
+          "Users cannot remove role APPLICATION. Use application registration instead.");
+    }
     samService.removeWorkspaceRole(
         id,
         getAuthenticatedInfo(),

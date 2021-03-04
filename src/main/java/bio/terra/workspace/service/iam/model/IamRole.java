@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.iam.model;
 
+import bio.terra.workspace.service.iam.exception.InvalidRoleException;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -24,7 +25,7 @@ public enum IamRole {
         Arrays.stream(IamRole.values()).filter(x -> x.apiRole.equals(apiModel)).findFirst();
     return result.orElseThrow(
         () ->
-            new RuntimeException(
+            new InvalidRoleException(
                 "No IamRole enum found corresponding to model role " + apiModel.toString()));
   }
 
@@ -32,7 +33,8 @@ public enum IamRole {
     Optional<IamRole> result =
         Arrays.stream(IamRole.values()).filter(x -> x.samRole.equals(samRole)).findFirst();
     return result.orElseThrow(
-        () -> new RuntimeException("No IamRole enum found corresponding to Sam role " + samRole));
+        () ->
+            new InvalidRoleException("No IamRole enum found corresponding to Sam role " + samRole));
   }
 
   public bio.terra.workspace.generated.model.IamRole toApiModel() {
