@@ -1,5 +1,11 @@
 package bio.terra.workspace.service.resource.reference;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
@@ -19,6 +25,8 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -27,15 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 
 class ReferenceResourceServiceTest extends BaseUnitTest {
   private static final Logger logger = LoggerFactory.getLogger(ReferenceResourceServiceTest.class);
@@ -80,6 +79,85 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
       }
     }
     workspaceDao.deleteWorkspace(workspaceId);
+  }
+
+  @Test
+  void testUpdate() {
+    referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
+    referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
+
+    // Change the name
+    String updatedName = "renamed" + referenceResource.getName();
+    String originalDescription = referenceResource.getDescription();
+
+    referenceResourceService.updateReferenceResource(
+        workspaceId, referenceResource.getResourceId(), updatedName, null, USER_REQUEST);
+    referenceResource =
+        referenceResourceService.getReferenceResourceByName(workspaceId, updatedName, USER_REQUEST);
+    assertThat(referenceResource.getName(), equalTo(updatedName));
+    assertThat(referenceResource.getDescription(), equalTo(originalDescription));
+
+    // Change the description
+    String updatedDescription = "updated" + referenceResource.getDescription();
+
+    referenceResourceService.updateReferenceResource(
+        workspaceId, referenceResource.getResourceId(), null, updatedDescription, USER_REQUEST);
+    referenceResource =
+        referenceResourceService.getReferenceResource(
+            workspaceId, referenceResource.getResourceId(), USER_REQUEST);
+    assertThat(referenceResource.getName(), equalTo(updatedName));
+    assertThat(referenceResource.getDescription(), equalTo(updatedDescription));
+
+    // Change both
+    String updatedName2 = "2" + updatedName;
+    String updatedDescription2 = "2" + updatedDescription;
+    referenceResourceService.updateReferenceResource(
+        workspaceId,
+        referenceResource.getResourceId(),
+        updatedName2,
+        updatedDescription2,
+        USER_REQUEST);
+    referenceResource =
+        referenceResourceService.getReferenceResource(
+            workspaceId, referenceResource.getResourceId(), USER_REQUEST);
+    assertThat(referenceResource.getName(), equalTo(updatedName2));
+    assertThat(referenceResource.getDescription(), equalTo(updatedDescription2));
+
+    // Change nothing and see the error
+    assertThrows(
+        InvalidDaoRequestException.class,
+        () ->
+            referenceResourceService.updateReferenceResource(
+                workspaceId, referenceResource.getResourceId(), null, null, USER_REQUEST));
+  }
+
+  /**
+   * Test utility which creates a workspace with a random ID, no spend profile, and stage
+   * RAWLS_WORKSPACE. Returns the generated workspace ID.
+   */
+  private UUID createRawlsTestWorkspace() {
+    WorkspaceRequest request =
+        WorkspaceRequest.builder()
+            .workspaceId(UUID.randomUUID())
+            .jobId(UUID.randomUUID().toString())
+            .spendProfileId(Optional.empty())
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
+    return workspaceService.createWorkspace(request, USER_REQUEST);
+  }
+
+  private ReferenceDataRepoSnapshotResource makeDataRepoSnapshotResource() {
+    UUID resourceId = UUID.randomUUID();
+    String resourceName = "testdatarepo-" + resourceId.toString();
+
+    return new ReferenceDataRepoSnapshotResource(
+        workspaceId,
+        resourceId,
+        resourceName,
+        "description of " + resourceName,
+        CloningInstructions.COPY_NOTHING,
+        DATA_REPO_INSTANCE_NAME,
+        "polaroid");
   }
 
   @Nested
@@ -144,6 +222,10 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
           () -> referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST));
     }
   }
+
+  // case - get not found by id and name
+  // case - delete not found
+  // case - update cases
 
   @Nested
   class DataRepoReference {
@@ -237,6 +319,12 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
 
   @Nested
   class GcpBucketReference {
+    @BeforeEach
+    void setup() throws Exception {
+      // Make the Verify step always succeed
+      doReturn(true).when(mockCrlService).gcsBucketExists(any(), any());
+    }
+
     private ReferenceGcsBucketResource makeGcsBucketResource() {
       UUID resourceId = UUID.randomUUID();
       String resourceName = "testgcs-" + resourceId.toString();
@@ -279,19 +367,16 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
     void testMissingBucketName() {
       UUID resourceId = UUID.randomUUID();
       String resourceName = "testgcs-" + resourceId.toString();
-
-      referenceResource =
-          new ReferenceGcsBucketResource(
-              workspaceId,
-              resourceId,
-              resourceName,
-              "description of " + resourceName,
-              CloningInstructions.COPY_DEFINITION,
-              null);
-
       assertThrows(
           MissingRequiredFieldException.class,
-          () -> referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST));
+          () ->
+              new ReferenceGcsBucketResource(
+                  workspaceId,
+                  resourceId,
+                  resourceName,
+                  "description of " + resourceName,
+                  CloningInstructions.COPY_DEFINITION,
+                  null));
     }
 
     @Test
@@ -299,24 +384,22 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
       UUID resourceId = UUID.randomUUID();
       String resourceName = "testgcs-" + resourceId.toString();
 
-      referenceResource =
-          new ReferenceGcsBucketResource(
-              workspaceId,
-              resourceId,
-              resourceName,
-              "description of " + resourceName,
-              CloningInstructions.COPY_DEFINITION,
-              "Buckets don't accept * in the names, either");
-
       assertThrows(
           InvalidReferenceException.class,
-          () -> referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST));
+          () ->
+              new ReferenceGcsBucketResource(
+                  workspaceId,
+                  resourceId,
+                  resourceName,
+                  "description of " + resourceName,
+                  CloningInstructions.COPY_DEFINITION,
+                  "Buckets don't accept * in the names, either"));
     }
   }
 
   @Nested
   class BigQueryReference {
-    private static final String DATASET_NAME = "testbq-datasetname";
+    private static final String DATASET_NAME = "testbq_datasetname";
 
     @BeforeEach
     void setup() throws Exception {
@@ -326,7 +409,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
 
     private ReferenceBigQueryDatasetResource makeBigQueryResource() {
       UUID resourceId = UUID.randomUUID();
-      String resourceName = "testbq_" + resourceId.toString();
+      String resourceName = "testbq-" + resourceId.toString();
 
       return new ReferenceBigQueryDatasetResource(
           workspaceId,
@@ -423,10 +506,6 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
     }
   }
 
-  // case - get not found by id and name
-  // case - delete not found
-  // case - update cases
-
   @Nested
   class NegativeTests {
 
@@ -482,84 +561,5 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
               referenceResourceService.createReferenceResource(
                   duplicateNameResource, USER_REQUEST));
     }
-  }
-
-  @Test
-  void testUpdate() {
-    referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
-    referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
-
-    // Change the name
-    String updatedName = "renamed" + referenceResource.getName();
-    String originalDescription = referenceResource.getDescription();
-
-    referenceResourceService.updateReferenceResource(
-        workspaceId, referenceResource.getResourceId(), updatedName, null, USER_REQUEST);
-    referenceResource =
-        referenceResourceService.getReferenceResourceByName(workspaceId, updatedName, USER_REQUEST);
-    assertThat(referenceResource.getName(), equalTo(updatedName));
-    assertThat(referenceResource.getDescription(), equalTo(originalDescription));
-
-    // Change the description
-    String updatedDescription = "updated" + referenceResource.getDescription();
-
-    referenceResourceService.updateReferenceResource(
-        workspaceId, referenceResource.getResourceId(), null, updatedDescription, USER_REQUEST);
-    referenceResource =
-        referenceResourceService.getReferenceResource(
-            workspaceId, referenceResource.getResourceId(), USER_REQUEST);
-    assertThat(referenceResource.getName(), equalTo(updatedName));
-    assertThat(referenceResource.getDescription(), equalTo(updatedDescription));
-
-    // Change both
-    String updatedName2 = "2" + updatedName;
-    String updatedDescription2 = "2" + updatedDescription;
-    referenceResourceService.updateReferenceResource(
-        workspaceId,
-        referenceResource.getResourceId(),
-        updatedName2,
-        updatedDescription2,
-        USER_REQUEST);
-    referenceResource =
-        referenceResourceService.getReferenceResource(
-            workspaceId, referenceResource.getResourceId(), USER_REQUEST);
-    assertThat(referenceResource.getName(), equalTo(updatedName2));
-    assertThat(referenceResource.getDescription(), equalTo(updatedDescription2));
-
-    // Change nothing and see the error
-    assertThrows(
-        InvalidDaoRequestException.class,
-        () ->
-            referenceResourceService.updateReferenceResource(
-                workspaceId, referenceResource.getResourceId(), null, null, USER_REQUEST));
-  }
-
-  /**
-   * Test utility which creates a workspace with a random ID, no spend profile, and stage
-   * RAWLS_WORKSPACE. Returns the generated workspace ID.
-   */
-  private UUID createRawlsTestWorkspace() {
-    WorkspaceRequest request =
-        WorkspaceRequest.builder()
-            .workspaceId(UUID.randomUUID())
-            .jobId(UUID.randomUUID().toString())
-            .spendProfileId(Optional.empty())
-            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
-            .build();
-    return workspaceService.createWorkspace(request, USER_REQUEST);
-  }
-
-  private ReferenceDataRepoSnapshotResource makeDataRepoSnapshotResource() {
-    UUID resourceId = UUID.randomUUID();
-    String resourceName = "testdatarepo-" + resourceId.toString();
-
-    return new ReferenceDataRepoSnapshotResource(
-        workspaceId,
-        resourceId,
-        resourceName,
-        "description of " + resourceName,
-        CloningInstructions.COPY_NOTHING,
-        DATA_REPO_INSTANCE_NAME,
-        "polaroid");
   }
 }

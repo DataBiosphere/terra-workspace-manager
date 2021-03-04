@@ -1,15 +1,12 @@
 package bio.terra.workspace.db;
 
-import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
-import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCE;
-import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
-
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledAccessType;
+import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceNameException;
@@ -21,10 +18,6 @@ import bio.terra.workspace.service.resource.reference.ReferenceDataRepoSnapshotR
 import bio.terra.workspace.service.resource.reference.ReferenceGcsBucketResource;
 import bio.terra.workspace.service.resource.reference.ReferenceResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +30,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
+import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCE;
+import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
 
 @Component
 public class ResourceDao {
@@ -343,7 +345,7 @@ public class ResourceDao {
       case CONTROLLED:
         switch (dbResource.getResourceType()) {
           case GCS_BUCKET:
-            break;
+            return new ControlledGcsBucketResource(dbResource);
 
           default:
             throw new InvalidMetadataException(
