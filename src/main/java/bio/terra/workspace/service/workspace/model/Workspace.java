@@ -4,13 +4,12 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 /**
  * Internal representation of a Workspace.
@@ -51,12 +50,12 @@ public class Workspace {
     return workspaceId;
   }
 
-  /** Optional display name for the workspace. Omitted for RAWLS workspaces. */
+  /** Optional display name for the workspace. */
   public Optional<String> getDisplayName() {
     return Optional.ofNullable(displayName);
   }
 
-  /** Optional description of the workspace. Omitted for RAWLS workspaces. */
+  /** Optional description of the workspace. */
   public Optional<String> getDescription() {
     return Optional.ofNullable(description);
   }

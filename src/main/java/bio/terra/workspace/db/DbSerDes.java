@@ -40,11 +40,11 @@ public class DbSerDes {
   }
 
   // Specific mappers for key-value properties
-  public static String toJsonFromProperties(Map<String, String> kvmap) {
+  public static String propertiesToJson(Map<String, String> kvmap) {
     return toJson(kvmap);
   }
 
-  public static Map<String, String> toPropertiesFromJson(String json) {
+  public static Map<String, String> jsonToProperties(String json) {
     try {
       return serdesMapper.readValue(json, new TypeReference<Map<String, String>>() {});
     } catch (JsonProcessingException ex) {

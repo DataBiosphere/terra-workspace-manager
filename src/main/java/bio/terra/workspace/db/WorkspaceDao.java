@@ -12,6 +12,8 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
+import java.util.Optional;
+import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,9 +27,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
-import java.util.UUID;
 
 /**
  * WorkspaceDao includes operations on the workspace and cloud_context tables. Each cloud context
@@ -70,7 +69,7 @@ public class WorkspaceDao {
             .addValue("description", workspace.getDescription().orElse(null))
             .addValue(
                 "spend_profile", workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))
-            .addValue("properties", DbSerDes.toJsonFromProperties(workspace.getProperties()))
+            .addValue("properties", DbSerDes.propertiesToJson(workspace.getProperties()))
             .addValue("workspace_stage", workspace.getWorkspaceStage().toString());
     try {
       jdbcTemplate.update(sql, params);
@@ -147,7 +146,7 @@ public class WorkspaceDao {
                                   .orElse(null))
                           .properties(
                               Optional.ofNullable(rs.getString("properties"))
-                                  .map(DbSerDes::toPropertiesFromJson)
+                                  .map(DbSerDes::jsonToProperties)
                                   .orElse(null))
                           .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
                           .gcpCloudContext(

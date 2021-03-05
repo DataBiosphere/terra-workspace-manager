@@ -97,6 +97,6 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
       throw new MissingRequiredFieldException(
           "Missing required field for ReferenceDataRepoSnapshotAttributes.");
     }
-    ValidationUtils.validateReferenceName(getSnapshot());
+    ValidationUtils.validateReferenceName(getName());
   }
 }

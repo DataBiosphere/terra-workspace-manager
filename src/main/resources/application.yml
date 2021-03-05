@@ -57,8 +57,8 @@ workspace:
   sam.base-path: ${env.urls.sam}
 
   stairway-database:
-    force-clean: true
-    migrate-upgrade: ${env.db.init}
+    force-clean: ${env.db.init}
+    migrate-upgrade: true
     password: ${env.db.stairway.pass}
     uri: ${env.db.host}/${env.db.stairway.name}
     username: ${env.db.stairway.user}

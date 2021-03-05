@@ -128,11 +128,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info("Getting workspace {} for {}", id, userReq.getEmail());
     Workspace workspace = workspaceService.getWorkspace(id, userReq);
-    GcpContext gcpContext =
-        workspace
-            .getGcpCloudContext()
-            .map(g -> new GcpContext().projectId(g.getGcpProjectId()))
-            .orElse(null);
+    GcpContext gcpContext = workspace.getGcpCloudContext().map(GcpCloudContext::toApi).orElse(null);
 
     // Note projectId will be null here if no GCP cloud context exists.
     // When we have another cloud context, we will need to do a similar retrieval for it.
@@ -359,8 +355,8 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<CreateCloudContextResult> createCloudContext(
       UUID id, @Valid CreateCloudContextRequest body) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ControllerValidationUtils.validateCloudType(body.getCloudType());
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     String jobId = body.getJobControl().getId();
     String resultPath = getAsyncResultEndpoint(jobId);
 

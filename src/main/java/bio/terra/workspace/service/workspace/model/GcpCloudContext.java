@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace.model;
 
+import bio.terra.workspace.generated.model.GcpContext;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -13,5 +14,9 @@ public class GcpCloudContext {
 
   public String getGcpProjectId() {
     return gcpProjectId;
+  }
+
+  public GcpContext toApi() {
+    return new GcpContext().projectId(getGcpProjectId());
   }
 }

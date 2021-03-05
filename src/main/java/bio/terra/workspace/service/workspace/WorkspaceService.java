@@ -134,7 +134,7 @@ public class WorkspaceService {
    * Process the request to create a GCP cloud context
    *
    * @param workspaceId workspace in which to create the context
-   * @param jobId called-supplied job it of the async job
+   * @param jobId called-supplied job id of the async job
    * @param resultPath endpoint where the result of the completed job can be retrieved
    * @param userReq user authentication info
    */

@@ -11,12 +11,22 @@ ENV=$1
 # Optional input
 TERRA_HELM_BRANCH=${2:-master}
 TERRA_HELMFILE_BRANCH=${3:-master}
+GIT_STRATEGY=${4:-http}
+
+if [ "$GIT_STRATEGY" = "http" ]; then
+    helmgit=https://github.com/broadinstitute/terra-helm
+    helmfilegit=https://github.com/broadinstitute/terra-helmfile
+else
+    # use ssh
+    helmgit=git@github.com:broadinstitute/terra-helm.git
+    helmfilegit=git@github.com:broadinstitute/terra-helmfile.git
+fi
 
 # Clone Helm chart and helmfile repos
 rm -rf terra-helm
 rm -rf terra-helmfile
-git clone -b "$TERRA_HELM_BRANCH" --single-branch https://github.com/broadinstitute/terra-helm
-git clone -b "$TERRA_HELMFILE_BRANCH" --single-branch https://github.com/broadinstitute/terra-helmfile
+git clone -b "$TERRA_HELM_BRANCH" --single-branch ${helmgit}
+git clone -b "$TERRA_HELMFILE_BRANCH" --single-branch ${helmfilegit}
 
 # Template in environment
 sed "s|ENV|${ENV}|g" skaffold.yaml.template > skaffold.yaml
