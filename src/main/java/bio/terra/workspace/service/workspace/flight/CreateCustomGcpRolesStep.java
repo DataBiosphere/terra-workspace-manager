@@ -15,6 +15,7 @@ import com.google.api.services.iam.v1.model.Role;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 
 public class CreateCustomGcpRolesStep implements Step {
 
@@ -41,14 +42,14 @@ public class CreateCustomGcpRolesStep implements Step {
             customRole.getIncludedPermissions(),
             projectId);
         iamCow.projects().roles().create("projects/" + projectId, request).execute();
-      } catch (GoogleJsonResponseException googleError) {
+      } catch (GoogleJsonResponseException googleEx) {
         // Because this step may run multiple times, we need to handle duplicate role creation.
         // The project was retrieved from RBS earlier in this flight, so we assume that any conflict
         // of role names must be due to duplicate step execution.
-        if (googleError.getStatusCode() == 409) {
+        if (googleEx.getStatusCode() == HttpStatus.CONFLICT.value()) {
           continue;
         } else {
-          throw new RetryException(googleError);
+          throw new RetryException(googleEx);
         }
       } catch (IOException e) {
         // Retry on IO exceptions thrown by CRL.
