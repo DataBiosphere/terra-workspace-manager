@@ -12,8 +12,6 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
-import java.util.Optional;
-import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +25,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * WorkspaceDao includes operations on the workspace and cloud_context tables. Each cloud context
@@ -57,7 +58,8 @@ public class WorkspaceDao {
   public UUID createWorkspace(Workspace workspace) {
     final String sql =
         "INSERT INTO workspace (workspace_id, display_name, description, spend_profile, properties, workspace_stage) "
-            + "values (:workspace_id, :display_name, :description, :spend_profile, :properties, :workspace_stage)";
+            + "values (:workspace_id, :display_name, :description, :spend_profile,"
+            + " cast(:properties AS json), :workspace_stage)";
 
     final String workspaceId = workspace.getWorkspaceId().toString();
 
@@ -68,9 +70,7 @@ public class WorkspaceDao {
             .addValue("description", workspace.getDescription().orElse(null))
             .addValue(
                 "spend_profile", workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))
-            .addValue(
-                "properties",
-                workspace.getProperties().map(DbSerDes::toJsonFromProperties).orElse(null))
+            .addValue("properties", DbSerDes.toJsonFromProperties(workspace.getProperties()))
             .addValue("workspace_stage", workspace.getWorkspaceStage().toString());
     try {
       jdbcTemplate.update(sql, params);
@@ -112,7 +112,7 @@ public class WorkspaceDao {
   /**
    * Retrieves a workspace from database by ID.
    *
-   * @param id unique idea of the workspace
+   * @param id unique identifier of the workspace
    * @return workspace value object
    */
   @Transactional(
@@ -223,6 +223,7 @@ public class WorkspaceDao {
    *
    * @param workspaceId workspace of the cloud context
    */
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public void deleteGcpCloudContext(UUID workspaceId) {
     deleteGcpCloudContextWorker(workspaceId);
   }
@@ -244,8 +245,6 @@ public class WorkspaceDao {
     }
   }
 
-  // -- serdes for GcpCloudContext --
-
   private void deleteGcpCloudContextWorker(UUID workspaceId) {
     final String sql =
         "DELETE FROM cloud_context "
@@ -265,6 +264,8 @@ public class WorkspaceDao {
       logger.info("No record to delete for GCP cloud context for workspace {}", workspaceId);
     }
   }
+
+  // -- serdes for GcpCloudContext --
 
   @VisibleForTesting
   String serializeGcpCloudContext(GcpCloudContext gcpCloudContext) {
