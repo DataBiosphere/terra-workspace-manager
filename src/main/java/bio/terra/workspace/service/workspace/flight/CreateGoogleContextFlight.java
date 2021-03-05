@@ -43,6 +43,7 @@ public class CreateGoogleContextFlight extends Flight {
         new RetryRuleExponentialBackoff(
             INITIAL_INTERVAL_SECONDS, MAX_INTERVAL_SECONDS, MAX_OPERATION_TIME_SECONDS);
     addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()));
+    addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), retryRule);
     addStep(
         new StoreGoogleContextStep(
             appContext.getWorkspaceDao(), appContext.getTransactionTemplate()),
