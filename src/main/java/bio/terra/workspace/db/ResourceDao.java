@@ -1,5 +1,10 @@
 package bio.terra.workspace.db;
 
+import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
+import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCE;
+import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
+
+import bio.terra.workspace.db.exception.CloudContextRequiredException;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
@@ -9,7 +14,6 @@ import bio.terra.workspace.service.resource.controlled.ControlledAccessType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
-import bio.terra.workspace.service.resource.exception.DuplicateResourceNameException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -18,6 +22,10 @@ import bio.terra.workspace.service.resource.reference.ReferenceDataRepoSnapshotR
 import bio.terra.workspace.service.resource.reference.ReferenceGcsBucketResource;
 import bio.terra.workspace.service.resource.reference.ReferenceResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,15 +38,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
-import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCE;
-import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
 
 @Component
 public class ResourceDao {
@@ -162,7 +161,8 @@ public class ResourceDao {
   // -- Reference Methods -- //
 
   /**
-   * Create a reference in the database
+   * Create a reference in the database We do creates in flights where the same create is issues
+   * more than once.
    *
    * @param resource a filled in reference resource
    * @throws DuplicateResourceException on a duplicate resource_id or (workspace_id, name)
@@ -218,6 +218,22 @@ public class ResourceDao {
   public void createControlledResource(ControlledResource controlledResource)
       throws DuplicateResourceException {
 
+    // Make sure there is a valid cloud context before we create the controlled resource
+    final String sql =
+        "SELECT COUNT(*) FROM cloud_context"
+            + " WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
+
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", controlledResource.getWorkspaceId().toString())
+            .addValue(
+                "cloud_platform", controlledResource.getResourceType().getCloudPlatform().toSql());
+    Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
+    if (count == null || count == 0) {
+      throw new CloudContextRequiredException(
+          "No cloud context found in which to create a controlled resource");
+    }
+
     storeResource(
         controlledResource.getWorkspaceId(),
         controlledResource.getResourceId(),
@@ -235,15 +251,6 @@ public class ResourceDao {
         controlledResource.getAssignedUser());
   }
 
-  // Interesting catch-22 I just came across. The schema has a unique constraint on
-  // resource(workspace_id, name) to make sure a name is unique within a workspace. So Postgres will
-  // throw a DuplicateKeyException which we re-throw as a DuplicateResourceException. However, the
-  // flight that stores resources ignore that exception, because the step might be re-run so it
-  // shouldn’t fail if the resource is already there. And we want it to do that if the failure is
-  // due to the resourceId being a duplicate!
-  // For the time being, I will code the name uniqueness check ahead of the insert and throw a
-  // different exception. If we implement “locks” during resource creation, then we can use that
-  // indicator in the flight itself to eliminate the duplicate store.
   private void storeResource(
       UUID workspaceId,
       UUID resourceId,
@@ -257,12 +264,22 @@ public class ResourceDao {
       Optional<UUID> associatedApp,
       Optional<String> assignedUser) {
 
-    // Check for duplicate name
-    try {
-      getResourceWithName(workspaceId, name);
-      throw new DuplicateResourceNameException("Workspace already has a resource named " + name);
-    } catch (ResourceNotFoundException ex) {
-      // Not found is a good thing!
+    // TODO: add resource locking to fix this
+    //  We create resources in flights, so we have steps that call resource creation that may
+    //  get run more than once. The safe solution is to "lock" the resource by writing the flight id
+    //  into the row at creation. Then it is possible on a re-insert to know whether the error is
+    //  because this flight step is re-running or because some other flight used the same resource
+    // id.
+    //  The small risk we have here is that a duplicate resource id of will appear to be
+    // successfully
+    //  created, but in fact will be silently rejected.
+
+    final String countSql = "SELECT COUNT(*) FROM resource WHERE resource_id = :resource_id";
+    MapSqlParameterSource countParams =
+        new MapSqlParameterSource().addValue("resource_id", resourceId.toString());
+    Integer count = jdbcTemplate.queryForObject(countSql, countParams, Integer.class);
+    if (count != null && count == 1) {
+      return;
     }
 
     final String sql =
@@ -292,7 +309,9 @@ public class ResourceDao {
       logger.info("Inserted record for resource {} for workspace {}", resourceId, workspaceId);
     } catch (DuplicateKeyException e) {
       throw new DuplicateResourceException(
-          "A resource named " + name + " already exists in the workspace");
+          String.format(
+              "A resource already exists in the workspace that has the same name (%s) or the same id (%s)",
+              name, resourceId.toString()));
     }
   }
 

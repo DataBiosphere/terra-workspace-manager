@@ -143,7 +143,10 @@ databaseChangeLog:
               name: workspace_id
               type: text
               constraints:
+                references: workspace(workspace_id)
+                foreignKeyName: fk_resource_workspace_id
                 nullable: false
+                deleteCascade: true
               remarks: |
                 First part of the foreign key to cloud_context. Foreign key will cause
                 resource to be deleted when its associated cloud_context is deleted.
@@ -230,19 +233,6 @@ databaseChangeLog:
                 It MAY be filled in, if a user is currently assigned, for USER_PRIVATE
                 and APP_PRIVATE access.
 
-    - addForeignKeyConstraint:
-        constraintName: fk_resource_cloud_context
-        baseColumnNames: workspace_id, cloud_platform
-        baseTableName: resource
-        referencedColumnNames: workspace_id, cloud_platform
-        referencedTableName: cloud_context
-        onDelete: CASCADE
-        onUpdate: RESTRICT
-        deferrable: true
-        remarks: |
-          Foreign key to cloud_context. This will cascade such that when the cloud_context
-          is deleted, these associated resource rows will be deleted.
-        
     - addUniqueConstraint:
         constraintName: unique_resource_name
         tableName: resource

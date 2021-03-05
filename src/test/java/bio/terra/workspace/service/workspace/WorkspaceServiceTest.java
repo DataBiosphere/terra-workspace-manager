@@ -13,6 +13,7 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
@@ -51,6 +52,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private CrlService crl;
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private ReferenceResourceService referenceResourceService;
+  @Autowired private ResourceDao resourceDao;
 
   @MockBean private DataRepoService dataRepoService;
 
@@ -276,8 +278,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     // Verify that the resource is also deleted
     assertThrows(
-        ResourceNotFoundException.class,
-        () -> referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST));
+        ResourceNotFoundException.class, () -> resourceDao.getResource(workspaceId, resourceId));
   }
 
   @Test

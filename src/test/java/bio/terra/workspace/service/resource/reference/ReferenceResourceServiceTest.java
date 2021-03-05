@@ -16,13 +16,12 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.WsmResourceType;
-import bio.terra.workspace.service.resource.exception.DuplicateResourceNameException;
+import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Optional;
@@ -64,7 +63,6 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
   void setup() {
     doReturn(true).when(mockDataRepoService).snapshotExists(any(), any(), any());
     workspaceId = createRawlsTestWorkspace();
-    workspaceDao.createGcpCloudContext(workspaceId, new GcpCloudContext(FAKE_PROJECT_ID));
     referenceResource = null;
   }
 
@@ -556,7 +554,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
               "polaroid");
 
       assertThrows(
-          DuplicateResourceNameException.class,
+          DuplicateResourceException.class,
           () ->
               referenceResourceService.createReferenceResource(
                   duplicateNameResource, USER_REQUEST));
