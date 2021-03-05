@@ -9,7 +9,8 @@ import java.util.List;
  *
  * <p>Each custom role is the application of a workspace IAM role to a specific resource type. A
  * CustomRole object holds a name made by combining the IAM role and resource type, and also holds a
- * set of GCP cloud permissions that are granted.
+ * set of GCP cloud permissions that are granted. See the full list of these permissions at
+ * https://cloud.google.com/iam/docs/permissions-reference
  *
  * <p>The role name is the combination of resource type + IamRole name with an underscore separator,
  * e.g. GCS_BUCKET_READER.
@@ -35,7 +36,7 @@ public class CustomGcpIamRole {
   }
 
   public String getRoleName() {
-    return CustomGcpIamRole.customGcpRoleName(resourceType, iamRole);
+    return customGcpRoleName(resourceType, iamRole);
   }
 
   public List<String> getIncludedPermissions() {

@@ -2,6 +2,7 @@ package bio.terra.workspace.service.iam;
 
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.resource.controlled.WsmResourceType;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -14,22 +15,32 @@ import com.google.common.collect.ImmutableSet;
  * <p>We expect this mapping to change over time. There is currently no migration infrastructure for
  * these roles in existing projects. Editing these lists will affect newly created workspace
  * contexts, but WSM will not retroactively apply changes to existing projects.
+ *
+ * <p>Although WSM also supports the EDITOR and APPLICATION workspace IAM roles, these roles only
+ * grant additional permissions through Sam. On GCP, those roles have the same permissions as
+ * WRITERs.
  */
 public class CustomGcpIamRoleMapping {
-  private static final ImmutableList<String> GCS_BUCKET_READER_PERMISSIONS =
+  @VisibleForTesting
+  public static final ImmutableList<String> GCS_BUCKET_READER_PERMISSIONS =
       ImmutableList.of("storage.objects.list", "storage.objects.get");
-  private static final ImmutableList<String> GCS_BUCKET_WRITER_PERMISSIONS =
+
+  @VisibleForTesting
+  public static final ImmutableList<String> GCS_BUCKET_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
           .addAll(GCS_BUCKET_READER_PERMISSIONS)
           .add("storage.objects.create", "storage.objects.delete")
           .build();
-  private static final ImmutableList<String> GCS_BUCKET_OWNER_PERMISSIONS =
+
+  @VisibleForTesting
+  public static final ImmutableList<String> GCS_BUCKET_OWNER_PERMISSIONS =
       new ImmutableList.Builder<String>()
           .addAll(GCS_BUCKET_WRITER_PERMISSIONS)
           .add("storage.buckets.get")
           .build();
 
-  private static final ImmutableList<String> BIGQUERY_DATASET_READER_PERMISSIONS =
+  @VisibleForTesting
+  public static final ImmutableList<String> BIGQUERY_DATASET_READER_PERMISSIONS =
       ImmutableList.of(
           "bigquery.datasets.get",
           "bigquery.jobs.create",
@@ -42,7 +53,9 @@ public class CustomGcpIamRoleMapping {
           "bigquery.tables.export",
           "bigquery.tables.getData",
           "bigquery.tables.list");
-  private static final ImmutableList<String> BIGQUERY_DATASET_WRITER_PERMISSIONS =
+
+  @VisibleForTesting
+  public static final ImmutableList<String> BIGQUERY_DATASET_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
           .addAll(BIGQUERY_DATASET_READER_PERMISSIONS)
           .add(
@@ -55,7 +68,9 @@ public class CustomGcpIamRoleMapping {
               "bigquery.routines.update",
               "bigquery.tables.updateData")
           .build();
-  private static final ImmutableList<String> BIGQUERY_DATASET_OWNER_PERMISSIONS =
+
+  @VisibleForTesting
+  public static final ImmutableList<String> BIGQUERY_DATASET_OWNER_PERMISSIONS =
       new ImmutableList.Builder<String>()
           .addAll(BIGQUERY_DATASET_WRITER_PERMISSIONS)
           .add(
