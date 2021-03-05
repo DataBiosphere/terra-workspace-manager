@@ -1,6 +1,7 @@
 package bio.terra.workspace.db;
 
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
+import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextException;
@@ -119,6 +120,9 @@ public class WorkspaceDao {
       isolation = Isolation.SERIALIZABLE,
       readOnly = true)
   public Workspace getWorkspace(UUID id) {
+    if (id == null) {
+      throw new MissingRequiredFieldException("Valid workspace id is required");
+    }
     String sql =
         "SELECT W.workspace_id, W.display_name, W.description, W.spend_profile,"
             + " W.properties, W.workspace_stage, C.context"

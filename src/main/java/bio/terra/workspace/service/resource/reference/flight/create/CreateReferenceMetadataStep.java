@@ -9,7 +9,6 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.WsmResourceType;
-import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.reference.ReferenceResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import org.springframework.http.HttpStatus;
@@ -26,15 +25,8 @@ public class CreateReferenceMetadataStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext) throws RetryException {
     ReferenceResource referenceResource = getReferenceResource(flightContext);
-    try {
-      resourceDao.createReferenceResource(referenceResource);
-    } catch (DuplicateResourceException e) {
-      // Stairway can call the same step multiple times as part of a flight, so finding a duplicate
-      // reference here is fine.
-    }
-
+    resourceDao.createReferenceResource(referenceResource);
     FlightUtils.setResponse(flightContext, referenceResource.getResourceId(), HttpStatus.OK);
-
     return StepResult.getStepResultSuccess();
   }
 
