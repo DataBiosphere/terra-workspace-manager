@@ -645,7 +645,23 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
-
+  /api/workspaces/v1/{workspaceId}/resources/controlled/google/buckets/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: get a controlled GCS bucket resource
+      operationId: getBucket
+      tags: [ControlledGoogleResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledGoogleBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        404:
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{workspaceId}/resources/controlled/google/buckets/result/{jobId}:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -704,7 +720,16 @@ components:
     ReferenceId:
       name: referenceId
       in: path
-      description: A UUID used to identify a data reference in a workspace
+      description: A UUID used to identify a data reference in a workspace.
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    ResourceId:
+      name: resourceId
+      in: path
+      description: A UUID used to identify a controlled resource in a workspace. Will be merged with ReferenceId soon.
       required: true
       schema:
         type: string
@@ -989,6 +1014,8 @@ components:
       required: [name, cloningInstructions]
       description: Common information shared across all types of data reference requests.
       properties:
+        ## TODO: This is not implemented as a name. It used as if it is a snapshot identifier (UUID)
+        ##   So either this is a misnomer, or we are doing it wrong.
         name:
           $ref: "#/components/schemas/Name"
         cloningInstructions:
@@ -1439,6 +1466,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreatedControlledGoogleBucket'
+
+    GetControlledGoogleBucketResponse:
+      description: Response to get bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GoogleBucketStoredAttributes'
 
     CreateCloudContextResultResponse:
       description: Job is complete (succeeded or failed)

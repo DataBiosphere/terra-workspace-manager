@@ -10,6 +10,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.resource.controlled.ControlledAccessType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import java.util.UUID;
@@ -77,6 +78,16 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
     final CreatedControlledGoogleBucket response = fetchGoogleBucketResult(jobId);
     return new ResponseEntity<>(
         response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));
+  }
+
+  @Override
+  public ResponseEntity<GoogleBucketStoredAttributes> getBucket(UUID id, UUID resourceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledResource controlledResource =
+        controlledResourceService.getControlledResource(id, resourceId, userRequest);
+    GoogleBucketStoredAttributes response =
+        controlledResource.castToGcsBucketResource().toApiModel();
+    return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   private CreatedControlledGoogleBucket fetchGoogleBucketResult(String jobId) {

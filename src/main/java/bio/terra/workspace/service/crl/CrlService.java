@@ -6,6 +6,7 @@ import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.bigquery.DatasetCow;
 import bio.terra.cloudres.google.billing.CloudBillingClientCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
+import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
@@ -42,6 +43,7 @@ public class CrlService {
   private final CrlConfiguration crlConfig;
   private final CloudResourceManagerCow crlResourceManagerCow;
   private final CloudBillingClientCow crlBillingClientCow;
+  private final IamCow crlIamCow;
   private final ServiceUsageCow crlServiceUsageCow;
 
   @Autowired
@@ -54,6 +56,7 @@ public class CrlService {
       try {
         this.crlResourceManagerCow = CloudResourceManagerCow.create(clientConfig, creds);
         this.crlBillingClientCow = new CloudBillingClientCow(clientConfig, creds);
+        this.crlIamCow = IamCow.create(clientConfig, creds);
         this.crlServiceUsageCow = ServiceUsageCow.create(clientConfig, creds);
 
       } catch (GeneralSecurityException | IOException e) {
@@ -63,6 +66,7 @@ public class CrlService {
       clientConfig = null;
       crlResourceManagerCow = null;
       crlBillingClientCow = null;
+      crlIamCow = null;
       crlServiceUsageCow = null;
     }
   }
@@ -77,6 +81,12 @@ public class CrlService {
   public CloudBillingClientCow getCloudBillingClientCow() {
     assertCrlInUse();
     return crlBillingClientCow;
+  }
+
+  /** Returns the CRL {@link IamCow} which wraps Google IAM API. */
+  public IamCow getIamCow() {
+    assertCrlInUse();
+    return crlIamCow;
   }
 
   /** Returns the CRL {@link ServiceUsageCow} which wraps Google Cloud ServiceUsage API. */

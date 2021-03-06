@@ -13,9 +13,7 @@ workspace:
       local: 97b5559a-2f8f-4df3-89ae-5a249173ee0c
       dev: 97b5559a-2f8f-4df3-89ae-5a249173ee0c
       alpha: d56f4db5-b6c6-4a7e-8be2-ff6aa21c4fa6
-      # Currently staging snapshot does not exist. This value should not be called.
-      # This value will be updated as soon as the snapshot is added
-      staging: 1234
+      staging: 3e858a77-ea11-4f55-96f4-e6e45b71b7bf
     user-emails:
       local: william.thunderlord@test.firecloud.org
       dev: william.thunderlord@test.firecloud.org

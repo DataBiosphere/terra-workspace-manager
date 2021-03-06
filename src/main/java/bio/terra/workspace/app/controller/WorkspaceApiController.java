@@ -166,7 +166,7 @@ public class WorkspaceApiController implements WorkspaceApi {
         body);
 
     ControllerValidationUtils.validate(body);
-    ValidationUtils.validateReferenceName(body.getName());
+    ValidationUtils.validateResourceName(body.getName());
 
     var resource =
         new ReferenceDataRepoSnapshotResource(
@@ -221,7 +221,7 @@ public class WorkspaceApiController implements WorkspaceApi {
       throw new InvalidReferenceException(
           "This endpoint does not support non-snapshot references. Use the newer type-specific endpoints instead.");
     }
-    ValidationUtils.validateReferenceName(name);
+    ValidationUtils.validateResourceName(name);
 
     ReferenceResource referenceResource =
         referenceResourceService.getReferenceResourceByName(workspaceId, name, userReq);
@@ -241,7 +241,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     }
 
     if (body.getName() != null) {
-      ValidationUtils.validateReferenceName(body.getName());
+      ValidationUtils.validateResourceName(body.getName());
     }
 
     referenceResourceService.updateReferenceResource(

@@ -7,18 +7,18 @@ import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
 import org.junit.jupiter.api.Test;
 
-public class DataReferenceValidationUtilsTest extends BaseUnitTest {
+public class ReferenceValidationUtilsTest extends BaseUnitTest {
 
   @Test
-  public void testInvalidCharInReferenceName() {
+  public void testInvalidCharInDataRepoName() {
     assertThrows(
         InvalidReferenceException.class,
-        () -> ValidationUtils.validateReferenceName("invalid@@@name"));
+        () -> ValidationUtils.validateDataRepoName("invalid@@@name"));
   }
 
   @Test
-  public void validCharInReferenceNameOk() {
-    ValidationUtils.validateReferenceName("valid_name");
+  public void validCharInDataRepoNameOk() {
+    ValidationUtils.validateDataRepoName("valid_name");
   }
 
   @Test
@@ -37,7 +37,7 @@ public class DataReferenceValidationUtilsTest extends BaseUnitTest {
   public void testInvalidCharInBqDatasetName() {
     assertThrows(
         InvalidReferenceException.class,
-        () -> ValidationUtils.validateReferenceName("invalid-name-for-dataset"));
+        () -> ValidationUtils.validateBqDatasetName("invalid-name-for-dataset"));
   }
 
   @Test
@@ -46,7 +46,7 @@ public class DataReferenceValidationUtilsTest extends BaseUnitTest {
   }
 
   @Test
-  public void testEmptyReferenceName() {
-    assertThrows(InvalidReferenceException.class, () -> ValidationUtils.validateReferenceName(""));
+  public void testEmptyDataRepoName() {
+    assertThrows(InvalidReferenceException.class, () -> ValidationUtils.validateDataRepoName(""));
   }
 }

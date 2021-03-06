@@ -47,24 +47,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 class WorkspaceServiceTest extends BaseConnectedTest {
-  @Autowired private WorkspaceService workspaceService;
-  @Autowired private JobService jobService;
-  @Autowired private CrlService crl;
-  @Autowired private SpendConnectedTestUtils spendUtils;
-  @Autowired private ReferenceResourceService referenceResourceService;
-  @Autowired private ResourceDao resourceDao;
-
-  @MockBean private DataRepoService dataRepoService;
-
-  /** Mock SamService does nothing for all calls that would throw if unauthorized. */
-  @MockBean private SamService mockSamService;
-
   /** A fake authenticated user request. */
   private static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest()
           .token(Optional.of("fake-token"))
           .email("fake@email.com")
           .subjectId("fakeID123");
+
+  @Autowired private WorkspaceService workspaceService;
+  @Autowired private JobService jobService;
+  @Autowired private CrlService crl;
+  @Autowired private SpendConnectedTestUtils spendUtils;
+  @Autowired private ReferenceResourceService referenceResourceService;
+  @Autowired private ResourceDao resourceDao;
+  @MockBean private DataRepoService dataRepoService;
+  /** Mock SamService does nothing for all calls that would throw if unauthorized. */
+  @MockBean private SamService mockSamService;
 
   @BeforeEach
   void setup() {

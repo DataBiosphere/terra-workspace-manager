@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.workspace.flight;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -11,6 +13,8 @@ import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.CustomGcpIamRole;
+import bio.terra.workspace.service.iam.CustomGcpIamRoleMapping;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -25,6 +29,8 @@ import com.google.api.services.cloudresourcemanager.model.Binding;
 import com.google.api.services.cloudresourcemanager.model.GetIamPolicyRequest;
 import com.google.api.services.cloudresourcemanager.model.Policy;
 import com.google.api.services.cloudresourcemanager.model.Project;
+import com.google.api.services.iam.v1.model.Role;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -82,6 +88,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
         crl.getCloudBillingClientCow()
             .getProjectBillingInfo("projects/" + projectId)
             .getBillingAccountName());
+    assertRolesExist(project);
     assertPolicyGroupsSynced(workspaceId, project);
   }
 
@@ -135,6 +142,21 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     inputs.put(WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, billingAccountId);
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userReq);
     return inputs;
+  }
+
+  /**
+   * Asserts that a provided project has every custom role specified in {@link
+   * CustomGcpIamRoleMapping}
+   */
+  private void assertRolesExist(Project project) throws IOException {
+    for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES) {
+      String fullRoleName =
+          "projects/" + project.getProjectId() + "/roles/" + customRole.getRoleName();
+      Role gcpRole = crl.getIamCow().projects().roles().get(fullRoleName).execute();
+      assertThat(
+          gcpRole.getIncludedPermissions(),
+          containsInAnyOrder(customRole.getIncludedPermissions().toArray()));
+    }
   }
 
   /** Asserts that Sam groups are granted their appropriate IAM roles on a GCP project. */

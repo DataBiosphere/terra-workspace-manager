@@ -9,14 +9,13 @@ import org.slf4j.LoggerFactory;
 /** A collection of static validation functions */
 public class ValidationUtils {
   private static final Logger logger = LoggerFactory.getLogger(ValidationUtils.class);
+
   /**
    * Names must be 1-63 characters long, and may consist of alphanumeric characters and underscores
    * (but may not start with an underscore). These restrictions match TDR snapshot name restrictions
    * as we often expect users to use snapshot names as reference names, though this isn't required.
    */
-  // TODO: this restriction does not make sense for WSM names in general. I made PF-517 to track.
-
-  public static final Pattern NAME_VALIDATION_PATTERN =
+  public static final Pattern DATAREPO_NAME_VALIDATION_PATTERN =
       Pattern.compile("^[a-zA-Z0-9][_a-zA-Z0-9]{0,62}$");
 
   /**
@@ -35,11 +34,11 @@ public class ValidationUtils {
   public static final Pattern BQ_DATASET_NAME_VALIDATION_PATTERN =
       Pattern.compile("^[_a-zA-Z0-9]{1,1024}$");
 
-  public static void validateReferenceName(String name) {
-    if (StringUtils.isEmpty(name) || !NAME_VALIDATION_PATTERN.matcher(name).matches()) {
-      logger.warn("Invalid reference name {}", name);
+  public static void validateDataRepoName(String name) {
+    if (StringUtils.isEmpty(name) || !DATAREPO_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
+      logger.warn("Invalid DataRepo name {}", name);
       throw new InvalidReferenceException(
-          "Invalid reference name specified. Name must be 1 to 63 alphanumeric characters or underscores, and cannot start with an underscore.");
+          "Invalid Data Repo Snapshot name specified. Name must be 1 to 63 alphanumeric characters or underscores, and cannot start with an underscore.");
     }
   }
 
@@ -57,5 +56,9 @@ public class ValidationUtils {
       throw new InvalidReferenceException(
           "Invalid BQ dataset name specified. Name must be 1 to 1024 alphanumeric characters or underscores.");
     }
+  }
+
+  public static void validateResourceName(String name) {
+    // TODO: Decide what name validation we should do for resource names
   }
 }
