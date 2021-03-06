@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource;
 
+import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.reference.ReferenceBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.reference.ReferenceDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.reference.ReferenceGcsBucketResource;
@@ -10,25 +12,28 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum WsmResourceType {
   DATA_REPO_SNAPSHOT(
-      CloudPlatform.GCP, "DATA_REPO_SNAPSHOT", ReferenceDataRepoSnapshotResource.class, false),
-  GCS_BUCKET(CloudPlatform.GCP, "GCS_BUCKET", ReferenceGcsBucketResource.class, true),
+      CloudPlatform.GCP,
+      "DATA_REPO_SNAPSHOT",
+      ReferenceDataRepoSnapshotResource.class,
+      ControlledGcsBucketResource.class),
+  GCS_BUCKET(CloudPlatform.GCP, "GCS_BUCKET", ReferenceGcsBucketResource.class, null),
   BIG_QUERY_DATASET(
-      CloudPlatform.GCP, "BIG_QUERY_DATASET", ReferenceBigQueryDatasetResource.class, true);
+      CloudPlatform.GCP, "BIG_QUERY_DATASET", ReferenceBigQueryDatasetResource.class, null);
 
   private final CloudPlatform cloudPlatform;
   private final String dbString; // serialized form of the resource type
   private final Class<? extends ReferenceResource> referenceClass;
-  private final boolean controlledSupported;
+  private final Class<? extends ControlledResource> controlledClass;
 
   WsmResourceType(
       CloudPlatform cloudPlatform,
       String dbString,
       Class<? extends ReferenceResource> referenceClass,
-      boolean controlledSupported) {
+      Class<? extends ControlledResource> controlledClass) {
     this.cloudPlatform = cloudPlatform;
     this.dbString = dbString;
     this.referenceClass = referenceClass;
-    this.controlledSupported = controlledSupported;
+    this.controlledClass = controlledClass;
   }
 
   public CloudPlatform getCloudPlatform() {
@@ -39,8 +44,8 @@ public enum WsmResourceType {
     return referenceClass;
   }
 
-  public boolean supportsControlled() {
-    return controlledSupported;
+  public Class<? extends ControlledResource> getControlledClass() {
+    return controlledClass;
   }
 
   public String toSql() {
