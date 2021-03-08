@@ -69,7 +69,10 @@ dependencies {
 	// Terra deps
 	implementation group: "bio.terra", name: "datarepo-client", version: "1.0.1-SNAPSHOT"
 	implementation group: "bio.terra", name: "stairway", version: "0.0.40-SNAPSHOT"
+	// TODO DO NOT SUBMIT Update version isntead of using local jar.
 	implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.18-SNAPSHOT"
+	implementation files("/home/wchambers/git-repos/terra-common-lib/build/libs/terra-common-lib-0.0.22-SNAPSHOT.jar")
+
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-billing', version: '0.4.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery', version: '0.4.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager', version: '0.4.0'
