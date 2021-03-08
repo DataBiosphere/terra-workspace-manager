@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,18 +58,21 @@ public class GoogleCloudSyncStep implements Step {
               .execute();
       List<Binding> existingBindings = currentPolicy.getBindings();
 
-      // GCP IAM always prefixes groups with the literal "group:"
       String readerGroup =
-          "group:" + workingMap.get(WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL, String.class);
+          gcpGroupNameFromSamEmail(
+              workingMap.get(WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL, String.class));
       String writerGroup =
-          "group:" + workingMap.get(WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL, String.class);
+          gcpGroupNameFromSamEmail(
+              workingMap.get(WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL, String.class));
       String applicationGroup =
-          "group:"
-              + workingMap.get(WorkspaceFlightMapKeys.IAM_APPLICATION_GROUP_EMAIL, String.class);
+          gcpGroupNameFromSamEmail(
+              workingMap.get(WorkspaceFlightMapKeys.IAM_APPLICATION_GROUP_EMAIL, String.class));
       String editorGroup =
-          "group:" + workingMap.get(WorkspaceFlightMapKeys.IAM_EDITOR_GROUP_EMAIL, String.class);
+          gcpGroupNameFromSamEmail(
+              workingMap.get(WorkspaceFlightMapKeys.IAM_EDITOR_GROUP_EMAIL, String.class));
       String ownerGroup =
-          "group:" + workingMap.get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class);
+          gcpGroupNameFromSamEmail(
+              workingMap.get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class));
       List<Binding> newBindings = new ArrayList<>();
       newBindings.addAll(bindingsForRole(IamRole.READER, readerGroup));
       newBindings.addAll(bindingsForRole(IamRole.WRITER, writerGroup));
@@ -93,6 +97,13 @@ public class GoogleCloudSyncStep implements Step {
   }
 
   /**
+   * GCP expects all groups to be prepended with the literal "group:" in IAM permissions bindings.
+   */
+  private String gcpGroupNameFromSamEmail(String samEmail) {
+    return "group:" + samEmail;
+  }
+
+  /**
    * Build a list of role bindings for a given group, using CloudSyncRoleMapping.
    *
    * @param role The role granted to this user. Translated to GCP roles using CloudSyncRoleMapping.
@@ -100,11 +111,9 @@ public class GoogleCloudSyncStep implements Step {
    *     GCP.
    */
   private List<Binding> bindingsForRole(IamRole role, String group) {
-    List<Binding> bindings = new ArrayList<>();
-    for (String gcpRole : CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(role)) {
-      bindings.add(new Binding().setRole(gcpRole).setMembers(Collections.singletonList(group)));
-    }
-    return bindings;
+    return CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(role).stream()
+        .map(gcpRole -> new Binding().setRole(gcpRole).setMembers(Collections.singletonList(group)))
+        .collect(Collectors.toList());
   }
 
   /**

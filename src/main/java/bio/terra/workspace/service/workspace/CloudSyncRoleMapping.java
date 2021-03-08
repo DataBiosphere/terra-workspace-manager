@@ -28,8 +28,11 @@ public class CloudSyncRoleMapping {
   // writers. If that changes, create a new list and modify the map below.
   public static final ImmutableMap<IamRole, List<String>> CLOUD_SYNC_ROLE_MAP =
       ImmutableMap.of(
+          // TODO: this should map to OWNER_PERMISSIONS if that's created.
           IamRole.OWNER, WRITER_PERMISSIONS,
+          // TODO: this should map to EDITOR_PERMISSIONS if that's created.
           IamRole.EDITOR, WRITER_PERMISSIONS,
+          // TODO: this should map to APPLICATION_PERMISSIONS if that's created.
           IamRole.APPLICATION, WRITER_PERMISSIONS,
           IamRole.WRITER, WRITER_PERMISSIONS,
           IamRole.READER, READER_PERMISSIONS);
