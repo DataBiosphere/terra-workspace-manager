@@ -56,6 +56,8 @@ repositories {
 		// Terra proxy for maven central
 		url "https://broadinstitute.jfrog.io/broadinstitute/maven-central/"
 	}
+	// TODO DO NOT SUBMIT consider how to do local maven.
+	mavenLocal()
 	mavenCentral()
 	maven {
 		url "https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/"
@@ -69,9 +71,8 @@ dependencies {
 	// Terra deps
 	implementation group: "bio.terra", name: "datarepo-client", version: "1.0.1-SNAPSHOT"
 	implementation group: "bio.terra", name: "stairway", version: "0.0.40-SNAPSHOT"
-	// TODO DO NOT SUBMIT Update version isntead of using local jar.
-	implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.18-SNAPSHOT"
-	implementation files("/home/wchambers/git-repos/terra-common-lib/build/libs/terra-common-lib-0.0.22-SNAPSHOT.jar")
+	// TODO DO NOT SUBMIT Update version isntead of using local version.
+	implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.23-LOCAL"
 
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-billing', version: '0.4.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery', version: '0.4.0'
@@ -89,12 +90,6 @@ dependencies {
 	implementation group: "org.liquibase", name: "liquibase-core", version: "4.2.1"
 	implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
 	runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.2.18"
-
-	// Tracing deps
-	implementation group: "io.opencensus", name: "opencensus-api"
-	implementation group: "io.opencensus", name: "opencensus-contrib-spring"
-	implementation group: "io.opencensus", name: "opencensus-exporter-trace-stackdriver"
-	runtimeOnly group: "io.opencensus", name: "opencensus-impl"
 
 	// Deps whose versions are controlled by Spring
 	implementation group: "javax.validation", name: "validation-api"
