@@ -5,12 +5,14 @@ import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
+import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.HashMap;
 import java.util.List;
@@ -24,9 +26,10 @@ import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
-import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembership;
+import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyDescendantPermissions;
+import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntry;
-import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequest;
+import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.SubsystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
 import org.slf4j.Logger;
@@ -84,12 +87,12 @@ public class SamService {
         userReq.getEmail() == null
             ? getEmailFromToken(userReq.getRequiredToken())
             : userReq.getEmail();
-    CreateResourceRequest workspaceRequest =
-        new CreateResourceRequest()
+    CreateResourceRequestV2 workspaceRequest =
+        new CreateResourceRequestV2()
             .resourceId(id.toString())
             .policies(defaultWorkspacePolicies(callerEmail));
     try {
-      resourceApi.createResource(SamConstants.SAM_WORKSPACE_RESOURCE, workspaceRequest);
+      resourceApi.createResourceV2(SamConstants.SAM_WORKSPACE_RESOURCE, workspaceRequest);
       logger.info("Created Sam resource for workspace {}", id);
     } catch (ApiException apiException) {
       throw new SamApiException(apiException);
@@ -275,7 +278,9 @@ public class SamService {
   }
 
   /**
-   * Builds a policy list with a single provided owner and empty reader + writer policies.
+   * Builds a policy list with a single provided owner and empty reader, writer, application, and
+   * editor policies. These policies use policy-based inheritance to also grant permissions on
+   * controlled resources created in this workspace.
    *
    * <p>This is a helper function for building the policy section of a request to create a workspace
    * resource in Sam. The provided user is granted the OWNER role and empty policies for reader and
@@ -285,26 +290,65 @@ public class SamService {
    * provided at creation time. Although policy membership can be modified later, policy creation
    * must happen at the same time as workspace resource creation.
    */
-  private Map<String, AccessPolicyMembership> defaultWorkspacePolicies(String ownerEmail) {
-    Map<String, AccessPolicyMembership> policyMap = new HashMap<>();
+  private Map<String, AccessPolicyMembershipV2> defaultWorkspacePolicies(String ownerEmail) {
+    Map<String, AccessPolicyMembershipV2> policyMap = new HashMap<>();
     policyMap.put(
         IamRole.OWNER.toSamRole(),
-        new AccessPolicyMembership()
+        new AccessPolicyMembershipV2()
             .addRolesItem(IamRole.OWNER.toSamRole())
-            .addMemberEmailsItem(ownerEmail));
-    policyMap.put(
-        IamRole.EDITOR.toSamRole(),
-        new AccessPolicyMembership().addRolesItem(IamRole.EDITOR.toSamRole()));
-    policyMap.put(
-        IamRole.APPLICATION.toSamRole(),
-        new AccessPolicyMembership().addRolesItem(IamRole.APPLICATION.toSamRole()));
-    policyMap.put(
-        IamRole.WRITER.toSamRole(),
-        new AccessPolicyMembership().addRolesItem(IamRole.WRITER.toSamRole()));
-    policyMap.put(
-        IamRole.READER.toSamRole(),
-        new AccessPolicyMembership().addRolesItem(IamRole.READER.toSamRole()));
+            .addMemberEmailsItem(ownerEmail)
+            .descendantPermissions(buildDescendantPermissions(IamRole.OWNER)));
+    // For all non-owner roles, we create empty policies which also grant certain permssions on
+    // resources in this workspace.
+    for (IamRole workspaceRole : IamRole.values()) {
+      if (workspaceRole != IamRole.OWNER) {
+        policyMap.put(
+            workspaceRole.toSamRole(),
+            new AccessPolicyMembershipV2()
+                .addRolesItem(workspaceRole.toSamRole())
+                .descendantPermissions(buildDescendantPermissions(workspaceRole)));
+      }
+    }
     return policyMap;
+  }
+
+  /**
+   * Build the set of descendant permissions a workspace role should have on controlled resources
+   * inside that workspace.
+   *
+   * @param wsRole The workspace role to list resource permissions for
+   * @return A list of AccessPolicyDescendantPermissions object, with each object representing the
+   *     descendant permissions for a single category of controlled resource (e.g. user-shared).
+   */
+  // TODO: add worker method for this once we have an actual type for resource categories.
+  private List<AccessPolicyDescendantPermissions> buildDescendantPermissions(IamRole wsRole) {
+    return ImmutableList.of(
+        new AccessPolicyDescendantPermissions()
+            .resourceType(SamConstants.SAM_CONTROLLED_USER_SHARED_RESOURCE)
+            .roles(
+                ControlledResourceInheritanceMapping.USER_SHARED_MAPPING.get(wsRole).stream()
+                    .map(ControlledResourceIamRole::toSamRole)
+                    .collect(Collectors.toList())),
+        new AccessPolicyDescendantPermissions()
+            .resourceType(SamConstants.SAM_CONTROLLED_USER_PRIVATE_RESOURCE)
+            .roles(
+                ControlledResourceInheritanceMapping.USER_PRIVATE_MAPPING.get(wsRole).stream()
+                    .map(ControlledResourceIamRole::toSamRole)
+                    .collect(Collectors.toList())),
+        new AccessPolicyDescendantPermissions()
+            .resourceType(SamConstants.SAM_CONTROLLED_APPLICATION_SHARED_RESOURCE)
+            .roles(
+                ControlledResourceInheritanceMapping.APPLICATION_SHARED_MAPPING.get(wsRole).stream()
+                    .map(ControlledResourceIamRole::toSamRole)
+                    .collect(Collectors.toList())),
+        new AccessPolicyDescendantPermissions()
+            .resourceType(SamConstants.SAM_CONTROLLED_APPLICATION_PRIVATE_RESOURCE)
+            .roles(
+                ControlledResourceInheritanceMapping.APPLICATION_PRIVATE_MAPPING
+                    .get(wsRole)
+                    .stream()
+                    .map(ControlledResourceIamRole::toSamRole)
+                    .collect(Collectors.toList())));
   }
 
   /** Fetch the email associated with an authToken from Sam. */

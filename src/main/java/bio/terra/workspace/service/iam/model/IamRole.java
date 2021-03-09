@@ -4,7 +4,7 @@ import bio.terra.workspace.service.iam.exception.InvalidRoleException;
 import java.util.Arrays;
 import java.util.Optional;
 
-/** Internal representation of IAM roles. */
+/** Internal representation of workspace-level IAM roles. */
 public enum IamRole {
   READER("reader", bio.terra.workspace.generated.model.IamRole.READER),
   WRITER("writer", bio.terra.workspace.generated.model.IamRole.WRITER),
