@@ -232,11 +232,6 @@ spotless {
 	}
 }
 
-quality {
-	// Don't break the build on code quality issues, at least until we get the backlog
-	// under control.
-	strict = false
-}
 // Custom tasks
 
 task setGitVersion(type: WriteProperties) {
@@ -267,3 +262,5 @@ swaggerSources.server.code.dependsOn tasks.unzipCloudResourceSchema
 swaggerSources.server.ui.dependsOn tasks.unzipCloudResourceSchema
 compileJava.dependsOn swaggerSources.server.code, spotlessApply, setGitVersion
 clean.dependsOn cleanSetGitVersion
+
+apply from: "$rootDir/gradle/quality.gradle"

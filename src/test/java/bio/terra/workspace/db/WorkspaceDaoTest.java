@@ -31,7 +31,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   private UUID workspaceId;
   private Optional<SpendProfileId> spendProfileId;
-  private final String readSql =
+  private static final String READ_SQL =
       "SELECT workspace_id, spend_profile, profile_settable FROM workspace WHERE workspace_id = :id";
 
   @BeforeEach
@@ -52,7 +52,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceId.toString());
-    Map<String, Object> queryOutput = jdbcTemplate.queryForMap(readSql, params);
+    Map<String, Object> queryOutput = jdbcTemplate.queryForMap(READ_SQL, params);
 
     assertThat(queryOutput.get("workspace_id"), equalTo(workspaceId.toString()));
     assertThat(queryOutput.get("spend_profile"), equalTo(spendProfileId.get().id()));
@@ -68,7 +68,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceId.toString());
-    Map<String, Object> queryOutput = jdbcTemplate.queryForMap(readSql, params);
+    Map<String, Object> queryOutput = jdbcTemplate.queryForMap(READ_SQL, params);
 
     assertThat(queryOutput.get("workspace_id"), equalTo(workspaceId.toString()));
     assertThat(queryOutput.get("profile_settable"), equalTo(true));
@@ -77,7 +77,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
     // Assert the object no longer exists after deletion
     assertThrows(
-        EmptyResultDataAccessException.class, () -> jdbcTemplate.queryForMap(readSql, params));
+        EmptyResultDataAccessException.class, () -> jdbcTemplate.queryForMap(READ_SQL, params));
   }
 
   @Test

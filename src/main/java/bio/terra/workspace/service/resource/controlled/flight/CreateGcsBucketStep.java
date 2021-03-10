@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.flight;
 
-import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -56,7 +55,7 @@ public class CreateGcsBucketStep implements Step {
             .build();
 
     final StorageCow storageCow = crlService.createStorageCow(userRequest);
-    final BucketCow bucketCow = storageCow.create(bucketInfo);
+    storageCow.create(bucketInfo);
 
     return StepResult.getStepResultSuccess();
   }
@@ -64,7 +63,7 @@ public class CreateGcsBucketStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     final StorageCow storageCow = crlService.createStorageCow(userRequest);
-    final boolean deleted = storageCow.delete(resource.getBucketName());
+    storageCow.delete(resource.getBucketName());
 
     return StepResult.getStepResultSuccess();
   }
