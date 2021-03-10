@@ -1,6 +1,6 @@
 {
   "name": "testrunner-integration@terra-kernel-k8s.iam.gserviceaccount.com",
-  "jsonKeyFilename": "testrunner-k8s-service-account.json",
+  "jsonKeyFilename": "testrunner-iam-service-account.json",
   "jsonKeyDirectoryPath": "./rendered",
   "clientKeyFilename": "testrunner-k8s-sa-client-key-data.crt",
   "tokenFilename": "testrunner-k8s-sa-token",
