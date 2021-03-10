@@ -1,0 +1,34 @@
+{
+  "name": "DeleteInitialPods",
+  "description": "Run two Service Status tests concurrently with an artificial delay, while incrementally deleting pods.",
+  "serverSpecificationFile": "workspace-resiliency.json",
+  "kubernetes": {
+    "numberOfInitialPods" : 2
+  },
+  "application": {
+    "apiComponentLabel":  "workspacemanager"
+  },
+  "disruptiveScript": {
+    "name": "DeleteInitialPods",
+    "parameters": []
+  },
+  "testScripts": [
+    {
+      "name": "ServiceStatus",
+      "parameters": [90],
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 1,
+      "expectedTimeForEach": 90,
+      "expectedTimeForEachUnit": "SECONDS"
+    },
+    {
+      "name": "ServiceStatus",
+      "parameters": [90],
+      "numberOfUserJourneyThreadsToRun": 3,
+      "userJourneyThreadPoolSize": 3,
+      "expectedTimeForEach": 90,
+      "expectedTimeForEachUnit": "SECONDS"
+    }
+  ],
+  "testUserFiles": []
+}

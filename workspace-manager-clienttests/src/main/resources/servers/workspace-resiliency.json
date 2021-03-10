@@ -10,6 +10,7 @@
     "clusterName": "gke_terra-kernel-k8s_us-central1-a_terra-integration",
     "clusterShortName": "terra-integration",
     "region": "us-central1",
+    "zone": "us-central1-a",
     "project": "terra-kernel-k8s",
     "namespace": "terra-ichang",
     "containerName": "workspacemanager-deployment"

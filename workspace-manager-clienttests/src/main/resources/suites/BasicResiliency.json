@@ -1,8 +1,8 @@
 {
   "name": "BasicResiliency",
-  "description": "Basic Resiliency tests.",
+  "description": "Test deleting all initially created pods",
   "serverSpecificationFile": "workspace-resiliency.json",
   "testConfigurationFiles": [
-    "resiliency/DeletePodsDisruption.json"
+    "resiliency/DeleteInitialPods.json"
   ]
 }

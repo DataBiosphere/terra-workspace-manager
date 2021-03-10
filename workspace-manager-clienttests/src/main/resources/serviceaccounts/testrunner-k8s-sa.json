@@ -1,5 +1,8 @@
 {
   "name": "testrunner-integration@terra-kernel-k8s.iam.gserviceaccount.com",
   "jsonKeyFilename": "testrunner-k8s-service-account.json",
-  "jsonKeyDirectoryPath": "/Users/ichang/repos/DataBiosphere/terra-workspace-manager/workspace-manager-clienttests/rendered/"
+  "jsonKeyDirectoryPath": "./rendered",
+  "clientKeyFilename": "testrunner-k8s-sa-client-key-data.crt",
+  "tokenFilename": "testrunner-k8s-sa-token",
+  "clientKeyDirectoryPath": "./rendered"
 }
