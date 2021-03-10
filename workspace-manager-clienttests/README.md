@@ -65,7 +65,7 @@ Resiliency Test
 
 #### Script for rendering Kubernetes Service Account Secrets
 
-Please use the script `render-k8s-confiog.sh` with a valid namespace to render the in-cluster service account secrets for resiliency tests.
+Please use the script `render-k8s-config.sh` with a valid namespace to render the in-cluster service account secrets for resiliency tests.
 Examples of valid namespaces are `ichang`, `zloery`, etc.
 
 ```./render-k8s-config.sh <namespace>
