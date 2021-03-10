@@ -2,9 +2,9 @@
 
 # This script renders the k8s service account secrets for namespace access
 # NAME_SPACE: ichang, zloery, or preview namespace etc.
-NAME_SPACE=${1}
+NAMESPACE=${1}
 VAULT_TOKEN=${2:-$(cat "$HOME"/.vault-token)}
-TESTRUNNER_K8S_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/integration/${NAME_SPACE}/testrunner-k8s-sa
+TESTRUNNER_K8S_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/integration/${NAMESPACE}/testrunner-k8s-sa
 TESTRUNNER_K8S_SERVICE_ACCOUNT_CA_OUTPUT_PATH=$(dirname "$0")/rendered/testrunner-k8s-sa-client-key-data.crt
 TESTRUNNER_K8S_SERVICE_ACCOUNT_TOKEN_OUTPUT_PATH=$(dirname "$0")/rendered/testrunner-k8s-sa-token
 
