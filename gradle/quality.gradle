@@ -7,5 +7,7 @@ quality {
   // enable Spotbugs only for now -- others when build is clean
   spotbugs = true
   pmd = false
+  cpd = false
   checkstyle = false
+  codenarc = false
 }
