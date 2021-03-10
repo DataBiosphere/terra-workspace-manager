@@ -5,21 +5,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ReferenceDataRepoSnapshotAttributes {
   private final String instanceName;
-  private final String snapshot;
+  private final String snapshotId;
 
   @JsonCreator
   public ReferenceDataRepoSnapshotAttributes(
       @JsonProperty("instanceName") String instanceName,
-      @JsonProperty("snapshot") String snapshot) {
+      @JsonProperty("snapshotId") String snapshotId) {
     this.instanceName = instanceName;
-    this.snapshot = snapshot;
+    this.snapshotId = snapshotId;
   }
 
   public String getInstanceName() {
     return instanceName;
   }
 
-  public String getSnapshot() {
-    return snapshot;
+  public String getSnapshotId() {
+    return snapshotId;
   }
 }

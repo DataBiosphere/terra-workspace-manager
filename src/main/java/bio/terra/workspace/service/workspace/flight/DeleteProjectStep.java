@@ -8,11 +8,12 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Start deletion of a Google Project.
@@ -52,7 +53,7 @@ public class DeleteProjectStep implements Step {
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     Optional<GcpCloudContext> cloudContext = getContext(flightContext);
     if (cloudContext.isEmpty()) {
-      // Nothing to delete, so nothing to undo.
+      // Nothing was deleted, so nothing to undo.
       return StepResult.getStepResultSuccess();
     }
     // Do not attempt to undo project deletions.

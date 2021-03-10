@@ -11,11 +11,13 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
+
+import java.util.Optional;
 import java.util.UUID;
 
 public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
   private final String instanceName;
-  private final String snapshot;
+  private final String snapshotId;
 
   /**
    * Constructor for serialized form for Stairway use
@@ -26,7 +28,7 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
    * @param description description - may be null
    * @param cloningInstructions cloning instructions
    * @param instanceName name of the data repository instance (e.g., "terra")
-   * @param snapshot name of the snapshot
+   * @param snapshotId name of the snapshot
    */
   @JsonCreator
   public ReferenceDataRepoSnapshotResource(
@@ -36,10 +38,10 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
       @JsonProperty("description") String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("instanceName") String instanceName,
-      @JsonProperty("snapshot") String snapshot) {
+      @JsonProperty("snapshotId") String snapshotId) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
     this.instanceName = instanceName;
-    this.snapshot = snapshot;
+    this.snapshotId = snapshotId;
   }
 
   /**
@@ -48,34 +50,28 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
    * @param dbResource database form of resources
    */
   public ReferenceDataRepoSnapshotResource(DbResource dbResource) {
-    super(
-        dbResource.getWorkspaceId(),
-        dbResource.getResourceId(),
-        dbResource.getName().orElse(null),
-        dbResource.getDescription().orElse(null),
-        dbResource.getCloningInstructions());
-
+    super(dbResource);
     if (dbResource.getResourceType() != WsmResourceType.DATA_REPO_SNAPSHOT) {
       throw new InvalidMetadataException("Expected DATA_REPO_SNAPSHOT");
     }
     ReferenceDataRepoSnapshotAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ReferenceDataRepoSnapshotAttributes.class);
     this.instanceName = attributes.getInstanceName();
-    this.snapshot = attributes.getSnapshot();
+    this.snapshotId = attributes.getSnapshotId();
   }
 
   public String getInstanceName() {
     return instanceName;
   }
 
-  public String getSnapshot() {
-    return snapshot;
+  public String getSnapshotId() {
+    return snapshotId;
   }
 
   public DataRepoSnapshotReference toApiModel() {
     return new DataRepoSnapshotReference()
         .metadata(super.toApiMetadata())
-        .snapshot(new DataRepoSnapshot().instanceName(getInstanceName()).snapshot(getSnapshot()));
+        .snapshot(new DataRepoSnapshot().instanceName(getInstanceName()).snapshot(getSnapshotId()));
   }
 
   @Override
@@ -86,18 +82,77 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ReferenceDataRepoSnapshotAttributes(getInstanceName(), getSnapshot()));
+        new ReferenceDataRepoSnapshotAttributes(getInstanceName(), getSnapshotId()));
   }
 
   @Override
   public void validate() {
     super.validate();
-    if (Strings.isNullOrEmpty(getInstanceName()) || Strings.isNullOrEmpty(getSnapshot())) {
+    if (Strings.isNullOrEmpty(getInstanceName()) || Strings.isNullOrEmpty(getSnapshotId())) {
       throw new MissingRequiredFieldException(
           "Missing required field for ReferenceDataRepoSnapshotAttributes.");
     }
-    // TODO: Something funky is going on. The integration test is passing a UUID for the
-    // snapshot - not the snapshot name. So this check is always failing.
-    // ValidationUtils.validateDataRepoName(getSnapshot());
   }
+
+  public static ReferenceDataRepoSnapshotResource.Builder builder() {
+    return new ReferenceDataRepoSnapshotResource.Builder();
+  }
+
+  public static class Builder {
+    private UUID workspaceId;
+    private UUID resourceId;
+    private String name;
+    private String description;
+    private CloningInstructions cloningInstructions;
+    private String instanceName;
+    private String snapshotId;
+
+    public ReferenceDataRepoSnapshotResource.Builder workspaceId(UUID workspaceId) {
+      this.workspaceId = workspaceId;
+      return this;
+    }
+
+    public ReferenceDataRepoSnapshotResource.Builder resourceId(UUID resourceId) {
+      this.resourceId = resourceId;
+      return this;
+    }
+
+    public ReferenceDataRepoSnapshotResource.Builder name(String name) {
+      this.name = name;
+      return this;
+    }
+
+    public ReferenceDataRepoSnapshotResource.Builder description(String description) {
+      this.description = description;
+      return this;
+    }
+
+    public ReferenceDataRepoSnapshotResource.Builder cloningInstructions(CloningInstructions cloningInstructions) {
+      this.cloningInstructions = cloningInstructions;
+      return this;
+    }
+
+    public Builder instanceName(String instanceName) {
+      this.instanceName = instanceName;
+      return this;
+    }
+
+    public Builder snapshotId(String snapshotId) {
+      this.snapshotId = snapshotId;
+      return this;
+    }
+
+    public ReferenceDataRepoSnapshotResource build() {
+      // On the create path, we can omit the resourceId and have it filled in by the builder.
+      return new ReferenceDataRepoSnapshotResource(
+              workspaceId,
+              Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
+              name,
+              description,
+              cloningInstructions,
+              instanceName,
+              snapshotId);
+    }
+  }
+
 }

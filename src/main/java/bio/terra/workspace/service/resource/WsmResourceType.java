@@ -12,11 +12,12 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum WsmResourceType {
   DATA_REPO_SNAPSHOT(
+      CloudPlatform.GCP, "DATA_REPO_SNAPSHOT", ReferenceDataRepoSnapshotResource.class, null),
+  GCS_BUCKET(
       CloudPlatform.GCP,
-      "DATA_REPO_SNAPSHOT",
-      ReferenceDataRepoSnapshotResource.class,
+      "GCS_BUCKET",
+      ReferenceGcsBucketResource.class,
       ControlledGcsBucketResource.class),
-  GCS_BUCKET(CloudPlatform.GCP, "GCS_BUCKET", ReferenceGcsBucketResource.class, null),
   BIG_QUERY_DATASET(
       CloudPlatform.GCP, "BIG_QUERY_DATASET", ReferenceBigQueryDatasetResource.class, null);
 
@@ -36,6 +37,16 @@ public enum WsmResourceType {
     this.controlledClass = controlledClass;
   }
 
+  public static WsmResourceType fromSql(String dbString) {
+    for (WsmResourceType value : values()) {
+      if (StringUtils.equals(value.dbString, dbString)) {
+        return value;
+      }
+    }
+    throw new SerializationException(
+        "Deeserialization failed: no matching resource type for " + dbString);
+  }
+
   public CloudPlatform getCloudPlatform() {
     return cloudPlatform;
   }
@@ -50,15 +61,5 @@ public enum WsmResourceType {
 
   public String toSql() {
     return dbString;
-  }
-
-  public static WsmResourceType fromSql(String dbString) {
-    for (WsmResourceType value : values()) {
-      if (StringUtils.equals(value.dbString, dbString)) {
-        return value;
-      }
-    }
-    throw new SerializationException(
-        "Deeserialization failed: no matching resource type for " + dbString);
   }
 }

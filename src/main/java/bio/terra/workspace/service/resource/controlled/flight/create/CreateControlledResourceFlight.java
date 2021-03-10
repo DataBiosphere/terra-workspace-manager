@@ -14,9 +14,9 @@ import bio.terra.workspace.service.workspace.flight.CreateSamResourceStep;
  */
 public class CreateControlledResourceFlight extends Flight {
 
-  public CreateControlledResourceFlight(FlightMap inputParameters, Object applicationContext) {
-    super(inputParameters, applicationContext);
-    final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
+  public CreateControlledResourceFlight(FlightMap inputParameters, Object beanBag) {
+    super(inputParameters, beanBag);
+    final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
     // store the resource metadata in the WSM database
     addStep(new StoreMetadataStep(flightBeanBag.getResourceDao()));

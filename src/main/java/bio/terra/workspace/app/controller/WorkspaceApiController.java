@@ -38,11 +38,6 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +47,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Controller
 public class WorkspaceApiController implements WorkspaceApi {
@@ -299,7 +300,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     var reference =
         new DataRepoSnapshot()
             .instanceName(snapshotResource.getInstanceName())
-            .snapshot(snapshotResource.getSnapshot());
+            .snapshot(snapshotResource.getSnapshotId());
     return new DataReferenceDescription()
         .referenceId(referenceResource.getResourceId())
         .name(referenceResource.getName())
@@ -355,7 +356,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<CreateCloudContextResult> createCloudContext(
       UUID id, @Valid CreateCloudContextRequest body) {
-    ControllerValidationUtils.validateCloudType(body.getCloudType());
+    ControllerValidationUtils.validateCloudPlatform(body.getCloudType());
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     String jobId = body.getJobControl().getId();
     String resultPath = getAsyncResultEndpoint(jobId);
@@ -396,7 +397,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<Void> deleteCloudContext(UUID id, CloudContext cloudContext) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    ControllerValidationUtils.validateCloudType(cloudContext);
+    ControllerValidationUtils.validateCloudPlatform(cloudContext);
     workspaceService.deleteGcpCloudContext(id, userReq);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }

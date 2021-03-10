@@ -9,10 +9,10 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 
 public class CreateReferenceResourceFlight extends Flight {
 
-  public CreateReferenceResourceFlight(FlightMap inputParameters, Object applicationContext) {
-    super(inputParameters, applicationContext);
+  public CreateReferenceResourceFlight(FlightMap inputParameters, Object beanBag) {
+    super(inputParameters, beanBag);
 
-    FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
+    FlightBeanBag appContext = FlightBeanBag.getFromObject(beanBag);
 
     // Perform access verification separately by resource type
     WsmResourceType resourceType =
@@ -20,7 +20,7 @@ public class CreateReferenceResourceFlight extends Flight {
             WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, WsmResourceType.class);
     switch (resourceType) {
       case BIG_QUERY_DATASET:
-        addStep(new CreateReferenceVerifyAccessBigQueryStep(appContext.getCrlService()));
+        addStep(new CreateReferenceVerifyAccessBigQueryDatasetStep(appContext.getCrlService()));
         break;
 
       case DATA_REPO_SNAPSHOT:

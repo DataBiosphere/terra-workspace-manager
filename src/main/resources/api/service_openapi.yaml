@@ -213,8 +213,6 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  #####
-
   /api/workspaces/v1/{workspaceId}/resources/references/datarepo/snapshots:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'

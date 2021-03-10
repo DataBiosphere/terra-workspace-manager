@@ -5,6 +5,8 @@ import bio.terra.workspace.service.resource.controlled.ControlledAccessType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+
+import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,9 +26,9 @@ public class DbResource {
   private CloningInstructions cloningInstructions;
   private String attributes;
   // controlled resource fields
-  private ControlledAccessType accessType;
-  private UUID associatedApp;
-  private String assignedUser;
+  @Nullable private ControlledAccessType accessType;
+  @Nullable private UUID associatedApp;
+  @Nullable private String assignedUser;
 
   public UUID getWorkspaceId() {
     return workspaceId;

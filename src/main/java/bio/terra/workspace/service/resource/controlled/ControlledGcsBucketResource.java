@@ -10,7 +10,8 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Objects;
+
+import java.util.Optional;
 import java.util.UUID;
 
 public class ControlledGcsBucketResource extends ControlledResource {
@@ -40,18 +41,15 @@ public class ControlledGcsBucketResource extends ControlledResource {
   }
 
   public ControlledGcsBucketResource(DbResource dbResource) {
-    super(
-        dbResource.getWorkspaceId(),
-        dbResource.getResourceId(),
-        dbResource.getName().orElse(null),
-        dbResource.getDescription().orElse(null),
-        dbResource.getCloningInstructions(),
-        dbResource.getAssignedUser().orElse(null),
-        dbResource.getAccessType().orElse(null));
+    super(dbResource);
     ControlledGcsBucketAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledGcsBucketAttributes.class);
     this.bucketName = attributes.getBucketName();
     validate();
+  }
+
+  public static ControlledGcsBucketResource.Builder builder() {
+    return new ControlledGcsBucketResource.Builder();
   }
 
   public String getBucketName() {
@@ -86,17 +84,84 @@ public class ControlledGcsBucketResource extends ControlledResource {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof ControlledGcsBucketResource)) {
-      return false;
-    }
-    return super.equals(o); // no fields in this class
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    ControlledGcsBucketResource that = (ControlledGcsBucketResource) o;
+
+    return bucketName.equals(that.bucketName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode());
+    int result = super.hashCode();
+    result = 31 * result + bucketName.hashCode();
+    return result;
+  }
+
+  public static class Builder {
+    private UUID workspaceId;
+    private UUID resourceId;
+    private String name;
+    private String description;
+    private CloningInstructions cloningInstructions;
+    private String assignedUser;
+    private ControlledAccessType controlledAccessType;
+    private String bucketName;
+
+    public ControlledGcsBucketResource.Builder workspaceId(UUID workspaceId) {
+      this.workspaceId = workspaceId;
+      return this;
+    }
+
+    public ControlledGcsBucketResource.Builder resourceId(UUID resourceId) {
+      this.resourceId = resourceId;
+      return this;
+    }
+
+    public ControlledGcsBucketResource.Builder name(String name) {
+      this.name = name;
+      return this;
+    }
+
+    public ControlledGcsBucketResource.Builder description(String description) {
+      this.description = description;
+      return this;
+    }
+
+    public ControlledGcsBucketResource.Builder cloningInstructions(
+        CloningInstructions cloningInstructions) {
+      this.cloningInstructions = cloningInstructions;
+      return this;
+    }
+
+    public ControlledGcsBucketResource.Builder bucketName(String bucketName) {
+      this.bucketName = bucketName;
+      return this;
+    }
+
+    public Builder assignedUser(String assignedUser) {
+      this.assignedUser = assignedUser;
+      return this;
+    }
+
+    public Builder controlledAccessType(ControlledAccessType controlledAccessType) {
+      this.controlledAccessType = controlledAccessType;
+      return this;
+    }
+
+    public ControlledGcsBucketResource build() {
+      // On the create path, we can omit the resourceId and have it filled in by the builder.
+      return new ControlledGcsBucketResource(
+          workspaceId,
+          Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
+          name,
+          description,
+          cloningInstructions,
+          assignedUser,
+          controlledAccessType,
+          bucketName);
+    }
   }
 }

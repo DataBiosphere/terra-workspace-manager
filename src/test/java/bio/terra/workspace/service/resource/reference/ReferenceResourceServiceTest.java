@@ -1,20 +1,16 @@
 package bio.terra.workspace.service.resource.reference;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
+import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -24,17 +20,23 @@ import bio.terra.workspace.service.resource.reference.exception.InvalidReference
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 
 class ReferenceResourceServiceTest extends BaseUnitTest {
   private static final Logger logger = LoggerFactory.getLogger(ReferenceResourceServiceTest.class);
@@ -143,20 +145,6 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
     return workspaceService.createWorkspace(request, USER_REQUEST);
-  }
-
-  private ReferenceDataRepoSnapshotResource makeDataRepoSnapshotResource() {
-    UUID resourceId = UUID.randomUUID();
-    String resourceName = "testdatarepo-" + resourceId.toString();
-
-    return new ReferenceDataRepoSnapshotResource(
-        workspaceId,
-        resourceId,
-        resourceName,
-        "description of " + resourceName,
-        CloningInstructions.COPY_NOTHING,
-        DATA_REPO_INSTANCE_NAME,
-        "polaroid");
   }
 
   @Nested
@@ -296,24 +284,14 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
           () -> referenceResourceService.createReferenceResource(resource, USER_REQUEST));
     }
 
-    @Disabled("TODO: understand whether this is a name or an id")
     @Test
-    void testInvalidSnapshotName() {
-      UUID resourceId = UUID.randomUUID();
-      String resourceName = "testdatarepo-" + resourceId.toString();
-
-      ReferenceDataRepoSnapshotResource resource =
-          new ReferenceDataRepoSnapshotResource(
-              workspaceId,
-              resourceId,
-              resourceName,
-              "description of " + resourceName,
-              CloningInstructions.COPY_NOTHING,
-              DATA_REPO_INSTANCE_NAME,
-              "Snapshots don't accept * in the names");
+    void testInvalidCast() {
+      referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
       assertThrows(
-          InvalidReferenceException.class,
-          () -> referenceResourceService.createReferenceResource(resource, USER_REQUEST));
+          InvalidMetadataException.class, () -> referenceResource.castToBigQueryDatasetResource());
+
+      WsmResource wsmResource = referenceResource;
+      assertThrows(InvalidMetadataException.class, wsmResource::castControlledResource);
     }
   }
 
@@ -394,6 +372,16 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
                   "description of " + resourceName,
                   CloningInstructions.COPY_DEFINITION,
                   "Buckets don't accept * in the names, either"));
+    }
+
+    @Test
+    void testInvalidCast() {
+      referenceResource = makeGcsBucketResource();
+      assertThrows(
+              InvalidMetadataException.class, () -> referenceResource.castToBigQueryDatasetResource());
+
+      WsmResource wsmResource = referenceResource;
+      assertThrows(InvalidMetadataException.class, wsmResource::castControlledResource);
     }
   }
 
@@ -503,6 +491,16 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
       assertThrows(
           InvalidReferenceException.class,
           () -> referenceResourceService.createReferenceResource(resource, USER_REQUEST));
+    }
+
+    @Test
+    void testInvalidCast() {
+      referenceResource = makeBigQueryResource();
+      assertThrows(
+              InvalidMetadataException.class, () -> referenceResource.castToGcsBucketResource());
+
+      WsmResource wsmResource = referenceResource;
+      assertThrows(InvalidMetadataException.class, wsmResource::castControlledResource);
     }
   }
 

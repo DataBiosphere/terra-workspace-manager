@@ -11,12 +11,13 @@ import bio.terra.workspace.service.datarepo.exception.DataRepoAuthorizationExcep
 import bio.terra.workspace.service.datarepo.exception.DataRepoInternalServerErrorException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+
+import java.util.HashMap;
 
 @Component
 public class DataRepoService {
@@ -62,7 +63,7 @@ public class DataRepoService {
 
     try {
       repositoryApi.retrieveSnapshot(snapshotId);
-      logger.info("Retrieved snapshot {} on Data Repo instance {}", snapshotId, instanceName);
+      logger.info("Retrieved snapshotId {} on Data Repo instance {}", snapshotId, instanceName);
       return true;
     } catch (ApiException e) {
       if (e.getCode() == HttpStatus.NOT_FOUND.value()) {

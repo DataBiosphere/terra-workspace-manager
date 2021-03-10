@@ -11,10 +11,10 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.reference.ReferenceBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
 
-public class CreateReferenceVerifyAccessBigQueryStep implements Step {
+public class CreateReferenceVerifyAccessBigQueryDatasetStep implements Step {
   private final CrlService crlService;
 
-  public CreateReferenceVerifyAccessBigQueryStep(CrlService crlService) {
+  public CreateReferenceVerifyAccessBigQueryDatasetStep(CrlService crlService) {
     this.crlService = crlService;
   }
 

@@ -12,6 +12,8 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
+
+import java.util.Optional;
 import java.util.UUID;
 
 public class ReferenceBigQueryDatasetResource extends ReferenceResource {
@@ -49,13 +51,7 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
    * @param dbResource database form of resources
    */
   public ReferenceBigQueryDatasetResource(DbResource dbResource) {
-    super(
-        dbResource.getWorkspaceId(),
-        dbResource.getResourceId(),
-        dbResource.getName().orElse(null),
-        dbResource.getDescription().orElse(null),
-        dbResource.getCloningInstructions());
-
+    super(dbResource);
     if (dbResource.getResourceType() != WsmResourceType.BIG_QUERY_DATASET) {
       throw new InvalidMetadataException("Expected BIG_QUERY_DATASET");
     }
@@ -100,5 +96,67 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
           "Missing required field for ReferenceBigQueryDatasetAttributes.");
     }
     ValidationUtils.validateBqDatasetName(getDatasetName());
+  }
+
+  public static ReferenceBigQueryDatasetResource.Builder builder() {
+    return new ReferenceBigQueryDatasetResource.Builder();
+  }
+
+
+  public static class Builder {
+    private UUID workspaceId;
+    private UUID resourceId;
+    private String name;
+    private String description;
+    private CloningInstructions cloningInstructions;
+    private String projectId;
+    private String datasetName;
+
+    public ReferenceBigQueryDatasetResource.Builder workspaceId(UUID workspaceId) {
+      this.workspaceId = workspaceId;
+      return this;
+    }
+
+    public ReferenceBigQueryDatasetResource.Builder resourceId(UUID resourceId) {
+      this.resourceId = resourceId;
+      return this;
+    }
+
+    public ReferenceBigQueryDatasetResource.Builder name(String name) {
+      this.name = name;
+      return this;
+    }
+
+    public ReferenceBigQueryDatasetResource.Builder description(String description) {
+      this.description = description;
+      return this;
+    }
+
+    public ReferenceBigQueryDatasetResource.Builder cloningInstructions(CloningInstructions cloningInstructions) {
+      this.cloningInstructions = cloningInstructions;
+      return this;
+    }
+
+    public Builder projectId(String projectId) {
+      this.projectId = projectId;
+      return this;
+    }
+
+    public Builder datasetName(String datasetName) {
+      this.datasetName = datasetName;
+      return this;
+    }
+
+    public ReferenceBigQueryDatasetResource build() {
+      // On the create path, we can omit the resourceId and have it filled in by the builder.
+      return new ReferenceBigQueryDatasetResource(
+              workspaceId,
+              Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
+              name,
+              description,
+              cloningInstructions,
+              projectId,
+              datasetName);
+    }
   }
 }

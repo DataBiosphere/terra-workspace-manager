@@ -1,22 +1,15 @@
 package bio.terra.workspace.service.resource;
 
 import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
-import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.regex.Pattern;
+
 /** A collection of static validation functions */
 public class ValidationUtils {
   private static final Logger logger = LoggerFactory.getLogger(ValidationUtils.class);
-
-  /**
-   * Names must be 1-63 characters long, and may consist of alphanumeric characters and underscores
-   * (but may not start with an underscore). These restrictions match TDR snapshot name restrictions
-   * as we often expect users to use snapshot names as reference names, though this isn't required.
-   */
-  public static final Pattern DATAREPO_NAME_VALIDATION_PATTERN =
-      Pattern.compile("^[a-zA-Z0-9][_a-zA-Z0-9]{0,62}$");
 
   /**
    * GCS bucket name validation is somewhat complex due to rules about usage of "." and restricted
@@ -33,14 +26,6 @@ public class ValidationUtils {
    */
   public static final Pattern BQ_DATASET_NAME_VALIDATION_PATTERN =
       Pattern.compile("^[_a-zA-Z0-9]{1,1024}$");
-
-  public static void validateDataRepoName(String name) {
-    if (StringUtils.isEmpty(name) || !DATAREPO_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
-      logger.warn("Invalid DataRepo name {}", name);
-      throw new InvalidReferenceException(
-          "Invalid Data Repo Snapshot name specified. Name must be 1 to 63 alphanumeric characters or underscores, and cannot start with an underscore.");
-    }
-  }
 
   public static void validateBucketName(String name) {
     if (StringUtils.isEmpty(name) || !BUCKET_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
@@ -59,6 +44,8 @@ public class ValidationUtils {
   }
 
   public static void validateResourceName(String name) {
-    // TODO: Decide what name validation we should do for resource names
+    // TODO: Decide what name validation we should do for resource names. My suggestion is to match TDR
+    //  with a 512 character name that cannot being with an underscore. That gives us room to generate
+    //  names based on the resource name. It also is roomy.
   }
 }

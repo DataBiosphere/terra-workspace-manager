@@ -16,15 +16,16 @@ import bio.terra.workspace.service.resource.reference.ReferenceDataRepoSnapshotR
 import bio.terra.workspace.service.resource.reference.ReferenceGcsBucketResource;
 import bio.terra.workspace.service.resource.reference.ReferenceResource;
 import bio.terra.workspace.service.resource.reference.ReferenceResourceService;
-import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.UUID;
 
 // TODO: GENERAL - add request validation
 
@@ -58,13 +59,14 @@ public class ReferenceController implements ReferenceApi {
 
     // Construct a ReferenceGcsBucketResource object from the API input
     var resource =
-        new ReferenceGcsBucketResource(
-            id,
-            UUID.randomUUID(), // mint a resource id for this bucket
-            body.getMetadata().getName(),
-            body.getMetadata().getDescription(),
-            CloningInstructions.fromApiModel(body.getMetadata().getCloningInstructions()),
-            body.getBucket().getBucketName());
+        ReferenceGcsBucketResource.builder()
+            .workspaceId(id)
+            .name(body.getMetadata().getName())
+            .description(body.getMetadata().getDescription())
+            .cloningInstructions(
+                CloningInstructions.fromApiModel(body.getMetadata().getCloningInstructions()))
+            .bucketName(body.getBucket().getBucketName())
+            .build();
     resource.validate();
 
     ReferenceResource referenceResource =
@@ -108,14 +110,15 @@ public class ReferenceController implements ReferenceApi {
 
     // Construct a ReferenceBigQueryResource object from the API input
     var resource =
-        new ReferenceBigQueryDatasetResource(
-            id,
-            UUID.randomUUID(), // mint a resource id for this bucket
-            body.getMetadata().getName(),
-            body.getMetadata().getDescription(),
-            CloningInstructions.fromApiModel(body.getMetadata().getCloningInstructions()),
-            body.getDataset().getProjectId(),
-            body.getDataset().getDatasetId());
+        ReferenceBigQueryDatasetResource.builder()
+            .workspaceId(id)
+            .name(body.getMetadata().getName())
+            .description(body.getMetadata().getDescription())
+            .cloningInstructions(
+                CloningInstructions.fromApiModel(body.getMetadata().getCloningInstructions()))
+            .projectId(body.getDataset().getProjectId())
+            .datasetName(body.getDataset().getDatasetId())
+            .build();
     resource.validate();
 
     ReferenceResource referenceResource =
@@ -163,14 +166,15 @@ public class ReferenceController implements ReferenceApi {
       UUID id, @Valid CreateDataRepoSnapshotReferenceRequestBody body) {
 
     var resource =
-        new ReferenceDataRepoSnapshotResource(
-            id,
-            UUID.randomUUID(), // mint a resource id for this bucket
-            body.getMetadata().getName(),
-            body.getMetadata().getDescription(),
-            CloningInstructions.fromApiModel(body.getMetadata().getCloningInstructions()),
-            body.getSnapshot().getInstanceName(),
-            body.getSnapshot().getSnapshot());
+        ReferenceDataRepoSnapshotResource.builder()
+            .workspaceId(id)
+            .name(body.getMetadata().getName())
+            .description(body.getMetadata().getDescription())
+            .cloningInstructions(
+                CloningInstructions.fromApiModel(body.getMetadata().getCloningInstructions()))
+            .instanceName(body.getSnapshot().getInstanceName())
+            .snapshotId(body.getSnapshot().getSnapshot())
+            .build();
     resource.validate();
 
     ReferenceResource referenceResource =

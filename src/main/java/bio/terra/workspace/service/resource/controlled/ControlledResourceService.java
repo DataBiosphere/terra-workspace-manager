@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.generated.model.GoogleBucketCreationParameters;
 import bio.terra.workspace.generated.model.IamRole;
 import bio.terra.workspace.generated.model.JobControl;
@@ -13,9 +12,10 @@ import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 /** CRUD methods for controlled objects. */
 @Component
@@ -33,8 +33,8 @@ public class ControlledResourceService {
     this.resourceDao = resourceDao;
   }
 
-  public String createGcsBucket(
-      ControlledGcsBucketResource resource,
+  public String createControlledResource(
+      ControlledResource resource,
       GoogleBucketCreationParameters creationParameters,
       IamRole creationIamRole,
       JobControl jobControl,
@@ -65,13 +65,6 @@ public class ControlledResourceService {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
-    return castControlledResource(wsmResource);
-  }
-
-  private ControlledResource castControlledResource(WsmResource wsmResource) {
-    if (!(wsmResource instanceof ControlledResource)) {
-      throw new InvalidMetadataException("Returned resource is not a controlled resource");
-    }
-    return (ControlledResource) wsmResource;
+    return wsmResource.castControlledResource();
   }
 }

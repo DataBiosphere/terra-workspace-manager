@@ -26,7 +26,7 @@ databaseChangeLog:
               type: text
               remarks: |
                 Free-form text describing the workspace. Can be null. Omitted for Rawls workspaces, since Rawls
-                maintains its own name.
+                maintains its own description.
           - column:
               name: spend_profile
               type: text
@@ -93,11 +93,15 @@ databaseChangeLog:
                 primaryKey: true
                 nullable: false
           - column:
-              name: name
+              name: display_name
               type: text
+              remarks: |
+                A user-friendly name for the application. Not used by WSM. Not necessarily unique. Optional.
           - column:
               name: description
               type: text
+              remarks: |
+                Free-form description of the application. Optional.
           - column:
               name: service_account
               type: text
@@ -112,7 +116,7 @@ databaseChangeLog:
         tableName: enabled_application
         remarks: |
           Workspaces may enable a subset of the available applications. This table maps
-          a workspace to and application it has enabled.
+          a workspace to an application it has enabled.
         columns:
           - column:
               name: workspace_id
@@ -188,7 +192,7 @@ databaseChangeLog:
                 nullable: false
               remarks: |
                 Enumeration of the resource type. Resource types are specific to the cloud
-                and resource; e.g., GCS_BUCKET, BIGQUERY_DATASET
+                and resource; e.g., GCS_BUCKET, BIG_QUERY_DATASET
           - column:
               name: cloning_instructions
               type: text

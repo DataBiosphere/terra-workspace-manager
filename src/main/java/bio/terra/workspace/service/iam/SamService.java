@@ -4,7 +4,7 @@ import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
-import bio.terra.workspace.service.StageService;
+import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;

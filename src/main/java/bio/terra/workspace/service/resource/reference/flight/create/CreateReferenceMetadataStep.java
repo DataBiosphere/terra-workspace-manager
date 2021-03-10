@@ -13,7 +13,7 @@ import bio.terra.workspace.service.resource.reference.ReferenceResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import org.springframework.http.HttpStatus;
 
-/** Stairway step to persist a data reference in WM's database. */
+/** Stairway step to persist a data reference in WSM's database. */
 public class CreateReferenceMetadataStep implements Step {
 
   private final ResourceDao resourceDao;

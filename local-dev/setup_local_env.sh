@@ -11,9 +11,9 @@ ENV=$1
 # Optional input
 TERRA_HELM_BRANCH=${2:-master}
 TERRA_HELMFILE_BRANCH=${3:-master}
-GIT_STRATEGY=${4:-http}
+GIT_PROTOCOL=${4:-http}
 
-if [ "$GIT_STRATEGY" = "http" ]; then
+if [ "$GIT_PROTOCOL" = "http" ]; then
     helmgit=https://github.com/broadinstitute/terra-helm
     helmfilegit=https://github.com/broadinstitute/terra-helmfile
 else

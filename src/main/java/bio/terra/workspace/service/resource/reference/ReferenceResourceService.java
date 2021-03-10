@@ -12,10 +12,12 @@ import bio.terra.workspace.service.resource.reference.flight.create.CreateRefere
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.List;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Nullable;
+import java.util.List;
+import java.util.UUID;
 
 @Component
 public class ReferenceResourceService {
@@ -48,6 +50,10 @@ public class ReferenceResourceService {
         String.format(
             "Create reference %s; id %s; name %s",
             resource.getResourceType(), resource.getResourceId(), resource.getName());
+
+    // The reason for separately passing in the ResourceType is to retrieve the class for this
+    // particular request. In the flight, when we get the request object from the input parameters,
+    // we can supply the right target class.
     JobBuilder createJob =
         jobService
             .newJob(
@@ -79,8 +85,8 @@ public class ReferenceResourceService {
   public void updateReferenceResource(
       UUID workspaceId,
       UUID resourceId,
-      String name,
-      String description,
+      @Nullable String name,
+      @Nullable String description,
       AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
@@ -109,7 +115,7 @@ public class ReferenceResourceService {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
-    return castReferenceResource(wsmResource);
+    return wsmResource.castReferenceResource();
   }
 
   public ReferenceResource getReferenceResourceByName(
@@ -118,7 +124,7 @@ public class ReferenceResourceService {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     WsmResource wsmResource = resourceDao.getResourceByName(workspaceId, name);
-    return castReferenceResource(wsmResource);
+    return wsmResource.castReferenceResource();
   }
 
   public List<ReferenceResource> enumerateReferences(
@@ -127,12 +133,5 @@ public class ReferenceResourceService {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return resourceDao.enumerateReferences(workspaceId, offset, limit);
-  }
-
-  private ReferenceResource castReferenceResource(WsmResource wsmResource) {
-    if (!(wsmResource instanceof ReferenceResource)) {
-      throw new InvalidMetadataException("Returned resource is not a reference");
-    }
-    return (ReferenceResource) wsmResource;
   }
 }
