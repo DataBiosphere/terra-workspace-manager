@@ -49,6 +49,28 @@ Perf Test
 ```
 ./gradlew  runTest --args="suites/BasicPerf.json /tmp/TR"
 ```
+
+#### Run resiliency test
+To run an resiliency test case, specify the path of the test configuration under the `suites` or `configs` directory as shown in the following examples.
+In order to run resiliency tests, an in-cluster namespaced Service Account with special RBAC role is required.
+Please refer to document on Test Runner Service Accounts for details:
+https://docs.google.com/document/d/1-fGZqtwEUVRMmfeZfUVrn2V3M2D_eonNLepuX0ve6nM/edit?usp=sharing
+ 
+
+Resiliency Test
+```
+./gradlew  runTest --args="suites/BasicResilency.json /tmp/TR"
+./gradlew  runTest --args="configs/resiliency/DeleteInitialPods.json /tmp/TR"
+```
+
+#### Script for rendering Kubernetes Service Account Secrets
+
+Please use the script `render-k8s-confiog.sh` with a valid namespace to render the in-cluster service account secrets for resiliency tests.
+Examples of valid namespaces are `ichang`, `zloery`, etc.
+
+```./render-k8s-config.sh <namespace>
+```
+
 #### Upload test results to Google Bucket
 To upload Test Runner results to a Google Bucket.
 The bucket location is specified as a parameter in an upload config file located in the `resources/uploadlists` directory
