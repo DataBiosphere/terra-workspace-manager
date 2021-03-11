@@ -51,7 +51,7 @@ Perf Test
 ```
 
 #### Run resiliency test
-To run an resiliency test case, specify the path of the test configuration under the `suites` or `configs` directory as shown in the following examples.
+To run a resiliency test case, specify the path of the test configuration under the `suites` or `configs` directory as shown in the following examples.
 In order to run resiliency tests, an in-cluster namespaced Service Account with special RBAC role is required.
 Please refer to document on Test Runner Service Accounts for details:
 https://docs.google.com/document/d/1-fGZqtwEUVRMmfeZfUVrn2V3M2D_eonNLepuX0ve6nM/edit?usp=sharing
