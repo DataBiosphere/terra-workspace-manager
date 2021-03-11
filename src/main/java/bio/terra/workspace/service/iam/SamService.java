@@ -293,9 +293,6 @@ public class SamService {
             .addRolesItem(IamRole.OWNER.toSamRole())
             .addMemberEmailsItem(ownerEmail));
     policyMap.put(
-        IamRole.EDITOR.toSamRole(),
-        new AccessPolicyMembership().addRolesItem(IamRole.EDITOR.toSamRole()));
-    policyMap.put(
         IamRole.APPLICATION.toSamRole(),
         new AccessPolicyMembership().addRolesItem(IamRole.APPLICATION.toSamRole()));
     policyMap.put(

@@ -67,9 +67,6 @@ public class GoogleCloudSyncStep implements Step {
       String applicationGroup =
           gcpGroupNameFromSamEmail(
               workingMap.get(WorkspaceFlightMapKeys.IAM_APPLICATION_GROUP_EMAIL, String.class));
-      String editorGroup =
-          gcpGroupNameFromSamEmail(
-              workingMap.get(WorkspaceFlightMapKeys.IAM_EDITOR_GROUP_EMAIL, String.class));
       String ownerGroup =
           gcpGroupNameFromSamEmail(
               workingMap.get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class));
@@ -77,7 +74,6 @@ public class GoogleCloudSyncStep implements Step {
       newBindings.addAll(bindingsForRole(IamRole.READER, readerGroup));
       newBindings.addAll(bindingsForRole(IamRole.WRITER, writerGroup));
       newBindings.addAll(bindingsForRole(IamRole.APPLICATION, applicationGroup));
-      newBindings.addAll(bindingsForRole(IamRole.EDITOR, editorGroup));
       newBindings.addAll(bindingsForRole(IamRole.OWNER, ownerGroup));
 
       // Add all existing bindings to ensure we don't accidentally clobber existing permissions.
