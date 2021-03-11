@@ -1,0 +1,13 @@
+
+quality {
+  // Don't break the build on code quality issues, at least until we get the backlog
+  // under control. Note that full console output is only available for strict = false.
+  strict = false
+
+  // Enable Spotbugs only for now -- others when build is clean
+  spotbugs = true
+  pmd = false
+  cpd = false
+  checkstyle = false
+  codenarc = false
+}

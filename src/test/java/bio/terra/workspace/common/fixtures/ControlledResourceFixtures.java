@@ -47,7 +47,7 @@ public class ControlledResourceFixtures {
                   .createdBefore(LocalDate.of(2017, 2, 18))
                   .addMatchesStorageClassItem(GoogleBucketDefaultStorageClass.STANDARD));
   // list must not be immutable if deserialization is to work
-  public static final List<GoogleBucketLifecycleRule> LIFECYCLE_RULES =
+  static final List<GoogleBucketLifecycleRule> LIFECYCLE_RULES =
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
   public static final String BUCKET_NAME = "my-bucket";
   public static final String BUCKET_LOCATION = "US-CENTRAL1";

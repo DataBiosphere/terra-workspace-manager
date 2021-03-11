@@ -23,6 +23,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceDbModel;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -40,6 +41,9 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
   private StoreControlledResourceMetadataStep storeGoogleBucketMetadataStep;
 
   @BeforeEach
+  @SuppressFBWarnings(
+      value = "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT",
+      justification = "Mock has side effect.")
   public void setup() {
     storeGoogleBucketMetadataStep =
         new StoreControlledResourceMetadataStep(mockControlledResourceDao, mockDataReferenceDao);
