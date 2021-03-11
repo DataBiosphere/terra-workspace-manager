@@ -24,8 +24,8 @@
     {
       "name": "ServiceStatus",
       "parameters": [90],
-      "numberOfUserJourneyThreadsToRun": 3,
-      "userJourneyThreadPoolSize": 3,
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 90,
       "expectedTimeForEachUnit": "SECONDS"
     }

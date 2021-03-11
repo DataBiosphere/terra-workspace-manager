@@ -28,7 +28,7 @@ public class ServiceStatus extends TestScript {
 
     @Override
     public void userJourney(TestUserSpecification testUser) throws Exception {
-        if (!delay.isNegative() && !delay.isZero()) TimeUnit.SECONDS.sleep(delay.getSeconds());
+        if (delay.getSeconds() > 0) TimeUnit.SECONDS.sleep(delay.getSeconds());
 
         logger.info("Starting test script");
         ApiClient apiClient = ClientTestUtils.getClientWithoutAccessToken(server);
