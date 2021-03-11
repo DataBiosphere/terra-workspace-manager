@@ -30,8 +30,6 @@ public class CloudSyncRoleMapping {
       ImmutableMap.of(
           // TODO: this should map to OWNER_PERMISSIONS if that's created.
           IamRole.OWNER, WRITER_PERMISSIONS,
-          // TODO: this should map to EDITOR_PERMISSIONS if that's created.
-          IamRole.EDITOR, WRITER_PERMISSIONS,
           // TODO: this should map to APPLICATION_PERMISSIONS if that's created.
           IamRole.APPLICATION, WRITER_PERMISSIONS,
           IamRole.WRITER, WRITER_PERMISSIONS,

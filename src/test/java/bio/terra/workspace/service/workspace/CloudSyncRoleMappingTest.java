@@ -21,13 +21,6 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
   }
 
   @Test
-  void editorPermissionsContainWriterPermissions() {
-    assertThat(
-        CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(IamRole.WRITER),
-        everyItem(in((CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(IamRole.EDITOR)))));
-  }
-
-  @Test
   void applicationPermissionsContainWriterPermissions() {
     assertThat(
         CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(IamRole.WRITER),
@@ -35,9 +28,9 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
   }
 
   @Test
-  void ownerPermissionsContainEditorPermissions() {
+  void ownerPermissionsContainWriterPermissions() {
     assertThat(
-        CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(IamRole.EDITOR),
+        CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(IamRole.WRITER),
         everyItem(in((CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(IamRole.OWNER)))));
   }
 }

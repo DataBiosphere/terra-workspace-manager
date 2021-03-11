@@ -39,9 +39,6 @@ public class SyncSamGroupsStep implements Step {
         WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL,
         samService.syncWorkspacePolicy(workspaceId, IamRole.OWNER, userReq));
     workingMap.put(
-        WorkspaceFlightMapKeys.IAM_EDITOR_GROUP_EMAIL,
-        samService.syncWorkspacePolicy(workspaceId, IamRole.EDITOR, userReq));
-    workingMap.put(
         WorkspaceFlightMapKeys.IAM_APPLICATION_GROUP_EMAIL,
         samService.syncWorkspacePolicy(workspaceId, IamRole.APPLICATION, userReq));
     workingMap.put(
