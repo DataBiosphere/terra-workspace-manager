@@ -10,6 +10,7 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
+import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,13 +25,15 @@ public class ControlledResourceService {
   private final JobService jobService;
   private final WorkspaceService workspaceService;
   private final ResourceDao resourceDao;
+  private final StageService stageService;
 
   @Autowired
   public ControlledResourceService(
-      JobService jobService, WorkspaceService workspaceService, ResourceDao resourceDao) {
+      JobService jobService, WorkspaceService workspaceService, ResourceDao resourceDao, StageService stageService) {
     this.jobService = jobService;
     this.workspaceService = workspaceService;
     this.resourceDao = resourceDao;
+    this.stageService = stageService;
   }
 
   public String createControlledResource(
@@ -39,7 +42,9 @@ public class ControlledResourceService {
       IamRole creationIamRole,
       JobControl jobControl,
       AuthenticatedUserRequest userRequest) {
-
+    stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
+    workspaceService.validateWorkspaceAndAction(
+            userRequest, resource.getWorkspaceId(), SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     final String jobDescription =
         String.format(
             "Create controlled resource %s; id %s; name %s",
@@ -61,7 +66,7 @@ public class ControlledResourceService {
 
   public ControlledResource getControlledResource(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
-    // TODO: Fix this based on resolution of permission model issue.
+    stageService.assertMcWorkspace(workspaceId, "getControlledResource");
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);

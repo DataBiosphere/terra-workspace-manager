@@ -41,7 +41,6 @@ public class ReferenceResourceService {
   @Traced
   public ReferenceResource createReferenceResource(
       ReferenceResource resource, AuthenticatedUserRequest userReq) {
-    // TODO: Fix this based on resolution of permission model issue.
     workspaceService.validateWorkspaceAndAction(
         userReq, resource.getWorkspaceId(), SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     resource.validate();
@@ -103,7 +102,6 @@ public class ReferenceResourceService {
    */
   public void deleteReferenceResource(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
-    // TODO: Fix this based on resolution of permission model issue.
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     resourceDao.deleteResource(workspaceId, resourceId);
@@ -111,7 +109,6 @@ public class ReferenceResourceService {
 
   public ReferenceResource getReferenceResource(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
-    // TODO: Fix this based on resolution of permission model issue.
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
@@ -120,7 +117,6 @@ public class ReferenceResourceService {
 
   public ReferenceResource getReferenceResourceByName(
       UUID workspaceId, String name, AuthenticatedUserRequest userReq) {
-    // TODO: Fix this based on resolution of permission model issue.
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     WsmResource wsmResource = resourceDao.getResourceByName(workspaceId, name);
@@ -129,7 +125,6 @@ public class ReferenceResourceService {
 
   public List<ReferenceResource> enumerateReferences(
       UUID workspaceId, int offset, int limit, AuthenticatedUserRequest userReq) {
-    // TODO: Fix this based on resolution of permission model issue.
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return resourceDao.enumerateReferences(workspaceId, offset, limit);
