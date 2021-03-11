@@ -27,12 +27,12 @@ Please refer to the GitHub Action workflow use cases in the `Run a test suite` s
 
 Integration Test
 ```
-./gradlew  runTest --args="configs/integration/BasicAuthenticated.json /tmp/TR"
+./gradlew runTest --args="configs/integration/BasicAuthenticated.json /tmp/TR"
 ```
 
 Perf Test
 ```
-./gradlew  runTest --args="configs/perf/BasicAuthenticated.json /tmp/TR"
+./gradlew runTest --args="configs/perf/BasicAuthenticated.json /tmp/TR"
 ```
 
 #### Run a test suite
@@ -42,12 +42,12 @@ See `test-runner-integration.yml` and `test-runner-nightly-perf.yml` in `.github
 
 Integration Test
 ```
-./gradlew  runTest --args="suites/BasicIntegration.json /tmp/TR"
+./gradlew runTest --args="suites/BasicIntegration.json /tmp/TR"
 ```
 
 Perf Test
 ```
-./gradlew  runTest --args="suites/BasicPerf.json /tmp/TR"
+./gradlew runTest --args="suites/BasicPerf.json /tmp/TR"
 ```
 
 #### Run resiliency test
@@ -58,9 +58,13 @@ https://docs.google.com/document/d/1-fGZqtwEUVRMmfeZfUVrn2V3M2D_eonNLepuX0ve6nM/
  
 
 Resiliency Test
+
+The first argument to the `runTest` task is the location of the resiliency test configs under the `src/main/resources` directory.
+The second argument is the directory to put the test results in.
+
 ```
-./gradlew  runTest --args="suites/BasicResilency.json /tmp/TR"
-./gradlew  runTest --args="configs/resiliency/DeleteInitialPods.json /tmp/TR"
+./gradlew runTest --args="suites/BasicResilency.json /tmp/TR"
+./gradlew runTest --args="configs/resiliency/DeleteInitialPods.json /tmp/TR"
 ```
 
 #### Script for rendering Kubernetes Service Account Secrets
