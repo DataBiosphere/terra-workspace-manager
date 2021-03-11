@@ -44,7 +44,7 @@ public class DeleteInitialPods extends DisruptiveScript {
 
         String componentLabelKey = "app.kubernetes.io/component";
         String componentLabelVal = "workspacemanager";
-        V1Deployment workspacemanagerDeployment = getDeployment(componentLabelKey, componentLabelVal).orElse(null);
+        V1Deployment workspacemanagerDeployment = KubernetesClientUtils.getApiDeployment(componentLabelKey, componentLabelVal);
         if (workspacemanagerDeployment == null) {
             throw new RuntimeException("WorkspaceManager deployment not found.");
         }
@@ -60,7 +60,7 @@ public class DeleteInitialPods extends DisruptiveScript {
         // delete original pods, and give them a chance to recover
         for (String podName : podsToDelete) {
             logger.debug("delete pod: {}", podName);
-            workspacemanagerDeployment = getDeployment(componentLabelKey, componentLabelVal).orElse(null);
+            workspacemanagerDeployment = KubernetesClientUtils.getApiDeployment(componentLabelKey, componentLabelVal);
             if (workspacemanagerDeployment != null) {
                 KubernetesClientUtils.printApiPods(workspacemanagerDeployment);
                 KubernetesClientUtils.deletePod(podName);
@@ -71,14 +71,5 @@ public class DeleteInitialPods extends DisruptiveScript {
         logger.debug("original pods:");
         podsToDelete.forEach(p -> logger.debug(p));
         KubernetesClientUtils.printApiPods(workspacemanagerDeployment);
-    }
-
-    private Optional<V1Deployment> getDeployment(String labelKey, String labelVal) throws ApiException {
-        return KubernetesClientUtils.listDeployments().stream()
-                .filter(
-                        deployment -> deployment.getMetadata().getLabels().containsKey(labelKey)
-                                && deployment.getMetadata().getLabels().get(labelKey).equals(labelVal)
-                )
-                .findFirst();
     }
 }

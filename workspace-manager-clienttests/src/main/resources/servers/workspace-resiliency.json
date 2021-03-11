@@ -16,7 +16,8 @@
     "containerName": "workspacemanager-deployment"
   },
   "deploymentScript": {},
-  "testRunnerServiceAccountFile": "testrunner-k8s-sa.json",
+  "testRunnerServiceAccountFile": "testrunner-iam-sa.json",
+  "testRunnerK8SServiceAccountFile": "testrunner-k8s-sa.json",
 
   "skipDeployment": true,
   "skipKubernetes": false

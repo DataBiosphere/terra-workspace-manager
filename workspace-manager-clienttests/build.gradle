@@ -6,7 +6,7 @@ plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
     // Terra Test Runner Plugin
-    id 'bio.terra.test-runner-plugin' version '0.0.3-20210304.145828-25'
+    id 'bio.terra.test-runner-plugin' version '0.0.3-20210311.184005-30'
 }
 
 repositories {
@@ -40,7 +40,7 @@ dependencies {
 
         workspacemanagerClient = "0.9.0-SNAPSHOT"
         datarepoClient = "1.0.155-SNAPSHOT"
-        testRunner = "0.0.3-20210304.145828-25"
+        testRunner = "0.0.3-20210311.184005-30"
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
     compileOnly "com.google.code.findbugs:annotations:${findbugsAnnotations}"
