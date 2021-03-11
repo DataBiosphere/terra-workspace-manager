@@ -69,7 +69,7 @@ public class CreateGcsBucketStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     final StorageCow storageCow = crlService.createStorageCow(userRequest);
-    final boolean deleted = storageCow.delete(resource.getBucketName());
+    storageCow.delete(resource.getBucketName());
     return StepResult.getStepResultSuccess();
   }
 

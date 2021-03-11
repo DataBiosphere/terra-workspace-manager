@@ -33,6 +33,7 @@ import bio.terra.workspace.service.job.exception.JobResponseException;
 import bio.terra.workspace.service.job.exception.JobUnauthorizedException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -91,6 +92,7 @@ public class JobService {
     }
   }
 
+  @SuppressFBWarnings(value = "NM_CLASS_NOT_EXCEPTION", justification = "Non-exception by design.")
   public static class JobResultOrException<T> {
     private T result;
     private RuntimeException exception;

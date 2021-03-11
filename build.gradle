@@ -9,6 +9,7 @@ plugins {
 	id "io.spring.dependency-management" version "1.0.10.RELEASE"
 	id "org.hidetake.swagger.generator" version "2.18.2"
 	id "org.springframework.boot" version "2.4.0"
+	id 'ru.vyarus.quality' version '4.5.0'
 }
 
 sourceCompatibility = JavaVersion.VERSION_11
@@ -262,3 +263,5 @@ swaggerSources.server.code.dependsOn tasks.unzipCloudResourceSchema
 swaggerSources.server.ui.dependsOn tasks.unzipCloudResourceSchema
 compileJava.dependsOn swaggerSources.server.code, spotlessApply, setGitVersion
 clean.dependsOn cleanSetGitVersion
+
+apply from: "$rootDir/gradle/quality.gradle"
