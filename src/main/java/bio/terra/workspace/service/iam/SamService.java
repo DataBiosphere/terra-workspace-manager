@@ -278,8 +278,8 @@ public class SamService {
   }
 
   /**
-   * Builds a policy list with a single provided owner and empty reader, writer, application, and
-   * editor policies. These policies use policy-based inheritance to also grant permissions on
+   * Builds a policy list with a single provided owner and empty reader, writer and application
+   * policies. These policies use policy-based inheritance to also grant permissions on
    * controlled resources created in this workspace.
    *
    * <p>This is a helper function for building the policy section of a request to create a workspace

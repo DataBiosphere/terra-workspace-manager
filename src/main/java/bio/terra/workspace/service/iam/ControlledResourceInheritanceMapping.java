@@ -26,7 +26,7 @@ public class ControlledResourceInheritanceMapping {
                   ControlledResourceIamRole.EDITOR,
                   ControlledResourceIamRole.WRITER,
                   ControlledResourceIamRole.READER),
-              IamRole.EDITOR,
+              IamRole.WRITER,
               ImmutableList.of(
                   ControlledResourceIamRole.EDITOR,
                   ControlledResourceIamRole.WRITER,
@@ -34,8 +34,6 @@ public class ControlledResourceInheritanceMapping {
               // Applications are granted permissions individually, not as a role.
               IamRole.APPLICATION,
               ImmutableList.of(),
-              IamRole.WRITER,
-              ImmutableList.of(ControlledResourceIamRole.WRITER, ControlledResourceIamRole.READER),
               IamRole.READER,
               ImmutableList.of(ControlledResourceIamRole.READER));
 
@@ -51,12 +49,10 @@ public class ControlledResourceInheritanceMapping {
               IamRole.OWNER,
               ImmutableList.of(
                   ControlledResourceIamRole.ASSIGNER, ControlledResourceIamRole.EDITOR),
-              IamRole.EDITOR,
-              ImmutableList.of(ControlledResourceIamRole.EDITOR),
-              // Applications, readers, and writers have no permissions on private resources.
-              IamRole.APPLICATION,
-              ImmutableList.of(),
               IamRole.WRITER,
+              ImmutableList.of(ControlledResourceIamRole.EDITOR),
+              // Applications and readers have no permissions on private resources.
+              IamRole.APPLICATION,
               ImmutableList.of(),
               IamRole.READER,
               ImmutableList.of());
@@ -66,12 +62,10 @@ public class ControlledResourceInheritanceMapping {
           ImmutableMap.of(
               IamRole.OWNER,
               ImmutableList.of(ControlledResourceIamRole.EDITOR),
-              IamRole.EDITOR,
-              ImmutableList.of(ControlledResourceIamRole.EDITOR),
-              // Applications, readers, and writers have no permissions on private resources.
-              IamRole.APPLICATION,
-              ImmutableList.of(),
               IamRole.WRITER,
+              ImmutableList.of(ControlledResourceIamRole.EDITOR),
+              // Applications and readers have no permissions on private resources.
+              IamRole.APPLICATION,
               ImmutableList.of(),
               IamRole.READER,
               ImmutableList.of());
