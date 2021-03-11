@@ -25,7 +25,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
       @JsonProperty("description") String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("assignedUser") String assignedUser,
-      @JsonProperty("controlledAccessType") ControlledAccessType controlledAccessType,
+      @JsonProperty("accessScope")  AccessScopeType accessScope,
+      @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("bucketName") String bucketName) {
 
     super(
@@ -35,7 +36,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
         description,
         cloningInstructions,
         assignedUser,
-        controlledAccessType);
+        accessScope,
+            managedBy);
     this.bucketName = bucketName;
     validate();
   }
@@ -107,7 +109,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
     private String description;
     private CloningInstructions cloningInstructions;
     private String assignedUser;
-    private ControlledAccessType controlledAccessType;
+    private AccessScopeType accessScope;
+    private ManagedByType managedBy;
     private String bucketName;
 
     public ControlledGcsBucketResource.Builder workspaceId(UUID workspaceId) {
@@ -146,8 +149,13 @@ public class ControlledGcsBucketResource extends ControlledResource {
       return this;
     }
 
-    public Builder controlledAccessType(ControlledAccessType controlledAccessType) {
-      this.controlledAccessType = controlledAccessType;
+    public Builder accessScope(AccessScopeType accessScope) {
+      this.accessScope = accessScope;
+      return this;
+    }
+
+    public Builder managedBy(ManagedByType managedBy) {
+      this.managedBy = managedBy;
       return this;
     }
 
@@ -160,7 +168,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
           description,
           cloningInstructions,
           assignedUser,
-          controlledAccessType,
+          accessScope,
+          managedBy,
           bucketName);
     }
   }

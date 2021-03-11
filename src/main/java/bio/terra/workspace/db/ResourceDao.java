@@ -1,18 +1,15 @@
 package bio.terra.workspace.db;
 
-import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
-import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCE;
-import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
-
 import bio.terra.workspace.db.exception.CloudContextRequiredException;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
-import bio.terra.workspace.service.resource.controlled.ControlledAccessType;
+import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -22,10 +19,6 @@ import bio.terra.workspace.service.resource.reference.ReferenceDataRepoSnapshotR
 import bio.terra.workspace.service.resource.reference.ReferenceGcsBucketResource;
 import bio.terra.workspace.service.resource.reference.ReferenceResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +32,15 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
+import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCE;
+import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
+
 @Component
 public class ResourceDao {
   private static final Logger logger = LoggerFactory.getLogger(ResourceDao.class);
@@ -47,7 +49,7 @@ public class ResourceDao {
   private static final String RESOURCE_SELECT_SQL =
       "SELECT workspace_id, cloud_platform, resource_id, name, description, "
           + "stewardship_type, resource_type, cloning_instructions, attributes,"
-          + " access, associated_app, assigned_user"
+          + " access_scope, managed_by, associated_app, assigned_user"
           + " FROM resource WHERE workspace_id = :workspace_id ";
 
   private static final RowMapper<DbResource> DB_RESOURCE_ROW_MAPPER =
@@ -62,9 +64,13 @@ public class ResourceDao {
             .resourceType(WsmResourceType.fromSql(rs.getString("resource_type")))
             .cloningInstructions(CloningInstructions.fromSql(rs.getString("cloning_instructions")))
             .attributes(rs.getString("attributes"))
-            .accessType(
-                Optional.ofNullable(rs.getString("access"))
-                    .map(ControlledAccessType::fromSql)
+            .accessScope(
+                Optional.ofNullable(rs.getString("access_scope"))
+                    .map(AccessScopeType::fromSql)
+                    .orElse(null))
+            .managedBy(
+                Optional.ofNullable(rs.getString("managed_by"))
+                    .map(ManagedByType::fromSql)
                     .orElse(null))
             .associatedApp(
                 Optional.ofNullable(rs.getString("associated_app"))
@@ -181,6 +187,7 @@ public class ResourceDao {
         resource.attributesToJson(),
         Optional.empty(),
         Optional.empty(),
+        Optional.empty(),
         Optional.empty());
   }
 
@@ -244,7 +251,8 @@ public class ResourceDao {
         controlledResource.getCloningInstructions(),
         controlledResource.attributesToJson(),
         // TODO: add this to ControlledResource
-        Optional.of(ControlledAccessType.USER_SHARED),
+        Optional.of(AccessScopeType.ACCESS_SCOPE_SHARED),
+        Optional.of(ManagedByType.MANAGED_BY_USER),
         // TODO: add associated app to ControlledResource
         Optional.empty(),
         // TODO: rename this
@@ -260,7 +268,8 @@ public class ResourceDao {
       WsmResourceType resourceType,
       CloningInstructions cloningInstructions,
       String attributes,
-      Optional<ControlledAccessType> accessType,
+      Optional<AccessScopeType> accessScope,
+      Optional<ManagedByType> managedBy,
       Optional<UUID> associatedApp,
       Optional<String> assignedUser) {
 
@@ -284,10 +293,11 @@ public class ResourceDao {
 
     final String sql =
         "INSERT INTO resource (workspace_id, cloud_platform, resource_id, name, description, stewardship_type,"
-            + " resource_type, cloning_instructions, attributes, access, associated_app, assigned_user)"
+            + " resource_type, cloning_instructions, attributes,"
+            + " access_scope, managed_by, associated_app, assigned_user)"
             + " VALUES (:workspace_id, :cloud_platform, :resource_id, :name, :description, :stewardship_type,"
             + " :resource_type, :cloning_instructions, cast(:attributes AS json),"
-            + " :access, :associated_app, :assigned_user)";
+            + " :access_scope, managed_by, :associated_app, :assigned_user)";
 
     final var params =
         new MapSqlParameterSource()
@@ -300,7 +310,8 @@ public class ResourceDao {
             .addValue("resource_type", resourceType.toSql())
             .addValue("cloning_instructions", cloningInstructions.toSql())
             .addValue("attributes", attributes)
-            .addValue("access", accessType.map(ControlledAccessType::toSql).orElse(null))
+            .addValue("access_scope", accessScope.map(AccessScopeType::toSql).orElse(null))
+            .addValue("managed_by", managedBy.map(ManagedByType::toSql).orElse(null))
             .addValue("associated_app", associatedApp.map(UUID::toString).orElse(null))
             .addValue("assigned_user", assignedUser.orElse(null));
 

@@ -8,10 +8,9 @@ import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+
 import java.util.Optional;
 import java.util.UUID;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 /**
  * Class for all controlled resource fields that are not common to all resource stewardship types
@@ -19,7 +18,8 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
  */
 public abstract class ControlledResource extends WsmResource {
   private final String assignedUser;
-  private final ControlledAccessType controlledAccessType;
+  private final AccessScopeType accessScope;
+  private final ManagedByType managedBy;
 
   public ControlledResource(
       UUID workspaceId,
@@ -28,10 +28,12 @@ public abstract class ControlledResource extends WsmResource {
       String description,
       CloningInstructions cloningInstructions,
       String assignedUser,
-      ControlledAccessType controlledAccessType) {
+      AccessScopeType accessScope,
+      ManagedByType managedBy) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
     this.assignedUser = assignedUser;
-    this.controlledAccessType = controlledAccessType;
+    this.accessScope = accessScope;
+    this.managedBy = managedBy;
   }
 
   public ControlledResource(DbResource dbResource) {
@@ -40,7 +42,8 @@ public abstract class ControlledResource extends WsmResource {
       throw new InvalidMetadataException("Expected CONTROLLED");
     }
     this.assignedUser = dbResource.getAssignedUser().orElse(null);
-    this.controlledAccessType = dbResource.getAccessType().orElse(null);
+    this.accessScope = dbResource.getAccessScope().orElse(null);
+    this.managedBy = dbResource.getManagedBy().orElse(null);
   }
 
   @Override
@@ -52,8 +55,12 @@ public abstract class ControlledResource extends WsmResource {
     return Optional.ofNullable(assignedUser);
   }
 
-  public ControlledAccessType getControlledAccessType() {
-    return controlledAccessType;
+  public AccessScopeType getAccessScope() {
+    return accessScope;
+  }
+
+  public ManagedByType getManagedBy() {
+    return managedBy;
   }
 
   @Override
@@ -61,12 +68,11 @@ public abstract class ControlledResource extends WsmResource {
     super.validate();
     if (getResourceType() == null
         || attributesToJson() == null
-        || getControlledAccessType() == null) {
+        || getAccessScope() == null
+        || getManagedBy() == null) {
       throw new MissingRequiredFieldException("Missing required field for ControlledResource.");
     }
-    if (getAssignedUser().isPresent()
-        && (getControlledAccessType() == ControlledAccessType.APP_SHARED
-            || getControlledAccessType() == ControlledAccessType.USER_SHARED)) {
+    if (getAssignedUser().isPresent() && getAccessScope() == AccessScopeType.ACCESS_SCOPE_SHARED) {
       throw new InconsistentFieldsException("Assigned user on SHARED resource");
     }
   }
@@ -87,24 +93,22 @@ public abstract class ControlledResource extends WsmResource {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-
     if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
 
     ControlledResource that = (ControlledResource) o;
 
-    return new EqualsBuilder()
-        .appendSuper(super.equals(o))
-        .append(assignedUser, that.assignedUser)
-        .append(controlledAccessType, that.controlledAccessType)
-        .isEquals();
+    if (assignedUser != null ? !assignedUser.equals(that.assignedUser) : that.assignedUser != null) return false;
+    if (accessScope != that.accessScope) return false;
+    return managedBy == that.managedBy;
   }
 
   @Override
   public int hashCode() {
-    return new HashCodeBuilder(17, 37)
-        .appendSuper(super.hashCode())
-        .append(assignedUser)
-        .append(controlledAccessType)
-        .toHashCode();
+    int result = super.hashCode();
+    result = 31 * result + (assignedUser != null ? assignedUser.hashCode() : 0);
+    result = 31 * result + (accessScope != null ? accessScope.hashCode() : 0);
+    result = 31 * result + (managedBy != null ? managedBy.hashCode() : 0);
+    return result;
   }
 }

@@ -1,7 +1,8 @@
 package bio.terra.workspace.db.model;
 
 import bio.terra.workspace.service.resource.WsmResourceType;
-import bio.terra.workspace.service.resource.controlled.ControlledAccessType;
+import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -26,7 +27,8 @@ public class DbResource {
   private CloningInstructions cloningInstructions;
   private String attributes;
   // controlled resource fields
-  @Nullable private ControlledAccessType accessType;
+  @Nullable private AccessScopeType accessScope;
+  @Nullable private ManagedByType managedBy;
   @Nullable private UUID associatedApp;
   @Nullable private String assignedUser;
 
@@ -111,12 +113,21 @@ public class DbResource {
     return this;
   }
 
-  public Optional<ControlledAccessType> getAccessType() {
-    return Optional.ofNullable(accessType);
+  public Optional<AccessScopeType> getAccessScope() {
+    return Optional.ofNullable(accessScope);
   }
 
-  public DbResource accessType(ControlledAccessType accessType) {
-    this.accessType = accessType;
+  public DbResource accessScope(@Nullable AccessScopeType accessScope) {
+    this.accessScope = accessScope;
+    return this;
+  }
+
+  public Optional<ManagedByType> getManagedBy() {
+    return Optional.ofNullable(managedBy);
+  }
+
+  public DbResource managedBy(@Nullable ManagedByType managedBy) {
+    this.managedBy = managedBy;
     return this;
   }
 

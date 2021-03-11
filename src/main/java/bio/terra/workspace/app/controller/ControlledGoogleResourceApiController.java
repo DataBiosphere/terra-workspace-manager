@@ -9,10 +9,11 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
-import bio.terra.workspace.service.resource.controlled.ControlledAccessType;
+import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,12 +59,14 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
             .workspaceId(workspaceId)
             .name(body.getCommon().getName())
             .description(body.getCommon().getDescription())
-            .cloningInstructions(CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(Optional.ofNullable(body.getCommon().getPrivateResourceUser())
-                .map(PrivateResourceUser::getUserName)
-                .orElse(null))
-            .controlledAccessType(ControlledAccessType.fromApi(
-                body.getCommon().getAccessScope(), body.getCommon().getManagedBy()))
+            .cloningInstructions(
+                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
+            .assignedUser(
+                Optional.ofNullable(body.getCommon().getPrivateResourceUser())
+                    .map(PrivateResourceUser::getUserName)
+                    .orElse(null))
+            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
+            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
             .bucketName(body.getGoogleBucket().getName())
             .build();
 

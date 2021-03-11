@@ -1,8 +1,5 @@
 package bio.terra.workspace.common.fixtures;
 
-import static bio.terra.workspace.service.resource.controlled.ControlledAccessType.USER_PRIVATE;
-import static bio.terra.workspace.service.resource.controlled.ControlledAccessType.USER_SHARED;
-
 import bio.terra.workspace.generated.model.GoogleBucketCreationParameters;
 import bio.terra.workspace.generated.model.GoogleBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycle;
@@ -10,8 +7,11 @@ import bio.terra.workspace.generated.model.GoogleBucketLifecycleRule;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleAction;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleActionType;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleCondition;
+import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,8 +74,11 @@ public class ControlledResourceFixtures {
           RESOURCE_DESCRIPTION,
           CLONING_INSTRUCTIONS,
           OWNER_EMAIL,
-          USER_PRIVATE,
+          AccessScopeType.ACCESS_SCOPE_PRIVATE,
+          ManagedByType.MANAGED_BY_USER,
           BUCKET_NAME);
+
+  private ControlledResourceFixtures() {}
 
   public static ControlledGcsBucketResource makeControlledGcsBucketResource(UUID workspaceId) {
     UUID resourceId = UUID.randomUUID();
@@ -86,9 +89,8 @@ public class ControlledResourceFixtures {
         RESOURCE_DESCRIPTION,
         CLONING_INSTRUCTIONS,
         null,
-        USER_SHARED,
+        AccessScopeType.ACCESS_SCOPE_SHARED,
+        ManagedByType.MANAGED_BY_USER,
         BUCKET_NAME);
   }
-
-  private ControlledResourceFixtures() {}
 }

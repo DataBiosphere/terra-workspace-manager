@@ -212,12 +212,19 @@ databaseChangeLog:
                 separate referenced_resource table that would have a single column for its
                 metadata.
           - column:
-              name: access
+              name: access_scope
               type: text
               remarks: |
                 Must be valid, non-null for controlled resources. Must be null for reference resources.
-                Enum of the possible access types of the controlled resource. Values are
-                USER_SHARED, USER_PRIVATE, APP_SHARED, APP_PRIVATE
+                Enum of the possible access scopes of the controlled resource. Values are
+                ACCESS_SHARED, ACCESS_PRIVATE
+          - column:
+              name: managed_by
+              type: text
+              remarks: |
+                Must be valid, non-null for controlled resources. Must be null for reference resources.
+                Enum of the possible managers of the controlled resource. Values are
+                USER, APPLICATION
           - column:
               name: associated_app
               type: text
