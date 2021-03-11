@@ -6,10 +6,9 @@ import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-
-import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 /**
  * This class is used to have a common structure to hold the database view of a resource. It

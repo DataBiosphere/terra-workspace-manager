@@ -1,5 +1,11 @@
 package bio.terra.workspace.service.resource.reference;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
@@ -20,6 +26,8 @@ import bio.terra.workspace.service.resource.reference.exception.InvalidReference
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -28,15 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 
 class ReferenceResourceServiceTest extends BaseUnitTest {
   private static final Logger logger = LoggerFactory.getLogger(ReferenceResourceServiceTest.class);
@@ -378,7 +377,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
     void testInvalidCast() {
       referenceResource = makeGcsBucketResource();
       assertThrows(
-              InvalidMetadataException.class, () -> referenceResource.castToBigQueryDatasetResource());
+          InvalidMetadataException.class, () -> referenceResource.castToBigQueryDatasetResource());
 
       WsmResource wsmResource = referenceResource;
       assertThrows(InvalidMetadataException.class, wsmResource::castControlledResource);
@@ -497,7 +496,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
     void testInvalidCast() {
       referenceResource = makeBigQueryResource();
       assertThrows(
-              InvalidMetadataException.class, () -> referenceResource.castToGcsBucketResource());
+          InvalidMetadataException.class, () -> referenceResource.castToGcsBucketResource());
 
       WsmResource wsmResource = referenceResource;
       assertThrows(InvalidMetadataException.class, wsmResource::castControlledResource);

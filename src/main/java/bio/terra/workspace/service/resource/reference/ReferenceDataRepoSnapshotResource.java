@@ -11,7 +11,6 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
-
 import java.util.Optional;
 import java.util.UUID;
 
@@ -127,7 +126,8 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
       return this;
     }
 
-    public ReferenceDataRepoSnapshotResource.Builder cloningInstructions(CloningInstructions cloningInstructions) {
+    public ReferenceDataRepoSnapshotResource.Builder cloningInstructions(
+        CloningInstructions cloningInstructions) {
       this.cloningInstructions = cloningInstructions;
       return this;
     }
@@ -145,14 +145,13 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
     public ReferenceDataRepoSnapshotResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
       return new ReferenceDataRepoSnapshotResource(
-              workspaceId,
-              Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
-              name,
-              description,
-              cloningInstructions,
-              instanceName,
-              snapshotId);
+          workspaceId,
+          Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
+          name,
+          description,
+          cloningInstructions,
+          instanceName,
+          snapshotId);
     }
   }
-
 }

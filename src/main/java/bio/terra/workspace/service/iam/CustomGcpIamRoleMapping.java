@@ -91,13 +91,13 @@ public class CustomGcpIamRoleMapping {
           new CustomGcpIamRole(
               WsmResourceType.BIG_QUERY_DATASET,
               IamRole.READER,
-                  BIG_QUERY_DATASET_READER_PERMISSIONS),
+              BIG_QUERY_DATASET_READER_PERMISSIONS),
           new CustomGcpIamRole(
               WsmResourceType.BIG_QUERY_DATASET,
               IamRole.WRITER,
-                  BIG_QUERY_DATASET_WRITER_PERMISSIONS),
+              BIG_QUERY_DATASET_WRITER_PERMISSIONS),
           new CustomGcpIamRole(
               WsmResourceType.BIG_QUERY_DATASET,
               IamRole.OWNER,
-                  BIG_QUERY_DATASET_OWNER_PERMISSIONS));
+              BIG_QUERY_DATASET_OWNER_PERMISSIONS));
 }

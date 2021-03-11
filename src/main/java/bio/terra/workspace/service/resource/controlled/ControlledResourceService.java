@@ -13,10 +13,9 @@ import bio.terra.workspace.service.resource.controlled.flight.create.CreateContr
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.UUID;
 
 /** CRUD methods for controlled objects. */
 @Component
@@ -29,7 +28,10 @@ public class ControlledResourceService {
 
   @Autowired
   public ControlledResourceService(
-      JobService jobService, WorkspaceService workspaceService, ResourceDao resourceDao, StageService stageService) {
+      JobService jobService,
+      WorkspaceService workspaceService,
+      ResourceDao resourceDao,
+      StageService stageService) {
     this.jobService = jobService;
     this.workspaceService = workspaceService;
     this.resourceDao = resourceDao;
@@ -44,7 +46,7 @@ public class ControlledResourceService {
       AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
     workspaceService.validateWorkspaceAndAction(
-            userRequest, resource.getWorkspaceId(), SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+        userRequest, resource.getWorkspaceId(), SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     final String jobDescription =
         String.format(
             "Create controlled resource %s; id %s; name %s",

@@ -8,7 +8,6 @@ import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-
 import java.util.Optional;
 import java.util.UUID;
 
@@ -98,7 +97,8 @@ public abstract class ControlledResource extends WsmResource {
 
     ControlledResource that = (ControlledResource) o;
 
-    if (assignedUser != null ? !assignedUser.equals(that.assignedUser) : that.assignedUser != null) return false;
+    if (assignedUser != null ? !assignedUser.equals(that.assignedUser) : that.assignedUser != null)
+      return false;
     if (accessScope != that.accessScope) return false;
     return managedBy == that.managedBy;
   }

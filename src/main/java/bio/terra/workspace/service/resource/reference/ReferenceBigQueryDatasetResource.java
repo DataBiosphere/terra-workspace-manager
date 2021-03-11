@@ -12,7 +12,6 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
-
 import java.util.Optional;
 import java.util.UUID;
 
@@ -102,7 +101,6 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
     return new ReferenceBigQueryDatasetResource.Builder();
   }
 
-
   public static class Builder {
     private UUID workspaceId;
     private UUID resourceId;
@@ -132,7 +130,8 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
       return this;
     }
 
-    public ReferenceBigQueryDatasetResource.Builder cloningInstructions(CloningInstructions cloningInstructions) {
+    public ReferenceBigQueryDatasetResource.Builder cloningInstructions(
+        CloningInstructions cloningInstructions) {
       this.cloningInstructions = cloningInstructions;
       return this;
     }
@@ -150,13 +149,13 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
     public ReferenceBigQueryDatasetResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
       return new ReferenceBigQueryDatasetResource(
-              workspaceId,
-              Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
-              name,
-              description,
-              cloningInstructions,
-              projectId,
-              datasetName);
+          workspaceId,
+          Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
+          name,
+          description,
+          cloningInstructions,
+          projectId,
+          datasetName);
     }
   }
 }

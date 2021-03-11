@@ -10,18 +10,6 @@ import org.junit.jupiter.api.Test;
 public class ReferenceValidationUtilsTest extends BaseUnitTest {
 
   @Test
-  public void testInvalidCharInDataRepoName() {
-    assertThrows(
-        InvalidReferenceException.class,
-        () -> ValidationUtils.validateDataRepoName("invalid@@@name"));
-  }
-
-  @Test
-  public void validCharInDataRepoNameOk() {
-    ValidationUtils.validateDataRepoName("valid_name");
-  }
-
-  @Test
   public void testInvalidCharInBucketName() {
     assertThrows(
         InvalidReferenceException.class,
@@ -43,10 +31,5 @@ public class ReferenceValidationUtilsTest extends BaseUnitTest {
   @Test
   public void validBqDatasetNameOk() {
     ValidationUtils.validateBqDatasetName("valid_bigquery_name_1");
-  }
-
-  @Test
-  public void testEmptyDataRepoName() {
-    assertThrows(InvalidReferenceException.class, () -> ValidationUtils.validateDataRepoName(""));
   }
 }

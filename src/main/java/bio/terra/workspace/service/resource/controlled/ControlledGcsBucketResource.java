@@ -10,7 +10,6 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,7 +24,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
       @JsonProperty("description") String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("assignedUser") String assignedUser,
-      @JsonProperty("accessScope")  AccessScopeType accessScope,
+      @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("bucketName") String bucketName) {
 
@@ -37,7 +36,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
         cloningInstructions,
         assignedUser,
         accessScope,
-            managedBy);
+        managedBy);
     this.bucketName = bucketName;
     validate();
   }

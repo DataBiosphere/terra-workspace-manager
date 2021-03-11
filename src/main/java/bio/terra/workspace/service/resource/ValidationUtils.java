@@ -1,11 +1,10 @@
 package bio.terra.workspace.service.resource;
 
 import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.regex.Pattern;
 
 /** A collection of static validation functions */
 public class ValidationUtils {
@@ -44,8 +43,10 @@ public class ValidationUtils {
   }
 
   public static void validateResourceName(String name) {
-    // TODO: Decide what name validation we should do for resource names. My suggestion is to match TDR
-    //  with a 512 character name that cannot being with an underscore. That gives us room to generate
+    // TODO: Decide what name validation we should do for resource names. My suggestion is to match
+    // TDR
+    //  with a 512 character name that cannot being with an underscore. That gives us room to
+    // generate
     //  names based on the resource name. It also is roomy.
   }
 }

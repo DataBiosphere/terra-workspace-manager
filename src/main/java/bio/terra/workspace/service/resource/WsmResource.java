@@ -8,7 +8,6 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.reference.ReferenceResource;
 import com.google.common.base.Strings;
-
 import java.util.UUID;
 
 /**
@@ -25,7 +24,8 @@ public abstract class WsmResource {
   /**
    * construct from individual fields
    *
-   * @param workspaceId unique identifier of the workspace where this resource lives (or is going to live)
+   * @param workspaceId unique identifier of the workspace where this resource lives (or is going to
+   *     live)
    * @param resourceId unique identifier of the resource
    * @param name resource name; unique within a workspace
    * @param description free-form text description of the resource
@@ -133,10 +133,13 @@ public abstract class WsmResource {
 
     WsmResource that = (WsmResource) o;
 
-    if (workspaceId != null ? !workspaceId.equals(that.workspaceId) : that.workspaceId != null) return false;
-    if (resourceId != null ? !resourceId.equals(that.resourceId) : that.resourceId != null) return false;
+    if (workspaceId != null ? !workspaceId.equals(that.workspaceId) : that.workspaceId != null)
+      return false;
+    if (resourceId != null ? !resourceId.equals(that.resourceId) : that.resourceId != null)
+      return false;
     if (name != null ? !name.equals(that.name) : that.name != null) return false;
-    if (description != null ? !description.equals(that.description) : that.description != null) return false;
+    if (description != null ? !description.equals(that.description) : that.description != null)
+      return false;
     return cloningInstructions == that.cloningInstructions;
   }
 
