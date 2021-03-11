@@ -13,8 +13,8 @@ env:
       pass: ${DATABASE_USER_PASSWORD:wmpwd}
       user: ${DATABASE_USER:wmuser}
   tracing:
-    exportEnabled: ${CLOUD_TRACE_ENABLED:true}
-    samplingRate: ${SAMPLING_PROBABILITY:0.1}
+    exportEnabled: ${CLOUD_TRACE_ENABLED:false}
+    samplingRate: ${SAMPLING_PROBABILITY:0}
   urls: # While we've traditionally thought of these as env specific and ok to hardcode, with kubernetes they may change
     sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org/}
     terra-datarepo: ${TERRA_DATAREPO_URL:https://jade.datarepo-dev.broadinstitute.org}
