@@ -106,10 +106,10 @@ class WorkspaceIntegrationTest extends BaseIntegrationTest {
   void deleteWorkspace(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
-    WorkspaceResponse<CreatedWorkspace> workspaceResponse = createDefaultWorkspace(workspaceId);
+    createDefaultWorkspace(workspaceId);
 
     String userEmail = testConfig.getUserEmail();
-    String token = authService.getAuthToken(userEmail);
+    authService.getAuthToken(userEmail);
     String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId;
 
     WorkspaceResponse<?> deleteWorkspaceResponse =
@@ -330,7 +330,7 @@ class WorkspaceIntegrationTest extends BaseIntegrationTest {
         This ticket will implement caching for auth token using Caffeine AS-428
     */
     String userEmail = testConfig.getUserEmail();
-    String token = authService.getAuthToken(userEmail);
+    authService.getAuthToken(userEmail);
     String workspaceBaseUrl = testConfig.getWsmWorkspacesBaseUrl();
 
     for (UUID uuid : workspaceIds) {

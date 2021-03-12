@@ -9,6 +9,7 @@ plugins {
 	id "io.spring.dependency-management" version "1.0.10.RELEASE"
 	id "org.hidetake.swagger.generator" version "2.18.2"
 	id "org.springframework.boot" version "2.4.0"
+	id 'ru.vyarus.quality' version '4.5.0'
 }
 
 sourceCompatibility = JavaVersion.VERSION_11
@@ -29,13 +30,6 @@ allprojects {
 			mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
 		}
 		dependencies {
-			dependencySet(group: "io.opencensus", version: "0.28.+") {
-				entry "opencensus-exporter-trace-stackdriver"
-				entry "opencensus-api"
-				entry "opencensus-contrib-spring"
-				entry "opencensus-impl"
-			}
-
 			dependency group: "bio.terra.cloud-resource-lib", name: "cloud-resource-schema", version: "0.4.0"
 			dependency group: "io.swagger.core.v3", name: "swagger-annotations", version: "2.1.6"
 			dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.23"
@@ -69,12 +63,13 @@ dependencies {
 	// Terra deps
 	implementation group: "bio.terra", name: "datarepo-client", version: "1.0.1-SNAPSHOT"
 	implementation group: "bio.terra", name: "stairway", version: "0.0.40-SNAPSHOT"
-	implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.18-SNAPSHOT"
+	implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.25-SNAPSHOT"
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-billing', version: '0.4.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery', version: '0.4.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager', version: '0.4.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-serviceusage', version: '0.4.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-storage', version: '0.4.0'
+	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-iam', version: '0.2.0'
 	implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.12", version: "0.1-61135c7"
 	implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
 
@@ -85,12 +80,6 @@ dependencies {
 	implementation group: "org.liquibase", name: "liquibase-core", version: "4.2.1"
 	implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
 	runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.2.18"
-
-	// Tracing deps
-	implementation group: "io.opencensus", name: "opencensus-api"
-	implementation group: "io.opencensus", name: "opencensus-contrib-spring"
-	implementation group: "io.opencensus", name: "opencensus-exporter-trace-stackdriver"
-	runtimeOnly group: "io.opencensus", name: "opencensus-impl"
 
 	// Deps whose versions are controlled by Spring
 	implementation group: "javax.validation", name: "validation-api"
@@ -261,3 +250,5 @@ swaggerSources.server.code.dependsOn tasks.unzipCloudResourceSchema
 swaggerSources.server.ui.dependsOn tasks.unzipCloudResourceSchema
 compileJava.dependsOn swaggerSources.server.code, spotlessApply, setGitVersion
 clean.dependsOn cleanSetGitVersion
+
+apply from: "$rootDir/gradle/quality.gradle"

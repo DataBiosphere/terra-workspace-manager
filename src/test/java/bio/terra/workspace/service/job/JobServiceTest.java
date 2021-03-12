@@ -12,6 +12,7 @@ import bio.terra.workspace.generated.model.JobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +36,7 @@ class JobServiceTest extends BaseUnitTest {
   @MockBean private SamService mockSamService;
 
   @BeforeEach
+  @SuppressFBWarnings(value = "DE_MIGHT_IGNORE", justification = "Mockito flakiness")
   void setup() {
     try {
       Mockito.doReturn(true).when(mockSamService.isAuthorized(any(), any(), any(), any()));
