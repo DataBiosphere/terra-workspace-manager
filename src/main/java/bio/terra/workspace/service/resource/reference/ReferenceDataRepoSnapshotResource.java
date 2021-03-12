@@ -90,7 +90,7 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
     super.validate();
     if (Strings.isNullOrEmpty(getInstanceName()) || Strings.isNullOrEmpty(getSnapshotId())) {
       throw new MissingRequiredFieldException(
-          "Missing required field for ReferenceApiDataRepoSnapshotAttributes.");
+          "Missing required field for ReferenceDataRepoSnapshotAttributes.");
     }
   }
 

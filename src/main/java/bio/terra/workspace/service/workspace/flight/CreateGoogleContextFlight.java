@@ -45,7 +45,7 @@ public class CreateGoogleContextFlight extends Flight {
             INITIAL_INTERVAL_SECONDS, MAX_INTERVAL_SECONDS, MAX_OPERATION_TIME_SECONDS);
     addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()));
     addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), retryRule);
-    addStep(new StoreGoogleContextStep(appContext.getWorkspaceDao()), retryRule);
+    addStep(new StoreGcpContextStep(appContext.getWorkspaceDao()), retryRule);
     addStep(new SyncSamGroupsStep(appContext.getSamService()), retryRule);
     addStep(new GoogleCloudSyncStep(crl.getCloudResourceManagerCow()), retryRule);
     addStep(new SetGoogleContextOutputStep());

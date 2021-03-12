@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace.flight;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -19,7 +19,7 @@ public class SetGoogleContextOutputStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
+    String projectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
     GcpCloudContext cloudContext = new GcpCloudContext(projectId);
     FlightUtils.setResponse(flightContext, cloudContext, HttpStatus.OK);
     return StepResult.getStepResultSuccess();

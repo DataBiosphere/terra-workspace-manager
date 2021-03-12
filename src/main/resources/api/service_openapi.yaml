@@ -1030,7 +1030,7 @@ components:
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
         gcpContext:
-          description: Gcp context, if one exists
+          description: GCP context, if one exists
           $ref: '#/components/schemas/GcpContext'
         # When we have an Azure context, we can put it right here.
         # No point making a complex structure when there will be only a few of these
@@ -1059,7 +1059,7 @@ components:
 
     GcpContext:
       type: object
-      description: The Gcp cloud context associated with a workspace.
+      description: The GCP cloud context associated with a workspace.
       properties:
         projectId:
           description: The ID of Gcp Project associated with the workspace.
@@ -1079,6 +1079,7 @@ components:
           $ref: '#/components/schemas/GcpContext'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
+
     CreateDataRepoSnapshotReferenceRequestBody:
       type: object
       description: A request to create a reference to a Data Repo snapshot.
@@ -1417,6 +1418,7 @@ components:
             when there are at least N versions (including the live version) newer than this version
             of the object.
           type: integer
+
   responses:
     ### DEPRECATED RESPONSES ###
     # TODO(PF-404): remove this in favor of reference-type specific objects.

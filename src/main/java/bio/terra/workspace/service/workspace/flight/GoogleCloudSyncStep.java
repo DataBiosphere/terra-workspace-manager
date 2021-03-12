@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace.flight;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.stairway.FlightContext;
@@ -47,7 +47,7 @@ public class GoogleCloudSyncStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    String gcpProjectName = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
+    String gcpProjectName = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
     FlightMap workingMap = flightContext.getWorkingMap();
     try {
       Policy currentPolicy =

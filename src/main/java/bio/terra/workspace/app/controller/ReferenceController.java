@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.generated.controller.ReferenceApi;
+<<<<<<< HEAD
 import bio.terra.workspace.generated.model.ApiBigQueryDatasetReference;
 import bio.terra.workspace.generated.model.ApiCreateBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
@@ -8,6 +9,15 @@ import bio.terra.workspace.generated.model.ApiCreateGcsBucketReferenceRequestBod
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotReference;
 import bio.terra.workspace.generated.model.ApiGcsBucketReference;
 import bio.terra.workspace.generated.model.ApiUpdateDataReferenceRequestBody;
+=======
+import bio.terra.workspace.generated.model.BigQueryDatasetReference;
+import bio.terra.workspace.generated.model.CreateBigQueryDatasetReferenceRequestBody;
+import bio.terra.workspace.generated.model.CreateDataRepoSnapshotReferenceRequestBody;
+import bio.terra.workspace.generated.model.CreateGoogleBucketReferenceRequestBody;
+import bio.terra.workspace.generated.model.DataRepoSnapshotReference;
+import bio.terra.workspace.generated.model.GoogleBucketReference;
+import bio.terra.workspace.generated.model.UpdateDataReferenceRequestBody;
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -53,8 +63,13 @@ public class ReferenceController implements ReferenceApi {
   // -- GCS Bucket -- //
 
   @Override
+<<<<<<< HEAD
   public ResponseEntity<ApiGcsBucketReference> createBucketReference(
       UUID id, @Valid ApiCreateGcsBucketReferenceRequestBody body) {
+=======
+  public ResponseEntity<GoogleBucketReference> createBucketReference(
+      UUID id, @Valid CreateGoogleBucketReferenceRequestBody body) {
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
 
     // Construct a ReferenceGcsBucketResource object from the API input
     var resource =
@@ -70,31 +85,55 @@ public class ReferenceController implements ReferenceApi {
 
     ReferenceResource referenceResource =
         referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
+<<<<<<< HEAD
     ApiGcsBucketReference response = referenceResource.castToGcsBucketResource().toApiModel();
+=======
+    GoogleBucketReference response = referenceResource.castToGcsBucketResource().toApiModel();
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
+<<<<<<< HEAD
   public ResponseEntity<ApiGcsBucketReference> getBucketReference(UUID id, UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ReferenceResource referenceResource =
         referenceResourceService.getReferenceResource(id, referenceId, userReq);
     ApiGcsBucketReference response = referenceResource.castToGcsBucketResource().toApiModel();
+=======
+  public ResponseEntity<GoogleBucketReference> getBucketReference(UUID id, UUID referenceId) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    ReferenceResource referenceResource =
+        referenceResourceService.getReferenceResource(id, referenceId, userReq);
+    GoogleBucketReference response = referenceResource.castToGcsBucketResource().toApiModel();
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
+<<<<<<< HEAD
   public ResponseEntity<ApiGcsBucketReference> getBucketReferenceByName(UUID id, String name) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ReferenceResource referenceResource =
         referenceResourceService.getReferenceResourceByName(id, name, userReq);
     ApiGcsBucketReference response = referenceResource.castToGcsBucketResource().toApiModel();
+=======
+  public ResponseEntity<GoogleBucketReference> getBucketReferenceByName(UUID id, String name) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    ReferenceResource referenceResource =
+        referenceResourceService.getReferenceResourceByName(id, name, userReq);
+    GoogleBucketReference response = referenceResource.castToGcsBucketResource().toApiModel();
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<Void> updateBucketReference(
+<<<<<<< HEAD
       UUID id, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
+=======
+      UUID id, UUID referenceId, UpdateDataReferenceRequestBody body) {
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     referenceResourceService.updateReferenceResource(
         id, referenceId, body.getName(), body.getDescription(), userReq);
@@ -104,8 +143,13 @@ public class ReferenceController implements ReferenceApi {
   // -- Big Query Dataset -- //
 
   @Override
+<<<<<<< HEAD
   public ResponseEntity<ApiBigQueryDatasetReference> createBigQueryDatasetReference(
       UUID id, @Valid ApiCreateBigQueryDatasetReferenceRequestBody body) {
+=======
+  public ResponseEntity<BigQueryDatasetReference> createBigQueryDatasetReference(
+      UUID id, @Valid CreateBigQueryDatasetReferenceRequestBody body) {
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
 
     // Construct a ReferenceBigQueryResource object from the API input
     var resource =
@@ -122,36 +166,60 @@ public class ReferenceController implements ReferenceApi {
 
     ReferenceResource referenceResource =
         referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
+<<<<<<< HEAD
     ApiBigQueryDatasetReference response =
+=======
+    BigQueryDatasetReference response =
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
         referenceResource.castToBigQueryDatasetResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
+<<<<<<< HEAD
   public ResponseEntity<ApiBigQueryDatasetReference> getBigQueryDatasetReference(
+=======
+  public ResponseEntity<BigQueryDatasetReference> getBigQueryDatasetReference(
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
       UUID id, UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ReferenceResource referenceResource =
         referenceResourceService.getReferenceResource(id, referenceId, userReq);
+<<<<<<< HEAD
     ApiBigQueryDatasetReference response =
+=======
+    BigQueryDatasetReference response =
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
         referenceResource.castToBigQueryDatasetResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
+<<<<<<< HEAD
   public ResponseEntity<ApiBigQueryDatasetReference> getBigQueryDatasetReferenceByName(
+=======
+  public ResponseEntity<BigQueryDatasetReference> getBigQueryDatasetReferenceByName(
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
       UUID id, String name) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ReferenceResource referenceResource =
         referenceResourceService.getReferenceResourceByName(id, name, userReq);
+<<<<<<< HEAD
     ApiBigQueryDatasetReference response =
+=======
+    BigQueryDatasetReference response =
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
         referenceResource.castToBigQueryDatasetResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<Void> updateBigQueryDatasetReference(
+<<<<<<< HEAD
       UUID id, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
+=======
+      UUID id, UUID referenceId, UpdateDataReferenceRequestBody body) {
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     referenceResourceService.updateReferenceResource(
         id, referenceId, body.getName(), body.getDescription(), userReq);
@@ -161,12 +229,21 @@ public class ReferenceController implements ReferenceApi {
   // -- Data Repo Snapshot -- //
 
   @Override
+<<<<<<< HEAD
   public ResponseEntity<ApiDataRepoSnapshotReference> createDataRepoSnapshotReference(
       UUID id, @Valid ApiCreateDataRepoSnapshotReferenceRequestBody body) {
 
     var resource =
         ReferenceDataRepoSnapshotResource.builder()
             .workspaceId(id)
+=======
+  public ResponseEntity<DataRepoSnapshotReference> createDataRepoSnapshotReference(
+      UUID workspaceId, @Valid CreateDataRepoSnapshotReferenceRequestBody body) {
+
+    var resource =
+        ReferenceDataRepoSnapshotResource.builder()
+            .workspaceId(workspaceId)
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
             .name(body.getMetadata().getName())
             .description(body.getMetadata().getDescription())
             .cloningInstructions(
@@ -178,36 +255,60 @@ public class ReferenceController implements ReferenceApi {
 
     ReferenceResource referenceResource =
         referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
+<<<<<<< HEAD
     ApiDataRepoSnapshotReference response =
+=======
+    DataRepoSnapshotReference response =
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
         referenceResource.castToDataRepoSnapshotResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
+<<<<<<< HEAD
   public ResponseEntity<ApiDataRepoSnapshotReference> getDataRepoSnapshotReference(
+=======
+  public ResponseEntity<DataRepoSnapshotReference> getDataRepoSnapshotReference(
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
       UUID id, UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ReferenceResource referenceResource =
         referenceResourceService.getReferenceResource(id, referenceId, userReq);
+<<<<<<< HEAD
     ApiDataRepoSnapshotReference response =
+=======
+    DataRepoSnapshotReference response =
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
         referenceResource.castToDataRepoSnapshotResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
+<<<<<<< HEAD
   public ResponseEntity<ApiDataRepoSnapshotReference> getDataRepoSnapshotReferenceByName(
+=======
+  public ResponseEntity<DataRepoSnapshotReference> getDataRepoSnapshotReferenceByName(
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
       UUID id, String name) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ReferenceResource referenceResource =
         referenceResourceService.getReferenceResourceByName(id, name, userReq);
+<<<<<<< HEAD
     ApiDataRepoSnapshotReference response =
+=======
+    DataRepoSnapshotReference response =
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
         referenceResource.castToDataRepoSnapshotResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<Void> updateDataRepoSnapshotReference(
+<<<<<<< HEAD
       UUID id, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
+=======
+      UUID id, UUID referenceId, UpdateDataReferenceRequestBody body) {
+>>>>>>> c70503b89dcc5e97082fc766d9b40d11bd8ad0e8
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     referenceResourceService.updateReferenceResource(
         id, referenceId, body.getName(), body.getDescription(), userReq);

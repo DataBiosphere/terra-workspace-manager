@@ -73,7 +73,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
         flightState
             .getResultMap()
             .get()
-            .get(WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID, String.class);
+            .get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
 
     workspace = workspaceService.getWorkspace(workspaceId, userReq);
     assertTrue(workspace.getGcpCloudContext().isPresent());
@@ -116,7 +116,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
         flightState
             .getResultMap()
             .get()
-            .get(WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID, String.class);
+            .get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
     // The Project should exist, but requested to be deleted.
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());
