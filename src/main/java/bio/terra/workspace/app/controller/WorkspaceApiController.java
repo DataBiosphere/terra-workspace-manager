@@ -26,6 +26,7 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.slf4j.Logger;
@@ -112,25 +113,39 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
+  public ResponseEntity<WorkspaceDescriptionList> listWorkspaces() {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    List<Workspace> workspaces = workspaceService.listWorkspaces(userReq);
+    WorkspaceDescriptionList response =
+        new WorkspaceDescriptionList()
+            .workspaces(
+                workspaces.stream()
+                    .map(this::buildWorkspaceDescription)
+                    .collect(Collectors.toList()));
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
   public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("workspaceId") UUID id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info("Getting workspace {} for {}", id, userReq.getEmail());
     Workspace workspace = workspaceService.getWorkspace(id, userReq);
-    WorkspaceCloudContext cloudContext = workspaceService.getCloudContext(id, userReq);
-
-    // Note projectId will be null here if no cloud context exists.
-    // TODO: this assumes a GoogleContext is the only cloud context on a workspace. This will
-    // eventually need to change.
-    GoogleContext googleContext = new GoogleContext().projectId(cloudContext.googleProjectId());
-    WorkspaceDescription desc =
-        new WorkspaceDescription()
-            .id(workspace.workspaceId())
-            .spendProfile(workspace.spendProfileId().map(SpendProfileId::id).orElse(null))
-            .stage(workspace.workspaceStage().toApiModel())
-            .googleContext(googleContext);
+    WorkspaceDescription desc = buildWorkspaceDescription(workspace);
     logger.info("Got workspace {} for {}", desc, userReq.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
+  }
+
+  private WorkspaceDescription buildWorkspaceDescription(Workspace workspace) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    WorkspaceCloudContext cloudContext =
+        workspaceService.getCloudContext(workspace.workspaceId(), userReq);
+    GoogleContext googleContext = new GoogleContext().projectId(cloudContext.googleProjectId());
+    return new WorkspaceDescription()
+        .id(workspace.workspaceId())
+        .spendProfile(workspace.spendProfileId().map(SpendProfileId::id).orElse(null))
+        .stage(workspace.workspaceStage().toApiModel())
+        .googleContext(googleContext);
   }
 
   @Override

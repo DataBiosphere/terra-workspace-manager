@@ -19,6 +19,7 @@ import bio.terra.workspace.service.workspace.flight.*;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -97,6 +98,13 @@ public class WorkspaceService {
     Workspace workspace = workspaceDao.getWorkspace(workspaceId);
     samService.workspaceAuthzOnly(userReq, workspaceId, action);
     return workspace;
+  }
+
+  @Traced
+  /** List all workspaces a user has read access to. */
+  public List<Workspace> listWorkspaces(AuthenticatedUserRequest userReq) {
+    List<UUID> samWorkspaceIds = samService.listWorkspaceIds(userReq);
+    return workspaceDao.getWorkspacesMatchingList(samWorkspaceIds);
   }
 
   /** Retrieves an existing workspace by ID */

@@ -12,8 +12,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +71,20 @@ public class WorkspaceDao {
     return workspace.workspaceId();
   }
 
+  /** Retrieve workspaces from a list of IDs. */
+  @Transactional(
+      propagation = Propagation.REQUIRED,
+      isolation = Isolation.SERIALIZABLE,
+      readOnly = true)
+  public List<Workspace> getWorkspacesMatchingList(List<UUID> idList) {
+    String sql = "SELECT * FROM workspace WHERE workspace_id IN (:workspace_ids)";
+    var params =
+        new MapSqlParameterSource()
+            .addValue(
+                "workspace_ids", idList.stream().map(UUID::toString).collect(Collectors.toList()));
+    return jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER);
+  }
+
   /** Deletes a workspace. Returns true on successful delete, false if there's nothing to delete. */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public boolean deleteWorkspace(UUID workspaceId) {
@@ -95,17 +111,8 @@ public class WorkspaceDao {
     try {
       Workspace result =
           DataAccessUtils.requiredSingleResult(
-              jdbcTemplate.query(
-                  sql,
-                  params,
-                  (rs, rowNum) ->
-                      Workspace.builder()
-                          .workspaceId(UUID.fromString(rs.getString("workspace_id")))
-                          .spendProfileId(
-                              Optional.ofNullable(rs.getString("spend_profile"))
-                                  .map(SpendProfileId::create))
-                          .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
-                          .build()));
+              jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER));
+
       logger.info("Retrieved workspace record {}", result);
       return result;
     } catch (EmptyResultDataAccessException e) {
@@ -190,6 +197,15 @@ public class WorkspaceDao {
       jdbcTemplate.update(sql, params);
     }
   }
+
+  private static final RowMapper<Workspace> WORKSPACE_ROW_MAPPER =
+      (rs, rowNum) ->
+          Workspace.builder()
+              .workspaceId(UUID.fromString(rs.getString("workspace_id")))
+              .spendProfileId(
+                  Optional.ofNullable(rs.getString("spend_profile")).map(SpendProfileId::create))
+              .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
+              .build();
 
   // TODO: Once we have multiple CloudTypes, we will need to handle other contexts.
   private static final RowMapper<WorkspaceCloudContext> GOOGLE_CONTEXT_ROW_MAPPER =

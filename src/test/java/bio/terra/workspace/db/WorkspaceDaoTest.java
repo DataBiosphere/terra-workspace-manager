@@ -2,6 +2,8 @@ package bio.terra.workspace.db;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.core.IsNot.not;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
@@ -12,9 +14,12 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import com.google.common.collect.ImmutableList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -90,6 +95,22 @@ class WorkspaceDaoTest extends BaseUnitTest {
     assertEquals(workspace, createdWorkspace);
 
     assertTrue(workspaceDao.deleteWorkspace(workspaceId));
+  }
+
+  @Test
+  void getWorkspacesFromList() {
+    Workspace realWorkspace = defaultWorkspace();
+    workspaceDao.createWorkspace(realWorkspace);
+    UUID fakeWorkspaceId = UUID.randomUUID();
+    List<Workspace> workspaceList =
+        workspaceDao.getWorkspacesMatchingList(
+            ImmutableList.of(realWorkspace.workspaceId(), fakeWorkspaceId));
+    // The DAO should return all workspaces this user has access to, including realWorkspace but
+    // not including the fake workspace id.
+    assertThat(workspaceList, hasItem(equalTo(realWorkspace)));
+    List<UUID> workspaceIdList =
+        workspaceList.stream().map(Workspace::workspaceId).collect(Collectors.toList());
+    assertThat(workspaceIdList, not(hasItem(equalTo(fakeWorkspaceId))));
   }
 
   @Nested

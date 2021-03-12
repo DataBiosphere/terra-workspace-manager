@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
@@ -210,6 +211,16 @@ class SamServiceTest extends BaseConnectedTest {
         () -> samService.listRoleBindings(fakeId, defaultUserRequest()));
   }
 
+  @Test
+  void ListWorkspacesIncludesWsmWorkspace() {
+    // This call cannot use william.thunderlord's account in dev Sam. Sam will return 500, as it
+    // cannot handle his tens of thousands of workspaces.
+    UUID workspaceId = createWorkspaceSecondaryUser();
+    List<UUID> samWorkspaceIdList =
+        samService.listWorkspaceIds(userAccessUtils.secondUserAuthRequest());
+    assertTrue(samWorkspaceIdList.contains(workspaceId));
+  }
+
   /**
    * Convenience method to build an AuthenticatedUserRequest from utils' default user.
    *
@@ -232,12 +243,20 @@ class SamServiceTest extends BaseConnectedTest {
 
   /** Create a workspace using the default test user for connected tests, return its ID. */
   private UUID createWorkspaceDefaultUser() {
+    return createWorkspaceForUser(defaultUserRequest());
+  }
+
+  private UUID createWorkspaceSecondaryUser() {
+    return createWorkspaceForUser(secondaryUserRequest());
+  }
+
+  private UUID createWorkspaceForUser(AuthenticatedUserRequest userReq) {
     WorkspaceRequest request =
         WorkspaceRequest.builder()
             .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .jobId(UUID.randomUUID().toString())
             .build();
-    return workspaceService.createWorkspace(request, defaultUserRequest());
+    return workspaceService.createWorkspace(request, userReq);
   }
 }
