@@ -107,8 +107,8 @@ public class WorkspaceService {
     return workspace;
   }
 
-  @Traced
   /** List all workspaces a user has read access to. */
+  @Traced
   public List<Workspace> listWorkspaces(AuthenticatedUserRequest userReq) {
     List<UUID> samWorkspaceIds = samService.listWorkspaceIds(userReq);
     return workspaceDao.getWorkspacesMatchingList(samWorkspaceIds);

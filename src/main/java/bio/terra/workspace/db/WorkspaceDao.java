@@ -147,7 +147,12 @@ public class WorkspaceDao {
     }
   }
 
-  /** Retrieve workspaces from a list of IDs. */
+  /**
+   * Retrieve workspaces from a list of IDs. IDs not matching workspaces will be ignored.
+   *
+   * @param idList List of workspaceIds to query for
+   * @return list of Workspaces corresponding to input IDs.
+   */
   @Transactional(
       propagation = Propagation.REQUIRED,
       isolation = Isolation.SERIALIZABLE,
