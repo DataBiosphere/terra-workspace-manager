@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.reference;
+package bio.terra.workspace.service.resource.referenced;
 
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
@@ -8,7 +8,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResource;
-import bio.terra.workspace.service.resource.reference.flight.create.CreateReferenceResourceFlight;
+import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceResourceFlight;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -19,14 +19,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ReferenceResourceService {
+public class ReferencedResourceService {
   private final JobService jobService;
   private final ResourceDao resourceDao;
   private final SamService samService;
   private final WorkspaceService workspaceService;
 
   @Autowired
-  public ReferenceResourceService(
+  public ReferencedResourceService(
       JobService jobService,
       ResourceDao resourceDao,
       SamService samService,
@@ -38,8 +38,8 @@ public class ReferenceResourceService {
   }
 
   @Traced
-  public ReferenceResource createReferenceResource(
-      ReferenceResource resource, AuthenticatedUserRequest userReq) {
+  public ReferencedResource createReferenceResource(
+      ReferencedResource resource, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
         userReq, resource.getWorkspaceId(), SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     resource.validate();
@@ -106,7 +106,7 @@ public class ReferenceResourceService {
     resourceDao.deleteResource(workspaceId, resourceId);
   }
 
-  public ReferenceResource getReferenceResource(
+  public ReferencedResource getReferenceResource(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
@@ -114,7 +114,7 @@ public class ReferenceResourceService {
     return wsmResource.castReferenceResource();
   }
 
-  public ReferenceResource getReferenceResourceByName(
+  public ReferencedResource getReferenceResourceByName(
       UUID workspaceId, String name, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
@@ -122,7 +122,7 @@ public class ReferenceResourceService {
     return wsmResource.castReferenceResource();
   }
 
-  public List<ReferenceResource> enumerateReferences(
+  public List<ReferencedResource> enumerateReferences(
       UUID workspaceId, int offset, int limit, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);

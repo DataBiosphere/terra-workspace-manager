@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.reference.flight.create;
+package bio.terra.workspace.service.resource.referenced.flight.create;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -8,13 +8,13 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.reference.ReferenceGcsBucketResource;
-import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
+import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 
-public class CreateReferenceVerifyAccessGcsBucketStep implements Step {
+public class CreateReferenceVerifyAccessBigQueryDatasetStep implements Step {
   private final CrlService crlService;
 
-  public CreateReferenceVerifyAccessGcsBucketStep(CrlService crlService) {
+  public CreateReferenceVerifyAccessBigQueryDatasetStep(CrlService crlService) {
     this.crlService = crlService;
   }
 
@@ -25,17 +25,16 @@ public class CreateReferenceVerifyAccessGcsBucketStep implements Step {
 
     AuthenticatedUserRequest userReq =
         inputMap.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    ReferenceGcsBucketResource referenceResource =
-        inputMap.get(JobMapKeys.REQUEST.getKeyName(), ReferenceGcsBucketResource.class);
-    String bucketName = referenceResource.getBucketName();
+    ReferencedBigQueryDatasetResource referenceResource =
+        inputMap.get(JobMapKeys.REQUEST.getKeyName(), ReferencedBigQueryDatasetResource.class);
+    String projectId = referenceResource.getProjectId();
+    String datasetName = referenceResource.getDatasetName();
 
-    // StorageCow.get() returns null if the bucket does not exist or a user does not have access,
-    // which fails validation.
-    if (!crlService.gcsBucketExists(bucketName, userReq)) {
+    if (!crlService.bigQueryDatasetExists(projectId, datasetName, userReq)) {
       throw new InvalidReferenceException(
           String.format(
-              "Could not access GCS bucket %s. Ensure the name is correct and that you have access.",
-              bucketName));
+              "Could not access BigQuery dataset %s in project %s. Ensure the name and GCP project are correct and that you have access.",
+              datasetName, projectId));
     }
 
     return StepResult.getStepResultSuccess();

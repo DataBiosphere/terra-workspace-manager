@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.reference;
+package bio.terra.workspace.service.resource.referenced;
 
 import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
@@ -15,7 +15,7 @@ import com.google.common.base.Strings;
 import java.util.Optional;
 import java.util.UUID;
 
-public class ReferenceBigQueryDatasetResource extends ReferenceResource {
+public class ReferencedBigQueryDatasetResource extends ReferencedResource {
   private final String projectId;
   private final String datasetName;
 
@@ -31,7 +31,7 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
    * @param datasetName BigQuery dataset name
    */
   @JsonCreator
-  public ReferenceBigQueryDatasetResource(
+  public ReferencedBigQueryDatasetResource(
       @JsonProperty("workspaceId") UUID workspaceId,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
@@ -49,14 +49,14 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
    *
    * @param dbResource database form of resources
    */
-  public ReferenceBigQueryDatasetResource(DbResource dbResource) {
+  public ReferencedBigQueryDatasetResource(DbResource dbResource) {
     super(dbResource);
     if (dbResource.getResourceType() != WsmResourceType.BIG_QUERY_DATASET) {
       throw new InvalidMetadataException("Expected BIG_QUERY_DATASET");
     }
 
-    ReferenceBigQueryDatasetAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ReferenceBigQueryDatasetAttributes.class);
+    ReferencedBigQueryDatasetAttributes attributes =
+        DbSerDes.fromJson(dbResource.getAttributes(), ReferencedBigQueryDatasetAttributes.class);
     this.projectId = attributes.getProjectId();
     this.datasetName = attributes.getDatasetName();
   }
@@ -86,7 +86,7 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ReferenceBigQueryDatasetAttributes(getProjectId(), getDatasetName()));
+        new ReferencedBigQueryDatasetAttributes(getProjectId(), getDatasetName()));
   }
 
   @Override
@@ -99,8 +99,8 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
     ValidationUtils.validateBqDatasetName(getDatasetName());
   }
 
-  public static ReferenceBigQueryDatasetResource.Builder builder() {
-    return new ReferenceBigQueryDatasetResource.Builder();
+  public static ReferencedBigQueryDatasetResource.Builder builder() {
+    return new ReferencedBigQueryDatasetResource.Builder();
   }
 
   public static class Builder {
@@ -112,27 +112,27 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
     private String projectId;
     private String datasetName;
 
-    public ReferenceBigQueryDatasetResource.Builder workspaceId(UUID workspaceId) {
+    public ReferencedBigQueryDatasetResource.Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
       return this;
     }
 
-    public ReferenceBigQueryDatasetResource.Builder resourceId(UUID resourceId) {
+    public ReferencedBigQueryDatasetResource.Builder resourceId(UUID resourceId) {
       this.resourceId = resourceId;
       return this;
     }
 
-    public ReferenceBigQueryDatasetResource.Builder name(String name) {
+    public ReferencedBigQueryDatasetResource.Builder name(String name) {
       this.name = name;
       return this;
     }
 
-    public ReferenceBigQueryDatasetResource.Builder description(String description) {
+    public ReferencedBigQueryDatasetResource.Builder description(String description) {
       this.description = description;
       return this;
     }
 
-    public ReferenceBigQueryDatasetResource.Builder cloningInstructions(
+    public ReferencedBigQueryDatasetResource.Builder cloningInstructions(
         CloningInstructions cloningInstructions) {
       this.cloningInstructions = cloningInstructions;
       return this;
@@ -148,9 +148,9 @@ public class ReferenceBigQueryDatasetResource extends ReferenceResource {
       return this;
     }
 
-    public ReferenceBigQueryDatasetResource build() {
+    public ReferencedBigQueryDatasetResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
-      return new ReferenceBigQueryDatasetResource(
+      return new ReferencedBigQueryDatasetResource(
           workspaceId,
           Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
           name,

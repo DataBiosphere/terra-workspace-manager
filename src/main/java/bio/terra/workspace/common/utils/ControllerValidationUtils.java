@@ -4,7 +4,7 @@ import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateDataReferenceRequestBody;
 import bio.terra.workspace.service.resource.controlled.exception.ControlledResourceNotImplementedException;
-import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
+import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.exceptions.AzureNotImplementedException;
 import java.util.ArrayList;
 import java.util.List;

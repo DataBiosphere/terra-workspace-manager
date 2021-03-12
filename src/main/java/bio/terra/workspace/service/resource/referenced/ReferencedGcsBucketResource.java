@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.reference;
+package bio.terra.workspace.service.resource.referenced;
 
 import bio.terra.workspace.common.exception.InconsistentFieldsException;
 import bio.terra.workspace.common.exception.MissingRequiredFieldException;
@@ -15,7 +15,7 @@ import com.google.common.base.Strings;
 import java.util.Optional;
 import java.util.UUID;
 
-public class ReferenceGcsBucketResource extends ReferenceResource {
+public class ReferencedGcsBucketResource extends ReferencedResource {
   private final String bucketName;
 
   /**
@@ -29,7 +29,7 @@ public class ReferenceGcsBucketResource extends ReferenceResource {
    * @param bucketName bucket name
    */
   @JsonCreator
-  public ReferenceGcsBucketResource(
+  public ReferencedGcsBucketResource(
       @JsonProperty("workspaceId") UUID workspaceId,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
@@ -46,10 +46,10 @@ public class ReferenceGcsBucketResource extends ReferenceResource {
    *
    * @param dbResource database form of resources
    */
-  public ReferenceGcsBucketResource(DbResource dbResource) {
+  public ReferencedGcsBucketResource(DbResource dbResource) {
     super(dbResource);
-    ReferenceGcsBucketAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ReferenceGcsBucketAttributes.class);
+    ReferencedGcsBucketAttributes attributes =
+        DbSerDes.fromJson(dbResource.getAttributes(), ReferencedGcsBucketAttributes.class);
     this.bucketName = attributes.getBucketName();
     validate();
   }
@@ -71,7 +71,7 @@ public class ReferenceGcsBucketResource extends ReferenceResource {
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ReferenceGcsBucketAttributes(bucketName));
+    return DbSerDes.toJson(new ReferencedGcsBucketAttributes(bucketName));
   }
 
   @Override
@@ -128,9 +128,9 @@ public class ReferenceGcsBucketResource extends ReferenceResource {
       return this;
     }
 
-    public ReferenceGcsBucketResource build() {
+    public ReferencedGcsBucketResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
-      return new ReferenceGcsBucketResource(
+      return new ReferencedGcsBucketResource(
           workspaceId,
           Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
           name,

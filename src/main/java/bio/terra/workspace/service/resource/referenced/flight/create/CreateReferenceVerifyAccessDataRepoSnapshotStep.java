@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.reference.flight.create;
+package bio.terra.workspace.service.resource.referenced.flight.create;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -8,8 +8,8 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.reference.ReferenceDataRepoSnapshotResource;
-import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
+import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 
 public class CreateReferenceVerifyAccessDataRepoSnapshotStep implements Step {
   private final DataRepoService dataRepoService;
@@ -25,8 +25,8 @@ public class CreateReferenceVerifyAccessDataRepoSnapshotStep implements Step {
 
     AuthenticatedUserRequest userReq =
         inputMap.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    ReferenceDataRepoSnapshotResource referenceResource =
-        inputMap.get(JobMapKeys.REQUEST.getKeyName(), ReferenceDataRepoSnapshotResource.class);
+    ReferencedDataRepoSnapshotResource referenceResource =
+        inputMap.get(JobMapKeys.REQUEST.getKeyName(), ReferencedDataRepoSnapshotResource.class);
 
     String instanceName = referenceResource.getInstanceName();
     String snapshotId = referenceResource.getSnapshotId();

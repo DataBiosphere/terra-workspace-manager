@@ -1,10 +1,10 @@
-package bio.terra.workspace.service.resource.reference;
+package bio.terra.workspace.service.resource.referenced;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.resource.ValidationUtils;
-import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
+import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import org.junit.jupiter.api.Test;
 
 public class ReferenceValidationUtilsTest extends BaseUnitTest {

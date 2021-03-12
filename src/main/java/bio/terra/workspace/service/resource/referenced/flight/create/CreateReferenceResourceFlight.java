@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.reference.flight.create;
+package bio.terra.workspace.service.resource.referenced.flight.create;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;

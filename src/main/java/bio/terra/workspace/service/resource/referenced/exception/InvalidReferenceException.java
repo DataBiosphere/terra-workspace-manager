@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.reference.exception;
+package bio.terra.workspace.service.resource.referenced.exception;
 
 import bio.terra.workspace.common.exception.BadRequestException;
 

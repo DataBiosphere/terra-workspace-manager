@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.reference;
+package bio.terra.workspace.service.resource.referenced;
 
 import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
@@ -14,7 +14,7 @@ import com.google.common.base.Strings;
 import java.util.Optional;
 import java.util.UUID;
 
-public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
+public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
   private final String instanceName;
   private final String snapshotId;
 
@@ -30,7 +30,7 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
    * @param snapshotId name of the snapshot
    */
   @JsonCreator
-  public ReferenceDataRepoSnapshotResource(
+  public ReferencedDataRepoSnapshotResource(
       @JsonProperty("workspaceId") UUID workspaceId,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
@@ -48,13 +48,13 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
    *
    * @param dbResource database form of resources
    */
-  public ReferenceDataRepoSnapshotResource(DbResource dbResource) {
+  public ReferencedDataRepoSnapshotResource(DbResource dbResource) {
     super(dbResource);
     if (dbResource.getResourceType() != WsmResourceType.DATA_REPO_SNAPSHOT) {
       throw new InvalidMetadataException("Expected DATA_REPO_SNAPSHOT");
     }
-    ReferenceDataRepoSnapshotAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ReferenceDataRepoSnapshotAttributes.class);
+    ReferencedDataRepoSnapshotAttributes attributes =
+        DbSerDes.fromJson(dbResource.getAttributes(), ReferencedDataRepoSnapshotAttributes.class);
     this.instanceName = attributes.getInstanceName();
     this.snapshotId = attributes.getSnapshotId();
   }
@@ -82,7 +82,7 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ReferenceDataRepoSnapshotAttributes(getInstanceName(), getSnapshotId()));
+        new ReferencedDataRepoSnapshotAttributes(getInstanceName(), getSnapshotId()));
   }
 
   @Override
@@ -94,8 +94,8 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
     }
   }
 
-  public static ReferenceDataRepoSnapshotResource.Builder builder() {
-    return new ReferenceDataRepoSnapshotResource.Builder();
+  public static ReferencedDataRepoSnapshotResource.Builder builder() {
+    return new ReferencedDataRepoSnapshotResource.Builder();
   }
 
   public static class Builder {
@@ -107,27 +107,27 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
     private String instanceName;
     private String snapshotId;
 
-    public ReferenceDataRepoSnapshotResource.Builder workspaceId(UUID workspaceId) {
+    public ReferencedDataRepoSnapshotResource.Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
       return this;
     }
 
-    public ReferenceDataRepoSnapshotResource.Builder resourceId(UUID resourceId) {
+    public ReferencedDataRepoSnapshotResource.Builder resourceId(UUID resourceId) {
       this.resourceId = resourceId;
       return this;
     }
 
-    public ReferenceDataRepoSnapshotResource.Builder name(String name) {
+    public ReferencedDataRepoSnapshotResource.Builder name(String name) {
       this.name = name;
       return this;
     }
 
-    public ReferenceDataRepoSnapshotResource.Builder description(String description) {
+    public ReferencedDataRepoSnapshotResource.Builder description(String description) {
       this.description = description;
       return this;
     }
 
-    public ReferenceDataRepoSnapshotResource.Builder cloningInstructions(
+    public ReferencedDataRepoSnapshotResource.Builder cloningInstructions(
         CloningInstructions cloningInstructions) {
       this.cloningInstructions = cloningInstructions;
       return this;
@@ -143,9 +143,9 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
       return this;
     }
 
-    public ReferenceDataRepoSnapshotResource build() {
+    public ReferencedDataRepoSnapshotResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
-      return new ReferenceDataRepoSnapshotResource(
+      return new ReferencedDataRepoSnapshotResource(
           workspaceId,
           Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
           name,

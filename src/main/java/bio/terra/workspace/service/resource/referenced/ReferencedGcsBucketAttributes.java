@@ -1,13 +1,13 @@
-package bio.terra.workspace.service.resource.reference;
+package bio.terra.workspace.service.resource.referenced;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class ReferenceGcsBucketAttributes {
+public class ReferencedGcsBucketAttributes {
   private final String bucketName;
 
   @JsonCreator
-  public ReferenceGcsBucketAttributes(@JsonProperty("bucketName") String bucketName) {
+  public ReferencedGcsBucketAttributes(@JsonProperty("bucketName") String bucketName) {
     this.bucketName = bucketName;
   }
 

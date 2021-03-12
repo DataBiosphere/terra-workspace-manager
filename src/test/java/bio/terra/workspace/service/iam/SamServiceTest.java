@@ -17,9 +17,9 @@ import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
-import bio.terra.workspace.service.resource.reference.ReferenceDataRepoSnapshotResource;
-import bio.terra.workspace.service.resource.reference.ReferenceResource;
-import bio.terra.workspace.service.resource.reference.ReferenceResourceService;
+import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -39,7 +39,7 @@ class SamServiceTest extends BaseConnectedTest {
   @Autowired private SamService samService;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private UserAccessUtils userAccessUtils;
-  @Autowired private ReferenceResourceService referenceResourceService;
+  @Autowired private ReferencedResourceService referenceResourceService;
 
   @MockBean private DataRepoService mockDataRepoService;
 
@@ -66,7 +66,7 @@ class SamServiceTest extends BaseConnectedTest {
   void AddedWriterCanWrite() {
     UUID workspaceId = createWorkspaceDefaultUser();
 
-    ReferenceDataRepoSnapshotResource referenceResource =
+    ReferencedDataRepoSnapshotResource referenceResource =
         ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
 
     // Before being granted permission, secondary user should be rejected.
@@ -80,9 +80,9 @@ class SamServiceTest extends BaseConnectedTest {
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), IamRole.WRITER, userAccessUtils.getSecondUserEmail());
 
-    ReferenceResource ref =
+    ReferencedResource ref =
         referenceResourceService.createReferenceResource(referenceResource, secondaryUserRequest());
-    ReferenceDataRepoSnapshotResource resultResource = ref.castToDataRepoSnapshotResource();
+    ReferencedDataRepoSnapshotResource resultResource = ref.castToDataRepoSnapshotResource();
     assertEquals(referenceResource, resultResource);
   }
 

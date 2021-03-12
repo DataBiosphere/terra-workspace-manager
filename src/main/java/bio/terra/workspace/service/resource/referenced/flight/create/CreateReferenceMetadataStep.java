@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.reference.flight.create;
+package bio.terra.workspace.service.resource.referenced.flight.create;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -9,7 +9,7 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.WsmResourceType;
-import bio.terra.workspace.service.resource.reference.ReferenceResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import org.springframework.http.HttpStatus;
 
@@ -24,7 +24,7 @@ public class CreateReferenceMetadataStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws RetryException {
-    ReferenceResource referenceResource = getReferenceResource(flightContext);
+    ReferencedResource referenceResource = getReferenceResource(flightContext);
     resourceDao.createReferenceResource(referenceResource);
     FlightUtils.setResponse(flightContext, referenceResource.getResourceId(), HttpStatus.OK);
     return StepResult.getStepResultSuccess();
@@ -32,7 +32,7 @@ public class CreateReferenceMetadataStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    ReferenceResource referenceResource = getReferenceResource(flightContext);
+    ReferencedResource referenceResource = getReferenceResource(flightContext);
 
     // Ignore return value, as we don't care whether a reference was deleted or just not found.
     resourceDao.deleteResource(
@@ -41,7 +41,7 @@ public class CreateReferenceMetadataStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private ReferenceResource getReferenceResource(FlightContext flightContext) {
+  private ReferencedResource getReferenceResource(FlightContext flightContext) {
     FlightMap inputMap = flightContext.getInputParameters();
     WsmResourceType resourceType =
         inputMap.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, WsmResourceType.class);

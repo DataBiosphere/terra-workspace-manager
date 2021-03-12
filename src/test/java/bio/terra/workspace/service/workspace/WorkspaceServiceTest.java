@@ -24,8 +24,8 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.DuplicateJobIdException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.reference.ReferenceDataRepoSnapshotResource;
-import bio.terra.workspace.service.resource.reference.ReferenceResourceService;
+import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
@@ -58,7 +58,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private JobService jobService;
   @Autowired private CrlService crl;
   @Autowired private SpendConnectedTestUtils spendUtils;
-  @Autowired private ReferenceResourceService referenceResourceService;
+  @Autowired private ReferencedResourceService referenceResourceService;
   @Autowired private ResourceDao resourceDao;
   @MockBean private DataRepoService dataRepoService;
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
@@ -252,8 +252,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     // Next, add a data reference to that workspace.
     UUID resourceId = UUID.randomUUID();
-    ReferenceDataRepoSnapshotResource snapshot =
-        new ReferenceDataRepoSnapshotResource(
+    ReferencedDataRepoSnapshotResource snapshot =
+        new ReferencedDataRepoSnapshotResource(
             workspaceId,
             resourceId,
             "fake_data_reference",

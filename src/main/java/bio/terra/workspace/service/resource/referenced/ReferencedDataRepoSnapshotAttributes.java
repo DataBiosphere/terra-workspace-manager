@@ -1,14 +1,14 @@
-package bio.terra.workspace.service.resource.reference;
+package bio.terra.workspace.service.resource.referenced;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class ReferenceDataRepoSnapshotAttributes {
+public class ReferencedDataRepoSnapshotAttributes {
   private final String instanceName;
   private final String snapshotId;
 
   @JsonCreator
-  public ReferenceDataRepoSnapshotAttributes(
+  public ReferencedDataRepoSnapshotAttributes(
       @JsonProperty("instanceName") String instanceName,
       @JsonProperty("snapshotId") String snapshotId) {
     this.instanceName = instanceName;

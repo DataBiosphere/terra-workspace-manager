@@ -30,10 +30,10 @@ import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.reference.ReferenceDataRepoSnapshotResource;
-import bio.terra.workspace.service.resource.reference.ReferenceResource;
-import bio.terra.workspace.service.resource.reference.ReferenceResourceService;
-import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
+import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
+import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -62,7 +62,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   private final SamService samService;
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
-  private final ReferenceResourceService referenceResourceService;
+  private final ReferencedResourceService referenceResourceService;
 
   @Autowired
   public WorkspaceApiController(
@@ -71,7 +71,7 @@ public class WorkspaceApiController implements WorkspaceApi {
       SamService samService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
-      ReferenceResourceService referenceResourceService) {
+      ReferencedResourceService referenceResourceService) {
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.samService = samService;
@@ -174,7 +174,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     ValidationUtils.validateResourceName(body.getName());
 
     var resource =
-        new ReferenceDataRepoSnapshotResource(
+        new ReferencedDataRepoSnapshotResource(
             id,
             UUID.randomUUID(), // mint a resource id for this bucket
             body.getName(),
@@ -183,7 +183,7 @@ public class WorkspaceApiController implements WorkspaceApi {
             body.getReference().getInstanceName(),
             body.getReference().getSnapshot());
 
-    ReferenceResource referenceResource =
+    ReferencedResource referenceResource =
         referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
     ApiDataReferenceDescription response = makeApiDataReferenceDescription(referenceResource);
     return new ResponseEntity<>(response, HttpStatus.OK);
@@ -200,7 +200,7 @@ public class WorkspaceApiController implements WorkspaceApi {
         workspaceId,
         userReq.getEmail());
 
-    ReferenceResource referenceResource =
+    ReferencedResource referenceResource =
         referenceResourceService.getReferenceResource(workspaceId, referenceId, userReq);
 
     // TODO(PF-404): this endpoint's return type does not support reference types beyond snapshots.
@@ -228,7 +228,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     }
     ValidationUtils.validateResourceName(name);
 
-    ReferenceResource referenceResource =
+    ReferencedResource referenceResource =
         referenceResourceService.getReferenceResourceByName(workspaceId, name, userReq);
     ApiDataReferenceDescription response = makeApiDataReferenceDescription(referenceResource);
     return new ResponseEntity<>(response, HttpStatus.OK);
@@ -284,12 +284,12 @@ public class WorkspaceApiController implements WorkspaceApi {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info("Getting snapshot data references in workspace {} for {}", id, userReq.getEmail());
     ControllerValidationUtils.validatePaginationParams(offset, limit);
-    List<ReferenceResource> enumerateResult =
+    List<ReferencedResource> enumerateResult =
         referenceResourceService.enumerateReferences(id, offset, limit, userReq);
 
     // TODO(PF-404): this is a workaround until clients migrate off this endpoint.
     ApiDataReferenceList responseList = new ApiDataReferenceList();
-    for (ReferenceResource resource : enumerateResult) {
+    for (ReferencedResource resource : enumerateResult) {
       if (resource.getResourceType() == WsmResourceType.DATA_REPO_SNAPSHOT) {
         responseList.addResourcesItem(makeApiDataReferenceDescription(resource));
       }
@@ -298,8 +298,8 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   private ApiDataReferenceDescription makeApiDataReferenceDescription(
-      ReferenceResource referenceResource) {
-    ReferenceDataRepoSnapshotResource snapshotResource =
+      ReferencedResource referenceResource) {
+    ReferencedDataRepoSnapshotResource snapshotResource =
         referenceResource.castToDataRepoSnapshotResource();
     var reference =
         new ApiDataRepoSnapshot()

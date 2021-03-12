@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.reference;
+package bio.terra.workspace.service.resource.referenced;
 
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
@@ -9,8 +9,8 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import java.util.UUID;
 
-public abstract class ReferenceResource extends WsmResource {
-  public ReferenceResource(
+public abstract class ReferencedResource extends WsmResource {
+  public ReferencedResource(
       UUID workspaceId,
       UUID resourceId,
       String name,
@@ -19,9 +19,9 @@ public abstract class ReferenceResource extends WsmResource {
     super(workspaceId, resourceId, name, description, cloningInstructions);
   }
 
-  public ReferenceResource(DbResource dbResource) {
+  public ReferencedResource(DbResource dbResource) {
     super(dbResource);
-    if (dbResource.getStewardshipType() != StewardshipType.REFERENCE) {
+    if (dbResource.getStewardshipType() != StewardshipType.REFERENCED) {
       throw new InvalidMetadataException("Expected REFERENCE");
     }
   }
@@ -37,23 +37,23 @@ public abstract class ReferenceResource extends WsmResource {
 
   @Override
   public StewardshipType getStewardshipType() {
-    return StewardshipType.REFERENCE;
+    return StewardshipType.REFERENCED;
   }
 
   // Double-checked down casts when we need to re-specialize from a ReferenceResource
-  public ReferenceBigQueryDatasetResource castToBigQueryDatasetResource() {
+  public ReferencedBigQueryDatasetResource castToBigQueryDatasetResource() {
     validateSubclass(WsmResourceType.BIG_QUERY_DATASET);
-    return (ReferenceBigQueryDatasetResource) this;
+    return (ReferencedBigQueryDatasetResource) this;
   }
 
-  public ReferenceDataRepoSnapshotResource castToDataRepoSnapshotResource() {
+  public ReferencedDataRepoSnapshotResource castToDataRepoSnapshotResource() {
     validateSubclass(WsmResourceType.DATA_REPO_SNAPSHOT);
-    return (ReferenceDataRepoSnapshotResource) this;
+    return (ReferencedDataRepoSnapshotResource) this;
   }
 
-  public ReferenceGcsBucketResource castToGcsBucketResource() {
+  public ReferencedGcsBucketResource castToGcsBucketResource() {
     validateSubclass(WsmResourceType.GCS_BUCKET);
-    return (ReferenceGcsBucketResource) this;
+    return (ReferencedGcsBucketResource) this;
   }
 
   private void validateSubclass(WsmResourceType expectedType) {

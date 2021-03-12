@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.reference;
+package bio.terra.workspace.service.resource.referenced;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -22,7 +22,7 @@ import bio.terra.workspace.service.resource.exception.DuplicateResourceException
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
+import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -51,7 +51,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private WorkspaceDao workspaceDao;
-  @Autowired private ReferenceResourceService referenceResourceService;
+  @Autowired private ReferencedResourceService referenceResourceService;
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
   @MockBean private SamService mockSamService;
 
@@ -59,7 +59,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
   @MockBean private CrlService mockCrlService;
 
   private UUID workspaceId;
-  private ReferenceResource referenceResource;
+  private ReferencedResource referenceResource;
 
   @BeforeEach
   void setup() {
@@ -153,7 +153,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
     @Test
     void testInvalidWorkspaceId() {
       referenceResource =
-          new ReferenceDataRepoSnapshotResource(
+          new ReferencedDataRepoSnapshotResource(
               null,
               UUID.randomUUID(),
               "aname",
@@ -169,7 +169,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
     @Test
     void testInvalidName() {
       referenceResource =
-          new ReferenceDataRepoSnapshotResource(
+          new ReferencedDataRepoSnapshotResource(
               workspaceId,
               UUID.randomUUID(),
               null,
@@ -185,7 +185,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
     @Test
     void testInvalidCloningInstructions() {
       referenceResource =
-          new ReferenceDataRepoSnapshotResource(
+          new ReferencedDataRepoSnapshotResource(
               workspaceId,
               UUID.randomUUID(),
               "aname",
@@ -201,7 +201,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
     @Test
     void testInvalidResourceId() {
       referenceResource =
-          new ReferenceDataRepoSnapshotResource(
+          new ReferencedDataRepoSnapshotResource(
               workspaceId, null, "aname", null, null, DATA_REPO_INSTANCE_NAME, "polaroid");
       assertThrows(
           MissingRequiredFieldException.class,
@@ -220,22 +220,22 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
     @Test
     void testDataRepoReference() {
       referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
-      assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCE));
+      assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCED));
 
-      ReferenceDataRepoSnapshotResource resource =
+      ReferencedDataRepoSnapshotResource resource =
           referenceResource.castToDataRepoSnapshotResource();
       assertThat(resource.getResourceType(), equalTo(WsmResourceType.DATA_REPO_SNAPSHOT));
 
-      ReferenceResource resultReferenceResource =
+      ReferencedResource resultReferenceResource =
           referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
-      ReferenceDataRepoSnapshotResource resultResource =
+      ReferencedDataRepoSnapshotResource resultResource =
           resultReferenceResource.castToDataRepoSnapshotResource();
       assertThat(resource, equalTo(resultResource));
 
-      ReferenceResource byid =
+      ReferencedResource byid =
           referenceResourceService.getReferenceResource(
               workspaceId, resource.getResourceId(), USER_REQUEST);
-      ReferenceResource byname =
+      ReferencedResource byname =
           referenceResourceService.getReferenceResourceByName(
               workspaceId, resource.getName(), USER_REQUEST);
       assertThat(
@@ -250,8 +250,8 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
       UUID resourceId = UUID.randomUUID();
       String resourceName = "testdatarepo-" + resourceId.toString();
 
-      ReferenceDataRepoSnapshotResource resource =
-          new ReferenceDataRepoSnapshotResource(
+      ReferencedDataRepoSnapshotResource resource =
+          new ReferencedDataRepoSnapshotResource(
               workspaceId,
               resourceId,
               resourceName,
@@ -269,8 +269,8 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
       UUID resourceId = UUID.randomUUID();
       String resourceName = "testdatarepo-" + resourceId.toString();
 
-      ReferenceDataRepoSnapshotResource resource =
-          new ReferenceDataRepoSnapshotResource(
+      ReferencedDataRepoSnapshotResource resource =
+          new ReferencedDataRepoSnapshotResource(
               workspaceId,
               resourceId,
               resourceName,
@@ -302,11 +302,11 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
       doReturn(true).when(mockCrlService).gcsBucketExists(any(), any());
     }
 
-    private ReferenceGcsBucketResource makeGcsBucketResource() {
+    private ReferencedGcsBucketResource makeGcsBucketResource() {
       UUID resourceId = UUID.randomUUID();
       String resourceName = "testgcs-" + resourceId.toString();
 
-      return new ReferenceGcsBucketResource(
+      return new ReferencedGcsBucketResource(
           workspaceId,
           resourceId,
           resourceName,
@@ -318,20 +318,21 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
     @Test
     void testGcsBucketReference() {
       referenceResource = makeGcsBucketResource();
-      assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCE));
+      assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCED));
 
-      ReferenceGcsBucketResource resource = referenceResource.castToGcsBucketResource();
+      ReferencedGcsBucketResource resource = referenceResource.castToGcsBucketResource();
       assertThat(resource.getResourceType(), equalTo(WsmResourceType.GCS_BUCKET));
 
-      ReferenceResource resultReferenceResource =
+      ReferencedResource resultReferenceResource =
           referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
-      ReferenceGcsBucketResource resultResource = resultReferenceResource.castToGcsBucketResource();
+      ReferencedGcsBucketResource resultResource =
+          resultReferenceResource.castToGcsBucketResource();
       assertThat(resource, equalTo(resultResource));
 
-      ReferenceResource byid =
+      ReferencedResource byid =
           referenceResourceService.getReferenceResource(
               workspaceId, resource.getResourceId(), USER_REQUEST);
-      ReferenceResource byname =
+      ReferencedResource byname =
           referenceResourceService.getReferenceResourceByName(
               workspaceId, resource.getName(), USER_REQUEST);
       assertThat(byid.castToGcsBucketResource(), equalTo(byname.castToGcsBucketResource()));
@@ -347,7 +348,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
       assertThrows(
           MissingRequiredFieldException.class,
           () ->
-              new ReferenceGcsBucketResource(
+              new ReferencedGcsBucketResource(
                   workspaceId,
                   resourceId,
                   resourceName,
@@ -364,7 +365,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
       assertThrows(
           InvalidReferenceException.class,
           () ->
-              new ReferenceGcsBucketResource(
+              new ReferencedGcsBucketResource(
                   workspaceId,
                   resourceId,
                   resourceName,
@@ -394,11 +395,11 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
       doReturn(true).when(mockCrlService).bigQueryDatasetExists(any(), any(), any());
     }
 
-    private ReferenceBigQueryDatasetResource makeBigQueryResource() {
+    private ReferencedBigQueryDatasetResource makeBigQueryResource() {
       UUID resourceId = UUID.randomUUID();
       String resourceName = "testbq-" + resourceId.toString();
 
-      return new ReferenceBigQueryDatasetResource(
+      return new ReferencedBigQueryDatasetResource(
           workspaceId,
           resourceId,
           resourceName,
@@ -411,21 +412,22 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
     @Test
     void testBigQueryReference() {
       referenceResource = makeBigQueryResource();
-      assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCE));
+      assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCED));
 
-      ReferenceBigQueryDatasetResource resource = referenceResource.castToBigQueryDatasetResource();
+      ReferencedBigQueryDatasetResource resource =
+          referenceResource.castToBigQueryDatasetResource();
       assertThat(resource.getResourceType(), equalTo(WsmResourceType.BIG_QUERY_DATASET));
 
-      ReferenceResource resultReferenceResource =
+      ReferencedResource resultReferenceResource =
           referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
-      ReferenceBigQueryDatasetResource resultResource =
+      ReferencedBigQueryDatasetResource resultResource =
           resultReferenceResource.castToBigQueryDatasetResource();
       assertThat(resource, equalTo(resultResource));
 
-      ReferenceResource byid =
+      ReferencedResource byid =
           referenceResourceService.getReferenceResource(
               workspaceId, resource.getResourceId(), USER_REQUEST);
-      ReferenceResource byname =
+      ReferencedResource byname =
           referenceResourceService.getReferenceResourceByName(
               workspaceId, resource.getName(), USER_REQUEST);
       assertThat(
@@ -440,8 +442,8 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
       UUID resourceId = UUID.randomUUID();
       String resourceName = "testdatarepo-" + resourceId.toString();
 
-      ReferenceBigQueryDatasetResource resource =
-          new ReferenceBigQueryDatasetResource(
+      ReferencedBigQueryDatasetResource resource =
+          new ReferencedBigQueryDatasetResource(
               workspaceId,
               resourceId,
               resourceName,
@@ -459,8 +461,8 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
       UUID resourceId = UUID.randomUUID();
       String resourceName = "testdatarepo-" + resourceId.toString();
 
-      ReferenceBigQueryDatasetResource resource =
-          new ReferenceBigQueryDatasetResource(
+      ReferencedBigQueryDatasetResource resource =
+          new ReferencedBigQueryDatasetResource(
               workspaceId,
               resourceId,
               resourceName,
@@ -478,8 +480,8 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
       UUID resourceId = UUID.randomUUID();
       String resourceName = "testdatarepo-" + resourceId.toString();
 
-      ReferenceBigQueryDatasetResource resource =
-          new ReferenceBigQueryDatasetResource(
+      ReferencedBigQueryDatasetResource resource =
+          new ReferencedBigQueryDatasetResource(
               workspaceId,
               resourceId,
               resourceName,
@@ -533,17 +535,17 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
     @Test
     void testDuplicateResourceName() {
       referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
-      assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCE));
+      assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCED));
 
-      ReferenceDataRepoSnapshotResource resource =
+      ReferencedDataRepoSnapshotResource resource =
           referenceResource.castToDataRepoSnapshotResource();
       assertThat(resource.getResourceType(), equalTo(WsmResourceType.DATA_REPO_SNAPSHOT));
       referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
 
       UUID resourceId = UUID.randomUUID();
 
-      ReferenceDataRepoSnapshotResource duplicateNameResource =
-          new ReferenceDataRepoSnapshotResource(
+      ReferencedDataRepoSnapshotResource duplicateNameResource =
+          new ReferencedDataRepoSnapshotResource(
               workspaceId,
               resourceId,
               referenceResource.getName(),
