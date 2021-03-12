@@ -10,11 +10,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Deletes a workspace's Google cloud context from the DAO. */
-public class DeleteGoogleContextStep implements Step {
-  private final Logger logger = LoggerFactory.getLogger(DeleteGoogleContextStep.class);
+public class DeleteGcpContextStep implements Step {
+  private final Logger logger = LoggerFactory.getLogger(DeleteGcpContextStep.class);
   private final WorkspaceDao workspaceDao;
 
-  protected DeleteGoogleContextStep(WorkspaceDao workspaceDao) {
+  protected DeleteGcpContextStep(WorkspaceDao workspaceDao) {
     this.workspaceDao = workspaceDao;
   }
 

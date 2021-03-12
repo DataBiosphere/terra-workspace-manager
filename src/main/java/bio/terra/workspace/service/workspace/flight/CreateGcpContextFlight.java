@@ -11,7 +11,7 @@ import bio.terra.workspace.service.crl.CrlService;
  * A {@link Flight} for creating a Google cloud context for a workspace using Buffer Service to
  * create the project.
  */
-public class CreateGoogleContextFlight extends Flight {
+public class CreateGcpContextFlight extends Flight {
   // Buffer Retry rule settings. For Buffer Service, allow for long wait times.
   // If the pool is empty, Buffer Service may need time to actually create a new project.
   private static final int BUFFER_INITIAL_INTERVAL_SECONDS = 1;
@@ -22,7 +22,7 @@ public class CreateGoogleContextFlight extends Flight {
   private static final int MAX_INTERVAL_SECONDS = 8;
   private static final int MAX_OPERATION_TIME_SECONDS = 16;
 
-  public CreateGoogleContextFlight(FlightMap inputParameters, Object applicationContext) {
+  public CreateGcpContextFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
@@ -47,7 +47,7 @@ public class CreateGoogleContextFlight extends Flight {
     addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), retryRule);
     addStep(new StoreGcpContextStep(appContext.getWorkspaceDao()), retryRule);
     addStep(new SyncSamGroupsStep(appContext.getSamService()), retryRule);
-    addStep(new GoogleCloudSyncStep(crl.getCloudResourceManagerCow()), retryRule);
-    addStep(new SetGoogleContextOutputStep());
+    addStep(new GcpCloudSyncStep(crl.getCloudResourceManagerCow()), retryRule);
+    addStep(new SetGcpContextOutputStep());
   }
 }

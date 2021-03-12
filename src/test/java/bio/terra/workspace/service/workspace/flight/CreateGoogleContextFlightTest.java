@@ -64,16 +64,13 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            CreateGoogleContextFlight.class,
+            CreateGcpContextFlight.class,
             createInputParameters(workspaceId, spendUtils.defaultBillingAccountId(), userReq),
             STAIRWAY_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
     String projectId =
-        flightState
-            .getResultMap()
-            .get()
-            .get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
+        flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
 
     workspace = workspaceService.getWorkspace(workspaceId, userReq);
     assertTrue(workspace.getGcpCloudContext().isPresent());
@@ -113,10 +110,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     assertTrue(workspace.getGcpCloudContext().isEmpty());
 
     String projectId =
-        flightState
-            .getResultMap()
-            .get()
-            .get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
+        flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
     // The Project should exist, but requested to be deleted.
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());
@@ -134,7 +128,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     return workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
   }
 
-  /** Create the FlightMap input parameters required for the {@link CreateGoogleContextFlight}. */
+  /** Create the FlightMap input parameters required for the {@link CreateGcpContextFlight}. */
   private static FlightMap createInputParameters(
       UUID workspaceId, String billingAccountId, AuthenticatedUserRequest userReq) {
     FlightMap inputs = new FlightMap();
@@ -203,10 +197,10 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   }
 
   /**
-   * An extension of {@link CreateGoogleContextFlight} that has the last step as an error, causing
-   * the flight to always attempt to be rolled back.
+   * An extension of {@link CreateGcpContextFlight} that has the last step as an error, causing the
+   * flight to always attempt to be rolled back.
    */
-  public static class ErrorCreateGoogleContextFlight extends CreateGoogleContextFlight {
+  public static class ErrorCreateGoogleContextFlight extends CreateGcpContextFlight {
     public ErrorCreateGoogleContextFlight(FlightMap inputParameters, Object applicationContext) {
       super(inputParameters, applicationContext);
       addStep(new StairwayTestUtils.ErrorDoStep());

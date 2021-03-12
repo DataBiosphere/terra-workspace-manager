@@ -1,14 +1,13 @@
 package bio.terra.workspace.service.workspace.flight;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
-
 import java.util.UUID;
-
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
 
 /**
  * Stores the previously generated Google Project Id in the {@link WorkspaceDao} as the Google cloud

@@ -9,8 +9,8 @@ import java.util.Optional;
 import org.springframework.http.HttpStatus;
 
 /** Utilities for interacting with Google Cloud APIs within {@link Step}s. */
-public class GoogleUtils {
-  private GoogleUtils() {}
+public class GcpUtils {
+  private GcpUtils() {}
 
   /** Try to delete the Project associated with {@code projectId}. */
   public static void deleteProject(String projectId, CloudResourceManagerCow resourceManager)

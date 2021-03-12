@@ -14,7 +14,7 @@ import org.springframework.http.HttpStatus;
  * A step which sets the output of the flight to the created google context and appropriate status
  * code.
  */
-public class SetGoogleContextOutputStep implements Step {
+public class SetGcpContextOutputStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext)

@@ -34,13 +34,13 @@ import org.slf4j.LoggerFactory;
  * CloudSyncRoleMapping}. Note that the bindings list sent to GCP may contain multiple entries with
  * the same role. This is valid, though GCP will condense them into one binding per role internally.
  */
-public class GoogleCloudSyncStep implements Step {
+public class GcpCloudSyncStep implements Step {
 
   private final CloudResourceManagerCow resourceManagerCow;
 
-  private final Logger logger = LoggerFactory.getLogger(GoogleCloudSyncStep.class);
+  private final Logger logger = LoggerFactory.getLogger(GcpCloudSyncStep.class);
 
-  public GoogleCloudSyncStep(CloudResourceManagerCow resourceManagerCow) {
+  public GcpCloudSyncStep(CloudResourceManagerCow resourceManagerCow) {
     this.resourceManagerCow = resourceManagerCow;
   }
 

@@ -62,7 +62,7 @@ public class PullProjectFromPoolStep implements Step {
     String projectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
     if (projectId != null) {
       try {
-        GoogleUtils.deleteProject(projectId, resourceManager);
+        GcpUtils.deleteProject(projectId, resourceManager);
       } catch (IOException e) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
