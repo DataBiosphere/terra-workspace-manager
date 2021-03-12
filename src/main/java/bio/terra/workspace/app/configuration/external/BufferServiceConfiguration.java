@@ -54,11 +54,11 @@ public class BufferServiceConfiguration {
   }
 
   public String getAccessToken() throws IOException {
-    FileInputStream f = new FileInputStream(clientCredentialFilePath);
-    GoogleCredentials credentials =
-        ServiceAccountCredentials.fromStream(new FileInputStream(clientCredentialFilePath))
-            .createScoped(BUFFER_SCOPES);
-    AccessToken token = credentials.refreshAccessToken();
-    return token.getTokenValue();
+    try (FileInputStream fileInputStream = new FileInputStream(clientCredentialFilePath)) {
+      GoogleCredentials credentials =
+          ServiceAccountCredentials.fromStream(fileInputStream).createScoped(BUFFER_SCOPES);
+      AccessToken token = credentials.refreshAccessToken();
+      return token.getTokenValue();
+    }
   }
 }

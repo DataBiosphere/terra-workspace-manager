@@ -1,4 +1,4 @@
- plugins {
+plugins {
 	id "idea"
 	id "java"
 
@@ -9,13 +9,14 @@
 	id "io.spring.dependency-management" version "1.0.10.RELEASE"
 	id "org.hidetake.swagger.generator" version "2.18.2"
 	id "org.springframework.boot" version "2.4.0"
+	id 'ru.vyarus.quality' version '4.5.0'
 }
 
 sourceCompatibility = JavaVersion.VERSION_11
 
 allprojects {
 	group = "bio.terra"
-	version = "0.13.0-SNAPSHOT"
+	version = "0.14.0-SNAPSHOT"
 	ext {
 		artifactGroup = "${group}.workspace"
 		swaggerOutputDir = "${buildDir}/swagger-code"
@@ -29,13 +30,6 @@ allprojects {
 			mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
 		}
 		dependencies {
-			dependencySet(group: "io.opencensus", version: "0.28.2") {
-				entry "opencensus-exporter-trace-stackdriver"
-				entry "opencensus-api"
-				entry "opencensus-contrib-spring"
-				entry "opencensus-impl"
-			}
-
 			dependency group: "bio.terra.cloud-resource-lib", name: "cloud-resource-schema", version: "0.4.0"
 			dependency group: "io.swagger.core.v3", name: "swagger-annotations", version: "2.1.6"
 			dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.23"
@@ -68,13 +62,14 @@ repositories {
 dependencies {
 	// Terra deps
 	implementation group: "bio.terra", name: "datarepo-client", version: "1.0.1-SNAPSHOT"
-	implementation group: "bio.terra", name: "stairway", version: "0.0.36-SNAPSHOT"
-	implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.17-SNAPSHOT"
+	implementation group: "bio.terra", name: "stairway", version: "0.0.40-SNAPSHOT"
+	implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.25-SNAPSHOT"
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-billing', version: '0.4.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery', version: '0.4.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager', version: '0.4.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-serviceusage', version: '0.4.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-storage', version: '0.4.0'
+	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-iam', version: '0.2.0'
 	implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.12", version: "0.1-61135c7"
 	implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
 
@@ -83,15 +78,8 @@ dependencies {
 	implementation group: "com.google.guava", name:"guava", version: "30.0-jre"
 	implementation group: "org.hashids", name: "hashids", version: "1.0.3"
 	implementation group: "org.liquibase", name: "liquibase-core", version: "4.2.1"
-	implementation group: "org.springframework.cloud", name: "spring-cloud-gcp-starter-logging", version: "1.2.6.RELEASE"
 	implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
 	runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.2.18"
-
-	// Tracing deps
-	implementation group: "io.opencensus", name: "opencensus-api"
-	implementation group: "io.opencensus", name: "opencensus-contrib-spring"
-	implementation group: "io.opencensus", name: "opencensus-exporter-trace-stackdriver"
-	runtimeOnly group: "io.opencensus", name: "opencensus-impl"
 
 	// Deps whose versions are controlled by Spring
 	implementation group: "javax.validation", name: "validation-api"
@@ -203,6 +191,7 @@ task unitTest(type: Test) {
 }
 
 task connectedTest(type: Test) {
+	environment.put('TEST_ENV', System.getenv("TEST_ENV"))
 	useJUnitPlatform {
 		includeTags "connected"
 	}
@@ -212,7 +201,9 @@ task connectedTest(type: Test) {
 	outputs.upToDateWhen { false }
 }
 
+
 task integrationTest(type: Test) {
+	environment.put('TEST_ENV', System.getenv("TEST_ENV"))
 	useJUnitPlatform {
 		includeTags "integration"
 	}
@@ -259,3 +250,5 @@ swaggerSources.server.code.dependsOn tasks.unzipCloudResourceSchema
 swaggerSources.server.ui.dependsOn tasks.unzipCloudResourceSchema
 compileJava.dependsOn swaggerSources.server.code, spotlessApply, setGitVersion
 clean.dependsOn cleanSetGitVersion
+
+apply from: "$rootDir/gradle/quality.gradle"

@@ -32,9 +32,11 @@ public class CreateWorkspaceStep implements Step {
 
     UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
 
-    Optional<SpendProfileId> spendProfileId =
-        Optional.ofNullable(inputMap.get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, String.class))
-            .map(SpendProfileId::create);
+    String spendProfileIdString =
+        inputMap.get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, String.class);
+    SpendProfileId spendProfileId =
+        Optional.ofNullable(spendProfileIdString).map(SpendProfileId::create).orElse(null);
+
     WorkspaceStage workspaceStage =
         inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStage.class);
     Workspace workspaceToCreate =

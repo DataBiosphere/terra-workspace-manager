@@ -5,17 +5,15 @@ import bio.terra.datarepo.api.UnauthenticatedApi;
 import bio.terra.datarepo.client.ApiClient;
 import bio.terra.datarepo.client.ApiException;
 import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
-import bio.terra.workspace.app.configuration.spring.TraceInterceptorConfig;
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
-import bio.terra.workspace.service.datareference.exception.DataRepoAuthorizationException;
-import bio.terra.workspace.service.datareference.exception.DataRepoInternalServerErrorException;
+import bio.terra.workspace.service.datarepo.exception.DataRepoAuthorizationException;
+import bio.terra.workspace.service.datarepo.exception.DataRepoInternalServerErrorException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -34,9 +32,6 @@ public class DataRepoService {
 
   private ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();
-    client.addDefaultHeader(
-        TraceInterceptorConfig.MDC_REQUEST_ID_HEADER,
-        MDC.get(TraceInterceptorConfig.MDC_REQUEST_ID_KEY));
     client.setAccessToken(accessToken);
     return client;
   }
@@ -67,7 +62,7 @@ public class DataRepoService {
 
     try {
       repositoryApi.retrieveSnapshot(snapshotId);
-      logger.info("Retrieved snapshot {} on Data Repo instance {}", snapshotId, instanceName);
+      logger.info("Retrieved snapshotId {} on Data Repo instance {}", snapshotId, instanceName);
       return true;
     } catch (ApiException e) {
       if (e.getCode() == HttpStatus.NOT_FOUND.value()) {
