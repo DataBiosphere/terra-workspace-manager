@@ -162,11 +162,11 @@ public class ReferenceController implements ReferenceApi {
 
   @Override
   public ResponseEntity<DataRepoSnapshotReference> createDataRepoSnapshotReference(
-      UUID id, @Valid CreateDataRepoSnapshotReferenceRequestBody body) {
+      UUID workspaceId, @Valid CreateDataRepoSnapshotReferenceRequestBody body) {
 
     var resource =
         ReferenceDataRepoSnapshotResource.builder()
-            .workspaceId(id)
+            .workspaceId(workspaceId)
             .name(body.getMetadata().getName())
             .description(body.getMetadata().getDescription())
             .cloningInstructions(

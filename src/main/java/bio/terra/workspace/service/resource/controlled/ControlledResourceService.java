@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.generated.model.GoogleBucketCreationParameters;
 import bio.terra.workspace.generated.model.IamRole;
 import bio.terra.workspace.generated.model.JobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -40,7 +39,7 @@ public class ControlledResourceService {
 
   public String createControlledResource(
       ControlledResource resource,
-      GoogleBucketCreationParameters creationParameters,
+      Object creationParameters,
       IamRole creationIamRole,
       JobControl jobControl,
       AuthenticatedUserRequest userRequest) {
