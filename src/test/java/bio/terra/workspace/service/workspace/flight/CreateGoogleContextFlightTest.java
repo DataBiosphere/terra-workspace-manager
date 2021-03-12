@@ -21,8 +21,8 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
-import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.model.Binding;
@@ -58,8 +58,8 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   void successCreatesProjectAndContext() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
-    assertEquals(
-        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
+    Workspace workspace = workspaceService.getWorkspace(workspaceId, userReq);
+    assertTrue(workspace.getGcpCloudContext().isEmpty());
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
@@ -74,9 +74,13 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
             .getResultMap()
             .get()
             .get(WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID, String.class);
-    assertEquals(
-        WorkspaceCloudContext.builder().googleProjectId(projectId).build(),
-        workspaceService.getCloudContext(workspaceId, userReq));
+
+    workspace = workspaceService.getWorkspace(workspaceId, userReq);
+    assertTrue(workspace.getGcpCloudContext().isPresent());
+
+    String contextProjectId = workspace.getGcpCloudContext().get().getGcpProjectId();
+    assertEquals(contextProjectId, projectId);
+
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());
     assertEquals(
@@ -93,8 +97,8 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   void errorRevertsChanges() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
-    assertEquals(
-        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
+    Workspace workspace = workspaceService.getWorkspace(workspaceId, userReq);
+    assertTrue(workspace.getGcpCloudContext().isEmpty());
 
     // Submit a flight class that always errors.
     FlightState flightState =
@@ -105,8 +109,9 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
             STAIRWAY_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
 
-    assertEquals(
-        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
+    workspace = workspaceService.getWorkspace(workspaceId, userReq);
+    assertTrue(workspace.getGcpCloudContext().isEmpty());
+
     String projectId =
         flightState
             .getResultMap()

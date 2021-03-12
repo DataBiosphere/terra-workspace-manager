@@ -4,35 +4,35 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
-import bio.terra.workspace.common.exception.ResourceNotFoundException;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
-import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
-import bio.terra.workspace.db.DataReferenceDao;
+import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.datareference.DataReferenceService;
-import bio.terra.workspace.service.datareference.model.CloningInstructions;
-import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
-import bio.terra.workspace.service.datareference.model.DataReferenceType;
-import bio.terra.workspace.service.datareference.model.SnapshotReference;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.DuplicateJobIdException;
+import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.reference.ReferenceDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.reference.ReferenceResourceService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -47,24 +47,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 class WorkspaceServiceTest extends BaseConnectedTest {
-  @Autowired private WorkspaceService workspaceService;
-  @Autowired private DataReferenceService dataReferenceService;
-  @Autowired private JobService jobService;
-  @Autowired private CrlService crl;
-  @Autowired private SpendConnectedTestUtils spendUtils;
-  @Autowired private DataReferenceDao dataReferenceDao;
-
-  @MockBean private DataRepoService dataRepoService;
-
-  /** Mock SamService does nothing for all calls that would throw if unauthorized. */
-  @MockBean private SamService mockSamService;
-
   /** A fake authenticated user request. */
   private static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest()
           .token(Optional.of("fake-token"))
           .email("fake@email.com")
           .subjectId("fakeID123");
+
+  @Autowired private WorkspaceService workspaceService;
+  @Autowired private JobService jobService;
+  @Autowired private CrlService crl;
+  @Autowired private SpendConnectedTestUtils spendUtils;
+  @Autowired private ReferenceResourceService referenceResourceService;
+  @Autowired private ResourceDao resourceDao;
+  @MockBean private DataRepoService dataRepoService;
+  /** Mock SamService does nothing for all calls that would throw if unauthorized. */
+  @MockBean private SamService mockSamService;
 
   @BeforeEach
   void setup() {
@@ -97,7 +95,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     assertEquals(
         request.workspaceId(),
-        workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST).workspaceId());
+        workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST).getWorkspaceId());
   }
 
   @Test
@@ -132,8 +130,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(mcWorkspaceRequest, USER_REQUEST);
     Workspace createdWorkspace =
         workspaceService.getWorkspace(mcWorkspaceRequest.workspaceId(), USER_REQUEST);
-    assertEquals(mcWorkspaceRequest.workspaceId(), createdWorkspace.workspaceId());
-    assertEquals(WorkspaceStage.MC_WORKSPACE, createdWorkspace.workspaceStage());
+    assertEquals(mcWorkspaceRequest.workspaceId(), createdWorkspace.getWorkspaceId());
+    assertEquals(WorkspaceStage.MC_WORKSPACE, createdWorkspace.getWorkspaceStage());
   }
 
   @Test
@@ -188,8 +186,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     Workspace createdWorkspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
-    assertEquals(request.workspaceId(), createdWorkspace.workspaceId());
-    assertEquals(spendProfileId, createdWorkspace.spendProfileId());
+    assertEquals(request.workspaceId(), createdWorkspace.getWorkspaceId());
+    assertEquals(spendProfileId, createdWorkspace.getSpendProfileId());
   }
 
   @Test
@@ -253,38 +251,32 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     // Next, add a data reference to that workspace.
-    SnapshotReference snapshot = SnapshotReference.create("fake instance", "fake snapshot");
-    DataReferenceRequest referenceRequest =
-        DataReferenceRequest.builder()
-            .workspaceId(workspaceId)
-            .name("fake_data_reference")
-            .cloningInstructions(CloningInstructions.COPY_NOTHING)
-            .referenceType(DataReferenceType.DATA_REPO_SNAPSHOT)
-            .referenceObject(snapshot)
-            .build();
+    UUID resourceId = UUID.randomUUID();
+    ReferenceDataRepoSnapshotResource snapshot =
+        new ReferenceDataRepoSnapshotResource(
+            workspaceId,
+            resourceId,
+            "fake_data_reference",
+            null,
+            CloningInstructions.COPY_NOTHING,
+            "fakeinstance",
+            "fakesnapshot");
+    referenceResourceService.createReferenceResource(snapshot, USER_REQUEST);
 
-    UUID referenceId =
-        dataReferenceService.createDataReference(referenceRequest, USER_REQUEST).referenceId();
     // Validate that the reference exists.
-    dataReferenceService.getDataReference(request.workspaceId(), referenceId, USER_REQUEST);
+    referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+
     // Delete the workspace.
     workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
+
     // Verify that the workspace was successfully deleted, even though it contained references
-
-    // Verify the data ref rows in question were also deleted; this is a direct call to the SQL
-    // table
-    assertThrows(
-        ResourceNotFoundException.class,
-        () -> dataReferenceDao.getDataReference(request.workspaceId(), referenceId));
-
-    // Verify that attempting to retrieve the reference via DataReferenceService fails; this
-    // includes
-    // workspace-existence and permission checks
     assertThrows(
         WorkspaceNotFoundException.class,
-        () ->
-            dataReferenceService.getDataReference(
-                request.workspaceId(), referenceId, USER_REQUEST));
+        () -> workspaceService.getWorkspace(workspaceId, USER_REQUEST));
+
+    // Verify that the resource is also deleted
+    assertThrows(
+        ResourceNotFoundException.class, () -> resourceDao.getResource(workspaceId, resourceId));
   }
 
   @Test
@@ -297,11 +289,14 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     String jobId = UUID.randomUUID().toString();
-    workspaceService.createGoogleContext(request.workspaceId(), jobId, "/fake/value", USER_REQUEST);
+    workspaceService.createGcpCloudContext(
+        request.workspaceId(), jobId, "/fake/value", USER_REQUEST);
     jobService.waitForJob(jobId);
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
+    Workspace workspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
     String projectId =
-        workspaceService.getCloudContext(request.workspaceId(), USER_REQUEST).googleProjectId();
+        workspace.getGcpCloudContext().map(GcpCloudContext::getGcpProjectId).orElse(null);
+    assertNotNull(projectId);
 
     // Verify project exists by retrieving it.
     crl.getCloudResourceManagerCow().projects().get(projectId).execute();
@@ -324,16 +319,16 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     String jobId = UUID.randomUUID().toString();
-    workspaceService.createGoogleContext(request.workspaceId(), jobId, "/fake/value", USER_REQUEST);
+    workspaceService.createGcpCloudContext(
+        request.workspaceId(), jobId, "/fake/value", USER_REQUEST);
     jobService.waitForJob(jobId);
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
-    assertNotNull(
-        workspaceService.getCloudContext(request.workspaceId(), USER_REQUEST).googleProjectId());
+    Workspace workspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
+    assertTrue(workspace.getGcpCloudContext().isPresent());
 
-    workspaceService.deleteGoogleContext(request.workspaceId(), USER_REQUEST);
-    assertEquals(
-        WorkspaceCloudContext.none(),
-        workspaceService.getCloudContext(request.workspaceId(), USER_REQUEST));
+    workspaceService.deleteGcpCloudContext(request.workspaceId(), USER_REQUEST);
+    workspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
+    assertTrue(workspace.getGcpCloudContext().isEmpty());
   }
 
   @Test
@@ -345,7 +340,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertThrows(
         StageDisabledException.class,
         () ->
-            workspaceService.createGoogleContext(
+            workspaceService.createGcpCloudContext(
                 request.workspaceId(), jobId, "/fake/value", USER_REQUEST));
   }
 
@@ -361,7 +356,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertThrows(
         MissingSpendProfileException.class,
         () ->
-            workspaceService.createGoogleContext(
+            workspaceService.createGcpCloudContext(
                 request.workspaceId(), jobId, "/fake/value", USER_REQUEST));
   }
 
@@ -385,7 +380,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertThrows(
         SpendUnauthorizedException.class,
         () ->
-            workspaceService.createGoogleContext(
+            workspaceService.createGcpCloudContext(
                 request.workspaceId(), jobId, "/fake/value", USER_REQUEST));
   }
 
@@ -402,7 +397,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertThrows(
         NoBillingAccountException.class,
         () ->
-            workspaceService.createGoogleContext(
+            workspaceService.createGcpCloudContext(
                 request.workspaceId(), jobId, "/fake/value", USER_REQUEST));
   }
 

@@ -30,14 +30,14 @@ public class CustomGcpIamRoleMappingTest extends BaseUnitTest {
   @Test
   void bqDatasetWriterContainsReader() {
     assertThat(
-        CustomGcpIamRoleMapping.BIGQUERY_DATASET_READER_PERMISSIONS,
-        everyItem(in(CustomGcpIamRoleMapping.BIGQUERY_DATASET_WRITER_PERMISSIONS)));
+        CustomGcpIamRoleMapping.BIG_QUERY_DATASET_READER_PERMISSIONS,
+        everyItem(in(CustomGcpIamRoleMapping.BIG_QUERY_DATASET_WRITER_PERMISSIONS)));
   }
 
   @Test
   void bqDatasetOwnerContainsWriter() {
     assertThat(
-        CustomGcpIamRoleMapping.BIGQUERY_DATASET_WRITER_PERMISSIONS,
-        everyItem(in(CustomGcpIamRoleMapping.BIGQUERY_DATASET_OWNER_PERMISSIONS)));
+        CustomGcpIamRoleMapping.BIG_QUERY_DATASET_WRITER_PERMISSIONS,
+        everyItem(in(CustomGcpIamRoleMapping.BIG_QUERY_DATASET_OWNER_PERMISSIONS)));
   }
 }

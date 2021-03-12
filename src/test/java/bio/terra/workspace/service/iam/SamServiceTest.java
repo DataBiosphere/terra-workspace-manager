@@ -12,17 +12,15 @@ import static org.mockito.Mockito.doReturn;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
-import bio.terra.workspace.common.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.service.datareference.DataReferenceService;
-import bio.terra.workspace.service.datareference.model.CloningInstructions;
-import bio.terra.workspace.service.datareference.model.DataReference;
-import bio.terra.workspace.service.datareference.model.DataReferenceRequest;
-import bio.terra.workspace.service.datareference.model.DataReferenceType;
-import bio.terra.workspace.service.datareference.model.SnapshotReference;
+import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
+import bio.terra.workspace.service.resource.reference.ReferenceDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.reference.ReferenceResource;
+import bio.terra.workspace.service.resource.reference.ReferenceResourceService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -42,7 +40,7 @@ class SamServiceTest extends BaseConnectedTest {
   @Autowired private SamService samService;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private UserAccessUtils userAccessUtils;
-  @Autowired private DataReferenceService dataReferenceService;
+  @Autowired private ReferenceResourceService referenceResourceService;
 
   @MockBean private DataRepoService mockDataRepoService;
 
@@ -62,31 +60,31 @@ class SamServiceTest extends BaseConnectedTest {
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), IamRole.READER, userAccessUtils.getSecondUserEmail());
     Workspace readWorkspace = workspaceService.getWorkspace(workspaceId, secondaryUserRequest());
-    assertEquals(workspaceId, readWorkspace.workspaceId());
+    assertEquals(workspaceId, readWorkspace.getWorkspaceId());
   }
 
   @Test
   void AddedWriterCanWrite() {
     UUID workspaceId = createWorkspaceDefaultUser();
-    DataReferenceRequest referenceRequest =
-        DataReferenceRequest.builder()
-            .workspaceId(workspaceId)
-            .name("valid_name")
-            .referenceType(DataReferenceType.DATA_REPO_SNAPSHOT)
-            .cloningInstructions(CloningInstructions.COPY_NOTHING)
-            // We mock TDR in this test so all snapshots are considered valid.
-            .referenceObject(SnapshotReference.create("fakeInstance", "fakeSnapshot"))
-            .build();
+
+    ReferenceDataRepoSnapshotResource referenceResource =
+        ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
+
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
         SamUnauthorizedException.class,
-        () -> dataReferenceService.createDataReference(referenceRequest, secondaryUserRequest()));
+        () ->
+            referenceResourceService.createReferenceResource(
+                referenceResource, secondaryUserRequest()));
+
     // After being granted permission, secondary user can modify the workspace.
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), IamRole.WRITER, userAccessUtils.getSecondUserEmail());
-    DataReference reference =
-        dataReferenceService.createDataReference(referenceRequest, secondaryUserRequest());
-    assertEquals(referenceRequest.name(), reference.name());
+
+    ReferenceResource ref =
+        referenceResourceService.createReferenceResource(referenceResource, secondaryUserRequest());
+    ReferenceDataRepoSnapshotResource resultResource = ref.castToDataRepoSnapshotResource();
+    assertEquals(referenceResource, resultResource);
   }
 
   @Test
@@ -100,7 +98,7 @@ class SamServiceTest extends BaseConnectedTest {
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), IamRole.READER, userAccessUtils.getSecondUserEmail());
     Workspace readWorkspace = workspaceService.getWorkspace(workspaceId, secondaryUserRequest());
-    assertEquals(workspaceId, readWorkspace.workspaceId());
+    assertEquals(workspaceId, readWorkspace.getWorkspaceId());
     // After removing permission, secondary user can no longer read.
     samService.removeWorkspaceRole(
         workspaceId, defaultUserRequest(), IamRole.READER, userAccessUtils.getSecondUserEmail());

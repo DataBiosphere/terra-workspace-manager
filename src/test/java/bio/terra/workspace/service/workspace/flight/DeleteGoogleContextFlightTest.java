@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.workspace.flight;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
@@ -13,8 +15,9 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
-import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.model.Project;
@@ -60,7 +63,11 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
             CREATION_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
-    String projectId = workspaceService.getCloudContext(workspaceId, userReq).googleProjectId();
+    Workspace workspace = workspaceService.getWorkspace(workspaceId, userReq);
+    String projectId =
+        workspace.getGcpCloudContext().map(GcpCloudContext::getGcpProjectId).orElse(null);
+    assertNotNull(projectId);
+
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals("ACTIVE", project.getLifecycleState());
 
@@ -75,8 +82,9 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
             DELETION_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
-    assertEquals(
-        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
+    workspace = workspaceService.getWorkspace(workspaceId, userReq);
+    assertTrue(workspace.getGcpCloudContext().isEmpty());
+
     project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals("DELETE_REQUESTED", project.getLifecycleState());
   }
@@ -85,8 +93,8 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
   void deleteNonExistentContextIsOk() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
-    assertEquals(
-        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
+    Workspace workspace = workspaceService.getWorkspace(workspaceId, userReq);
+    assertTrue(workspace.getGcpCloudContext().isEmpty());
 
     FlightMap inputParameters = new FlightMap();
     inputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
@@ -98,8 +106,8 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
             DELETION_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
-    assertEquals(
-        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
+    workspace = workspaceService.getWorkspace(workspaceId, userReq);
+    assertTrue(workspace.getGcpCloudContext().isEmpty());
   }
 
   /** Creates a workspace, returning its workspaceId. */

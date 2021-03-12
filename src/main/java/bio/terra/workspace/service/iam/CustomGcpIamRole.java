@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.iam;
 
 import bio.terra.workspace.service.iam.model.IamRole;
-import bio.terra.workspace.service.resource.controlled.WsmResourceType;
+import bio.terra.workspace.service.resource.WsmResourceType;
 import java.util.List;
 
 /**
