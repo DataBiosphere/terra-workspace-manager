@@ -3,8 +3,9 @@ package bio.terra.workspace.common.utils;
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.CloudContext;
 import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
-import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
-import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
+import bio.terra.workspace.service.resource.controlled.exception.ControlledResourceNotImplementedException;
+import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
+import bio.terra.workspace.service.workspace.exceptions.AzureNotImplementedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -55,7 +56,7 @@ public final class ControllerValidationUtils {
               + " instead. This functionality will be implemented in the future.");
     }
     if (body.getReferenceType() == null || body.getReference() == null) {
-      throw new InvalidDataReferenceException(
+      throw new InvalidReferenceException(
           "Data reference must contain a reference type and a reference description");
     }
   }
@@ -74,9 +75,9 @@ public final class ControllerValidationUtils {
   }
 
   /** Validate that a user is requesting a valid cloud for adding workspace context. */
-  public static void validateCloudContext(CloudContext context) {
+  public static void validateCloudPlatform(CloudContext context) {
     if (context != CloudContext.GOOGLE) {
-      throw new ValidationException(
+      throw new AzureNotImplementedException(
           "Invalid cloud context. Currently, only Google contexts are supported.");
     }
   }

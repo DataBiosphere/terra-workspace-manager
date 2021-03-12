@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.iam;
 
 import bio.terra.workspace.service.iam.model.IamRole;
-import bio.terra.workspace.service.resource.controlled.WsmResourceType;
+import bio.terra.workspace.service.resource.WsmResourceType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -40,7 +40,7 @@ public class CustomGcpIamRoleMapping {
           .build();
 
   @VisibleForTesting
-  public static final ImmutableList<String> BIGQUERY_DATASET_READER_PERMISSIONS =
+  public static final ImmutableList<String> BIG_QUERY_DATASET_READER_PERMISSIONS =
       ImmutableList.of(
           "bigquery.datasets.get",
           "bigquery.jobs.create",
@@ -55,9 +55,9 @@ public class CustomGcpIamRoleMapping {
           "bigquery.tables.list");
 
   @VisibleForTesting
-  public static final ImmutableList<String> BIGQUERY_DATASET_WRITER_PERMISSIONS =
+  public static final ImmutableList<String> BIG_QUERY_DATASET_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
-          .addAll(BIGQUERY_DATASET_READER_PERMISSIONS)
+          .addAll(BIG_QUERY_DATASET_READER_PERMISSIONS)
           .add(
               "bigquery.models.create",
               "bigquery.models.delete",
@@ -70,9 +70,9 @@ public class CustomGcpIamRoleMapping {
           .build();
 
   @VisibleForTesting
-  public static final ImmutableList<String> BIGQUERY_DATASET_OWNER_PERMISSIONS =
+  public static final ImmutableList<String> BIG_QUERY_DATASET_OWNER_PERMISSIONS =
       new ImmutableList.Builder<String>()
-          .addAll(BIGQUERY_DATASET_WRITER_PERMISSIONS)
+          .addAll(BIG_QUERY_DATASET_WRITER_PERMISSIONS)
           .add(
               "bigquery.datasets.getIamPolicy",
               "bigquery.tables.create",
@@ -89,13 +89,15 @@ public class CustomGcpIamRoleMapping {
           new CustomGcpIamRole(
               WsmResourceType.GCS_BUCKET, IamRole.OWNER, GCS_BUCKET_OWNER_PERMISSIONS),
           new CustomGcpIamRole(
-              WsmResourceType.BIGQUERY_DATASET,
+              WsmResourceType.BIG_QUERY_DATASET,
               IamRole.READER,
-              BIGQUERY_DATASET_READER_PERMISSIONS),
+              BIG_QUERY_DATASET_READER_PERMISSIONS),
           new CustomGcpIamRole(
-              WsmResourceType.BIGQUERY_DATASET,
+              WsmResourceType.BIG_QUERY_DATASET,
               IamRole.WRITER,
-              BIGQUERY_DATASET_WRITER_PERMISSIONS),
+              BIG_QUERY_DATASET_WRITER_PERMISSIONS),
           new CustomGcpIamRole(
-              WsmResourceType.BIGQUERY_DATASET, IamRole.OWNER, BIGQUERY_DATASET_OWNER_PERMISSIONS));
+              WsmResourceType.BIG_QUERY_DATASET,
+              IamRole.OWNER,
+              BIG_QUERY_DATASET_OWNER_PERMISSIONS));
 }

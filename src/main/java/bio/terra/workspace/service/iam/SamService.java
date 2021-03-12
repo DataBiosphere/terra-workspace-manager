@@ -3,11 +3,11 @@ package bio.terra.workspace.service.iam;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
-import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.stage.StageService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,14 +38,14 @@ import org.springframework.stereotype.Component;
 public class SamService {
   private final SamConfiguration samConfig;
   private final ObjectMapper objectMapper;
-  private final WorkspaceDao workspaceDao;
+  private final StageService stageService;
 
   @Autowired
   public SamService(
-      SamConfiguration samConfig, ObjectMapper objectMapper, WorkspaceDao workspaceDao) {
+      SamConfiguration samConfig, ObjectMapper objectMapper, StageService stageService) {
     this.samConfig = samConfig;
     this.objectMapper = objectMapper;
-    this.workspaceDao = workspaceDao;
+    this.stageService = stageService;
   }
 
   private final Logger logger = LoggerFactory.getLogger(SamService.class);
@@ -152,7 +152,7 @@ public class SamService {
   @Traced
   public void grantWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
-    workspaceDao.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
+    stageService.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
     workspaceAuthzOnly(userReq, workspaceId, samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
@@ -175,7 +175,7 @@ public class SamService {
   @Traced
   public void removeWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
-    workspaceDao.assertMcWorkspace(workspaceId, "removeWorkspaceRole");
+    stageService.assertMcWorkspace(workspaceId, "removeWorkspaceRole");
     workspaceAuthzOnly(userReq, workspaceId, samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
@@ -196,7 +196,7 @@ public class SamService {
    */
   @Traced
   public List<RoleBinding> listRoleBindings(UUID workspaceId, AuthenticatedUserRequest userReq) {
-    workspaceDao.assertMcWorkspace(workspaceId, "listRoleBindings");
+    stageService.assertMcWorkspace(workspaceId, "listRoleBindings");
     workspaceAuthzOnly(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_IAM_ACTION);
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
