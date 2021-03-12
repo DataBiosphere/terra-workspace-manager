@@ -2,7 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
-import bio.terra.workspace.generated.model.ApiCloudContext;
+import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
 import bio.terra.workspace.generated.model.ApiCreateDataReferenceRequestBody;
@@ -352,7 +352,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiCreateCloudContextResult> createCloudContext(
       UUID id, @Valid ApiCreateCloudContextRequest body) {
-    ControllerValidationUtils.validateCloudPlatform(body.getCloudType());
+    ControllerValidationUtils.validateCloudPlatform(body.getCloudPlatform());
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     String jobId = body.getJobControl().getId();
     String resultPath = getAsyncResultEndpoint(jobId);
@@ -391,9 +391,9 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<Void> deleteCloudContext(UUID id, ApiCloudContext cloudContext) {
+  public ResponseEntity<Void> deleteCloudContext(UUID id, ApiCloudPlatform cloudPlatform) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    ControllerValidationUtils.validateCloudPlatform(cloudContext);
+    ControllerValidationUtils.validateCloudPlatform(cloudPlatform);
     workspaceService.deleteGcpCloudContext(id, userReq);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }

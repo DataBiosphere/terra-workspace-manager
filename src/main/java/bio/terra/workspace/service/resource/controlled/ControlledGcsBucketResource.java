@@ -4,7 +4,7 @@ import bio.terra.workspace.common.exception.InconsistentFieldsException;
 import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.generated.model.ApiGoogleBucketStoredAttributes;
+import bio.terra.workspace.generated.model.ApiGcsBucketStoredAttributes;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -57,8 +57,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
     return bucketName;
   }
 
-  public ApiGoogleBucketStoredAttributes toApiModel() {
-    return new ApiGoogleBucketStoredAttributes().bucketName(getBucketName());
+  public ApiGcsBucketStoredAttributes toApiModel() {
+    return new ApiGcsBucketStoredAttributes().bucketName(getBucketName());
   }
 
   @Override

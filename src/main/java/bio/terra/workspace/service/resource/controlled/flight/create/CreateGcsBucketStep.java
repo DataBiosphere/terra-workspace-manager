@@ -8,12 +8,12 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.generated.model.ApiGoogleBucketCreationParameters;
-import bio.terra.workspace.generated.model.ApiGoogleBucketDefaultStorageClass;
-import bio.terra.workspace.generated.model.ApiGoogleBucketLifecycle;
-import bio.terra.workspace.generated.model.ApiGoogleBucketLifecycleRule;
-import bio.terra.workspace.generated.model.ApiGoogleBucketLifecycleRuleAction;
-import bio.terra.workspace.generated.model.ApiGoogleBucketLifecycleRuleCondition;
+import bio.terra.workspace.generated.model.ApiGcsBucketCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcsBucketDefaultStorageClass;
+import bio.terra.workspace.generated.model.ApiGcsBucketLifecycle;
+import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRule;
+import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleAction;
+import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
@@ -51,8 +51,8 @@ public class CreateGcsBucketStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
-    ApiGoogleBucketCreationParameters creationParameters =
-        inputMap.get(CREATION_PARAMETERS, ApiGoogleBucketCreationParameters.class);
+    ApiGcsBucketCreationParameters creationParameters =
+        inputMap.get(CREATION_PARAMETERS, ApiGcsBucketCreationParameters.class);
 
     final BucketInfo bucketInfo =
         BucketInfo.newBuilder(resource.getBucketName())
@@ -77,7 +77,7 @@ public class CreateGcsBucketStep implements Step {
 
     private ApiConversions() {}
 
-    private static StorageClass toGcsApi(ApiGoogleBucketDefaultStorageClass storageClass) {
+    private static StorageClass toGcsApi(ApiGcsBucketDefaultStorageClass storageClass) {
       switch (storageClass) {
         case STANDARD:
           return StorageClass.STANDARD;
@@ -92,19 +92,18 @@ public class CreateGcsBucketStep implements Step {
       }
     }
 
-    private static List<LifecycleRule> toGcsApi(ApiGoogleBucketLifecycle lifecycle) {
+    private static List<LifecycleRule> toGcsApi(ApiGcsBucketLifecycle lifecycle) {
       return lifecycle.getRules().stream()
           .map(ApiConversions::toGcsApi)
           .collect(Collectors.toList());
     }
 
-    private static LifecycleRule toGcsApi(ApiGoogleBucketLifecycleRule lifecycleRule) {
+    private static LifecycleRule toGcsApi(ApiGcsBucketLifecycleRule lifecycleRule) {
       return new LifecycleRule(
           toGcsApi(lifecycleRule.getAction()), toGcsApi(lifecycleRule.getCondition()));
     }
 
-    private static LifecycleAction toGcsApi(
-        ApiGoogleBucketLifecycleRuleAction lifecycleRuleAction) {
+    private static LifecycleAction toGcsApi(ApiGcsBucketLifecycleRuleAction lifecycleRuleAction) {
       switch (lifecycleRuleAction.getType()) {
         case DELETE:
           return LifecycleAction.newDeleteAction();
@@ -117,7 +116,7 @@ public class CreateGcsBucketStep implements Step {
       }
     }
 
-    private static LifecycleCondition toGcsApi(ApiGoogleBucketLifecycleRuleCondition condition) {
+    private static LifecycleCondition toGcsApi(ApiGcsBucketLifecycleRuleCondition condition) {
       final LifecycleCondition.Builder resultBuilder = LifecycleCondition.newBuilder();
 
       /* TODO(PF-506): some conditions aren't in the version of the Google Storage API in the

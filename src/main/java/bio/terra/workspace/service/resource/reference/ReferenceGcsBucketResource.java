@@ -4,7 +4,7 @@ import bio.terra.workspace.common.exception.InconsistentFieldsException;
 import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.generated.model.ApiGoogleBucketReference;
+import bio.terra.workspace.generated.model.ApiGcsBucketReference;
 import bio.terra.workspace.generated.model.ApiGoogleBucketUid;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
@@ -58,8 +58,8 @@ public class ReferenceGcsBucketResource extends ReferenceResource {
     return bucketName;
   }
 
-  public ApiGoogleBucketReference toApiModel() {
-    return new ApiGoogleBucketReference()
+  public ApiGcsBucketReference toApiModel() {
+    return new ApiGcsBucketReference()
         .metadata(super.toApiMetadata())
         .bucket(new ApiGoogleBucketUid().bucketName(getBucketName()));
   }

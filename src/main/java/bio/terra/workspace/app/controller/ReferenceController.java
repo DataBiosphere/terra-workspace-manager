@@ -4,9 +4,9 @@ import bio.terra.workspace.generated.controller.ReferenceApi;
 import bio.terra.workspace.generated.model.ApiBigQueryDatasetReference;
 import bio.terra.workspace.generated.model.ApiCreateBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGoogleBucketReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateGcsBucketReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotReference;
-import bio.terra.workspace.generated.model.ApiGoogleBucketReference;
+import bio.terra.workspace.generated.model.ApiGcsBucketReference;
 import bio.terra.workspace.generated.model.ApiUpdateDataReferenceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -53,8 +53,8 @@ public class ReferenceController implements ReferenceApi {
   // -- GCS Bucket -- //
 
   @Override
-  public ResponseEntity<ApiGoogleBucketReference> createBucketReference(
-      UUID id, @Valid ApiCreateGoogleBucketReferenceRequestBody body) {
+  public ResponseEntity<ApiGcsBucketReference> createBucketReference(
+      UUID id, @Valid ApiCreateGcsBucketReferenceRequestBody body) {
 
     // Construct a ReferenceGcsBucketResource object from the API input
     var resource =
@@ -70,25 +70,25 @@ public class ReferenceController implements ReferenceApi {
 
     ReferenceResource referenceResource =
         referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
-    ApiGoogleBucketReference response = referenceResource.castToGcsBucketResource().toApiModel();
+    ApiGcsBucketReference response = referenceResource.castToGcsBucketResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<ApiGoogleBucketReference> getBucketReference(UUID id, UUID referenceId) {
+  public ResponseEntity<ApiGcsBucketReference> getBucketReference(UUID id, UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ReferenceResource referenceResource =
         referenceResourceService.getReferenceResource(id, referenceId, userReq);
-    ApiGoogleBucketReference response = referenceResource.castToGcsBucketResource().toApiModel();
+    ApiGcsBucketReference response = referenceResource.castToGcsBucketResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<ApiGoogleBucketReference> getBucketReferenceByName(UUID id, String name) {
+  public ResponseEntity<ApiGcsBucketReference> getBucketReferenceByName(UUID id, String name) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ReferenceResource referenceResource =
         referenceResourceService.getReferenceResourceByName(id, name, userReq);
-    ApiGoogleBucketReference response = referenceResource.castToGcsBucketResource().toApiModel();
+    ApiGcsBucketReference response = referenceResource.castToGcsBucketResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 

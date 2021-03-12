@@ -1,7 +1,7 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.workspace.common.exception.ValidationException;
-import bio.terra.workspace.generated.model.ApiCloudContext;
+import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateDataReferenceRequestBody;
 import bio.terra.workspace.service.resource.controlled.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.resource.reference.exception.InvalidReferenceException;
@@ -74,10 +74,10 @@ public final class ControllerValidationUtils {
   }
 
   /** Validate that a user is requesting a valid cloud for adding workspace context. */
-  public static void validateCloudPlatform(ApiCloudContext context) {
-    if (context != ApiCloudContext.GOOGLE) {
+  public static void validateCloudPlatform(ApiCloudPlatform platform) {
+    if (platform != ApiCloudPlatform.GCP) {
       throw new ValidationException(
-          "Invalid cloud context. Currently, only Google contexts are supported.");
+          "Invalid cloud platform. Currently, only GCP is are supported.");
     }
   }
 }
