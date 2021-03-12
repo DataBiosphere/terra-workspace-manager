@@ -61,6 +61,9 @@ paths:
         '500':
           $ref: '#/components/responses/NotFound'
     get:
+      parameters:
+      - $ref: '#/components/parameters/Offset'
+      - $ref: '#/components/parameters/Limit'
       summary: List all workspaces a user can read.
       operationId: listWorkspaces
       tags: [ Workspace ]
@@ -722,7 +725,7 @@ components:
     Limit:
       name: limit
       in: query
-      description: The numbers of items to return. Default 10
+      description: The maximum number of items to return. Default 10
       schema:
         type: integer
         minimum: 1

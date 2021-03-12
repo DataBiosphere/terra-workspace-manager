@@ -3,6 +3,7 @@ package bio.terra.workspace.db;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.in;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -107,13 +108,51 @@ class WorkspaceDaoTest extends BaseUnitTest {
     UUID fakeWorkspaceId = UUID.randomUUID();
     List<Workspace> workspaceList =
         workspaceDao.getWorkspacesMatchingList(
-            ImmutableList.of(realWorkspace.getWorkspaceId(), fakeWorkspaceId));
+            ImmutableList.of(realWorkspace.getWorkspaceId(), fakeWorkspaceId), 0, 1);
     // The DAO should return all workspaces this user has access to, including realWorkspace but
     // not including the fake workspace id.
     assertThat(workspaceList, hasItem(equalTo(realWorkspace)));
     List<UUID> workspaceIdList =
         workspaceList.stream().map(Workspace::getWorkspaceId).collect(Collectors.toList());
     assertThat(workspaceIdList, not(hasItem(equalTo(fakeWorkspaceId))));
+  }
+
+  @Test
+  void offsetSkipsWorkspaceInList() {
+    Workspace firstWorkspace = defaultWorkspace();
+    workspaceDao.createWorkspace(firstWorkspace);
+    Workspace secondWorkspace =
+        Workspace.builder()
+            .workspaceId(UUID.randomUUID())
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
+    workspaceDao.createWorkspace(secondWorkspace);
+    List<Workspace> workspaceList =
+        workspaceDao.getWorkspacesMatchingList(
+            ImmutableList.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
+            1,
+            10);
+    assertThat(workspaceList.size(), equalTo(1));
+    assertThat(workspaceList.get(0), in(ImmutableList.of(firstWorkspace, secondWorkspace)));
+  }
+
+  @Test
+  void listWorkspaceLimitEnforced() {
+    Workspace firstWorkspace = defaultWorkspace();
+    workspaceDao.createWorkspace(firstWorkspace);
+    Workspace secondWorkspace =
+        Workspace.builder()
+            .workspaceId(UUID.randomUUID())
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
+    workspaceDao.createWorkspace(secondWorkspace);
+    List<Workspace> workspaceList =
+        workspaceDao.getWorkspacesMatchingList(
+            ImmutableList.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
+            0,
+            1);
+    assertThat(workspaceList.size(), equalTo(1));
+    assertThat(workspaceList.get(0), in(ImmutableList.of(firstWorkspace, secondWorkspace)));
   }
 
   @Nested

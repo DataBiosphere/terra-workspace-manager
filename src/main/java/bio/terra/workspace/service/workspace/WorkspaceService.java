@@ -107,11 +107,17 @@ public class WorkspaceService {
     return workspace;
   }
 
-  /** List all workspaces a user has read access to. */
+  /**
+   * List all workspaces a user has read access to.
+   *
+   * @param userReq Authentication object for the caller
+   * @param offset The number of items to skip before starting to collect the result set.
+   * @param limit The maximum number of items to return.
+   */
   @Traced
-  public List<Workspace> listWorkspaces(AuthenticatedUserRequest userReq) {
+  public List<Workspace> listWorkspaces(AuthenticatedUserRequest userReq, int offset, int limit) {
     List<UUID> samWorkspaceIds = samService.listWorkspaceIds(userReq);
-    return workspaceDao.getWorkspacesMatchingList(samWorkspaceIds);
+    return workspaceDao.getWorkspacesMatchingList(samWorkspaceIds, offset, limit);
   }
 
   /** Retrieves an existing workspace by ID */

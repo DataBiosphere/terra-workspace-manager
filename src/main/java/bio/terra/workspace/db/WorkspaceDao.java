@@ -151,18 +151,24 @@ public class WorkspaceDao {
    * Retrieve workspaces from a list of IDs. IDs not matching workspaces will be ignored.
    *
    * @param idList List of workspaceIds to query for
+   * @param offset The number of items to skip before starting to collect the result set.
+   * @param limit The maximum number of items to return.
    * @return list of Workspaces corresponding to input IDs.
    */
   @Transactional(
       propagation = Propagation.REQUIRED,
       isolation = Isolation.SERIALIZABLE,
       readOnly = true)
-  public List<Workspace> getWorkspacesMatchingList(List<UUID> idList) {
-    String sql = WORKSPACE_SELECT_SQL + " WHERE W.workspace_id IN (:workspace_ids)";
+  public List<Workspace> getWorkspacesMatchingList(List<UUID> idList, int offset, int limit) {
+    String sql =
+        WORKSPACE_SELECT_SQL
+            + " WHERE W.workspace_id IN (:workspace_ids) ORDER BY W.workspace_id OFFSET :offset LIMIT :limit";
     var params =
         new MapSqlParameterSource()
             .addValue(
-                "workspace_ids", idList.stream().map(UUID::toString).collect(Collectors.toList()));
+                "workspace_ids", idList.stream().map(UUID::toString).collect(Collectors.toList()))
+            .addValue("offset", offset)
+            .addValue("limit", limit);
     return jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER);
   }
 
