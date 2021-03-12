@@ -3,7 +3,7 @@ package bio.terra.workspace.service.iam;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
-import bio.terra.workspace.generated.model.SystemStatusSystems;
+import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
@@ -246,7 +246,7 @@ public class SamService {
     }
   }
 
-  public SystemStatusSystems status() {
+  public ApiSystemStatusSystems status() {
     // No access token needed since this is an unauthenticated API.
     StatusApi statusApi = new StatusApi(getApiClient(null));
 
@@ -268,9 +268,9 @@ public class SamService {
                       entry.getKey() + ": " + StringUtils.join(entry.getValue().getMessages()))
               .collect(Collectors.toList());
 
-      return new SystemStatusSystems().ok(samStatus.getOk()).messages(subsystemStatusMessages);
+      return new ApiSystemStatusSystems().ok(samStatus.getOk()).messages(subsystemStatusMessages);
     } catch (ApiException | JsonProcessingException e) {
-      return new SystemStatusSystems().ok(false).addMessagesItem(e.getLocalizedMessage());
+      return new ApiSystemStatusSystems().ok(false).addMessagesItem(e.getLocalizedMessage());
     }
   }
 

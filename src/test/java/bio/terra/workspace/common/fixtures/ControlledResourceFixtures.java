@@ -1,12 +1,12 @@
 package bio.terra.workspace.common.fixtures;
 
-import bio.terra.workspace.generated.model.GoogleBucketCreationParameters;
-import bio.terra.workspace.generated.model.GoogleBucketDefaultStorageClass;
-import bio.terra.workspace.generated.model.GoogleBucketLifecycle;
-import bio.terra.workspace.generated.model.GoogleBucketLifecycleRule;
-import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleAction;
-import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleActionType;
-import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleCondition;
+import bio.terra.workspace.generated.model.ApiGoogleBucketCreationParameters;
+import bio.terra.workspace.generated.model.ApiGoogleBucketDefaultStorageClass;
+import bio.terra.workspace.generated.model.ApiGoogleBucketLifecycle;
+import bio.terra.workspace.generated.model.ApiGoogleBucketLifecycleRule;
+import bio.terra.workspace.generated.model.ApiGoogleBucketLifecycleRuleAction;
+import bio.terra.workspace.generated.model.ApiGoogleBucketLifecycleRuleActionType;
+import bio.terra.workspace.generated.model.ApiGoogleBucketLifecycleRuleCondition;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
@@ -24,41 +24,41 @@ public class ControlledResourceFixtures {
   public static final UUID DATA_REFERENCE_ID =
       UUID.fromString("33333333-fcf0-4981-bb96-6b8dd634e7c0");
   public static final String OWNER_EMAIL = "jay@all-the-bits-thats-fit-to-blit.dev";
-  public static final GoogleBucketLifecycleRule LIFECYCLE_RULE_1 =
-      new GoogleBucketLifecycleRule()
+  public static final ApiGoogleBucketLifecycleRule LIFECYCLE_RULE_1 =
+      new ApiGoogleBucketLifecycleRule()
           .action(
-              new GoogleBucketLifecycleRuleAction()
+              new ApiGoogleBucketLifecycleRuleAction()
                   .type(
-                      GoogleBucketLifecycleRuleActionType
+                      ApiGoogleBucketLifecycleRuleActionType
                           .DELETE)) // no storage class require for delete actions
           .condition(
-              new GoogleBucketLifecycleRuleCondition()
+              new ApiGoogleBucketLifecycleRuleCondition()
                   .age(64)
                   .live(true)
-                  .addMatchesStorageClassItem(GoogleBucketDefaultStorageClass.ARCHIVE)
+                  .addMatchesStorageClassItem(ApiGoogleBucketDefaultStorageClass.ARCHIVE)
                   .numNewerVersions(2));
 
-  public static final GoogleBucketLifecycleRule LIFECYCLE_RULE_2 =
-      new GoogleBucketLifecycleRule()
+  public static final ApiGoogleBucketLifecycleRule LIFECYCLE_RULE_2 =
+      new ApiGoogleBucketLifecycleRule()
           .action(
-              new GoogleBucketLifecycleRuleAction()
-                  .storageClass(GoogleBucketDefaultStorageClass.NEARLINE)
-                  .type(GoogleBucketLifecycleRuleActionType.SET_STORAGE_CLASS))
+              new ApiGoogleBucketLifecycleRuleAction()
+                  .storageClass(ApiGoogleBucketDefaultStorageClass.NEARLINE)
+                  .type(ApiGoogleBucketLifecycleRuleActionType.SET_STORAGE_CLASS))
           .condition(
-              new GoogleBucketLifecycleRuleCondition()
+              new ApiGoogleBucketLifecycleRuleCondition()
                   .createdBefore(LocalDate.of(2017, 2, 18))
-                  .addMatchesStorageClassItem(GoogleBucketDefaultStorageClass.STANDARD));
+                  .addMatchesStorageClassItem(ApiGoogleBucketDefaultStorageClass.STANDARD));
   // list must not be immutable if deserialization is to work
-  static final List<GoogleBucketLifecycleRule> LIFECYCLE_RULES =
+  static final List<ApiGoogleBucketLifecycleRule> LIFECYCLE_RULES =
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
   public static final String BUCKET_NAME = "my-bucket";
   public static final String BUCKET_LOCATION = "US-CENTRAL1";
-  public static final GoogleBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS =
-      new GoogleBucketCreationParameters()
+  public static final ApiGoogleBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS =
+      new ApiGoogleBucketCreationParameters()
           .name(BUCKET_NAME)
           .location(BUCKET_LOCATION)
-          .defaultStorageClass(GoogleBucketDefaultStorageClass.STANDARD)
-          .lifecycle(new GoogleBucketLifecycle().rules(LIFECYCLE_RULES));
+          .defaultStorageClass(ApiGoogleBucketDefaultStorageClass.STANDARD)
+          .lifecycle(new ApiGoogleBucketLifecycle().rules(LIFECYCLE_RULES));
 
   public static final String RESOURCE_NAME = "my_first_bucket";
 

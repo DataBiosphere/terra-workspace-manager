@@ -4,8 +4,8 @@ import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.generated.model.DataRepoSnapshot;
-import bio.terra.workspace.generated.model.DataRepoSnapshotReference;
+import bio.terra.workspace.generated.model.ApiDataRepoSnapshot;
+import bio.terra.workspace.generated.model.ApiDataRepoSnapshotReference;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -67,10 +67,11 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
     return snapshotId;
   }
 
-  public DataRepoSnapshotReference toApiModel() {
-    return new DataRepoSnapshotReference()
+  public ApiDataRepoSnapshotReference toApiModel() {
+    return new ApiDataRepoSnapshotReference()
         .metadata(super.toApiMetadata())
-        .snapshot(new DataRepoSnapshot().instanceName(getInstanceName()).snapshot(getSnapshotId()));
+        .snapshot(
+            new ApiDataRepoSnapshot().instanceName(getInstanceName()).snapshot(getSnapshotId()));
   }
 
   @Override
@@ -89,7 +90,7 @@ public class ReferenceDataRepoSnapshotResource extends ReferenceResource {
     super.validate();
     if (Strings.isNullOrEmpty(getInstanceName()) || Strings.isNullOrEmpty(getSnapshotId())) {
       throw new MissingRequiredFieldException(
-          "Missing required field for ReferenceDataRepoSnapshotAttributes.");
+          "Missing required field for ReferenceApiDataRepoSnapshotAttributes.");
     }
   }
 

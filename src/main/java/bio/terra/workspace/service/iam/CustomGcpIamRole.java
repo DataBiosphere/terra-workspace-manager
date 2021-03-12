@@ -12,8 +12,8 @@ import java.util.List;
  * set of GCP cloud permissions that are granted. See the full list of these permissions at
  * https://cloud.google.com/iam/docs/permissions-reference
  *
- * <p>The role name is the combination of resource type + IamRole name with an underscore separator,
- * e.g. GCS_BUCKET_READER.
+ * <p>The role name is the combination of resource type + ApiIamRole name with an underscore
+ * separator, e.g. GCS_BUCKET_READER.
  */
 public class CustomGcpIamRole {
   private final WsmResourceType resourceType;

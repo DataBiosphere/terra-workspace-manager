@@ -224,7 +224,7 @@ public class WorkspaceDao {
    */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public void deleteGcpCloudContext(UUID workspaceId) {
-    deleteGcpCloudContextWorker(workspaceId);
+    deleteGcpApiCloudContextWorker(workspaceId);
   }
 
   /**
@@ -234,17 +234,17 @@ public class WorkspaceDao {
    * @param projectId the GCP project id to validate
    */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public void deleteGcpCloudContextWithIdCheck(UUID workspaceId, String projectId) {
+  public void deleteGcpApiCloudContextWithIdCheck(UUID workspaceId, String projectId) {
     // Only perform the delete, if the project id matches the input project id
-    Optional<GcpCloudContext> gcpCloudContext = getGcpCloudContext(workspaceId);
-    if (gcpCloudContext.isPresent()) {
-      if (StringUtils.equals(projectId, gcpCloudContext.get().getGcpProjectId())) {
-        deleteGcpCloudContextWorker(workspaceId);
+    Optional<GcpCloudContext> gcpApiCloudContext = getGcpCloudContext(workspaceId);
+    if (gcpApiCloudContext.isPresent()) {
+      if (StringUtils.equals(projectId, gcpApiCloudContext.get().getGcpProjectId())) {
+        deleteGcpApiCloudContextWorker(workspaceId);
       }
     }
   }
 
-  private void deleteGcpCloudContextWorker(UUID workspaceId) {
+  private void deleteGcpApiCloudContextWorker(UUID workspaceId) {
     final String sql =
         "DELETE FROM cloud_context "
             + "WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
@@ -264,7 +264,7 @@ public class WorkspaceDao {
     }
   }
 
-  // -- serdes for GcpCloudContext --
+  // -- serdes for GcpApiCloudContext --
 
   @VisibleForTesting
   String serializeGcpCloudContext(GcpCloudContext gcpCloudContext) {

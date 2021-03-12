@@ -2,27 +2,29 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
-import bio.terra.workspace.generated.model.CloudContext;
-import bio.terra.workspace.generated.model.CreateCloudContextRequest;
-import bio.terra.workspace.generated.model.CreateCloudContextResult;
-import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
-import bio.terra.workspace.generated.model.CreateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.CreatedWorkspace;
-import bio.terra.workspace.generated.model.DataReferenceDescription;
-import bio.terra.workspace.generated.model.DataReferenceList;
-import bio.terra.workspace.generated.model.DataRepoSnapshot;
-import bio.terra.workspace.generated.model.GcpContext;
-import bio.terra.workspace.generated.model.GrantRoleRequestBody;
-import bio.terra.workspace.generated.model.IamRole;
-import bio.terra.workspace.generated.model.JobReport.StatusEnum;
-import bio.terra.workspace.generated.model.ReferenceTypeEnum;
-import bio.terra.workspace.generated.model.RoleBindingList;
-import bio.terra.workspace.generated.model.UpdateDataReferenceRequestBody;
-import bio.terra.workspace.generated.model.WorkspaceDescription;
-import bio.terra.workspace.generated.model.WorkspaceStageModel;
+import bio.terra.workspace.generated.model.ApiCloudContext;
+import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
+import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
+import bio.terra.workspace.generated.model.ApiCreateDataReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
+import bio.terra.workspace.generated.model.ApiDataReferenceDescription;
+import bio.terra.workspace.generated.model.ApiDataReferenceList;
+import bio.terra.workspace.generated.model.ApiDataRepoSnapshot;
+import bio.terra.workspace.generated.model.ApiGcpContext;
+import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
+import bio.terra.workspace.generated.model.ApiIamRole;
+import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ApiReferenceTypeEnum;
+import bio.terra.workspace.generated.model.ApiRoleBinding;
+import bio.terra.workspace.generated.model.ApiRoleBindingList;
+import bio.terra.workspace.generated.model.ApiUpdateDataReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
+import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.resource.ValidationUtils;
@@ -85,23 +87,24 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   // Returns the result endpoint corresponding to an async request, prefixed with a / character.
-  // Used to build a JobReport. This assumes the result endpoint is at /result/{jobId} relative to
+  // Used to build a ApiJobReport. This assumes the result endpoint is at /result/{jobId} relative
+  // to
   // the async endpoint, which is standard but not enforced.
   private String getAsyncResultEndpoint(String jobId) {
     return String.format("%s/result/%s", request.getServletPath(), jobId);
   }
 
   @Override
-  public ResponseEntity<CreatedWorkspace> createWorkspace(
-      @RequestBody CreateWorkspaceRequestBody body) {
+  public ResponseEntity<ApiCreatedWorkspace> createWorkspace(
+      @RequestBody ApiCreateWorkspaceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info("Creating workspace {} for {}", body.getId(), userReq.getEmail());
 
     // Existing client libraries should not need to know about the stage, as they won't use any of
     // the features it gates. If stage isn't specified in a create request, we default to
     // RAWLS_WORKSPACE.
-    WorkspaceStageModel requestStage = body.getStage();
-    requestStage = (requestStage == null ? WorkspaceStageModel.RAWLS_WORKSPACE : requestStage);
+    ApiWorkspaceStageModel requestStage = body.getStage();
+    requestStage = (requestStage == null ? ApiWorkspaceStageModel.RAWLS_WORKSPACE : requestStage);
     WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::create);
@@ -117,23 +120,25 @@ public class WorkspaceApiController implements WorkspaceApi {
             .build();
     UUID createdId = workspaceService.createWorkspace(internalRequest, userReq);
 
-    CreatedWorkspace responseWorkspace = new CreatedWorkspace().id(createdId);
+    ApiCreatedWorkspace responseWorkspace = new ApiCreatedWorkspace().id(createdId);
     logger.info("Created workspace {} for {}", responseWorkspace, userReq.getEmail());
 
     return new ResponseEntity<>(responseWorkspace, HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<WorkspaceDescription> getWorkspace(@PathVariable("workspaceId") UUID id) {
+  public ResponseEntity<ApiWorkspaceDescription> getWorkspace(
+      @PathVariable("workspaceId") UUID id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info("Getting workspace {} for {}", id, userReq.getEmail());
     Workspace workspace = workspaceService.getWorkspace(id, userReq);
-    GcpContext gcpContext = workspace.getGcpCloudContext().map(GcpCloudContext::toApi).orElse(null);
+    ApiGcpContext gcpContext =
+        workspace.getGcpCloudContext().map(GcpCloudContext::toApi).orElse(null);
 
     // Note projectId will be null here if no GCP cloud context exists.
     // When we have another cloud context, we will need to do a similar retrieval for it.
-    WorkspaceDescription desc =
-        new WorkspaceDescription()
+    ApiWorkspaceDescription desc =
+        new ApiWorkspaceDescription()
             .id(workspace.getWorkspaceId())
             .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))
             .stage(workspace.getWorkspaceStage().toApiModel())
@@ -156,8 +161,8 @@ public class WorkspaceApiController implements WorkspaceApi {
   // TODO(PF-404): the following DataReference endpoints are deprecated and will go away
 
   @Override
-  public ResponseEntity<DataReferenceDescription> createDataReference(
-      @PathVariable("workspaceId") UUID id, @RequestBody CreateDataReferenceRequestBody body) {
+  public ResponseEntity<ApiDataReferenceDescription> createDataReference(
+      @PathVariable("workspaceId") UUID id, @RequestBody ApiCreateDataReferenceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info(
         "Creating data reference in workspace {} for {} with body {}",
@@ -180,12 +185,12 @@ public class WorkspaceApiController implements WorkspaceApi {
 
     ReferenceResource referenceResource =
         referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
-    DataReferenceDescription response = makeDataReferenceDescription(referenceResource);
+    ApiDataReferenceDescription response = makeApiDataReferenceDescription(referenceResource);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<DataReferenceDescription> getDataReference(
+  public ResponseEntity<ApiDataReferenceDescription> getDataReference(
       @PathVariable("workspaceId") UUID workspaceId,
       @PathVariable("referenceId") UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
@@ -205,19 +210,19 @@ public class WorkspaceApiController implements WorkspaceApi {
           "This endpoint does not support non-snapshot references. Use the newer type-specific endpoints instead.");
     }
 
-    DataReferenceDescription response = makeDataReferenceDescription(referenceResource);
+    ApiDataReferenceDescription response = makeApiDataReferenceDescription(referenceResource);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<DataReferenceDescription> getDataReferenceByName(
+  public ResponseEntity<ApiDataReferenceDescription> getDataReferenceByName(
       @PathVariable("workspaceId") UUID workspaceId,
-      @PathVariable("referenceType") ReferenceTypeEnum referenceType,
+      @PathVariable("referenceType") ApiReferenceTypeEnum referenceType,
       @PathVariable("name") String name) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     // TODO(PF-404): this endpoint's return type does not support reference types beyond snapshots.
     // Clients should migrate to type-specific endpoints, and this endpoint should be removed.
-    if (referenceType != ReferenceTypeEnum.DATA_REPO_SNAPSHOT) {
+    if (referenceType != ApiReferenceTypeEnum.DATA_REPO_SNAPSHOT) {
       throw new InvalidReferenceException(
           "This endpoint does not support non-snapshot references. Use the newer type-specific endpoints instead.");
     }
@@ -225,7 +230,7 @@ public class WorkspaceApiController implements WorkspaceApi {
 
     ReferenceResource referenceResource =
         referenceResourceService.getReferenceResourceByName(workspaceId, name, userReq);
-    DataReferenceDescription response = makeDataReferenceDescription(referenceResource);
+    ApiDataReferenceDescription response = makeApiDataReferenceDescription(referenceResource);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -233,7 +238,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<Void> updateDataReference(
       @PathVariable("workspaceId") UUID id,
       @PathVariable("referenceId") UUID referenceId,
-      @RequestBody UpdateDataReferenceRequestBody body) {
+      @RequestBody ApiUpdateDataReferenceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
 
     if (body.getName() == null && body.getDescription() == null) {
@@ -272,7 +277,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<DataReferenceList> enumerateReferences(
+  public ResponseEntity<ApiDataReferenceList> enumerateReferences(
       @PathVariable("workspaceId") UUID id,
       @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
       @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
@@ -283,78 +288,70 @@ public class WorkspaceApiController implements WorkspaceApi {
         referenceResourceService.enumerateReferences(id, offset, limit, userReq);
 
     // TODO(PF-404): this is a workaround until clients migrate off this endpoint.
-    DataReferenceList responseList = new DataReferenceList();
+    ApiDataReferenceList responseList = new ApiDataReferenceList();
     for (ReferenceResource resource : enumerateResult) {
       if (resource.getResourceType() == WsmResourceType.DATA_REPO_SNAPSHOT) {
-        responseList.addResourcesItem(makeDataReferenceDescription(resource));
+        responseList.addResourcesItem(makeApiDataReferenceDescription(resource));
       }
     }
     return ResponseEntity.ok(responseList);
   }
 
-  private DataReferenceDescription makeDataReferenceDescription(
+  private ApiDataReferenceDescription makeApiDataReferenceDescription(
       ReferenceResource referenceResource) {
     ReferenceDataRepoSnapshotResource snapshotResource =
         referenceResource.castToDataRepoSnapshotResource();
     var reference =
-        new DataRepoSnapshot()
+        new ApiDataRepoSnapshot()
             .instanceName(snapshotResource.getInstanceName())
             .snapshot(snapshotResource.getSnapshotId());
-    return new DataReferenceDescription()
+    return new ApiDataReferenceDescription()
         .referenceId(referenceResource.getResourceId())
         .name(referenceResource.getName())
         .description(referenceResource.getDescription())
         .workspaceId(referenceResource.getWorkspaceId())
         .cloningInstructions(referenceResource.getCloningInstructions().toApiModel())
-        .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
+        .referenceType(ApiReferenceTypeEnum.DATA_REPO_SNAPSHOT)
         .reference(reference);
   }
 
   @Override
   public ResponseEntity<Void> grantRole(
       @PathVariable("workspaceId") UUID id,
-      @PathVariable("role") IamRole role,
-      @RequestBody GrantRoleRequestBody body) {
+      @PathVariable("role") ApiIamRole role,
+      @RequestBody ApiGrantRoleRequestBody body) {
     ControllerValidationUtils.validateEmail(body.getMemberEmail());
     samService.grantWorkspaceRole(
-        id,
-        getAuthenticatedInfo(),
-        bio.terra.workspace.service.iam.model.IamRole.fromApiModel(role),
-        body.getMemberEmail());
+        id, getAuthenticatedInfo(), IamRole.fromApiModel(role), body.getMemberEmail());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
   public ResponseEntity<Void> removeRole(
       @PathVariable("workspaceId") UUID id,
-      @PathVariable("role") IamRole role,
+      @PathVariable("role") ApiIamRole role,
       @PathVariable("memberEmail") String memberEmail) {
     ControllerValidationUtils.validateEmail(memberEmail);
     samService.removeWorkspaceRole(
-        id,
-        getAuthenticatedInfo(),
-        bio.terra.workspace.service.iam.model.IamRole.fromApiModel(role),
-        memberEmail);
+        id, getAuthenticatedInfo(), IamRole.fromApiModel(role), memberEmail);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
-  public ResponseEntity<RoleBindingList> getRoles(@PathVariable("workspaceId") UUID id) {
+  public ResponseEntity<ApiRoleBindingList> getRoles(@PathVariable("workspaceId") UUID id) {
     List<bio.terra.workspace.service.iam.model.RoleBinding> bindingList =
         samService.listRoleBindings(id, getAuthenticatedInfo());
-    RoleBindingList responseList = new RoleBindingList();
+    ApiRoleBindingList responseList = new ApiRoleBindingList();
     for (bio.terra.workspace.service.iam.model.RoleBinding roleBinding : bindingList) {
       responseList.add(
-          new bio.terra.workspace.generated.model.RoleBinding()
-              .role(roleBinding.role().toApiModel())
-              .members(roleBinding.users()));
+          new ApiRoleBinding().role(roleBinding.role().toApiModel()).members(roleBinding.users()));
     }
     return new ResponseEntity<>(responseList, HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<CreateCloudContextResult> createCloudContext(
-      UUID id, @Valid CreateCloudContextRequest body) {
+  public ResponseEntity<ApiCreateCloudContextResult> createCloudContext(
+      UUID id, @Valid ApiCreateCloudContextRequest body) {
     ControllerValidationUtils.validateCloudPlatform(body.getCloudType());
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     String jobId = body.getJobControl().getId();
@@ -362,39 +359,39 @@ public class WorkspaceApiController implements WorkspaceApi {
 
     // For now, the cloud type is always GCP and that is guaranteed in the validate.
     workspaceService.createGcpCloudContext(id, jobId, resultPath, userReq);
-    CreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userReq);
+    ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userReq);
     return new ResponseEntity<>(
         response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));
   }
 
   @Override
-  public ResponseEntity<CreateCloudContextResult> getCreateCloudContextResult(
+  public ResponseEntity<ApiCreateCloudContextResult> getCreateCloudContextResult(
       UUID id, String jobId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    CreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userReq);
+    ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userReq);
     return new ResponseEntity<>(
         response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));
   }
 
-  private CreateCloudContextResult fetchCreateCloudContextResult(
+  private ApiCreateCloudContextResult fetchCreateCloudContextResult(
       String jobId, AuthenticatedUserRequest userReq) {
     final AsyncJobResult<GcpCloudContext> jobResult =
         jobService.retrieveAsyncJobResult(jobId, GcpCloudContext.class, userReq);
 
-    final GcpContext gcpContext;
-    if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
-      gcpContext = new GcpContext().projectId(jobResult.getResult().getGcpProjectId());
+    final ApiGcpContext gcpContext;
+    if (jobResult.getApiJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
+      gcpContext = new ApiGcpContext().projectId(jobResult.getResult().getGcpProjectId());
     } else {
       gcpContext = null;
     }
-    return new CreateCloudContextResult()
-        .jobReport(jobResult.getJobReport())
-        .errorReport(jobResult.getErrorReport())
+    return new ApiCreateCloudContextResult()
+        .jobReport(jobResult.getApiJobReport())
+        .errorReport(jobResult.getApiErrorReport())
         .gcpContext(gcpContext);
   }
 
   @Override
-  public ResponseEntity<Void> deleteCloudContext(UUID id, CloudContext cloudContext) {
+  public ResponseEntity<Void> deleteCloudContext(UUID id, ApiCloudContext cloudContext) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ControllerValidationUtils.validateCloudPlatform(cloudContext);
     workspaceService.deleteGcpCloudContext(id, userReq);

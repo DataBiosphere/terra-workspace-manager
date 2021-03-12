@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.utils.BaseStatusService;
 import bio.terra.workspace.common.utils.StatusSubsystem;
-import bio.terra.workspace.generated.model.SystemStatusSystems;
+import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -25,7 +25,7 @@ public class BaseStatusServiceTest extends BaseUnitTest {
   @Test
   void testSingleComponent() {
     List<StatusSubsystem> subsystems = new ArrayList<>();
-    subsystems.add(new StatusSubsystem(() -> new SystemStatusSystems().ok(true), true));
+    subsystems.add(new StatusSubsystem(() -> new ApiSystemStatusSystems().ok(true), true));
 
     BaseStatusServiceTestImpl statusService = new BaseStatusServiceTestImpl(subsystems);
     statusService.checkSubsystems();
@@ -35,8 +35,8 @@ public class BaseStatusServiceTest extends BaseUnitTest {
   @Test
   void testPassesWithNonCriticalFailure() {
     List<StatusSubsystem> subsystems = new ArrayList<>();
-    subsystems.add(new StatusSubsystem(() -> new SystemStatusSystems().ok(true), true));
-    subsystems.add(new StatusSubsystem(() -> new SystemStatusSystems().ok(false), false));
+    subsystems.add(new StatusSubsystem(() -> new ApiSystemStatusSystems().ok(true), true));
+    subsystems.add(new StatusSubsystem(() -> new ApiSystemStatusSystems().ok(false), false));
 
     BaseStatusServiceTestImpl statusService = new BaseStatusServiceTestImpl(subsystems);
     statusService.checkSubsystems();
@@ -46,8 +46,8 @@ public class BaseStatusServiceTest extends BaseUnitTest {
   @Test
   void testNotOkWithCriticalFailure() {
     List<StatusSubsystem> subsystems = new ArrayList<>();
-    subsystems.add(new StatusSubsystem(() -> new SystemStatusSystems().ok(false), true));
-    subsystems.add(new StatusSubsystem(() -> new SystemStatusSystems().ok(true), false));
+    subsystems.add(new StatusSubsystem(() -> new ApiSystemStatusSystems().ok(false), true));
+    subsystems.add(new StatusSubsystem(() -> new ApiSystemStatusSystems().ok(true), false));
 
     BaseStatusServiceTestImpl statusService = new BaseStatusServiceTestImpl(subsystems);
     statusService.checkSubsystems();
@@ -57,7 +57,7 @@ public class BaseStatusServiceTest extends BaseUnitTest {
   @Test
   void testNotOkWithCriticalException() {
     List<StatusSubsystem> subsystems = new ArrayList<>();
-    Supplier<SystemStatusSystems> exceptionSupplier =
+    Supplier<ApiSystemStatusSystems> exceptionSupplier =
         () -> {
           throw new RuntimeException("oh no");
         };
@@ -71,7 +71,7 @@ public class BaseStatusServiceTest extends BaseUnitTest {
   @Test
   void testOkWithNonCriticalException() {
     List<StatusSubsystem> subsystems = new ArrayList<>();
-    Supplier<SystemStatusSystems> exceptionSupplier =
+    Supplier<ApiSystemStatusSystems> exceptionSupplier =
         () -> {
           throw new RuntimeException("oh no");
         };

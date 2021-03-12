@@ -1,6 +1,6 @@
 package bio.terra.workspace.common.utils;
 
-import bio.terra.workspace.generated.model.SystemStatusSystems;
+import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
 import java.util.function.Supplier;
 
 /*
@@ -16,19 +16,19 @@ import java.util.function.Supplier;
 */
 public class StatusSubsystem {
 
-  private Supplier<SystemStatusSystems> statusCheckFn;
+  private Supplier<ApiSystemStatusSystems> statusCheckFn;
   private boolean isCritical;
 
-  public StatusSubsystem(Supplier<SystemStatusSystems> statusCheckFn, boolean isCritical) {
+  public StatusSubsystem(Supplier<ApiSystemStatusSystems> statusCheckFn, boolean isCritical) {
     this.statusCheckFn = statusCheckFn;
     this.isCritical = isCritical;
   }
 
-  public Supplier<SystemStatusSystems> getStatusCheckFn() {
+  public Supplier<ApiSystemStatusSystems> getStatusCheckFn() {
     return statusCheckFn;
   }
 
-  public void setStatusCheckFn(Supplier<SystemStatusSystems> statusCheckFn) {
+  public void setStatusCheckFn(Supplier<ApiSystemStatusSystems> statusCheckFn) {
     this.statusCheckFn = statusCheckFn;
   }
 

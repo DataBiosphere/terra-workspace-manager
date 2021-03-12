@@ -39,7 +39,7 @@ public class StoreGoogleContextStep implements Step {
     String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
 
     // Delete the cloud context, but only if it is the one with our project id
-    workspaceDao.deleteGcpCloudContextWithIdCheck(workspaceId, projectId);
+    workspaceDao.deleteGcpApiCloudContextWithIdCheck(workspaceId, projectId);
     return StepResult.getStepResultSuccess();
   }
 }

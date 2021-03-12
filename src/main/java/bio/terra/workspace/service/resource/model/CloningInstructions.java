@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.model;
 
-import bio.terra.workspace.generated.model.CloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.EnumBiMap;
 import com.google.common.collect.EnumHashBiMap;
@@ -17,17 +17,17 @@ public enum CloningInstructions {
   COPY_RESOURCE,
   COPY_REFERENCE;
 
-  private static final BiMap<CloningInstructions, CloningInstructionsEnum> instructionMap =
-      EnumBiMap.create(CloningInstructions.class, CloningInstructionsEnum.class);
+  private static final BiMap<CloningInstructions, ApiCloningInstructionsEnum> instructionMap =
+      EnumBiMap.create(CloningInstructions.class, ApiCloningInstructionsEnum.class);
 
   private static final BiMap<CloningInstructions, String> sqlMap =
       EnumHashBiMap.create(CloningInstructions.class);
 
   static {
-    instructionMap.put(CloningInstructions.COPY_NOTHING, CloningInstructionsEnum.NOTHING);
-    instructionMap.put(CloningInstructions.COPY_DEFINITION, CloningInstructionsEnum.DEFINITION);
-    instructionMap.put(CloningInstructions.COPY_RESOURCE, CloningInstructionsEnum.RESOURCE);
-    instructionMap.put(CloningInstructions.COPY_REFERENCE, CloningInstructionsEnum.REFERENCE);
+    instructionMap.put(CloningInstructions.COPY_NOTHING, ApiCloningInstructionsEnum.NOTHING);
+    instructionMap.put(CloningInstructions.COPY_DEFINITION, ApiCloningInstructionsEnum.DEFINITION);
+    instructionMap.put(CloningInstructions.COPY_RESOURCE, ApiCloningInstructionsEnum.RESOURCE);
+    instructionMap.put(CloningInstructions.COPY_REFERENCE, ApiCloningInstructionsEnum.REFERENCE);
 
     sqlMap.put(COPY_NOTHING, "COPY_NOTHING");
     sqlMap.put(COPY_DEFINITION, "COPY_DEFINITION");
@@ -35,11 +35,11 @@ public enum CloningInstructions {
     sqlMap.put(COPY_REFERENCE, "COPY_REFERENCE");
   }
 
-  public static CloningInstructions fromApiModel(CloningInstructionsEnum modelEnum) {
+  public static CloningInstructions fromApiModel(ApiCloningInstructionsEnum modelEnum) {
     return instructionMap.inverse().get(modelEnum);
   }
 
-  public CloningInstructionsEnum toApiModel() {
+  public ApiCloningInstructionsEnum toApiModel() {
     return instructionMap.get(this);
   }
 
