@@ -10,6 +10,7 @@ plugins {
 	id "org.hidetake.swagger.generator" version "2.18.2"
 	id "org.springframework.boot" version "2.4.0"
 	id 'ru.vyarus.quality' version '4.5.0'
+	id 'jacoco'
 }
 
 sourceCompatibility = JavaVersion.VERSION_11
@@ -45,6 +46,9 @@ allprojects {
 	}
 
 	apply plugin: "jacoco"
+	jacoco {
+		toolVersion = '0.8.2'
+	}
 }
 
 repositories {
@@ -176,6 +180,11 @@ tasks.withType(Test) {
 }
 
 jacocoTestReport {
+	reports {
+		html.enabled = true
+		xml.enabled = true
+		csv.enabled = true
+	}
 	dependsOn test // tests are required to run before generating the report
 }
 
@@ -184,7 +193,6 @@ test {
 	useJUnitPlatform {
 		includeTags "unit"
 	}
-	finalizedBy jacocoTestReport
 }
 
 task unitTest(type: Test) {
@@ -195,6 +203,7 @@ task unitTest(type: Test) {
 		events = ["passed", "failed", "skipped", "started"]
 	}
 	outputs.upToDateWhen { false }
+	finalizedBy jacocoTestReport
 }
 
 task connectedTest(type: Test) {
