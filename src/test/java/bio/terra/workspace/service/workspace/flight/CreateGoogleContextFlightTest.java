@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.workspace.flight;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -11,20 +13,24 @@ import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.CustomGcpIamRole;
+import bio.terra.workspace.service.iam.CustomGcpIamRoleMapping;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
-import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.model.Binding;
 import com.google.api.services.cloudresourcemanager.model.GetIamPolicyRequest;
 import com.google.api.services.cloudresourcemanager.model.Policy;
 import com.google.api.services.cloudresourcemanager.model.Project;
+import com.google.api.services.iam.v1.model.Role;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -52,8 +58,8 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   void successCreatesProjectAndContext() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
-    assertEquals(
-        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
+    Workspace workspace = workspaceService.getWorkspace(workspaceId, userReq);
+    assertTrue(workspace.getGcpCloudContext().isEmpty());
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
@@ -68,9 +74,13 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
             .getResultMap()
             .get()
             .get(WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID, String.class);
-    assertEquals(
-        WorkspaceCloudContext.builder().googleProjectId(projectId).build(),
-        workspaceService.getCloudContext(workspaceId, userReq));
+
+    workspace = workspaceService.getWorkspace(workspaceId, userReq);
+    assertTrue(workspace.getGcpCloudContext().isPresent());
+
+    String contextProjectId = workspace.getGcpCloudContext().get().getGcpProjectId();
+    assertEquals(contextProjectId, projectId);
+
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());
     assertEquals(
@@ -78,6 +88,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
         crl.getCloudBillingClientCow()
             .getProjectBillingInfo("projects/" + projectId)
             .getBillingAccountName());
+    assertRolesExist(project);
     assertPolicyGroupsSynced(workspaceId, project);
   }
 
@@ -86,8 +97,8 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   void errorRevertsChanges() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
-    assertEquals(
-        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
+    Workspace workspace = workspaceService.getWorkspace(workspaceId, userReq);
+    assertTrue(workspace.getGcpCloudContext().isEmpty());
 
     // Submit a flight class that always errors.
     FlightState flightState =
@@ -98,8 +109,9 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
             STAIRWAY_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
 
-    assertEquals(
-        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
+    workspace = workspaceService.getWorkspace(workspaceId, userReq);
+    assertTrue(workspace.getGcpCloudContext().isEmpty());
+
     String projectId =
         flightState
             .getResultMap()
@@ -130,6 +142,21 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     inputs.put(WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, billingAccountId);
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userReq);
     return inputs;
+  }
+
+  /**
+   * Asserts that a provided project has every custom role specified in {@link
+   * CustomGcpIamRoleMapping}
+   */
+  private void assertRolesExist(Project project) throws IOException {
+    for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES) {
+      String fullRoleName =
+          "projects/" + project.getProjectId() + "/roles/" + customRole.getRoleName();
+      Role gcpRole = crl.getIamCow().projects().roles().get(fullRoleName).execute();
+      assertThat(
+          gcpRole.getIncludedPermissions(),
+          containsInAnyOrder(customRole.getIncludedPermissions().toArray()));
+    }
   }
 
   /** Asserts that Sam groups are granted their appropriate IAM roles on a GCP project. */

@@ -25,10 +25,12 @@ workspace:
     # this status check. Mockito does not like it's mocks being modified and called concurrently.
     cron: "-"
 
-  tracing.enabled: false
-
   workspace-database:
     initialize-on-start: true
     password: dbpwd
     uri: jdbc:postgresql://127.0.0.1:5432/testdb
     username: dbuser
+
+terra.common:
+  tracing:
+    stackdriverExportEnabled: false

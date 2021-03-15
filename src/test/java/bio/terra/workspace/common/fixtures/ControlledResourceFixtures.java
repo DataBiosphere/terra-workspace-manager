@@ -7,8 +7,10 @@ import bio.terra.workspace.generated.model.GoogleBucketLifecycleRule;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleAction;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleActionType;
 import bio.terra.workspace.generated.model.GoogleBucketLifecycleRuleCondition;
-import bio.terra.workspace.service.datareference.model.CloningInstructions;
-import bio.terra.workspace.service.resource.controlled.gcp.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.ManagedByType;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +49,7 @@ public class ControlledResourceFixtures {
                   .createdBefore(LocalDate.of(2017, 2, 18))
                   .addMatchesStorageClassItem(GoogleBucketDefaultStorageClass.STANDARD));
   // list must not be immutable if deserialization is to work
-  public static final List<GoogleBucketLifecycleRule> LIFECYCLE_RULES =
+  static final List<GoogleBucketLifecycleRule> LIFECYCLE_RULES =
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
   public static final String BUCKET_NAME = "my-bucket";
   public static final String BUCKET_LOCATION = "US-CENTRAL1";
@@ -65,22 +67,29 @@ public class ControlledResourceFixtures {
   public static final CloningInstructions CLONING_INSTRUCTIONS = CloningInstructions.COPY_REFERENCE;
   public static final ControlledGcsBucketResource BUCKET_RESOURCE =
       new ControlledGcsBucketResource(
-          RESOURCE_NAME,
-          CLONING_INSTRUCTIONS,
-          RESOURCE_DESCRIPTION,
           WORKSPACE_ID,
-          OWNER_EMAIL,
-          GOOGLE_BUCKET_CREATION_PARAMETERS);
-
-  /** Flawed resource missing owner email. */
-  public static final ControlledGcsBucketResource INVALID_BUCKET_RESOURCE =
-      new ControlledGcsBucketResource(
+          RESOURCE_ID,
           RESOURCE_NAME,
-          CLONING_INSTRUCTIONS,
           RESOURCE_DESCRIPTION,
-          null,
+          CLONING_INSTRUCTIONS,
           OWNER_EMAIL,
-          GOOGLE_BUCKET_CREATION_PARAMETERS);
+          AccessScopeType.ACCESS_SCOPE_PRIVATE,
+          ManagedByType.MANAGED_BY_USER,
+          BUCKET_NAME);
 
   private ControlledResourceFixtures() {}
+
+  public static ControlledGcsBucketResource makeControlledGcsBucketResource(UUID workspaceId) {
+    UUID resourceId = UUID.randomUUID();
+    return new ControlledGcsBucketResource(
+        workspaceId,
+        resourceId,
+        "testgcs-" + resourceId,
+        RESOURCE_DESCRIPTION,
+        CLONING_INSTRUCTIONS,
+        null,
+        AccessScopeType.ACCESS_SCOPE_SHARED,
+        ManagedByType.MANAGED_BY_USER,
+        BUCKET_NAME);
+  }
 }

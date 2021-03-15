@@ -4,13 +4,18 @@ import bio.terra.workspace.generated.controller.ControlledGoogleResourceApi;
 import bio.terra.workspace.generated.model.CreateControlledGoogleBucketRequestBody;
 import bio.terra.workspace.generated.model.CreatedControlledGoogleBucket;
 import bio.terra.workspace.generated.model.GoogleBucketStoredAttributes;
-import bio.terra.workspace.service.datareference.model.CloningInstructions;
+import bio.terra.workspace.generated.model.PrivateResourceUser;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
-import bio.terra.workspace.service.resource.controlled.gcp.ControlledGcpResourceService;
-import bio.terra.workspace.service.resource.controlled.gcp.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.ManagedByType;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
+import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -27,14 +32,14 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
       LoggerFactory.getLogger(ControlledGoogleResourceApiController.class);
 
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
-  private final ControlledGcpResourceService controlledResourceService;
+  private final ControlledResourceService controlledResourceService;
   private final HttpServletRequest request;
   private final JobService jobService;
 
   @Autowired
   public ControlledGoogleResourceApiController(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      ControlledGcpResourceService controlledResourceService,
+      ControlledResourceService controlledResourceService,
       JobService jobService,
       HttpServletRequest request) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
@@ -47,19 +52,32 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
   public ResponseEntity<CreatedControlledGoogleBucket> createBucket(
       UUID workspaceId, @Valid CreateControlledGoogleBucketRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final ControlledGcsBucketResource resource =
-        new ControlledGcsBucketResource(
-            body.getCommon().getName(),
-            CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()),
-            body.getCommon().getDescription(),
-            workspaceId,
-            body.getCommon().getOwner(),
-            body.getGoogleBucket());
-    // run all self-validation checks
-    resource.validate();
+
+    ControlledGcsBucketResource resource =
+        ControlledGcsBucketResource.builder()
+            .workspaceId(workspaceId)
+            .name(body.getCommon().getName())
+            .description(body.getCommon().getDescription())
+            .cloningInstructions(
+                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
+            .assignedUser(
+                Optional.ofNullable(body.getCommon().getPrivateResourceUser())
+                    .map(PrivateResourceUser::getUserName)
+                    .orElse(null))
+            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
+            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .bucketName(body.getGoogleBucket().getName())
+            .build();
+
     final String jobId =
-        controlledResourceService.createGcsBucket(
-            resource, body.getCommon().getJobControl(), userRequest);
+        controlledResourceService.createControlledResource(
+            resource,
+            body.getGoogleBucket(),
+            Optional.ofNullable(body.getCommon().getPrivateResourceUser())
+                .map(PrivateResourceUser::getIamRole)
+                .orElse(null),
+            body.getCommon().getJobControl(),
+            userRequest);
     return getCreateBucketResult(workspaceId, jobId);
   }
 
@@ -73,7 +91,12 @@ public class ControlledGoogleResourceApiController implements ControlledGoogleRe
 
   @Override
   public ResponseEntity<GoogleBucketStoredAttributes> getBucket(UUID id, UUID resourceId) {
-    return new ResponseEntity<>(controlledResourceService.getBucket(id, resourceId), HttpStatus.OK);
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledResource controlledResource =
+        controlledResourceService.getControlledResource(id, resourceId, userRequest);
+    GoogleBucketStoredAttributes response =
+        controlledResource.castToGcsBucketResource().toApiModel();
+    return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   private CreatedControlledGoogleBucket fetchGoogleBucketResult(String jobId) {

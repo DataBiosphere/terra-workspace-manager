@@ -7,8 +7,8 @@ import bio.terra.datarepo.client.ApiException;
 import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.SystemStatusSystems;
-import bio.terra.workspace.service.datareference.exception.DataRepoAuthorizationException;
-import bio.terra.workspace.service.datareference.exception.DataRepoInternalServerErrorException;
+import bio.terra.workspace.service.datarepo.exception.DataRepoAuthorizationException;
+import bio.terra.workspace.service.datarepo.exception.DataRepoInternalServerErrorException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.HashMap;
@@ -62,7 +62,7 @@ public class DataRepoService {
 
     try {
       repositoryApi.retrieveSnapshot(snapshotId);
-      logger.info("Retrieved snapshot {} on Data Repo instance {}", snapshotId, instanceName);
+      logger.info("Retrieved snapshotId {} on Data Repo instance {}", snapshotId, instanceName);
       return true;
     } catch (ApiException e) {
       if (e.getCode() == HttpStatus.NOT_FOUND.value()) {

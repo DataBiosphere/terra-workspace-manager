@@ -8,12 +8,15 @@ import static org.mockito.Mockito.verify;
 
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.controlled.flight.create.CreateGcsBucketStep;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
@@ -48,6 +51,13 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
 
   @Test
   public void testCreatesBucket() throws RetryException, InterruptedException {
+    final FlightMap inputFlightMap = new FlightMap();
+    inputFlightMap.put(
+        WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS,
+        ControlledResourceFixtures.GOOGLE_BUCKET_CREATION_PARAMETERS);
+    inputFlightMap.makeImmutable();
+    doReturn(inputFlightMap).when(mockFlightContext).getInputParameters();
+
     final StepResult stepResult = createGcsBucketStep.doStep(mockFlightContext);
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
     verify(mockStorageCow).create(bucketInfoCaptor.capture());
