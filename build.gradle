@@ -43,6 +43,8 @@ allprojects {
 			downloadJavadoc = true
 		}
 	}
+
+	apply plugin: "jacoco"
 }
 
 repositories {
@@ -173,11 +175,16 @@ tasks.withType(Test) {
 	]
 }
 
+jacocoTestReport {
+	dependsOn test // tests are required to run before generating the report
+}
+
  // default test to unit tests so the build target succeeds
 test {
 	useJUnitPlatform {
 		includeTags "unit"
 	}
+	finalizedBy jacocoTestReport
 }
 
 task unitTest(type: Test) {
