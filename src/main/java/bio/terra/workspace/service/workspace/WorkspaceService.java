@@ -23,6 +23,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -104,6 +105,19 @@ public class WorkspaceService {
     Workspace workspace = workspaceDao.getWorkspace(workspaceId);
     samService.workspaceAuthzOnly(userReq, workspaceId, action);
     return workspace;
+  }
+
+  /**
+   * List all workspaces a user has read access to.
+   *
+   * @param userReq Authentication object for the caller
+   * @param offset The number of items to skip before starting to collect the result set.
+   * @param limit The maximum number of items to return.
+   */
+  @Traced
+  public List<Workspace> listWorkspaces(AuthenticatedUserRequest userReq, int offset, int limit) {
+    List<UUID> samWorkspaceIds = samService.listWorkspaceIds(userReq);
+    return workspaceDao.getWorkspacesMatchingList(samWorkspaceIds, offset, limit);
   }
 
   /** Retrieves an existing workspace by ID */

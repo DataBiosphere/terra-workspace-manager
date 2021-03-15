@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,6 +95,32 @@ public class SamService {
     } catch (ApiException apiException) {
       throw new SamApiException(apiException);
     }
+  }
+
+  /**
+   * List all workspace IDs in Sam this user has access to. Note that in environments shared with
+   * Rawls, some of these workspaces will be Rawls managed and WSM will not know about them.
+   */
+  @Traced
+  public List<UUID> listWorkspaceIds(AuthenticatedUserRequest userReq) {
+    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+    List<UUID> workspaceIds = new ArrayList<>();
+    try {
+      for (var resourceAndPolicy :
+          resourceApi.listResourcesAndPolicies(SamConstants.SAM_WORKSPACE_RESOURCE)) {
+        try {
+          workspaceIds.add(UUID.fromString(resourceAndPolicy.getResourceId()));
+        } catch (IllegalArgumentException e) {
+          // WSM always uses UUIDs for workspace IDs, but this is not enforced in Sam and there are
+          // old workspaces that don't use UUIDs. Any workspace with a non-UUID workspace ID is
+          // ignored here.
+          continue;
+        }
+      }
+    } catch (ApiException samException) {
+      throw new SamApiException(samException);
+    }
+    return workspaceIds;
   }
 
   @Traced

@@ -60,6 +60,22 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/NotFound'
+    get:
+      parameters:
+      - $ref: '#/components/parameters/Offset'
+      - $ref: '#/components/parameters/Limit'
+      summary: List all workspaces a user can read.
+      operationId: listWorkspaces
+      tags: [ Workspace ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceDescriptionList'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
   /api/workspaces/v1/{workspaceId}:
     parameters:
@@ -716,7 +732,7 @@ components:
     Limit:
       name: limit
       in: query
-      description: The numbers of items to return. Default 10
+      description: The maximum number of items to return. Default 10
       schema:
         type: integer
         minimum: 1
@@ -1040,6 +1056,16 @@ components:
           $ref: '#/components/schemas/GcpContext'
         # When we have an Azure context, we can put it right here.
         # No point making a complex structure when there will be only a few of these
+
+    WorkspaceDescriptionList:
+      type: object
+      required: [ workspaces ]
+      properties:
+        workspaces:
+          description: A list of workspaces
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkspaceDescription'
 
     CloningInstructionsEnum:
       type: string
