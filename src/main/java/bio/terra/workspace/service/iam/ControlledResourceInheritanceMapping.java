@@ -2,6 +2,9 @@ package bio.terra.workspace.service.iam;
 
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ManagedByType;
+import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -69,4 +72,25 @@ public class ControlledResourceInheritanceMapping {
               ImmutableList.of(),
               IamRole.READER,
               ImmutableList.of());
+
+  public static ImmutableMap<IamRole, ImmutableList<ControlledResourceIamRole>>
+      getInheritanceMapping(AccessScopeType accessScope, ManagedByType managedBy) {
+    if (accessScope == AccessScopeType.ACCESS_SCOPE_SHARED) {
+      if (managedBy == ManagedByType.MANAGED_BY_USER) {
+        return USER_SHARED_MAPPING;
+      } else if (managedBy == ManagedByType.MANAGED_BY_APPLICATION) {
+        return APPLICATION_SHARED_MAPPING;
+      }
+    } else if (accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
+      if (managedBy == ManagedByType.MANAGED_BY_USER) {
+        return USER_PRIVATE_MAPPING;
+      } else if (managedBy == ManagedByType.MANAGED_BY_APPLICATION) {
+        return APPLICATION_PRIVATE_MAPPING;
+      }
+    }
+    throw new InternalLogicException(
+        String.format(
+            "Inheritance map not specified for access scope %s and ManagedByType %s",
+            accessScope.toString(), managedBy.toString()));
+  }
 }

@@ -8,7 +8,10 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.IamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.stage.StageService;
+import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -279,8 +282,8 @@ public class SamService {
 
   /**
    * Builds a policy list with a single provided owner and empty reader, writer and application
-   * policies. These policies use policy-based inheritance to also grant permissions on
-   * controlled resources created in this workspace.
+   * policies. These policies use policy-based inheritance to also grant permissions on controlled
+   * resources created in this workspace.
    *
    * <p>This is a helper function for building the policy section of a request to create a workspace
    * resource in Sam. The provided user is granted the OWNER role and empty policies for reader and
@@ -320,35 +323,21 @@ public class SamService {
    * @return A list of AccessPolicyDescendantPermissions object, with each object representing the
    *     descendant permissions for a single category of controlled resource (e.g. user-shared).
    */
-  // TODO: add worker method for this once we have an actual type for resource categories.
   private List<AccessPolicyDescendantPermissions> buildDescendantPermissions(IamRole wsRole) {
-    return ImmutableList.of(
-        new AccessPolicyDescendantPermissions()
-            .resourceType(SamConstants.SAM_CONTROLLED_USER_SHARED_RESOURCE)
+    var builder = new ImmutableList.Builder<AccessPolicyDescendantPermissions>();
+    for (AccessScopeType accessScope : AccessScopeType.values()) {
+      for (ManagedByType managedBy : ManagedByType.values()) {
+        // For each controlled resource category, we have a mapping of workspace roles -> resource
+        // roles. This translates the mapping for a provided workspace role into Sam policy.
+        builder.add(new AccessPolicyDescendantPermissions()
+            .resourceType(samControlledResourceType(accessScope, managedBy))
             .roles(
-                ControlledResourceInheritanceMapping.USER_SHARED_MAPPING.get(wsRole).stream()
-                    .map(ControlledResourceIamRole::toSamRole)
-                    .collect(Collectors.toList())),
-        new AccessPolicyDescendantPermissions()
-            .resourceType(SamConstants.SAM_CONTROLLED_USER_PRIVATE_RESOURCE)
-            .roles(
-                ControlledResourceInheritanceMapping.USER_PRIVATE_MAPPING.get(wsRole).stream()
-                    .map(ControlledResourceIamRole::toSamRole)
-                    .collect(Collectors.toList())),
-        new AccessPolicyDescendantPermissions()
-            .resourceType(SamConstants.SAM_CONTROLLED_APPLICATION_SHARED_RESOURCE)
-            .roles(
-                ControlledResourceInheritanceMapping.APPLICATION_SHARED_MAPPING.get(wsRole).stream()
-                    .map(ControlledResourceIamRole::toSamRole)
-                    .collect(Collectors.toList())),
-        new AccessPolicyDescendantPermissions()
-            .resourceType(SamConstants.SAM_CONTROLLED_APPLICATION_PRIVATE_RESOURCE)
-            .roles(
-                ControlledResourceInheritanceMapping.APPLICATION_PRIVATE_MAPPING
-                    .get(wsRole)
-                    .stream()
+                ControlledResourceInheritanceMapping.getInheritanceMapping(accessScope, managedBy).get(wsRole).stream()
                     .map(ControlledResourceIamRole::toSamRole)
                     .collect(Collectors.toList())));
+      }
+    }
+    return builder.build();
   }
 
   /** Fetch the email associated with an authToken from Sam. */
@@ -364,5 +353,26 @@ public class SamService {
   /** Returns the Sam action for modifying a given IAM role. */
   private String samActionToModifyRole(IamRole role) {
     return String.format("share_policy::%s", role.toSamRole());
+  }
+
+  /** Return the Sam resource name for the specified controlled resource type. */
+  private String samControlledResourceType(AccessScopeType accessScope, ManagedByType managedBy) {
+    if (accessScope == AccessScopeType.ACCESS_SCOPE_SHARED) {
+      if (managedBy == ManagedByType.MANAGED_BY_USER) {
+        return SamConstants.SAM_CONTROLLED_USER_SHARED_RESOURCE;
+      } else if (managedBy == ManagedByType.MANAGED_BY_APPLICATION) {
+        return SamConstants.SAM_CONTROLLED_APPLICATION_SHARED_RESOURCE;
+      }
+    } else if (accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
+      if (managedBy == ManagedByType.MANAGED_BY_USER) {
+        return SamConstants.SAM_CONTROLLED_USER_PRIVATE_RESOURCE;
+      } else if (managedBy == ManagedByType.MANAGED_BY_APPLICATION) {
+        return SamConstants.SAM_CONTROLLED_APPLICATION_PRIVATE_RESOURCE;
+      }
+    }
+    throw new InternalLogicException(
+        String.format(
+            "Sam resource name not specified for access scope %s and ManagedByType %s",
+            accessScope.toString(), managedBy.toString()));
   }
 }
