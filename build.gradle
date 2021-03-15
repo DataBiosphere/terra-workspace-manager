@@ -135,14 +135,14 @@ task unzipCloudResourceSchema(type: Copy) {
 // Download and extract the Cloud Profiler Java Agent
 ext {
 	// where to place the Cloud Profiler agent in the container
-	cloudProfilerLocation = '/opt/cprof'
+	cloudProfilerLocation = "/opt/cprof"
 
 	// location for jib extras, including the Java agent
 	jibExtraDirectory = "${buildDir}/jib-agents"
 }
 task downloadProfilerAgent(type: Download) {
 	// where to download the Cloud Profiler agent https://cloud.google.com/profiler/docs/profiling-java
-	src 'https://storage.googleapis.com/cloud-profiler/java/latest/profiler_java_agent.tar.gz'
+	src "https://storage.googleapis.com/cloud-profiler/java/latest/profiler_java_agent.tar.gz"
 	dest "${buildDir}/cprof_java_agent_gce.tar.gz"
 }
 task extractProfilerAgent(dependsOn: downloadProfilerAgent, type: Copy) {
