@@ -118,6 +118,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
+      deprecated: true
       summary: (DEPRECATED) Create a new data reference in a workspace.
       operationId: createDataReference
       tags: [Workspace]
@@ -140,6 +141,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     get:
+      deprecated: true
       summary: (DEPRECATED) Enumerate the data references in a workspace.
       operationId: enumerateReferences
       tags: [Workspace]
@@ -164,6 +166,7 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ReferenceId'
     get:
+      deprecated: true
       summary: (DEPRECATED) Gets a data reference from a workspace.
       operationId: getDataReference
       tags: [Workspace]
@@ -177,6 +180,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     patch:
+      deprecated: true
       summary: (DEPRECATED) Update name or description of a data reference in a workspace.
       operationId: updateDataReference
       tags: [Workspace]
@@ -196,6 +200,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     delete:
+      deprecated: true
       summary: (DEPRECATED) Deletes a data reference from a workspace.
       operationId: deleteDataReference
       tags: [Workspace]
@@ -216,6 +221,7 @@ paths:
       - $ref: '#/components/parameters/ReferenceType'
       - $ref: '#/components/parameters/Name'
     get:
+      deprecated: true
       summary: (DEPRECATED) Gets a data reference from a workspace by name and type.
       operationId: getDataReferenceByName
       tags: [Workspace]
