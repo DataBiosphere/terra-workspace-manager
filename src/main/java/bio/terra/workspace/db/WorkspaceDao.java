@@ -12,8 +12,10 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.support.DataAccessUtils;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -38,6 +41,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class WorkspaceDao {
   /** Serializing format of the GCP cloud context */
   @VisibleForTesting static final long GCP_CLOUD_CONTEXT_DB_VERSION = 1;
+
+  /** SQL query for reading a workspace, including its cloud context. */
+  private static final String WORKSPACE_SELECT_SQL =
+      "SELECT W.workspace_id, W.display_name, W.description, W.spend_profile,"
+          + " W.properties, W.workspace_stage, C.context"
+          + " FROM workspace W LEFT JOIN cloud_context C"
+          + " ON W.workspace_id = C.workspace_id ";
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final Logger logger = LoggerFactory.getLogger(WorkspaceDao.class);
@@ -123,42 +133,43 @@ public class WorkspaceDao {
       throw new MissingRequiredFieldException("Valid workspace id is required");
     }
     String sql =
-        "SELECT W.workspace_id, W.display_name, W.description, W.spend_profile,"
-            + " W.properties, W.workspace_stage, C.context"
-            + " FROM workspace W LEFT JOIN cloud_context C"
-            + " ON W.workspace_id = C.workspace_id"
+        WORKSPACE_SELECT_SQL
             + " WHERE W.workspace_id = :id AND (C.cloud_platform = 'GCP' OR C.cloud_platform IS NULL)";
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id.toString());
     try {
       Workspace result =
           DataAccessUtils.requiredSingleResult(
-              jdbcTemplate.query(
-                  sql,
-                  params,
-                  (rs, rowNum) ->
-                      Workspace.builder()
-                          .workspaceId(UUID.fromString(rs.getString("workspace_id")))
-                          .displayName(rs.getString("display_name"))
-                          .description(rs.getString("description"))
-                          .spendProfileId(
-                              Optional.ofNullable(rs.getString("spend_profile"))
-                                  .map(SpendProfileId::create)
-                                  .orElse(null))
-                          .properties(
-                              Optional.ofNullable(rs.getString("properties"))
-                                  .map(DbSerDes::jsonToProperties)
-                                  .orElse(null))
-                          .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
-                          .gcpCloudContext(
-                              Optional.ofNullable(rs.getString("context"))
-                                  .map(this::deserializeGcpCloudContext)
-                                  .orElse(null))
-                          .build()));
-      logger.debug("Retrieved workspace record {}", result);
+              jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER));
+      logger.info("Retrieved workspace record {}", result);
       return result;
     } catch (EmptyResultDataAccessException e) {
       throw new WorkspaceNotFoundException(String.format("Workspace %s not found.", id.toString()));
     }
+  }
+
+  /**
+   * Retrieve workspaces from a list of IDs. IDs not matching workspaces will be ignored.
+   *
+   * @param idList List of workspaceIds to query for
+   * @param offset The number of items to skip before starting to collect the result set.
+   * @param limit The maximum number of items to return.
+   * @return list of Workspaces corresponding to input IDs.
+   */
+  @Transactional(
+      propagation = Propagation.REQUIRED,
+      isolation = Isolation.SERIALIZABLE,
+      readOnly = true)
+  public List<Workspace> getWorkspacesMatchingList(List<UUID> idList, int offset, int limit) {
+    String sql =
+        WORKSPACE_SELECT_SQL
+            + " WHERE W.workspace_id IN (:workspace_ids) ORDER BY W.workspace_id OFFSET :offset LIMIT :limit";
+    var params =
+        new MapSqlParameterSource()
+            .addValue(
+                "workspace_ids", idList.stream().map(UUID::toString).collect(Collectors.toList()))
+            .addValue("offset", offset)
+            .addValue("limit", limit);
+    return jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER);
   }
 
   /**
@@ -264,6 +275,26 @@ public class WorkspaceDao {
     }
   }
 
+  private static final RowMapper<Workspace> WORKSPACE_ROW_MAPPER =
+      (rs, rowNum) ->
+          Workspace.builder()
+              .workspaceId(UUID.fromString(rs.getString("workspace_id")))
+              .displayName(rs.getString("display_name"))
+              .description(rs.getString("description"))
+              .spendProfileId(
+                  Optional.ofNullable(rs.getString("spend_profile"))
+                      .map(SpendProfileId::create)
+                      .orElse(null))
+              .properties(
+                  Optional.ofNullable(rs.getString("properties"))
+                      .map(DbSerDes::jsonToProperties)
+                      .orElse(null))
+              .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
+              .gcpCloudContext(
+                  Optional.ofNullable(rs.getString("context"))
+                      .map(WorkspaceDao::deserializeGcpCloudContext)
+                      .orElse(null))
+              .build();
   // -- serdes for GcpCloudContext --
 
   @VisibleForTesting
@@ -273,7 +304,7 @@ public class WorkspaceDao {
   }
 
   @VisibleForTesting
-  GcpCloudContext deserializeGcpCloudContext(String json) {
+  static GcpCloudContext deserializeGcpCloudContext(String json) {
     GcpCloudContextV1 result = DbSerDes.fromJson(json, GcpCloudContextV1.class);
     if (result.version != GCP_CLOUD_CONTEXT_DB_VERSION) {
       throw new InvalidSerializedVersionException("Invalid serialized version");
