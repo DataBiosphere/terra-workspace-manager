@@ -24,7 +24,7 @@ import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.resource.ValidationUtils;
@@ -286,7 +286,6 @@ public class WorkspaceApiController implements WorkspaceApi {
     ControllerValidationUtils.validatePaginationParams(offset, limit);
     List<ReferencedResource> enumerateResult =
         referenceResourceService.enumerateReferences(id, offset, limit, userReq);
-
     // TODO(PF-404): this is a workaround until clients migrate off this endpoint.
     ApiDataReferenceList responseList = new ApiDataReferenceList();
     for (ReferencedResource resource : enumerateResult) {
@@ -322,7 +321,7 @@ public class WorkspaceApiController implements WorkspaceApi {
       @RequestBody ApiGrantRoleRequestBody body) {
     ControllerValidationUtils.validateEmail(body.getMemberEmail());
     samService.grantWorkspaceRole(
-        id, getAuthenticatedInfo(), IamRole.fromApiModel(role), body.getMemberEmail());
+        id, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -333,7 +332,7 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("memberEmail") String memberEmail) {
     ControllerValidationUtils.validateEmail(memberEmail);
     samService.removeWorkspaceRole(
-        id, getAuthenticatedInfo(), IamRole.fromApiModel(role), memberEmail);
+        id, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), memberEmail);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -379,13 +378,13 @@ public class WorkspaceApiController implements WorkspaceApi {
         jobService.retrieveAsyncJobResult(jobId, GcpCloudContext.class, userReq);
 
     final ApiGcpContext gcpContext;
-    if (jobResult.getApiJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
+    if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
       gcpContext = new ApiGcpContext().projectId(jobResult.getResult().getGcpProjectId());
     } else {
       gcpContext = null;
     }
     return new ApiCreateCloudContextResult()
-        .jobReport(jobResult.getApiJobReport())
+        .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .gcpContext(gcpContext);
   }

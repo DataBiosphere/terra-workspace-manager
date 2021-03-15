@@ -103,7 +103,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     final AsyncJobResult<ApiGcsBucketStoredAttributes> jobResult =
         jobService.retrieveAsyncJobResult(jobId, ApiGcsBucketStoredAttributes.class, userRequest);
     return new ApiCreatedControlledGcsBucket()
-        .jobReport(jobResult.getApiJobReport())
+        .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .gcpBucket(jobResult.getResult());
   }

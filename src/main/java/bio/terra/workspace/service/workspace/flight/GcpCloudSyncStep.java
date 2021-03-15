@@ -8,7 +8,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.exceptions.RetryableCrlException;
 import com.google.api.services.cloudresourcemanager.model.Binding;
@@ -65,9 +65,9 @@ public class GcpCloudSyncStep implements Step {
       String ownerGroup =
           "group:" + workingMap.get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class);
       List<Binding> newBindings = new ArrayList<>();
-      newBindings.addAll(bindingsForRole(IamRole.READER, readerGroup));
-      newBindings.addAll(bindingsForRole(IamRole.WRITER, writerGroup));
-      newBindings.addAll(bindingsForRole(IamRole.OWNER, ownerGroup));
+      newBindings.addAll(bindingsForRole(WsmIamRole.READER, readerGroup));
+      newBindings.addAll(bindingsForRole(WsmIamRole.WRITER, writerGroup));
+      newBindings.addAll(bindingsForRole(WsmIamRole.OWNER, ownerGroup));
 
       // Add all existing bindings to ensure we don't accidentally clobber existing permissions.
       newBindings.addAll(existingBindings);
@@ -92,7 +92,7 @@ public class GcpCloudSyncStep implements Step {
    * @param group The group being granted a role. Should be prefixed with the literal "group:" for
    *     GCP.
    */
-  private List<Binding> bindingsForRole(IamRole role, String group) {
+  private List<Binding> bindingsForRole(WsmIamRole role, String group) {
     List<Binding> bindings = new ArrayList<>();
     for (String gcpRole : CloudSyncRoleMapping.cloudSyncRoleMap.get(role)) {
       bindings.add(new Binding().setRole(gcpRole).setMembers(Collections.singletonList(group)));

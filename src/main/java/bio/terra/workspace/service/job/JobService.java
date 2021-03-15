@@ -141,7 +141,7 @@ public class JobService {
       return this;
     }
 
-    public ApiJobReport getApiJobReport() {
+    public ApiJobReport getJobReport() {
       return jobReport;
     }
 

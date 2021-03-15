@@ -78,7 +78,7 @@ public final class ControllerValidationUtils {
   public static void validateCloudPlatform(ApiCloudPlatform platform) {
     if (platform != ApiCloudPlatform.GCP) {
       throw new AzureNotImplementedException(
-          "Invalid cloud platform. Currently, only GCP is are supported.");
+          "Invalid cloud platform. Currently, only GCP is supported.");
     }
   }
 }

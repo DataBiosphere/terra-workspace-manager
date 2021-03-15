@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.iam;
 
-import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import java.util.List;
 
@@ -17,11 +17,11 @@ import java.util.List;
  */
 public class CustomGcpIamRole {
   private final WsmResourceType resourceType;
-  private final IamRole iamRole;
+  private final WsmIamRole iamRole;
   private final List<String> includedPermissions;
 
   public CustomGcpIamRole(
-      WsmResourceType resourceType, IamRole iamRole, List<String> includedPermissions) {
+      WsmResourceType resourceType, WsmIamRole iamRole, List<String> includedPermissions) {
     this.resourceType = resourceType;
     this.iamRole = iamRole;
     this.includedPermissions = includedPermissions;
@@ -31,7 +31,7 @@ public class CustomGcpIamRole {
    * Builds the name of a custom GCP IAM role from the resource type and workspace-level IAM
    * combination it applies to.
    */
-  public static String customGcpRoleName(WsmResourceType resourceType, IamRole iamRole) {
+  public static String customGcpRoleName(WsmResourceType resourceType, WsmIamRole iamRole) {
     return resourceType.name() + "_" + iamRole.name();
   }
 

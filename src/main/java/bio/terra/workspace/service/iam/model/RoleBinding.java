@@ -8,7 +8,7 @@ import java.util.List;
 public abstract class RoleBinding {
 
   /** The role granted to each of the bound users. */
-  public abstract IamRole role();
+  public abstract WsmIamRole role();
 
   /** The list of users and/or groups this binding applies to as email addresses. */
   public abstract List<String> users();
@@ -19,7 +19,7 @@ public abstract class RoleBinding {
 
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract RoleBinding.Builder role(IamRole value);
+    public abstract RoleBinding.Builder role(WsmIamRole value);
 
     public abstract RoleBinding.Builder users(List<String> value);
 

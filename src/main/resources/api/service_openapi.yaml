@@ -102,6 +102,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
+      deprecated: true
       summary: (DEPRECATED) Create a new data reference in a workspace.
       operationId: createDataReference
       tags: [Workspace]
@@ -124,6 +125,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     get:
+      deprecated: true
       summary: (DEPRECATED) Enumerate the data references in a workspace.
       operationId: enumerateReferences
       tags: [Workspace]
@@ -148,6 +150,7 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ReferenceId'
     get:
+      deprecated: true
       summary: (DEPRECATED) Gets a data reference from a workspace.
       operationId: getDataReference
       tags: [Workspace]
@@ -161,6 +164,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     patch:
+      deprecated: true
       summary: (DEPRECATED) Update name or description of a data reference in a workspace.
       operationId: updateDataReference
       tags: [Workspace]
@@ -180,6 +184,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     delete:
+      deprecated: true
       summary: (DEPRECATED) Deletes a data reference from a workspace.
       operationId: deleteDataReference
       tags: [Workspace]
@@ -200,6 +205,7 @@ paths:
       - $ref: '#/components/parameters/ReferenceType'
       - $ref: '#/components/parameters/Name'
     get:
+      deprecated: true
       summary: (DEPRECATED) Gets a data reference from a workspace by name and type.
       operationId: getDataReferenceByName
       tags: [Workspace]
@@ -1050,7 +1056,7 @@ components:
       required: [cloudPlatform, jobControl]
       description: |
         Request body for asynchronously creating a cloud context for a workspace.
-        Contains the CloudPlatform for the context and and the JobControl object.
+        Contains the CloudPlatform for the context and the JobControl object.
       properties:
         cloudPlatform:
           $ref: '#/components/schemas/CloudPlatform'
@@ -1319,8 +1325,7 @@ components:
     GcsBucketDefaultStorageClass:
       description: >-
         Type and availability of objects in a bucket, described at https://cloud.google.com/storage/docs/storage-classes.
-        This list does not include legacy types that apply to some existing buckets. For those, see
-        GcsBucketLegacyStorageClass.
+        This list does not include legacy types that apply to some existing buckets.
       type: string
       enum:
         - STANDARD

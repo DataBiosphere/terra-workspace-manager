@@ -16,7 +16,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.CustomGcpIamRole;
 import bio.terra.workspace.service.iam.CustomGcpIamRoleMapping;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
@@ -155,8 +155,8 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
 
   /** Asserts that Sam groups are granted their appropriate IAM roles on a GCP project. */
   private void assertPolicyGroupsSynced(UUID workspaceId, Project project) throws Exception {
-    Map<IamRole, String> roleToSamGroup =
-        Arrays.stream(IamRole.values())
+    Map<WsmIamRole, String> roleToSamGroup =
+        Arrays.stream(WsmIamRole.values())
             .collect(
                 Collectors.toMap(
                     Function.identity(),
@@ -169,7 +169,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
             .projects()
             .getIamPolicy(project.getProjectId(), new GetIamPolicyRequest())
             .execute();
-    for (IamRole role : IamRole.values()) {
+    for (WsmIamRole role : WsmIamRole.values()) {
       assertRoleBindingsInPolicy(role, roleToSamGroup.get(role), currentPolicy);
     }
   }
@@ -181,7 +181,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
    * @param groupEmail The group we expect roles to be bound to.
    * @param gcpPolicy The GCP policy we're checking for role bindings.
    */
-  private void assertRoleBindingsInPolicy(IamRole role, String groupEmail, Policy gcpPolicy) {
+  private void assertRoleBindingsInPolicy(WsmIamRole role, String groupEmail, Policy gcpPolicy) {
     List<String> expectedGcpRoleList = CloudSyncRoleMapping.cloudSyncRoleMap.get(role);
     List<Binding> actualGcpBindingList = gcpPolicy.getBindings();
     List<String> actualGcpRoleList =

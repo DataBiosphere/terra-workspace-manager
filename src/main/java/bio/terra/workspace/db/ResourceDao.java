@@ -119,10 +119,11 @@ public class ResourceDao {
   public List<ReferencedResource> enumerateReferences(UUID workspaceId, int offset, int limit) {
     String sql =
         RESOURCE_SELECT_SQL
-            + " AND stewardship_type = 'REFERENCE' ORDER BY name OFFSET :offset LIMIT :limit";
+            + " AND stewardship_type = :stewardship_type ORDER BY name OFFSET :offset LIMIT :limit";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
+            .addValue("stewardship_type", REFERENCED.toSql())
             .addValue("offset", offset)
             .addValue("limit", limit);
     List<DbResource> dbResourceList = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
