@@ -180,10 +180,10 @@ tasks.withType(Test) {
 }
 
 jacocoTestReport {
+	reportsDirectory = file("$buildDir/reports/jacoco")
 	reports {
 		html.enabled = true
-		xml.enabled = true
-		csv.enabled = true
+		xml.destination = file("$buildDir/reports/jacoco")
 	}
 	dependsOn test
 }
