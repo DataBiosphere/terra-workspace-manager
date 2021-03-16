@@ -12,11 +12,12 @@ import bio.terra.workspace.service.resource.referenced.flight.create.CreateRefer
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.List;
-import java.util.UUID;
-import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Nullable;
+import java.util.List;
+import java.util.UUID;
 
 @Component
 public class ReferencedResourceService {

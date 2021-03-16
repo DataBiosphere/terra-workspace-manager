@@ -261,10 +261,10 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots/{referenceId}:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots/{resourceId}:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/ReferenceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Gets a reference to a snapshot from a workspace.
       operationId: getDataRepoSnapshotReference
@@ -288,6 +288,19 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete datarepo snapshot reference
+      operationId: deleteDataRepoSnapshotReference
+      tags: [ReferencedGcpResource]
       responses:
         '204':
           description: OK
@@ -341,13 +354,13 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/buckets/{referenceId}:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/buckets/{resourceId}:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/ReferenceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Gets a reference to a Gcp bucket from a workspace.
-      operationId: getBucketReference
+      operationId: getGcpBucketReference
       tags: [ReferencedGcpResource]
       responses:
         '200':
@@ -360,7 +373,7 @@ paths:
           $ref: '#/components/responses/ServerError'
     patch:
       summary: Update name or description of a bucket reference in a workspace.
-      operationId: updateBucketReference
+      operationId: updateGcpBucketReference
       tags: [ReferencedGcpResource]
       requestBody:
         required: true
@@ -377,6 +390,19 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete Gcp bucket reference
+      operationId: deleteGcpBucketReference
+      tags: [ReferencedGcpResource]
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/buckets/name/{name}:
     parameters:
@@ -384,7 +410,7 @@ paths:
     - $ref: '#/components/parameters/Name'
     get:
       summary: Gets a reference to a Gcp bucket by name.
-      operationId: getBucketReferenceByName
+      operationId: getGcpBucketReferenceByName
       tags: [ReferencedGcpResource]
       responses:
         '200':
@@ -421,10 +447,10 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets/{referenceId}:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets/{resourceId}:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/ReferenceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Gets a reference to a BigQuery dataset from a workspace.
       operationId: getBigQueryDatasetReference
@@ -448,6 +474,19 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete BigQuery dataset reference
+      operationId: deleteBigQueryDatasetReference
+      tags: [ReferencedGcpResource]
       responses:
         '204':
           description: OK
