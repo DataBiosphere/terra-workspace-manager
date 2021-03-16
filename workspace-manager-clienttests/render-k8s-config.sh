@@ -3,6 +3,13 @@
 # This script renders the k8s service account secrets for namespace access
 # NAME_SPACE: ichang, zloery, or preview namespace etc.
 NAMESPACE=${1}
+if [ -z "$1" ]
+  then
+    echo "Please provide a namespace as input argument as in the following example."
+    echo "Usage: ./render-k8s-config.sh <namespace: e.g. ichang>"
+    exit 1;
+fi
+
 VAULT_TOKEN=${2:-$(cat "$HOME"/.vault-token)}
 TESTRUNNER_K8S_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/integration/${NAMESPACE}/testrunner-k8s-sa
 TESTRUNNER_K8S_SERVICE_ACCOUNT_CA_OUTPUT_PATH=$(dirname "$0")/rendered/testrunner-k8s-sa-client-key-data.crt
