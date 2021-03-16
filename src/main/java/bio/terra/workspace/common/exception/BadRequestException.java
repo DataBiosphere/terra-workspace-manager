@@ -1,8 +1,8 @@
 package bio.terra.workspace.common.exception;
 
-// This base class has data that corresponds to the ErrorReport model generated from
+// This base class has data that corresponds to the ApiErrorReport model generated from
 // the OpenAPI yaml. The global exception handler auto-magically converts exceptions
-// of this base class into the appropriate ErrorReport REST response.
+// of this base class into the appropriate ApiErrorReport REST response.
 
 import java.util.List;
 import org.springframework.http.HttpStatus;

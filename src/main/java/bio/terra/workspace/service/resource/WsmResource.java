@@ -6,7 +6,7 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.reference.ReferenceResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import com.google.common.base.Strings;
 import java.util.UUID;
 
@@ -112,11 +112,11 @@ public abstract class WsmResource {
     }
   }
 
-  public ReferenceResource castReferenceResource() {
-    if (getStewardshipType() != StewardshipType.REFERENCE) {
+  public ReferencedResource castReferenceResource() {
+    if (getStewardshipType() != StewardshipType.REFERENCED) {
       throw new InvalidMetadataException("Resource is not a referenced resource");
     }
-    return (ReferenceResource) this;
+    return (ReferencedResource) this;
   }
 
   public ControlledResource castControlledResource() {

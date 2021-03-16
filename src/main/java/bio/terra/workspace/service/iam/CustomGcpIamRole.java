@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.iam;
 
-import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import java.util.List;
 
@@ -12,16 +12,16 @@ import java.util.List;
  * set of GCP cloud permissions that are granted. See the full list of these permissions at
  * https://cloud.google.com/iam/docs/permissions-reference
  *
- * <p>The role name is the combination of resource type + IamRole name with an underscore separator,
- * e.g. GCS_BUCKET_READER.
+ * <p>The role name is the combination of resource type + ApiIamRole name with an underscore
+ * separator, e.g. GCS_BUCKET_READER.
  */
 public class CustomGcpIamRole {
   private final WsmResourceType resourceType;
-  private final IamRole iamRole;
+  private final WsmIamRole iamRole;
   private final List<String> includedPermissions;
 
   public CustomGcpIamRole(
-      WsmResourceType resourceType, IamRole iamRole, List<String> includedPermissions) {
+      WsmResourceType resourceType, WsmIamRole iamRole, List<String> includedPermissions) {
     this.resourceType = resourceType;
     this.iamRole = iamRole;
     this.includedPermissions = includedPermissions;
@@ -31,7 +31,7 @@ public class CustomGcpIamRole {
    * Builds the name of a custom GCP IAM role from the resource type and workspace-level IAM
    * combination it applies to.
    */
-  public static String customGcpRoleName(WsmResourceType resourceType, IamRole iamRole) {
+  public static String customGcpRoleName(WsmResourceType resourceType, WsmIamRole iamRole) {
     return resourceType.name() + "_" + iamRole.name();
   }
 

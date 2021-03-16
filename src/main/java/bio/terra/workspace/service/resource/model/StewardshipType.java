@@ -4,7 +4,7 @@ import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;
 
 public enum StewardshipType {
-  REFERENCE("REFERENCE"),
+  REFERENCED("REFERENCED"),
   CONTROLLED("CONTROLLED"),
   MONITORED("MONITORED");
 

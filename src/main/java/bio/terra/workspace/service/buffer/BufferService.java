@@ -9,7 +9,7 @@ import bio.terra.buffer.model.PoolInfo;
 import bio.terra.buffer.model.ResourceInfo;
 import bio.terra.buffer.model.SystemStatus;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
-import bio.terra.workspace.generated.model.SystemStatusSystems;
+import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAPIException;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAuthorizationException;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -107,7 +107,7 @@ public class BufferService {
     }
   }
 
-  public SystemStatusSystems status() {
+  public ApiSystemStatusSystems status() {
     UnauthenticatedApi unauthenticatedApi =
         new UnauthenticatedApi(
             getApiClient(null).setBasePath(bufferServiceConfiguration.getInstanceUrl()));
@@ -121,9 +121,9 @@ public class BufferService {
                   (entry) ->
                       entry.getKey() + ": " + StringUtils.join(entry.getValue().getMessages()))
               .collect(Collectors.toList());
-      return new SystemStatusSystems().ok(status.isOk()).messages(subsystemStatusMessages);
+      return new ApiSystemStatusSystems().ok(status.isOk()).messages(subsystemStatusMessages);
     } catch (ApiException e) {
-      return new SystemStatusSystems().ok(false).addMessagesItem(e.getResponseBody());
+      return new ApiSystemStatusSystems().ok(false).addMessagesItem(e.getResponseBody());
     }
   }
 }

@@ -1,7 +1,7 @@
 package bio.terra.workspace.db;
 
 import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
-import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCE;
+import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
 
 import bio.terra.workspace.db.exception.CloudContextRequiredException;
@@ -18,10 +18,10 @@ import bio.terra.workspace.service.resource.exception.DuplicateResourceException
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.reference.ReferenceBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.reference.ReferenceDataRepoSnapshotResource;
-import bio.terra.workspace.service.resource.reference.ReferenceGcsBucketResource;
-import bio.terra.workspace.service.resource.reference.ReferenceResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.List;
 import java.util.Optional;
@@ -116,20 +116,21 @@ public class ResourceDao {
    * @param limit paging support
    * @return list of reference resources
    */
-  public List<ReferenceResource> enumerateReferences(UUID workspaceId, int offset, int limit) {
+  public List<ReferencedResource> enumerateReferences(UUID workspaceId, int offset, int limit) {
     String sql =
         RESOURCE_SELECT_SQL
-            + " AND stewardship_type = 'REFERENCE' ORDER BY name OFFSET :offset LIMIT :limit";
+            + " AND stewardship_type = :stewardship_type ORDER BY name OFFSET :offset LIMIT :limit";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
+            .addValue("stewardship_type", REFERENCED.toSql())
             .addValue("offset", offset)
             .addValue("limit", limit);
     List<DbResource> dbResourceList = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
 
     return dbResourceList.stream()
         .map(this::constructResource)
-        .map(ReferenceResource.class::cast)
+        .map(ReferencedResource.class::cast)
         .collect(Collectors.toList());
   }
 
@@ -173,14 +174,14 @@ public class ResourceDao {
    * @throws DuplicateResourceException on a duplicate resource_id or (workspace_id, name)
    */
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public void createReferenceResource(ReferenceResource resource)
+  public void createReferenceResource(ReferencedResource resource)
       throws DuplicateResourceException {
     storeResource(
         resource.getWorkspaceId(),
         resource.getResourceId(),
         resource.getName(),
         resource.getDescription(),
-        REFERENCE,
+        REFERENCED,
         resource.getResourceType(),
         resource.getCloningInstructions(),
         resource.attributesToJson(),
@@ -355,16 +356,16 @@ public class ResourceDao {
    */
   private WsmResource constructResource(DbResource dbResource) {
     switch (dbResource.getStewardshipType()) {
-      case REFERENCE:
+      case REFERENCED:
         switch (dbResource.getResourceType()) {
           case GCS_BUCKET:
-            return new ReferenceGcsBucketResource(dbResource);
+            return new ReferencedGcsBucketResource(dbResource);
 
           case BIG_QUERY_DATASET:
-            return new ReferenceBigQueryDatasetResource(dbResource);
+            return new ReferencedBigQueryDatasetResource(dbResource);
 
           case DATA_REPO_SNAPSHOT:
-            return new ReferenceDataRepoSnapshotResource(dbResource);
+            return new ReferencedDataRepoSnapshotResource(dbResource);
 
           default:
             throw new InvalidMetadataException(

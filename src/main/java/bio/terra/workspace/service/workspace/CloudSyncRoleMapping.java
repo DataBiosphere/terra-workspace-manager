@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
-import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
@@ -26,12 +26,12 @@ public class CloudSyncRoleMapping {
           .build();
   // Currently, workspace editors, applications and owners have the sam cloud permissions as
   // writers. If that changes, create a new list and modify the map below.
-  public static final ImmutableMap<IamRole, List<String>> CLOUD_SYNC_ROLE_MAP =
+  public static final ImmutableMap<WsmIamRole, List<String>> CLOUD_SYNC_ROLE_MAP =
       ImmutableMap.of(
           // TODO: this should map to OWNER_PERMISSIONS if that's created.
-          IamRole.OWNER, WRITER_PERMISSIONS,
+          WsmIamRole.OWNER, WRITER_PERMISSIONS,
           // TODO: this should map to APPLICATION_PERMISSIONS if that's created.
-          IamRole.APPLICATION, WRITER_PERMISSIONS,
-          IamRole.WRITER, WRITER_PERMISSIONS,
-          IamRole.READER, READER_PERMISSIONS);
+          WsmIamRole.APPLICATION, WRITER_PERMISSIONS,
+          WsmIamRole.WRITER, WRITER_PERMISSIONS,
+          WsmIamRole.READER, READER_PERMISSIONS);
 }

@@ -1,7 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.generated.controller.JobsApi;
-import bio.terra.workspace.generated.model.JobReport;
+import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.job.JobService;
@@ -34,9 +34,9 @@ public class JobsApiController implements JobsApi {
   }
 
   @Override
-  public ResponseEntity<JobReport> retrieveJob(@PathVariable("id") String id) {
+  public ResponseEntity<ApiJobReport> retrieveJob(@PathVariable("id") String id) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    JobReport jobReport = jobService.retrieveJob(id, userReq);
+    ApiJobReport jobReport = jobService.retrieveJob(id, userReq);
     return new ResponseEntity<>(jobReport, HttpStatus.valueOf(jobReport.getStatusCode()));
   }
 }

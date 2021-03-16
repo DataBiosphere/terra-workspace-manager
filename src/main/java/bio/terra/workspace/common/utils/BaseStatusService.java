@@ -1,7 +1,7 @@
 package bio.terra.workspace.common.utils;
 
-import bio.terra.workspace.generated.model.SystemStatus;
-import bio.terra.workspace.generated.model.SystemStatusSystems;
+import bio.terra.workspace.generated.model.ApiSystemStatus;
+import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,14 +23,14 @@ public class BaseStatusService {
 
   private final ConcurrentHashMap<String, StatusSubsystem> subsystems;
   private long lastUpdatedTimestampMillis;
-  private final SystemStatus currentStatus;
+  private final ApiSystemStatus currentStatus;
   private final long staleThresholdMillis;
 
   private static final Logger logger = LoggerFactory.getLogger(BaseStatusService.class);
 
   public BaseStatusService(long staleThresholdMillis) {
     subsystems = new ConcurrentHashMap<>();
-    currentStatus = new SystemStatus().ok(false);
+    currentStatus = new ApiSystemStatus().ok(false);
     lastUpdatedTimestampMillis = 0;
     this.staleThresholdMillis = staleThresholdMillis;
   }
@@ -41,22 +41,23 @@ public class BaseStatusService {
 
   @Scheduled(cron = "${workspace.status-check.cron}")
   public void checkSubsystems() {
-    // SystemStatus uses the thread-unsafe HashMap to hold SystemStatusSystems objects by default.
+    // SystemStatus uses the thread-unsafe HashMap to hold ApiSystemStatusSystems objects by
+    // default.
     // Instead of calling putSystemsItems from multiple threads, we safely construct a subsystem
     // status map here and then pass the complete map.
-    ConcurrentHashMap<String, SystemStatusSystems> tmpSubsystemStatusMap =
+    ConcurrentHashMap<String, ApiSystemStatusSystems> tmpSubsystemStatusMap =
         new ConcurrentHashMap<>();
     AtomicBoolean systemOk = new AtomicBoolean(true);
     subsystems.forEach(
         /*parallelismThreshold=*/ 1,
         (name, subsystem) -> {
-          SystemStatusSystems subsystemStatus;
+          ApiSystemStatusSystems subsystemStatus;
           try {
             subsystemStatus = subsystem.getStatusCheckFn().get();
             subsystemStatus.critical(subsystem.isCritical());
           } catch (Exception e) {
             subsystemStatus =
-                new SystemStatusSystems()
+                new ApiSystemStatusSystems()
                     .ok(false)
                     .critical(subsystem.isCritical())
                     .addMessagesItem("Error checking status: " + e.getLocalizedMessage());
@@ -70,7 +71,7 @@ public class BaseStatusService {
     Date lastUpdatedDate = new Date(lastUpdatedTimestampMillis);
     tmpSubsystemStatusMap.put(
         "Staleness",
-        new SystemStatusSystems()
+        new ApiSystemStatusSystems()
             .ok(true)
             .addMessagesItem("Systems last checked " + lastUpdatedDate.toString()));
     currentStatus.ok(systemOk.get()).setSystems(tmpSubsystemStatusMap);
@@ -79,7 +80,7 @@ public class BaseStatusService {
     }
   }
 
-  public SystemStatus getCurrentStatus() {
+  public ApiSystemStatus getCurrentStatus() {
     if (System.currentTimeMillis() - lastUpdatedTimestampMillis > staleThresholdMillis) {
       Date lastCheckDate = new Date(lastUpdatedTimestampMillis);
       String timeoutMessage =
@@ -88,10 +89,10 @@ public class BaseStatusService {
               + ", exceeding deadline of "
               + staleThresholdMillis
               + " ms.";
-      return new SystemStatus()
+      return new ApiSystemStatus()
           .ok(false)
           .putSystemsItem(
-              "Staleness", new SystemStatusSystems().ok(false).addMessagesItem(timeoutMessage));
+              "Staleness", new ApiSystemStatusSystems().ok(false).addMessagesItem(timeoutMessage));
     }
     return currentStatus;
   }
