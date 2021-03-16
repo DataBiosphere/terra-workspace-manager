@@ -8,6 +8,7 @@ import java.util.Optional;
 public enum WsmIamRole {
   READER("reader", ApiIamRole.READER),
   WRITER("writer", ApiIamRole.WRITER),
+  APPLICATION("application", ApiIamRole.APPLICATION),
   OWNER("owner", ApiIamRole.OWNER);
 
   private final String samRole;

@@ -25,6 +25,7 @@ import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.exception.InvalidRoleException;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
@@ -349,6 +350,10 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("role") ApiIamRole role,
       @RequestBody ApiGrantRoleRequestBody body) {
     ControllerValidationUtils.validateEmail(body.getMemberEmail());
+    if (role == ApiIamRole.APPLICATION) {
+      throw new InvalidRoleException(
+          "Users cannot grant role APPLICATION. Use application registration instead.");
+    }
     samService.grantWorkspaceRole(
         id, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail());
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -360,6 +365,10 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("role") ApiIamRole role,
       @PathVariable("memberEmail") String memberEmail) {
     ControllerValidationUtils.validateEmail(memberEmail);
+    if (role == ApiIamRole.APPLICATION) {
+      throw new InvalidRoleException(
+          "Users cannot remove role APPLICATION. Use application registration instead.");
+    }
     samService.removeWorkspaceRole(
         id, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), memberEmail);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
