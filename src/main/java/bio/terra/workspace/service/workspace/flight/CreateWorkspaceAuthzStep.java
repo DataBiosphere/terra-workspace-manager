@@ -14,6 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
+/**
+ * A step that creates a Sam workspace resource. This only runs for MC_WORKSPACE stage workspaces,
+ * as RAWLS_WORKSPACEs use existing Sam resources instead.
+ */
 public class CreateWorkspaceAuthzStep implements Step {
 
   private final SamService samService;
