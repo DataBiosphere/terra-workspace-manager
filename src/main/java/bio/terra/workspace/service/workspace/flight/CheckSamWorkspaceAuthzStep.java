@@ -33,7 +33,7 @@ public class CheckSamWorkspaceAuthzStep implements Step {
     if (!canReadExistingWorkspace(workspaceID)) {
       throw new WorkspaceNotFoundException(
           String.format(
-              "Could not find pre-existing Sam resource for workspace %s. WSM will not create Sam resources for RAWLS_WORKSPACE stage workspaces.",
+              "Sam resource not found for workspace %s. WSM requires an existing Sam resource for a RAWLS_WORKSPACE.",
               workspaceID));
     }
 
