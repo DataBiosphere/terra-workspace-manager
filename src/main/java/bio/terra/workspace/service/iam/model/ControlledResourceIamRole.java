@@ -3,7 +3,7 @@ package bio.terra.workspace.service.iam.model;
 /**
  * Internal representation of resource-level IAM roles. These roles exist on all controlled
  * resources. See {@Code ControlledResourceInheritanceMapping} for the canonical mapping of
- * workspaec IamRoles to equivalent ControlledResourceIamRoles.
+ * workspace IamRoles to equivalent ControlledResourceIamRoles.
  */
 public enum ControlledResourceIamRole {
   ASSIGNER("assigner"),
