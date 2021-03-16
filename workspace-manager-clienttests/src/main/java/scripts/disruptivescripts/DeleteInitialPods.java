@@ -28,14 +28,6 @@ public class DeleteInitialPods extends DisruptiveScript {
     protected static final int SECONDS_TO_WAIT_BEFORE_STARTING_DISRUPT = 15;
 
     @Override
-    public void setParameters(List<String> parameters) {
-
-        if (parameters == null || parameters.size() == 0) {
-            return;
-        }
-    }
-
-    @Override
     public void disrupt(List<TestUserSpecification> testUsers) throws Exception {
         // give user journey threads time to get started before disruption
         TimeUnit.SECONDS.sleep(SECONDS_TO_WAIT_BEFORE_STARTING_DISRUPT);
