@@ -15,14 +15,15 @@ import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
-import bio.terra.workspace.service.workspace.flight.CreateGoogleContextFlight;
-import bio.terra.workspace.service.workspace.flight.DeleteGoogleContextFlight;
+import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlight;
+import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -106,6 +107,19 @@ public class WorkspaceService {
     return workspace;
   }
 
+  /**
+   * List all workspaces a user has read access to.
+   *
+   * @param userReq Authentication object for the caller
+   * @param offset The number of items to skip before starting to collect the result set.
+   * @param limit The maximum number of items to return.
+   */
+  @Traced
+  public List<Workspace> listWorkspaces(AuthenticatedUserRequest userReq, int offset, int limit) {
+    List<UUID> samWorkspaceIds = samService.listWorkspaceIds(userReq);
+    return workspaceDao.getWorkspacesMatchingList(samWorkspaceIds, offset, limit);
+  }
+
   /** Retrieves an existing workspace by ID */
   @Traced
   public Workspace getWorkspace(UUID id, AuthenticatedUserRequest userReq) {
@@ -169,7 +183,7 @@ public class WorkspaceService {
         .newJob(
             "Create GCP Cloud Context " + workspaceId,
             jobId,
-            CreateGoogleContextFlight.class,
+            CreateGcpContextFlight.class,
             /* request= */ null,
             userReq)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
@@ -192,7 +206,7 @@ public class WorkspaceService {
         .newJob(
             "Delete GCP Context " + workspaceId,
             UUID.randomUUID().toString(),
-            DeleteGoogleContextFlight.class,
+            DeleteGcpContextFlight.class,
             /* request= */ null,
             userReq)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)

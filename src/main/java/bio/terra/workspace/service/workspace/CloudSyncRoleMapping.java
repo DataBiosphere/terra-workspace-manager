@@ -1,14 +1,14 @@
 package bio.terra.workspace.service.workspace;
 
-import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 
 public class CloudSyncRoleMapping {
-  public static final ImmutableMap<IamRole, List<String>> cloudSyncRoleMap =
+  public static final ImmutableMap<WsmIamRole, List<String>> cloudSyncRoleMap =
       ImmutableMap.of(
-          IamRole.OWNER,
+          WsmIamRole.OWNER,
               ImmutableList.of(
                   "roles/viewer",
                   "roles/bigquery.dataEditor",
@@ -23,7 +23,7 @@ public class CloudSyncRoleMapping {
                   // TODO(marikomedlock): Revise storage permissions when there are controlled
                   // resources for buckets.
                   "roles/storage.admin"),
-          IamRole.WRITER,
+          WsmIamRole.WRITER,
               ImmutableList.of(
                   "roles/viewer",
                   "roles/bigquery.dataEditor",
@@ -38,5 +38,5 @@ public class CloudSyncRoleMapping {
                   // TODO(marikomedlock): Revise storage permissions when there are controlled
                   // resources for buckets.
                   "roles/storage.admin"),
-          IamRole.READER, ImmutableList.of("roles/viewer"));
+          WsmIamRole.READER, ImmutableList.of("roles/viewer"));
 }

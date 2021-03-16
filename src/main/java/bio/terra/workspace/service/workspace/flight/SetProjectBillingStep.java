@@ -17,7 +17,7 @@ public class SetProjectBillingStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext) {
     String projectId =
-        flightContext.getWorkingMap().get(WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID, String.class);
+        flightContext.getWorkingMap().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
     String billingAccountId =
         flightContext
             .getInputParameters()

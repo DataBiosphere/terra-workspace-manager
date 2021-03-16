@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import bio.terra.workspace.generated.model.ControlledResourceCommonFields;
+import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;
@@ -21,7 +21,7 @@ public enum AccessScopeType {
   }
 
   public static AccessScopeType fromApi(
-      ControlledResourceCommonFields.AccessScopeEnum apiAccessScope) {
+      ApiControlledResourceCommonFields.AccessScopeEnum apiAccessScope) {
     switch (apiAccessScope) {
       case PRIVATE_ACCESS:
         return ACCESS_SCOPE_PRIVATE;

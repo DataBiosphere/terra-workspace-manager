@@ -39,7 +39,7 @@ public class DeleteProjectStep implements Step {
       CloudResourceManagerCow resourceManager = crl.getCloudResourceManagerCow();
       try {
         String projectId = cloudContext.get().getGcpProjectId();
-        GoogleUtils.deleteProject(projectId, resourceManager);
+        GcpUtils.deleteProject(projectId, resourceManager);
       } catch (IOException e) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
