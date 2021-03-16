@@ -24,8 +24,8 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.DuplicateJobIdException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.reference.ReferenceDataRepoSnapshotResource;
-import bio.terra.workspace.service.resource.reference.ReferenceResourceService;
+import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
@@ -58,7 +58,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Autowired private JobService jobService;
   @Autowired private CrlService crl;
   @Autowired private SpendConnectedTestUtils spendUtils;
-  @Autowired private ReferenceResourceService referenceResourceService;
+  @Autowired private ReferencedResourceService referenceResourceService;
   @Autowired private ResourceDao resourceDao;
   @MockBean private DataRepoService dataRepoService;
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
@@ -252,8 +252,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     // Next, add a data reference to that workspace.
     UUID resourceId = UUID.randomUUID();
-    ReferenceDataRepoSnapshotResource snapshot =
-        new ReferenceDataRepoSnapshotResource(
+    ReferencedDataRepoSnapshotResource snapshot =
+        new ReferencedDataRepoSnapshotResource(
             workspaceId,
             resourceId,
             "fake_data_reference",
@@ -333,7 +333,19 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void createGoogleContextRawlsStageThrows() {
-    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    // RAWLS_WORKSPACE stage workspaces use existing Sam resources instead of owning them, so the
+    // mock pretends our user has access to any workspace we ask about.
+    Mockito.when(
+            mockSamService.isAuthorized(
+                Mockito.any(),
+                Mockito.eq(SamConstants.SAM_WORKSPACE_RESOURCE),
+                Mockito.any(),
+                Mockito.eq(SamConstants.SAM_WORKSPACE_READ_ACTION)))
+        .thenReturn(true);
+    WorkspaceRequest request =
+        defaultRequestBuilder(UUID.randomUUID())
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     String jobId = UUID.randomUUID().toString();
 
@@ -405,13 +417,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
    * Convenience method for getting a WorkspaceRequest builder with some pre-filled default values.
    *
    * <p>This provides default values for jobId (random UUID), spend profile (Optional.empty()), and
-   * workspace stage (RAWLS_WORKSPACE).
+   * workspace stage (MC_WORKSPACE).
    */
   private WorkspaceRequest.Builder defaultRequestBuilder(UUID workspaceId) {
     return WorkspaceRequest.builder()
         .workspaceId(workspaceId)
         .jobId(UUID.randomUUID().toString())
         .spendProfileId(Optional.empty())
-        .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE);
+        .workspaceStage(WorkspaceStage.MC_WORKSPACE);
   }
 }

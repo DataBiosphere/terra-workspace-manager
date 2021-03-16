@@ -5,7 +5,7 @@ import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.in;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -16,21 +16,21 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
   @Test
   void writerPermissionsContainReaderPermissions() {
     assertThat(
-        CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(IamRole.READER),
-        everyItem(in((CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(IamRole.WRITER)))));
+        CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(WsmIamRole.READER),
+        everyItem(in((CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(WsmIamRole.WRITER)))));
   }
 
   @Test
   void applicationPermissionsContainWriterPermissions() {
     assertThat(
-        CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(IamRole.WRITER),
-        everyItem(in((CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(IamRole.APPLICATION)))));
+        CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(WsmIamRole.WRITER),
+        everyItem(in((CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(WsmIamRole.APPLICATION)))));
   }
 
   @Test
   void ownerPermissionsContainWriterPermissions() {
     assertThat(
-        CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(IamRole.WRITER),
-        everyItem(in((CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(IamRole.OWNER)))));
+        CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(WsmIamRole.WRITER),
+        everyItem(in((CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(WsmIamRole.OWNER)))));
   }
 }

@@ -1,9 +1,9 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
-import bio.terra.workspace.generated.model.DataRepoSnapshot;
-import bio.terra.workspace.generated.model.ReferenceTypeEnum;
+import bio.terra.workspace.generated.model.ApiCreateDataReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiDataRepoSnapshot;
+import bio.terra.workspace.generated.model.ApiReferenceTypeEnum;
 import org.junit.jupiter.api.Test;
 
 public class ControllerValidationUtilsTest extends BaseUnitTest {
@@ -12,11 +12,11 @@ public class ControllerValidationUtilsTest extends BaseUnitTest {
   // migrate clients, but this test should be cleaned up with that field.
   @Test
   public void testCreateDataReferenceDeprecatedReference() {
-    DataRepoSnapshot snapshotReference =
-        new DataRepoSnapshot().snapshot("snapshot-name").instanceName("instance-name");
-    CreateDataReferenceRequestBody deprecatedRequest =
-        new CreateDataReferenceRequestBody()
-            .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
+    ApiDataRepoSnapshot snapshotReference =
+        new ApiDataRepoSnapshot().snapshot("snapshot-name").instanceName("instance-name");
+    ApiCreateDataReferenceRequestBody deprecatedRequest =
+        new ApiCreateDataReferenceRequestBody()
+            .referenceType(ApiReferenceTypeEnum.DATA_REPO_SNAPSHOT)
             .reference(snapshotReference);
     ControllerValidationUtils.validate(deprecatedRequest);
   }

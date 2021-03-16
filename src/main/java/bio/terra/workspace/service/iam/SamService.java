@@ -3,15 +3,16 @@ package bio.terra.workspace.service.iam;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
-import bio.terra.workspace.generated.model.SystemStatusSystems;
-import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.stage.StageService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,6 +97,32 @@ public class SamService {
     }
   }
 
+  /**
+   * List all workspace IDs in Sam this user has access to. Note that in environments shared with
+   * Rawls, some of these workspaces will be Rawls managed and WSM will not know about them.
+   */
+  @Traced
+  public List<UUID> listWorkspaceIds(AuthenticatedUserRequest userReq) {
+    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+    List<UUID> workspaceIds = new ArrayList<>();
+    try {
+      for (var resourceAndPolicy :
+          resourceApi.listResourcesAndPolicies(SamConstants.SAM_WORKSPACE_RESOURCE)) {
+        try {
+          workspaceIds.add(UUID.fromString(resourceAndPolicy.getResourceId()));
+        } catch (IllegalArgumentException e) {
+          // WSM always uses UUIDs for workspace IDs, but this is not enforced in Sam and there are
+          // old workspaces that don't use UUIDs. Any workspace with a non-UUID workspace ID is
+          // ignored here.
+          continue;
+        }
+      }
+    } catch (ApiException samException) {
+      throw new SamApiException(samException);
+    }
+    return workspaceIds;
+  }
+
   @Traced
   public void deleteWorkspace(String authToken, UUID id) {
     ResourcesApi resourceApi = samResourcesApi(authToken);
@@ -151,7 +178,7 @@ public class SamService {
    */
   @Traced
   public void grantWorkspaceRole(
-      UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
+      UUID workspaceId, AuthenticatedUserRequest userReq, WsmIamRole role, String email) {
     stageService.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
     workspaceAuthzOnly(userReq, workspaceId, samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
@@ -174,7 +201,7 @@ public class SamService {
    */
   @Traced
   public void removeWorkspaceRole(
-      UUID workspaceId, AuthenticatedUserRequest userReq, IamRole role, String email) {
+      UUID workspaceId, AuthenticatedUserRequest userReq, WsmIamRole role, String email) {
     stageService.assertMcWorkspace(workspaceId, "removeWorkspaceRole");
     workspaceAuthzOnly(userReq, workspaceId, samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
@@ -207,7 +234,7 @@ public class SamService {
           .map(
               entry ->
                   RoleBinding.builder()
-                      .role(IamRole.fromSam(entry.getPolicyName()))
+                      .role(WsmIamRole.fromSam(entry.getPolicyName()))
                       .users(entry.getPolicy().getMemberEmails())
                       .build())
           .collect(Collectors.toList());
@@ -223,7 +250,7 @@ public class SamService {
    */
   @Traced
   public String syncWorkspacePolicy(
-      UUID workspaceId, IamRole role, AuthenticatedUserRequest userReq) {
+      UUID workspaceId, WsmIamRole role, AuthenticatedUserRequest userReq) {
     GoogleApi googleApi = samGoogleApi(userReq.getRequiredToken());
     try {
       // Sam makes no guarantees about what values are returned from the POST call, so we instead
@@ -246,7 +273,7 @@ public class SamService {
     }
   }
 
-  public SystemStatusSystems status() {
+  public ApiSystemStatusSystems status() {
     // No access token needed since this is an unauthenticated API.
     StatusApi statusApi = new StatusApi(getApiClient(null));
 
@@ -268,14 +295,15 @@ public class SamService {
                       entry.getKey() + ": " + StringUtils.join(entry.getValue().getMessages()))
               .collect(Collectors.toList());
 
-      return new SystemStatusSystems().ok(samStatus.getOk()).messages(subsystemStatusMessages);
+      return new ApiSystemStatusSystems().ok(samStatus.getOk()).messages(subsystemStatusMessages);
     } catch (ApiException | JsonProcessingException e) {
-      return new SystemStatusSystems().ok(false).addMessagesItem(e.getLocalizedMessage());
+      return new ApiSystemStatusSystems().ok(false).addMessagesItem(e.getLocalizedMessage());
     }
   }
 
   /**
-   * Builds a policy list with a single provided owner and empty reader, writer, and application policies.
+   * Builds a policy list with a single provided owner and empty reader, writer, and application
+   * policies.
    *
    * <p>This is a helper function for building the policy section of a request to create a workspace
    * resource in Sam. The provided user is granted the OWNER role and empty policies for reader,
@@ -288,19 +316,19 @@ public class SamService {
   private Map<String, AccessPolicyMembership> defaultWorkspacePolicies(String ownerEmail) {
     Map<String, AccessPolicyMembership> policyMap = new HashMap<>();
     policyMap.put(
-        IamRole.OWNER.toSamRole(),
+        WsmIamRole.OWNER.toSamRole(),
         new AccessPolicyMembership()
-            .addRolesItem(IamRole.OWNER.toSamRole())
+            .addRolesItem(WsmIamRole.OWNER.toSamRole())
             .addMemberEmailsItem(ownerEmail));
     policyMap.put(
-        IamRole.APPLICATION.toSamRole(),
-        new AccessPolicyMembership().addRolesItem(IamRole.APPLICATION.toSamRole()));
+        WsmIamRole.APPLICATION.toSamRole(),
+        new AccessPolicyMembership().addRolesItem(WsmIamRole.APPLICATION.toSamRole()));
     policyMap.put(
-        IamRole.WRITER.toSamRole(),
-        new AccessPolicyMembership().addRolesItem(IamRole.WRITER.toSamRole()));
+        WsmIamRole.WRITER.toSamRole(),
+        new AccessPolicyMembership().addRolesItem(WsmIamRole.WRITER.toSamRole()));
     policyMap.put(
-        IamRole.READER.toSamRole(),
-        new AccessPolicyMembership().addRolesItem(IamRole.READER.toSamRole()));
+        WsmIamRole.READER.toSamRole(),
+        new AccessPolicyMembership().addRolesItem(WsmIamRole.READER.toSamRole()));
     return policyMap;
   }
 
@@ -315,7 +343,7 @@ public class SamService {
   }
 
   /** Returns the Sam action for modifying a given IAM role. */
-  private String samActionToModifyRole(IamRole role) {
+  private String samActionToModifyRole(WsmIamRole role) {
     return String.format("share_policy::%s", role.toSamRole());
   }
 }

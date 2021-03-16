@@ -16,7 +16,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.CustomGcpIamRole;
 import bio.terra.workspace.service.iam.CustomGcpIamRoleMapping;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
@@ -64,16 +64,13 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            CreateGoogleContextFlight.class,
+            CreateGcpContextFlight.class,
             createInputParameters(workspaceId, spendUtils.defaultBillingAccountId(), userReq),
             STAIRWAY_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
     String projectId =
-        flightState
-            .getResultMap()
-            .get()
-            .get(WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID, String.class);
+        flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
 
     workspace = workspaceService.getWorkspace(workspaceId, userReq);
     assertTrue(workspace.getGcpCloudContext().isPresent());
@@ -113,10 +110,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     assertTrue(workspace.getGcpCloudContext().isEmpty());
 
     String projectId =
-        flightState
-            .getResultMap()
-            .get()
-            .get(WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID, String.class);
+        flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
     // The Project should exist, but requested to be deleted.
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());
@@ -134,7 +128,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     return workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
   }
 
-  /** Create the FlightMap input parameters required for the {@link CreateGoogleContextFlight}. */
+  /** Create the FlightMap input parameters required for the {@link CreateGcpContextFlight}. */
   private static FlightMap createInputParameters(
       UUID workspaceId, String billingAccountId, AuthenticatedUserRequest userReq) {
     FlightMap inputs = new FlightMap();
@@ -161,8 +155,8 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
 
   /** Asserts that Sam groups are granted their appropriate IAM roles on a GCP project. */
   private void assertPolicyGroupsSynced(UUID workspaceId, Project project) throws Exception {
-    Map<IamRole, String> roleToSamGroup =
-        Arrays.stream(IamRole.values())
+    Map<WsmIamRole, String> roleToSamGroup =
+        Arrays.stream(WsmIamRole.values())
             .collect(
                 Collectors.toMap(
                     Function.identity(),
@@ -175,7 +169,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
             .projects()
             .getIamPolicy(project.getProjectId(), new GetIamPolicyRequest())
             .execute();
-    for (IamRole role : IamRole.values()) {
+    for (WsmIamRole role : WsmIamRole.values()) {
       assertRoleBindingsInPolicy(role, roleToSamGroup.get(role), currentPolicy);
     }
   }
@@ -187,7 +181,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
    * @param groupEmail The group we expect roles to be bound to.
    * @param gcpPolicy The GCP policy we're checking for role bindings.
    */
-  private void assertRoleBindingsInPolicy(IamRole role, String groupEmail, Policy gcpPolicy) {
+  private void assertRoleBindingsInPolicy(WsmIamRole role, String groupEmail, Policy gcpPolicy) {
     List<String> expectedGcpRoleList = CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(role);
     List<Binding> actualGcpBindingList = gcpPolicy.getBindings();
     List<String> actualGcpRoleList =
@@ -203,10 +197,10 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   }
 
   /**
-   * An extension of {@link CreateGoogleContextFlight} that has the last step as an error, causing
-   * the flight to always attempt to be rolled back.
+   * An extension of {@link CreateGcpContextFlight} that has the last step as an error, causing the
+   * flight to always attempt to be rolled back.
    */
-  public static class ErrorCreateGoogleContextFlight extends CreateGoogleContextFlight {
+  public static class ErrorCreateGoogleContextFlight extends CreateGcpContextFlight {
     public ErrorCreateGoogleContextFlight(FlightMap inputParameters, Object applicationContext) {
       super(inputParameters, applicationContext);
       addStep(new StairwayTestUtils.ErrorDoStep());

@@ -14,6 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
+/**
+ * A step that creates a Sam workspace resource. This only runs for MC_WORKSPACE stage workspaces,
+ * as RAWLS_WORKSPACEs use existing Sam resources instead.
+ */
 public class CreateWorkspaceAuthzStep implements Step {
 
   private final SamService samService;
@@ -30,19 +34,10 @@ public class CreateWorkspaceAuthzStep implements Step {
   public StepResult doStep(FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-
-    // This may seem a bit counterintuitive, but in many of the existing use-cases, the workspace
-    // resource already exists
-    // If the user has access to the workspace, it means that we can skip the case of trying (and
-    // failing) to create
-    // the Sam resource. If the user doesn't have access, we'll default to the existing behavior and
-    // return the following
-    // error or success message from Sam.
-    if (!samService.isAuthorized(
-        userReq.getRequiredToken(),
-        SamConstants.SAM_WORKSPACE_RESOURCE,
-        workspaceID.toString(),
-        SamConstants.SAM_WORKSPACE_READ_ACTION)) {
+    // Even though WSM should own this resource, Stairway steps can run multiple times, so it's
+    // possible this step already created the resource. If WSM can either read the existing Sam
+    // resource or create a new one, this is considered successful.
+    if (!canReadExistingWorkspace(workspaceID)) {
       samService.createWorkspaceWithDefaults(userReq, workspaceID);
     }
     return StepResult.getStepResultSuccess();
@@ -51,7 +46,6 @@ public class CreateWorkspaceAuthzStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) {
     FlightMap inputMap = flightContext.getInputParameters();
-    // Only delete the Sam resource if we actually created it in the do step.
     UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     try {
       samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);
@@ -66,5 +60,13 @@ public class CreateWorkspaceAuthzStep implements Step {
       }
     }
     return StepResult.getStepResultSuccess();
+  }
+
+  private boolean canReadExistingWorkspace(UUID workspaceID) {
+    return samService.isAuthorized(
+        userReq.getRequiredToken(),
+        SamConstants.SAM_WORKSPACE_RESOURCE,
+        workspaceID.toString(),
+        SamConstants.SAM_WORKSPACE_READ_ACTION);
   }
 }

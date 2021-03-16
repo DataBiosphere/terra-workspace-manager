@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import bio.terra.workspace.generated.model.ControlledResourceCommonFields;
+import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;
@@ -20,7 +20,8 @@ public enum ManagedByType {
     return dbString;
   }
 
-  public static ManagedByType fromApi(ControlledResourceCommonFields.ManagedByEnum apiManagedBy) {
+  public static ManagedByType fromApi(
+      ApiControlledResourceCommonFields.ManagedByEnum apiManagedBy) {
     switch (apiManagedBy) {
       case USER:
         return ManagedByType.MANAGED_BY_USER;

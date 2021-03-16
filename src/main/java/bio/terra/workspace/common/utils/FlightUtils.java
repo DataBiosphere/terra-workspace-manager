@@ -2,7 +2,7 @@ package bio.terra.workspace.common.utils;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
-import bio.terra.workspace.generated.model.ErrorReport;
+import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.service.job.JobMapKeys;
 import org.springframework.http.HttpStatus;
 
@@ -19,7 +19,7 @@ public final class FlightUtils {
    */
   public static void setErrorResponse(
       FlightContext context, String message, HttpStatus responseStatus) {
-    ErrorReport errorModel = new ErrorReport().message(message);
+    ApiErrorReport errorModel = new ApiErrorReport().message(message);
     setResponse(context, errorModel, responseStatus);
   }
 

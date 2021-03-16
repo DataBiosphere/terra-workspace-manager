@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.iam;
 
-import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -83,21 +83,21 @@ public class CustomGcpIamRoleMapping {
   public static final ImmutableSet<CustomGcpIamRole> CUSTOM_GCP_IAM_ROLES =
       ImmutableSet.of(
           new CustomGcpIamRole(
-              WsmResourceType.GCS_BUCKET, IamRole.READER, GCS_BUCKET_READER_PERMISSIONS),
+              WsmResourceType.GCS_BUCKET, WsmIamRole.READER, GCS_BUCKET_READER_PERMISSIONS),
           new CustomGcpIamRole(
-              WsmResourceType.GCS_BUCKET, IamRole.WRITER, GCS_BUCKET_WRITER_PERMISSIONS),
+              WsmResourceType.GCS_BUCKET, WsmIamRole.WRITER, GCS_BUCKET_WRITER_PERMISSIONS),
           new CustomGcpIamRole(
-              WsmResourceType.GCS_BUCKET, IamRole.OWNER, GCS_BUCKET_OWNER_PERMISSIONS),
+              WsmResourceType.GCS_BUCKET, WsmIamRole.OWNER, GCS_BUCKET_OWNER_PERMISSIONS),
           new CustomGcpIamRole(
               WsmResourceType.BIG_QUERY_DATASET,
-              IamRole.READER,
+              WsmIamRole.READER,
               BIG_QUERY_DATASET_READER_PERMISSIONS),
           new CustomGcpIamRole(
               WsmResourceType.BIG_QUERY_DATASET,
-              IamRole.WRITER,
+              WsmIamRole.WRITER,
               BIG_QUERY_DATASET_WRITER_PERMISSIONS),
           new CustomGcpIamRole(
               WsmResourceType.BIG_QUERY_DATASET,
-              IamRole.OWNER,
+              WsmIamRole.OWNER,
               BIG_QUERY_DATASET_OWNER_PERMISSIONS));
 }

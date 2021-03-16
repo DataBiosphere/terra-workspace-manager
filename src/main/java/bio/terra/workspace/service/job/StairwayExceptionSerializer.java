@@ -40,11 +40,11 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
 
     if (exception instanceof ErrorReportException) {
       fields
-          .setErrorReportException(true)
+          .setApiErrorReportException(true)
           .setErrorDetails(((ErrorReportException) exception).getCauses())
           .setErrorCode(((ErrorReportException) exception).getStatusCode().value());
     } else {
-      fields.setErrorReportException(false);
+      fields.setApiErrorReportException(false);
     }
 
     try {
@@ -84,10 +84,10 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
               + fields.getMessage());
     }
 
-    // If this is an ErrorReport exception and the exception exposes a constructor with the
+    // If this is an ApiErrorReport exception and the exception exposes a constructor with the
     // error details, then we try to use that. We first try a version with a message, causes, and
     // status code.
-    if (fields.isErrorReportException()) {
+    if (fields.isApiErrorReportException()) {
       try {
         Constructor<?> ctor = clazz.getConstructor(String.class, List.class, HttpStatus.class);
         Object object =
@@ -106,9 +106,9 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
       }
     }
 
-    // If this is an ErrorReport exception but didn't match the above constructor signature, we
+    // If this is an ApiErrorReport exception but didn't match the above constructor signature, we
     // try again with another common pattern of message + causes.
-    if (fields.isErrorReportException()) {
+    if (fields.isApiErrorReportException()) {
       try {
         Constructor<?> ctor = clazz.getConstructor(String.class, List.class);
         Object object = ctor.newInstance(fields.getMessage(), fields.getErrorDetails());
@@ -123,7 +123,7 @@ public class StairwayExceptionSerializer implements ExceptionSerializer {
       }
     }
 
-    // We have either an ErrorReport exception that doesn't support error details or some other
+    // We have either an ApiErrorReport exception that doesn't support error details or some other
     // runtime exception
     try {
       Constructor<?> ctor = clazz.getConstructor(String.class);
