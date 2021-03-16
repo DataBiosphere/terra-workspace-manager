@@ -160,24 +160,21 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void emptyJobIdRequestRejected() {
-    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID())
-            .jobId("")
-            .build();
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).jobId("").build();
+
+    assertEquals("", request.jobId());
     // create-workspace request specifies the empty string for jobId
     assertThrows(
-            InvalidJobIdException.class,
-            () -> workspaceService.createWorkspace(request, USER_REQUEST));
+        InvalidJobIdException.class, () -> workspaceService.createWorkspace(request, USER_REQUEST));
   }
 
   @Test
   void whitespaceJobIdRequestRejected() {
-    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID())
-            .jobId("  \t  ")
-            .build();
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).jobId("  \t  ").build();
     // create-workspace request specifies a whitespace-only string for jobId
     assertThrows(
-            InvalidJobIdException.class,
-            () -> workspaceService.createWorkspace(request, USER_REQUEST));  }
+        InvalidJobIdException.class, () -> workspaceService.createWorkspace(request, USER_REQUEST));
+  }
 
   @Test
   void duplicateOperationSharesFailureResponse() {

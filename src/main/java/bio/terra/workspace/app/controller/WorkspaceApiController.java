@@ -29,7 +29,6 @@ import bio.terra.workspace.service.iam.exception.InvalidRoleException;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
-import bio.terra.workspace.service.job.exception.InvalidJobIdException;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -49,8 +48,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,9 +111,6 @@ public class WorkspaceApiController implements WorkspaceApi {
     WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::create);
-    // If clients provide a job ID, it cannot be whitespace-only
-    if (StringUtils.isWhitespace(body.getJobId()))
-      throw new InvalidJobIdException("jobId cannot be whitespace-only.");
     // If clients do not provide a job ID, we generate one instead.
     String jobId = body.getJobId() != null ? body.getJobId() : UUID.randomUUID().toString();
 

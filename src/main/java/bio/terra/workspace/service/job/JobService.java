@@ -24,13 +24,7 @@ import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.exception.DuplicateJobIdException;
-import bio.terra.workspace.service.job.exception.InternalStairwayException;
-import bio.terra.workspace.service.job.exception.InvalidResultStateException;
-import bio.terra.workspace.service.job.exception.JobNotCompleteException;
-import bio.terra.workspace.service.job.exception.JobNotFoundException;
-import bio.terra.workspace.service.job.exception.JobResponseException;
-import bio.terra.workspace.service.job.exception.JobUnauthorizedException;
+import bio.terra.workspace.service.job.exception.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -158,6 +152,11 @@ public class JobService {
       Class<? extends Flight> flightClass,
       Object request,
       AuthenticatedUserRequest userReq) {
+
+    // If clients provide a non-null job ID, it cannot be whitespace-only
+    if (StringUtils.isWhitespace(jobId))
+      throw new InvalidJobIdException("jobId cannot be whitespace-only.");
+
     return new JobBuilder(description, jobId, flightClass, request, userReq, this)
         .addParameter(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext())
         .addParameter(
