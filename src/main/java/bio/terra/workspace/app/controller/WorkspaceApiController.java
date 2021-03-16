@@ -41,12 +41,6 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +50,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Controller
 public class WorkspaceApiController implements WorkspaceApi {
@@ -131,25 +132,27 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiWorkspaceDescriptionList> listWorkspaces(Integer offset, Integer limit) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    logger.info("Listgin workspaces for {}", userReq.getEmail());
     List<Workspace> workspaces = workspaceService.listWorkspaces(userReq, offset, limit);
-    var response = new ApiWorkspaceDescriptionList()
-                    .workspaces(
-                            workspaces.stream()
-                                    .map(this::buildWorkspaceDescription)
-                                    .collect(Collectors.toList()));
+    var response =
+        new ApiWorkspaceDescriptionList()
+            .workspaces(
+                workspaces.stream()
+                    .map(this::buildWorkspaceDescription)
+                    .collect(Collectors.toList()));
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   private ApiWorkspaceDescription buildWorkspaceDescription(Workspace workspace) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    ApiGcpContext gcpContext = workspace.getGcpCloudContext().map(GcpCloudContext::toApi).orElse(null);
+    ApiGcpContext gcpContext =
+        workspace.getGcpCloudContext().map(GcpCloudContext::toApi).orElse(null);
     // Note projectId will be null here if no GCP cloud context exists.
     // When we have another cloud context, we will need to do a similar retrieval for it.
     return new ApiWorkspaceDescription()
-            .id(workspace.getWorkspaceId())
-            .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))
-            .stage(workspace.getWorkspaceStage().toApiModel())
-            .gcpContext(gcpContext);
+        .id(workspace.getWorkspaceId())
+        .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))
+        .stage(workspace.getWorkspaceStage().toApiModel())
+        .gcpContext(gcpContext);
   }
 
   @Override
