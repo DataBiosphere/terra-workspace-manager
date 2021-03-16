@@ -328,7 +328,7 @@ public class SamService {
             .addRolesItem(WsmIamRole.OWNER.toSamRole())
             .addMemberEmailsItem(ownerEmail)
             .descendantPermissions(buildDescendantPermissions(WsmIamRole.OWNER)));
-    // For all non-owner roles, we create empty policies which also grant certain permssions on
+    // For all non-owner roles, we create empty policies which also grant certain permissions on
     // resources in this workspace.
     for (WsmIamRole workspaceRole : WsmIamRole.values()) {
       if (workspaceRole != WsmIamRole.OWNER) {
