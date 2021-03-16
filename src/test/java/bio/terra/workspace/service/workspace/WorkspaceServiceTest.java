@@ -333,7 +333,19 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void createGoogleContextRawlsStageThrows() {
-    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    // RAWLS_WORKSPACE stage workspaces use existing Sam resources instead of owning them, so the
+    // mock pretends our user has access to any workspace we ask about.
+    Mockito.when(
+            mockSamService.isAuthorized(
+                Mockito.any(),
+                Mockito.eq(SamConstants.SAM_WORKSPACE_RESOURCE),
+                Mockito.any(),
+                Mockito.eq(SamConstants.SAM_WORKSPACE_READ_ACTION)))
+        .thenReturn(true);
+    WorkspaceRequest request =
+        defaultRequestBuilder(UUID.randomUUID())
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
     String jobId = UUID.randomUUID().toString();
 
@@ -405,13 +417,13 @@ class WorkspaceServiceTest extends BaseConnectedTest {
    * Convenience method for getting a WorkspaceRequest builder with some pre-filled default values.
    *
    * <p>This provides default values for jobId (random UUID), spend profile (Optional.empty()), and
-   * workspace stage (RAWLS_WORKSPACE).
+   * workspace stage (MC_WORKSPACE).
    */
   private WorkspaceRequest.Builder defaultRequestBuilder(UUID workspaceId) {
     return WorkspaceRequest.builder()
         .workspaceId(workspaceId)
         .jobId(UUID.randomUUID().toString())
         .spendProfileId(Optional.empty())
-        .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE);
+        .workspaceStage(WorkspaceStage.MC_WORKSPACE);
   }
 }

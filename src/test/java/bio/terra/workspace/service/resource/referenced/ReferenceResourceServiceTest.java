@@ -68,7 +68,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
   @BeforeEach
   void setup() {
     doReturn(true).when(mockDataRepoService).snapshotExists(any(), any(), any());
-    workspaceId = createRawlsTestWorkspace();
+    workspaceId = createMcTestWorkspace();
     referenceResource = null;
   }
 
@@ -137,15 +137,15 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
 
   /**
    * Test utility which creates a workspace with a random ID, no spend profile, and stage
-   * RAWLS_WORKSPACE. Returns the generated workspace ID.
+   * MC_WORKSPACE. Returns the generated workspace ID.
    */
-  private UUID createRawlsTestWorkspace() {
+  private UUID createMcTestWorkspace() {
     WorkspaceRequest request =
         WorkspaceRequest.builder()
             .workspaceId(UUID.randomUUID())
             .jobId(UUID.randomUUID().toString())
             .spendProfileId(Optional.empty())
-            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     return workspaceService.createWorkspace(request, USER_REQUEST);
   }
