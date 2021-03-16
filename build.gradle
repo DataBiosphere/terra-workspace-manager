@@ -185,7 +185,7 @@ jacocoTestReport {
 		xml.enabled = true
 		csv.enabled = true
 	}
-	dependsOn test // tests are required to run before generating the report
+	dependsOn test
 }
 
  // default test to unit tests so the build target succeeds
