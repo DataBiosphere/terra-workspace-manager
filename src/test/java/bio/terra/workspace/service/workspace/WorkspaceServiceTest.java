@@ -163,7 +163,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID())
             .jobId("")
             .build();
-    workspaceService.createWorkspace(request, USER_REQUEST);
     // create-workspace request specifies the empty string for jobId
     assertThrows(
             InvalidJobIdException.class,
@@ -175,7 +174,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID())
             .jobId("  \t  ")
             .build();
-    workspaceService.createWorkspace(request, USER_REQUEST);
     // create-workspace request specifies a whitespace-only string for jobId
     assertThrows(
             InvalidJobIdException.class,
