@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.generated.model.JobReport;
+import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
@@ -82,7 +82,7 @@ class JobServiceTest extends BaseUnitTest {
   }
 
   private void testSingleRetrieval(List<String> fids) {
-    JobReport response = jobService.retrieveJob(fids.get(2), testUser);
+    ApiJobReport response = jobService.retrieveJob(fids.get(2), testUser);
     assertThat(response, notNullValue());
     validateJobReport(response, 2, fids);
   }
@@ -97,10 +97,10 @@ class JobServiceTest extends BaseUnitTest {
 
   // Get some range and compare it with the fids
   private void testEnumRange(List<String> fids, int offset, int limit) {
-    List<JobReport> jobList = jobService.enumerateJobs(offset, limit, testUser);
+    List<ApiJobReport> jobList = jobService.enumerateJobs(offset, limit, testUser);
     assertThat(jobList, notNullValue());
     int index = offset;
-    for (JobReport job : jobList) {
+    for (ApiJobReport job : jobList) {
       validateJobReport(job, index, fids);
       index++;
     }
@@ -108,7 +108,7 @@ class JobServiceTest extends BaseUnitTest {
 
   // Get some range and make sure we got the number we expected
   private void testEnumCount(int count, int offset, int length) {
-    List<JobReport> jobList = jobService.enumerateJobs(offset, length, testUser);
+    List<ApiJobReport> jobList = jobService.enumerateJobs(offset, length, testUser);
     assertThat(jobList, notNullValue());
     assertThat(jobList.size(), equalTo(count));
   }
@@ -125,10 +125,10 @@ class JobServiceTest extends BaseUnitTest {
         () -> jobService.retrieveJobResult("abcdef", Object.class, testUser));
   }
 
-  private void validateJobReport(JobReport jr, int index, List<String> fids) {
+  private void validateJobReport(ApiJobReport jr, int index, List<String> fids) {
     assertThat(jr.getDescription(), equalTo(makeDescription(index)));
     assertThat(jr.getId(), equalTo(fids.get(index)));
-    assertThat(jr.getStatus(), equalTo(JobReport.StatusEnum.SUCCEEDED));
+    assertThat(jr.getStatus(), equalTo(ApiJobReport.StatusEnum.SUCCEEDED));
     assertThat(jr.getStatusCode(), equalTo(HttpStatus.I_AM_A_TEAPOT.value()));
   }
 

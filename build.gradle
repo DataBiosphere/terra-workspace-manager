@@ -149,6 +149,7 @@ swaggerSources {
 			rawOptions = [
 					"--api-package", "${artifactGroup}.generated.controller",
 					"--model-package", "${artifactGroup}.generated.model",
+					"--model-name-prefix", "Api",
 					"-D", "interfaceOnly=true," +
 							"useTags=true," +
 							"dateLibrary=java8"

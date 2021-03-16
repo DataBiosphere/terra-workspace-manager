@@ -58,7 +58,7 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            CreateGoogleContextFlight.class,
+            CreateGcpContextFlight.class,
             createParameters,
             CREATION_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
@@ -77,7 +77,7 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
     flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            DeleteGoogleContextFlight.class,
+            DeleteGcpContextFlight.class,
             deleteParameters,
             DELETION_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
@@ -101,7 +101,7 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            DeleteGoogleContextFlight.class,
+            DeleteGcpContextFlight.class,
             inputParameters,
             DELETION_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());

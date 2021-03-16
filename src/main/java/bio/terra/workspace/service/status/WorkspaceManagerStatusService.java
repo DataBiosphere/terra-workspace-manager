@@ -4,7 +4,7 @@ import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration
 import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
 import bio.terra.workspace.common.utils.BaseStatusService;
 import bio.terra.workspace.common.utils.StatusSubsystem;
-import bio.terra.workspace.generated.model.SystemStatusSystems;
+import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
 import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.SamService;
@@ -30,15 +30,15 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
       BufferService bufferService,
       @Value("${workspace.status-check.staleness-threshold-ms}") long staleThresholdMillis) {
     super(staleThresholdMillis);
-    Supplier<SystemStatusSystems> dbHealthFn =
+    Supplier<ApiSystemStatusSystems> dbHealthFn =
         () ->
-            new SystemStatusSystems()
+            new ApiSystemStatusSystems()
                 .ok(jdbcTemplate.getJdbcTemplate().execute(this::isConnectionValid));
     registerSubsystem("Postgres", new StatusSubsystem(dbHealthFn, /*isCritical=*/ true));
 
     for (Map.Entry<String, String> instanceEntry :
         dataRepoConfiguration.getInstances().entrySet()) {
-      Supplier<SystemStatusSystems> checkDataRepoInstanceFn =
+      Supplier<ApiSystemStatusSystems> checkDataRepoInstanceFn =
           () -> dataRepoService.status(instanceEntry.getValue());
       registerSubsystem(
           "Data Repo instance: " + instanceEntry.getKey(),

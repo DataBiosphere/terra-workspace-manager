@@ -4,18 +4,18 @@ import java.util.List;
 
 // POJO for serializing one level of exception into JSON
 public class StairwayExceptionFields {
-  private boolean isErrorReportException;
+  private boolean isApiErrorReportException;
   private String className;
   private String message;
   private List<String> errorDetails;
   private int errorCode;
 
-  public boolean isErrorReportException() {
-    return isErrorReportException;
+  public boolean isApiErrorReportException() {
+    return isApiErrorReportException;
   }
 
-  public StairwayExceptionFields setErrorReportException(boolean errorReportException) {
-    isErrorReportException = errorReportException;
+  public StairwayExceptionFields setApiErrorReportException(boolean errorReportException) {
+    isApiErrorReportException = errorReportException;
     return this;
   }
 
