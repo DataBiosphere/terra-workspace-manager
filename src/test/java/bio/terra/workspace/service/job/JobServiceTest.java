@@ -11,6 +11,7 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.job.exception.InvalidJobIdException;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
@@ -43,6 +44,26 @@ class JobServiceTest extends BaseUnitTest {
     } catch (Exception e) {
       // How does a mock even throw an exception?
     }
+  }
+
+  @Test
+  void emptyStringJobIdTest() {
+    String testJobId = "";
+    assertThrows(
+        InvalidJobIdException.class,
+        () ->
+            jobService.newJob(
+                "description", testJobId, JobServiceTestFlight.class, null, testUser));
+  }
+
+  @Test
+  void whitespaceStringJobIdTest() {
+    String testJobId = "\t ";
+    assertThrows(
+        InvalidJobIdException.class,
+        () ->
+            jobService.newJob(
+                "description", testJobId, JobServiceTestFlight.class, null, testUser));
   }
 
   @Test
