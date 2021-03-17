@@ -183,7 +183,6 @@ tasks.withType(Test) {
 
 jacocoTestReport {
 	reports {
-		html.enabled = true
 		xml.enabled = true
 		xml.destination = file("$buildDir/reports/jacoco/test/jacoco.xml")
 	}
@@ -196,7 +195,6 @@ test {
 		includeTags "unit"
 	}
 }
-
 
 task unitTest(type: Test) {
 	useJUnitPlatform {
