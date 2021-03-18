@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Check out this repository
-      - uses: actions/checkout@v2
+        uses: actions/checkout@v2
       - name: Set up AdoptOpenJDK 11
         uses: joschi/setup-jdk@v2
         with:
