@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.iam;
 
-import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -16,8 +16,9 @@ import com.google.common.collect.ImmutableSet;
  * these roles in existing projects. Editing these lists will affect newly created workspace
  * contexts, but WSM will not retroactively apply changes to existing projects.
  *
- * <p>Although WSM also supports the APPLICATION workspace IAM role, that roles only grants
- * additional permissions through Sam. On GCP, those roles have the same permissions as WRITERs.
+ * <p>Although WSM also supports the EDITOR and APPLICATION workspace IAM roles, these roles only
+ * grant additional permissions through Sam. On GCP, those roles have the same permissions as
+ * WRITERs.
  */
 public class CustomGcpIamRoleMapping {
   @VisibleForTesting
@@ -26,11 +27,17 @@ public class CustomGcpIamRoleMapping {
 
   @VisibleForTesting
   public static final ImmutableList<String> GCS_BUCKET_WRITER_PERMISSIONS =
-      ImmutableList.of("storage.objects.create", "storage.objects.delete");
+      new ImmutableList.Builder<String>()
+          .addAll(GCS_BUCKET_READER_PERMISSIONS)
+          .add("storage.objects.create", "storage.objects.delete")
+          .build();
 
   @VisibleForTesting
-  public static final ImmutableList<String> GCS_BUCKET_EDITOR_PERMISSIONS =
-      ImmutableList.of("storage.buckets.get");
+  public static final ImmutableList<String> GCS_BUCKET_OWNER_PERMISSIONS =
+      new ImmutableList.Builder<String>()
+          .addAll(GCS_BUCKET_WRITER_PERMISSIONS)
+          .add("storage.buckets.get")
+          .build();
 
   @VisibleForTesting
   public static final ImmutableList<String> BIG_QUERY_DATASET_READER_PERMISSIONS =
@@ -49,48 +56,48 @@ public class CustomGcpIamRoleMapping {
 
   @VisibleForTesting
   public static final ImmutableList<String> BIG_QUERY_DATASET_WRITER_PERMISSIONS =
-      ImmutableList.of(
-          "bigquery.models.create",
-          "bigquery.models.delete",
-          "bigquery.models.updateData",
-          "bigquery.models.updateMetadata",
-          "bigquery.routines.create",
-          "bigquery.routines.delete",
-          "bigquery.routines.update",
-          "bigquery.tables.updateData");
+      new ImmutableList.Builder<String>()
+          .addAll(BIG_QUERY_DATASET_READER_PERMISSIONS)
+          .add(
+              "bigquery.models.create",
+              "bigquery.models.delete",
+              "bigquery.models.updateData",
+              "bigquery.models.updateMetadata",
+              "bigquery.routines.create",
+              "bigquery.routines.delete",
+              "bigquery.routines.update",
+              "bigquery.tables.updateData")
+          .build();
 
   @VisibleForTesting
-  public static final ImmutableList<String> BIG_QUERY_DATASET_EDITOR_PERMISSIONS =
-      ImmutableList.of(
-          "bigquery.datasets.getIamPolicy",
-          "bigquery.tables.create",
-          "bigquery.tables.delete",
-          "bigquery.tables.update");
+  public static final ImmutableList<String> BIG_QUERY_DATASET_OWNER_PERMISSIONS =
+      new ImmutableList.Builder<String>()
+          .addAll(BIG_QUERY_DATASET_WRITER_PERMISSIONS)
+          .add(
+              "bigquery.datasets.getIamPolicy",
+              "bigquery.tables.create",
+              "bigquery.tables.delete",
+              "bigquery.tables.update")
+          .build();
 
   public static final ImmutableSet<CustomGcpIamRole> CUSTOM_GCP_IAM_ROLES =
       ImmutableSet.of(
           new CustomGcpIamRole(
-              WsmResourceType.GCS_BUCKET,
-              ControlledResourceIamRole.READER,
-              GCS_BUCKET_READER_PERMISSIONS),
+              WsmResourceType.GCS_BUCKET, WsmIamRole.READER, GCS_BUCKET_READER_PERMISSIONS),
           new CustomGcpIamRole(
-              WsmResourceType.GCS_BUCKET,
-              ControlledResourceIamRole.WRITER,
-              GCS_BUCKET_WRITER_PERMISSIONS),
+              WsmResourceType.GCS_BUCKET, WsmIamRole.WRITER, GCS_BUCKET_WRITER_PERMISSIONS),
           new CustomGcpIamRole(
-              WsmResourceType.GCS_BUCKET,
-              ControlledResourceIamRole.EDITOR,
-              GCS_BUCKET_EDITOR_PERMISSIONS),
+              WsmResourceType.GCS_BUCKET, WsmIamRole.OWNER, GCS_BUCKET_OWNER_PERMISSIONS),
           new CustomGcpIamRole(
               WsmResourceType.BIG_QUERY_DATASET,
-              ControlledResourceIamRole.READER,
+              WsmIamRole.READER,
               BIG_QUERY_DATASET_READER_PERMISSIONS),
           new CustomGcpIamRole(
               WsmResourceType.BIG_QUERY_DATASET,
-              ControlledResourceIamRole.WRITER,
+              WsmIamRole.WRITER,
               BIG_QUERY_DATASET_WRITER_PERMISSIONS),
           new CustomGcpIamRole(
               WsmResourceType.BIG_QUERY_DATASET,
-              ControlledResourceIamRole.EDITOR,
-              BIG_QUERY_DATASET_EDITOR_PERMISSIONS));
+              WsmIamRole.OWNER,
+              BIG_QUERY_DATASET_OWNER_PERMISSIONS));
 }
