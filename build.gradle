@@ -48,7 +48,6 @@ allprojects {
 	apply plugin: "jacoco"
 	jacoco {
 		toolVersion = '0.8.2'
-		//reportsDirectory = file("$buildDir/reports/jacoco")
 	}
 }
 
@@ -182,7 +181,6 @@ tasks.withType(Test) {
 
 jacocoTestReport {
 	reports {
-		html.enabled = true
 		xml.enabled = true
 		xml.destination = file("$buildDir/reports/jacoco/test/jacoco.xml")
 	}
