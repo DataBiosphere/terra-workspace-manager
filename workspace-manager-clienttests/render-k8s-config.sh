@@ -12,8 +12,8 @@ fi
 
 VAULT_TOKEN=${2:-$(cat "$HOME"/.vault-token)}
 TESTRUNNER_K8S_SERVICE_ACCOUNT_VAULT_PATH=secret/dsde/terra/kernel/integration/${NAMESPACE}/testrunner-k8s-sa
-TESTRUNNER_K8S_SERVICE_ACCOUNT_CA_OUTPUT_PATH=$(dirname "$0")/rendered/testrunner-k8s-sa-client-key-data.crt
-TESTRUNNER_K8S_SERVICE_ACCOUNT_TOKEN_OUTPUT_PATH=$(dirname "$0")/rendered/testrunner-k8s-sa-token
+TESTRUNNER_K8S_SERVICE_ACCOUNT_CA_OUTPUT_PATH=$(dirname "$0")/rendered/testrunner-k8s-${NAMESPACE}-sa-client-key-data.crt
+TESTRUNNER_K8S_SERVICE_ACCOUNT_TOKEN_OUTPUT_PATH=$(dirname "$0")/rendered/testrunner-k8s-${NAMESPACE}-sa-token
 
 DSDE_TOOLBOX_DOCKER_IMAGE=broadinstitute/dsde-toolbox:consul-0.20.0
 
