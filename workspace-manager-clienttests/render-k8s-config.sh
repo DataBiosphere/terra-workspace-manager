@@ -6,7 +6,7 @@ NAMESPACE=${1}
 if [ -z "$1" ]
   then
     echo "Please provide a namespace as input argument as in the following example."
-    echo "Usage: ./render-k8s-config.sh <namespace: e.g. ichang>"
+    echo "Usage: ./render-k8s-config.sh <namespace: e.g. wsmtest>"
     exit 1;
 fi
 
