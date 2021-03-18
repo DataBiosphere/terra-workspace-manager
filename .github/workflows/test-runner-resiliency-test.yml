@@ -75,7 +75,7 @@ jobs:
           ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
           ./render-k8s-config.sh ichang ${{ steps.vault-token-step.outputs.vault-token }}
           echo "Running test suite"
-          ./gradlew runTest --args="suites/BasicResiliency.json /tmp/TestRunnerResults"
+          ./gradlew runTest --args="suites/WsmTestResiliency.json /tmp/TestRunnerResults"
 
       - name: Upload test results to Google Bucket
         if: ${{ always() }}
