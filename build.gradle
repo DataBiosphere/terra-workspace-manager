@@ -11,6 +11,7 @@ plugins {
 	id "org.hidetake.swagger.generator" version "2.18.2"
 	id "org.springframework.boot" version "2.4.0"
 	id 'ru.vyarus.quality' version '4.5.0'
+	id 'jacoco'
 }
 
 sourceCompatibility = JavaVersion.VERSION_11
@@ -43,6 +44,11 @@ allprojects {
 			generatedSourceDirs = [file("${swaggerOutputDir}/src/main/java")]
 			downloadJavadoc = true
 		}
+	}
+
+	apply plugin: "jacoco"
+	jacoco {
+		toolVersion = '0.8.2'
 	}
 }
 
@@ -193,6 +199,14 @@ tasks.withType(Test) {
 	]
 }
 
+jacocoTestReport {
+	reports {
+		xml.enabled = true
+		xml.destination = file("$buildDir/reports/jacoco/test/jacoco.xml")
+	}
+	dependsOn test
+}
+
  // default test to unit tests so the build target succeeds
 test {
 	useJUnitPlatform {
@@ -208,6 +222,7 @@ task unitTest(type: Test) {
 		events = ["passed", "failed", "skipped", "started"]
 	}
 	outputs.upToDateWhen { false }
+	finalizedBy jacocoTestReport
 }
 
 task connectedTest(type: Test) {
