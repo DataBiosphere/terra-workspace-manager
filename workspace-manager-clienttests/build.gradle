@@ -1,12 +1,9 @@
-import org.gradle.api.JavaVersion
-import org.gradle.api.tasks.JavaExec
-
 plugins {
     id 'java'
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
     // Terra Test Runner Plugin
-    id 'bio.terra.test-runner-plugin' version '0.0.3-20210316.131233-31'
+    id 'bio.terra.test-runner-plugin' version '0.0.3-SNAPSHOT'
 }
 
 repositories {
@@ -40,7 +37,7 @@ dependencies {
 
         workspacemanagerClient = "0.9.0-SNAPSHOT"
         datarepoClient = "1.0.155-SNAPSHOT"
-        testRunner = "0.0.3-20210316.131233-31"
+        testRunner = "0.0.3-SNAPSHOT"
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
     compileOnly "com.google.code.findbugs:annotations:${findbugsAnnotations}"

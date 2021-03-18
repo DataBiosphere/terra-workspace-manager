@@ -1,5 +1,4 @@
-# This workflow will build a Java project with Gradle
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
+# This workflow will build and run a workspace manager resiliency test against the terra-wsmtest namespace
 
 name: Test Runner Resiliency Test
 
@@ -13,7 +12,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:12.3
+        image: postgres:13.1
         env:
           POSTGRES_PASSWORD: postgres
         options: >-
@@ -25,6 +24,7 @@ jobs:
           - 5432:5432
 
     steps:
+      - name: Check out this repository
       - uses: actions/checkout@v2
       - name: Set up AdoptOpenJDK 11
         uses: joschi/setup-jdk@v2
@@ -42,7 +42,6 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # These steps aren't needed for unit tests
       - name: Get Vault token
         id: vault-token-step
         env:
@@ -65,7 +64,7 @@ jobs:
           export ORG_GRADLE_PROJECT_workspacemanagerclientjar=$(find .. -type f -name "workspace-manager-client*.jar")
           echo "ORG_GRADLE_PROJECT_workspacemanagerclientjar = ${ORG_GRADLE_PROJECT_workspacemanagerclientjar}"
 
-      # We can also set the env var in the GH action script to specify which server we are testing against.
+      # We can also set the env var (TEST_RUNNER_SERVER_SPECIFICATION_FILE) in the GH action script to specify which server we are testing against.
       # This will be particularly helpful once we switch over to testing against any test env -- then it's just a change to the env var.
       # Please refer to https://github.com/DataBiosphere/terra-test-runner#override-the-server-from-the-command-line for more information.
       - name: Run a basic Resiliency test suite against a namespace
