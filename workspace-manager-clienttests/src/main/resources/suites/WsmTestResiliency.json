@@ -1,0 +1,8 @@
+{
+  "name": "WsmTestResiliency",
+  "description": "Test deleting all initially created pods",
+  "serverSpecificationFile": "workspace-wsmtest-resiliency.json",
+  "testConfigurationFiles": [
+    "resiliency/DeleteInitialPods.json"
+  ]
+}

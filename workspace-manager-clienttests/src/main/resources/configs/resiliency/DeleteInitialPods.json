@@ -1,7 +1,7 @@
 {
   "name": "CheckStatusWhileDeletePods",
   "description": "Run two Service Status tests concurrently with an artificial delay, while incrementally deleting pods.",
-  "serverSpecificationFile": "workspace-ichang.json",
+  "serverSpecificationFile": "workspace-wsmtest-resiliency.json",
   "kubernetes": {
     "numberOfInitialPods" : 2
   },
@@ -15,10 +15,10 @@
   "testScripts": [
     {
       "name": "ServiceStatus",
-      "parameters": [90],
+      "parameters": [120],
       "numberOfUserJourneyThreadsToRun": 2,
       "userJourneyThreadPoolSize": 2,
-      "expectedTimeForEach": 90,
+      "expectedTimeForEach": 120,
       "expectedTimeForEachUnit": "SECONDS"
     }
   ],
