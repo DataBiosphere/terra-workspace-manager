@@ -129,6 +129,8 @@ jobs:
     - name: Codacy Coverage Reporter
       if: matrix.gradleTask == 'unitTest'
       uses: codacy/codacy-coverage-reporter-action@0.2.0
+      env:
+        CODACY_API_BASE_URL: https://app.codacy.com/gh/DataBiosphere/terra-workspace-manager
       with:
         project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
         coverage-reports: build/reports/jacoco/test/jacoco.xml
