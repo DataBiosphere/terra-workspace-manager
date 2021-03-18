@@ -302,11 +302,12 @@ public class SamService {
   }
 
   /**
-   * Builds a policy list with a single provided owner and empty reader + writer policies.
+   * Builds a policy list with a single provided owner and empty reader, writer, and application
+   * policies.
    *
    * <p>This is a helper function for building the policy section of a request to create a workspace
-   * resource in Sam. The provided user is granted the OWNER role and empty policies for reader and
-   * writer are also included.
+   * resource in Sam. The provided user is granted the OWNER role and empty policies for reader,
+   * writer, and application are also included.
    *
    * <p>The empty policies are included because Sam requires all policies on a workspace to be
    * provided at creation time. Although policy membership can be modified later, policy creation
@@ -319,6 +320,9 @@ public class SamService {
         new AccessPolicyMembership()
             .addRolesItem(WsmIamRole.OWNER.toSamRole())
             .addMemberEmailsItem(ownerEmail));
+    policyMap.put(
+        WsmIamRole.APPLICATION.toSamRole(),
+        new AccessPolicyMembership().addRolesItem(WsmIamRole.APPLICATION.toSamRole()));
     policyMap.put(
         WsmIamRole.WRITER.toSamRole(),
         new AccessPolicyMembership().addRolesItem(WsmIamRole.WRITER.toSamRole()));

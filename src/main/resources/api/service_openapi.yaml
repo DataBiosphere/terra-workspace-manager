@@ -1105,6 +1105,8 @@ components:
             unique requests. Sending different requests with the same jobId
             will lead to all but one of the request bodies being ignored.
             This will be randomly generated if not provided in a request.
+            Best practice is for job identifier to be a UUID, a ShortUUID,
+            or other globally unique identifier.
           type: string
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
@@ -1319,7 +1321,7 @@ components:
     IamRole:
       description: Enum containing all valid IAM roles on a Workspace
       type: string
-      enum: ['READER', 'WRITER', 'OWNER']
+      enum: ['READER', 'WRITER', 'APPLICATION', 'OWNER']
 
     RoleBinding:
       description: A binding between an IAM role and users with that role

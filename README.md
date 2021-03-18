@@ -12,6 +12,7 @@ A swagger-ui page is available at /swagger-ui.html on any running instance. For 
 - alpha: https://workspace.dsde-alpha.broadinstitute.org/swagger-ui.html
 - staging: https://workspace.dsde-staging.broadinstitute.org/swagger-ui.html
 - perf: https://workspace.dsde-perf.broadinstitute.org/swagger-ui.html
+- prod: https://workspace.dsde-prod.broadinstitute.org/swagger-ui.html 
 
 We currently do not deploy to a production environment.
 
