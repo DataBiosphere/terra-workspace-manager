@@ -17,7 +17,7 @@ public final class WorkspaceFlightMapKeys {
   /** Use inner class for new set of keys so it's easy to spot duplicates */
   public static class ControlledResourceKeys {
     public static final String CREATION_PARAMETERS = "creationParameters";
-    public static final String IAM_ROLE = "iamRole";
+    public static final String PRIVATE_RESOURCE_IAM_ROLE = "iamRole";
 
     private ControlledResourceKeys() {}
   }

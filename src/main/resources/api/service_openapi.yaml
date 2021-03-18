@@ -1301,14 +1301,28 @@ components:
           $ref: '#/components/schemas/PrivateResourceUser'
 
     PrivateResourceUser:
-      description: A user and role pair for a user of a private resource.
+      description: A user and role information for a user of a private resource.
       type: object
       properties:
         userName:
           description: Email address for the user of the resource
           type: string
-        iamRole:
-          $ref: '#/components/schemas/IamRole'
+        privateResourceIamRole:
+          $ref: '#/components/schemas/PrivateResourceIamRole'
+
+    PrivateResourceIamRole:
+      description: Description of role(s) granted to the user of a private resource
+      type: object
+      properties:
+        role:
+          description: What access role (reader or writer) this user has
+          type: string
+          enum: ['READER', 'WRITER']
+        editor:
+          description: Whether this user should be an editor in addition to their role
+          type: boolean
+
+
 
     CreatedControlledGcsBucket:
       description: Response Payload for requesting a new controlled resource.

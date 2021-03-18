@@ -6,6 +6,7 @@ import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
+import bio.terra.workspace.service.resource.controlled.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import java.util.Optional;
@@ -73,6 +74,10 @@ public abstract class ControlledResource extends WsmResource {
     }
     if (getAssignedUser().isPresent() && getAccessScope() == AccessScopeType.ACCESS_SCOPE_SHARED) {
       throw new InconsistentFieldsException("Assigned user on SHARED resource");
+    }
+    if (getManagedBy() == ManagedByType.MANAGED_BY_APPLICATION) {
+      throw new ControlledResourceNotImplementedException(
+          "WSM does not support application managed resources yet");
     }
   }
 

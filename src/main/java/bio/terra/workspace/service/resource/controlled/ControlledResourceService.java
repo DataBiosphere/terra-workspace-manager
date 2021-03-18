@@ -2,8 +2,8 @@ package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcsBucketCreationParameters;
-import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.generated.model.ApiPrivateResourceIamRole;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
@@ -41,12 +41,12 @@ public class ControlledResourceService {
   public String createControlledResource(
       ControlledResource resource,
       ApiGcsBucketCreationParameters creationParameters,
-      ApiIamRole creationApiIamRole,
+      ApiPrivateResourceIamRole privateResourceIamRole,
       ApiJobControl jobControl,
       AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
     workspaceService.validateWorkspaceAndAction(
-        userRequest, resource.getWorkspaceId(), SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+        userRequest, resource.getWorkspaceId(), SamConstants.SAM_RESOURCE_WRITE_ACTION);
     final String jobDescription =
         String.format(
             "Create controlled resource %s; id %s; name %s",
@@ -61,7 +61,7 @@ public class ControlledResourceService {
                 resource,
                 userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters)
-            .addParameter(ControlledResourceKeys.IAM_ROLE, creationApiIamRole);
+            .addParameter(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLE, privateResourceIamRole);
 
     return jobBuilder.submit();
   }
@@ -70,7 +70,7 @@ public class ControlledResourceService {
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
     stageService.assertMcWorkspace(workspaceId, "getControlledResource");
     workspaceService.validateWorkspaceAndAction(
-        userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+        userReq, workspaceId, SamConstants.SAM_RESOURCE_READ_ACTION);
     WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
     return wsmResource.castControlledResource();
   }

@@ -359,7 +359,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                 Mockito.any(),
                 Mockito.eq(SamConstants.SAM_WORKSPACE_RESOURCE),
                 Mockito.any(),
-                Mockito.eq(SamConstants.SAM_WORKSPACE_READ_ACTION)))
+                Mockito.eq(SamConstants.SAM_RESOURCE_READ_ACTION)))
         .thenReturn(true);
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())

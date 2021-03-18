@@ -3,24 +3,26 @@ package bio.terra.workspace.service.iam;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
+import bio.terra.workspace.generated.model.ApiPrivateResourceIamRole;
+import bio.terra.workspace.generated.model.ApiPrivateResourceIamRole.RoleEnum;
 import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.stage.StageService;
-import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
@@ -30,10 +32,10 @@ import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
-import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyDescendantPermissions;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntry;
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
+import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
 import org.broadinstitute.dsde.workbench.client.sam.model.SubsystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
 import org.slf4j.Logger;
@@ -279,6 +281,59 @@ public class SamService {
     }
   }
 
+  @Traced
+  public void createControlledResource(
+      ControlledResource resource,
+      Optional<ApiPrivateResourceIamRole> privateIamRole,
+      AuthenticatedUserRequest userReq) {
+    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+    FullyQualifiedResourceId workspaceParent =
+        new FullyQualifiedResourceId()
+            .resourceId(resource.getWorkspaceId().toString())
+            .resourceTypeName(SamConstants.SAM_WORKSPACE_RESOURCE);
+    CreateResourceRequestV2 resourceRequest =
+        new CreateResourceRequestV2()
+            .resourceId(resource.getResourceId().toString())
+            .parent(workspaceParent);
+    addWsmResourceOwnerPolicy(resourceRequest);
+    // Only create policies for private resources. Workspace role permissions are handled through
+    // role-based inheritance in Sam instead. This will likely expand to include policies for
+    // applications in the future.
+    if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
+      addPrivateResourcePolicies(
+          resourceRequest,
+          resource.getAccessScope(),
+          resource.getManagedBy(),
+          privateIamRole.get(),
+          resource.getAssignedUser().get());
+    }
+
+    try {
+      resourceApi.createResourceV2(
+          SamConstants.samControlledResourceType(
+              resource.getAccessScope(), resource.getManagedBy()),
+          resourceRequest);
+      logger.info("Created Sam controlled resource {}", resource.getResourceId());
+    } catch (ApiException e) {
+      throw new SamApiException(e);
+    }
+  }
+
+  @Traced
+  public void deleteControlledResource(
+      ControlledResource resource, AuthenticatedUserRequest userReq) {
+    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+    try {
+      resourceApi.deleteResourceV2(
+          SamConstants.samControlledResourceType(
+              resource.getAccessScope(), resource.getManagedBy()),
+          resource.getResourceId().toString());
+      logger.info("Deleted Sam controlled resource {}", resource.getResourceId());
+    } catch (ApiException apiException) {
+      throw new SamApiException(apiException);
+    }
+  }
+
   public ApiSystemStatusSystems status() {
     // No access token needed since this is an unauthenticated API.
     StatusApi statusApi = new StatusApi(getApiClient(null));
@@ -309,8 +364,7 @@ public class SamService {
 
   /**
    * Builds a policy list with a single provided owner and empty reader, writer and application
-   * policies. These policies use policy-based inheritance to also grant permissions on controlled
-   * resources created in this workspace.
+   * policies.
    *
    * <p>This is a helper function for building the policy section of a request to create a workspace
    * resource in Sam. The provided user is granted the OWNER role and empty policies for reader,
@@ -326,49 +380,59 @@ public class SamService {
         WsmIamRole.OWNER.toSamRole(),
         new AccessPolicyMembershipV2()
             .addRolesItem(WsmIamRole.OWNER.toSamRole())
-            .addMemberEmailsItem(ownerEmail)
-            .descendantPermissions(buildDescendantPermissions(WsmIamRole.OWNER)));
-    // For all non-owner roles, we create empty policies which also grant certain permissions on
-    // resources in this workspace.
+            .addMemberEmailsItem(ownerEmail));
+    // For all non-owner roles, we create empty policies which can be modified later.
     for (WsmIamRole workspaceRole : WsmIamRole.values()) {
       if (workspaceRole != WsmIamRole.OWNER) {
         policyMap.put(
             workspaceRole.toSamRole(),
-            new AccessPolicyMembershipV2()
-                .addRolesItem(workspaceRole.toSamRole())
-                .descendantPermissions(buildDescendantPermissions(workspaceRole)));
+            new AccessPolicyMembershipV2().addRolesItem(workspaceRole.toSamRole()));
       }
     }
     return policyMap;
   }
 
   /**
-   * Build the set of descendant permissions a workspace role should have on controlled resources
-   * inside that workspace.
-   *
-   * @param wsRole The workspace role to list resource permissions for
-   * @return A list of AccessPolicyDescendantPermissions object, with each object representing the
-   *     descendant permissions for a single category of controlled resource (e.g. user-shared).
+   * Add WSM's service account as a resource owner. Used for admin reassignment of lost resources.
    */
-  private List<AccessPolicyDescendantPermissions> buildDescendantPermissions(WsmIamRole wsRole) {
-    var builder = new ImmutableList.Builder<AccessPolicyDescendantPermissions>();
-    for (AccessScopeType accessScope : AccessScopeType.values()) {
-      for (ManagedByType managedBy : ManagedByType.values()) {
-        // For each controlled resource category, we have a mapping of workspace roles -> resource
-        // roles. This translates the mapping for a provided workspace role into Sam policy.
-        builder.add(
-            new AccessPolicyDescendantPermissions()
-                .resourceType(samControlledResourceType(accessScope, managedBy))
-                .roles(
-                    ControlledResourceInheritanceMapping.getInheritanceMapping(
-                            accessScope, managedBy)
-                        .get(wsRole)
-                        .stream()
-                        .map(ControlledResourceIamRole::toSamRole)
-                        .collect(Collectors.toList())));
+  private void addWsmResourceOwnerPolicy(CreateResourceRequestV2 request) {
+    // TODO: Are we adding this now?
+  }
+
+  /**
+   * Add policies for managing private users and applications via policy. This will likely expand to
+   * support policies for applications.
+   */
+  private void addPrivateResourcePolicies(
+      CreateResourceRequestV2 request,
+      AccessScopeType accessScope,
+      ManagedByType managedBy,
+      ApiPrivateResourceIamRole privateIamRole,
+      String privateUser) {
+    AccessPolicyMembershipV2 readerPolicy =
+        new AccessPolicyMembershipV2().addRolesItem(ControlledResourceIamRole.READER.toSamRole());
+    AccessPolicyMembershipV2 writerPolicy =
+        new AccessPolicyMembershipV2().addRolesItem(ControlledResourceIamRole.WRITER.toSamRole());
+    AccessPolicyMembershipV2 editorPolicy =
+        new AccessPolicyMembershipV2().addRolesItem(ControlledResourceIamRole.EDITOR.toSamRole());
+
+    if (accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
+      // Create a reader or writer role as specified by the user request, but also create empty
+      // roles in case of later re-assignment.
+      if (privateIamRole.getRole() == RoleEnum.READER) {
+        readerPolicy.addMemberEmailsItem(privateUser);
+      } else if (privateIamRole.getRole() == RoleEnum.WRITER) {
+        writerPolicy.addMemberEmailsItem(privateUser);
+      }
+
+      if (privateIamRole.isEditor()) {
+        editorPolicy.addMemberEmailsItem(privateUser);
       }
     }
-    return builder.build();
+
+    request.putPoliciesItem(ControlledResourceIamRole.READER.toSamRole(), readerPolicy);
+    request.putPoliciesItem(ControlledResourceIamRole.WRITER.toSamRole(), writerPolicy);
+    request.putPoliciesItem(ControlledResourceIamRole.EDITOR.toSamRole(), editorPolicy);
   }
 
   /** Fetch the email associated with an authToken from Sam. */
@@ -384,26 +448,5 @@ public class SamService {
   /** Returns the Sam action for modifying a given IAM role. */
   private String samActionToModifyRole(WsmIamRole role) {
     return String.format("share_policy::%s", role.toSamRole());
-  }
-
-  /** Return the Sam resource name for the specified controlled resource type. */
-  private String samControlledResourceType(AccessScopeType accessScope, ManagedByType managedBy) {
-    if (accessScope == AccessScopeType.ACCESS_SCOPE_SHARED) {
-      if (managedBy == ManagedByType.MANAGED_BY_USER) {
-        return SamConstants.SAM_CONTROLLED_USER_SHARED_RESOURCE;
-      } else if (managedBy == ManagedByType.MANAGED_BY_APPLICATION) {
-        return SamConstants.SAM_CONTROLLED_APPLICATION_SHARED_RESOURCE;
-      }
-    } else if (accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
-      if (managedBy == ManagedByType.MANAGED_BY_USER) {
-        return SamConstants.SAM_CONTROLLED_USER_PRIVATE_RESOURCE;
-      } else if (managedBy == ManagedByType.MANAGED_BY_APPLICATION) {
-        return SamConstants.SAM_CONTROLLED_APPLICATION_PRIVATE_RESOURCE;
-      }
-    }
-    throw new InternalLogicException(
-        String.format(
-            "Sam resource name not specified for access scope %s and ManagedByType %s",
-            accessScope.toString(), managedBy.toString()));
   }
 }

@@ -73,7 +73,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             resource,
             body.getGcsBucket(),
             Optional.ofNullable(body.getCommon().getPrivateResourceUser())
-                .map(ApiPrivateResourceUser::getIamRole)
+                .map(ApiPrivateResourceUser::getPrivateResourceIamRole)
                 .orElse(null),
             body.getCommon().getJobControl(),
             userRequest);

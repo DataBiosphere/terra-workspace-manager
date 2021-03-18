@@ -123,14 +123,14 @@ public class WorkspaceService {
   /** Retrieves an existing workspace by ID */
   @Traced
   public Workspace getWorkspace(UUID id, AuthenticatedUserRequest userReq) {
-    return validateWorkspaceAndAction(userReq, id, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    return validateWorkspaceAndAction(userReq, id, SamConstants.SAM_RESOURCE_READ_ACTION);
   }
 
   /** Delete an existing workspace by ID. */
   @Traced
   public void deleteWorkspace(UUID id, AuthenticatedUserRequest userReq) {
     Workspace workspace =
-        validateWorkspaceAndAction(userReq, id, SamConstants.SAM_WORKSPACE_DELETE_ACTION);
+        validateWorkspaceAndAction(userReq, id, SamConstants.SAM_RESOURCE_DELETE_ACTION);
 
     String description = "Delete workspace " + id;
     JobBuilder deleteJob =
@@ -164,7 +164,7 @@ public class WorkspaceService {
     }
 
     Workspace workspace =
-        validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+        validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_RESOURCE_WRITE_ACTION);
     stageService.assertMcWorkspace(workspace, "createCloudContext");
 
     // TODO: We should probably do this in a step of the job. It will be talking to another
@@ -200,7 +200,7 @@ public class WorkspaceService {
   @Traced
   public void deleteGcpCloudContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
     Workspace workspace =
-        validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+        validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_RESOURCE_WRITE_ACTION);
     stageService.assertMcWorkspace(workspace, "deleteGcpCloudContext");
     jobService
         .newJob(

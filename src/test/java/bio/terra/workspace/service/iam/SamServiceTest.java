@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -15,9 +16,17 @@ import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.generated.model.ApiPrivateResourceIamRole;
+import bio.terra.workspace.generated.model.ApiPrivateResourceIamRole.RoleEnum;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.model.RoleBinding;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.ManagedByType;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
@@ -34,6 +43,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 
 class SamServiceTest extends BaseConnectedTest {
 
@@ -231,6 +241,99 @@ class SamServiceTest extends BaseConnectedTest {
     assertTrue(samWorkspaceIdList.contains(workspaceId));
   }
 
+  @Test
+  void WorkspaceReaderIsSharedResourceReader() {
+    // Default user is workspace owner, secondary user is workspace reader
+    UUID workspaceId = createWorkspaceDefaultUser();
+    samService.grantWorkspaceRole(
+        workspaceId, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
+
+    ControlledResource bucketResource = defaultBucket(workspaceId).build();
+    samService.createControlledResource(bucketResource, Optional.empty(), defaultUserRequest());
+
+    // Workspace reader should have read access on a user-shared resource via inheritance
+    assertTrue(
+        samService.isAuthorized(
+            secondaryUserRequest().getRequiredToken(),
+            SamConstants.SAM_CONTROLLED_USER_SHARED_RESOURCE,
+            bucketResource.getResourceId().toString(),
+            SamConstants.SAM_RESOURCE_READ_ACTION));
+
+    samService.deleteControlledResource(bucketResource, defaultUserRequest());
+  }
+
+  @Test
+  void WorkspaceReaderIsNotPrivateResourceReader() {
+    // Default user is workspace owner, secondary user is workspace reader
+    UUID workspaceId = createWorkspaceDefaultUser();
+    samService.grantWorkspaceRole(
+        workspaceId, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
+
+    // Create private resource assigned to the default user.
+    ControlledResource bucketResource =
+        defaultBucket(workspaceId)
+            .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
+            .assignedUser(userAccessUtils.getDefaultUserEmail())
+            .build();
+    ApiPrivateResourceIamRole privateResourceIamRole =
+        new ApiPrivateResourceIamRole().role(RoleEnum.READER).editor(true);
+    samService.createControlledResource(
+        bucketResource, Optional.of(privateResourceIamRole), defaultUserRequest());
+
+    // Workspace reader should not have read access on a private resource.
+    assertFalse(
+        samService.isAuthorized(
+            secondaryUserRequest().getRequiredToken(),
+            SamConstants.SAM_CONTROLLED_USER_PRIVATE_RESOURCE,
+            bucketResource.getResourceId().toString(),
+            SamConstants.SAM_RESOURCE_READ_ACTION));
+    // However, the assigned user should have read access.
+    assertTrue(
+        samService.isAuthorized(
+            defaultUserRequest().getRequiredToken(),
+            SamConstants.SAM_CONTROLLED_USER_PRIVATE_RESOURCE,
+            bucketResource.getResourceId().toString(),
+            SamConstants.SAM_RESOURCE_READ_ACTION));
+
+    samService.deleteControlledResource(bucketResource, defaultUserRequest());
+  }
+
+  // Duplicate execution during flights is handled using Sam error codes, so this verifies expected
+  // behavior in SamService.
+  @Test
+  void DuplicateResourceCreateThrows() {
+    UUID workspaceId = createWorkspaceDefaultUser();
+
+    ControlledResource bucketResource = defaultBucket(workspaceId).build();
+    samService.createControlledResource(bucketResource, Optional.empty(), defaultUserRequest());
+
+    SamApiException exception =
+        assertThrows(
+            SamApiException.class,
+            () ->
+                samService.createControlledResource(
+                    bucketResource, Optional.empty(), defaultUserRequest()));
+    assertEquals(HttpStatus.CONFLICT.value(), exception.getApiExceptionStatus());
+  }
+
+  // Undoing the create resource step relies on Sam error codes, so this test asserts we get a
+  // NOT_FOUND when we send multiple delete requests.
+  @Test
+  void DuplicateResourceDeleteThrows() {
+    UUID workspaceId = createWorkspaceDefaultUser();
+
+    ControlledResource bucketResource = defaultBucket(workspaceId).build();
+    samService.createControlledResource(bucketResource, Optional.empty(), defaultUserRequest());
+
+    samService.deleteControlledResource(bucketResource, defaultUserRequest());
+
+    SamApiException exception =
+        assertThrows(
+            SamApiException.class,
+            () -> samService.deleteControlledResource(bucketResource, defaultUserRequest()));
+    assertEquals(HttpStatus.NOT_FOUND.value(), exception.getApiExceptionStatus());
+  }
+
   /**
    * Convenience method to build an AuthenticatedUserRequest from utils' default user.
    *
@@ -268,5 +371,20 @@ class SamServiceTest extends BaseConnectedTest {
             .jobId(UUID.randomUUID().toString())
             .build();
     return workspaceService.createWorkspace(request, userReq);
+  }
+
+  /**
+   * Creates a controlled user-shared GCS bucket with random resource ID and constant name, bucket
+   * name, and cloning instructions.
+   */
+  private ControlledGcsBucketResource.Builder defaultBucket(UUID workspaceId) {
+    return ControlledGcsBucketResource.builder()
+        .workspaceId(workspaceId)
+        .resourceId(UUID.randomUUID())
+        .bucketName("fake-bucket-name")
+        .name("fakeResourceName")
+        .cloningInstructions(CloningInstructions.COPY_NOTHING)
+        .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+        .managedBy(ManagedByType.MANAGED_BY_USER);
   }
 }

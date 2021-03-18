@@ -11,9 +11,9 @@ import com.google.common.collect.ImmutableMap;
 /**
  * A static mapping of workspace-level IAM roles to resource-level IAM roles.
  *
- * <p>Currently, Sam's implementation of hierarchical resources does not support syncing inherited
- * roles or policies to groups. We need this functionality for WSM cloud sync, so this mapping must
- * live in WSM instead of in Sam's resource definition.
+ * <p>This maps workspace roles to the resource roles, which are used for granting cloud
+ * permissions. Sam also has a similar mapping configured for granting Sam permissions. If you
+ * change this map, also check that mapping.
  *
  * <p>This mapping is slightly different for each category of controlled resource (user-shared,
  * user-private, app-shared, app-private), so this class holds four separate maps.
