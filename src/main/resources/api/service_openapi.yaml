@@ -1301,7 +1301,7 @@ components:
           $ref: '#/components/schemas/PrivateResourceUser'
 
     PrivateResourceUser:
-      description: A user and role information for a user of a private resource.
+      description: User and role information for a user of a private resource.
       type: object
       properties:
         userName:

@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
-// TODO: PF-415 implement this
 public class CreateSamResourceStep implements Step {
 
   private final SamService samService;
