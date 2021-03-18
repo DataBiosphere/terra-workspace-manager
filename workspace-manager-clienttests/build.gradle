@@ -1,6 +1,3 @@
-import org.gradle.api.JavaVersion
-import org.gradle.api.tasks.JavaExec
-
 plugins {
     id 'java'
     // Apply the application plugin to add support for building a CLI application in Java.
@@ -37,7 +34,7 @@ dependencies {
         googleCloud = "1.108.0"
         googleOauth2 = "0.20.0"
 
-        workspacemanagerClient = "0.11.0-SNAPSHOT"
+        workspacemanagerClient = "0.16.0-SNAPSHOT"
         datarepoClient = "1.0.155-SNAPSHOT"
         testRunner = "0.0.1-SNAPSHOT"
     }

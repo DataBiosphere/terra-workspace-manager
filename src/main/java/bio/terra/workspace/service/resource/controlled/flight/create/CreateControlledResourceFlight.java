@@ -31,7 +31,9 @@ public class CreateControlledResourceFlight extends Flight {
       case GCS_BUCKET:
         addStep(
             new CreateGcsBucketStep(
-                flightBeanBag.getCrlService(), resource.castToGcsBucketResource(), userRequest));
+                flightBeanBag.getCrlService(),
+                resource.castToGcsBucketResource(),
+                flightBeanBag.getWorkspaceService()));
         break;
       case BIG_QUERY_DATASET:
       default:

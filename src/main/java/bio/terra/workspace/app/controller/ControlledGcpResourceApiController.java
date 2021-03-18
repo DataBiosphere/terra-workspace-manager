@@ -3,7 +3,10 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcsBucket;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcsBucketRequest;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcsBucketResult;
 import bio.terra.workspace.generated.model.ApiGcsBucketStoredAttributes;
+import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -78,6 +81,36 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             body.getCommon().getJobControl(),
             userRequest);
     return getCreateBucketResult(workspaceId, jobId);
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledGcsBucketResult> deleteBucket(
+      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledGcsBucketRequest body) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final ApiJobControl jobControl = body.getJobControl();
+    final String jobId =
+        controlledResourceService.deleteControlledGcsBucket(
+            jobControl, workspaceId, resourceId, userRequest);
+    return getDeleteResult(jobId, userRequest);
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledGcsBucketResult> getDeleteBucketResult(
+      UUID workspaceId, String jobId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    return getDeleteResult(jobId, userRequest);
+  }
+
+  private ResponseEntity<ApiDeleteControlledGcsBucketResult> getDeleteResult(
+      String jobId, AuthenticatedUserRequest userRequest) {
+    final AsyncJobResult<Void> jobResult =
+        jobService.retrieveAsyncJobResult(jobId, Void.class, userRequest);
+    var response =
+        new ApiDeleteControlledGcsBucketResult()
+            .jobReport(jobResult.getJobReport())
+            .errorReport(jobResult.getApiErrorReport());
+    return new ResponseEntity<>(
+        response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));
   }
 
   @Override

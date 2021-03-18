@@ -705,6 +705,25 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a gcp bucket creation job.
+      operationId: getCreateBucketResult
+      tags: [ControlledGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledGcsBucketResponse'
+        '202':
+          $ref: '#/components/responses/CreatedControlledGcsBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/{resourceId}:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -722,19 +741,41 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/result/{jobId}:
+    delete:
+      summary: |
+        Delete a controlled GCS bucket resource. This is async, because deleting the bucket and contents can
+        take a very long time.
+      operationId: deleteBucket
+      tags: [ControlledGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledGcsBucketRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledGcsBucketResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledGcsBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/delete-result/{jobId}:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/JobId'
     get:
       summary: Retrieve information about a gcp bucket creation job.
-      operationId: getCreateBucketResult
+      operationId: getDeleteBucketResult
       tags: [ControlledGcpResource]
       responses:
         '200':
-          $ref: '#/components/responses/CreatedControlledGcsBucketResponse'
+          $ref: '#/components/responses/DeleteControlledGcsBucketResponse'
         '202':
-          $ref: '#/components/responses/CreatedControlledGcsBucketResponse'
+          $ref: '#/components/responses/DeleteControlledGcsBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -1489,6 +1530,21 @@ components:
             of the object.
           type: integer
 
+    DeleteControlledGcsBucketRequest:
+      type: object
+      required: [ jobControl ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    DeleteControlledGcsBucketResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
   responses:
     ### DEPRECATED RESPONSES ###
     # TODO(PF-404): remove this in favor of reference-type specific objects.
@@ -1549,6 +1605,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreatedControlledGcsBucket'
+
+    DeleteControlledGcsBucketResponse:
+      description: Response Payload for deleting a Gcs bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteControlledGcsBucketResult'
 
     GetControlledGcsBucketResponse:
       description: Response to get bucket

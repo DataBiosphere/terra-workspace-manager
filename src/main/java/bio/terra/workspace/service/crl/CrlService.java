@@ -28,6 +28,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
+import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -108,7 +110,7 @@ public class CrlService {
    * service and generate an answer without actually touching BigQuery.
    *
    * @param projectId Google project id where the dataset is
-   * @param datasetId name of the dataset
+   * @param datasetName name of the dataset
    * @param userRequest auth info
    * @return true if the dataset exists
    */
@@ -125,7 +127,30 @@ public class CrlService {
     }
   }
 
-  /** @return CRL {@link StorageCow} which wraps Google Cloud Storage API */
+  /**
+   * This creates a storage COW that will operate with WSM credentials optionally in a specific
+   * project.
+   *
+   * @param projectId optional GCP project
+   * @return CRL {@link StorageCow} which wraps Google Cloud Storage API
+   */
+  public StorageCow createStorageCow(@Nullable String projectId) {
+    assertCrlInUse();
+
+    StorageOptions.Builder optionsBuilder = StorageOptions.newBuilder();
+    if (!StringUtils.isEmpty(projectId)) {
+      optionsBuilder.setProjectId(projectId);
+    }
+
+    return new StorageCow(clientConfig, optionsBuilder.build());
+  }
+
+  /**
+   * This creates a storage COW that will operate with the user's credentials.
+   *
+   * @param userReq user auth information
+   * @return CRL {@link StorageCow} which wraps Google Cloud Storage API
+   */
   public StorageCow createStorageCow(AuthenticatedUserRequest userReq) {
     assertCrlInUse();
 

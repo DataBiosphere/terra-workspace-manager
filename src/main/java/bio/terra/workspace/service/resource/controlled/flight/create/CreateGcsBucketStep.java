@@ -15,8 +15,9 @@ import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRule;
 import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleAction;
 import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
+import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.api.client.util.DateTime;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
@@ -29,6 +30,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -36,15 +38,15 @@ public class CreateGcsBucketStep implements Step {
 
   private final CrlService crlService;
   private final ControlledGcsBucketResource resource;
-  private final AuthenticatedUserRequest userRequest;
+  private final WorkspaceService workspaceService;
 
   public CreateGcsBucketStep(
       CrlService crlService,
       ControlledGcsBucketResource resource,
-      AuthenticatedUserRequest userRequest) {
+      WorkspaceService workspaceService) {
     this.crlService = crlService;
     this.resource = resource;
-    this.userRequest = userRequest;
+    this.workspaceService = workspaceService;
   }
 
   @Override
@@ -53,6 +55,9 @@ public class CreateGcsBucketStep implements Step {
     FlightMap inputMap = flightContext.getInputParameters();
     ApiGcsBucketCreationParameters creationParameters =
         inputMap.get(CREATION_PARAMETERS, ApiGcsBucketCreationParameters.class);
+    UUID workspaceId =
+        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+    String projectId = workspaceService.getGcpProject(workspaceId);
 
     final BucketInfo bucketInfo =
         BucketInfo.newBuilder(resource.getBucketName())
@@ -61,14 +66,18 @@ public class CreateGcsBucketStep implements Step {
             .setLifecycleRules(ApiConversions.toGcsApi(creationParameters.getLifecycle()))
             .build();
 
-    final StorageCow storageCow = crlService.createStorageCow(userRequest);
+    final StorageCow storageCow = crlService.createStorageCow(projectId);
     storageCow.create(bucketInfo);
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    final StorageCow storageCow = crlService.createStorageCow(userRequest);
+    FlightMap inputMap = flightContext.getInputParameters();
+    UUID workspaceId =
+        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+    String projectId = workspaceService.getGcpProject(workspaceId);
+    final StorageCow storageCow = crlService.createStorageCow(projectId);
     storageCow.delete(resource.getBucketName());
     return StepResult.getStepResultSuccess();
   }
