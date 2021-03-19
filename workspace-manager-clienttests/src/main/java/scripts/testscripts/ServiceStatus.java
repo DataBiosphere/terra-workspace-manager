@@ -30,7 +30,7 @@ public class ServiceStatus extends TestScript {
     public void userJourney(TestUserSpecification testUser) throws Exception {
         if (delay.getSeconds() > 0) TimeUnit.SECONDS.sleep(delay.getSeconds());
 
-        logger.info("Starting test script");
+        logger.info("Checking service status endpoint now.");
         ApiClient apiClient = ClientTestUtils.getClientWithoutAccessToken(server);
         UnauthenticatedApi unauthenticatedApi = new UnauthenticatedApi(apiClient);
         SystemStatus systemStatus = unauthenticatedApi.serviceStatus();
