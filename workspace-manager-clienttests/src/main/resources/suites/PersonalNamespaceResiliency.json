@@ -1,0 +1,8 @@
+{
+  "name": "PersonalNamespaceTestResiliency",
+  "description": "Test deleting all initially created pods",
+  "serverSpecificationFile": "workspace-ichang.json",
+  "testConfigurationFiles": [
+    "resiliency/DeleteInitialPods.json"
+  ]
+}
