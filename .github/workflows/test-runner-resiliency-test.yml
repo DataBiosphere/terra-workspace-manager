@@ -3,10 +3,9 @@
 name: Test Runner Resiliency Test
 
 on:
-  push:
-    branches: [ dev ]
-  pull_request:
-    branches: [ '**' ]
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 7 * * *' # run at 6 AM UTC, 2 AM ET.
 
 jobs:
   test-runner-resiliency:
