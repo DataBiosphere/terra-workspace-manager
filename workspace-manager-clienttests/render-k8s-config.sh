@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script renders the k8s service account secrets for namespace access
-# NAME_SPACE: ichang, wsmtest or preview namespace etc.
+# NAME_SPACE: wsmtest, ichang, other personal or preview namespaces.
 NAMESPACE=${1}
 if [ -z "$1" ]
   then
