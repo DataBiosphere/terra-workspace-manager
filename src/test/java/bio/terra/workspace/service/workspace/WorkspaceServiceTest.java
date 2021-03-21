@@ -95,8 +95,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     assertEquals(
-//        request.workspaceId(),
-            java.util.UUID.randomUUID(),
+        request.workspaceId(),
         workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST).getWorkspaceId());
   }
 
