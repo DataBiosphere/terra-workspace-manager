@@ -144,8 +144,7 @@ jobs:
         path: build/reports/tests
 
     - name: "Notify QA Slack"
-      if: ${{ always() }}
-      # if:  steps.set-env-step.outputs.test-env == 'alpha' || steps.set-env-step.outputs.test-env == 'staging'
+      if: steps.set-env-step.outputs.test-env == 'alpha' || steps.set-env-step.outputs.test-env == 'staging'
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
       env:
