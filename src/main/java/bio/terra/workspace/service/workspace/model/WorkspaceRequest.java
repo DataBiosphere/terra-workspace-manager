@@ -36,6 +36,10 @@ public abstract class WorkspaceRequest {
   /** Temporary feature flag indicating whether this workspace uses MC Terra features. */
   public abstract WorkspaceStage workspaceStage();
 
+  public abstract Optional<String> displayName();
+
+  public abstract Optional<String> description();
+
   public static WorkspaceRequest.Builder builder() {
     return new AutoValue_WorkspaceRequest.Builder();
   }
@@ -49,6 +53,10 @@ public abstract class WorkspaceRequest {
     public abstract WorkspaceRequest.Builder spendProfileId(Optional<SpendProfileId> value);
 
     public abstract WorkspaceRequest.Builder workspaceStage(WorkspaceStage value);
+
+    public abstract WorkspaceRequest.Builder displayName(Optional<String> value);
+
+    public abstract WorkspaceRequest.Builder description(Optional<String> value);
 
     public abstract WorkspaceRequest build();
   }

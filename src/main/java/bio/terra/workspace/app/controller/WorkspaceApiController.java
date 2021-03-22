@@ -19,6 +19,7 @@ import bio.terra.workspace.generated.model.ApiReferenceTypeEnum;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
 import bio.terra.workspace.generated.model.ApiUpdateDataReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
@@ -120,6 +121,8 @@ public class WorkspaceApiController implements WorkspaceApi {
             .jobId(jobId)
             .spendProfileId(spendProfileId)
             .workspaceStage(internalStage)
+            .displayName(Optional.ofNullable(body.getDisplayName()))
+            .description(Optional.ofNullable(body.getDescription()))
             .build();
     UUID createdId = workspaceService.createWorkspace(internalRequest, userReq);
 
@@ -152,7 +155,9 @@ public class WorkspaceApiController implements WorkspaceApi {
         .id(workspace.getWorkspaceId())
         .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))
         .stage(workspace.getWorkspaceStage().toApiModel())
-        .gcpContext(gcpContext);
+        .gcpContext(gcpContext)
+        .displayName(workspace.getDisplayName().orElse(null))
+        .description(workspace.getDescription().orElse(null));
   }
 
   @Override
@@ -161,19 +166,22 @@ public class WorkspaceApiController implements WorkspaceApi {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     logger.info("Getting workspace {} for {}", id, userReq.getEmail());
     Workspace workspace = workspaceService.getWorkspace(id, userReq);
-    ApiGcpContext gcpContext =
-        workspace.getGcpCloudContext().map(GcpCloudContext::toApi).orElse(null);
-
-    // Note projectId will be null here if no GCP cloud context exists.
-    // When we have another cloud context, we will need to do a similar retrieval for it.
-    ApiWorkspaceDescription desc =
-        new ApiWorkspaceDescription()
-            .id(workspace.getWorkspaceId())
-            .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))
-            .stage(workspace.getWorkspaceStage().toApiModel())
-            .gcpContext(gcpContext);
-
+    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace);
     logger.info("Got workspace {} for {}", desc, userReq.getEmail());
+
+    return new ResponseEntity<>(desc, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiWorkspaceDescription> updateWorkspace(
+      @PathVariable("workspaceId") UUID id, @RequestBody ApiUpdateWorkspaceRequestBody body) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    logger.info("Updating workspace {} for {}", id, userReq.getEmail());
+    Workspace workspace =
+        workspaceService.updateWorkspace(userReq, id, body.getDisplayName(), body.getDescription());
+
+    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace);
+    logger.info("Updated workspace {} for {}", desc, userReq.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
   }

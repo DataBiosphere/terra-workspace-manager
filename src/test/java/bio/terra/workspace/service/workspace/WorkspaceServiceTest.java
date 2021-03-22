@@ -210,6 +210,58 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  void testWithDisplayNameAndDescription() {
+    String name = "My workspace";
+    String description = "The greatest workspace";
+    WorkspaceRequest request =
+        defaultRequestBuilder(UUID.randomUUID())
+            .displayName(Optional.of(name))
+            .description(Optional.of(description))
+            .build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+
+    Workspace createdWorkspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
+    assertEquals(request.workspaceId(), createdWorkspace.getWorkspaceId());
+    assertEquals(name, createdWorkspace.getDisplayName());
+    assertEquals(description, createdWorkspace.getDescription());
+  }
+
+  @Test
+  void testUpdateWorkspace() {
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+    Workspace createdWorkspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
+    assertEquals(request.workspaceId(), createdWorkspace.getWorkspaceId());
+    assertEquals("", createdWorkspace.getDisplayName());
+    assertEquals("", createdWorkspace.getDescription());
+
+    UUID workspaceId = request.workspaceId();
+    String name = "My workspace";
+    String description = "The greatest workspace";
+
+    Workspace updatedWorkspace =
+        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, name, description);
+
+    assertEquals(name, updatedWorkspace.getDisplayName());
+    assertEquals(description, updatedWorkspace.getDescription());
+
+    String otherDescription = "The deprecated workspace";
+
+    Workspace secondUpdatedWorkspace =
+        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, otherDescription);
+
+    // Since name is null, leave it alone. Description should be updated.
+    assertEquals(name, secondUpdatedWorkspace.getDisplayName());
+    assertEquals(otherDescription, secondUpdatedWorkspace.getDescription());
+
+    // Sending through empty strings clears the values.
+    Workspace thirdUpdatedWorkspace =
+        workspaceService.updateWorkspace(USER_REQUEST, workspaceId, "", "");
+    assertEquals("", thirdUpdatedWorkspace.getDisplayName());
+    assertEquals("", thirdUpdatedWorkspace.getDescription());
+  }
+
+  @Test
   void testHandlesSamError() {
     String errorMsg = "fake SAM error message";
 
