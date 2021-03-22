@@ -162,10 +162,6 @@ There are sample tests for the ping service to illustrate two styles of unit tes
 3. This updates the default [version mapping for the app in question](https://github.com/broadinstitute/terra-helmfile/blob/master/versions.yaml).
 4. [Our deployment of ArgoCD](https://ap-argocd.dsp-devops.broadinstitute.org/applications) monitors the above repo, and any environments in which the app is set to auto-sync will immediately pick up the new version of the image. If the app is not set to auto-sync in an environment, it can be manually synced via the ArgoCD UI or API.
 
-### Hotfix Process
-
-See the [HOTFIX.md](https://github.com/broadinstitute/terra-helmfile/blob/master/docs/HOTFIX.md) documentation in [terra-helmfile](https://github.com/broadinstitute/terra-helmfile) for the MC-Terra hotfix procedure.
-
 ## Api Client
 Workspace Manager publishes an API client library based on the OpenAPI Spec v3. 
 
