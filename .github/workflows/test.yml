@@ -155,5 +155,4 @@ jobs:
         status: ${{ job.status }}
         channel: "#dsde-qa"
         username: "Workspace Manager tests"
-        text: "Integration tests"
         fields: repo,job,workflow,commit,eventName,author,took
