@@ -142,3 +142,16 @@ jobs:
       with:
         name: Test Reports
         path: build/reports/tests
+
+    - name: "Notify QA Slack"
+      if: steps.set-env-step.outputs.test-env == 'alpha' || steps.set-env-step.outputs.test-env == 'staging'
+      uses: broadinstitute/action-slack@v3.8.0
+      # see https://github.com/broadinstitute/action-slack
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        MATRIX_CONTEXT: ${{ toJson(matrix) }}
+      with:
+        status: ${{ job.status }}
+        channel: "#dsde-qa"
+        username: "Workspace Manager tests"
+        fields: repo,job,workflow,commit,eventName,author,took
