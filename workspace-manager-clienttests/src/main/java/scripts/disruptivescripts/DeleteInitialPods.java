@@ -2,18 +2,11 @@ package scripts.disruptivescripts;
 
 import bio.terra.testrunner.common.utils.KubernetesClientUtils;
 import bio.terra.testrunner.runner.DisruptiveScript;
-import bio.terra.testrunner.runner.TestRunner;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
-import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -34,9 +27,10 @@ public class DeleteInitialPods extends DisruptiveScript {
 
         logger.info("Starting disruption - all initially created api pods will be deleted, one by one.");
 
-        String componentLabelKey = "app.kubernetes.io/component";
-        String componentLabelVal = "workspacemanager";
-        V1Deployment workspacemanagerDeployment = KubernetesClientUtils.getApiDeployment(componentLabelKey, componentLabelVal);
+        String componentLabelKey = KubernetesClientUtils.getComponentLabel(); // e.g. "app.kubernetes.io/component";
+        String componentLabelVal = KubernetesClientUtils.getApiComponentLabel(); // e.g. "workspacemanager";
+        //V1Deployment workspacemanagerDeployment = KubernetesClientUtils.getApiDeployment(componentLabelKey, componentLabelVal);
+        V1Deployment workspacemanagerDeployment = KubernetesClientUtils.getApiDeployment();
         if (workspacemanagerDeployment == null) {
             throw new RuntimeException("WorkspaceManager deployment not found.");
         }
@@ -44,15 +38,15 @@ public class DeleteInitialPods extends DisruptiveScript {
         List<String> podsToDelete = KubernetesClientUtils.listPods().stream()
                 .filter(
                         pod ->
-                                pod.getMetadata().getLabels().containsKey("app.kubernetes.io/component")
-                                        && pod.getMetadata().getLabels().get("app.kubernetes.io/component").equals("workspacemanager"))
+                                pod.getMetadata().getLabels().containsKey(componentLabelKey)
+                                        && pod.getMetadata().getLabels().get(componentLabelKey).equals(componentLabelVal))
                 .map(pod -> pod.getMetadata().getName())
                 .collect(Collectors.toList());
 
         // delete original pods, and give them a chance to recover
         for (String podName : podsToDelete) {
             logger.debug("delete pod: {}", podName);
-            workspacemanagerDeployment = KubernetesClientUtils.getApiDeployment(componentLabelKey, componentLabelVal);
+            workspacemanagerDeployment = KubernetesClientUtils.getApiDeployment();
             if (workspacemanagerDeployment != null) {
                 KubernetesClientUtils.printApiPods(workspacemanagerDeployment);
                 KubernetesClientUtils.deletePod(podName);
