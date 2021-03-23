@@ -7,7 +7,6 @@ import bio.terra.workspace.generated.model.ApiPrivateResourceIamRole;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
-import bio.terra.workspace.service.workspace.flight.CreateSamResourceStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 
 /**

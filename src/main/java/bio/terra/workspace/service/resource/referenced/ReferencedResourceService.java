@@ -41,7 +41,7 @@ public class ReferencedResourceService {
   public ReferencedResource createReferenceResource(
       ReferencedResource resource, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
-        userReq, resource.getWorkspaceId(), SamConstants.SAM_RESOURCE_WRITE_ACTION);
+        userReq, resource.getWorkspaceId(), SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     resource.validate();
 
     String jobDescription =
@@ -87,7 +87,7 @@ public class ReferencedResourceService {
       @Nullable String description,
       AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
-        userReq, workspaceId, SamConstants.SAM_RESOURCE_WRITE_ACTION);
+        userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     resourceDao.updateReferenceResource(workspaceId, resourceId, name, description);
   }
 
@@ -102,14 +102,14 @@ public class ReferencedResourceService {
   public void deleteReferenceResource(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
-        userReq, workspaceId, SamConstants.SAM_RESOURCE_WRITE_ACTION);
+        userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     resourceDao.deleteResource(workspaceId, resourceId);
   }
 
   public ReferencedResource getReferenceResource(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
-        userReq, workspaceId, SamConstants.SAM_RESOURCE_READ_ACTION);
+        userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
     return wsmResource.castReferenceResource();
   }
@@ -117,7 +117,7 @@ public class ReferencedResourceService {
   public ReferencedResource getReferenceResourceByName(
       UUID workspaceId, String name, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
-        userReq, workspaceId, SamConstants.SAM_RESOURCE_READ_ACTION);
+        userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     WsmResource wsmResource = resourceDao.getResourceByName(workspaceId, name);
     return wsmResource.castReferenceResource();
   }
@@ -125,7 +125,7 @@ public class ReferencedResourceService {
   public List<ReferencedResource> enumerateReferences(
       UUID workspaceId, int offset, int limit, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
-        userReq, workspaceId, SamConstants.SAM_RESOURCE_READ_ACTION);
+        userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return resourceDao.enumerateReferences(workspaceId, offset, limit);
   }
 }

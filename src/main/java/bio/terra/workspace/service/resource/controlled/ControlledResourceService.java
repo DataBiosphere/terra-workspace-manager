@@ -46,7 +46,7 @@ public class ControlledResourceService {
       AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
     workspaceService.validateWorkspaceAndAction(
-        userRequest, resource.getWorkspaceId(), SamConstants.SAM_RESOURCE_WRITE_ACTION);
+        userRequest, resource.getWorkspaceId(), SamConstants.samCreateControlledResourceAction(resource.getAccessScope(), resource.getManagedBy()));
     final String jobDescription =
         String.format(
             "Create controlled resource %s; id %s; name %s",
@@ -70,7 +70,7 @@ public class ControlledResourceService {
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
     stageService.assertMcWorkspace(workspaceId, "getControlledResource");
     workspaceService.validateWorkspaceAndAction(
-        userReq, workspaceId, SamConstants.SAM_RESOURCE_READ_ACTION);
+        userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
     return wsmResource.castControlledResource();
   }

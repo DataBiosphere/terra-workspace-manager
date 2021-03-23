@@ -1,12 +1,13 @@
 package bio.terra.workspace.service.iam.model;
 
 /**
- * Internal representation of resource-level IAM roles. These roles exist on all controlled
- * resources. See {@Code ControlledResourceInheritanceMapping} for the canonical mapping of
- * workspace IamRoles to equivalent ControlledResourceIamRoles.
+ * Internal representation of resource-level IAM roles. See {@Code
+ * ControlledResourceInheritanceMapping} for the canonical mapping of workspace IamRoles to
+ * equivalent ControlledResourceIamRoles.
  */
 public enum ControlledResourceIamRole {
   OWNER("owner"),
+  // Only private resources have the ASSIGNER role defined in Sam.
   ASSIGNER("assigner"),
   EDITOR("editor"),
   WRITER("writer"),

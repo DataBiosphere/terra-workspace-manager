@@ -29,7 +29,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
@@ -45,6 +44,7 @@ import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -112,7 +112,7 @@ public class SamService {
       usersApi.getUserStatusInfo();
       logger.info("WSM service account already registered in Sam");
     } catch (ApiException userStatusException) {
-      if (userStatusException.getCode() == HttpStatus.SC_NOT_FOUND) {
+      if (userStatusException.getCode() == HttpStatus.NOT_FOUND.value()) {
         registerWsmServiceAccount(usersApi);
       }
     }
@@ -464,8 +464,9 @@ public class SamService {
   }
 
   /**
-   * Add policies for managing private users via policy. This will likely expand to support policies
-   * for applications.
+   * Add policies for managing private users via policy. All private resources will have reader,
+   * writer, and editor policies even if they are empty to support potential later reassignment.
+   * This method will likely expand to support policies for applications in the future.
    */
   private void addPrivateResourcePolicies(
       CreateResourceRequestV2 request,

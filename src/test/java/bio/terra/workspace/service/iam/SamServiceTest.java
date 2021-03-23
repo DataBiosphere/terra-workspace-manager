@@ -257,7 +257,7 @@ class SamServiceTest extends BaseConnectedTest {
             secondaryUserRequest().getRequiredToken(),
             SamConstants.SAM_CONTROLLED_USER_SHARED_RESOURCE,
             bucketResource.getResourceId().toString(),
-            SamConstants.SAM_RESOURCE_READ_ACTION));
+            SamConstants.SAM_WORKSPACE_READ_ACTION));
 
     samService.deleteControlledResource(bucketResource, defaultUserRequest());
   }
@@ -286,14 +286,14 @@ class SamServiceTest extends BaseConnectedTest {
             secondaryUserRequest().getRequiredToken(),
             SamConstants.SAM_CONTROLLED_USER_PRIVATE_RESOURCE,
             bucketResource.getResourceId().toString(),
-            SamConstants.SAM_RESOURCE_READ_ACTION));
+            SamConstants.SAM_WORKSPACE_READ_ACTION));
     // However, the assigned user should have read access.
     assertTrue(
         samService.isAuthorized(
             defaultUserRequest().getRequiredToken(),
             SamConstants.SAM_CONTROLLED_USER_PRIVATE_RESOURCE,
             bucketResource.getResourceId().toString(),
-            SamConstants.SAM_RESOURCE_READ_ACTION));
+            SamConstants.SAM_WORKSPACE_READ_ACTION));
 
     samService.deleteControlledResource(bucketResource, defaultUserRequest());
   }

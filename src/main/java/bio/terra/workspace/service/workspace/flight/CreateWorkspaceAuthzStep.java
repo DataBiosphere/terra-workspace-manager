@@ -67,6 +67,6 @@ public class CreateWorkspaceAuthzStep implements Step {
         userReq.getRequiredToken(),
         SamConstants.SAM_WORKSPACE_RESOURCE,
         workspaceID.toString(),
-        SamConstants.SAM_RESOURCE_READ_ACTION);
+        SamConstants.SAM_WORKSPACE_READ_ACTION);
   }
 }
