@@ -25,15 +25,9 @@ public class ControlledResourceInheritanceMapping {
       SHARED_RESOURCE_MAPPING =
           ImmutableMap.of(
               WsmIamRole.OWNER,
-              ImmutableList.of(
-                  ControlledResourceIamRole.EDITOR,
-                  ControlledResourceIamRole.WRITER,
-                  ControlledResourceIamRole.READER),
+              ImmutableList.of(ControlledResourceIamRole.EDITOR, ControlledResourceIamRole.WRITER),
               WsmIamRole.WRITER,
-              ImmutableList.of(
-                  ControlledResourceIamRole.EDITOR,
-                  ControlledResourceIamRole.WRITER,
-                  ControlledResourceIamRole.READER),
+              ImmutableList.of(ControlledResourceIamRole.EDITOR, ControlledResourceIamRole.WRITER),
               // Applications are granted permissions individually, not as a role.
               WsmIamRole.APPLICATION,
               ImmutableList.of(),
