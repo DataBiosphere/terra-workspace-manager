@@ -2,6 +2,7 @@ plugins {
     id 'java'
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
+    id "com.diffplug.spotless" version "5.8.2"
     // Terra Test Runner Plugin
     id 'bio.terra.test-runner-plugin' version '0.0.3-SNAPSHOT'
 }
@@ -81,4 +82,13 @@ dependencies {
 group "bio.terra"
 version "1.0-SNAPSHOT"
 sourceCompatibility = JavaVersion.VERSION_11
+
+spotless {
+    java {
+        googleJavaFormat()
+        targetExclude "${buildDir}/**"
+    }
+}
+
+compileJava.dependsOn spotlessApply
 
