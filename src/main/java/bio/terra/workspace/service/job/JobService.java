@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.job;
 
+import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.common.stairway.TracingHook;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightFilter;
@@ -54,12 +55,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class JobService {
 
-  private final Stairway stairway;
   private final JobConfiguration jobConfig;
   private final IngressConfiguration ingressConfig;
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
   private final ScheduledExecutorService executor;
   private final MdcHook mdcHook;
+  private final StairwayComponent stairwayComponent;
 
   private final Logger logger = LoggerFactory.getLogger(JobService.class);
 
@@ -68,28 +69,14 @@ public class JobService {
       JobConfiguration jobConfig,
       IngressConfiguration ingressConfig,
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
-      FlightBeanBag applicationContext,
       MdcHook mdcHook,
-      ObjectMapper objectMapper) {
+      StairwayComponent stairwayComponent) {
     this.jobConfig = jobConfig;
     this.ingressConfig = ingressConfig;
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
     this.executor = Executors.newScheduledThreadPool(jobConfig.getMaxThreads());
     this.mdcHook = mdcHook;
-    StairwayExceptionSerializer serializer = new StairwayExceptionSerializer(objectMapper);
-    Stairway.Builder builder =
-        Stairway.newBuilder()
-            .applicationContext(applicationContext)
-            .exceptionSerializer(serializer)
-            .keepFlightLog(true)
-            .enableWorkQueue(false)
-            .stairwayHook(mdcHook)
-            .stairwayHook(new TracingHook());
-    try {
-      stairway = new Stairway(builder);
-    } catch (StairwayExecutionException e) {
-      throw new StairwayInitializationException("Error starting stairway: ", e);
-    }
+    this.stairwayComponent = stairwayComponent;
   }
 
   @SuppressFBWarnings(value = "NM_CLASS_NOT_EXCEPTION", justification = "Non-exception by design.")
@@ -494,6 +481,6 @@ public class JobService {
 
   @VisibleForTesting
   public Stairway getStairway() {
-    return stairway;
+    return stairwayComponent.get();
   }
 }
