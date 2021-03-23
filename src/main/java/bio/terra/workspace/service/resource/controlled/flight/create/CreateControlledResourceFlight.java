@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.flight.create;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.workspace.flight.CreateSamResourceStep;
@@ -24,8 +23,6 @@ public class CreateControlledResourceFlight extends Flight {
     // create the cloud resource via CRL
     final ControlledResource resource =
         inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
-    final AuthenticatedUserRequest userRequest =
-        inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     switch (resource.getResourceType()) {
       case GCS_BUCKET:
@@ -46,5 +43,8 @@ public class CreateControlledResourceFlight extends Flight {
 
     // assign custom roles to the resource based on Sam policies
     // TODO: can this step be the same for all resource types?
+
+    // Populate the return response
+    addStep(new SetCreateResponseStep(resource));
   }
 }

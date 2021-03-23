@@ -1,8 +1,9 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import bio.terra.workspace.common.exception.MissingRequiredFieldException;
+import bio.terra.workspace.common.exception.SerializationException;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
-import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;
 
 /** Controlled resources can be shared by all users in a workspace or be private to a single user */
@@ -22,6 +23,10 @@ public enum AccessScopeType {
 
   public static AccessScopeType fromApi(
       ApiControlledResourceCommonFields.AccessScopeEnum apiAccessScope) {
+    if (apiAccessScope == null) {
+      throw new MissingRequiredFieldException("Valid accessScope is required");
+    }
+
     switch (apiAccessScope) {
       case PRIVATE_ACCESS:
         return ACCESS_SCOPE_PRIVATE;

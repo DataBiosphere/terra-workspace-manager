@@ -28,6 +28,7 @@ import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -36,6 +37,7 @@ import org.springframework.stereotype.Component;
  * <p>This service holds core workspace management operations like creating, reading, and deleting
  * workspaces as well as their cloud contexts. New methods generally should go in new services.
  */
+@Lazy
 @Component
 public class WorkspaceService {
 

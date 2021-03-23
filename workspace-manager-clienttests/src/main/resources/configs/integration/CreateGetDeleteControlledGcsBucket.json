@@ -1,18 +1,18 @@
 {
-  "name": "DataReferenceLifecycle",
-  "description": "CRUD data reference tests.",
+  "name": "CreateGetDeleteControlledGcsBucket",
+  "description": "CRUD controlled GCS bucket tests.",
   "serverSpecificationFile": "workspace-dev.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
     {
-      "name": "DataReferenceLifecycle",
+      "name": "CreateGetDeleteControlledGcsBucket",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 2,
       "expectedTimeForEach": 5,
-      "expectedTimeForEachUnit": "SECONDS",
+      "expectedTimeForEachUnit": "MINUTES",
       "parameters": ["wm-default-spend-profile"]
     }
   ],
-  "testUserFiles": ["william.json"]
+  "testUserFiles": ["william.json","neville.json"]
 }

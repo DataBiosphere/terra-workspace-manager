@@ -11,12 +11,12 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 
 import java.util.UUID;
-import scripts.utils.WorkspaceTestScriptBase;
+import scripts.utils.WorkspaceApiTestScriptBase;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-public class CreateGetDeleteWorkspace extends WorkspaceTestScriptBase {
+public class CreateGetDeleteWorkspace extends WorkspaceApiTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(CreateGetDeleteWorkspace.class);
 
   @Override

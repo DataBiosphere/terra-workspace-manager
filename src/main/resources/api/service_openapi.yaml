@@ -741,10 +741,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-    delete:
+    post:
       summary: |
         Delete a controlled GCS bucket resource. This is async, because deleting the bucket and contents can
-        take a very long time.
+        take a very long time. NOTE: this cannot be an HTTP DELETE, because something between generated code
+        and server behavior does not support delete operations with bodies. We require the body for the async
+        state, so this is a POST.
       operationId: deleteBucket
       tags: [ControlledGcpResource]
       requestBody:
@@ -1361,7 +1363,7 @@ components:
 
     ControlledResourceCommonFields:
       type: object
-      required: [ name, cloningInstructions, jobControl, accessScope ]
+      required: [ name, cloningInstructions, jobControl, accessScope, managedBy ]
       properties:
         jobControl:
           $ref: '#/components/schemas/JobControl'

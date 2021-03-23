@@ -3,6 +3,7 @@ package scripts.utils;
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
+import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
@@ -12,6 +13,7 @@ import bio.terra.workspace.model.DataReferenceDescription;
 import bio.terra.workspace.model.DataReferenceList;
 import bio.terra.workspace.model.DataRepoSnapshot;
 import bio.terra.workspace.model.IamRole;
+import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ReferenceTypeEnum;
 import bio.terra.workspace.model.RoleBindingList;
 import com.google.api.client.http.HttpStatusCodes;
@@ -186,5 +188,9 @@ public class ClientTestUtils {
       RoleBindingList roleBindings, String userEmail, IamRole role) {
     return roleBindings.stream()
         .anyMatch(rb -> rb.getRole() == role && rb.getMembers().contains(userEmail));
+  }
+  
+  public static boolean jobIsRunning(JobReport jobReport) {
+    return jobReport.getStatus().equals(JobReport.StatusEnum.RUNNING);
   }
 }

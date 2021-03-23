@@ -55,9 +55,7 @@ public class CreateGcsBucketStep implements Step {
     FlightMap inputMap = flightContext.getInputParameters();
     ApiGcsBucketCreationParameters creationParameters =
         inputMap.get(CREATION_PARAMETERS, ApiGcsBucketCreationParameters.class);
-    UUID workspaceId =
-        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    String projectId = workspaceService.getGcpProject(workspaceId);
+    String projectId = workspaceService.getGcpProject(resource.getWorkspaceId());
 
     final BucketInfo bucketInfo =
         BucketInfo.newBuilder(resource.getBucketName())
@@ -68,6 +66,7 @@ public class CreateGcsBucketStep implements Step {
 
     final StorageCow storageCow = crlService.createStorageCow(projectId);
     storageCow.create(bucketInfo);
+
     return StepResult.getStepResultSuccess();
   }
 

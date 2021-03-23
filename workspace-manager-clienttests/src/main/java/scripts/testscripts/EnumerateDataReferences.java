@@ -1,12 +1,5 @@
 package scripts.testscripts;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.lessThan;
-
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
@@ -14,16 +7,24 @@ import bio.terra.workspace.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.model.DataReferenceDescription;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import scripts.utils.ClientTestUtils;
+import scripts.utils.WorkspaceAllocateTestScriptBase;
+
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import scripts.utils.ClientTestUtils;
-import scripts.utils.WorkspaceFixtureTestScriptBase;
 
-public class EnumerateDataReferences extends WorkspaceFixtureTestScriptBase {
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThan;
+
+public class EnumerateDataReferences extends WorkspaceAllocateTestScriptBase {
 
   private static final Logger logger = LoggerFactory.getLogger(EnumerateDataReferences.class);
 
@@ -32,7 +33,7 @@ public class EnumerateDataReferences extends WorkspaceFixtureTestScriptBase {
 
   @Override
   public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-      throws ApiException {
+      throws Exception {
 
     // initialize workspace
     super.doSetup(testUsers, workspaceApi);

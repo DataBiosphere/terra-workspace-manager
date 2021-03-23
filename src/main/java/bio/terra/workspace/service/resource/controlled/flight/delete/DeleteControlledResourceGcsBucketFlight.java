@@ -19,10 +19,11 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.StorageException;
 import com.google.common.collect.ImmutableList;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Flight for deletion of a Gcs Bucket resource. This resource is deleted in a particular way and
@@ -93,16 +94,17 @@ public class DeleteControlledResourceGcsBucketFlight extends Flight {
       while (bucketExists) {
         // We always replace the lifecycle rules. This covers the case where the step is rerun
         // and covers the case where the rules are changed out of band of this operation.
-        bucket.toBuilder()
-            .setLifecycleRules(
-                ImmutableList.of(
-                    new BucketInfo.LifecycleRule(
-                        BucketInfo.LifecycleRule.LifecycleAction.newDeleteAction(),
-                        BucketInfo.LifecycleRule.LifecycleCondition.newBuilder()
-                            .setAge(0)
-                            .build())))
-            .build()
-            .update();
+        BucketCow bucketCow =
+            bucket.toBuilder()
+                .setLifecycleRules(
+                    ImmutableList.of(
+                        new BucketInfo.LifecycleRule(
+                            BucketInfo.LifecycleRule.LifecycleAction.newDeleteAction(),
+                            BucketInfo.LifecycleRule.LifecycleCondition.newBuilder()
+                                .setAge(0)
+                                .build())))
+                .build();
+        bucketCow.update();
         bucketExists = tryBucketDelete(bucket);
         if (bucketExists) {
           TimeUnit.HOURS.sleep(1);

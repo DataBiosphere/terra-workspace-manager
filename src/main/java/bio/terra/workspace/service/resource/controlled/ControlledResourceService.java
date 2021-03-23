@@ -2,10 +2,10 @@ package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcsBucketCreationParameters;
-import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResource;
@@ -43,7 +43,7 @@ public class ControlledResourceService {
   public String createControlledResource(
       ControlledResource resource,
       ApiGcsBucketCreationParameters creationParameters,
-      ApiIamRole creationApiIamRole,
+      WsmIamRole creationIamRole,
       ApiJobControl jobControl,
       AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
@@ -63,7 +63,7 @@ public class ControlledResourceService {
                 resource,
                 userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters)
-            .addParameter(ControlledResourceKeys.IAM_ROLE, creationApiIamRole);
+            .addParameter(ControlledResourceKeys.IAM_ROLE, creationIamRole);
 
     return jobBuilder.submit();
   }

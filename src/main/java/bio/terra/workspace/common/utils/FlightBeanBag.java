@@ -8,6 +8,7 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -27,6 +28,7 @@ public class FlightBeanBag {
   private final WorkspaceDao workspaceDao;
   private final WorkspaceService workspaceService;
 
+  @Lazy
   @Autowired
   public FlightBeanBag(
       BufferService bufferService,
