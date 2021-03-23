@@ -70,14 +70,14 @@ The second argument is the directory to put the test results in.
 #### Script for rendering Kubernetes Service Account Secrets
 
 Please use the script `render-k8s-config.sh` with a valid namespace to render the in-cluster service account secrets for resiliency tests.
-Examples of valid namespaces are `ichang`, `zloery`, etc.
+Examples of valid namespaces are `wsmtest`, `ichang`, etc.
 
 ```./render-k8s-config.sh <namespace>
 ```
 
 #### Upload test results to Google Bucket
 To upload Test Runner results to a Google Bucket.
-The bucket location is specified as a parameter in an upload config file located in the `resources/uploadlists` directory
+The bucket location is a parameter in an upload config file located in the `resources/uploadlists` directory
 
 The Gradle `uploadResults` task below archive the test results located in `/tmp/TR` to the bucket specified in config file `CompressDirectoryToBucket.json`.
 
