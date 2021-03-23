@@ -13,13 +13,10 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdSubmittedException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
-import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.app.configuration.external.IngressConfiguration;
 import bio.terra.workspace.app.configuration.external.JobConfiguration;
 import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
-import bio.terra.workspace.common.exception.stairway.StairwayInitializationException;
 import bio.terra.workspace.common.utils.ErrorReportUtils;
-import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.MdcHook;
 import bio.terra.workspace.generated.model.ErrorReport;
 import bio.terra.workspace.generated.model.JobReport;
@@ -32,7 +29,6 @@ import bio.terra.workspace.service.job.exception.JobNotCompleteException;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import bio.terra.workspace.service.job.exception.JobResponseException;
 import bio.terra.workspace.service.job.exception.JobUnauthorizedException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -157,7 +153,7 @@ public class JobService {
   protected String submit(
       Class<? extends Flight> flightClass, FlightMap parameterMap, String jobId) {
     try {
-      stairway.submit(jobId, flightClass, parameterMap);
+      stairwayComponent.get().submit(jobId, flightClass, parameterMap);
     } catch (DuplicateFlightIdSubmittedException ex) {
       // DuplicateFlightIdSubmittedException is a more specific StairwayException, and so needs to
       // be checked separately. Allowing duplicate FlightIds is useful for ensuring idempotent
@@ -197,7 +193,8 @@ public class JobService {
       int pollCycles = jobConfig.getTimeoutSeconds() / jobConfig.getPollingIntervalSeconds();
       for (int i = 0; i < pollCycles; i++) {
         ScheduledFuture<FlightState> futureState =
-            executor.schedule(new PollFlightTask(stairway, jobId), pollSeconds, TimeUnit.SECONDS);
+            executor.schedule(
+                new PollFlightTask(stairwayComponent.get(), jobId), pollSeconds, TimeUnit.SECONDS);
         FlightState state = futureState.get();
         if (state != null) {
           // Indicates job has completed, though not necessarily successfully.
@@ -240,23 +237,25 @@ public class JobService {
    * encapsulates all of the Stairway interaction.
    */
   public void initialize() {
-    try {
-      stairway.initialize(
-          stairwayDatabaseConfiguration.getDataSource(),
-          stairwayDatabaseConfiguration.isForceClean(),
-          stairwayDatabaseConfiguration.isMigrateUpgrade());
-      stairway.recoverAndStart(null);
-
-    } catch (StairwayException | InterruptedException stairwayEx) {
-      throw new InternalStairwayException("Stairway initialization failed", stairwayEx);
-    }
+    //    try {
+    //      stairwayComponent
+    //          .get()
+    //          .initialize(
+    //              stairwayDatabaseConfiguration.getDataSource(),
+    //              stairwayDatabaseConfiguration.isForceClean(),
+    //              stairwayDatabaseConfiguration.isMigrateUpgrade());
+    //      stairwayComponent.get().recoverAndStart(null);
+    //
+    //    } catch (StairwayException | InterruptedException stairwayEx) {
+    //      throw new InternalStairwayException("Stairway initialization failed", stairwayEx);
+    //    }
   }
 
   @Traced
   public void releaseJob(String jobId, AuthenticatedUserRequest userReq) {
     try {
       verifyUserAccess(jobId, userReq); // jobId=flightId
-      stairway.deleteFlight(jobId, false);
+      stairwayComponent.get().deleteFlight(jobId, false);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
@@ -326,7 +325,7 @@ public class JobService {
       FlightFilter filter = new FlightFilter();
       filter.addFilterInputParameter(
           JobMapKeys.SUBJECT_ID.getKeyName(), FlightFilterOp.EQUAL, userReq.getSubjectId());
-      flightStateList = stairway.getFlights(offset, limit, filter);
+      flightStateList = stairwayComponent.get().getFlights(offset, limit, filter);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
@@ -344,7 +343,7 @@ public class JobService {
 
     try {
       verifyUserAccess(jobId, userReq); // jobId=flightId
-      FlightState flightState = stairway.getFlightState(jobId);
+      FlightState flightState = stairwayComponent.get().getFlightState(jobId);
       return mapFlightStateToJobReport(flightState);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
@@ -421,7 +420,7 @@ public class JobService {
 
   private <T> JobResultOrException<T> retrieveJobResultWorker(String jobId, Class<T> resultClass)
       throws StairwayException, InterruptedException {
-    FlightState flightState = stairway.getFlightState(jobId);
+    FlightState flightState = stairwayComponent.get().getFlightState(jobId);
     FlightMap resultMap = flightState.getResultMap().orElse(null);
     if (resultMap == null) {
       throw new InvalidResultStateException("No result map returned from flight");
@@ -465,7 +464,7 @@ public class JobService {
 
   private void verifyUserAccess(String jobId, AuthenticatedUserRequest userReq) {
     try {
-      FlightState flightState = stairway.getFlightState(jobId);
+      FlightState flightState = stairwayComponent.get().getFlightState(jobId);
       FlightMap inputParameters = flightState.getInputParameters();
       String flightSubjectId =
           inputParameters.get(JobMapKeys.SUBJECT_ID.getKeyName(), String.class);

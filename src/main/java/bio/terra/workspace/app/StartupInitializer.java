@@ -40,8 +40,8 @@ public final class StartupInitializer {
 
   private static void initializeStairwayComponent(ApplicationContext applicationContext) {
     final StairwayComponent stairwayComponent = applicationContext.getBean(StairwayComponent.class);
-    final StairwayDatabaseConfiguration stairwayDatabaseConfiguration = applicationContext.getBean(
-        StairwayDatabaseConfiguration.class);
+    final StairwayDatabaseConfiguration stairwayDatabaseConfiguration =
+        applicationContext.getBean(StairwayDatabaseConfiguration.class);
     final DataSource dataSource = stairwayDatabaseConfiguration.getDataSource();
     final MdcHook mdcHook = applicationContext.getBean(MdcHook.class);
     final TracingHook tracingHook = new TracingHook();
