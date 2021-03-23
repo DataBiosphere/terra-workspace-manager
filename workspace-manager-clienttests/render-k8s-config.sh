@@ -17,11 +17,11 @@ TESTRUNNER_K8S_SERVICE_ACCOUNT_TOKEN_OUTPUT_PATH=$(dirname "$0")/rendered/testru
 DSDE_TOOLBOX_DOCKER_IMAGE=broadinstitute/dsde-toolbox:consul-0.20.0
 
 docker run --rm -e VAULT_TOKEN="$VAULT_TOKEN" $DSDE_TOOLBOX_DOCKER_IMAGE \
-    vault read -format=json ${TESTRUNNER_K8S_SERVICE_ACCOUNT_VAULT_PATH} | \
+    vault read -format=json "${TESTRUNNER_K8S_SERVICE_ACCOUNT_VAULT_PATH}" | \
     jq -r .data.key | base64 --decode | \
-    jq -r ".data[\"ca.crt\"]" > ${TESTRUNNER_K8S_SERVICE_ACCOUNT_CA_OUTPUT_PATH}
+    jq -r ".data[\"ca.crt\"]" > "${TESTRUNNER_K8S_SERVICE_ACCOUNT_CA_OUTPUT_PATH}"
 
 docker run --rm -e VAULT_TOKEN="$VAULT_TOKEN" $DSDE_TOOLBOX_DOCKER_IMAGE \
-    vault read -format=json ${TESTRUNNER_K8S_SERVICE_ACCOUNT_VAULT_PATH} | \
+    vault read -format=json "${TESTRUNNER_K8S_SERVICE_ACCOUNT_VAULT_PATH}" | \
     jq -r .data.key | base64 --decode | \
-    jq -r .data.token | base64 --decode > ${TESTRUNNER_K8S_SERVICE_ACCOUNT_TOKEN_OUTPUT_PATH}
+    jq -r .data.token | base64 --decode > "${TESTRUNNER_K8S_SERVICE_ACCOUNT_TOKEN_OUTPUT_PATH}"
