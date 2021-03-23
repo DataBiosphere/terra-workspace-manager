@@ -6,6 +6,7 @@ package bio.terra.workspace.service.iam.model;
  * workspace IamRoles to equivalent ControlledResourceIamRoles.
  */
 public enum ControlledResourceIamRole {
+  OWNER("owner"),
   ASSIGNER("assigner"),
   EDITOR("editor"),
   WRITER("writer"),

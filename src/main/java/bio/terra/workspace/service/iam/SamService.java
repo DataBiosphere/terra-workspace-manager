@@ -12,20 +12,24 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.stage.StageService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.collect.ImmutableSet;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
@@ -48,6 +52,8 @@ public class SamService {
   private final SamConfiguration samConfig;
   private final ObjectMapper objectMapper;
   private final StageService stageService;
+
+  private final Set<String> SAM_OAUTH_SCOPES = ImmutableSet.of("openid", "email", "profile");
 
   @Autowired
   public SamService(
@@ -75,6 +81,50 @@ public class SamService {
 
   private UsersApi samUsersApi(String accessToken) {
     return new UsersApi(getApiClient(accessToken));
+  }
+
+  private String getWsmServiceAccountToken() throws IOException {
+    GoogleCredentials creds =
+        GoogleCredentials.getApplicationDefault().createScoped(SAM_OAUTH_SCOPES);
+    creds.refreshIfExpired();
+    return creds.getAccessToken().getTokenValue();
+  }
+
+  /**
+   * Register WSM's service account as a user in Sam if it isn't already. This is called on every
+   * WSM startup, but should only need to register with Sam once per environment.
+   */
+  public void initialize() {
+    String wsmAccessToken;
+    try {
+      wsmAccessToken = getWsmServiceAccountToken();
+    } catch (IOException e) {
+      // In cases where WSM is not running as a service account (e.g. unit tests), the above call
+      // will throw. This can be ignored now and later when the credentials are used again.
+      logger.warn("Failed to register WSM service account in Sam. This is expected for tests.", e);
+      return;
+    }
+
+    UsersApi usersApi = samUsersApi(wsmAccessToken);
+    try {
+      // getUserStatusInfo throws a 404 if the calling user is not registered, which will happen
+      // the first time WSM is run in each environment.
+      usersApi.getUserStatusInfo();
+      logger.info("WSM service account already registered in Sam");
+    } catch (ApiException userStatusException) {
+      if (userStatusException.getCode() == HttpStatus.SC_NOT_FOUND) {
+        registerWsmServiceAccount(usersApi);
+      }
+    }
+  }
+
+  private void registerWsmServiceAccount(UsersApi usersApi) {
+    try {
+      usersApi.createUserV2();
+    } catch (ApiException createUserException) {
+      throw new SamApiException(
+          "Error registering WSM service account with Sam", createUserException);
+    }
   }
 
   /**
@@ -295,17 +345,14 @@ public class SamService {
         new CreateResourceRequestV2()
             .resourceId(resource.getResourceId().toString())
             .parent(workspaceParent);
+
     addWsmResourceOwnerPolicy(resourceRequest);
     // Only create policies for private resources. Workspace role permissions are handled through
     // role-based inheritance in Sam instead. This will likely expand to include policies for
     // applications in the future.
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
       addPrivateResourcePolicies(
-          resourceRequest,
-          resource.getAccessScope(),
-          resource.getManagedBy(),
-          privateIamRole.get(),
-          resource.getAssignedUser().get());
+          resourceRequest, privateIamRole.get(), resource.getAssignedUser().get());
     }
 
     try {
@@ -393,20 +440,35 @@ public class SamService {
   }
 
   /**
-   * Add WSM's service account as a resource owner. Used for admin reassignment of lost resources.
+   * Add WSM's service account as the owner of a controlled resource in Sam. Used for admin
+   * reassignment of resources. This assumes samService.initialize() has already been called, which
+   * should happen on start.
    */
   private void addWsmResourceOwnerPolicy(CreateResourceRequestV2 request) {
-    // TODO: Are we adding this now?
+    try {
+      String wsmSaEmail = getEmailFromToken(getWsmServiceAccountToken());
+      AccessPolicyMembershipV2 ownerPolicy =
+          new AccessPolicyMembershipV2()
+              .addRolesItem(ControlledResourceIamRole.OWNER.toSamRole())
+              .addMemberEmailsItem(wsmSaEmail);
+      request.putPoliciesItem(ControlledResourceIamRole.OWNER.toSamRole(), ownerPolicy);
+    } catch (IOException e) {
+      // In cases where WSM is not running as a service account (e.g. unit tests), the above call to
+      // get application default credentials will fail. This is fine, as those cases don't create
+      // real resources.
+      logger.warn(
+          "Failed to add WSM service account as resource owner Sam. This is expected for tests.",
+          e);
+      return;
+    }
   }
 
   /**
-   * Add policies for managing private users and applications via policy. This will likely expand to
-   * support policies for applications.
+   * Add policies for managing private users via policy. This will likely expand to support policies
+   * for applications.
    */
   private void addPrivateResourcePolicies(
       CreateResourceRequestV2 request,
-      AccessScopeType accessScope,
-      ManagedByType managedBy,
       ApiPrivateResourceIamRole privateIamRole,
       String privateUser) {
     AccessPolicyMembershipV2 readerPolicy =
@@ -416,18 +478,16 @@ public class SamService {
     AccessPolicyMembershipV2 editorPolicy =
         new AccessPolicyMembershipV2().addRolesItem(ControlledResourceIamRole.EDITOR.toSamRole());
 
-    if (accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
-      // Create a reader or writer role as specified by the user request, but also create empty
-      // roles in case of later re-assignment.
-      if (privateIamRole.getRole() == RoleEnum.READER) {
-        readerPolicy.addMemberEmailsItem(privateUser);
-      } else if (privateIamRole.getRole() == RoleEnum.WRITER) {
-        writerPolicy.addMemberEmailsItem(privateUser);
-      }
+    // Create a reader or writer role as specified by the user request, but also create empty
+    // roles in case of later re-assignment.
+    if (privateIamRole.getRole() == RoleEnum.READER) {
+      readerPolicy.addMemberEmailsItem(privateUser);
+    } else if (privateIamRole.getRole() == RoleEnum.WRITER) {
+      writerPolicy.addMemberEmailsItem(privateUser);
+    }
 
-      if (privateIamRole.isEditor()) {
-        editorPolicy.addMemberEmailsItem(privateUser);
-      }
+    if (privateIamRole.isEditor()) {
+      editorPolicy.addMemberEmailsItem(privateUser);
     }
 
     request.putPoliciesItem(ControlledResourceIamRole.READER.toSamRole(), readerPolicy);
