@@ -64,7 +64,7 @@ jobs:
           export ORG_GRADLE_PROJECT_workspacemanagerclientjar=$(find .. -type f -name "workspace-manager-client*.jar")
           echo "ORG_GRADLE_PROJECT_workspacemanagerclientjar = ${ORG_GRADLE_PROJECT_workspacemanagerclientjar}"
 
-      # We can also set the env var (TEST_RUNNER_SERVER_SPECIFICATION_FILE) in the GH action script to specify which server we are testing against.
+      # Set the env var (TEST_RUNNER_SERVER_SPECIFICATION_FILE) in the GH action script to specify which server we are testing against.
       # This will be particularly helpful once we switch over to testing against any test env -- then it's just a change to the env var.
       # Please refer to https://github.com/DataBiosphere/terra-test-runner#override-the-server-from-the-command-line for more information.
       - name: Run a basic Resiliency test suite against a namespace
@@ -73,7 +73,6 @@ jobs:
           echo "Test Runner config"
           ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
           ./render-k8s-config.sh wsmtest ${{ steps.vault-token-step.outputs.vault-token }}
-      # Set env var (TEST_RUNNER_SERVER_SPECIFICATION_FILE)
           export TEST_RUNNER_SERVER_SPECIFICATION_FILE=workspace-wsmtest-resiliency.json
           echo "Running test suite"
           ./gradlew runTest --args="suites/BasicResiliency.json /tmp/TestRunnerResults"
