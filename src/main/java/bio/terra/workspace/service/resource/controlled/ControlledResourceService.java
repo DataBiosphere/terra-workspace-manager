@@ -46,7 +46,10 @@ public class ControlledResourceService {
       AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
     workspaceService.validateWorkspaceAndAction(
-        userRequest, resource.getWorkspaceId(), SamConstants.samCreateControlledResourceAction(resource.getAccessScope(), resource.getManagedBy()));
+        userRequest,
+        resource.getWorkspaceId(),
+        SamConstants.samCreateControlledResourceAction(
+            resource.getAccessScope(), resource.getManagedBy()));
     final String jobDescription =
         String.format(
             "Create controlled resource %s; id %s; name %s",

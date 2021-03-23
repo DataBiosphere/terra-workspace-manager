@@ -52,7 +52,7 @@ public class SamConstants {
             accessScope.toString(), managedBy.toString()));
   }
 
-  /** Return the Sam action name for creating a specific type of controlled resource.*/
+  /** Return the Sam action name for creating a specific type of controlled resource. */
   public static String samCreateControlledResourceAction(
       AccessScopeType accessScope, ManagedByType managedBy) {
     if (accessScope == AccessScopeType.ACCESS_SCOPE_SHARED) {
