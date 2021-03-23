@@ -17,7 +17,6 @@ import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRule;
 import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleAction;
 import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import com.google.api.client.util.DateTime;
 import com.google.cloud.storage.BucketInfo;
@@ -39,17 +38,12 @@ public class CreateGcsBucketStep implements Step {
   private final CrlService crlService;
   private final ControlledGcsBucketResource resource;
   private final WorkspaceDao workspaceDao;
-  private final AuthenticatedUserRequest userRequest;
 
   public CreateGcsBucketStep(
-      CrlService crlService,
-      ControlledGcsBucketResource resource,
-      WorkspaceDao workspaceDao,
-      AuthenticatedUserRequest userRequest) {
+      CrlService crlService, ControlledGcsBucketResource resource, WorkspaceDao workspaceDao) {
     this.crlService = crlService;
     this.resource = resource;
     this.workspaceDao = workspaceDao;
-    this.userRequest = userRequest;
   }
 
   @Override
@@ -74,7 +68,9 @@ public class CreateGcsBucketStep implements Step {
             .setLifecycleRules(ApiConversions.toGcsApi(creationParameters.getLifecycle()))
             .build();
 
-    final StorageCow storageCow = crlService.createStorageCow(gcpProjectId, userRequest);
+    // Users do not have bucket create permission, so this request happens using WSM's credentials.
+    final StorageCow storageCow =
+        crlService.createStorageCow(Optional.of(gcpProjectId), Optional.empty());
     storageCow.create(bucketInfo);
     return StepResult.getStepResultSuccess();
   }
@@ -89,7 +85,9 @@ public class CreateGcsBucketStep implements Step {
                     new CloudContextRequiredException(
                         "No cloud context found in which to create a controlled resource"))
             .getGcpProjectId();
-    final StorageCow storageCow = crlService.createStorageCow(gcpProjectId, userRequest);
+    // Users do not have bucket delete permission, so this request happens using WSM's credentials.
+    final StorageCow storageCow =
+        crlService.createStorageCow(Optional.of(gcpProjectId), Optional.empty());
     storageCow.delete(resource.getBucketName());
     return StepResult.getStepResultSuccess();
   }

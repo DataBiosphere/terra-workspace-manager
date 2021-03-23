@@ -28,6 +28,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -129,33 +130,25 @@ public class CrlService {
   }
 
   /**
+   * Creates a Cloud Object Wrapper for the Google Cloud Storage API.
+   *
+   * @param projectId ID of the project to operate in. Required for bucket creation, optional for
+   *     all other operations as buckets are globally namespaced.
+   * @param userReq Credentials to use for requests. If not specified, WSM's service account
+   *     credentials will be used instead.
    * @return CRL {@link StorageCow} which wraps Google Cloud Storage API in the given project using
    *     provided user credentials.
    */
-  public StorageCow createStorageCow(String projectId, AuthenticatedUserRequest userReq) {
+  public StorageCow createStorageCow(
+      Optional<String> projectId, Optional<AuthenticatedUserRequest> userReq) {
     assertCrlInUse();
 
     return new StorageCow(
         clientConfig,
         StorageOptions.newBuilder()
-            .setCredentials(googleCredentialsFromUserReq(userReq))
-            .setProjectId(projectId)
+            .setCredentials(userReq.map(this::googleCredentialsFromUserReq).orElse(null))
+            .setProjectId(projectId.orElse(null))
             .build());
-  }
-
-  /**
-   * CRL {@link StorageCow} using the default project from the application's credentials.
-   * Convenience for read-only operations, as GCP buckets are actually namespaced globally and
-   * project IDs are not required to read them.
-   *
-   * @param userReq Credentials of the user to make requests for
-   */
-  public StorageCow createStorageCow(AuthenticatedUserRequest userReq) {
-    assertCrlInUse();
-
-    return new StorageCow(
-        clientConfig,
-        StorageOptions.newBuilder().setCredentials(googleCredentialsFromUserReq(userReq)).build());
   }
 
   /**
@@ -168,7 +161,8 @@ public class CrlService {
    */
   public boolean gcsBucketExists(String bucketName, AuthenticatedUserRequest userRequest) {
     try {
-      BucketCow bucket = createStorageCow(userRequest).get(bucketName);
+      BucketCow bucket =
+          createStorageCow(Optional.empty(), Optional.of(userRequest)).get(bucketName);
       return (bucket != null);
     } catch (StorageException e) {
       throw new InvalidReferenceException(

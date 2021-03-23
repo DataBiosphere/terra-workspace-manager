@@ -7,6 +7,7 @@ import bio.terra.workspace.generated.model.ApiPrivateResourceIamRole;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.workspace.flight.SyncSamGroupsStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 
 /**
@@ -19,10 +20,6 @@ public class CreateControlledResourceFlight extends Flight {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
-    // store the resource metadata in the WSM database
-    addStep(new StoreMetadataStep(flightBeanBag.getResourceDao()));
-
-    // create the cloud resource via CRL
     final ControlledResource resource =
         inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
     final AuthenticatedUserRequest userRequest =
@@ -31,26 +28,33 @@ public class CreateControlledResourceFlight extends Flight {
         inputParameters.get(
             ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLE, ApiPrivateResourceIamRole.class);
 
+    // store the resource metadata in the WSM database
+    addStep(new StoreMetadataStep(flightBeanBag.getResourceDao()));
+
+    // create the Sam resource associated with the resource
+    addStep(
+        new CreateSamResourceStep(
+            flightBeanBag.getSamService(), resource, privateResourceIamRole, userRequest));
+
+    // Get google group names from Sam groups and store them in the working map
+    addStep(new SyncSamGroupsStep(flightBeanBag.getSamService()));
+
+    // create the cloud resource and grant IAM roles via CRL
     switch (resource.getResourceType()) {
       case GCS_BUCKET:
         addStep(
             new CreateGcsBucketStep(
                 flightBeanBag.getCrlService(),
                 resource.castToGcsBucketResource(),
-                flightBeanBag.getWorkspaceDao(),
-                userRequest));
+                flightBeanBag.getWorkspaceDao()));
+        addStep(
+            new GrantGcsBucketIamRolesStep(
+                flightBeanBag.getCrlService(), resource.castToGcsBucketResource()));
         break;
       case BIG_QUERY_DATASET:
       default:
         throw new IllegalStateException(
             String.format("Unrecognized resource type %s", resource.getResourceType()));
     }
-    // create the Sam resource associated with the resource
-    addStep(
-        new CreateSamResourceStep(
-            flightBeanBag.getSamService(), resource, privateResourceIamRole, userRequest));
-
-    // assign custom roles to the resource based on Sam policies
-    // TODO: can this step be the same for all resource types?
   }
 }

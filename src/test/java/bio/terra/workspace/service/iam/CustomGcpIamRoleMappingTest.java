@@ -21,23 +21,9 @@ public class CustomGcpIamRoleMappingTest extends BaseUnitTest {
   }
 
   @Test
-  void bucketOwnerContainsWriter() {
-    assertThat(
-        CustomGcpIamRoleMapping.GCS_BUCKET_WRITER_PERMISSIONS,
-        everyItem(in(CustomGcpIamRoleMapping.GCS_BUCKET_OWNER_PERMISSIONS)));
-  }
-
-  @Test
   void bqDatasetWriterContainsReader() {
     assertThat(
         CustomGcpIamRoleMapping.BIG_QUERY_DATASET_READER_PERMISSIONS,
         everyItem(in(CustomGcpIamRoleMapping.BIG_QUERY_DATASET_WRITER_PERMISSIONS)));
-  }
-
-  @Test
-  void bqDatasetOwnerContainsWriter() {
-    assertThat(
-        CustomGcpIamRoleMapping.BIG_QUERY_DATASET_WRITER_PERMISSIONS,
-        everyItem(in(CustomGcpIamRoleMapping.BIG_QUERY_DATASET_OWNER_PERMISSIONS)));
   }
 }

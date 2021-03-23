@@ -4,7 +4,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
@@ -17,7 +16,6 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateGcsBucketStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -40,7 +38,6 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
   @Mock private CrlService mockCrlService;
   @Mock private StorageCow mockStorageCow;
   @Mock private WorkspaceDao mockWorkspaceDao;
-  @Mock private AuthenticatedUserRequest mockUserRequest;
 
   @Captor private ArgumentCaptor<BucketInfo> bucketInfoCaptor;
 
@@ -50,13 +47,10 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
   public void setup() {
     createGcsBucketStep =
         new CreateGcsBucketStep(
-            mockCrlService,
-            ControlledResourceFixtures.BUCKET_RESOURCE,
-            mockWorkspaceDao,
-            mockUserRequest);
+            mockCrlService, ControlledResourceFixtures.BUCKET_RESOURCE, mockWorkspaceDao);
     GcpCloudContext fakeContext = new GcpCloudContext("fake-project-id");
     doReturn(Optional.of(fakeContext)).when(mockWorkspaceDao).getGcpCloudContext(any());
-    doReturn(mockStorageCow).when(mockCrlService).createStorageCow(any(), eq(mockUserRequest));
+    doReturn(mockStorageCow).when(mockCrlService).createStorageCow(any(), any());
   }
 
   @Test
