@@ -78,9 +78,7 @@ public class GrantGcsBucketIamRolesStep implements Step {
             .setEtag(currentPolicy.getEtag())
             .build();
     logger.info(
-        "Granting GCP permissions on bucket {}: {}: ",
-        resource.getBucketName(),
-        newPolicy.toString());
+        "Syncing workspace roles to GCP permissions on bucket {}", resource.getBucketName());
     // Users do not have read or write access to IAM policies, so this request is executed via
     // WSM's service account.
     crlService
@@ -99,8 +97,8 @@ public class GrantGcsBucketIamRolesStep implements Step {
   /**
    * Build a list of role bindings for a given group, using ControlledResourceInheritanceMapping.
    *
-   * @param role The role granted to this user. Translated to GCP roles using
-   *     ControlledResourceInheritanceMapping.
+   * @param role The workspace-level role granted to this user. Translated to GCP resource-specific
+   *     roles using ControlledResourceInheritanceMapping.
    * @param group The group being granted a role. Should be prefixed with the literal "group:" for
    *     GCP.
    */
@@ -119,8 +117,8 @@ public class GrantGcsBucketIamRolesStep implements Step {
   }
 
   /**
-   * Return the name of the existing GCP custom IAM role defined for a given Resource role and
-   * resource type (in this case, GCS Bucket).
+   * Return the name of the existing GCP custom IAM role defined for a given resource role (e.g.
+   * reader, writer) for GCS buckets.
    */
   private String gcpRoleFromResourceRole(ControlledResourceIamRole role) {
     return CustomGcpIamRole.customGcpRoleName(WsmResourceType.GCS_BUCKET, role);
