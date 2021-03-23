@@ -1,7 +1,7 @@
 {
   "name": "CompressDirectoryToBucket",
   "description": "Compress results directory to the terra-kernel-k8s-testrunner-results bucket",
-  "uploaderServiceAccountFile": "testrunner-iam-sa.json",
+  "uploaderServiceAccountFile": "testrunner-sa.json",
   "uploadScripts": [
     {
       "name": "CompressDirectoryToBucket",
