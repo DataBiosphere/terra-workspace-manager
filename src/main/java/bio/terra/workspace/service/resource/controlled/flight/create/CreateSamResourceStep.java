@@ -9,7 +9,6 @@ import bio.terra.workspace.generated.model.ApiPrivateResourceIamRole;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -38,8 +37,7 @@ public class CreateSamResourceStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     try {
-      samService.createControlledResource(
-          resource, Optional.ofNullable(privateResourceIamRole), userReq);
+      samService.createControlledResource(resource, privateResourceIamRole, userReq);
     } catch (SamApiException samException) {
       // Do nothing if the resource to create already exists, this may not be the first time do is
       // called. Other exceptions still need to be surfaced.

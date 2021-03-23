@@ -21,6 +21,7 @@ import bio.terra.workspace.generated.model.ApiPrivateResourceIamRole.RoleEnum;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceNames;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
@@ -60,7 +61,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void AddedReaderCanRead() {
+  void addedReaderCanRead() {
     UUID workspaceId = createWorkspaceDefaultUser();
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
@@ -74,7 +75,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void AddedWriterCanWrite() {
+  void addedWriterCanWrite() {
     UUID workspaceId = createWorkspaceDefaultUser();
 
     ReferencedDataRepoSnapshotResource referenceResource =
@@ -98,7 +99,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void RemovedReaderCannotRead() {
+  void removedReaderCannotRead() {
     UUID workspaceId = createWorkspaceDefaultUser();
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
@@ -118,7 +119,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void NonOwnerCannotAddReader() {
+  void nonOwnerCannotAddReader() {
     UUID workspaceId = createWorkspaceDefaultUser();
     // Note that this request uses the secondary user's authentication token, when only the first
     // user is an owner.
@@ -133,7 +134,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void PermissionsApiFailsInRawlsWorkspace() {
+  void permissionsApiFailsInRawlsWorkspace() {
     UUID workspaceId = UUID.randomUUID();
     // RAWLS_WORKSPACEs do not own their own Sam resources, so we need to manage them separately.
     samService.createWorkspaceWithDefaults(defaultUserRequest(), workspaceId);
@@ -158,7 +159,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void InvalidUserEmailRejected() {
+  void invalidUserEmailRejected() {
     UUID workspaceId = createWorkspaceDefaultUser();
     assertThrows(
         SamApiException.class,
@@ -171,7 +172,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void ListPermissionsIncludesAddedUsers() {
+  void listPermissionsIncludesAddedUsers() {
     UUID workspaceId = createWorkspaceDefaultUser();
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
@@ -201,7 +202,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void WriterCannotListPermissions() {
+  void writerCannotListPermissions() {
     UUID workspaceId = createWorkspaceDefaultUser();
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), WsmIamRole.WRITER, userAccessUtils.getSecondUserEmail());
@@ -211,7 +212,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void GrantRoleInMissingWorkspaceThrows() {
+  void grantRoleInMissingWorkspaceThrows() {
     UUID fakeId = UUID.randomUUID();
     assertThrows(
         WorkspaceNotFoundException.class,
@@ -224,7 +225,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void ReadRolesInMissingWorkspaceThrows() {
+  void readRolesInMissingWorkspaceThrows() {
     UUID fakeId = UUID.randomUUID();
     assertThrows(
         WorkspaceNotFoundException.class,
@@ -232,7 +233,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void ListWorkspacesIncludesWsmWorkspace() {
+  void listWorkspacesIncludesWsmWorkspace() {
     // This call cannot use william.thunderlord's account in dev Sam. Sam will return 500, as it
     // cannot handle his tens of thousands of workspaces.
     UUID workspaceId = createWorkspaceSecondaryUser();
@@ -242,20 +243,20 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void WorkspaceReaderIsSharedResourceReader() {
+  void workspaceReaderIsSharedResourceReader() {
     // Default user is workspace owner, secondary user is workspace reader
     UUID workspaceId = createWorkspaceDefaultUser();
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
 
     ControlledResource bucketResource = defaultBucket(workspaceId).build();
-    samService.createControlledResource(bucketResource, Optional.empty(), defaultUserRequest());
+    samService.createControlledResource(bucketResource, null, defaultUserRequest());
 
     // Workspace reader should have read access on a user-shared resource via inheritance
     assertTrue(
         samService.isAuthorized(
             secondaryUserRequest().getRequiredToken(),
-            SamConstants.SAM_CONTROLLED_USER_SHARED_RESOURCE,
+            SamControlledResourceNames.CONTROLLED_USER_SHARED_RESOURCE,
             bucketResource.getResourceId().toString(),
             SamConstants.SAM_WORKSPACE_READ_ACTION));
 
@@ -263,7 +264,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void WorkspaceReaderIsNotPrivateResourceReader() {
+  void workspaceReaderIsNotPrivateResourceReader() {
     // Default user is workspace owner, secondary user is workspace reader
     UUID workspaceId = createWorkspaceDefaultUser();
     samService.grantWorkspaceRole(
@@ -278,20 +279,20 @@ class SamServiceTest extends BaseConnectedTest {
     ApiPrivateResourceIamRole privateResourceIamRole =
         new ApiPrivateResourceIamRole().role(RoleEnum.READER).editor(true);
     samService.createControlledResource(
-        bucketResource, Optional.of(privateResourceIamRole), defaultUserRequest());
+        bucketResource, privateResourceIamRole, defaultUserRequest());
 
     // Workspace reader should not have read access on a private resource.
     assertFalse(
         samService.isAuthorized(
             secondaryUserRequest().getRequiredToken(),
-            SamConstants.SAM_CONTROLLED_USER_PRIVATE_RESOURCE,
+            SamControlledResourceNames.CONTROLLED_USER_PRIVATE_RESOURCE,
             bucketResource.getResourceId().toString(),
             SamConstants.SAM_WORKSPACE_READ_ACTION));
     // However, the assigned user should have read access.
     assertTrue(
         samService.isAuthorized(
             defaultUserRequest().getRequiredToken(),
-            SamConstants.SAM_CONTROLLED_USER_PRIVATE_RESOURCE,
+            SamControlledResourceNames.CONTROLLED_USER_PRIVATE_RESOURCE,
             bucketResource.getResourceId().toString(),
             SamConstants.SAM_WORKSPACE_READ_ACTION));
 
@@ -301,29 +302,27 @@ class SamServiceTest extends BaseConnectedTest {
   // Duplicate execution during flights is handled using Sam error codes, so this verifies expected
   // behavior in SamService.
   @Test
-  void DuplicateResourceCreateThrows() {
+  void duplicateResourceCreateThrows() {
     UUID workspaceId = createWorkspaceDefaultUser();
 
     ControlledResource bucketResource = defaultBucket(workspaceId).build();
-    samService.createControlledResource(bucketResource, Optional.empty(), defaultUserRequest());
+    samService.createControlledResource(bucketResource, null, defaultUserRequest());
 
     SamApiException exception =
         assertThrows(
             SamApiException.class,
-            () ->
-                samService.createControlledResource(
-                    bucketResource, Optional.empty(), defaultUserRequest()));
+            () -> samService.createControlledResource(bucketResource, null, defaultUserRequest()));
     assertEquals(HttpStatus.CONFLICT.value(), exception.getApiExceptionStatus());
   }
 
   // Undoing the create resource step relies on Sam error codes, so this test asserts we get a
   // NOT_FOUND when we send multiple delete requests.
   @Test
-  void DuplicateResourceDeleteThrows() {
+  void duplicateResourceDeleteThrows() {
     UUID workspaceId = createWorkspaceDefaultUser();
 
     ControlledResource bucketResource = defaultBucket(workspaceId).build();
-    samService.createControlledResource(bucketResource, Optional.empty(), defaultUserRequest());
+    samService.createControlledResource(bucketResource, null, defaultUserRequest());
 
     samService.deleteControlledResource(bucketResource, defaultUserRequest());
 

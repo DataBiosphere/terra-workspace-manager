@@ -6,6 +6,7 @@ import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiPrivateResourceIamRole;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceCreateActions;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResource;
@@ -48,8 +49,7 @@ public class ControlledResourceService {
     workspaceService.validateWorkspaceAndAction(
         userRequest,
         resource.getWorkspaceId(),
-        SamConstants.samCreateControlledResourceAction(
-            resource.getAccessScope(), resource.getManagedBy()));
+        SamControlledResourceCreateActions.get(resource.getAccessScope(), resource.getManagedBy()));
     final String jobDescription =
         String.format(
             "Create controlled resource %s; id %s; name %s",

@@ -9,6 +9,7 @@ import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceNames;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -24,7 +25,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -106,14 +106,23 @@ public class SamService {
     }
 
     UsersApi usersApi = samUsersApi(wsmAccessToken);
+    if (!wsmServiceAccountRegistered(usersApi)) {
+      registerWsmServiceAccount(usersApi);
+    }
+  }
+
+  private boolean wsmServiceAccountRegistered(UsersApi usersApi) {
     try {
       // getUserStatusInfo throws a 404 if the calling user is not registered, which will happen
       // the first time WSM is run in each environment.
       usersApi.getUserStatusInfo();
       logger.info("WSM service account already registered in Sam");
+      return true;
     } catch (ApiException userStatusException) {
       if (userStatusException.getCode() == HttpStatus.NOT_FOUND.value()) {
-        registerWsmServiceAccount(usersApi);
+        return false;
+      } else {
+        throw new SamApiException(userStatusException);
       }
     }
   }
@@ -331,34 +340,40 @@ public class SamService {
     }
   }
 
+  /**
+   * Create a controlled resource in Sam.
+   *
+   * @param resource The WSM representation of the resource to create.
+   * @param privateIamRole The IAM role(s) to grant a private user. Required for private resources,
+   *     should be null otherwise.
+   * @param userReq Credentials to use for talking to Sam.
+   */
   @Traced
   public void createControlledResource(
       ControlledResource resource,
-      Optional<ApiPrivateResourceIamRole> privateIamRole,
+      ApiPrivateResourceIamRole privateIamRole,
       AuthenticatedUserRequest userReq) {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
-    FullyQualifiedResourceId workspaceParent =
+    FullyQualifiedResourceId workspaceParentFqId =
         new FullyQualifiedResourceId()
             .resourceId(resource.getWorkspaceId().toString())
             .resourceTypeName(SamConstants.SAM_WORKSPACE_RESOURCE);
     CreateResourceRequestV2 resourceRequest =
         new CreateResourceRequestV2()
             .resourceId(resource.getResourceId().toString())
-            .parent(workspaceParent);
+            .parent(workspaceParentFqId);
 
     addWsmResourceOwnerPolicy(resourceRequest);
     // Only create policies for private resources. Workspace role permissions are handled through
     // role-based inheritance in Sam instead. This will likely expand to include policies for
     // applications in the future.
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
-      addPrivateResourcePolicies(
-          resourceRequest, privateIamRole.get(), resource.getAssignedUser().get());
+      addPrivateResourcePolicies(resourceRequest, privateIamRole, resource.getAssignedUser().get());
     }
 
     try {
       resourceApi.createResourceV2(
-          SamConstants.samControlledResourceType(
-              resource.getAccessScope(), resource.getManagedBy()),
+          SamControlledResourceNames.get(resource.getAccessScope(), resource.getManagedBy()),
           resourceRequest);
       logger.info("Created Sam controlled resource {}", resource.getResourceId());
     } catch (ApiException e) {
@@ -372,8 +387,7 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       resourceApi.deleteResourceV2(
-          SamConstants.samControlledResourceType(
-              resource.getAccessScope(), resource.getManagedBy()),
+          SamControlledResourceNames.get(resource.getAccessScope(), resource.getManagedBy()),
           resource.getResourceId().toString());
       logger.info("Deleted Sam controlled resource {}", resource.getResourceId());
     } catch (ApiException apiException) {
