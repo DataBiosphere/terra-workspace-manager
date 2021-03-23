@@ -5,17 +5,15 @@ import bio.terra.datarepo.api.UnauthenticatedApi;
 import bio.terra.datarepo.client.ApiClient;
 import bio.terra.datarepo.client.ApiException;
 import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
-import bio.terra.workspace.app.configuration.spring.TraceInterceptorConfig;
 import bio.terra.workspace.common.exception.ValidationException;
-import bio.terra.workspace.generated.model.SystemStatusSystems;
-import bio.terra.workspace.service.datareference.exception.DataRepoAuthorizationException;
-import bio.terra.workspace.service.datareference.exception.DataRepoInternalServerErrorException;
+import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
+import bio.terra.workspace.service.datarepo.exception.DataRepoAuthorizationException;
+import bio.terra.workspace.service.datarepo.exception.DataRepoInternalServerErrorException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -30,13 +28,10 @@ public class DataRepoService {
     this.dataRepoConfiguration = dataRepoConfiguration;
   }
 
-  private Logger logger = LoggerFactory.getLogger(DataRepoService.class);
+  private final Logger logger = LoggerFactory.getLogger(DataRepoService.class);
 
   private ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();
-    client.addDefaultHeader(
-        TraceInterceptorConfig.MDC_REQUEST_ID_HEADER,
-        MDC.get(TraceInterceptorConfig.MDC_REQUEST_ID_KEY));
     client.setAccessToken(accessToken);
     return client;
   }
@@ -67,9 +62,7 @@ public class DataRepoService {
 
     try {
       repositoryApi.retrieveSnapshot(snapshotId);
-      logger.info(
-          String.format(
-              "Retrieved snapshot %s on Data Repo instance %s", snapshotId, instanceName));
+      logger.info("Retrieved snapshotId {} on Data Repo instance {}", snapshotId, instanceName);
       return true;
     } catch (ApiException e) {
       if (e.getCode() == HttpStatus.NOT_FOUND.value()) {
@@ -84,16 +77,16 @@ public class DataRepoService {
     }
   }
 
-  public SystemStatusSystems status(String instanceUrl) {
+  public ApiSystemStatusSystems status(String instanceUrl) {
     UnauthenticatedApi unauthenticatedApi =
         new UnauthenticatedApi(new ApiClient().setBasePath(instanceUrl));
     try {
       // TDR serviceStatus method returns cleanly on a 200 response and throws an error otherwise,
       // no other information is available through this endpoint.
       unauthenticatedApi.serviceStatus();
-      return new SystemStatusSystems().ok(true);
+      return new ApiSystemStatusSystems().ok(true);
     } catch (ApiException nonOkStatusException) {
-      return new SystemStatusSystems()
+      return new ApiSystemStatusSystems()
           .ok(false)
           .addMessagesItem(nonOkStatusException.getResponseBody());
     }

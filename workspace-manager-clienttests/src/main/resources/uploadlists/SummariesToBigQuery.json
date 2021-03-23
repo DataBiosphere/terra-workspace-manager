@@ -1,0 +1,12 @@
+{
+  "name": "SummariesToBigQuery",
+  "description": "Upload test summary results to the `broad-dsde-dev.test_runner_results` dataset",
+  "uploaderServiceAccountFile": "dev-testrunner-sa.json",
+  "uploadScripts": [
+    {
+      "name": "SummariesToBigQuery",
+      "description": "Write the summary results to BigQuery with the Test Runner schema.",
+      "parameters": ["broad-dsde-dev", "test_runner_results"]
+    }
+  ]
+}

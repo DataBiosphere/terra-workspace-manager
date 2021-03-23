@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
-public class WorkspaceIntegrationTest extends BaseIntegrationTest {
+class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   // TODO: As this class grows, consider if it's worth breaking down these workspace tests into
   //  different class files based on the the type of workspace action (Create, Get, Delete, etc).
@@ -49,9 +49,6 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
   //  this test and elsewhere. AS-431.
   private final String TAG_NEEDS_CLEANUP = "needs-cleanup";
 
-  @BeforeEach
-  public void setup() {}
-
   /*
    * TODO: Cloud Resource Library (CRL) is planning to broadly address resource cleanup for integration tests in MC Terra
    *  applications.
@@ -60,7 +57,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
    *  Doc: https://docs.google.com/document/d/13mYVJML_fOLsX1gxQxRJgECUNT27dAMKzEJxUEvtQqM/edit#heading=h.x06ofvfgp7wt
    */
   @AfterEach
-  public void tearDown(TestInfo testInfo) throws Exception {
+  void tearDown(TestInfo testInfo) throws Exception {
     Set<String> tags = testInfo.getTags();
     if (tags != null && tags.contains(TAG_NEEDS_CLEANUP)) {
       List<UUID> uuidList = testToWorkspaceIdsMap.get(testInfo.getDisplayName());
@@ -72,7 +69,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void createWorkspace(TestInfo testInfo) throws Exception {
+  void createWorkspace(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -86,7 +83,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void getWorkspace(TestInfo testInfo) throws Exception {
+  void getWorkspace(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -106,13 +103,13 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void deleteWorkspace(TestInfo testInfo) throws Exception {
+  void deleteWorkspace(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
-    WorkspaceResponse<CreatedWorkspace> workspaceResponse = createDefaultWorkspace(workspaceId);
+    createDefaultWorkspace(workspaceId);
 
     String userEmail = testConfig.getUserEmail();
-    String token = authService.getAuthToken(userEmail);
+    authService.getAuthToken(userEmail);
     String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId;
 
     WorkspaceResponse<?> deleteWorkspaceResponse =
@@ -134,7 +131,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void createDataReference(TestInfo testInfo) throws Exception {
+  void createDataReference(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -154,7 +151,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void deleteDataReference(TestInfo testInfo) throws Exception {
+  void deleteDataReference(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -169,12 +166,12 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
     WorkspaceResponse<?> deleteResponse =
         workspaceManagerTestClient.delete(testConfig.getUserEmail(), deletePath);
-    assertEquals(HttpStatus.valueOf(204), deleteResponse.getStatusCode());
+    assertEquals(HttpStatus.NO_CONTENT, deleteResponse.getStatusCode());
   }
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void listDataReference(TestInfo testInfo) throws Exception {
+  void listDataReference(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -207,7 +204,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void getDataReferenceById(TestInfo testInfo) throws Exception {
+  void getDataReferenceById(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -236,7 +233,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
   @Test
   @Tag(TAG_NEEDS_CLEANUP)
-  public void getDataReferenceByNameAndType(TestInfo testInfo) throws Exception {
+  void getDataReferenceByNameAndType(TestInfo testInfo) throws Exception {
     UUID workspaceId = UUID.randomUUID();
     testToWorkspaceIdsMap.put(testInfo.getDisplayName(), Collections.singletonList(workspaceId));
 
@@ -267,30 +264,12 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
     assertEquals(workspaceId, dataReferenceDescription.getWorkspaceId());
   }
 
-  @Test
-  @Tag(TAG_NEEDS_CLEANUP)
-  public void testDefaultWorkspaceStageIsRawls() throws Exception {
-    UUID workspaceId = UUID.randomUUID();
-    createDefaultWorkspace(workspaceId);
-
-    String userEmail = testConfig.getUserEmail();
-    String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId;
-
-    WorkspaceResponse<WorkspaceDescription> getWorkspaceResponse =
-        workspaceManagerTestClient.get(userEmail, path, WorkspaceDescription.class);
-
-    assertEquals(HttpStatus.OK, getWorkspaceResponse.getStatusCode());
-    assertTrue(getWorkspaceResponse.isResponseObject());
-    WorkspaceDescription workspaceDescription = getWorkspaceResponse.getResponseObject();
-    assertEquals(workspaceId, workspaceDescription.getId());
-    assertEquals(WorkspaceStageModel.RAWLS_WORKSPACE, workspaceDescription.getStage());
-  }
-
   private WorkspaceResponse<CreatedWorkspace> createDefaultWorkspace(UUID workspaceId)
       throws Exception {
     String path = testConfig.getWsmWorkspacesBaseUrl();
     String userEmail = testConfig.getUserEmail();
-    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(workspaceId);
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody().id(workspaceId).stage(WorkspaceStageModel.MC_WORKSPACE);
     String jsonBody = testUtils.mapToJson(body);
 
     return workspaceManagerTestClient.post(userEmail, path, jsonBody, CreatedWorkspace.class);
@@ -333,7 +312,7 @@ public class WorkspaceIntegrationTest extends BaseIntegrationTest {
         This ticket will implement caching for auth token using Caffeine AS-428
     */
     String userEmail = testConfig.getUserEmail();
-    String token = authService.getAuthToken(userEmail);
+    authService.getAuthToken(userEmail);
     String workspaceBaseUrl = testConfig.getWsmWorkspacesBaseUrl();
 
     for (UUID uuid : workspaceIds) {

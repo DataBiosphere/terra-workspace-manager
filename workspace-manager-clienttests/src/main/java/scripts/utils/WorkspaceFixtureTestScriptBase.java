@@ -67,12 +67,11 @@ public abstract class WorkspaceFixtureTestScriptBase extends WorkspaceTestScript
   }
 
   /**
-   * Override this method to change the stage model of the workspace. Preserves default of
-   * RAWLS_WORKSPACE.
-   *
+   * Override this method to change the stage model of the workspace. Preserves default
+   * of MC_WORKSPACE.
    * @return the stage model to be used in create
    */
   protected WorkspaceStageModel getStageModel() {
-    return WorkspaceStageModel.RAWLS_WORKSPACE;
+    return WorkspaceStageModel.MC_WORKSPACE;
   }
 }

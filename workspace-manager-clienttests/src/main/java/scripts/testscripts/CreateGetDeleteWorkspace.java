@@ -22,15 +22,14 @@ public class CreateGetDeleteWorkspace extends WorkspaceTestScriptBase {
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws ApiException {
     UUID workspaceId = UUID.randomUUID();
-    CreateWorkspaceRequestBody requestBody = new CreateWorkspaceRequestBody();
-    requestBody.setId(workspaceId);
+    CreateWorkspaceRequestBody requestBody = new CreateWorkspaceRequestBody().id(workspaceId).stage(WorkspaceStageModel.MC_WORKSPACE);
     workspaceApi.createWorkspace(requestBody);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "CREATE workspace");
 
     WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspaceId);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "GET workspace");
     assertThat(workspaceDescription.getId(), equalTo(workspaceId));
-    assertThat(workspaceDescription.getStage(), equalTo(WorkspaceStageModel.RAWLS_WORKSPACE));
+    assertThat(workspaceDescription.getStage(), equalTo(WorkspaceStageModel.MC_WORKSPACE));
 
     workspaceApi.deleteWorkspace(workspaceId);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");

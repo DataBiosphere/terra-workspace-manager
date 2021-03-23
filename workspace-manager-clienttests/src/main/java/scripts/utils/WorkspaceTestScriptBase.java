@@ -68,7 +68,5 @@ public abstract class WorkspaceTestScriptBase extends TestScript {
   protected abstract void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws ApiException;
 
-  protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-      throws ApiException {}
-  ;
+  protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws ApiException {}
 }

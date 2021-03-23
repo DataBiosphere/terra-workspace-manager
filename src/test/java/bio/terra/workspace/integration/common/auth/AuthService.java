@@ -30,7 +30,7 @@ public class AuthService {
   }
 
   private String getAccessToken(String userEmail) throws IOException {
-    if (!Optional.ofNullable(serviceAccountFile).isPresent()) {
+    if (Optional.ofNullable(serviceAccountFile).isEmpty()) {
       throw new IllegalStateException(
           String.format(
               "Service account file not found: %s",

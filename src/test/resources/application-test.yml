@@ -1,6 +1,7 @@
 workspace:
   buffer:
-    pool-id: workspace_manager_v1
+    enabled: true
+    pool-id: workspace_manager_v3
     instance-url: https://buffer.tools.integ.envs.broadinstitute.org
     client-credential-file-path: rendered/buffer-client-sa-account.json
 
@@ -24,10 +25,12 @@ workspace:
     # this status check. Mockito does not like it's mocks being modified and called concurrently.
     cron: "-"
 
-  tracing.enabled: false
-
   workspace-database:
     initialize-on-start: true
     password: dbpwd
     uri: jdbc:postgresql://127.0.0.1:5432/testdb
     username: dbuser
+
+terra.common:
+  tracing:
+    stackdriverExportEnabled: false

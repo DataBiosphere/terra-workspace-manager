@@ -18,9 +18,9 @@ import org.springframework.http.HttpStatus;
 
 public class CreateWorkspaceStep implements Step {
 
-  private WorkspaceDao workspaceDao;
+  private final WorkspaceDao workspaceDao;
 
-  private Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
+  private final Logger logger = LoggerFactory.getLogger(CreateWorkspaceStep.class);
 
   public CreateWorkspaceStep(WorkspaceDao workspaceDao) {
     this.workspaceDao = workspaceDao;
@@ -32,9 +32,11 @@ public class CreateWorkspaceStep implements Step {
 
     UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
 
-    Optional<SpendProfileId> spendProfileId =
-        Optional.ofNullable(inputMap.get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, String.class))
-            .map(SpendProfileId::create);
+    String spendProfileIdString =
+        inputMap.get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, String.class);
+    SpendProfileId spendProfileId =
+        Optional.ofNullable(spendProfileIdString).map(SpendProfileId::create).orElse(null);
+
     WorkspaceStage workspaceStage =
         inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStage.class);
     Workspace workspaceToCreate =
@@ -47,7 +49,7 @@ public class CreateWorkspaceStep implements Step {
     workspaceDao.createWorkspace(workspaceToCreate);
 
     FlightUtils.setResponse(flightContext, workspaceId, HttpStatus.OK);
-    logger.info(String.format("Workspace created with id %s", workspaceId));
+    logger.info("Workspace created with id {}", workspaceId);
 
     return StepResult.getStepResultSuccess();
   }

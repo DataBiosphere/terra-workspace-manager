@@ -4,36 +4,17 @@
 name: Test Runner Nightly Integration Tests
 
 on:
-  push:
-    branches: [ dev ]
-  pull_request:
-      branches: [ '**' ]
+  workflow_dispatch: {}
+  schedule:
+  - cron: '0 7 * * *' # run at 7 AM UTC, 2 AM ET.
 
 jobs:
   test-runner-integration:
 
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:12.3
-        env:
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
       - uses: actions/checkout@v2
-      # This step is needed when running test using a local server.
-      - name: Initialize Postgres DB
-        env:
-          PGPASSWORD: postgres
-        run: psql -h 127.0.0.1 -U postgres -f ./local-dev/local-postgres-init.sql
       - name: Set up AdoptOpenJDK 11
         uses: joschi/setup-jdk@v2
         with:
@@ -49,8 +30,6 @@ jobs:
           restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-
-      # These steps aren't needed for unit tests
       - name: Get Vault token
         id: vault-token-step
         env:
@@ -67,24 +46,8 @@ jobs:
       - name: Set permissions and render test configurations
         run: |
           chmod +x render_config.sh
-          ./render_config.sh ${{ steps.vault-token-step.outputs.vault-token }} dev
+          ./render_config.sh dev ${{ steps.vault-token-step.outputs.vault-token }}
           chmod +r rendered
-
-      # Spin up a local server.
-      - name: Run local server (in background)
-        run: ./gradlew bootRun &
-      - name: Wait for local server to start
-        # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
-        run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
-
-      - name: Build the WSM client
-        run: |
-          echo "Building WSM client library"
-          ./gradlew :workspace-manager-client:clean :workspace-manager-client:assemble
-          cd workspace-manager-clienttests
-          export ORG_GRADLE_PROJECT_workspacemanagerclientjar=$(find .. -type f -name "workspace-manager-client*.jar")
-          echo "ORG_GRADLE_PROJECT_workspacemanagerclientjar = ${ORG_GRADLE_PROJECT_workspacemanagerclientjar}"
-
       # We can also set the env var in the GH action script to specify which server we are testing against.
       # This will be particularly helpful once we switch over to testing against any test env -- then it's just a change to the env var.
       # Please refer to https://github.com/DataBiosphere/terra-test-runner#override-the-server-from-the-command-line for more information.
@@ -102,3 +65,10 @@ jobs:
           cd workspace-manager-clienttests
           echo "Upload test results to Google Bucket"
           ./gradlew uploadResults --args="CompressDirectoryToBucket.json /tmp/TestRunnerResults"
+
+      - name: Upload test results to BigQuery Test Runner Dataset
+        if: ${{ always() }}
+        run: |
+          cd workspace-manager-clienttests
+          echo "Upload test results to BigQuery Test Runner Dataset"
+          ./gradlew uploadResults --args="SummariesToBigQuery.json /tmp/TestRunnerResults"

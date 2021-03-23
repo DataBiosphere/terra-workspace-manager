@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.utils.BaseStatusService;
 import bio.terra.workspace.common.utils.StatusSubsystem;
-import bio.terra.workspace.generated.model.SystemStatusSystems;
+import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 public class BaseStatusServiceTest extends BaseUnitTest {
 
-  private class BaseStatusServiceTestImpl extends BaseStatusService {
+  private static class BaseStatusServiceTestImpl extends BaseStatusService {
     public BaseStatusServiceTestImpl(List<StatusSubsystem> subsystems) {
       super(/*staleThresholdMillis=*/ 600000);
       for (int i = 0; i < subsystems.size(); i++) {
@@ -23,9 +23,9 @@ public class BaseStatusServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void testSingleComponent() throws Exception {
+  void testSingleComponent() {
     List<StatusSubsystem> subsystems = new ArrayList<>();
-    subsystems.add(new StatusSubsystem(() -> new SystemStatusSystems().ok(true), true));
+    subsystems.add(new StatusSubsystem(() -> new ApiSystemStatusSystems().ok(true), true));
 
     BaseStatusServiceTestImpl statusService = new BaseStatusServiceTestImpl(subsystems);
     statusService.checkSubsystems();
@@ -33,10 +33,10 @@ public class BaseStatusServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void testPassesWithNonCriticalFailure() throws Exception {
+  void testPassesWithNonCriticalFailure() {
     List<StatusSubsystem> subsystems = new ArrayList<>();
-    subsystems.add(new StatusSubsystem(() -> new SystemStatusSystems().ok(true), true));
-    subsystems.add(new StatusSubsystem(() -> new SystemStatusSystems().ok(false), false));
+    subsystems.add(new StatusSubsystem(() -> new ApiSystemStatusSystems().ok(true), true));
+    subsystems.add(new StatusSubsystem(() -> new ApiSystemStatusSystems().ok(false), false));
 
     BaseStatusServiceTestImpl statusService = new BaseStatusServiceTestImpl(subsystems);
     statusService.checkSubsystems();
@@ -44,10 +44,10 @@ public class BaseStatusServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void testNotOkWithCriticalFailure() throws Exception {
+  void testNotOkWithCriticalFailure() {
     List<StatusSubsystem> subsystems = new ArrayList<>();
-    subsystems.add(new StatusSubsystem(() -> new SystemStatusSystems().ok(false), true));
-    subsystems.add(new StatusSubsystem(() -> new SystemStatusSystems().ok(true), false));
+    subsystems.add(new StatusSubsystem(() -> new ApiSystemStatusSystems().ok(false), true));
+    subsystems.add(new StatusSubsystem(() -> new ApiSystemStatusSystems().ok(true), false));
 
     BaseStatusServiceTestImpl statusService = new BaseStatusServiceTestImpl(subsystems);
     statusService.checkSubsystems();
@@ -55,9 +55,9 @@ public class BaseStatusServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void testNotOkWithCriticalException() throws Exception {
+  void testNotOkWithCriticalException() {
     List<StatusSubsystem> subsystems = new ArrayList<>();
-    Supplier<SystemStatusSystems> exceptionSupplier =
+    Supplier<ApiSystemStatusSystems> exceptionSupplier =
         () -> {
           throw new RuntimeException("oh no");
         };
@@ -69,9 +69,9 @@ public class BaseStatusServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void testOkWithNonCriticalException() throws Exception {
+  void testOkWithNonCriticalException() {
     List<StatusSubsystem> subsystems = new ArrayList<>();
-    Supplier<SystemStatusSystems> exceptionSupplier =
+    Supplier<ApiSystemStatusSystems> exceptionSupplier =
         () -> {
           throw new RuntimeException("oh no");
         };

@@ -3,15 +3,17 @@ package bio.terra.workspace.service.job;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 
-import bio.terra.stairway.exception.StairwayException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.generated.model.JobModel;
+import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.job.exception.InvalidJobIdException;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,8 +25,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 
-public class JobServiceTest extends BaseUnitTest {
-  private AuthenticatedUserRequest testUser =
+class JobServiceTest extends BaseUnitTest {
+  private final AuthenticatedUserRequest testUser =
       new AuthenticatedUserRequest()
           .subjectId("StairwayUnit")
           .email("stairway@unit.com")
@@ -35,7 +37,8 @@ public class JobServiceTest extends BaseUnitTest {
   @MockBean private SamService mockSamService;
 
   @BeforeEach
-  public void setup() {
+  @SuppressFBWarnings(value = "DE_MIGHT_IGNORE", justification = "Mockito flakiness")
+  void setup() {
     try {
       Mockito.doReturn(true).when(mockSamService.isAuthorized(any(), any(), any(), any()));
     } catch (Exception e) {
@@ -44,7 +47,27 @@ public class JobServiceTest extends BaseUnitTest {
   }
 
   @Test
-  public void retrieveTest() throws Exception {
+  void emptyStringJobIdTest() {
+    String testJobId = "";
+    assertThrows(
+        InvalidJobIdException.class,
+        () ->
+            jobService.newJob(
+                "description", testJobId, JobServiceTestFlight.class, null, testUser));
+  }
+
+  @Test
+  void whitespaceStringJobIdTest() {
+    String testJobId = "\t ";
+    assertThrows(
+        InvalidJobIdException.class,
+        () ->
+            jobService.newJob(
+                "description", testJobId, JobServiceTestFlight.class, null, testUser));
+  }
+
+  @Test
+  void retrieveTest() throws Exception {
     // We perform 7 flights and then retrieve and enumerate them.
     // The fids list should be in exactly the same order as the database ordered by submit time.
 
@@ -80,66 +103,60 @@ public class JobServiceTest extends BaseUnitTest {
   }
 
   private void testSingleRetrieval(List<String> fids) {
-    JobModel response = jobService.retrieveJob(fids.get(2), testUser);
+    ApiJobReport response = jobService.retrieveJob(fids.get(2), testUser);
     assertThat(response, notNullValue());
-    validateJobModel(response, 2, fids);
+    validateJobReport(response, 2, fids);
   }
 
   private void testResultRetrieval(List<String> fids) {
-    JobService.JobResultWithStatus<String> resultHolder =
+    JobService.JobResultOrException<String> resultHolder =
         jobService.retrieveJobResult(fids.get(2), String.class, testUser);
 
-    assertThat(resultHolder.getStatusCode(), equalTo(HttpStatus.I_AM_A_TEAPOT));
+    assertNull(resultHolder.getException());
     assertThat(resultHolder.getResult(), equalTo(makeDescription(2)));
   }
 
   // Get some range and compare it with the fids
   private void testEnumRange(List<String> fids, int offset, int limit) {
-    List<JobModel> jobList = jobService.enumerateJobs(offset, limit, testUser);
+    List<ApiJobReport> jobList = jobService.enumerateJobs(offset, limit, testUser);
     assertThat(jobList, notNullValue());
     int index = offset;
-    for (JobModel job : jobList) {
-      validateJobModel(job, index, fids);
+    for (ApiJobReport job : jobList) {
+      validateJobReport(job, index, fids);
       index++;
     }
   }
 
   // Get some range and make sure we got the number we expected
   private void testEnumCount(int count, int offset, int length) {
-    List<JobModel> jobList = jobService.enumerateJobs(offset, length, testUser);
+    List<ApiJobReport> jobList = jobService.enumerateJobs(offset, length, testUser);
     assertThat(jobList, notNullValue());
     assertThat(jobList.size(), equalTo(count));
   }
 
   @Test
-  public void testBadIdRetrieveJob() {
-    assertThrows(
-        JobNotFoundException.class,
-        () -> {
-          jobService.retrieveJob("abcdef", testUser);
-        });
+  void testBadIdRetrieveJob() {
+    assertThrows(JobNotFoundException.class, () -> jobService.retrieveJob("abcdef", testUser));
   }
 
   @Test
-  public void testBadIdRetrieveResult() {
+  void testBadIdRetrieveResult() {
     assertThrows(
         JobNotFoundException.class,
-        () -> {
-          jobService.retrieveJobResult("abcdef", Object.class, testUser);
-        });
+        () -> jobService.retrieveJobResult("abcdef", Object.class, testUser));
   }
 
-  private void validateJobModel(JobModel jm, int index, List<String> fids) {
-    assertThat(jm.getDescription(), equalTo(makeDescription(index)));
-    assertThat(jm.getId(), equalTo(fids.get(index)));
-    assertThat(jm.getStatus(), equalTo(JobModel.StatusEnum.SUCCEEDED));
-    assertThat(jm.getStatusCode(), equalTo(HttpStatus.I_AM_A_TEAPOT.value()));
+  private void validateJobReport(ApiJobReport jr, int index, List<String> fids) {
+    assertThat(jr.getDescription(), equalTo(makeDescription(index)));
+    assertThat(jr.getId(), equalTo(fids.get(index)));
+    assertThat(jr.getStatus(), equalTo(ApiJobReport.StatusEnum.SUCCEEDED));
+    assertThat(jr.getStatusCode(), equalTo(HttpStatus.I_AM_A_TEAPOT.value()));
   }
 
   // Submit a flight; wait for it to finish; return the flight id
-  private String runFlight(String description) throws StairwayException {
+  private String runFlight(String description) {
     String jobId = UUID.randomUUID().toString();
-    jobService.newJob(description, jobId, JobServiceTestFlight.class, null, testUser).submit(false);
+    jobService.newJob(description, jobId, JobServiceTestFlight.class, null, testUser).submit();
     jobService.waitForJob(jobId);
     return jobId;
   }

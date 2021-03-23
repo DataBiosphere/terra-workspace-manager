@@ -1,15 +1,13 @@
 package bio.terra.workspace.common.utils;
 
-import bio.terra.workspace.app.configuration.external.GoogleWorkspaceConfiguration;
-import bio.terra.workspace.db.DataReferenceDao;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.SamService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * The purpose of FlightBeanBag is to provide a clean interface for flights to get access to
@@ -22,31 +20,25 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class FlightBeanBag {
   private final BufferService bufferService;
   private final CrlService crlService;
-  private final DataReferenceDao dataReferenceDao;
-  private final GoogleWorkspaceConfiguration googleWorkspaceConfiguration;
-  private final ObjectMapper objectMapper;
+  private final ResourceDao resourceDao;
   private final SamService samService;
-  private final TransactionTemplate transactionTemplate;
   private final WorkspaceDao workspaceDao;
+  private final DataRepoService dataRepoService;
 
   @Autowired
   public FlightBeanBag(
       BufferService bufferService,
       CrlService crlService,
-      DataReferenceDao dataReferenceDao,
-      GoogleWorkspaceConfiguration googleWorkspaceConfiguration,
-      ObjectMapper objectMapper,
+      ResourceDao resourceDao,
       SamService samService,
-      TransactionTemplate transactionTemplate,
-      WorkspaceDao workspaceDao) {
+      WorkspaceDao workspaceDao,
+      DataRepoService dataRepoService) {
     this.bufferService = bufferService;
     this.crlService = crlService;
-    this.dataReferenceDao = dataReferenceDao;
-    this.googleWorkspaceConfiguration = googleWorkspaceConfiguration;
-    this.objectMapper = objectMapper;
+    this.resourceDao = resourceDao;
     this.samService = samService;
-    this.transactionTemplate = transactionTemplate;
     this.workspaceDao = workspaceDao;
+    this.dataRepoService = dataRepoService;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -61,27 +53,19 @@ public class FlightBeanBag {
     return crlService;
   }
 
-  public DataReferenceDao getDataReferenceDao() {
-    return dataReferenceDao;
-  }
-
-  public GoogleWorkspaceConfiguration getGoogleWorkspaceConfiguration() {
-    return googleWorkspaceConfiguration;
-  }
-
-  public ObjectMapper getObjectMapper() {
-    return objectMapper;
+  public ResourceDao getResourceDao() {
+    return resourceDao;
   }
 
   public SamService getSamService() {
     return samService;
   }
 
-  public TransactionTemplate getTransactionTemplate() {
-    return transactionTemplate;
-  }
-
   public WorkspaceDao getWorkspaceDao() {
     return workspaceDao;
+  }
+
+  public DataRepoService getDataRepoService() {
+    return dataRepoService;
   }
 }

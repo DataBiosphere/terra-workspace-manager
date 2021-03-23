@@ -9,14 +9,12 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import java.util.UUID;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
 public class DeleteWorkspaceStateStep implements Step {
 
-  private WorkspaceDao workspaceDao;
+  private final WorkspaceDao workspaceDao;
 
-  @Autowired
   public DeleteWorkspaceStateStep(WorkspaceDao workspaceDao) {
     this.workspaceDao = workspaceDao;
   }
@@ -29,7 +27,7 @@ public class DeleteWorkspaceStateStep implements Step {
     // not found, but the user-facing delete operation should return a 204 even if the workspace is
     // not found.
     workspaceDao.deleteWorkspace(workspaceID);
-    FlightUtils.setResponse(flightContext, null, HttpStatus.valueOf(204));
+    FlightUtils.setResponse(flightContext, null, HttpStatus.NO_CONTENT);
     return StepResult.getStepResultSuccess();
   }
 

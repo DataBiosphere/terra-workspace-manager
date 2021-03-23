@@ -6,19 +6,18 @@ import bio.terra.stairway.*;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.job.JobService;
 import com.google.common.collect.ImmutableMap;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class MdcHookTest extends BaseUnitTest {
+class MdcHookTest extends BaseUnitTest {
   @Autowired private MdcHook mdcHook;
   @Autowired private JobService jobService;
 
   @Test
-  public void initialContextPropagated_Do() throws Exception {
+  void initialContextPropagated_Do() throws Exception {
     Stairway stairway = jobService.getStairway();
 
     MDC.clear();
@@ -34,7 +33,7 @@ public class MdcHookTest extends BaseUnitTest {
   }
 
   @Test
-  public void initialContextPropagated_Undo() throws Exception {
+  void initialContextPropagated_Undo() throws Exception {
     Stairway stairway = jobService.getStairway();
 
     MDC.clear();
@@ -53,7 +52,7 @@ public class MdcHookTest extends BaseUnitTest {
   }
 
   @Test
-  public void noInitialContextOk() throws Exception {
+  void noInitialContextOk() throws Exception {
     Stairway stairway = jobService.getStairway();
 
     MDC.clear();
@@ -68,7 +67,7 @@ public class MdcHookTest extends BaseUnitTest {
   }
 
   @Test
-  public void inputParametersNotSetOk() throws Exception {
+  void inputParametersNotSetOk() throws Exception {
     Stairway stairway = jobService.getStairway();
 
     String flightId = stairway.createFlightId();
@@ -81,7 +80,7 @@ public class MdcHookTest extends BaseUnitTest {
 
   /** Test that the CheckMdc Step will fail the flight as expected by the rest of the tests. */
   @Test
-  public void testCheckMdc() throws Exception {
+  void testCheckMdc() throws Exception {
     Stairway stairway = jobService.getStairway();
 
     String flightId = stairway.createFlightId();
@@ -140,10 +139,6 @@ public class MdcHookTest extends BaseUnitTest {
 
     private void assertMatchesExpectedContext() {
       try {
-        Map<String, String> mdcContext = MDC.getCopyOfContextMap();
-        if (mdcContext == null) {
-          mdcContext = ImmutableMap.of();
-        }
         assertEquals(expectedContext, MDC.getCopyOfContextMap());
       } catch (AssertionError error) {
         // Rethrow an AssertionError as an Exception so that Stairway can handle it

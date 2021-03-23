@@ -29,7 +29,6 @@ public class EnumerateDataReferences extends WorkspaceFixtureTestScriptBase {
 
   private static final int DATA_REFERENCE_COUNT = 10;
   private static final int PAGE_SIZE = 4;
-  private List<UUID> dataReferenceIds;
 
   @Override
   public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
@@ -60,7 +59,7 @@ public class EnumerateDataReferences extends WorkspaceFixtureTestScriptBase {
           dataReferenceDescription.getReferenceId().toString());
     }
 
-    dataReferenceIds = referenceIdListBuilder.build();
+    List<UUID> dataReferenceIds = referenceIdListBuilder.build();
     assertThat(dataReferenceIds.size(), equalTo(DATA_REFERENCE_COUNT));
 
     logger.info("Created {} data references", dataReferenceIds.size());

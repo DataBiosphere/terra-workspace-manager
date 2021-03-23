@@ -12,6 +12,7 @@ A swagger-ui page is available at /swagger-ui.html on any running instance. For 
 - alpha: https://workspace.dsde-alpha.broadinstitute.org/swagger-ui.html
 - staging: https://workspace.dsde-staging.broadinstitute.org/swagger-ui.html
 - perf: https://workspace.dsde-perf.broadinstitute.org/swagger-ui.html
+- prod: https://workspace.dsde-prod.broadinstitute.org/swagger-ui.html 
 
 We currently do not deploy to a production environment.
 
@@ -69,7 +70,7 @@ of the class. Spring will autowire all of the inputs to the constructor.
 ```java
 @Component
 public class Foo {
-    private Bar bar;
+    private final Bar bar;
     private Fribble fribble;
 
     @Autowired
@@ -166,7 +167,7 @@ Workspace Manager publishes an API client library based on the OpenAPI Spec v3.
 
 ### Usage (Gradle)
 ```gradle
-implementation(group: 'bio.terra', name: 'terra-workspace-manager-client', version: '0.0.3-SNAPSHOT')
+implementation(group: 'bio.terra', name: 'terra-workspace-manager-client', version: '0.11.0-SNAPSHOT')
 ```
 
 Note that the publishing of this artifact is currently manual. Whenever the OpenAPI definitions change,
@@ -179,5 +180,5 @@ breaking changes at all costs.
 To publish, you will need to export the `ARTIFACTORY_USERNAME` and `ARTIFACTORY_PASSWORD` environment variables for the Broad artifactory. To build and publish:
 
 ```sh
-./gradlew terra-workspace-manager-client:artifactoryPublish
+./gradlew workspace-manager-client:artifactoryPublish
 ```

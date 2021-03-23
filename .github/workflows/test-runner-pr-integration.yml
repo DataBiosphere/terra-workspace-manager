@@ -1,0 +1,100 @@
+# Action for running client integration tests against PRs. This test uses local
+# server changes but runs a published version of the client, so it will not pick
+# up local client changes.
+
+name: PR Client Library Integration Tests
+on:
+  push:
+    branches: [ dev ]
+  pull_request:
+    branches: [ '**' ]
+
+jobs:
+  integration-test:
+
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13.1
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+        - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v2
+    # This step is needed when running test using a local server.
+    - name: Initialize Postgres DB
+      env:
+        PGPASSWORD: postgres
+      run: psql -h 127.0.0.1 -U postgres -f ./local-dev/local-postgres-init.sql
+    - name: Set up AdoptOpenJDK 11
+      uses: joschi/setup-jdk@v2
+      with:
+        java-version: 11
+    # This step caches Gradle packages for reuse in the same VM instance.
+    - name: Cache Gradle packages
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
+        restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Get Vault token
+      id: vault-token-step
+      env:
+        VAULT_ADDR: https://clotho.broadinstitute.org:8200
+      run: |
+        VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
+          -e "VAULT_ADDR=${VAULT_ADDR}" \
+          vault:1.1.0 \
+          vault write -field token \
+            auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+            secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+        echo ::set-output name=vault-token::$VAULT_TOKEN
+        echo ::add-mask::$VAULT_TOKEN
+    - name: Set permissions and render test configurations
+      run: |
+        chmod +x render_config.sh
+        ./render_config.sh dev ${{ steps.vault-token-step.outputs.vault-token }}
+        chmod +r rendered
+
+    # Spin up a local server.
+    - name: Run local server (in background)
+      run: ./gradlew bootRun &
+    - name: Wait for local server to start
+      # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
+      run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
+
+    - name: Run the Basic Integration test suite
+      run: |
+        cd workspace-manager-clienttests
+        echo "Test Runner config"
+        ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
+        echo "Running test suite"
+        export TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-local.json"
+        ./gradlew runTest --args="suites/BasicIntegration.json /tmp/TestRunnerResults"
+
+    - name: Upload test results to Google Bucket
+      if: ${{ always() }}
+      run: |
+        cd workspace-manager-clienttests
+        echo "Upload test results to Google Bucket"
+        ./gradlew uploadResults --args="CompressDirectoryToBucket.json /tmp/TestRunnerResults"
+
+    - name: Upload test results to BigQuery Test Runner Dataset
+      if: ${{ always() }}
+      run: |
+        cd workspace-manager-clienttests
+        echo "Upload test results to BigQuery Test Runner Dataset"
+        ./gradlew uploadResults --args="SummariesToBigQuery.json /tmp/TestRunnerResults"

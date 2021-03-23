@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.workspace.flight;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
@@ -13,17 +15,19 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
-import bio.terra.workspace.service.workspace.WorkspaceCloudContext;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import java.time.Duration;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
+class DeleteGoogleContextFlightTest extends BaseConnectedTest {
   /**
    * How long to wait for a delete context Stairway flight to complete before timing out the test.
    */
@@ -31,7 +35,7 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
   /**
    * How long to wait for a create context Stairway flight to complete before timing out the test.
    */
-  private static final Duration CREATION_FLIGHT_TIMEOUT = Duration.ofMinutes(5);
+  private static final Duration CREATION_FLIGHT_TIMEOUT = Duration.ofMinutes(3);
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private CrlService crl;
@@ -40,7 +44,8 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
   @Autowired private UserAccessUtils userAccessUtils;
 
   @Test
-  public void deleteContext() throws Exception {
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  void deleteContext() throws Exception {
     UUID workspaceId = createWorkspace();
     FlightMap createParameters = new FlightMap();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
@@ -53,13 +58,16 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            CreateGoogleContextFlight.class,
+            CreateGcpContextFlight.class,
             createParameters,
             CREATION_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
+    Workspace workspace = workspaceService.getWorkspace(workspaceId, userReq);
     String projectId =
-        workspaceService.getCloudContext(workspaceId, userReq).googleProjectId().get();
+        workspace.getGcpCloudContext().map(GcpCloudContext::getGcpProjectId).orElse(null);
+    assertNotNull(projectId);
+
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals("ACTIVE", project.getLifecycleState());
 
@@ -69,36 +77,37 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
     flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            DeleteGoogleContextFlight.class,
+            DeleteGcpContextFlight.class,
             deleteParameters,
             DELETION_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
-    assertEquals(
-        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
+    workspace = workspaceService.getWorkspace(workspaceId, userReq);
+    assertTrue(workspace.getGcpCloudContext().isEmpty());
+
     project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals("DELETE_REQUESTED", project.getLifecycleState());
   }
 
   @Test
-  public void deleteNonExistentContextIsOk() throws Exception {
+  void deleteNonExistentContextIsOk() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
-    assertEquals(
-        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
+    Workspace workspace = workspaceService.getWorkspace(workspaceId, userReq);
+    assertTrue(workspace.getGcpCloudContext().isEmpty());
 
     FlightMap inputParameters = new FlightMap();
     inputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            DeleteGoogleContextFlight.class,
+            DeleteGcpContextFlight.class,
             inputParameters,
             DELETION_FLIGHT_TIMEOUT);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
-    assertEquals(
-        WorkspaceCloudContext.none(), workspaceService.getCloudContext(workspaceId, userReq));
+    workspace = workspaceService.getWorkspace(workspaceId, userReq);
+    assertTrue(workspace.getGcpCloudContext().isEmpty());
   }
 
   /** Creates a workspace, returning its workspaceId. */
@@ -107,7 +116,7 @@ public class DeleteGoogleContextFlightTest extends BaseConnectedTest {
         WorkspaceRequest.builder()
             .workspaceId(UUID.randomUUID())
             .jobId(UUID.randomUUID().toString())
-            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     return workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
   }
