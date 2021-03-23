@@ -156,5 +156,5 @@ jobs:
         channel: "#dsp-appservices-notifications"
 #        channel: "#dsde-qa"
         username: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} tests"
-        author_name: "${{ steps.set-env-step.outputs.test-env }} ${{ process.env.AS_JOB }}"
+        author_name: "${{ steps.set-env-step.outputs.test-env }} ${{ github.workflow }}"
         fields: repo,job,workflow,commit,eventName,author,took
