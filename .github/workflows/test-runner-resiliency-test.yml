@@ -3,9 +3,7 @@
 name: Test Runner Resiliency Test
 
 on:
-  workflow_dispatch: {}
-  schedule:
-    - cron: '0 7 * * *' # run at 6 AM UTC, 2 AM ET.
+  push
 
 jobs:
   test-runner-resiliency:
@@ -75,8 +73,10 @@ jobs:
           echo "Test Runner config"
           ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
           ./render-k8s-config.sh wsmtest ${{ steps.vault-token-step.outputs.vault-token }}
+      # Set env var (TEST_RUNNER_SERVER_SPECIFICATION_FILE)
+          export TEST_RUNNER_SERVER_SPECIFICATION_FILE=workspace-wsmtest-resiliency.json
           echo "Running test suite"
-          ./gradlew runTest --args="suites/WsmTestResiliency.json /tmp/TestRunnerResults"
+          ./gradlew runTest --args="suites/BasicResiliency.json /tmp/TestRunnerResults"
 
       - name: Upload test results to Google Bucket
         if: ${{ always() }}
