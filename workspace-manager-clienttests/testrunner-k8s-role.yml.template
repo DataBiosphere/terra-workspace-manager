@@ -16,7 +16,7 @@ metadata:
   name: testrunner-k8s-role
   # A k8s namespace: e.g. terra-wsmtest, terra-ichang.
   # Avoid using default or system namespaces such as kube-system.
-  namespace: terra-ENV
+  namespace: terra-NAMESPACE
   labels:
     app.kubernetes.io/component: APP
 rules:

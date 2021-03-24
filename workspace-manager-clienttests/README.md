@@ -67,6 +67,14 @@ The second argument is the directory to put the test results in.
 ./gradlew runTest --args="configs/resiliency/DeleteInitialPods.json /tmp/TR"
 ```
 
+#### Script for setting up Test Runner to run resiliency tests in your own namespace
+
+For development, please use the script `setup-k8s-testrunner.sh` to provision the necessary Test Runner Kubernetes objects.
+The script has detailed usage comments.
+
+```../setup-k8s-testrunner.sh <kubeconfig-context-name> <namespace> <appname>
+```
+
 #### Script for rendering Kubernetes Service Account Secrets
 
 Please use the script `render-k8s-config.sh` with a valid namespace to render the in-cluster service account secrets for resiliency tests.

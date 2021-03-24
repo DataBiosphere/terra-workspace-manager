@@ -16,14 +16,14 @@ metadata:
   name: testrunner-k8s-sa-rolebinding
   # A k8s namespace: e.g. terra-wsmtest, terra-ichang.
   # Avoid using default or system namespaces such as kube-system.
-  namespace: terra-ENV
+  namespace: terra-NAMESPACE
   labels:
     app.kubernetes.io/component: APP
 subjects:
   # Authorize In-Cluster Service Account
   - kind: ServiceAccount
     name: testrunner-k8s-sa
-    namespace: terra-ENV
+    namespace: terra-NAMESPACE
 roleRef:
   kind: Role
   name: testrunner-k8s-role
