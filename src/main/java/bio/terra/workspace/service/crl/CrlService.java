@@ -96,11 +96,14 @@ public class CrlService {
   }
 
   /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
-  public BigQueryCow createBigQueryCow(AuthenticatedUserRequest userReq) {
+  public BigQueryCow createBigQueryCow(String projectId, AuthenticatedUserRequest userReq) {
     assertCrlInUse();
     return new BigQueryCow(
         clientConfig,
-        BigQueryOptions.newBuilder().setCredentials(googleCredentialsFromUserReq(userReq)).build());
+        BigQueryOptions.newBuilder()
+            .setCredentials(googleCredentialsFromUserReq(userReq))
+            .setProjectId(projectId)
+            .build());
   }
 
   /**
@@ -108,7 +111,7 @@ public class CrlService {
    * service and generate an answer without actually touching BigQuery.
    *
    * @param projectId Google project id where the dataset is
-   * @param datasetId name of the dataset
+   * @param datasetName name of the dataset
    * @param userRequest auth info
    * @return true if the dataset exists
    */
@@ -118,14 +121,35 @@ public class CrlService {
       DatasetId datasetId = DatasetId.of(projectId, datasetName);
       // BigQueryCow.get() returns null if the bucket does not exist or a user does not have access,
       // which fails validation.
-      DatasetCow dataset = createBigQueryCow(userRequest).getDataset(datasetId);
+      DatasetCow dataset = createBigQueryCow(projectId, userRequest).getDataset(datasetId);
       return (dataset != null);
     } catch (BigQueryException e) {
       throw new InvalidReferenceException("Error while trying to access BigQuery dataset", e);
     }
   }
 
-  /** @return CRL {@link StorageCow} which wraps Google Cloud Storage API */
+  /**
+   * @return CRL {@link StorageCow} which wraps Google Cloud Storage API in the given project using
+   *     provided user credentials.
+   */
+  public StorageCow createStorageCow(String projectId, AuthenticatedUserRequest userReq) {
+    assertCrlInUse();
+
+    return new StorageCow(
+        clientConfig,
+        StorageOptions.newBuilder()
+            .setCredentials(googleCredentialsFromUserReq(userReq))
+            .setProjectId(projectId)
+            .build());
+  }
+
+  /**
+   * CRL {@link StorageCow} using the default project from the application's credentials.
+   * Convenience for read-only operations, as GCP buckets are actually namespaced globally and
+   * project IDs are not required to read them.
+   *
+   * @param userReq Credentials of the user to make requests for
+   */
   public StorageCow createStorageCow(AuthenticatedUserRequest userReq) {
     assertCrlInUse();
 

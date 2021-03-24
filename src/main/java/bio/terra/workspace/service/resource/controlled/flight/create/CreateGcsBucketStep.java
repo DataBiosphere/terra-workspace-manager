@@ -8,6 +8,8 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.db.exception.CloudContextRequiredException;
 import bio.terra.workspace.generated.model.ApiGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcsBucketLifecycle;
@@ -17,6 +19,7 @@ import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.util.DateTime;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
@@ -36,14 +39,17 @@ public class CreateGcsBucketStep implements Step {
 
   private final CrlService crlService;
   private final ControlledGcsBucketResource resource;
+  private final WorkspaceDao workspaceDao;
   private final AuthenticatedUserRequest userRequest;
 
   public CreateGcsBucketStep(
       CrlService crlService,
       ControlledGcsBucketResource resource,
+      WorkspaceDao workspaceDao,
       AuthenticatedUserRequest userRequest) {
     this.crlService = crlService;
     this.resource = resource;
+    this.workspaceDao = workspaceDao;
     this.userRequest = userRequest;
   }
 
@@ -53,6 +59,14 @@ public class CreateGcsBucketStep implements Step {
     FlightMap inputMap = flightContext.getInputParameters();
     ApiGcsBucketCreationParameters creationParameters =
         inputMap.get(CREATION_PARAMETERS, ApiGcsBucketCreationParameters.class);
+    String gcpProjectId =
+        workspaceDao
+            .getGcpCloudContext(resource.getWorkspaceId())
+            .orElseThrow(
+                () ->
+                    new CloudContextRequiredException(
+                        "No cloud context found in which to create a controlled resource"))
+            .getGcpProjectId();
 
     final BucketInfo bucketInfo =
         BucketInfo.newBuilder(resource.getBucketName())
@@ -61,14 +75,22 @@ public class CreateGcsBucketStep implements Step {
             .setLifecycleRules(ApiConversions.toGcsApi(creationParameters.getLifecycle()))
             .build();
 
-    final StorageCow storageCow = crlService.createStorageCow(userRequest);
+    final StorageCow storageCow = crlService.createStorageCow(gcpProjectId, userRequest);
     storageCow.create(bucketInfo);
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    final StorageCow storageCow = crlService.createStorageCow(userRequest);
+    String gcpProjectId =
+        workspaceDao
+            .getGcpCloudContext(resource.getWorkspaceId())
+            .map(GcpCloudContext::getGcpProjectId)
+            .orElseThrow(
+                () ->
+                    new CloudContextRequiredException(
+                        "No cloud context found in which to create a controlled resource"));
+    final StorageCow storageCow = crlService.createStorageCow(gcpProjectId, userRequest);
     storageCow.delete(resource.getBucketName());
     return StepResult.getStepResultSuccess();
   }

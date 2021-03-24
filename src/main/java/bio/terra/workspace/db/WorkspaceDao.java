@@ -147,6 +147,25 @@ public class WorkspaceDao {
     }
   }
 
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
+  public boolean updateWorkspace(UUID workspaceId, String name, String description) {
+    if (name == null && description == null) {
+      throw new MissingRequiredFieldException("Must specify name or description to update.");
+    }
+
+    var params = new MapSqlParameterSource();
+
+    if (name != null) {
+      params.addValue("display_name", name);
+    }
+
+    if (description != null) {
+      params.addValue("description", description);
+    }
+
+    return updateWorkspaceHelper(workspaceId, params);
+  }
+
   /**
    * Retrieve workspaces from a list of IDs. IDs not matching workspaces will be ignored.
    *
@@ -273,6 +292,43 @@ public class WorkspaceDao {
     } else {
       logger.info("No record to delete for GCP cloud context for workspace {}", workspaceId);
     }
+  }
+
+  /**
+   * This is an open ended method for constructing the SQL update statement. To use it, build the
+   * parameter list making the param name equal to the column name you want to update. The method
+   * generates the column_name = :column_name list. It is an error if the params map is empty.
+   *
+   * @param workspaceId workspace identifier - not strictly necessarily, but an extra validation
+   * @param params sql parameters
+   */
+  private boolean updateWorkspaceHelper(UUID workspaceId, MapSqlParameterSource params) {
+    StringBuilder sb = new StringBuilder("UPDATE workspace SET ");
+
+    String[] parameterNames = params.getParameterNames();
+    if (parameterNames.length == 0) {
+      throw new MissingRequiredFieldException("Must specify some data to be updated.");
+    }
+    for (int i = 0; i < parameterNames.length; i++) {
+      String columnName = parameterNames[i];
+      if (i > 0) {
+        sb.append(", ");
+      }
+      sb.append(columnName).append(" = :").append(columnName);
+    }
+    sb.append(" WHERE workspace_id = :workspace_id");
+
+    params.addValue("workspace_id", workspaceId.toString());
+
+    int rowsAffected = jdbcTemplate.update(sb.toString(), params);
+    boolean updated = rowsAffected > 0;
+
+    logger.info(
+        "{} record for workspace {}",
+        (updated ? "Updated" : "No Update - did not find"),
+        workspaceId);
+
+    return updated;
   }
 
   private static final RowMapper<Workspace> WORKSPACE_ROW_MAPPER =
