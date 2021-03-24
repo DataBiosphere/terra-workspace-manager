@@ -5,10 +5,11 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.SamApiException;
-import bio.terra.workspace.generated.model.ApiPrivateResourceIamRole;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -17,7 +18,7 @@ public class CreateSamResourceStep implements Step {
 
   private final SamService samService;
   private final ControlledResource resource;
-  private final ApiPrivateResourceIamRole privateResourceIamRole;
+  private final List<ControlledResourceIamRole> privateResourceIamRole;
   private final AuthenticatedUserRequest userReq;
 
   private final Logger logger = LoggerFactory.getLogger(CreateSamResourceStep.class);
@@ -25,11 +26,11 @@ public class CreateSamResourceStep implements Step {
   public CreateSamResourceStep(
       SamService samService,
       ControlledResource resource,
-      ApiPrivateResourceIamRole privateResourceIamRole,
+      List<ControlledResourceIamRole> privateResourceIamRoles,
       AuthenticatedUserRequest userReq) {
     this.samService = samService;
     this.resource = resource;
-    this.privateResourceIamRole = privateResourceIamRole;
+    this.privateResourceIamRole = privateResourceIamRoles;
     this.userReq = userReq;
   }
 

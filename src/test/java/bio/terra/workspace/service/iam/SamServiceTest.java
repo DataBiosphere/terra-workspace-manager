@@ -16,9 +16,8 @@ import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
-import bio.terra.workspace.generated.model.ApiPrivateResourceIamRole;
-import bio.terra.workspace.generated.model.ApiPrivateResourceIamRole.RoleEnum;
 import bio.terra.workspace.service.datarepo.DataRepoService;
+import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceNames;
@@ -36,6 +35,8 @@ import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import com.google.common.collect.ImmutableList;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -58,6 +59,15 @@ class SamServiceTest extends BaseConnectedTest {
   @BeforeEach
   public void setup() {
     doReturn(true).when(mockDataRepoService).snapshotExists(any(), any(), any());
+  }
+
+  @Test
+  void samServiceInitializationSucceeded() throws IOException {
+    // As part of initialization, WSM's service account is registered as a user in Sam. This test
+    // verifies that registration status by calling Sam directly.
+    String wsmAccessToken;
+    wsmAccessToken = samService.getWsmServiceAccountToken();
+    assertTrue(samService.wsmServiceAccountRegistered(samService.samUsersApi(wsmAccessToken)));
   }
 
   @Test
@@ -276,10 +286,10 @@ class SamServiceTest extends BaseConnectedTest {
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .assignedUser(userAccessUtils.getDefaultUserEmail())
             .build();
-    ApiPrivateResourceIamRole privateResourceIamRole =
-        new ApiPrivateResourceIamRole().role(RoleEnum.READER).editor(true);
+    List<ControlledResourceIamRole> privateResourceIamRoles =
+        ImmutableList.of(ControlledResourceIamRole.READER, ControlledResourceIamRole.EDITOR);
     samService.createControlledResource(
-        bucketResource, privateResourceIamRole, defaultUserRequest());
+        bucketResource, privateResourceIamRoles, defaultUserRequest());
 
     // Workspace reader should not have read access on a private resource.
     assertFalse(
