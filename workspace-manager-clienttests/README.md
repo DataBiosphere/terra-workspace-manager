@@ -50,38 +50,45 @@ Perf Test
 ./gradlew runTest --args="suites/BasicPerf.json /tmp/TR"
 ```
 
-#### Run resiliency test
-To run a resiliency test case, specify the path of the test configuration under the `suites` or `configs` directory as shown in the following examples.
-In order to run resiliency tests, an in-cluster namespaced Service Account with special RBAC role is required.
-Please refer to document on Test Runner Service Accounts for details:
-https://docs.google.com/document/d/1-fGZqtwEUVRMmfeZfUVrn2V3M2D_eonNLepuX0ve6nM/edit?usp=sharing
- 
+### Running Resiliency Tests Through Test Runner Library
+Test Runner Library provides the underlying framework for running resiliency tests within namespaces. The whole process involves only a few simple setup and configuration steps described below.
 
-Resiliency Test
+At a high level, running resiliency tests within namespaces require a set of permissions to manipulate cluster resources with Kubernetes API.
+These permissions are namespace scoped so that no resiliency tests will have cluster-wide access.
 
-The first argument to the `runTest` task is the location of the resiliency test configs under the `src/main/resources` directory.
-The second argument is the directory to put the test results in.
+The required namespace permissions are specified in the 3 manifest templates which comes with the Test Runner Library distribution [GitHub repository](https://github.com/DataBiosphere/terra-test-runner).
 
+The three manifest template files are
+
+* testrunner-k8s-serviceaccount.yml.template
+* testrunner-k8s-role.yml.template
+* testrunner-k8s-rolebinding.yml.template
+
+The `setup-k8s-testrunner.sh` script templates the formation of the actual manifests for deploying to a namespace.
+The `setup-k8s-testrunner.sh` script also carries out the following functions:
+
+* Provision the Kubernetes Service Account, RBAC Role and RoleBinding for Test Runner.
+* Export credentials of the Test Runner Kubernetes Service Account to Vault.
+
+To set up a namespace for Test Runner resiliency tests, simply run the command in the following example (`terra-zloery` namespace for example).
+
+The first argument is the `kubectl context` mentioned elsewhere in this document.
+
+The second argument is the Terra namespace (without the `terra-` prefix).
+
+The third argument is just some text to describe the application itself.
+```shell script
+$ ./setup-k8s-testrunner.sh gke_terra-kernel-k8s_us-central1-a_terra-integration zloery workspacemanager
 ```
-./gradlew runTest --args="suites/BasicResilency.json /tmp/TR"
-./gradlew runTest --args="configs/resiliency/DeleteInitialPods.json /tmp/TR"
+
+Once the script above ran successfully, the namespace is ready for resiliency testing through the Test Runner Framework.
+
+The Kubernetes credentials stored in Vault needs to be rendered by means of the `./render-k8s-config.sh zloery` script in the local repository before kicking off the resiliency tests.
+```shell script
+$ ./render-k8s-config.sh zloery
 ```
 
-#### Script for setting up Test Runner to run resiliency tests in your own namespace
-
-For development, please use the script `setup-k8s-testrunner.sh` to provision the necessary Test Runner Kubernetes objects.
-The script has detailed usage comments.
-
-```../setup-k8s-testrunner.sh <kubeconfig-context-name> <namespace> <appname>
-```
-
-#### Script for rendering Kubernetes Service Account Secrets
-
-Please use the script `render-k8s-config.sh` with a valid namespace to render the in-cluster service account secrets for resiliency tests.
-Examples of valid namespaces are `wsmtest`, `ichang`, etc.
-
-```./render-k8s-config.sh <namespace>
-```
+For more details, please refer to [Personal Test Environments Guideline Document] (https://github.com/DataBiosphere/terra/blob/main/docs/dev-guides/personal-environments.md) or [Test Runner Library Repo(https://github.com/DataBiosphere/terra-test-runner).
 
 #### Upload test results to Google Bucket
 To upload Test Runner results to a Google Bucket.
