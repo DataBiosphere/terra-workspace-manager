@@ -97,6 +97,29 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update an existing Workspace.
+      operationId: updateWorkspace
+      tags: [Workspace]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkspaceRequestBody'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceDescription'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
     delete:
       summary: Delete a Workspace.
       operationId: deleteWorkspace
@@ -1009,6 +1032,12 @@ components:
           description: The ID of the workspace
           type: string
           format: uuid
+        displayName:
+          description: The human readable name of the workspace
+          type: string
+        description:
+          description: A description of the workspace
+          type: string
         spendProfile:
           description: ID of provided spend profile
           type: string
@@ -1048,6 +1077,12 @@ components:
           description: The ID of the workspace
           type: string
           format: uuid
+        displayName:
+          description: The human readable name of the workspace
+          type: string
+        description:
+          description: A description of the workspace
+          type: string
         spendProfile:
           description: ID of provided spend profile
           type: string
@@ -1058,6 +1093,16 @@ components:
           $ref: '#/components/schemas/GcpContext'
         # When we have an Azure context, we can put it right here.
         # No point making a complex structure when there will be only a few of these
+
+    UpdateWorkspaceRequestBody:
+      type: object
+      properties:
+        displayName:
+          description: The human readable name of the workspace
+          type: string
+        description:
+          description: A description of the workspace
+          type: string
 
     WorkspaceDescriptionList:
       type: object
