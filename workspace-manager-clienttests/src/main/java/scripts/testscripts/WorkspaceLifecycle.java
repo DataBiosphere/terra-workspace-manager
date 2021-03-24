@@ -19,6 +19,8 @@ import static org.hamcrest.Matchers.equalTo;
 
 public class WorkspaceLifecycle extends WorkspaceTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceLifecycle.class);
+  private static final String workspaceName = "name";
+  private static final String workspaceDescriptionString = "description";
 
   @Override
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi) throws ApiException {
@@ -32,14 +34,12 @@ public class WorkspaceLifecycle extends WorkspaceTestScriptBase {
     assertThat(workspaceDescription.getId(), equalTo(workspaceId));
     assertThat(workspaceDescription.getStage(), equalTo(WorkspaceStageModel.MC_WORKSPACE));
 
-    static string workspaceName = "name";
-    static string workspaceDescription = "description";
     UpdateWorkspaceRequestBody updateBody = new UpdateWorkspaceRequestBody().displayName(
-        workspaceName).description(workspaceDescription);
+        workspaceName).description(workspaceDescriptionString);
     WorkspaceDescription updatedDescription = workspaceApi.updateWorkspace(updateBody, workspaceId);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "PATCH workspace");
     assertThat(updatedDescription.getDisplayName(), equalTo(workspaceName));
-    assertThat(updatedDescription.getDescription(), equalTo(workspaceDescription));
+    assertThat(updatedDescription.getDescription(), equalTo(workspaceDescriptionString));
 
     workspaceApi.deleteWorkspace(workspaceId);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");
