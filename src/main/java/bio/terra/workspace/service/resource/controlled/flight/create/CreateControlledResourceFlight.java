@@ -38,7 +38,7 @@ public class CreateControlledResourceFlight extends Flight {
         new CreateSamResourceStep(
             flightBeanBag.getSamService(), resource, privateResourceIamRoles, userRequest));
 
-    // Get google group names from Sam groups and store them in the working map
+    // get google group names from Sam groups and store them in the working map
     addStep(new SyncSamGroupsStep(flightBeanBag.getSamService()));
 
     // create the cloud resource and grant IAM roles via CRL

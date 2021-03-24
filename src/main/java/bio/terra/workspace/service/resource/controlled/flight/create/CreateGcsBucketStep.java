@@ -18,6 +18,7 @@ import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleAction;
 import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.util.DateTime;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
@@ -55,11 +56,11 @@ public class CreateGcsBucketStep implements Step {
     String gcpProjectId =
         workspaceDao
             .getGcpCloudContext(resource.getWorkspaceId())
+            .map(GcpCloudContext::getGcpProjectId)
             .orElseThrow(
                 () ->
                     new CloudContextRequiredException(
-                        "No cloud context found in which to create a controlled resource"))
-            .getGcpProjectId();
+                        "No cloud context found in which to create a controlled resource"));
 
     final BucketInfo bucketInfo =
         BucketInfo.newBuilder(resource.getBucketName())
