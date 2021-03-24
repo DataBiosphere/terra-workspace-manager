@@ -12,6 +12,13 @@
 docker push gcr.io/terra-kernel-k8s/terra-workspace-manager:hotfix-<DATE>
 ```
 
-3) To apply the hotfix, see the [HOTFIX.md](https://github.com/broadinstitute/terra-helmfile/blob/master/docs/HOTFIX.md) documentation in [terra-helmfile](https://github.com/broadinstitute/terra-helmfile) for the general MC-Terra hotfix procedure, which applies to Workspace Manager. Use the image that you built above when applying the hotfix.
+3) Follow Step 1 in terra-helmfile/[HOTFIX.md](https://github.com/broadinstitute/terra-helmfile/blob/master/docs/HOTFIX.md)
 
-Should the hotfix process deviate from the general procedure outlined in terra-helmfile, this document should be updated to highlight those differences.
+
+4) Follow Step 2 in terra-helmfile/[HOTFIX.md](https://github.com/broadinstitute/terra-helmfile/blob/master/docs/HOTFIX.md), except instead of running ArgoCD to sync the deployment, run the [gke-deploy Jenkins job](https://fc-jenkins.dsp-techops.broadinstitute.org/job/gke-deploy/) with `project` set to `workspacemanager`. Do this for `dev` and `staging`. Using this Jenkins deploy job will enusre that the tests run against the hotfix.
+
+
+5) Follow Step 3 in terra-helmfile/[HOTFIX.md](https://github.com/broadinstitute/terra-helmfile/blob/master/docs/HOTFIX.md)
+
+
+Should the hotfix process further deviate from the general procedure outlined in terra-helmfile, this document should be updated to highlight those differences.
