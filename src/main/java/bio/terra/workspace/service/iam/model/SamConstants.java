@@ -50,10 +50,8 @@ public class SamConstants {
 
   public static class SamControlledResourceCreateActions {
 
-    public static final String CREATE_CONTROLLED_USER_SHARED =
-        "create_controlled_user_shared";
-    public static final String CREATE_CONTROLLED_USER_PRIVATE =
-        "create_controlled_user_private";
+    public static final String CREATE_CONTROLLED_USER_SHARED = "create_controlled_user_shared";
+    public static final String CREATE_CONTROLLED_USER_PRIVATE = "create_controlled_user_private";
     public static final String CREATE_CONTROLLED_APPLICATION_SHARED =
         "create_controlled_application_shared";
     public static final String CREATE_CONTROLLED_APPLICATION_PRIVATE =
