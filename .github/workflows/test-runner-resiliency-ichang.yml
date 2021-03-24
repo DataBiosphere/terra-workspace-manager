@@ -3,7 +3,8 @@
 name: Test Runner Resiliency Test
 
 on:
-  push
+  push:
+    branches: [ dev ]
 
 jobs:
   test-runner-resiliency:
