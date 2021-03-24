@@ -294,7 +294,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
           InvalidMetadataException.class, () -> referenceResource.castToBigQueryDatasetResource());
 
       WsmResource wsmResource = referenceResource;
-      assertThrows(InvalidMetadataException.class, wsmResource::castControlledResource);
+      assertThrows(InvalidMetadataException.class, wsmResource::castToControlledResource);
     }
 
     @Test
@@ -411,7 +411,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
             () -> referenceResource.castToBigQueryDatasetResource());
 
         WsmResource wsmResource = referenceResource;
-        assertThrows(InvalidMetadataException.class, wsmResource::castControlledResource);
+        assertThrows(InvalidMetadataException.class, wsmResource::castToControlledResource);
       }
     }
 
@@ -531,7 +531,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
             InvalidMetadataException.class, () -> referenceResource.castToGcsBucketResource());
 
         WsmResource wsmResource = referenceResource;
-        assertThrows(InvalidMetadataException.class, wsmResource::castControlledResource);
+        assertThrows(InvalidMetadataException.class, wsmResource::castToControlledResource);
       }
     }
 

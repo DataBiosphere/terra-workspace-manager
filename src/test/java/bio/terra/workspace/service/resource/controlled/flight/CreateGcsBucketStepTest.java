@@ -52,7 +52,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
             mockCrlService, ControlledResourceFixtures.BUCKET_RESOURCE, mockWorkspaceService);
 
     when(mockCrlService.createStorageCow(mockUserRequest)).thenReturn(mockStorageCow);
-    when(mockWorkspaceService.getGcpProject(any())).thenReturn("fakeprojectid");
+    when(mockWorkspaceService.getRequiredGcpProject(any())).thenReturn("fakeprojectid");
     when(mockStorageCow.create(bucketInfoCaptor.capture())).thenReturn(mockBucketCow);
 
     final FlightMap inputFlightMap = new FlightMap();

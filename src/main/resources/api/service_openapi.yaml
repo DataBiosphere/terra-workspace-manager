@@ -359,8 +359,8 @@ paths:
     - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/ResourceId'
     get:
-      summary: Gets a reference to a Gcp bucket from a workspace.
-      operationId: getGcpBucketReference
+      summary: Gets a reference to a bucket from a workspace.
+      operationId: getBucketReference
       tags: [ReferencedGcpResource]
       responses:
         '200':
@@ -373,7 +373,7 @@ paths:
           $ref: '#/components/responses/ServerError'
     patch:
       summary: Update name or description of a bucket reference in a workspace.
-      operationId: updateGcpBucketReference
+      operationId: updateBucketReference
       tags: [ReferencedGcpResource]
       requestBody:
         required: true
@@ -392,7 +392,7 @@ paths:
           $ref: '#/components/responses/ServerError'
     delete:
       summary: Delete Gcp bucket reference
-      operationId: deleteGcpBucketReference
+      operationId: deleteBucketReference
       tags: [ReferencedGcpResource]
       responses:
         '204':
@@ -410,7 +410,7 @@ paths:
     - $ref: '#/components/parameters/Name'
     get:
       summary: Gets a reference to a Gcp bucket by name.
-      operationId: getGcpBucketReferenceByName
+      operationId: getBucketReferenceByName
       tags: [ReferencedGcpResource]
       responses:
         '200':
@@ -1403,7 +1403,7 @@ components:
         jobReport:
           $ref: '#/components/schemas/JobReport'
         gcpBucket:
-          $ref: '#/components/schemas/GcsBucketStoredAttributes'
+          $ref: '#/components/schemas/GcsBucketAttributes'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
@@ -1423,7 +1423,7 @@ components:
           $ref: '#/components/schemas/GcsBucketDefaultStorageClass'
         lifecycle:
           $ref: '#/components/schemas/GcsBucketLifecycle'
-    GcsBucketStoredAttributes:
+    GcsBucketAttributes:
       description: >-
         Bucket properties included in post-creation, get, and update. Others must be
         retrieved from GCS using the name.
@@ -1622,7 +1622,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/GcsBucketStoredAttributes'
+            $ref: '#/components/schemas/GcsBucketAttributes'
 
     CreateCloudContextResultResponse:
       description: Job is complete (succeeded or failed)

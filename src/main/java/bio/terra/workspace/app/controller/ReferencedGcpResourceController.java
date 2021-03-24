@@ -75,7 +75,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<ApiGcsBucketReference> getGcpBucketReference(UUID id, UUID referenceId) {
+  public ResponseEntity<ApiGcsBucketReference> getBucketReference(UUID id, UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ReferencedResource referenceResource =
         referenceResourceService.getReferenceResource(id, referenceId, userReq);
@@ -84,7 +84,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<ApiGcsBucketReference> getGcpBucketReferenceByName(UUID id, String name) {
+  public ResponseEntity<ApiGcsBucketReference> getBucketReferenceByName(UUID id, String name) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ReferencedResource referenceResource =
         referenceResourceService.getReferenceResourceByName(id, name, userReq);
@@ -93,7 +93,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<Void> updateGcpBucketReference(
+  public ResponseEntity<Void> updateBucketReference(
       UUID id, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     referenceResourceService.updateReferenceResource(
@@ -102,7 +102,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<Void> deleteGcpBucketReference(UUID workspaceId, UUID resourceId) {
+  public ResponseEntity<Void> deleteBucketReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.deleteReferenceResource(workspaceId, resourceId, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);

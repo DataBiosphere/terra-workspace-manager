@@ -25,11 +25,12 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.List;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Service for workspace lifecycle operations.
@@ -218,13 +219,13 @@ public class WorkspaceService {
   }
 
   /**
-   * Get the GCP project associated with a workspace. If none is defined, throw. This helper method
-   * is used by other classes that need to know the GCP project associated with the workspace.
+   * Helper method used by other classes that require the GCP project to exist in the workspace. It
+   * throws if the project (GCP cloud context) is not set up.
    *
    * @param workspaceId unique workspace id
    * @return GCP project id
    */
-  public String getGcpProject(UUID workspaceId) {
+  public String getRequiredGcpProject(UUID workspaceId) {
     Workspace workspace = workspaceDao.getWorkspace(workspaceId);
     GcpCloudContext gcpCloudContext =
         workspace

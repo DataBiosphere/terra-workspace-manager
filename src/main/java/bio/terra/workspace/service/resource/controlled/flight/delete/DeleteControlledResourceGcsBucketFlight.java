@@ -79,11 +79,11 @@ public class DeleteControlledResourceGcsBucketFlight extends Flight {
           UUID.fromString(
               inputParameters.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, String.class));
 
-      String projectId = workspaceService.getGcpProject(workspaceId);
+      String projectId = workspaceService.getRequiredGcpProject(workspaceId);
 
       WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
       ControlledGcsBucketResource resource =
-          wsmResource.castControlledResource().castToGcsBucketResource();
+          wsmResource.castToControlledResource().castToGcsBucketResource();
 
       final StorageCow storageCow = crlService.createStorageCow(projectId);
 
@@ -112,7 +112,7 @@ public class DeleteControlledResourceGcsBucketFlight extends Flight {
         if (deleteTries >= MAX_DELETE_TRIES) {
           // This will cause the flight to fail.
           throw new BucketDeleteTimeoutException(
-              String.format("Failed to delete bucket after %d hours", MAX_DELETE_TRIES));
+              String.format("Failed to delete bucket after %d tries", MAX_DELETE_TRIES));
         }
       }
       return StepResult.getStepResultSuccess();

@@ -5,7 +5,7 @@ import bio.terra.workspace.generated.model.ApiCreateControlledGcsBucketRequestBo
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcsBucket;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcsBucketResult;
-import bio.terra.workspace.generated.model.ApiGcsBucketStoredAttributes;
+import bio.terra.workspace.generated.model.ApiGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -126,12 +126,11 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   }
 
   @Override
-  public ResponseEntity<ApiGcsBucketStoredAttributes> getBucket(UUID id, UUID resourceId) {
+  public ResponseEntity<ApiGcsBucketAttributes> getBucket(UUID id, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResource controlledResource =
         controlledResourceService.getControlledResource(id, resourceId, userRequest);
-    ApiGcsBucketStoredAttributes response =
-        controlledResource.castToGcsBucketResource().toApiModel();
+    ApiGcsBucketAttributes response = controlledResource.castToGcsBucketResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -142,7 +141,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
     ControlledResource resource = jobResult.getResult();
     UUID resourceId = Optional.ofNullable(resource).map(WsmResource::getResourceId).orElse(null);
-    ApiGcsBucketStoredAttributes gcpBucket =
+    ApiGcsBucketAttributes gcpBucket =
         Optional.ofNullable(resource)
             .map(r -> r.castToGcsBucketResource().toApiModel())
             .orElse(null);

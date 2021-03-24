@@ -74,7 +74,7 @@ public class ControlledResourceService {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
-    return wsmResource.castControlledResource();
+    return wsmResource.castToControlledResource();
   }
 
   public String deleteControlledGcsBucket(
