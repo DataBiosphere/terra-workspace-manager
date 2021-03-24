@@ -32,8 +32,7 @@ public class DeleteInitialPods extends DisruptiveScript {
         KubernetesClientUtils.getComponentLabel(); // e.g. "app.kubernetes.io/component";
     String componentLabelVal =
         KubernetesClientUtils.getApiComponentLabel(); // e.g. "workspacemanager";
-    // V1Deployment workspacemanagerDeployment =
-    // KubernetesClientUtils.getApiDeployment(componentLabelKey, componentLabelVal);
+
     V1Deployment workspacemanagerDeployment = KubernetesClientUtils.getApiDeployment();
     if (workspacemanagerDeployment == null) {
       throw new RuntimeException("WorkspaceManager deployment not found.");
