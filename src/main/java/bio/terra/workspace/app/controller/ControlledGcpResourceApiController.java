@@ -1,5 +1,8 @@
 package bio.terra.workspace.app.controller;
 
+import static java.util.stream.Collectors.toCollection;
+
+import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcsBucket;
@@ -7,6 +10,8 @@ import bio.terra.workspace.generated.model.ApiGcsBucketStoredAttributes;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.iam.model.ControlledResourceIamRoleList;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
@@ -15,6 +20,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -68,13 +74,26 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .bucketName(body.getGcsBucket().getName())
             .build();
 
+    // This value is serialized in Stairway, so we avoid making a generic list.
+    ControlledResourceIamRoleList privateRoles =
+        (ControlledResourceIamRoleList)
+            Optional.ofNullable(body.getCommon().getPrivateResourceUser())
+                .map(
+                    user ->
+                        user.getPrivateResourceIamRoles().stream()
+                            .map(ControlledResourceIamRole::fromApiModel)
+                            .collect(toCollection(ArrayList::new)))
+                .orElse(null);
+    if (privateRoles != null && privateRoles.isEmpty()) {
+      throw new ValidationException(
+          "At least one IAM role is required for private resources and the field must be omitted for shared resources");
+    }
+
     final String jobId =
         controlledResourceService.createControlledResource(
             resource,
             body.getGcsBucket(),
-            Optional.ofNullable(body.getCommon().getPrivateResourceUser())
-                .map(ApiPrivateResourceUser::getIamRole)
-                .orElse(null),
+            privateRoles,
             body.getCommon().getJobControl(),
             userRequest);
     return getCreateBucketResult(workspaceId, jobId);

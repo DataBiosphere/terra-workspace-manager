@@ -1288,6 +1288,11 @@ components:
       type: string
       enum: ['READER', 'WRITER', 'APPLICATION', 'OWNER']
 
+    ControlledResourceIamRole:
+      description: Enum containing all IAM roles on controlled resources available to users
+      type: string
+      enum: [ 'READER', 'WRITER', 'EDITOR']
+
     RoleBinding:
       description: A binding between an IAM role and users with that role
       type: object
@@ -1346,14 +1351,22 @@ components:
           $ref: '#/components/schemas/PrivateResourceUser'
 
     PrivateResourceUser:
-      description: A user and role pair for a user of a private resource.
+      description: User and role information for a user of a private resource.
       type: object
       properties:
         userName:
           description: Email address for the user of the resource
           type: string
-        iamRole:
-          $ref: '#/components/schemas/IamRole'
+        privateResourceIamRoles:
+          $ref: '#/components/schemas/PrivateResourceIamRoles'
+
+    PrivateResourceIamRoles:
+      description: >-
+        List of role(s) granted to the user of a private resource. WRITER includes
+        READER by definition, so if both are present only WRITER will be granted.
+      type: array
+      items:
+        $ref: '#/components/schemas/ControlledResourceIamRole'
 
     CreatedControlledGcsBucket:
       description: Response Payload for requesting a new controlled resource.
