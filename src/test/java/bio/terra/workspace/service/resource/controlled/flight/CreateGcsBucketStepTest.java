@@ -50,7 +50,8 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
             mockCrlService, ControlledResourceFixtures.BUCKET_RESOURCE, mockWorkspaceDao);
     GcpCloudContext fakeContext = new GcpCloudContext("fake-project-id");
     doReturn(Optional.of(fakeContext)).when(mockWorkspaceDao).getGcpCloudContext(any());
-    doReturn(mockStorageCow).when(mockCrlService).createStorageCow(any(), any());
+    // Explicitly mock createStorageCow(projectId), not createStorageCow(userRequest)
+    doReturn(mockStorageCow).when(mockCrlService).createStorageCow(any(String.class));
   }
 
   @Test

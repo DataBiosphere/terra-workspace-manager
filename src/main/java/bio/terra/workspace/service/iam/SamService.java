@@ -3,12 +3,11 @@ package bio.terra.workspace.service.iam;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
-import bio.terra.workspace.generated.model.ApiPrivateResourceIamRole;
-import bio.terra.workspace.generated.model.ApiPrivateResourceIamRole.RoleEnum;
 import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceNames;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -17,6 +16,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -79,11 +78,13 @@ public class SamService {
     return new GoogleApi(getApiClient(accessToken));
   }
 
-  private UsersApi samUsersApi(String accessToken) {
+  @VisibleForTesting
+  public UsersApi samUsersApi(String accessToken) {
     return new UsersApi(getApiClient(accessToken));
   }
 
-  private String getWsmServiceAccountToken() throws IOException {
+  @VisibleForTesting
+  public String getWsmServiceAccountToken() throws IOException {
     GoogleCredentials creds =
         GoogleCredentials.getApplicationDefault().createScoped(SAM_OAUTH_SCOPES);
     creds.refreshIfExpired();
@@ -106,14 +107,24 @@ public class SamService {
     }
 
     UsersApi usersApi = samUsersApi(wsmAccessToken);
+    if (!wsmServiceAccountRegistered(usersApi)) {
+      registerWsmServiceAccount(usersApi);
+    }
+  }
+
+  @VisibleForTesting
+  public boolean wsmServiceAccountRegistered(UsersApi usersApi) {
     try {
       // getUserStatusInfo throws a 404 if the calling user is not registered, which will happen
       // the first time WSM is run in each environment.
       usersApi.getUserStatusInfo();
       logger.info("WSM service account already registered in Sam");
+      return true;
     } catch (ApiException userStatusException) {
       if (userStatusException.getCode() == HttpStatus.NOT_FOUND.value()) {
-        registerWsmServiceAccount(usersApi);
+        return false;
+      } else {
+        throw new SamApiException(userStatusException);
       }
     }
   }
@@ -331,20 +342,28 @@ public class SamService {
     }
   }
 
+  /**
+   * Create a controlled resource in Sam.
+   *
+   * @param resource The WSM representation of the resource to create.
+   * @param privateIamRoles The IAM role(s) to grant a private user. Required for private resources,
+   *     should be null otherwise.
+   * @param userReq Credentials to use for talking to Sam.
+   */
   @Traced
   public void createControlledResource(
       ControlledResource resource,
-      Optional<ApiPrivateResourceIamRole> privateIamRole,
+      List<ControlledResourceIamRole> privateIamRoles,
       AuthenticatedUserRequest userReq) {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
-    FullyQualifiedResourceId workspaceParent =
+    FullyQualifiedResourceId workspaceParentFqId =
         new FullyQualifiedResourceId()
             .resourceId(resource.getWorkspaceId().toString())
             .resourceTypeName(SamConstants.SAM_WORKSPACE_RESOURCE);
     CreateResourceRequestV2 resourceRequest =
         new CreateResourceRequestV2()
             .resourceId(resource.getResourceId().toString())
-            .parent(workspaceParent);
+            .parent(workspaceParentFqId);
 
     addWsmResourceOwnerPolicy(resourceRequest);
     // Only create policies for private resources. Workspace role permissions are handled through
@@ -352,13 +371,12 @@ public class SamService {
     // applications in the future.
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
       addPrivateResourcePolicies(
-          resourceRequest, privateIamRole.get(), resource.getAssignedUser().get());
+          resourceRequest, privateIamRoles, resource.getAssignedUser().get());
     }
 
     try {
       resourceApi.createResourceV2(
-          SamConstants.samControlledResourceType(
-              resource.getAccessScope(), resource.getManagedBy()),
+          SamControlledResourceNames.get(resource.getAccessScope(), resource.getManagedBy()),
           resourceRequest);
       logger.info("Created Sam controlled resource {}", resource.getResourceId());
     } catch (ApiException e) {
@@ -372,8 +390,7 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       resourceApi.deleteResourceV2(
-          SamConstants.samControlledResourceType(
-              resource.getAccessScope(), resource.getManagedBy()),
+          SamControlledResourceNames.get(resource.getAccessScope(), resource.getManagedBy()),
           resource.getResourceId().toString());
       logger.info("Deleted Sam controlled resource {}", resource.getResourceId());
     } catch (ApiException apiException) {
@@ -470,7 +487,7 @@ public class SamService {
    */
   private void addPrivateResourcePolicies(
       CreateResourceRequestV2 request,
-      ApiPrivateResourceIamRole privateIamRole,
+      List<ControlledResourceIamRole> privateIamRoles,
       String privateUser) {
     AccessPolicyMembershipV2 readerPolicy =
         new AccessPolicyMembershipV2().addRolesItem(ControlledResourceIamRole.READER.toSamRole());
@@ -481,13 +498,13 @@ public class SamService {
 
     // Create a reader or writer role as specified by the user request, but also create empty
     // roles in case of later re-assignment.
-    if (privateIamRole.getRole() == RoleEnum.READER) {
-      readerPolicy.addMemberEmailsItem(privateUser);
-    } else if (privateIamRole.getRole() == RoleEnum.WRITER) {
+    if (privateIamRoles.contains(ControlledResourceIamRole.WRITER)) {
       writerPolicy.addMemberEmailsItem(privateUser);
+    } else if (privateIamRoles.contains(ControlledResourceIamRole.READER)) {
+      readerPolicy.addMemberEmailsItem(privateUser);
     }
 
-    if (privateIamRole.isEditor()) {
+    if (privateIamRoles.contains(ControlledResourceIamRole.EDITOR)) {
       editorPolicy.addMemberEmailsItem(privateUser);
     }
 

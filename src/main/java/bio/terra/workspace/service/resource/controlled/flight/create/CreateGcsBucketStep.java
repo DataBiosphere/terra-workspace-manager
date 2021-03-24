@@ -69,8 +69,7 @@ public class CreateGcsBucketStep implements Step {
             .build();
 
     // Users do not have bucket create permission, so this request happens using WSM's credentials.
-    final StorageCow storageCow =
-        crlService.createStorageCow(Optional.of(gcpProjectId), Optional.empty());
+    final StorageCow storageCow = crlService.createStorageCow(gcpProjectId);
     storageCow.create(bucketInfo);
     return StepResult.getStepResultSuccess();
   }
@@ -86,8 +85,7 @@ public class CreateGcsBucketStep implements Step {
                         "No cloud context found in which to create a controlled resource"))
             .getGcpProjectId();
     // Users do not have bucket delete permission, so this request happens using WSM's credentials.
-    final StorageCow storageCow =
-        crlService.createStorageCow(Optional.of(gcpProjectId), Optional.empty());
+    final StorageCow storageCow = crlService.createStorageCow(gcpProjectId);
     storageCow.delete(resource.getBucketName());
     return StepResult.getStepResultSuccess();
   }

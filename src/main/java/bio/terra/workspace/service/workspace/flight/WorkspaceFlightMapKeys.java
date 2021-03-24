@@ -11,13 +11,15 @@ public final class WorkspaceFlightMapKeys {
   public static final String IAM_WRITER_GROUP_EMAIL = "iamWriterGroupEmail";
   public static final String IAM_READER_GROUP_EMAIL = "iamReaderGroupEmail";
   public static final String RBS_RESOURCE_ID = "rbsResourceId";
+  public static final String DISPLAY_NAME_ID = "displayNameId";
+  public static final String DESCRIPTION_ID = "descriptionId";
 
   private WorkspaceFlightMapKeys() {}
 
   /** Use inner class for new set of keys so it's easy to spot duplicates */
   public static class ControlledResourceKeys {
     public static final String CREATION_PARAMETERS = "creationParameters";
-    public static final String PRIVATE_RESOURCE_IAM_ROLE = "iamRole";
+    public static final String PRIVATE_RESOURCE_IAM_ROLES = "iamRoles";
 
     private ControlledResourceKeys() {}
   }

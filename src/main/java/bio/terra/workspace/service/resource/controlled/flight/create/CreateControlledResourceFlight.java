@@ -3,12 +3,14 @@ package bio.terra.workspace.service.resource.controlled.flight.create;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.generated.model.ApiPrivateResourceIamRole;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.iam.model.ControlledResourceIamRoleList;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.workspace.flight.SyncSamGroupsStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import java.util.List;
 
 /**
  * Flight for creation of a controlled resource. Some steps are resource-type-agnostic, and others
@@ -24,9 +26,9 @@ public class CreateControlledResourceFlight extends Flight {
         inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
     final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final ApiPrivateResourceIamRole privateResourceIamRole =
+    final List<ControlledResourceIamRole> privateResourceIamRoles =
         inputParameters.get(
-            ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLE, ApiPrivateResourceIamRole.class);
+            ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, ControlledResourceIamRoleList.class);
 
     // store the resource metadata in the WSM database
     addStep(new StoreMetadataStep(flightBeanBag.getResourceDao()));
@@ -34,7 +36,7 @@ public class CreateControlledResourceFlight extends Flight {
     // create the Sam resource associated with the resource
     addStep(
         new CreateSamResourceStep(
-            flightBeanBag.getSamService(), resource, privateResourceIamRole, userRequest));
+            flightBeanBag.getSamService(), resource, privateResourceIamRoles, userRequest));
 
     // Get google group names from Sam groups and store them in the working map
     addStep(new SyncSamGroupsStep(flightBeanBag.getSamService()));
@@ -49,7 +51,9 @@ public class CreateControlledResourceFlight extends Flight {
                 flightBeanBag.getWorkspaceDao()));
         addStep(
             new GrantGcsBucketIamRolesStep(
-                flightBeanBag.getCrlService(), resource.castToGcsBucketResource()));
+                flightBeanBag.getCrlService(),
+                resource.castToGcsBucketResource(),
+                flightBeanBag.getWorkspaceDao()));
         break;
       case BIG_QUERY_DATASET:
       default:
