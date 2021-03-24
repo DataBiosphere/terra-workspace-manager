@@ -11,6 +11,7 @@ import static org.mockito.Mockito.doThrow;
 
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
+import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.db.ResourceDao;
@@ -222,8 +223,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     Workspace createdWorkspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
     assertEquals(request.workspaceId(), createdWorkspace.getWorkspaceId());
-    assertEquals(name, createdWorkspace.getDisplayName());
-    assertEquals(description, createdWorkspace.getDescription());
+    assertEquals(name, createdWorkspace.getDisplayName().get());
+    assertEquals(description, createdWorkspace.getDescription().get());
   }
 
   @Test
@@ -232,8 +233,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
     Workspace createdWorkspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
     assertEquals(request.workspaceId(), createdWorkspace.getWorkspaceId());
-    assertEquals("", createdWorkspace.getDisplayName());
-    assertEquals("", createdWorkspace.getDescription());
+    assertEquals("", createdWorkspace.getDisplayName().get());
+    assertEquals("", createdWorkspace.getDescription().get());
 
     UUID workspaceId = request.workspaceId();
     String name = "My workspace";
@@ -242,8 +243,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace updatedWorkspace =
         workspaceService.updateWorkspace(USER_REQUEST, workspaceId, name, description);
 
-    assertEquals(name, updatedWorkspace.getDisplayName());
-    assertEquals(description, updatedWorkspace.getDescription());
+    assertEquals(name, updatedWorkspace.getDisplayName().get());
+    assertEquals(description, updatedWorkspace.getDescription().get());
 
     String otherDescription = "The deprecated workspace";
 
@@ -251,14 +252,18 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, otherDescription);
 
     // Since name is null, leave it alone. Description should be updated.
-    assertEquals(name, secondUpdatedWorkspace.getDisplayName());
-    assertEquals(otherDescription, secondUpdatedWorkspace.getDescription());
+    assertEquals(name, secondUpdatedWorkspace.getDisplayName().get());
+    assertEquals(otherDescription, secondUpdatedWorkspace.getDescription().get());
 
     // Sending through empty strings clears the values.
     Workspace thirdUpdatedWorkspace =
         workspaceService.updateWorkspace(USER_REQUEST, workspaceId, "", "");
-    assertEquals("", thirdUpdatedWorkspace.getDisplayName());
-    assertEquals("", thirdUpdatedWorkspace.getDescription());
+    assertEquals("", thirdUpdatedWorkspace.getDisplayName().get());
+    assertEquals("", thirdUpdatedWorkspace.getDescription().get());
+
+    assertThrows(
+        MissingRequiredFieldException.class,
+        () -> workspaceService.updateWorkspace(USER_REQUEST, workspaceId, null, null));
   }
 
   @Test

@@ -174,11 +174,13 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<ApiWorkspaceDescription> updateWorkspace(
-      @PathVariable("workspaceId") UUID id, @RequestBody ApiUpdateWorkspaceRequestBody body) {
+      @PathVariable("workspaceId") UUID workspaceId,
+      @RequestBody ApiUpdateWorkspaceRequestBody body) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info("Updating workspace {} for {}", id, userReq.getEmail());
+    logger.info("Updating workspace {} for {}", workspaceId, userReq.getEmail());
     Workspace workspace =
-        workspaceService.updateWorkspace(userReq, id, body.getDisplayName(), body.getDescription());
+        workspaceService.updateWorkspace(
+            userReq, workspaceId, body.getDisplayName(), body.getDescription());
 
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace);
     logger.info("Updated workspace {} for {}", desc, userReq.getEmail());

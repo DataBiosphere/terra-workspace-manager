@@ -32,11 +32,14 @@ public class WorkspaceLifecycle extends WorkspaceTestScriptBase {
     assertThat(workspaceDescription.getId(), equalTo(workspaceId));
     assertThat(workspaceDescription.getStage(), equalTo(WorkspaceStageModel.MC_WORKSPACE));
 
-    UpdateWorkspaceRequestBody updateBody = new UpdateWorkspaceRequestBody().displayName("name").description("desc");
+    static string workspaceName = "name";
+    static string workspaceDescription = "description";
+    UpdateWorkspaceRequestBody updateBody = new UpdateWorkspaceRequestBody().displayName(
+        workspaceName).description(workspaceDescription);
     WorkspaceDescription updatedDescription = workspaceApi.updateWorkspace(updateBody, workspaceId);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "PATCH workspace");
-    assertThat(updatedDescription.getDisplayName(), equalTo("name"));
-    assertThat(updatedDescription.getDescription(), equalTo("desc"));
+    assertThat(updatedDescription.getDisplayName(), equalTo(workspaceName));
+    assertThat(updatedDescription.getDescription(), equalTo(workspaceDescription));
 
     workspaceApi.deleteWorkspace(workspaceId);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "DELETE workspace");

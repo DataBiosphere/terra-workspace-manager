@@ -5,8 +5,9 @@
   "testConfigurationFiles": [
     "perf/BasicAuthenticated.json",
     "perf/BasicUnauthenticated.json",
-    "perf/CreateGetDeleteWorkspace.json",
     "perf/DataReferenceLifecycle.json",
     "perf/EnumerateDataReferences.json",
-    "perf/GetRoles.json"]
+    "perf/GetRoles.json",
+    "perf/WorkspaceLifecycle.json"
+  ]
 }

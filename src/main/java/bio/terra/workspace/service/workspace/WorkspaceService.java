@@ -79,6 +79,10 @@ public class WorkspaceService {
     createJob.addParameter(
         WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceRequest.workspaceStage());
 
+    createJob.addParameter(
+        WorkspaceFlightMapKeys.DISPLAY_NAME_ID, workspaceRequest.displayName().orElse(""));
+    createJob.addParameter(
+        WorkspaceFlightMapKeys.DESCRIPTION_ID, workspaceRequest.description().orElse(""));
     return createJob.submitAndWait(UUID.class);
   }
 
@@ -128,7 +132,9 @@ public class WorkspaceService {
   }
 
   /**
-   * Update an existing workspace. Currently, can change the workspace's display name or description.
+   * Update an existing workspace. Currently, can change the workspace's display name or
+   * description.
+   *
    * @param workspaceId workspace of interest
    * @param name name to change - may be null
    * @param description description to change - may be null
