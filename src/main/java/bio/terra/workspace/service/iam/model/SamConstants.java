@@ -50,28 +50,28 @@ public class SamConstants {
 
   public static class SamControlledResourceCreateActions {
 
-    public static final String CREATE_CONTROLLED_USER_SHARED_ACTION =
+    public static final String CREATE_CONTROLLED_USER_SHARED =
         "create_controlled_user_shared";
-    public static final String CREATE_CONTROLLED_USER_PRIVATE_ACTION =
+    public static final String CREATE_CONTROLLED_USER_PRIVATE =
         "create_controlled_user_private";
-    public static final String CREATE_CONTROLLED_APPLICATION_SHARED_ACTION =
+    public static final String CREATE_CONTROLLED_APPLICATION_SHARED =
         "create_controlled_application_shared";
-    public static final String CREATE_CONTROLLED_APPLICATION_PRIVATE_ACTION =
+    public static final String CREATE_CONTROLLED_APPLICATION_PRIVATE =
         "create_controlled_application_private";
 
     /** Return the Sam action name for creating a specific type of controlled resource. */
     public static String get(AccessScopeType accessScope, ManagedByType managedBy) {
       if (accessScope == AccessScopeType.ACCESS_SCOPE_SHARED) {
         if (managedBy == ManagedByType.MANAGED_BY_USER) {
-          return CREATE_CONTROLLED_USER_SHARED_ACTION;
+          return CREATE_CONTROLLED_USER_SHARED;
         } else if (managedBy == ManagedByType.MANAGED_BY_APPLICATION) {
-          return CREATE_CONTROLLED_APPLICATION_SHARED_ACTION;
+          return CREATE_CONTROLLED_APPLICATION_SHARED;
         }
       } else if (accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
         if (managedBy == ManagedByType.MANAGED_BY_USER) {
-          return CREATE_CONTROLLED_USER_PRIVATE_ACTION;
+          return CREATE_CONTROLLED_USER_PRIVATE;
         } else if (managedBy == ManagedByType.MANAGED_BY_APPLICATION) {
-          return CREATE_CONTROLLED_APPLICATION_PRIVATE_ACTION;
+          return CREATE_CONTROLLED_APPLICATION_PRIVATE;
         }
       }
       throw new InternalLogicException(
