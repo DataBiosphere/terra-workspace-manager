@@ -69,4 +69,4 @@ jobs:
         run: |
           cd workspace-manager-clienttests
           echo "Upload test results to BigQuery Test Runner Dataset"
-          ./gradlew uploadResults --args="SummariesToBigQuery.json /tmp/TestRunnerResults"
+          ./gradlew uploadResults --args="SummariesToTerraKernelK8SBigQuery.json /tmp/TestRunnerResults"
