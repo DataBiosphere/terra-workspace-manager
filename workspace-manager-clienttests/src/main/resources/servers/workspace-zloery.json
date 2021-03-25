@@ -1,0 +1,24 @@
+{
+  "name": "workspace-zloery",
+  "description": "Workspace Manager zloery personal development environment",
+
+  "samUri": "https://sam.dsde-dev.broadinstitute.org",
+  "datarepoUri": "https://jade.datarepo-dev.broadinstitute.org/",
+  "workspaceManagerUri": "https://workspace.zloery.integ.envs.broadinstitute.org/",
+
+  "cluster": {
+    "clusterName": "gke_terra-kernel-k8s_us-central1-a_terra-integration",
+    "clusterShortName": "terra-integration",
+    "region": "us-central1",
+    "zone": "us-central1-a",
+    "project": "terra-kernel-k8s",
+    "namespace": "terra-zloery",
+    "containerName": "workspacemanager-deployment"
+  },
+  "deploymentScript": {},
+  "testRunnerServiceAccountFile": "testrunner-sa.json",
+  "testRunnerK8SServiceAccountFile": "testrunner-k8s-zloery-sa.json",
+
+  "skipDeployment": true,
+  "skipKubernetes": false
+}

@@ -1,0 +1,8 @@
+{
+  "name": "BasicResiliency",
+  "description": "Resiliency tests",
+  "serverSpecificationFile": "workspace-wsmtest-resiliency.json",
+  "testConfigurationFiles": [
+    "resiliency/DeleteInitialPods.json"
+  ]
+}

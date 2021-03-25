@@ -1,0 +1,87 @@
+# This workflow will build and run a workspace manager resiliency test against the terra-wsmtest namespace
+
+name: Test Runner Resiliency Test
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 8 * * *' # run at 8 AM UTC, 3 AM ET.
+
+jobs:
+  test-runner-resiliency:
+
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13.1
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@v2
+      - name: Set up AdoptOpenJDK 11
+        uses: joschi/setup-jdk@v2
+        with:
+          java-version: 11
+      # This step caches Gradle packages for reuse in the same VM instance.
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
+          restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Get Vault token
+        id: vault-token-step
+        env:
+          VAULT_ADDR: https://clotho.broadinstitute.org:8200
+        run: |
+          VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
+            -e "VAULT_ADDR=${VAULT_ADDR}" \
+            vault:1.1.0 \
+            vault write -field token \
+              auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+              secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+          echo ::set-output name=vault-token::$VAULT_TOKEN
+          echo ::add-mask::$VAULT_TOKEN
+
+      - name: Build the WSM client
+        run: |
+          echo "Building WSM client library"
+          ./gradlew :workspace-manager-client:clean :workspace-manager-client:assemble
+          cd workspace-manager-clienttests
+          export ORG_GRADLE_PROJECT_workspacemanagerclientjar=$(find .. -type f -name "workspace-manager-client*.jar")
+          echo "ORG_GRADLE_PROJECT_workspacemanagerclientjar = ${ORG_GRADLE_PROJECT_workspacemanagerclientjar}"
+
+      # Set the env var (TEST_RUNNER_SERVER_SPECIFICATION_FILE) in the GH action script to specify which server we are testing against.
+      # This will be particularly helpful once we switch over to testing against any test env -- then it's just a change to the env var.
+      # Please refer to https://github.com/DataBiosphere/terra-test-runner#override-the-server-from-the-command-line for more information.
+      - name: Run a basic Resiliency test suite against a namespace
+        run: |
+          cd workspace-manager-clienttests
+          echo "Test Runner config"
+          ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
+          ./render-k8s-config.sh wsmtest ${{ steps.vault-token-step.outputs.vault-token }}
+          export TEST_RUNNER_SERVER_SPECIFICATION_FILE=workspace-wsmtest-resiliency.json
+          echo "Running test suite"
+          ./gradlew runTest --args="suites/BasicResiliency.json /tmp/TestRunnerResults"
+
+      - name: Upload test results to Google Bucket
+        if: ${{ always() }}
+        run: |
+          cd workspace-manager-clienttests
+          echo "Upload test results to Google Bucket"
+          ./gradlew uploadResults --args="CompressDirectoryToTerraKernelK8S.json /tmp/TestRunnerResults"
