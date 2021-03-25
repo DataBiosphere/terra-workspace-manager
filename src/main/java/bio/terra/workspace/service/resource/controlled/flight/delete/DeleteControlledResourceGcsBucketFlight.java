@@ -19,10 +19,11 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.StorageException;
 import com.google.common.collect.ImmutableList;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Flight for deletion of a Gcs Bucket resource. This resource is deleted in a particular way and
@@ -73,11 +74,9 @@ public class DeleteControlledResourceGcsBucketFlight extends Flight {
       int deleteTries = 0;
 
       FlightMap inputParameters = flightContext.getInputParameters();
-      UUID workspaceId =
-          UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+      UUID workspaceId = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
       UUID resourceId =
-          UUID.fromString(
-              inputParameters.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, String.class));
+          inputParameters.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, UUID.class);
 
       String projectId = workspaceService.getRequiredGcpProject(workspaceId);
 
@@ -131,10 +130,7 @@ public class DeleteControlledResourceGcsBucketFlight extends Flight {
         return false;
       } catch (StorageException ex) {
         logger.info(
-            "Attempt to delete bucket "
-                + bucket.getBucketInfo().getName()
-                + "failed, but that is OK we will try again",
-            ex);
+            "Attempt to delete bucket failed on this try: " + bucket.getBucketInfo().getName(), ex);
         return true;
       }
     }

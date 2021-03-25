@@ -43,7 +43,7 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
   }
 
   /**
-   * Allow inheriting classes to object the spend profile
+   * Allow inheriting classes to obtain the spend profile
    *
    * @return spend profile string
    */

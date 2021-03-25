@@ -14,7 +14,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * Intermediate base class for testing Workspace Manager in the TestRunner framework. This class handles
  * obtaining the WorkspaceApi object and basic checks and debugging around its status code.
  *
- * Users of this class need to o overload doUserJourney() with the body of the userJourney() method,
+ * Users of this class need to overload doUserJourney() with the body of the userJourney() method,
  * and optionally doSetup() and doCleanup() aw well.
  */
 public abstract class WorkspaceApiTestScriptBase extends TestScript {

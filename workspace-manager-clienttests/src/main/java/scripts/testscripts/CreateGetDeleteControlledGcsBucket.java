@@ -13,6 +13,7 @@ import bio.terra.workspace.model.CreateControlledGcsBucketRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcsBucket;
 import bio.terra.workspace.model.DeleteControlledGcsBucketRequest;
 import bio.terra.workspace.model.DeleteControlledGcsBucketResult;
+import bio.terra.workspace.model.GcsBucketAttributes;
 import bio.terra.workspace.model.GcsBucketCreationParameters;
 import bio.terra.workspace.model.GcsBucketDefaultStorageClass;
 import bio.terra.workspace.model.GcsBucketLifecycle;
@@ -20,7 +21,6 @@ import bio.terra.workspace.model.GcsBucketLifecycleRule;
 import bio.terra.workspace.model.GcsBucketLifecycleRuleAction;
 import bio.terra.workspace.model.GcsBucketLifecycleRuleActionType;
 import bio.terra.workspace.model.GcsBucketLifecycleRuleCondition;
-import bio.terra.workspace.model.GcsBucketAttributes;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
 import com.google.api.client.http.HttpStatusCodes;
@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,7 @@ import static org.hamcrest.Matchers.equalTo;
 public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger =
       LoggerFactory.getLogger(CreateGetDeleteControlledGcsBucket.class);
+  private static final Duration CREATE_BUCKET_POLL_INTERVAL = Duration.ofSeconds(5);
   private static final long CREATE_BUCKET_POLL_SECONDS = 5;
   private static final long DELETE_BUCKET_POLL_SECONDS = 15;
   private static final long CREATE_CONTEXT_POLL_SECONDS = 10;
@@ -51,7 +53,7 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
               new GcsBucketLifecycleRuleAction()
                   .type(
                       GcsBucketLifecycleRuleActionType
-                          .DELETE)) // no storage class require for delete actions
+                          .DELETE)) // no storage class required for delete actions
           .condition(
               new GcsBucketLifecycleRuleCondition()
                   .age(64)
@@ -75,10 +77,12 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
 
   private static final String BUCKET_LOCATION = "US-CENTRAL1";
-  private static final String BUCKET_PREFIX = "wsmtestrun-";
+  private static final String BUCKET_PREFIX = "wsmtestbucket-";
+  private static final String RESOURCE_PREFIX = "wsmtestresource-";
 
   private TestUserSpecification reader;
   private String bucketName;
+  private String resourceName;
 
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
@@ -89,7 +93,9 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
         "There must be at least two test users defined for this test.",
         testUsers != null && testUsers.size() > 1);
     this.reader = testUsers.get(1);
-    this.bucketName = BUCKET_PREFIX + UUID.randomUUID().toString();
+    String nameSuffix = UUID.randomUUID().toString();
+    this.bucketName = BUCKET_PREFIX + nameSuffix;
+    this.resourceName = RESOURCE_PREFIX + nameSuffix;
   }
 
   @Override
@@ -162,7 +168,7 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
     }
     bucketName = null;
 
-    // Delete the cloud context
+    // Delete the cloud context. This is not required. Just some exercise for deleteCloudContext
     logger.info("Deleting the cloud context");
     workspaceApi.deleteCloudContext(getWorkspaceId(), CloudPlatform.GCP);
   }
@@ -178,7 +184,7 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
 
     var commonParameters =
             new ControlledResourceCommonFields()
-                    .name(bucketName)
+                    .name(resourceName)
                     .cloningInstructions(CloningInstructionsEnum.NOTHING)
                     .accessScope(ControlledResourceCommonFields.AccessScopeEnum.SHARED_ACCESS)
                     .managedBy(ControlledResourceCommonFields.ManagedByEnum.USER)
@@ -189,7 +195,6 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
                     .gcsBucket(creationParameters)
                     .common(commonParameters);
 
-    // Try and fail to create a bucket - no cloud context
     logger.info("Attempt to creating bucket {} jobId {} workspace {}", bucketName, jobId, getWorkspaceId());
     CreatedControlledGcsBucket bucket = resourceApi.createBucket(body, getWorkspaceId());
     while (ClientTestUtils.jobIsRunning(bucket.getJobReport())) {

@@ -23,6 +23,7 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -122,7 +123,7 @@ public class ClientTestUtils {
     return buildClient(null, server);
   }
 
-  private static ApiClient buildClient(AccessToken accessToken, ServerSpecification server)
+  private static ApiClient buildClient(@Nullable AccessToken accessToken, ServerSpecification server)
       throws IOException {
     if (Strings.isNullOrEmpty(server.workspaceManagerUri)) {
       throw new IllegalArgumentException("Workspace Manager Service URI cannot be empty");

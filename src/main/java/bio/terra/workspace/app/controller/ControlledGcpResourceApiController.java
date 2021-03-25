@@ -3,6 +3,7 @@ package bio.terra.workspace.app.controller;
 import static java.util.stream.Collectors.toCollection;
 
 import bio.terra.workspace.common.exception.ValidationException;
+import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcsBucket;
@@ -100,12 +101,14 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
           "At least one IAM role is required for private resources and the field must be omitted for shared resources");
     }
 
+    ApiJobControl jobControl = body.getCommon().getJobControl();
     final String jobId =
         controlledResourceService.createControlledResource(
             resource,
             body.getGcsBucket(),
             privateRoles,
-            body.getCommon().getJobControl(),
+            jobControl,
+            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId()),
             userRequest);
     return getCreateBucketResult(workspaceId, jobId);
   }
@@ -119,7 +122,11 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         "deleteBucket workspace {} resource {}", workspaceId.toString(), resourceId.toString());
     final String jobId =
         controlledResourceService.deleteControlledGcsBucket(
-            jobControl, workspaceId, resourceId, userRequest);
+            jobControl,
+            workspaceId,
+            resourceId,
+            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId()),
+            userRequest);
     return getDeleteResult(jobId, userRequest);
   }
 
