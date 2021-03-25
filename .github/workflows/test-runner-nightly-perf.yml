@@ -4,7 +4,9 @@
 name: Test Runner Nightly Perf Tests
 
 on:
-  push
+  workflow_dispatch: {}
+    schedule:
+      - cron: '0 6 * * *' # run at 6 AM UTC, 1 AM ET.
 
 jobs:
   test-runner-integration:
