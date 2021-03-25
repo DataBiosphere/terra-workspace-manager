@@ -76,10 +76,10 @@ public class GrantGcsBucketIamRolesStep implements Step {
             workingMap.get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class));
 
     List<Binding> newBindings = new ArrayList<>();
-    newBindings.addAll(bindingsForRole(WsmIamRole.READER, readerGroup));
-    newBindings.addAll(bindingsForRole(WsmIamRole.WRITER, writerGroup));
-    newBindings.addAll(bindingsForRole(WsmIamRole.APPLICATION, applicationGroup));
-    newBindings.addAll(bindingsForRole(WsmIamRole.OWNER, ownerGroup));
+    newBindings.addAll(bindingsForRole(WsmIamRole.READER, readerGroup, gcpProjectId));
+    newBindings.addAll(bindingsForRole(WsmIamRole.WRITER, writerGroup, gcpProjectId));
+    newBindings.addAll(bindingsForRole(WsmIamRole.APPLICATION, applicationGroup, gcpProjectId));
+    newBindings.addAll(bindingsForRole(WsmIamRole.OWNER, ownerGroup, gcpProjectId));
     newBindings.addAll(currentPolicy.getBindingsList());
 
     Policy newPolicy =
@@ -110,8 +110,9 @@ public class GrantGcsBucketIamRolesStep implements Step {
    *     roles using ControlledResourceInheritanceMapping.
    * @param group The group being granted a role. Should be prefixed with the literal "group:" for
    *     GCP.
+   * @param projectId The GCP project ID
    */
-  private List<Binding> bindingsForRole(WsmIamRole role, String group) {
+  private List<Binding> bindingsForRole(WsmIamRole role, String group, String projectId) {
     return ControlledResourceInheritanceMapping.getInheritanceMapping(
             resource.getAccessScope(), resource.getManagedBy())
         .get(role)
@@ -119,7 +120,7 @@ public class GrantGcsBucketIamRolesStep implements Step {
         .map(
             resourceRole ->
                 Binding.newBuilder()
-                    .setRole(gcpRoleFromResourceRole(resourceRole))
+                    .setRole(fullyQualifiedRoleName(resourceRole, projectId))
                     .setMembers(Collections.singletonList(group))
                     .build())
         .collect(Collectors.toList());
@@ -129,8 +130,9 @@ public class GrantGcsBucketIamRolesStep implements Step {
    * Return the name of the existing GCP custom IAM role defined for a given resource role (e.g.
    * reader, writer) for GCS buckets.
    */
-  private String gcpRoleFromResourceRole(ControlledResourceIamRole role) {
-    return CustomGcpIamRole.customGcpRoleName(WsmResourceType.GCS_BUCKET, role);
+  private String fullyQualifiedRoleName(ControlledResourceIamRole role, String projectId) {
+    String roleName = CustomGcpIamRole.customGcpRoleName(WsmResourceType.GCS_BUCKET, role);
+    return String.format("projects/%s/roles/%s", projectId, roleName);
   }
 
   /**

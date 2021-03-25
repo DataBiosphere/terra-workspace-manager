@@ -8,7 +8,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
-import bio.terra.workspace.service.job.JobMapKeys;
 import java.util.UUID;
 
 /**
@@ -18,9 +17,14 @@ import java.util.UUID;
 public class SyncSamGroupsStep implements Step {
 
   private final SamService samService;
+  private final UUID workspaceId;
+  private final AuthenticatedUserRequest userReq;
 
-  public SyncSamGroupsStep(SamService samService) {
+  public SyncSamGroupsStep(
+      SamService samService, UUID workspaceId, AuthenticatedUserRequest userReq) {
     this.samService = samService;
+    this.workspaceId = workspaceId;
+    this.userReq = userReq;
   }
 
   // Note that the SamService.syncWorkspacePolicy is already idempotent, so this doesn't need to
@@ -28,12 +32,6 @@ public class SyncSamGroupsStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    UUID workspaceId =
-        flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-    AuthenticatedUserRequest userReq =
-        flightContext
-            .getInputParameters()
-            .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(
         WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL,
