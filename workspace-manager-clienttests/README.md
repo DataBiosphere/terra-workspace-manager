@@ -138,6 +138,7 @@ For example,
 
 NB: A Google Bucket name has a limit of up to 63 characters.
 
+## Local testing
 #### Use a local Workspace Manager client JAR file
 The version of the Workspace Manager client JAR file is specified in the build.gradle file in this sub-project. This JAR file is
 fetched from the Broad Institute Maven repository. You can override this to use a local version of the Workspace Manager client
@@ -160,4 +161,16 @@ Please refer to `test-runner-integration.yml` for an example use case.
 cd ~/terra-workspace-manager/workspace-manager-client
 ../gradlew clean assemble
 ls -la ./build/libs/*jar
+```
+
+#### Use a local Workspace Manager server
+See [DEVELOPMENT.md](../DEVELOPMENT.md#running-workspace-manager) to start a
+local Workspace Manager server.
+
+Workspace Manager has a [pre-defined configuration file](src/main/resources/servers/workspace-local.json) 
+for running against a local server. Once you have a local server running separately,
+you can run client tests against that server, e.g.
+```
+export TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-local.json" 
+./gradlew runTest --args="configs/integration/BasicAuthenticated.json /tmp/TR"
 ```
