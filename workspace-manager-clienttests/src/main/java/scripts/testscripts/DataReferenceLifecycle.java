@@ -1,5 +1,8 @@
 package scripts.testscripts;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
@@ -10,9 +13,6 @@ import bio.terra.workspace.model.ReferenceTypeEnum;
 import org.apache.http.HttpStatus;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 
 public class DataReferenceLifecycle extends WorkspaceAllocateTestScriptBase {
 

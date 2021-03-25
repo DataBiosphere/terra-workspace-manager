@@ -1,5 +1,8 @@
 package scripts.testscripts;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
@@ -24,20 +27,16 @@ import bio.terra.workspace.model.GcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
 import com.google.api.client.http.HttpStatusCodes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import scripts.utils.ClientTestUtils;
-import scripts.utils.WorkspaceAllocateTestScriptBase;
-
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import scripts.utils.ClientTestUtils;
+import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger =
@@ -103,21 +102,24 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
       throws Exception {
 
     ControlledGcpResourceApi resourceApi =
-            ClientTestUtils.getControlledGpcResourceClient(testUser, server);
+        ClientTestUtils.getControlledGpcResourceClient(testUser, server);
 
     // Create a user-shared controlled GCS bucket - should fail due to no cloud context
     CreatedControlledGcsBucket bucket = createBucketAttempt(resourceApi);
     assertThat(bucket.getJobReport().getStatus(), equalTo(JobReport.StatusEnum.FAILED));
-    assertThat(bucket.getErrorReport().getStatusCode(), equalTo(HttpStatusCodes.STATUS_CODE_BAD_REQUEST));
+    assertThat(
+        bucket.getErrorReport().getStatusCode(), equalTo(HttpStatusCodes.STATUS_CODE_BAD_REQUEST));
 
     // Create the cloud context
     logger.info("Creating cloud context");
 
     String contextJobId = UUID.randomUUID().toString();
-    var createContext = new CreateCloudContextRequest()
-    .cloudPlatform(CloudPlatform.GCP)
-    .jobControl(new JobControl().id(contextJobId));
-    CreateCloudContextResult contextResult = workspaceApi.createCloudContext(createContext, getWorkspaceId());
+    var createContext =
+        new CreateCloudContextRequest()
+            .cloudPlatform(CloudPlatform.GCP)
+            .jobControl(new JobControl().id(contextJobId));
+    CreateCloudContextResult contextResult =
+        workspaceApi.createCloudContext(createContext, getWorkspaceId());
     while (ClientTestUtils.jobIsRunning(contextResult.getJobReport())) {
       TimeUnit.SECONDS.sleep(CREATE_CONTEXT_POLL_SECONDS);
       contextResult = workspaceApi.getCreateCloudContextResult(getWorkspaceId(), contextJobId);
@@ -173,29 +175,31 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
     workspaceApi.deleteCloudContext(getWorkspaceId(), CloudPlatform.GCP);
   }
 
-  private CreatedControlledGcsBucket createBucketAttempt(ControlledGcpResourceApi resourceApi) throws Exception {
+  private CreatedControlledGcsBucket createBucketAttempt(ControlledGcpResourceApi resourceApi)
+      throws Exception {
     String jobId = UUID.randomUUID().toString();
     var creationParameters =
-            new GcsBucketCreationParameters()
-                    .name(bucketName)
-                    .location(BUCKET_LOCATION)
-                    .defaultStorageClass(GcsBucketDefaultStorageClass.STANDARD)
-                    .lifecycle(new GcsBucketLifecycle().rules(LIFECYCLE_RULES));
+        new GcsBucketCreationParameters()
+            .name(bucketName)
+            .location(BUCKET_LOCATION)
+            .defaultStorageClass(GcsBucketDefaultStorageClass.STANDARD)
+            .lifecycle(new GcsBucketLifecycle().rules(LIFECYCLE_RULES));
 
     var commonParameters =
-            new ControlledResourceCommonFields()
-                    .name(resourceName)
-                    .cloningInstructions(CloningInstructionsEnum.NOTHING)
-                    .accessScope(ControlledResourceCommonFields.AccessScopeEnum.SHARED_ACCESS)
-                    .managedBy(ControlledResourceCommonFields.ManagedByEnum.USER)
-                    .jobControl(new JobControl().id(jobId));
+        new ControlledResourceCommonFields()
+            .name(resourceName)
+            .cloningInstructions(CloningInstructionsEnum.NOTHING)
+            .accessScope(ControlledResourceCommonFields.AccessScopeEnum.SHARED_ACCESS)
+            .managedBy(ControlledResourceCommonFields.ManagedByEnum.USER)
+            .jobControl(new JobControl().id(jobId));
 
     var body =
-            new CreateControlledGcsBucketRequestBody()
-                    .gcsBucket(creationParameters)
-                    .common(commonParameters);
+        new CreateControlledGcsBucketRequestBody()
+            .gcsBucket(creationParameters)
+            .common(commonParameters);
 
-    logger.info("Attempt to creating bucket {} jobId {} workspace {}", bucketName, jobId, getWorkspaceId());
+    logger.info(
+        "Attempt to creating bucket {} jobId {} workspace {}", bucketName, jobId, getWorkspaceId());
     CreatedControlledGcsBucket bucket = resourceApi.createBucket(body, getWorkspaceId());
     while (ClientTestUtils.jobIsRunning(bucket.getJobReport())) {
       TimeUnit.SECONDS.sleep(CREATE_BUCKET_POLL_SECONDS);

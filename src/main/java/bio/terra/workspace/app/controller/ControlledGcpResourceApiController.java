@@ -1,7 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import static java.util.stream.Collectors.toCollection;
-
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
@@ -25,17 +23,20 @@ import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.ArrayList;
+import java.util.Optional;
+import java.util.UUID;
+
+import static java.util.stream.Collectors.toCollection;
 
 @Controller
 public class ControlledGcpResourceApiController implements ControlledGcpResourceApi {
@@ -90,9 +91,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
                             .collect(toCollection(ArrayList::new)))
                 .orElse(null);
 
-    // REVIEWERS: I changed this from what was in Zach's recent PR. I think this is the proper
-    // check, but
-    // please check my work!
+    // Validate that we get the private role when the resource is private and do not get it
+    // when the resource is public
     boolean privateRoleOmitted = (privateRoles == null || privateRoles.isEmpty());
     if ((resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE && privateRoleOmitted)
         || (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_SHARED

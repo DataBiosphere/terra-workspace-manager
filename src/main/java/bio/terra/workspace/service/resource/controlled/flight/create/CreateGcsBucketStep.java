@@ -72,8 +72,7 @@ public class CreateGcsBucketStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     FlightMap inputMap = flightContext.getInputParameters();
-    UUID workspaceId =
-        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+    UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
     String projectId = workspaceService.getRequiredGcpProject(workspaceId);
     final StorageCow storageCow = crlService.createStorageCow(projectId);
     storageCow.delete(resource.getBucketName());
