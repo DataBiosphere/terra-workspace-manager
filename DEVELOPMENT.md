@@ -125,7 +125,7 @@ http://localhost:8080/swagger-ui.html
 
 New versions of the WSM client library need to be published manually. You should
  publish a new version of the client library alongside any changes to WSM's 
- visible interface (generally, any changes to [our Swagger API specification](src/main/resources/api/service_openapi.yaml)).
+ visible interface (generally, any changes to [our API specification](src/main/resources/api/service_openapi.yaml)).
  Until you follow these steps, API changes may cause failures in automated client tests that run against your PR.
 
 To publish a new version of the client library:
