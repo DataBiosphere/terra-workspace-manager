@@ -98,6 +98,7 @@ public class ClientTestUtils {
 
     return buildClient(accessToken, server);
   }
+<<<<<<< HEAD
 
   public static WorkspaceApi getWorkspaceClient(
       TestUserSpecification testUser, ServerSpecification server) throws IOException {
@@ -109,6 +110,13 @@ public class ClientTestUtils {
       TestUserSpecification testUser, ServerSpecification server) throws IOException {
     final ApiClient apiClient = getClientForTestUser(testUser, server);
     return new ControlledGcpResourceApi(apiClient);
+=======
+
+  public static WorkspaceApi getWorkspaceClient(
+      TestUserSpecification testUser, ServerSpecification server) throws IOException {
+    final ApiClient apiClient = getClientForTestUser(testUser, server);
+    return new WorkspaceApi(apiClient);
+>>>>>>> 881b3360e17aec1b9a6a7617b6d2ea8b00dfb002
   }
 
   /**
@@ -123,7 +131,11 @@ public class ClientTestUtils {
     return buildClient(null, server);
   }
 
+<<<<<<< HEAD
   private static ApiClient buildClient(@Nullable AccessToken accessToken, ServerSpecification server)
+=======
+  private static ApiClient buildClient(AccessToken accessToken, ServerSpecification server)
+>>>>>>> 881b3360e17aec1b9a6a7617b6d2ea8b00dfb002
       throws IOException {
     if (Strings.isNullOrEmpty(server.workspaceManagerUri)) {
       throw new IllegalArgumentException("Workspace Manager Service URI cannot be empty");
@@ -189,9 +201,12 @@ public class ClientTestUtils {
       RoleBindingList roleBindings, String userEmail, IamRole role) {
     return roleBindings.stream()
         .anyMatch(rb -> rb.getRole() == role && rb.getMembers().contains(userEmail));
+<<<<<<< HEAD
   }
   
   public static boolean jobIsRunning(JobReport jobReport) {
     return jobReport.getStatus().equals(JobReport.StatusEnum.RUNNING);
+=======
+>>>>>>> 881b3360e17aec1b9a6a7617b6d2ea8b00dfb002
   }
 }
