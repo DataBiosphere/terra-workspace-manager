@@ -81,6 +81,7 @@ jobs:
         cd workspace-manager-clienttests
         echo "Test Runner config"
         ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
+        ./render-k8s-config.sh wsmtest ${{ steps.vault-token-step.outputs.vault-token }}
         echo "Running test suite"
         export TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-local.json"
         ./gradlew runTest --args="suites/BasicIntegration.json /tmp/TestRunnerResults"
@@ -90,11 +91,11 @@ jobs:
       run: |
         cd workspace-manager-clienttests
         echo "Upload test results to Google Bucket"
-        ./gradlew uploadResults --args="CompressDirectoryToBucket.json /tmp/TestRunnerResults"
+        ./gradlew uploadResults --args="CompressDirectoryToTerraKernelK8S.json /tmp/TestRunnerResults"
 
     - name: Upload test results to BigQuery Test Runner Dataset
       if: ${{ always() }}
       run: |
         cd workspace-manager-clienttests
         echo "Upload test results to BigQuery Test Runner Dataset"
-        ./gradlew uploadResults --args="SummariesToBigQuery.json /tmp/TestRunnerResults"
+        ./gradlew uploadResults --args="SummariesToTerraKernelK8SBigQuery.json /tmp/TestRunnerResults"

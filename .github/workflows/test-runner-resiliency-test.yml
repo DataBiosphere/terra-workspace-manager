@@ -3,9 +3,7 @@
 name: Test Runner Resiliency Test
 
 on:
-  workflow_dispatch: {}
-  schedule:
-    - cron: '0 8 * * *' # run at 8 AM UTC, 3 AM ET.
+  push
 
 jobs:
   test-runner-resiliency:
@@ -85,3 +83,10 @@ jobs:
           cd workspace-manager-clienttests
           echo "Upload test results to Google Bucket"
           ./gradlew uploadResults --args="CompressDirectoryToTerraKernelK8S.json /tmp/TestRunnerResults"
+
+      - name: Upload test results to BigQuery Test Runner Dataset
+        if: ${{ always() }}
+        run: |
+          cd workspace-manager-clienttests
+          echo "Upload test results to BigQuery Test Runner Dataset"
+          ./gradlew uploadResults --args="SummariesToTerraKernelK8SBigQuery.json /tmp/TestRunnerResults"

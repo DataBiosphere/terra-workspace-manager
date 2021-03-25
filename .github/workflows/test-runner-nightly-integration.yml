@@ -65,7 +65,7 @@ jobs:
         run: |
           cd workspace-manager-clienttests
           echo "Upload test results to Google Bucket"
-          ./gradlew uploadResults --args="CompressDirectoryToBucket.json /tmp/TestRunnerResults"
+          ./gradlew uploadResults --args="CompressDirectoryToTerraKernelK8S.json /tmp/TestRunnerResults"
 
       - name: Upload test results to BigQuery Test Runner Dataset
         if: ${{ always() }}
