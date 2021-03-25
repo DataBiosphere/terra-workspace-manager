@@ -20,7 +20,7 @@ import bio.terra.workspace.model.GcsBucketLifecycleRule;
 import bio.terra.workspace.model.GcsBucketLifecycleRuleAction;
 import bio.terra.workspace.model.GcsBucketLifecycleRuleActionType;
 import bio.terra.workspace.model.GcsBucketLifecycleRuleCondition;
-import bio.terra.workspace.model.GcsBucketStoredAttributes;
+import bio.terra.workspace.model.GcsBucketAttributes;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
 import com.google.api.client.http.HttpStatusCodes;
@@ -126,7 +126,7 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
 
     // Retrieve the bucket resource
     logger.info("Retrieving bucket resource id {}", resourceId.toString());
-    GcsBucketStoredAttributes gotBucket = resourceApi.getBucket(getWorkspaceId(), resourceId);
+    GcsBucketAttributes gotBucket = resourceApi.getBucket(getWorkspaceId(), resourceId);
     assertThat(gotBucket.getBucketName(), equalTo(bucket.getGcpBucket().getBucketName()));
 
     // TODO: Check access:
