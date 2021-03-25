@@ -17,7 +17,7 @@ import scripts.utils.ClientTestUtils;
 import scripts.utils.WorkspaceFixtureTestScriptBase;
 
 public class GetRoles extends WorkspaceFixtureTestScriptBase {
-private static final IamRole IAM_ROLE = IamRole.WRITER;
+  private static final IamRole IAM_ROLE = IamRole.WRITER;
   private static final Logger logger = LoggerFactory.getLogger(GetRoles.class);
 
   @Override
@@ -26,10 +26,12 @@ private static final IamRole IAM_ROLE = IamRole.WRITER;
     super.doSetup(testUsers, workspaceApi);
 
     for (TestUserSpecification testUser : testUsers) {
-      logger.info("Granting role {} for user {} on workspace id {}", IAM_ROLE.toString(),
-          testUser.userEmail, getWorkspaceId().toString());
-      final var body = new GrantRoleRequestBody()
-          .memberEmail(testUser.userEmail);
+      logger.info(
+          "Granting role {} for user {} on workspace id {}",
+          IAM_ROLE.toString(),
+          testUser.userEmail,
+          getWorkspaceId().toString());
+      final var body = new GrantRoleRequestBody().memberEmail(testUser.userEmail);
       // grant the role
       workspaceApi.grantRole(body, getWorkspaceId(), IAM_ROLE);
     }
@@ -42,14 +44,18 @@ private static final IamRole IAM_ROLE = IamRole.WRITER;
     // check granted roles
     final RoleBindingList roles = workspaceApi.getRoles(getWorkspaceId());
 
-    logger.debug("For workspace id {}, retrieved role bindings:\n{}", getWorkspaceId().toString(), roles.toString());
-   // our user should be in this list, with the correct role
+    logger.debug(
+        "For workspace id {}, retrieved role bindings:\n{}",
+        getWorkspaceId().toString(),
+        roles.toString());
+    // our user should be in this list, with the correct role
     boolean isInList = ClientTestUtils.containsBinding(roles, testUser.userEmail, IAM_ROLE);
     assertThat(isInList, equalTo(true));
   }
 
   /**
    * Specify an MC Terra workspace so that roles are supported.
+   *
    * @return
    */
   @Override
