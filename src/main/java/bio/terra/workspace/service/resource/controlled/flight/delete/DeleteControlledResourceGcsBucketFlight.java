@@ -103,7 +103,7 @@ public class DeleteControlledResourceGcsBucketFlight extends Flight {
                                 .setAge(0)
                                 .build())))
                 .build();
-        bucketCow.update();
+        bucket = bucketCow.update();
         bucketExists = tryBucketDelete(bucket);
         if (bucketExists) {
           TimeUnit.HOURS.sleep(1);

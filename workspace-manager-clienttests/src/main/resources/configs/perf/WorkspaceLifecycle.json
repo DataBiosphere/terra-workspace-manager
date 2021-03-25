@@ -1,13 +1,13 @@
 {
-  "name": "CreateGetDeleteWorkspace",
+  "name": "WorkspaceLifecycle",
   "description": "CRUD workspace tests.",
   "serverSpecificationFile": "workspace-dev.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
     {
-      "name": "CreateGetDeleteWorkspace",
-      "numberOfUserJourneyThreadsToRun": 1,
+      "name": "WorkspaceLifecycle",
+      "numberOfUserJourneyThreadsToRun": 10,
       "userJourneyThreadPoolSize": 2,
       "expectedTimeForEach": 5,
       "expectedTimeForEachUnit": "SECONDS"

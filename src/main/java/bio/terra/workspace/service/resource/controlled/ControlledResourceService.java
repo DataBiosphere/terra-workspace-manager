@@ -4,8 +4,9 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.model.ControlledResourceIamRoleList;
 import bio.terra.workspace.service.iam.model.SamConstants;
-import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceCreateActions;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResource;
@@ -43,12 +44,14 @@ public class ControlledResourceService {
   public String createControlledResource(
       ControlledResource resource,
       ApiGcsBucketCreationParameters creationParameters,
-      WsmIamRole creationIamRole,
+      ControlledResourceIamRoleList privateResourceIamRoles,
       ApiJobControl jobControl,
       AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
     workspaceService.validateWorkspaceAndAction(
-        userRequest, resource.getWorkspaceId(), SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+        userRequest,
+        resource.getWorkspaceId(),
+        SamControlledResourceCreateActions.get(resource.getAccessScope(), resource.getManagedBy()));
     final String jobDescription =
         String.format(
             "Create controlled resource %s; id %s; name %s",
@@ -63,8 +66,8 @@ public class ControlledResourceService {
                 resource,
                 userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters)
-            .addParameter(ControlledResourceKeys.IAM_ROLE, creationIamRole);
-
+            .addParameter(
+                ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, privateResourceIamRoles);
     return jobBuilder.submit();
   }
 

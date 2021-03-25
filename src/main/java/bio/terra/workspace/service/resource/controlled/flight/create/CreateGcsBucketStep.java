@@ -56,15 +56,14 @@ public class CreateGcsBucketStep implements Step {
     ApiGcsBucketCreationParameters creationParameters =
         inputMap.get(CREATION_PARAMETERS, ApiGcsBucketCreationParameters.class);
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
-
-    final BucketInfo bucketInfo =
+    BucketInfo bucketInfo =
         BucketInfo.newBuilder(resource.getBucketName())
             .setLocation(creationParameters.getLocation())
             .setStorageClass(ApiConversions.toGcsApi(creationParameters.getDefaultStorageClass()))
             .setLifecycleRules(ApiConversions.toGcsApi(creationParameters.getLifecycle()))
             .build();
 
-    final StorageCow storageCow = crlService.createStorageCow(projectId);
+    StorageCow storageCow = crlService.createStorageCow(projectId);
     storageCow.create(bucketInfo);
 
     return StepResult.getStepResultSuccess();

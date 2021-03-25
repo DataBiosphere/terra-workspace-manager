@@ -25,12 +25,12 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.List;
+import java.util.UUID;
+import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Service for workspace lifecycle operations.
@@ -83,6 +83,10 @@ public class WorkspaceService {
     createJob.addParameter(
         WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceRequest.workspaceStage());
 
+    createJob.addParameter(
+        WorkspaceFlightMapKeys.DISPLAY_NAME_ID, workspaceRequest.displayName().orElse(""));
+    createJob.addParameter(
+        WorkspaceFlightMapKeys.DESCRIPTION_ID, workspaceRequest.description().orElse(""));
     return createJob.submitAndWait(UUID.class);
   }
 
@@ -129,6 +133,24 @@ public class WorkspaceService {
   @Traced
   public Workspace getWorkspace(UUID id, AuthenticatedUserRequest userReq) {
     return validateWorkspaceAndAction(userReq, id, SamConstants.SAM_WORKSPACE_READ_ACTION);
+  }
+
+  /**
+   * Update an existing workspace. Currently, can change the workspace's display name or
+   * description.
+   *
+   * @param workspaceId workspace of interest
+   * @param name name to change - may be null
+   * @param description description to change - may be null
+   */
+  public Workspace updateWorkspace(
+      AuthenticatedUserRequest userReq,
+      UUID workspaceId,
+      @Nullable String name,
+      @Nullable String description) {
+    validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+    workspaceDao.updateWorkspace(workspaceId, name, description);
+    return workspaceDao.getWorkspace(workspaceId);
   }
 
   /** Delete an existing workspace by ID. */

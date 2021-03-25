@@ -33,7 +33,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 
 // TODO: I cannot get the storageCow.create to work. It keeps NPE in the step.
-//  So turning this off for now.
+//  So turning this test off for now.
 @Disabled
 public class CreateGcsBucketStepTest extends BaseUnitTest {
 
@@ -45,14 +45,17 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
   @Mock private BucketCow mockBucketCow;
   @Captor private ArgumentCaptor<BucketInfo> bucketInfoCaptor;
 
+  private static final String FAKE_PROJECT_ID = "fakeprojectid";
+
   @Test
   public void testCreatesBucket() throws RetryException, InterruptedException {
     CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
             mockCrlService, ControlledResourceFixtures.BUCKET_RESOURCE, mockWorkspaceService);
 
-    when(mockCrlService.createStorageCow(mockUserRequest)).thenReturn(mockStorageCow);
-    when(mockWorkspaceService.getRequiredGcpProject(any())).thenReturn("fakeprojectid");
+    when(mockCrlService.createStorageCow(FAKE_PROJECT_ID, mockUserRequest))
+        .thenReturn(mockStorageCow);
+    when(mockWorkspaceService.getRequiredGcpProject(any())).thenReturn(FAKE_PROJECT_ID);
     when(mockStorageCow.create(bucketInfoCaptor.capture())).thenReturn(mockBucketCow);
 
     final FlightMap inputFlightMap = new FlightMap();
