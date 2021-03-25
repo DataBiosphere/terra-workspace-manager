@@ -20,5 +20,5 @@
   "testRunnerK8SServiceAccountFile": "testrunner-k8s-wsmtest-sa.json",
 
   "skipDeployment": true,
-  "skipKubernetes": true
+  "skipKubernetes": false
 }
