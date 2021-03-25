@@ -54,6 +54,7 @@ jobs:
           cd workspace-manager-clienttests
           echo "Test Runner config"
           ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
+          ./render-k8s-config.sh wsmtest ${{ steps.vault-token-step.outputs.vault-token }}
           echo "Running test suite"
           ./gradlew runTest --args="suites/BasicIntegration.json /tmp/TestRunnerResults"
 
