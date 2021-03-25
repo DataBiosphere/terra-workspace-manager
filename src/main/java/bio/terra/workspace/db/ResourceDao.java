@@ -250,12 +250,10 @@ public class ResourceDao {
         controlledResource.getResourceType(),
         controlledResource.getCloningInstructions(),
         controlledResource.attributesToJson(),
-        // TODO: add this to ControlledResource
-        Optional.of(AccessScopeType.ACCESS_SCOPE_SHARED),
-        Optional.of(ManagedByType.MANAGED_BY_USER),
+        Optional.ofNullable(controlledResource.getAccessScope()),
+        Optional.ofNullable(controlledResource.getManagedBy()),
         // TODO: add associated app to ControlledResource
         Optional.empty(),
-        // TODO: rename this
         controlledResource.getAssignedUser());
   }
 

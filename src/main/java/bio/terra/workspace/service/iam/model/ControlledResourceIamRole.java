@@ -28,7 +28,7 @@ public enum ControlledResourceIamRole {
   public static ControlledResourceIamRole fromApiModel(ApiControlledResourceIamRole apiModel) {
     Optional<ControlledResourceIamRole> result =
         Arrays.stream(ControlledResourceIamRole.values())
-            .filter(x -> x.apiRole.equals(apiModel))
+            .filter(x -> x.apiRole == apiModel)
             .findFirst();
     return result.orElseThrow(
         () ->
