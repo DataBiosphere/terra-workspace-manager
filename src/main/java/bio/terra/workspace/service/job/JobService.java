@@ -17,6 +17,7 @@ import bio.terra.workspace.app.configuration.external.IngressConfiguration;
 import bio.terra.workspace.app.configuration.external.JobConfiguration;
 import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
 import bio.terra.workspace.common.utils.ErrorReportUtils;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.MdcHook;
 import bio.terra.workspace.generated.model.ErrorReport;
 import bio.terra.workspace.generated.model.JobReport;
@@ -30,6 +31,7 @@ import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import bio.terra.workspace.service.job.exception.JobResponseException;
 import bio.terra.workspace.service.job.exception.JobUnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.nio.file.Path;
@@ -57,6 +59,7 @@ public class JobService {
   private final ScheduledExecutorService executor;
   private final MdcHook mdcHook;
   private final StairwayComponent stairwayComponent;
+  private final FlightBeanBag flightBeanBag;
 
   private final Logger logger = LoggerFactory.getLogger(JobService.class);
 
@@ -66,13 +69,15 @@ public class JobService {
       IngressConfiguration ingressConfig,
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
       MdcHook mdcHook,
-      StairwayComponent stairwayComponent) {
+      StairwayComponent stairwayComponent,
+      FlightBeanBag flightBeanBag) {
     this.jobConfig = jobConfig;
     this.ingressConfig = ingressConfig;
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
     this.executor = Executors.newScheduledThreadPool(jobConfig.getMaxThreads());
     this.mdcHook = mdcHook;
     this.stairwayComponent = stairwayComponent;
+    this.flightBeanBag = flightBeanBag;
   }
 
   @SuppressFBWarnings(value = "NM_CLASS_NOT_EXCEPTION", justification = "Non-exception by design.")
@@ -237,18 +242,10 @@ public class JobService {
    * encapsulates all of the Stairway interaction.
    */
   public void initialize() {
-    //    try {
-    //      stairwayComponent
-    //          .get()
-    //          .initialize(
-    //              stairwayDatabaseConfiguration.getDataSource(),
-    //              stairwayDatabaseConfiguration.isForceClean(),
-    //              stairwayDatabaseConfiguration.isMigrateUpgrade());
-    //      stairwayComponent.get().recoverAndStart(null);
-    //
-    //    } catch (StairwayException | InterruptedException stairwayEx) {
-    //      throw new InternalStairwayException("Stairway initialization failed", stairwayEx);
-    //    }
+    stairwayComponent.initialize(
+        stairwayDatabaseConfiguration.getDataSource(),
+        flightBeanBag,
+        ImmutableList.of(mdcHook, new TracingHook()));
   }
 
   @Traced
