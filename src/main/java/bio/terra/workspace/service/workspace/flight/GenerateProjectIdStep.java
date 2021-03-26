@@ -28,6 +28,7 @@ public class GenerateProjectIdStep implements Step {
   }
 
   /** Generate a pseudo-random resource id. */
+  // TODO: Why not just use the UUID? Or use a short UUID (once I put that into common-lib)
   public static String randomResourceId() {
     return "wm-" + Long.valueOf(UUID.randomUUID().getMostSignificantBits()).toString();
   }

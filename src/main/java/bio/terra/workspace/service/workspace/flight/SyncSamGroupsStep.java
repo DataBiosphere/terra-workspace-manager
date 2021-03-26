@@ -7,7 +7,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.IamRole;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import java.util.UUID;
 
@@ -37,13 +37,16 @@ public class SyncSamGroupsStep implements Step {
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(
         WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL,
-        samService.syncWorkspacePolicy(workspaceId, IamRole.OWNER, userReq));
+        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.OWNER, userReq));
+    workingMap.put(
+        WorkspaceFlightMapKeys.IAM_APPLICATION_GROUP_EMAIL,
+        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.APPLICATION, userReq));
     workingMap.put(
         WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL,
-        samService.syncWorkspacePolicy(workspaceId, IamRole.WRITER, userReq));
+        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.WRITER, userReq));
     workingMap.put(
         WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL,
-        samService.syncWorkspacePolicy(workspaceId, IamRole.READER, userReq));
+        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.READER, userReq));
 
     return StepResult.getStepResultSuccess();
   }

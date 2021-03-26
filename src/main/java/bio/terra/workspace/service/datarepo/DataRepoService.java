@@ -6,9 +6,9 @@ import bio.terra.datarepo.client.ApiClient;
 import bio.terra.datarepo.client.ApiException;
 import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
 import bio.terra.workspace.common.exception.ValidationException;
-import bio.terra.workspace.generated.model.SystemStatusSystems;
-import bio.terra.workspace.service.datareference.exception.DataRepoAuthorizationException;
-import bio.terra.workspace.service.datareference.exception.DataRepoInternalServerErrorException;
+import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
+import bio.terra.workspace.service.datarepo.exception.DataRepoAuthorizationException;
+import bio.terra.workspace.service.datarepo.exception.DataRepoInternalServerErrorException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.HashMap;
@@ -62,7 +62,7 @@ public class DataRepoService {
 
     try {
       repositoryApi.retrieveSnapshot(snapshotId);
-      logger.info("Retrieved snapshot {} on Data Repo instance {}", snapshotId, instanceName);
+      logger.info("Retrieved snapshotId {} on Data Repo instance {}", snapshotId, instanceName);
       return true;
     } catch (ApiException e) {
       if (e.getCode() == HttpStatus.NOT_FOUND.value()) {
@@ -77,16 +77,16 @@ public class DataRepoService {
     }
   }
 
-  public SystemStatusSystems status(String instanceUrl) {
+  public ApiSystemStatusSystems status(String instanceUrl) {
     UnauthenticatedApi unauthenticatedApi =
         new UnauthenticatedApi(new ApiClient().setBasePath(instanceUrl));
     try {
       // TDR serviceStatus method returns cleanly on a 200 response and throws an error otherwise,
       // no other information is available through this endpoint.
       unauthenticatedApi.serviceStatus();
-      return new SystemStatusSystems().ok(true);
+      return new ApiSystemStatusSystems().ok(true);
     } catch (ApiException nonOkStatusException) {
-      return new SystemStatusSystems()
+      return new ApiSystemStatusSystems()
           .ok(false)
           .addMessagesItem(nonOkStatusException.getResponseBody());
     }

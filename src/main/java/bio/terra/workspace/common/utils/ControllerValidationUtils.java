@@ -1,10 +1,11 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.workspace.common.exception.ValidationException;
-import bio.terra.workspace.generated.model.CloudContext;
-import bio.terra.workspace.generated.model.CreateDataReferenceRequestBody;
-import bio.terra.workspace.service.datareference.exception.ControlledResourceNotImplementedException;
-import bio.terra.workspace.service.datareference.exception.InvalidDataReferenceException;
+import bio.terra.workspace.generated.model.ApiCloudPlatform;
+import bio.terra.workspace.generated.model.ApiCreateDataReferenceRequestBody;
+import bio.terra.workspace.service.resource.controlled.exception.ControlledResourceNotImplementedException;
+import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import bio.terra.workspace.service.workspace.exceptions.AzureNotImplementedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -41,21 +42,21 @@ public final class ControllerValidationUtils {
   }
 
   /**
-   * Utility function for validating a CreateDataReferenceRequestBody.
+   * Utility function for validating a ApiCreateDataReferenceRequestBody.
    *
-   * <p>CreateDataReferenceRequestBody is currently structured to allow several parameters for
+   * <p>ApiCreateDataReferenceRequestBody is currently structured to allow several parameters for
    * controlled and private resources that aren't supported in WM. This function throws exceptions
    * if any of those fields are set, or if any required fields are missing.
    */
-  // TODO(PF-404): remove this once CreateDataReferenceRequestBody is removed.
-  public static void validate(CreateDataReferenceRequestBody body) {
+  // TODO(PF-404): remove this once ApiCreateDataReferenceRequestBody is removed.
+  public static void validate(ApiCreateDataReferenceRequestBody body) {
     if (body.getResourceId() != null) {
       throw new ControlledResourceNotImplementedException(
           "Unable to create a reference with a resourceId, use a reference type and description"
               + " instead. This functionality will be implemented in the future.");
     }
     if (body.getReferenceType() == null || body.getReference() == null) {
-      throw new InvalidDataReferenceException(
+      throw new InvalidReferenceException(
           "Data reference must contain a reference type and a reference description");
     }
   }
@@ -74,10 +75,10 @@ public final class ControllerValidationUtils {
   }
 
   /** Validate that a user is requesting a valid cloud for adding workspace context. */
-  public static void validateCloudContext(CloudContext context) {
-    if (context != CloudContext.GOOGLE) {
-      throw new ValidationException(
-          "Invalid cloud context. Currently, only Google contexts are supported.");
+  public static void validateCloudPlatform(ApiCloudPlatform platform) {
+    if (platform != ApiCloudPlatform.GCP) {
+      throw new AzureNotImplementedException(
+          "Invalid cloud platform. Currently, only GCP is supported.");
     }
   }
 }

@@ -1,0 +1,24 @@
+{
+  "name": "workspace-wsmtest-resiliency",
+  "description": "Workspace Manager Resiliency Environment",
+
+  "samUri": "https://sam.dsde-dev.broadinstitute.org",
+  "datarepoUri": "https://jade.datarepo-dev.broadinstitute.org/",
+  "workspaceManagerUri": "https://workspace.wsmtest.integ.envs.broadinstitute.org/",
+
+  "cluster": {
+    "clusterName": "gke_terra-kernel-k8s_us-central1-a_terra-integration",
+    "clusterShortName": "terra-integration",
+    "region": "us-central1",
+    "zone": "us-central1-a",
+    "project": "terra-kernel-k8s",
+    "namespace": "terra-wsmtest",
+    "containerName": "workspacemanager-deployment"
+  },
+  "deploymentScript": {},
+  "testRunnerServiceAccountFile": "testrunner-sa.json",
+  "testRunnerK8SServiceAccountFile": "testrunner-k8s-wsmtest-sa.json",
+
+  "skipDeployment": true,
+  "skipKubernetes": false
+}

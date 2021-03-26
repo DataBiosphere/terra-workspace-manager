@@ -264,30 +264,12 @@ class WorkspaceIntegrationTest extends BaseIntegrationTest {
     assertEquals(workspaceId, dataReferenceDescription.getWorkspaceId());
   }
 
-  @Test
-  @Tag(TAG_NEEDS_CLEANUP)
-  void testDefaultWorkspaceStageIsRawls() throws Exception {
-    UUID workspaceId = UUID.randomUUID();
-    createDefaultWorkspace(workspaceId);
-
-    String userEmail = testConfig.getUserEmail();
-    String path = testConfig.getWsmWorkspacesBaseUrl() + "/" + workspaceId;
-
-    WorkspaceResponse<WorkspaceDescription> getWorkspaceResponse =
-        workspaceManagerTestClient.get(userEmail, path, WorkspaceDescription.class);
-
-    assertEquals(HttpStatus.OK, getWorkspaceResponse.getStatusCode());
-    assertTrue(getWorkspaceResponse.isResponseObject());
-    WorkspaceDescription workspaceDescription = getWorkspaceResponse.getResponseObject();
-    assertEquals(workspaceId, workspaceDescription.getId());
-    assertEquals(WorkspaceStageModel.RAWLS_WORKSPACE, workspaceDescription.getStage());
-  }
-
   private WorkspaceResponse<CreatedWorkspace> createDefaultWorkspace(UUID workspaceId)
       throws Exception {
     String path = testConfig.getWsmWorkspacesBaseUrl();
     String userEmail = testConfig.getUserEmail();
-    CreateWorkspaceRequestBody body = new CreateWorkspaceRequestBody().id(workspaceId);
+    CreateWorkspaceRequestBody body =
+        new CreateWorkspaceRequestBody().id(workspaceId).stage(WorkspaceStageModel.MC_WORKSPACE);
     String jsonBody = testUtils.mapToJson(body);
 
     return workspaceManagerTestClient.post(userEmail, path, jsonBody, CreatedWorkspace.class);

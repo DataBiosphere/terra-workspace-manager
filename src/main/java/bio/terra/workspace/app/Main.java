@@ -20,6 +20,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
       "bio.terra.common.logging",
       // Scan for Liquibase migration components & configs
       "bio.terra.common.migrate",
+      // Scan for tracing-related components & configs
+      "bio.terra.common.tracing",
       // Stairway
       "bio.terra.common.stairway",
       // Scan all service-specific packages beneath the current package

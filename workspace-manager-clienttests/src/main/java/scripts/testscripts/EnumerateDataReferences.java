@@ -42,16 +42,21 @@ public class EnumerateDataReferences extends WorkspaceFixtureTestScriptBase {
     assertThat(PAGE_SIZE * 3, greaterThan(DATA_REFERENCE_COUNT));
 
     // create 10 data references
-    final List<CreateDataReferenceRequestBody> createBodies = IntStream.range(0, DATA_REFERENCE_COUNT)
-        .mapToObj(i -> ClientTestUtils.getTestCreateDataReferenceRequestBody())
-        .collect(Collectors.toList());
+    final List<CreateDataReferenceRequestBody> createBodies =
+        IntStream.range(0, DATA_REFERENCE_COUNT)
+            .mapToObj(i -> ClientTestUtils.getTestCreateDataReferenceRequestBody())
+            .collect(Collectors.toList());
 
     logger.debug("Creating references for workspace {}", getWorkspaceId());
     final ImmutableList.Builder<UUID> referenceIdListBuilder = ImmutableList.builder();
     for (CreateDataReferenceRequestBody body : createBodies) {
-      final DataReferenceDescription dataReferenceDescription = workspaceApi.createDataReference(body, getWorkspaceId());
+      final DataReferenceDescription dataReferenceDescription =
+          workspaceApi.createDataReference(body, getWorkspaceId());
       referenceIdListBuilder.add(dataReferenceDescription.getReferenceId());
-      logger.debug("Created Data Reference Name: {}, ID: {}", dataReferenceDescription.getName(), dataReferenceDescription.getReferenceId().toString());
+      logger.debug(
+          "Created Data Reference Name: {}, ID: {}",
+          dataReferenceDescription.getName(),
+          dataReferenceDescription.getReferenceId().toString());
     }
 
     List<UUID> dataReferenceIds = referenceIdListBuilder.build();
@@ -64,43 +69,48 @@ public class EnumerateDataReferences extends WorkspaceFixtureTestScriptBase {
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws ApiException {
 
-
     // fetch all
-    final List<DataReferenceDescription> referenceDescriptions = ClientTestUtils
-        .getDataReferenceDescriptions(
-        getWorkspaceId(), workspaceApi,0, DATA_REFERENCE_COUNT);
+    final List<DataReferenceDescription> referenceDescriptions =
+        ClientTestUtils.getDataReferenceDescriptions(
+            getWorkspaceId(), workspaceApi, 0, DATA_REFERENCE_COUNT);
     assertThat(referenceDescriptions.size(), equalTo(DATA_REFERENCE_COUNT));
 
-    final String allIdString = referenceDescriptions.stream()
-        .map(DataReferenceDescription::getReferenceId)
-        .map(UUID::toString)
-        .collect(Collectors.joining("\n\t"));
+    final String allIdString =
+        referenceDescriptions.stream()
+            .map(DataReferenceDescription::getReferenceId)
+            .map(UUID::toString)
+            .collect(Collectors.joining("\n\t"));
     logger.info("Retrieved offset 0, limit {}, IDs:\n\t{}", DATA_REFERENCE_COUNT, allIdString);
 
     // should have all unique ids
-    final ImmutableSet<UUID> referenceIds = ImmutableSet.copyOf(referenceDescriptions.stream()
-        .map(DataReferenceDescription::getReferenceId)
-        .collect(Collectors.toSet()));
+    final ImmutableSet<UUID> referenceIds =
+        ImmutableSet.copyOf(
+            referenceDescriptions.stream()
+                .map(DataReferenceDescription::getReferenceId)
+                .collect(Collectors.toSet()));
     assertThat(referenceIds.size(), equalTo(DATA_REFERENCE_COUNT));
 
     // fetch first page
-    final List<DataReferenceDescription> referenceDescriptionsPage0 = ClientTestUtils
-        .getDataReferenceDescriptions(
-        getWorkspaceId(), workspaceApi, 0, PAGE_SIZE);
+    final List<DataReferenceDescription> referenceDescriptionsPage0 =
+        ClientTestUtils.getDataReferenceDescriptions(getWorkspaceId(), workspaceApi, 0, PAGE_SIZE);
     assertThat(referenceDescriptionsPage0.size(), equalTo(PAGE_SIZE));
-    final ImmutableSet<UUID> referenceIdsPage0 = ImmutableSet.copyOf(referenceDescriptionsPage0.stream()
-        .map(DataReferenceDescription::getReferenceId)
-        .collect(Collectors.toSet()));
+    final ImmutableSet<UUID> referenceIdsPage0 =
+        ImmutableSet.copyOf(
+            referenceDescriptionsPage0.stream()
+                .map(DataReferenceDescription::getReferenceId)
+                .collect(Collectors.toSet()));
     assertThat(referenceIdsPage0.size(), equalTo(PAGE_SIZE));
 
     // fetch second page
-    final List<DataReferenceDescription> referenceDescriptionsPage1 = ClientTestUtils
-        .getDataReferenceDescriptions(
-        getWorkspaceId(), workspaceApi, PAGE_SIZE, PAGE_SIZE);
+    final List<DataReferenceDescription> referenceDescriptionsPage1 =
+        ClientTestUtils.getDataReferenceDescriptions(
+            getWorkspaceId(), workspaceApi, PAGE_SIZE, PAGE_SIZE);
     assertThat(referenceDescriptionsPage1.size(), equalTo(PAGE_SIZE));
-    final ImmutableSet<UUID> referenceIdsPage1 = ImmutableSet.copyOf(referenceDescriptionsPage1.stream()
-        .map(DataReferenceDescription::getReferenceId)
-        .collect(Collectors.toSet()));
+    final ImmutableSet<UUID> referenceIdsPage1 =
+        ImmutableSet.copyOf(
+            referenceDescriptionsPage1.stream()
+                .map(DataReferenceDescription::getReferenceId)
+                .collect(Collectors.toSet()));
     assertThat(referenceIdsPage1.size(), equalTo(PAGE_SIZE));
 
     // Assure no repeats
@@ -111,13 +121,15 @@ public class EnumerateDataReferences extends WorkspaceFixtureTestScriptBase {
     assertThat(idsFromTwoPages.size(), equalTo(2 * PAGE_SIZE));
 
     // final partial page
-    final List<DataReferenceDescription> referenceDescriptionsPage2 = ClientTestUtils
-        .getDataReferenceDescriptions(
-        getWorkspaceId(), workspaceApi, 2 * PAGE_SIZE, PAGE_SIZE);
+    final List<DataReferenceDescription> referenceDescriptionsPage2 =
+        ClientTestUtils.getDataReferenceDescriptions(
+            getWorkspaceId(), workspaceApi, 2 * PAGE_SIZE, PAGE_SIZE);
     assertThat(referenceDescriptionsPage2.size(), equalTo(DATA_REFERENCE_COUNT - 2 * PAGE_SIZE));
-    final ImmutableSet<UUID> referenceIdsPage2 = ImmutableSet.copyOf(referenceDescriptionsPage2.stream()
-        .map(DataReferenceDescription::getReferenceId)
-        .collect(Collectors.toSet()));
+    final ImmutableSet<UUID> referenceIdsPage2 =
+        ImmutableSet.copyOf(
+            referenceDescriptionsPage2.stream()
+                .map(DataReferenceDescription::getReferenceId)
+                .collect(Collectors.toSet()));
     assertThat(referenceIdsPage2.size(), equalTo(referenceDescriptionsPage2.size()));
 
     // Assure no repeats
@@ -129,9 +141,9 @@ public class EnumerateDataReferences extends WorkspaceFixtureTestScriptBase {
     assertThat(allIds.size(), equalTo(DATA_REFERENCE_COUNT));
 
     // Assure no results if offset is too high
-    final List<DataReferenceDescription> referencesBeyondUpperBound = ClientTestUtils
-        .getDataReferenceDescriptions(
-        getWorkspaceId(), workspaceApi, 10 * PAGE_SIZE, PAGE_SIZE);
+    final List<DataReferenceDescription> referencesBeyondUpperBound =
+        ClientTestUtils.getDataReferenceDescriptions(
+            getWorkspaceId(), workspaceApi, 10 * PAGE_SIZE, PAGE_SIZE);
     assertThat(referencesBeyondUpperBound, is(empty()));
   }
 }

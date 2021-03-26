@@ -1,0 +1,6 @@
+{
+  "name": "testrunner-k8s-sa",
+  "clientKeyFilename": "testrunner-k8s-wsmtest-sa-client-key-data.crt",
+  "tokenFilename": "testrunner-k8s-wsmtest-sa-token",
+  "clientKeyDirectoryPath": "./rendered"
+}

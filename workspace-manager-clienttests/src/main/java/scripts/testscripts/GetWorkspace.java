@@ -10,17 +10,15 @@ import bio.terra.workspace.model.WorkspaceDescription;
 import scripts.utils.WorkspaceFixtureTestScriptBase;
 
 public class GetWorkspace extends WorkspaceFixtureTestScriptBase {
-    @Override
-    public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
-        throws ApiException {
-        /**
-         * This GetWorkspace test expects a valid workspace id
-         * created by the setup step.
-         *
-         * Throw exception if anything goes wrong
-         * **/
-        final WorkspaceDescription workspaceDescription = workspaceApi
-            .getWorkspace(getWorkspaceId());
-        assertThat(workspaceDescription.getId(), equalTo(getWorkspaceId()));
-    }
+  @Override
+  public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
+      throws ApiException {
+    /**
+     * This GetWorkspace test expects a valid workspace id created by the setup step.
+     *
+     * <p>Throw exception if anything goes wrong *
+     */
+    final WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(getWorkspaceId());
+    assertThat(workspaceDescription.getId(), equalTo(getWorkspaceId()));
+  }
 }

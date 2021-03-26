@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace.flight;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
 
 import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.stairway.FlightContext;
@@ -30,7 +30,7 @@ public class CreateCustomGcpRolesStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
+    String projectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
     for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES) {
       try {
         Role gcpRole = new Role().setIncludedPermissions(customRole.getIncludedPermissions());

@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace.flight;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GOOGLE_PROJECT_ID;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.RBS_RESOURCE_ID;
 
 import bio.terra.buffer.model.HandoutRequestBody;
@@ -41,7 +41,7 @@ public class PullProjectFromPoolStep implements Step {
       ResourceInfo info = bufferService.handoutResource(body);
       String projectId = info.getCloudResourceUid().getGoogleProjectUid().getProjectId();
       logger.info("Buffer Service returned project with id: " + projectId);
-      flightContext.getWorkingMap().put(GOOGLE_PROJECT_ID, projectId);
+      flightContext.getWorkingMap().put(GCP_PROJECT_ID, projectId);
       return StepResult.getStepResultSuccess();
     } catch (BufferServiceAPIException e) {
       // The NOT_FOUND status code indicates that Buffer Service is still creating a project and we
@@ -59,10 +59,10 @@ public class PullProjectFromPoolStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) {
-    String projectId = flightContext.getWorkingMap().get(GOOGLE_PROJECT_ID, String.class);
+    String projectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
     if (projectId != null) {
       try {
-        GoogleUtils.deleteProject(projectId, resourceManager);
+        GcpUtils.deleteProject(projectId, resourceManager);
       } catch (IOException e) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }

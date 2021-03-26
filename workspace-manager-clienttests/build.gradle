@@ -1,12 +1,10 @@
-import org.gradle.api.JavaVersion
-import org.gradle.api.tasks.JavaExec
-
 plugins {
     id 'java'
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
+    id "com.diffplug.spotless" version "5.8.2"
     // Terra Test Runner Plugin
-    id 'bio.terra.test-runner-plugin' version '0.0.1-SNAPSHOT'
+    id 'bio.terra.test-runner-plugin' version '0.0.3-SNAPSHOT'
 }
 
 repositories {
@@ -27,7 +25,7 @@ dependencies {
         guava = "29.0-jre"
         jackson = "2.10.2"
         jersey = "2.30.1"
-        kubernetesClient = "8.0.2"
+        kubernetesClient = "10.0.0"
         logback = "1.2.3"
         slf4j = "1.7.25"
         hamcrest = "2.1"
@@ -36,10 +34,11 @@ dependencies {
         googleApi = "1.23.0"
         googleCloud = "1.108.0"
         googleOauth2 = "0.20.0"
+        googleContainer = "v1-rev93-1.25.0"
 
-        workspacemanagerClient = "0.11.0-SNAPSHOT"
+        workspacemanagerClient = "0.17.0-SNAPSHOT"
         datarepoClient = "1.0.155-SNAPSHOT"
-        testRunner = "0.0.1-SNAPSHOT"
+        testRunner = "0.0.3-SNAPSHOT"
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
     compileOnly "com.google.code.findbugs:annotations:${findbugsAnnotations}"
@@ -56,6 +55,7 @@ dependencies {
     compile "com.google.auth:google-auth-library-oauth2-http:${googleOauth2}"
     compile "com.google.cloud:google-cloud-bigquery:${googleCloud}"
     compile "com.google.cloud:google-cloud-storage:${googleCloud}"
+    compile "com.google.apis:google-api-services-container:${googleContainer}"
 
     // Data Repo client library
     implementation "bio.terra:datarepo-client:${datarepoClient}"
@@ -82,4 +82,13 @@ dependencies {
 group "bio.terra"
 version "1.0-SNAPSHOT"
 sourceCompatibility = JavaVersion.VERSION_11
+
+spotless {
+    java {
+        googleJavaFormat()
+        targetExclude "${buildDir}/**"
+    }
+}
+
+compileJava.dependsOn spotlessApply
 

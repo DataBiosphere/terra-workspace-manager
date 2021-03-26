@@ -32,9 +32,14 @@ public class CreateWorkspaceStep implements Step {
 
     UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
 
-    Optional<SpendProfileId> spendProfileId =
-        Optional.ofNullable(inputMap.get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, String.class))
-            .map(SpendProfileId::create);
+    String spendProfileIdString =
+        inputMap.get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, String.class);
+    SpendProfileId spendProfileId =
+        Optional.ofNullable(spendProfileIdString).map(SpendProfileId::create).orElse(null);
+
+    String displayName = inputMap.get(WorkspaceFlightMapKeys.DISPLAY_NAME_ID, String.class);
+    String description = inputMap.get(WorkspaceFlightMapKeys.DESCRIPTION_ID, String.class);
+
     WorkspaceStage workspaceStage =
         inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStage.class);
     Workspace workspaceToCreate =
@@ -42,6 +47,8 @@ public class CreateWorkspaceStep implements Step {
             .workspaceId(workspaceId)
             .spendProfileId(spendProfileId)
             .workspaceStage(workspaceStage)
+            .displayName(displayName)
+            .description(description)
             .build();
 
     workspaceDao.createWorkspace(workspaceToCreate);

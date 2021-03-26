@@ -1,0 +1,5 @@
+{
+  "name": "testrunner-integration@terra-kernel-k8s.iam.gserviceaccount.com",
+  "jsonKeyFilename": "testrunner-service-account.json",
+  "jsonKeyDirectoryPath": "./rendered"
+}

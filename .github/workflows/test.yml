@@ -32,7 +32,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:12.3
+        image: postgres:13.1
         env:
           POSTGRES_PASSWORD: postgres
         options: >-
@@ -126,9 +126,33 @@ jobs:
         TEST_ENV: ${{ steps.set-env-step.outputs.test-env }}
       run: ./gradlew ${{ matrix.gradleTask }} --scan
 
+    - name: Codacy Coverage Reporter
+      if: matrix.gradleTask == 'unitTest'
+      uses: codacy/codacy-coverage-reporter-action@0.2.0
+      continue-on-error: true
+      env:
+        CODACY_API_BASE_URL: https://app.codacy.com/gh/DataBiosphere/terra-workspace-manager
+      with:
+        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        coverage-reports: build/reports/jacoco/test/jacoco.xml
+
     - name: Upload Test Reports
       if: ${{ always() }}
       uses: actions/upload-artifact@v1
       with:
         name: Test Reports
         path: build/reports/tests
+
+    - name: "Notify QA Slack"
+      if: steps.set-env-step.outputs.test-env == 'alpha' || steps.set-env-step.outputs.test-env == 'staging'
+      uses: broadinstitute/action-slack@v3.8.0
+      # see https://github.com/broadinstitute/action-slack
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        MATRIX_CONTEXT: ${{ toJson(matrix) }}
+      with:
+        status: ${{ job.status }}
+        channel: "#dsde-qa"
+        username: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} tests"
+        author_name: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} ${{ matrix.gradleTask }}"
+        fields: repo,job,workflow,commit,eventName,author,took

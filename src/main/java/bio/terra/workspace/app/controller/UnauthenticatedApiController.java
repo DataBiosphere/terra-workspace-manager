@@ -2,8 +2,8 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.app.configuration.external.VersionConfiguration;
 import bio.terra.workspace.generated.controller.UnauthenticatedApi;
-import bio.terra.workspace.generated.model.SystemStatus;
-import bio.terra.workspace.generated.model.SystemVersion;
+import bio.terra.workspace.generated.model.ApiSystemStatus;
+import bio.terra.workspace.generated.model.ApiSystemVersion;
 import bio.terra.workspace.service.status.WorkspaceManagerStatusService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Controller;
 public class UnauthenticatedApiController implements UnauthenticatedApi {
 
   private final WorkspaceManagerStatusService statusService;
-  private final SystemVersion currentVersion;
+  private final ApiSystemVersion currentVersion;
 
   @Autowired
   public UnauthenticatedApiController(
@@ -22,7 +22,7 @@ public class UnauthenticatedApiController implements UnauthenticatedApi {
     this.statusService = statusService;
 
     this.currentVersion =
-        new SystemVersion()
+        new ApiSystemVersion()
             .gitTag(versionConfiguration.getGitTag())
             .gitHash(versionConfiguration.getGitHash())
             .github(
@@ -32,14 +32,14 @@ public class UnauthenticatedApiController implements UnauthenticatedApi {
   }
 
   @Override
-  public ResponseEntity<SystemStatus> serviceStatus() {
-    SystemStatus currentStatus = statusService.getCurrentStatus();
+  public ResponseEntity<ApiSystemStatus> serviceStatus() {
+    ApiSystemStatus currentStatus = statusService.getCurrentStatus();
     return new ResponseEntity<>(
         currentStatus, currentStatus.isOk() ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   @Override
-  public ResponseEntity<SystemVersion> serviceVersion() {
+  public ResponseEntity<ApiSystemVersion> serviceVersion() {
     return new ResponseEntity<>(currentVersion, HttpStatus.OK);
   }
 }

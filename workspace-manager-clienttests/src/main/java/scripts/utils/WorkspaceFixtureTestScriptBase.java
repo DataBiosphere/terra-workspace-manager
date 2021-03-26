@@ -16,11 +16,12 @@ import org.slf4j.LoggerFactory;
 import scripts.testscripts.GetWorkspace;
 
 /**
- * Base class for tests that use a single workspace as a fixture. The expectation is that
- * the workspace setup & destruction are all that needs to happen in setup() and cleanup(), although
+ * Base class for tests that use a single workspace as a fixture. The expectation is that the
+ * workspace setup & destruction are all that needs to happen in setup() and cleanup(), although
  * doSetup() and doCleanup() can still be overridden, provided the caller calls super().
  *
- * No doUserJourney() implementation is provided, and this must be overridden by inheriting classes.
+ * <p>No doUserJourney() implementation is provided, and this must be overridden by inheriting
+ * classes.
  */
 public abstract class WorkspaceFixtureTestScriptBase extends WorkspaceTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(GetWorkspace.class);
@@ -29,6 +30,7 @@ public abstract class WorkspaceFixtureTestScriptBase extends WorkspaceTestScript
 
   /**
    * Allow inheriting classes to obtain the workspace ID for the fixture.
+   *
    * @return
    */
   protected UUID getWorkspaceId() {
@@ -37,6 +39,7 @@ public abstract class WorkspaceFixtureTestScriptBase extends WorkspaceTestScript
 
   /**
    * Create a workspace as a test fixture (i.e. not specifically the code under test).
+   *
    * @param testUsers - test user configurations
    * @param workspaceApi - API with workspace methods
    * @throws ApiException
@@ -45,15 +48,14 @@ public abstract class WorkspaceFixtureTestScriptBase extends WorkspaceTestScript
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws ApiException {
     workspaceId = UUID.randomUUID();
-    final var requestBody = new CreateWorkspaceRequestBody()
-        .id(workspaceId)
-        .stage(getStageModel());
+    final var requestBody = new CreateWorkspaceRequestBody().id(workspaceId).stage(getStageModel());
     final CreatedWorkspace workspace = workspaceApi.createWorkspace(requestBody);
     assertThat(workspace.getId(), equalTo(workspaceId));
   }
 
   /**
    * Clean up workspace only.
+   *
    * @param testUsers
    * @param workspaceApi
    * @throws ApiException
@@ -66,10 +68,10 @@ public abstract class WorkspaceFixtureTestScriptBase extends WorkspaceTestScript
 
   /**
    * Override this method to change the stage model of the workspace. Preserves default
-   * of RAWLS_WORKSPACE.
+   * of MC_WORKSPACE.
    * @return the stage model to be used in create
    */
   protected WorkspaceStageModel getStageModel() {
-    return WorkspaceStageModel.RAWLS_WORKSPACE;
+    return WorkspaceStageModel.MC_WORKSPACE;
   }
 }
