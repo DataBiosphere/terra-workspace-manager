@@ -3,9 +3,7 @@
 name: Test Runner Resiliency Test
 
 on:
-  workflow_dispatch: {}
-  schedule:
-    - cron: '0 8 * * *' # run at 8 AM UTC, 3 AM ET.
+  push
 
 jobs:
   test-runner-resiliency:
