@@ -34,17 +34,4 @@ public final class StartupInitializer {
     //  the point of opening the port to start accepting REST requests.
 
   }
-
-  //  private static void initializeStairwayComponent(ApplicationContext applicationContext) {
-  //    final StairwayComponent stairwayComponent =
-  // applicationContext.getBean(StairwayComponent.class);
-  //    final StairwayDatabaseConfiguration stairwayDatabaseConfiguration =
-  //        applicationContext.getBean(StairwayDatabaseConfiguration.class);
-  //    final DataSource dataSource = stairwayDatabaseConfiguration.getDataSource();
-  //    final MdcHook mdcHook = applicationContext.getBean(MdcHook.class);
-  //    final TracingHook tracingHook = new TracingHook();
-  //    final FlightBeanBag flightBeanBag = applicationContext.getBean(FlightBeanBag.class);
-  //    stairwayComponent.initialize(dataSource, flightBeanBag, ImmutableList.of(mdcHook,
-  // tracingHook));
-  //  }
 }
