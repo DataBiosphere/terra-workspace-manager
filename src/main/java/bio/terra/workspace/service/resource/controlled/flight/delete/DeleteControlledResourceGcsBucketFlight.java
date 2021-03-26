@@ -24,11 +24,12 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.StorageException;
 import com.google.common.collect.ImmutableList;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Flight for deletion of a Gcs Bucket resource. This resource is deleted in a particular way and
@@ -104,6 +105,10 @@ public class DeleteControlledResourceGcsBucketFlight extends Flight {
       try {
         samService.deleteControlledResource(resource, userRequest);
       } catch (SamApiException samApiException) {
+        // The Sam resource might be not found for two reasons. First, the failure causing
+        // this undo might be that we failed to create the resource. Second, if there is a
+        // system failure during undo, this step might be called twice and might have already
+        // done the resource delete.
         if (samApiException.getApiExceptionStatus() == HttpStatus.NOT_FOUND.value()) {
           logger.debug("No Sam resource found for resource {}", resourceId);
         } else {
@@ -115,7 +120,7 @@ public class DeleteControlledResourceGcsBucketFlight extends Flight {
 
     @Override
     public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-      // No undo for delete
+      // No undo for delete. There is no way to put it back.
       return StepResult.getStepResultSuccess();
     }
   }
