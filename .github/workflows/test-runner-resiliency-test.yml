@@ -77,16 +77,16 @@ jobs:
           echo "Running test suite"
           ./gradlew runTest --args="suites/BasicResiliency.json /tmp/TestRunnerResults"
 
-      - name: Upload test results to Google Bucket
-        if: ${{ always() }}
-        run: |
-          cd workspace-manager-clienttests
-          echo "Upload test results to Google Bucket"
-          ./gradlew uploadResults --args="CompressDirectoryToTerraKernelK8S.json /tmp/TestRunnerResults"
-
       - name: Upload test results to BigQuery Test Runner Results Dataset
         if: ${{ always() }}
         run: |
           cd workspace-manager-clienttests
           echo "Upload test results to BigQuery Test Runner Dataset"
           ./gradlew uploadResults --args="SummariesToTerraKernelK8SBigQuery.json /tmp/TestRunnerResults"
+
+      - name: Upload test results to Google Bucket
+        if: ${{ always() }}
+        run: |
+          cd workspace-manager-clienttests
+          echo "Upload test results to Google Bucket"
+          ./gradlew uploadResults --args="CompressDirectoryToTerraKernelK8S.json /tmp/TestRunnerResults"
