@@ -50,7 +50,7 @@ public class CreateControlledResourceFlight extends Flight {
             new CreateGcsBucketStep(
                 flightBeanBag.getCrlService(),
                 resource.castToGcsBucketResource(),
-                flightBeanBag.getWorkspaceDao()));
+                flightBeanBag.getWorkspaceService()));
         addStep(
             new GrantGcsBucketIamRolesStep(
                 flightBeanBag.getCrlService(),
@@ -62,5 +62,7 @@ public class CreateControlledResourceFlight extends Flight {
         throw new IllegalStateException(
             String.format("Unrecognized resource type %s", resource.getResourceType()));
     }
+    // Populate the return response
+    addStep(new SetCreateResponseStep(resource));
   }
 }

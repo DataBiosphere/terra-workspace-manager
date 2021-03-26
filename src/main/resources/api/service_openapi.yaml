@@ -284,10 +284,10 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots/{referenceId}:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots/{resourceId}:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/ReferenceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Gets a reference to a snapshot from a workspace.
       operationId: getDataRepoSnapshotReference
@@ -311,6 +311,19 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete datarepo snapshot reference
+      operationId: deleteDataRepoSnapshotReference
+      tags: [ReferencedGcpResource]
       responses:
         '204':
           description: OK
@@ -364,12 +377,12 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/buckets/{referenceId}:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/buckets/{resourceId}:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/ReferenceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
-      summary: Gets a reference to a Gcp bucket from a workspace.
+      summary: Gets a reference to a bucket from a workspace.
       operationId: getBucketReference
       tags: [ReferencedGcpResource]
       responses:
@@ -391,6 +404,19 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete Gcp bucket reference
+      operationId: deleteBucketReference
+      tags: [ReferencedGcpResource]
       responses:
         '204':
           description: OK
@@ -444,10 +470,10 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets/{referenceId}:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets/{resourceId}:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
-    - $ref: '#/components/parameters/ReferenceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Gets a reference to a BigQuery dataset from a workspace.
       operationId: getBigQueryDatasetReference
@@ -471,6 +497,19 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete BigQuery dataset reference
+      operationId: deleteBigQueryDatasetReference
+      tags: [ReferencedGcpResource]
       responses:
         '204':
           description: OK
@@ -689,6 +728,25 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a gcp bucket creation job.
+      operationId: getCreateBucketResult
+      tags: [ControlledGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledGcsBucketResponse'
+        '202':
+          $ref: '#/components/responses/CreatedControlledGcsBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/{resourceId}:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -706,19 +764,43 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/result/{jobId}:
+    post:
+      summary: |
+        Delete a controlled GCS bucket resource. This is async, because deleting the bucket and contents can
+        take a very long time. NOTE: this cannot be an HTTP DELETE, because something between generated code
+        and server behavior does not support delete operations with bodies. We require the body for the async
+        state, so this is a POST.
+      operationId: deleteBucket
+      tags: [ControlledGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledGcsBucketRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledGcsBucketResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledGcsBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/delete-result/{jobId}:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/JobId'
     get:
       summary: Retrieve information about a gcp bucket creation job.
-      operationId: getCreateBucketResult
+      operationId: getDeleteBucketResult
       tags: [ControlledGcpResource]
       responses:
         '200':
-          $ref: '#/components/responses/CreatedControlledGcsBucketResponse'
+          $ref: '#/components/responses/DeleteControlledGcsBucketResponse'
         '202':
-          $ref: '#/components/responses/CreatedControlledGcsBucketResponse'
+          $ref: '#/components/responses/DeleteControlledGcsBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -1331,7 +1413,7 @@ components:
 
     ControlledResourceCommonFields:
       type: object
-      required: [ name, cloningInstructions, jobControl, accessScope ]
+      required: [ name, cloningInstructions, jobControl, accessScope, managedBy ]
       properties:
         jobControl:
           $ref: '#/components/schemas/JobControl'
@@ -1379,7 +1461,7 @@ components:
         jobReport:
           $ref: '#/components/schemas/JobReport'
         gcpBucket:
-          $ref: '#/components/schemas/GcsBucketStoredAttributes'
+          $ref: '#/components/schemas/GcsBucketAttributes'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
@@ -1399,7 +1481,7 @@ components:
           $ref: '#/components/schemas/GcsBucketDefaultStorageClass'
         lifecycle:
           $ref: '#/components/schemas/GcsBucketLifecycle'
-    GcsBucketStoredAttributes:
+    GcsBucketAttributes:
       description: >-
         Bucket properties included in post-creation, get, and update. Others must be
         retrieved from GCS using the name.
@@ -1510,6 +1592,21 @@ components:
             of the object.
           type: integer
 
+    DeleteControlledGcsBucketRequest:
+      type: object
+      required: [ jobControl ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    DeleteControlledGcsBucketResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
   responses:
     ### DEPRECATED RESPONSES ###
     # TODO(PF-404): remove this in favor of reference-type specific objects.
@@ -1571,12 +1668,19 @@ components:
           schema:
             $ref: '#/components/schemas/CreatedControlledGcsBucket'
 
+    DeleteControlledGcsBucketResponse:
+      description: Response Payload for deleting a Gcs bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteControlledGcsBucketResult'
+
     GetControlledGcsBucketResponse:
       description: Response to get bucket
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/GcsBucketStoredAttributes'
+            $ref: '#/components/schemas/GcsBucketAttributes'
 
     CreateCloudContextResultResponse:
       description: Job is complete (succeeded or failed)

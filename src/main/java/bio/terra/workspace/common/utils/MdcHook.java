@@ -11,6 +11,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -24,6 +26,11 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class MdcHook implements StairwayHook {
+  private static final Logger logger = LoggerFactory.getLogger(MdcHook.class);
+  private static final String FLIGHT_LOG_FORMAT = "Operation: {}, flightClass: {}, flightId: {}";
+  private static final String STEP_LOG_FORMAT =
+      "Operation: {}, flightClass: {}, flightId: {}, stepClass: {}, stepIndex: {}, direction: {}";
+
   /** The key to use in {@link FlightMap} for storing the MDC context. */
   public static final String MDC_FLIGHT_MAP_KEY = "mdcKey";
 
@@ -48,6 +55,14 @@ public class MdcHook implements StairwayHook {
 
   @Override
   public HookAction startStep(FlightContext flightContext) {
+    logger.info(
+        STEP_LOG_FORMAT,
+        "startStep",
+        flightContext.getFlightClassName(),
+        flightContext.getFlightId(),
+        flightContext.getStepClassName(),
+        flightContext.getStepIndex(),
+        flightContext.getDirection().name());
     String serializedMdc = flightContext.getInputParameters().get(MDC_FLIGHT_MAP_KEY, String.class);
     // Note that this destroys any previous context on this thread.
     MDC.setContextMap(deserializeMdc(serializedMdc));
@@ -56,19 +71,35 @@ public class MdcHook implements StairwayHook {
 
   @Override
   public HookAction endStep(FlightContext flightContext) {
+    logger.info(
+        STEP_LOG_FORMAT,
+        "endStep",
+        flightContext.getFlightClassName(),
+        flightContext.getFlightId(),
+        flightContext.getStepClassName(),
+        flightContext.getStepIndex(),
+        flightContext.getDirection().name());
     MDC.clear();
     return HookAction.CONTINUE;
   }
 
   @Override
   public HookAction startFlight(FlightContext flightContext) {
-    // Do nothing for flights.
+    logger.info(
+        FLIGHT_LOG_FORMAT,
+        "startFlight",
+        flightContext.getFlightClassName(),
+        flightContext.getFlightId());
     return HookAction.CONTINUE;
   }
 
   @Override
   public HookAction endFlight(FlightContext flightContext) {
-    // Do nothing for flights.
+    logger.info(
+        FLIGHT_LOG_FORMAT,
+        "endFlight",
+        flightContext.getFlightClassName(),
+        flightContext.getFlightId());
     return HookAction.CONTINUE;
   }
 

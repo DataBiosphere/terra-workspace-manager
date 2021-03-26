@@ -7,9 +7,9 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.WorkspaceDescription;
-import scripts.utils.WorkspaceFixtureTestScriptBase;
+import scripts.utils.WorkspaceAllocateTestScriptBase;
 
-public class GetWorkspace extends WorkspaceFixtureTestScriptBase {
+public class GetWorkspace extends WorkspaceAllocateTestScriptBase {
   @Override
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws ApiException {
