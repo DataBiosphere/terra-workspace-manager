@@ -124,7 +124,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             jobControl,
             workspaceId,
             resourceId,
-            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId()),
+            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
             userRequest);
     return getDeleteResult(jobId, userRequest);
   }

@@ -8,11 +8,16 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.exception.BucketDeleteTimeoutException;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -23,6 +28,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 
 /**
  * Flight for deletion of a Gcs Bucket resource. This resource is deleted in a particular way and
@@ -36,9 +42,14 @@ public class DeleteControlledResourceGcsBucketFlight extends Flight {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
+    final UUID workspaceId = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    final UUID resourceId =
+        inputParameters.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, UUID.class);
+    final AuthenticatedUserRequest userRequest =
+        inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+
     // Flight plan:
-    // 1. TODO: Delete the Sam resource - this should make the object invisible via get and
-    // enumerate endpoints
+    // 1. Delete the Sam resource. That will make the object inaccessible.
     // 2. Delete the cloud resource:
     //    a. Set the lifecycle on the bucket to delete immediately
     //    b. Try deleting the bucket
@@ -46,45 +57,100 @@ public class DeleteControlledResourceGcsBucketFlight extends Flight {
     //    d. If delete fails, sleep one hour; goto (either a or b; maybe a for belts and suspenders)
     // 3. Delete the metadata
     addStep(
+        new DeleteSamResourceStep(
+            flightBeanBag.getResourceDao(),
+            flightBeanBag.getSamService(),
+            workspaceId,
+            resourceId,
+            userRequest));
+    addStep(
         new DeleteGcsBucketStep(
             flightBeanBag.getCrlService(),
             flightBeanBag.getResourceDao(),
-            flightBeanBag.getWorkspaceService()));
-    addStep(new DeleteMetadataStep(flightBeanBag.getResourceDao()));
+            flightBeanBag.getWorkspaceService(),
+            workspaceId,
+            resourceId));
+    addStep(new DeleteMetadataStep(flightBeanBag.getResourceDao(), workspaceId, resourceId));
+  }
+
+  static class DeleteSamResourceStep implements Step {
+    private final ResourceDao resourceDao;
+    private final SamService samService;
+    private final UUID workspaceId;
+    private final UUID resourceId;
+    private final AuthenticatedUserRequest userRequest;
+
+    // TODO: this looks generic, so factor it out and share it
+    public DeleteSamResourceStep(
+        ResourceDao resourceDao,
+        SamService samService,
+        UUID workspaceId,
+        UUID resourceId,
+        AuthenticatedUserRequest userRequest) {
+      this.resourceDao = resourceDao;
+      this.samService = samService;
+      this.workspaceId = workspaceId;
+      this.resourceId = resourceId;
+      this.userRequest = userRequest;
+    }
+
+    @Override
+    public StepResult doStep(FlightContext flightContext)
+        throws InterruptedException, RetryException {
+
+      WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
+      ControlledResource resource = wsmResource.castToControlledResource();
+
+      try {
+        samService.deleteControlledResource(resource, userRequest);
+      } catch (SamApiException samApiException) {
+        if (samApiException.getApiExceptionStatus() == HttpStatus.NOT_FOUND.value()) {
+          logger.debug("No Sam resource found for resource {}", resourceId);
+        } else {
+          throw samApiException;
+        }
+      }
+      return StepResult.getStepResultSuccess();
+    }
+
+    @Override
+    public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+      // No undo for delete
+      return StepResult.getStepResultSuccess();
+    }
   }
 
   // TODO: when Stairway implements timed waits, we can use those and not sit on a thread sleeping
-  // for three days.
+  //  for three days.
   static class DeleteGcsBucketStep implements Step {
     private static final int MAX_DELETE_TRIES = 72; // 3 days
     private final CrlService crlService;
     private final ResourceDao resourceDao;
     private final WorkspaceService workspaceService;
+    private final UUID workspaceId;
+    private final UUID resourceId;
 
     public DeleteGcsBucketStep(
-        CrlService crlService, ResourceDao resourceDao, WorkspaceService workspaceService) {
+        CrlService crlService,
+        ResourceDao resourceDao,
+        WorkspaceService workspaceService,
+        UUID workspaceId,
+        UUID resourceId) {
       this.crlService = crlService;
       this.resourceDao = resourceDao;
       this.workspaceService = workspaceService;
+      this.workspaceId = workspaceId;
+      this.resourceId = resourceId;
     }
 
     @Override
     public StepResult doStep(FlightContext flightContext) throws InterruptedException {
       int deleteTries = 0;
-
-      FlightMap inputParameters = flightContext.getInputParameters();
-      UUID workspaceId = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
-      UUID resourceId =
-          inputParameters.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, UUID.class);
-
       String projectId = workspaceService.getRequiredGcpProject(workspaceId);
-
       WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
       ControlledGcsBucketResource resource =
           wsmResource.castToControlledResource().castToGcsBucketResource();
-
       final StorageCow storageCow = crlService.createStorageCow(projectId);
-
       BucketCow bucket = storageCow.get(resource.getBucketName());
 
       boolean bucketExists = true;
@@ -143,20 +209,18 @@ public class DeleteControlledResourceGcsBucketFlight extends Flight {
   // TODO: this looks generic, so factor it out and share it
   static class DeleteMetadataStep implements Step {
     private final ResourceDao resourceDao;
+    private final UUID workspaceId;
+    private final UUID resourceId;
 
-    public DeleteMetadataStep(ResourceDao resourceDao) {
+    public DeleteMetadataStep(ResourceDao resourceDao, UUID workspaceId, UUID resourceId) {
       this.resourceDao = resourceDao;
+      this.workspaceId = workspaceId;
+      this.resourceId = resourceId;
     }
 
     @Override
     public StepResult doStep(FlightContext flightContext)
         throws InterruptedException, RetryException {
-      FlightMap inputParameters = flightContext.getInputParameters();
-      UUID workspaceId =
-          UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-      UUID resourceId =
-          UUID.fromString(
-              inputParameters.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, String.class));
       resourceDao.deleteResource(workspaceId, resourceId);
       return StepResult.getStepResultSuccess();
     }
