@@ -55,7 +55,7 @@ public class CreateControlledResourceFlight extends Flight {
             new GrantGcsBucketIamRolesStep(
                 flightBeanBag.getCrlService(),
                 resource.castToGcsBucketResource(),
-                flightBeanBag.getWorkspaceDao()));
+                flightBeanBag.getWorkspaceService()));
         break;
       case BIG_QUERY_DATASET:
       default:

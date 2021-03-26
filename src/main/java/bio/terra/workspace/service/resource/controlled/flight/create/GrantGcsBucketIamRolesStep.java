@@ -14,6 +14,7 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.cloud.Binding;
 import com.google.cloud.Policy;
@@ -33,14 +34,14 @@ public class GrantGcsBucketIamRolesStep implements Step {
 
   private final CrlService crlService;
   private final ControlledGcsBucketResource resource;
-  private final WorkspaceDao workspaceDao;
+  private final WorkspaceService workspaceService;
   private final Logger logger = LoggerFactory.getLogger(GrantGcsBucketIamRolesStep.class);
 
   public GrantGcsBucketIamRolesStep(
-      CrlService crlService, ControlledGcsBucketResource resource, WorkspaceDao workspaceDao) {
+      CrlService crlService, ControlledGcsBucketResource resource, WorkspaceService workspaceService) {
     this.crlService = crlService;
     this.resource = resource;
-    this.workspaceDao = workspaceDao;
+    this.workspaceService = workspaceService;
   }
 
   @Override
@@ -48,14 +49,7 @@ public class GrantGcsBucketIamRolesStep implements Step {
       throws InterruptedException, RetryException {
     final FlightMap workingMap = flightContext.getWorkingMap();
 
-    String gcpProjectId =
-        workspaceDao
-            .getGcpCloudContext(resource.getWorkspaceId())
-            .orElseThrow(
-                () ->
-                    new CloudContextRequiredException(
-                        "No cloud context found in which to create a controlled resource"))
-            .getGcpProjectId();
+    String gcpProjectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
 
     // Users do not have read or write access to IAM policies, so this request is executed via
     // WSM's service account.
@@ -90,8 +84,7 @@ public class GrantGcsBucketIamRolesStep implements Step {
             .build();
     logger.info(
         "Syncing workspace roles to GCP permissions on bucket {}", resource.getBucketName());
-    // Users do not have read or write access to IAM policies, so this request is executed via
-    // WSM's service account.
+
     crlService.createStorageCow(gcpProjectId).setIamPolicy(resource.getBucketName(), newPolicy);
     return StepResult.getStepResultSuccess();
   }
