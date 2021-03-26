@@ -21,9 +21,9 @@ import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
-import scripts.utils.WorkspaceFixtureTestScriptBase;
+import scripts.utils.WorkspaceAllocateTestScriptBase;
 
-public class EnumerateDataReferences extends WorkspaceFixtureTestScriptBase {
+public class EnumerateDataReferences extends WorkspaceAllocateTestScriptBase {
 
   private static final Logger logger = LoggerFactory.getLogger(EnumerateDataReferences.class);
 
@@ -32,7 +32,7 @@ public class EnumerateDataReferences extends WorkspaceFixtureTestScriptBase {
 
   @Override
   public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-      throws ApiException {
+      throws Exception {
 
     // initialize workspace
     super.doSetup(testUsers, workspaceApi);

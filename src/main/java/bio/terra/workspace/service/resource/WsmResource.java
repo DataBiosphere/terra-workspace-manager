@@ -112,14 +112,14 @@ public abstract class WsmResource {
     }
   }
 
-  public ReferencedResource castReferenceResource() {
+  public ReferencedResource castToReferenceResource() {
     if (getStewardshipType() != StewardshipType.REFERENCED) {
       throw new InvalidMetadataException("Resource is not a referenced resource");
     }
     return (ReferencedResource) this;
   }
 
-  public ControlledResource castControlledResource() {
+  public ControlledResource castToControlledResource() {
     if (getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InvalidMetadataException("Resource is not a controlled resource");
     }

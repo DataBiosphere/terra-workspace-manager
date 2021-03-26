@@ -13,6 +13,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
+import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlight;
@@ -20,6 +21,7 @@ import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -27,6 +29,7 @@ import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -35,6 +38,7 @@ import org.springframework.stereotype.Component;
  * <p>This service holds core workspace management operations like creating, reading, and deleting
  * workspaces as well as their cloud contexts. New methods generally should go in new services.
  */
+@Lazy
 @Component
 public class WorkspaceService {
 
@@ -234,5 +238,22 @@ public class WorkspaceService {
             userReq)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
         .submitAndWait(null);
+  }
+
+  /**
+   * Helper method used by other classes that require the GCP project to exist in the workspace. It
+   * throws if the project (GCP cloud context) is not set up.
+   *
+   * @param workspaceId unique workspace id
+   * @return GCP project id
+   */
+  public String getRequiredGcpProject(UUID workspaceId) {
+    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
+    GcpCloudContext gcpCloudContext =
+        workspace
+            .getGcpCloudContext()
+            .orElseThrow(
+                () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
+    return gcpCloudContext.getGcpProjectId();
   }
 }

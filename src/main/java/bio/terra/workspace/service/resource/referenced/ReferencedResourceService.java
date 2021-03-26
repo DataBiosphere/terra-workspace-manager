@@ -111,7 +111,7 @@ public class ReferencedResourceService {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
-    return wsmResource.castReferenceResource();
+    return wsmResource.castToReferenceResource();
   }
 
   public ReferencedResource getReferenceResourceByName(
@@ -119,7 +119,7 @@ public class ReferencedResourceService {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     WsmResource wsmResource = resourceDao.getResourceByName(workspaceId, name);
-    return wsmResource.castReferenceResource();
+    return wsmResource.castToReferenceResource();
   }
 
   public List<ReferencedResource> enumerateReferences(

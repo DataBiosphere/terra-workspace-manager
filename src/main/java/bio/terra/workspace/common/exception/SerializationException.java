@@ -5,6 +5,9 @@ package bio.terra.workspace.common.exception;
  * broken serialization or deserialization.
  */
 public class SerializationException extends InternalServerErrorException {
+  public SerializationException(String message) {
+    super(message);
+  }
 
   public SerializationException(String message, Throwable cause) {
     super(message, cause);

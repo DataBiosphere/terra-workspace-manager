@@ -1,6 +1,6 @@
 {
-  "name": "BasicIntegration",
-  "description": "Integration tests that do not require a K8s setup; for PR merge testing. Please add tests to FullIntegration when you add them here.",
+  "name": "FullIntegration",
+  "description": "All integration tests - to be run on a K8s environment",
   "serverSpecificationFile": "workspace-wsmtest.json",
   "testConfigurationFiles": [
     "integration/BasicAuthenticated.json",
@@ -8,7 +8,8 @@
     "integration/DataReferenceLifecycle.json",
     "integration/EnumerateDataReferences.json",
     "integration/GetRoles.json",
-    "integration/WorkspaceLifecycle.json"
+    "integration/WorkspaceLifecycle.json",
+    "integration/CreateGetDeleteControlledGcsBucket.json"
   ]
 }
 

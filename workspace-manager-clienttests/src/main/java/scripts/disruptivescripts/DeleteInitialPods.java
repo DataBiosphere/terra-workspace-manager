@@ -38,7 +38,8 @@ public class DeleteInitialPods extends DisruptiveScript {
       throw new RuntimeException("WorkspaceManager deployment not found.");
     }
 
-    // TODO (QA-1421): refactor this out into a method of the Test Runner KubernetesClientUtils class.
+    // TODO (QA-1421): refactor this out into a method of the Test Runner KubernetesClientUtils
+    // class.
     List<String> podsToDelete =
         KubernetesClientUtils.listPods().stream()
             .filter(

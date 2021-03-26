@@ -3,10 +3,14 @@ package bio.terra.workspace.app.controller;
 import static java.util.stream.Collectors.toCollection;
 
 import bio.terra.workspace.common.exception.ValidationException;
+import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcsBucket;
-import bio.terra.workspace.generated.model.ApiGcsBucketStoredAttributes;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcsBucketRequest;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcsBucketResult;
+import bio.terra.workspace.generated.model.ApiGcsBucketAttributes;
+import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -14,6 +18,7 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRoleList;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
+import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -84,19 +89,63 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
                             .map(ControlledResourceIamRole::fromApiModel)
                             .collect(toCollection(ArrayList::new)))
                 .orElse(null);
-    if (privateRoles != null && privateRoles.isEmpty()) {
+
+    // Validate that we get the private role when the resource is private and do not get it
+    // when the resource is public
+    boolean privateRoleOmitted = (privateRoles == null || privateRoles.isEmpty());
+    if ((resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE && privateRoleOmitted)
+        || (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_SHARED
+            && !privateRoleOmitted)) {
       throw new ValidationException(
           "At least one IAM role is required for private resources and the field must be omitted for shared resources");
     }
 
+    ApiJobControl jobControl = body.getCommon().getJobControl();
     final String jobId =
         controlledResourceService.createControlledResource(
             resource,
             body.getGcsBucket(),
             privateRoles,
-            body.getCommon().getJobControl(),
+            jobControl,
+            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId()),
             userRequest);
     return getCreateBucketResult(workspaceId, jobId);
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledGcsBucketResult> deleteBucket(
+      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledGcsBucketRequest body) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final ApiJobControl jobControl = body.getJobControl();
+    logger.info(
+        "deleteBucket workspace {} resource {}", workspaceId.toString(), resourceId.toString());
+    final String jobId =
+        controlledResourceService.deleteControlledGcsBucket(
+            jobControl,
+            workspaceId,
+            resourceId,
+            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
+            userRequest);
+    return getDeleteResult(jobId, userRequest);
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledGcsBucketResult> getDeleteBucketResult(
+      UUID workspaceId, String jobId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    return getDeleteResult(jobId, userRequest);
+  }
+
+  private ResponseEntity<ApiDeleteControlledGcsBucketResult> getDeleteResult(
+      String jobId, AuthenticatedUserRequest userRequest) {
+    final AsyncJobResult<Void> jobResult =
+        jobService.retrieveAsyncJobResult(jobId, Void.class, userRequest);
+    var response =
+        new ApiDeleteControlledGcsBucketResult()
+            .jobReport(jobResult.getJobReport())
+            .errorReport(jobResult.getApiErrorReport());
+    return new ResponseEntity<>(
+        response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));
   }
 
   @Override
@@ -108,23 +157,31 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   }
 
   @Override
-  public ResponseEntity<ApiGcsBucketStoredAttributes> getBucket(UUID id, UUID resourceId) {
+  public ResponseEntity<ApiGcsBucketAttributes> getBucket(UUID id, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResource controlledResource =
         controlledResourceService.getControlledResource(id, resourceId, userRequest);
-    ApiGcsBucketStoredAttributes response =
-        controlledResource.castToGcsBucketResource().toApiModel();
+    ApiGcsBucketAttributes response = controlledResource.castToGcsBucketResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   private ApiCreatedControlledGcsBucket fetchGcsBucketResult(String jobId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final AsyncJobResult<ApiGcsBucketStoredAttributes> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, ApiGcsBucketStoredAttributes.class, userRequest);
+    final AsyncJobResult<ControlledResource> jobResult =
+        jobService.retrieveAsyncJobResult(jobId, ControlledResource.class, userRequest);
+
+    ControlledResource resource = jobResult.getResult();
+    UUID resourceId = Optional.ofNullable(resource).map(WsmResource::getResourceId).orElse(null);
+    ApiGcsBucketAttributes gcpBucket =
+        Optional.ofNullable(resource)
+            .map(r -> r.castToGcsBucketResource().toApiModel())
+            .orElse(null);
+
     return new ApiCreatedControlledGcsBucket()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
-        .gcpBucket(jobResult.getResult());
+        .resourceId(resourceId)
+        .gcpBucket(gcpBucket);
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
