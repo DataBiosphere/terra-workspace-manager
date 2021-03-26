@@ -39,8 +39,7 @@ public class CreateControlledResourceFlight extends Flight {
             new CreateGcsBucketStep(
                 flightBeanBag.getCrlService(),
                 resource.castToGcsBucketResource(),
-                flightBeanBag.getWorkspaceDao(),
-                userRequest));
+                flightBeanBag.getWorkspaceService()));
         break;
       case BIG_QUERY_DATASET:
       default:
@@ -54,5 +53,8 @@ public class CreateControlledResourceFlight extends Flight {
 
     // assign custom roles to the resource based on Sam policies
     // TODO: can this step be the same for all resource types?
+
+    // Populate the return response
+    addStep(new SetCreateResponseStep(resource));
   }
 }

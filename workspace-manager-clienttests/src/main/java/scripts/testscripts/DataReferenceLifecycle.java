@@ -12,9 +12,9 @@ import bio.terra.workspace.model.DataReferenceDescription;
 import bio.terra.workspace.model.ReferenceTypeEnum;
 import org.apache.http.HttpStatus;
 import scripts.utils.ClientTestUtils;
-import scripts.utils.WorkspaceFixtureTestScriptBase;
+import scripts.utils.WorkspaceAllocateTestScriptBase;
 
-public class DataReferenceLifecycle extends WorkspaceFixtureTestScriptBase {
+public class DataReferenceLifecycle extends WorkspaceAllocateTestScriptBase {
 
   @Override
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)

@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.equalTo;
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
+import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
@@ -15,6 +16,7 @@ import bio.terra.workspace.model.DataReferenceDescription;
 import bio.terra.workspace.model.DataReferenceList;
 import bio.terra.workspace.model.DataRepoSnapshot;
 import bio.terra.workspace.model.IamRole;
+import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ReferenceTypeEnum;
 import bio.terra.workspace.model.RoleBindingList;
 import com.google.api.client.http.HttpStatusCodes;
@@ -24,6 +26,7 @@ import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,6 +104,12 @@ public class ClientTestUtils {
     return new WorkspaceApi(apiClient);
   }
 
+  public static ControlledGcpResourceApi getControlledGpcResourceClient(
+      TestUserSpecification testUser, ServerSpecification server) throws IOException {
+    final ApiClient apiClient = getClientForTestUser(testUser, server);
+    return new ControlledGcpResourceApi(apiClient);
+  }
+
   /**
    * Build the Workspace Manager API client object for the server specifications. No access token is
    * needed for this API client.
@@ -113,8 +122,8 @@ public class ClientTestUtils {
     return buildClient(null, server);
   }
 
-  private static ApiClient buildClient(AccessToken accessToken, ServerSpecification server)
-      throws IOException {
+  private static ApiClient buildClient(
+      @Nullable AccessToken accessToken, ServerSpecification server) throws IOException {
     if (Strings.isNullOrEmpty(server.workspaceManagerUri)) {
       throw new IllegalArgumentException("Workspace Manager Service URI cannot be empty");
     }
@@ -168,16 +177,20 @@ public class ClientTestUtils {
   }
 
   /**
-   * True if the role binding list contains a binding for a given user and Iam Role.
+   * Checks if a user email is in a role binding list
    *
    * @param roleBindings - list of role bindings, as retrieved via getRoles()
    * @param userEmail - user to check for
    * @param role - role to check
-   * @return
+   * @return True if the role binding list contains a binding for a given user and Iam Role.
    */
   public static boolean containsBinding(
       RoleBindingList roleBindings, String userEmail, IamRole role) {
     return roleBindings.stream()
         .anyMatch(rb -> rb.getRole() == role && rb.getMembers().contains(userEmail));
+  }
+
+  public static boolean jobIsRunning(JobReport jobReport) {
+    return jobReport.getStatus().equals(JobReport.StatusEnum.RUNNING);
   }
 }
