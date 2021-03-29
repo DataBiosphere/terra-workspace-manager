@@ -13,10 +13,8 @@ import org.junit.jupiter.api.Test;
 public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
   @Test
   public void validateOk() {
-    ControlledAiNotebookInstanceResource resource =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance().build();
     // will throw if anything is amiss.
-    resource.validate();
+    ControlledResourceFixtures.makeDefaultAiNotebookInstance().build().validate();
   }
 
   @Test
@@ -28,11 +26,12 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
 
   @Test
   public void validateInstanceIdPattern() {
-    ControlledAiNotebookInstanceResource.Builder builder =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance();
     assertThrows(
         InvalidReferenceException.class,
-        () -> builder.instanceId("Invalid Instance Id %$^%$^").build());
+        () ->
+            ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+                .instanceId("Invalid Instance Id %$^%$^")
+                .build());
   }
 
   @Test
