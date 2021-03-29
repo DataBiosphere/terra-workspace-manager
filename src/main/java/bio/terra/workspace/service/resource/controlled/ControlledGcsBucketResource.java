@@ -5,6 +5,7 @@ import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGcsBucketAttributes;
+import bio.terra.workspace.generated.model.ApiGcsBucketResource;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -57,8 +58,12 @@ public class ControlledGcsBucketResource extends ControlledResource {
     return bucketName;
   }
 
-  public ApiGcsBucketAttributes toApiModel() {
+  public ApiGcsBucketAttributes toApiAttributes() {
     return new ApiGcsBucketAttributes().bucketName(getBucketName());
+  }
+
+  public ApiGcsBucketResource toApiResource() {
+    return new ApiGcsBucketResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
   }
 
   @Override

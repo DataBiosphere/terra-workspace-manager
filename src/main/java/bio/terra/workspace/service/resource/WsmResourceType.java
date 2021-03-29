@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource;
 
+import bio.terra.workspace.common.exception.ValidationException;
+import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
@@ -12,27 +14,39 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum WsmResourceType {
   DATA_REPO_SNAPSHOT(
-      CloudPlatform.GCP, "DATA_REPO_SNAPSHOT", ReferencedDataRepoSnapshotResource.class, null),
+      CloudPlatform.GCP,
+      "DATA_REPO_SNAPSHOT",
+      ApiResourceType.DATA_REPO_SNAPSHOT,
+      ReferencedDataRepoSnapshotResource.class,
+      null),
   GCS_BUCKET(
       CloudPlatform.GCP,
       "GCS_BUCKET",
+      ApiResourceType.GCS_BUCKET,
       ReferencedGcsBucketResource.class,
       ControlledGcsBucketResource.class),
   BIG_QUERY_DATASET(
-      CloudPlatform.GCP, "BIG_QUERY_DATASET", ReferencedBigQueryDatasetResource.class, null);
+      CloudPlatform.GCP,
+      "BIG_QUERY_DATASET",
+      ApiResourceType.BIG_QUERY_DATASET,
+      ReferencedBigQueryDatasetResource.class,
+      null);
 
   private final CloudPlatform cloudPlatform;
   private final String dbString; // serialized form of the resource type
+  private final ApiResourceType apiResourceType;
   private final Class<? extends ReferencedResource> referenceClass;
   private final Class<? extends ControlledResource> controlledClass;
 
   WsmResourceType(
       CloudPlatform cloudPlatform,
       String dbString,
+      ApiResourceType apiResourceType,
       Class<? extends ReferencedResource> referenceClass,
       Class<? extends ControlledResource> controlledClass) {
     this.cloudPlatform = cloudPlatform;
     this.dbString = dbString;
+    this.apiResourceType = apiResourceType;
     this.referenceClass = referenceClass;
     this.controlledClass = controlledClass;
   }
@@ -45,6 +59,15 @@ public enum WsmResourceType {
     }
     throw new SerializationException(
         "Deeserialization failed: no matching resource type for " + dbString);
+  }
+
+  public static WsmResourceType fromApi(ApiResourceType apiResourceType) {
+    for (WsmResourceType value : values()) {
+      if (value.toApiModel() == apiResourceType) {
+        return value;
+      }
+    }
+    throw new ValidationException("Invalid resource type " + apiResourceType);
   }
 
   public CloudPlatform getCloudPlatform() {
@@ -61,5 +84,9 @@ public enum WsmResourceType {
 
   public String toSql() {
     return dbString;
+  }
+
+  public ApiResourceType toApiModel() {
+    return apiResourceType;
   }
 }

@@ -7,7 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.SerializationException;
-import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
+import bio.terra.workspace.generated.model.ApiAccessScope;
+import bio.terra.workspace.generated.model.ApiManagedBy;
 import org.junit.jupiter.api.Test;
 
 public class ValidCommonEnumTest extends BaseUnitTest {
@@ -15,11 +16,11 @@ public class ValidCommonEnumTest extends BaseUnitTest {
   @Test
   public void accessScopeValidityTest() throws Exception {
     assertThat(
-        AccessScopeType.fromApi(ApiControlledResourceCommonFields.AccessScopeEnum.PRIVATE_ACCESS),
+        AccessScopeType.fromApi(ApiAccessScope.PRIVATE_ACCESS),
         equalTo(AccessScopeType.ACCESS_SCOPE_PRIVATE));
 
     assertThat(
-        AccessScopeType.fromApi(ApiControlledResourceCommonFields.AccessScopeEnum.SHARED_ACCESS),
+        AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS),
         equalTo(AccessScopeType.ACCESS_SCOPE_SHARED));
 
     AccessScopeType x = AccessScopeType.fromSql(AccessScopeType.ACCESS_SCOPE_PRIVATE.toSql());
@@ -36,12 +37,10 @@ public class ValidCommonEnumTest extends BaseUnitTest {
   @Test
   public void managedByValidityTest() throws Exception {
     assertThat(
-        ManagedByType.fromApi(ApiControlledResourceCommonFields.ManagedByEnum.APPLICATION),
+        ManagedByType.fromApi(ApiManagedBy.APPLICATION),
         equalTo(ManagedByType.MANAGED_BY_APPLICATION));
 
-    assertThat(
-        ManagedByType.fromApi(ApiControlledResourceCommonFields.ManagedByEnum.USER),
-        equalTo(ManagedByType.MANAGED_BY_USER));
+    assertThat(ManagedByType.fromApi(ApiManagedBy.USER), equalTo(ManagedByType.MANAGED_BY_USER));
 
     ManagedByType x = ManagedByType.fromSql(ManagedByType.MANAGED_BY_APPLICATION.toSql());
     assertThat(x, equalTo(ManagedByType.MANAGED_BY_APPLICATION));

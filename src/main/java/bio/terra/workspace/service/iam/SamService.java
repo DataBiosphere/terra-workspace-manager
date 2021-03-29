@@ -398,6 +398,25 @@ public class SamService {
     }
   }
 
+  /**
+   * List all controlled resources ID in Sam this user has access to. This builds an aggregated list
+   * across the four types of controlled resources.
+   */
+  @Traced
+  public List<UUID> listControlledResourceIds(
+      AuthenticatedUserRequest userReq, String controlledResourceName) {
+    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+    List<UUID> workspaceIds = new ArrayList<>();
+    try {
+      for (var resourceAndPolicy : resourceApi.listResourcesAndPolicies(controlledResourceName)) {
+        workspaceIds.add(UUID.fromString(resourceAndPolicy.getResourceId()));
+      }
+    } catch (ApiException samException) {
+      throw new SamApiException(samException);
+    }
+    return workspaceIds;
+  }
+
   public ApiSystemStatusSystems status() {
     // No access token needed since this is an unauthenticated API.
     StatusApi statusApi = new StatusApi(getApiClient(null));

@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,6 +117,10 @@ public class ResourceDao {
    * @param limit paging support
    * @return list of reference resources
    */
+  @Transactional(
+      propagation = Propagation.REQUIRED,
+      isolation = Isolation.SERIALIZABLE,
+      readOnly = true)
   public List<ReferencedResource> enumerateReferences(UUID workspaceId, int offset, int limit) {
     String sql =
         RESOURCE_SELECT_SQL
@@ -132,6 +137,70 @@ public class ResourceDao {
         .map(this::constructResource)
         .map(ReferencedResource.class::cast)
         .collect(Collectors.toList());
+  }
+
+  /**
+   * @param workspaceId identifier for work space to enumerate
+   * @param controlledResourceIds identifiers of controlled resources visible to the caller
+   * @param resourceType filter by this resource type - optional
+   * @param stewardshipType filtered by this stewardship type - optional
+   * @param offset starting row for result
+   * @param limit maximum number of rows to return
+   * @return list of resources
+   */
+  @Transactional(
+      propagation = Propagation.REQUIRED,
+      isolation = Isolation.SERIALIZABLE,
+      readOnly = true)
+  public List<WsmResource> enumerateResources(
+      UUID workspaceId,
+      List<UUID> controlledResourceIds,
+      @Nullable WsmResourceType resourceType,
+      @Nullable StewardshipType stewardshipType,
+      int offset,
+      int limit) {
+
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("offset", offset)
+            .addValue("limit", limit);
+
+    StringBuilder sb = new StringBuilder(RESOURCE_SELECT_SQL);
+    if (resourceType != null) {
+      sb.append(" AND resource_type = :resource_type");
+      params.addValue("resource_type", resourceType.toSql());
+    }
+    if (stewardshipType != null) {
+      sb.append(" AND stewardship_type = :stewardship_type");
+      params.addValue("resource_type", stewardshipType.toSql());
+    }
+    // We want to see all reference resources and the controlled resources that are visible to the
+    // caller.
+    // This next phrase will either be:
+    //  (stewardship_type = 'REFERENCED')
+    // or it will be:
+    //  (stewardship_type = 'REFERENCED' OR (stewardship_type = 'CONTROLLED' AND resource_id IN
+    // <inlist>))
+    // Pass in the SQL strings for the enumeration so they are only specified in one place: the
+    // enum.
+    sb.append(" (stewardship_type = :referenced_resource");
+    params.addValue("referenced_resource", REFERENCED.toSql());
+
+    if (controlledResourceIds.isEmpty()) {
+      sb.append(")");
+    } else {
+      sb.append(" (stewardship_type = :referenced_resource OR")
+          .append(" (stewardship_type = :controlled_resource AND")
+          .append(" resource_id IN :id_list))");
+      params.addValue("controlled_resource", CONTROLLED.toSql());
+      params.addValue("id_list", controlledResourceIds);
+    }
+    sb.append(" ORDER BY name OFFSET :offset LIMIT :limit");
+    List<DbResource> dbResourceList =
+        jdbcTemplate.query(sb.toString(), params, DB_RESOURCE_ROW_MAPPER);
+
+    return dbResourceList.stream().map(this::constructResource).collect(Collectors.toList());
   }
 
   /**
@@ -382,7 +451,6 @@ public class ResourceDao {
                 "Invalid controlled resource type" + dbResource.getResourceType().toString());
         }
 
-      case MONITORED:
       default:
         throw new InvalidMetadataException(
             "Invalid stewardship type" + dbResource.getStewardshipType().toString());
