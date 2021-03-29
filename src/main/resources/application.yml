@@ -81,7 +81,7 @@ terra:
     stairway:
       cluster-name-suffix: workspace-stairway
       force-clean-start: false
-      max-parallel-flights: 500
+      max-parallel-flights: 50
       migrate-upgrade: false
       quiet-down-timeout: 30s
       terminate-timeout: 60s
