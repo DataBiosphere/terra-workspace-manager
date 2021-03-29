@@ -159,10 +159,9 @@ public class ControlledGcsBucketResource extends ControlledResource {
     }
 
     public ControlledGcsBucketResource build() {
-      // On the create path, we can omit the resourceId and have it filled in by the builder.
       return new ControlledGcsBucketResource(
           workspaceId,
-          Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
+          resourceId,
           name,
           description,
           cloningInstructions,

@@ -61,6 +61,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     ControlledGcsBucketResource resource =
         ControlledGcsBucketResource.builder()
             .workspaceId(workspaceId)
+            .resourceId(UUID.randomUUID())
             .name(body.getCommon().getName())
             .description(body.getCommon().getDescription())
             .cloningInstructions(

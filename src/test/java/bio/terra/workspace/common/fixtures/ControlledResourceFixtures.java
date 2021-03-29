@@ -8,6 +8,7 @@ import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleAction;
 import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleActionType;
 import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -91,5 +92,13 @@ public class ControlledResourceFixtures {
         AccessScopeType.ACCESS_SCOPE_SHARED,
         ManagedByType.MANAGED_BY_USER,
         BUCKET_NAME);
+  }
+
+  public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance() {
+    return ControlledAiNotebookInstanceResource.builder()
+            .workspaceId(UUID.randomUUID())
+            .resourceId(UUID.randomUUID())
+            .name("/projects/my-project/locations/my-location/instanceId/my-instance-id")
+            ; // DO NOT SUBMIT finish me.
   }
 }
