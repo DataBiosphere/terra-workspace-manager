@@ -94,11 +94,23 @@ public class ControlledResourceFixtures {
         BUCKET_NAME);
   }
 
+  /**
+   * Returns a {@link ControlledAiNotebookInstanceResource.Builder} that is ready to be built.
+   *
+   * <p>Tests should not rely on any particular value for the fields returned by this function and
+   * instead override the values that they care about.
+   */
   public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance() {
     return ControlledAiNotebookInstanceResource.builder()
-            .workspaceId(UUID.randomUUID())
-            .resourceId(UUID.randomUUID())
-            .name("/projects/my-project/locations/my-location/instanceId/my-instance-id")
-            ; // DO NOT SUBMIT finish me.
+        .workspaceId(UUID.randomUUID())
+        .resourceId(UUID.randomUUID())
+        .name("my-notebook")
+        .description("my notebook description")
+        .cloningInstructions(CloningInstructions.COPY_NOTHING)
+        .assignedUser(null)
+        .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+        .managedBy(ManagedByType.MANAGED_BY_USER)
+        .instanceId("my-instance-id")
+        .location("us-east1-b");
   }
 }

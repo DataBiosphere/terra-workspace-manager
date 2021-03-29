@@ -87,6 +87,11 @@ public abstract class ControlledResource extends WsmResource {
     return (ControlledGcsBucketResource) this;
   }
 
+  public ControlledAiNotebookInstanceResource castToAiNotebookInstanceResource() {
+    validateSubclass(WsmResourceType.AI_NOTEBOOK_INSTANCE);
+    return (ControlledAiNotebookInstanceResource) this;
+  }
+
   private void validateSubclass(WsmResourceType expectedType) {
     if (getResourceType() != expectedType) {
       throw new InvalidMetadataException(

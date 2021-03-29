@@ -26,9 +26,12 @@ public class ValidationUtils {
   public static final Pattern BQ_DATASET_NAME_VALIDATION_PATTERN =
       Pattern.compile("^[_a-zA-Z0-9]{1,1024}$");
 
-  /** AI Notebook instances must be 1-62 characters, using letters (upper or lowercase), numbers, and dashes. The first character must be a lower case letter. */
+  /**
+   * AI Notebook instances must be 1-62 characters, using lower case letters, numbers, and dashes.
+   * The first character must be a lower case letter.
+   */
   public static final Pattern AI_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN =
-          Pattern.compile("(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)");
+      Pattern.compile("(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)");
 
   public static void validateBucketName(String name) {
     if (StringUtils.isEmpty(name) || !BUCKET_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
@@ -46,12 +49,11 @@ public class ValidationUtils {
     }
   }
 
-  // DO NOT SUBMIT TODO add test for me.
-  public static void validateAiNotebookInstanceName(String name) {
+  public static void validateAiNotebookInstanceId(String name) {
     if (!AI_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
       logger.warn("Invalid AI Notebook instance name {}", name);
       throw new InvalidReferenceException(
-              "Invalid AI Notebook instance name specified. Name must be 1 to 62 alphanumeric characters or underscores, where the first letter is a lower case letter.");
+          "Invalid AI Notebook instance name specified. Name must be 1 to 62 alphanumeric characters or underscores, where the first letter is a lower case letter.");
     }
   }
 

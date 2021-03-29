@@ -21,11 +21,7 @@ public enum WsmResourceType {
   BIG_QUERY_DATASET(
       CloudPlatform.GCP, "BIG_QUERY_DATASET", ReferencedBigQueryDatasetResource.class, null),
   AI_NOTEBOOK_INSTANCE(
-          CloudPlatform.GCP,
-          "AI_NOTEBOOK_INSTANCE",
-          null,
-          ControlledGcsBucketResource.class
-  );
+      CloudPlatform.GCP, "AI_NOTEBOOK_INSTANCE", null, ControlledGcsBucketResource.class);
 
   private final CloudPlatform cloudPlatform;
   private final String dbString; // serialized form of the resource type

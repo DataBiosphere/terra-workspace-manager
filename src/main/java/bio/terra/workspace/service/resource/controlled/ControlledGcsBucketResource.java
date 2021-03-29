@@ -10,7 +10,6 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Optional;
 import java.util.UUID;
 
 public class ControlledGcsBucketResource extends ControlledResource {

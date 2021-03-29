@@ -11,6 +11,7 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
@@ -376,6 +377,8 @@ public class ResourceDao {
         switch (dbResource.getResourceType()) {
           case GCS_BUCKET:
             return new ControlledGcsBucketResource(dbResource);
+          case AI_NOTEBOOK_INSTANCE:
+            return new ControlledAiNotebookInstanceResource(dbResource);
 
           default:
             throw new InvalidMetadataException(

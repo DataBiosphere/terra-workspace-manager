@@ -9,164 +9,188 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 /** A {@link ControlledResource} for a Google AI Platform Notebook instance. */
 public class ControlledAiNotebookInstanceResource extends ControlledResource {
-    private final String instanceName;
+  private final String instanceId;
+  private final String location;
 
-    @JsonCreator
-    public ControlledAiNotebookInstanceResource(
-            @JsonProperty("workspaceId") UUID workspaceId,
-            @JsonProperty("resourceId") UUID resourceId,
-            @JsonProperty("name") String name,
-            @JsonProperty("description") String description,
-            @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
-            @JsonProperty("assignedUser") String assignedUser,
-            @JsonProperty("accessScope") AccessScopeType accessScope,
-            @JsonProperty("managedBy") ManagedByType managedBy,
-            @JsonProperty("instanceName") String instanceName) {
-        super(
-                workspaceId,
-                resourceId,
-                name,
-                description,
-                cloningInstructions,
-                assignedUser,
-                accessScope,
-                managedBy);
-        this.instanceName = instanceName;
-        validate();
+  @JsonCreator
+  public ControlledAiNotebookInstanceResource(
+      @JsonProperty("workspaceId") UUID workspaceId,
+      @JsonProperty("resourceId") UUID resourceId,
+      @JsonProperty("name") String name,
+      @JsonProperty("description") String description,
+      @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
+      @JsonProperty("assignedUser") String assignedUser,
+      @JsonProperty("accessScope") AccessScopeType accessScope,
+      @JsonProperty("managedBy") ManagedByType managedBy,
+      @JsonProperty("instanceId") String instanceId,
+      @JsonProperty("location") String location) {
+    super(
+        workspaceId,
+        resourceId,
+        name,
+        description,
+        cloningInstructions,
+        assignedUser,
+        accessScope,
+        managedBy);
+    this.instanceId = instanceId;
+    this.location = location;
+    validate();
+  }
+
+  public ControlledAiNotebookInstanceResource(DbResource dbResource) {
+    super(dbResource);
+    ControlledAiNotebookInstanceAttributes attributes =
+        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAiNotebookInstanceAttributes.class);
+    this.instanceId = attributes.getInstanceId();
+    this.location = attributes.getLocation();
+    validate();
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /** The user specified id of the notebook instance. */
+  public String getInstanceId() {
+    return instanceId;
+  }
+
+  /** The Google Cloud Platform location of the notebook instance, e.g. "us-east1-b". */
+  public String getLocation() {
+    return location;
+  }
+
+  // TODO(PF-469): Add conversion to API model.
+
+  @Override
+  public WsmResourceType getResourceType() {
+    return WsmResourceType.AI_NOTEBOOK_INSTANCE;
+  }
+
+  @Override
+  public String attributesToJson() {
+    return DbSerDes.toJson(
+        new ControlledAiNotebookInstanceAttributes(getInstanceId(), getLocation()));
+  }
+
+  @Override
+  public void validate() {
+    super.validate();
+    if (getResourceType() != WsmResourceType.AI_NOTEBOOK_INSTANCE) {
+      throw new InconsistentFieldsException("Expected AI_NOTEBOOK_INSTANCE");
+    }
+    checkFieldNonNull(getInstanceId(), "instanceId");
+    checkFieldNonNull(getLocation(), "location");
+    ValidationUtils.validateAiNotebookInstanceId(getInstanceId());
+  }
+
+  private static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {
+    if (fieldValue == null) {
+      throw new MissingRequiredFieldException(
+          String.format("Missing required field '%s' for ControlledNotebookInstance.", fieldName));
+    }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    ControlledAiNotebookInstanceResource that = (ControlledAiNotebookInstanceResource) o;
+
+    return instanceId.equals(that.instanceId) && location.equals(that.location);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + instanceId.hashCode();
+    result = 31 * result + location.hashCode();
+    return result;
+  }
+
+  /** Builder for {@link ControlledAiNotebookInstanceResource}. */
+  public static class Builder {
+    private UUID workspaceId;
+    private UUID resourceId;
+    private String name;
+    private String description;
+    private CloningInstructions cloningInstructions;
+    private String assignedUser;
+    private AccessScopeType accessScope;
+    private ManagedByType managedBy;
+    private String instanceId;
+    private String location;
+
+    public Builder workspaceId(UUID workspaceId) {
+      this.workspaceId = workspaceId;
+      return this;
     }
 
-    public ControlledAiNotebookInstanceResource(DbResource dbResource) {
-        super(dbResource);
-        ControlledAiNotebookInstanceAttributes attributes =
-                DbSerDes.fromJson(dbResource.getAttributes(), ControlledAiNotebookInstanceAttributes.class);
-        this.instanceName = attributes.getInstanceName();
-        validate();
+    public Builder resourceId(UUID resourceId) {
+      this.resourceId = resourceId;
+      return this;
     }
 
-    public static ControlledAiNotebookInstanceResource.Builder builder() {
-        return new ControlledAiNotebookInstanceResource.Builder();
+    public Builder name(String name) {
+      this.name = name;
+      return this;
     }
 
-    public String getInstanceName() {
-        return instanceName;
+    public Builder description(String description) {
+      this.description = description;
+      return this;
     }
 
-    // TODO(PF-469): Add conversion to API model.
-
-    @Override
-    public WsmResourceType getResourceType() {
-        return WsmResourceType.AI_NOTEBOOK_INSTANCE;
+    public Builder cloningInstructions(CloningInstructions cloningInstructions) {
+      this.cloningInstructions = cloningInstructions;
+      return this;
     }
 
-    @Override
-    public String attributesToJson() {
-        return DbSerDes.toJson(new ControlledAiNotebookInstanceAttributes(getInstanceName()));
+    public Builder instanceId(String instanceId) {
+      this.instanceId = instanceId;
+      return this;
     }
 
-    @Override
-    public void validate() {
-        super.validate();
-        if (getResourceType() != WsmResourceType.AI_NOTEBOOK_INSTANCE) {
-            throw new InconsistentFieldsException("Expected AI_NOTEBOOK_INSTANCE");
-        }
-        if (getInstanceName() == null) {
-            throw new MissingRequiredFieldException("Missing required field instanceName for ControlledNotebookInstance.");
-        }
-        ValidationUtils.validateAiNotebookInstanceName(getInstanceName());
+    public Builder location(String location) {
+      this.location = location;
+      return this;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
-        ControlledAiNotebookInstanceResource that = (ControlledAiNotebookInstanceResource) o;
-
-        return instanceName.equals(that.instanceName);
+    public Builder assignedUser(String assignedUser) {
+      this.assignedUser = assignedUser;
+      return this;
     }
 
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + instanceName.hashCode();
-        return result;
+    public Builder accessScope(AccessScopeType accessScope) {
+      this.accessScope = accessScope;
+      return this;
     }
 
-    /** Builder for {@link ControlledAiNotebookInstanceResource}. */
-    public static class Builder {
-        private UUID workspaceId;
-        private UUID resourceId;
-        private String name;
-        private String description;
-        private CloningInstructions cloningInstructions;
-        private String assignedUser;
-        private AccessScopeType accessScope;
-        private ManagedByType managedBy;
-        private String instanceName;
-
-        public ControlledAiNotebookInstanceResource.Builder workspaceId(UUID workspaceId) {
-            this.workspaceId = workspaceId;
-            return this;
-        }
-
-        public ControlledAiNotebookInstanceResource.Builder resourceId(UUID resourceId) {
-            this.resourceId = resourceId;
-            return this;
-        }
-
-        public ControlledAiNotebookInstanceResource.Builder name(String name) {
-            this.name = name;
-            return this;
-        }
-
-        public ControlledAiNotebookInstanceResource.Builder description(String description) {
-            this.description = description;
-            return this;
-        }
-
-        public ControlledAiNotebookInstanceResource.Builder cloningInstructions(
-                CloningInstructions cloningInstructions) {
-            this.cloningInstructions = cloningInstructions;
-            return this;
-        }
-
-        public ControlledAiNotebookInstanceResource.Builder instanceName(String instanceName) {
-            this.instanceName = instanceName;
-            return this;
-        }
-
-        public Builder assignedUser(String assignedUser) {
-            this.assignedUser = assignedUser;
-            return this;
-        }
-
-        public Builder accessScope(AccessScopeType accessScope) {
-            this.accessScope = accessScope;
-            return this;
-        }
-
-        public Builder managedBy(ManagedByType managedBy) {
-            this.managedBy = managedBy;
-            return this;
-        }
-
-        public ControlledAiNotebookInstanceResource build() {
-            return new ControlledAiNotebookInstanceResource(
-                    workspaceId,
-                    resourceId,
-                    name,
-                    description,
-                    cloningInstructions,
-                    assignedUser,
-                    accessScope,
-                    managedBy,
-                    instanceName);
-        }
+    public Builder managedBy(ManagedByType managedBy) {
+      this.managedBy = managedBy;
+      return this;
     }
+
+    public ControlledAiNotebookInstanceResource build() {
+      return new ControlledAiNotebookInstanceResource(
+          workspaceId,
+          resourceId,
+          name,
+          description,
+          cloningInstructions,
+          assignedUser,
+          accessScope,
+          managedBy,
+          instanceId,
+          location);
+    }
+  }
 }
