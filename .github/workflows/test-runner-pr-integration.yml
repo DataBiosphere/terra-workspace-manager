@@ -77,6 +77,9 @@ jobs:
       run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
 
     - name: Run the Basic Integration test suite
+      # The ./render-k8s-config.sh step renders k8s credentials for running resiliency tests against k8s.
+      # The k8s credentials aren't needed when running tests against a local server.
+      # It is standard practice to include this step in all workflows that use the Test Runner Framework.
       run: |
         cd workspace-manager-clienttests
         echo "Test Runner config"
