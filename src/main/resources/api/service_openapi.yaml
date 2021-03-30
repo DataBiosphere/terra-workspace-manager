@@ -4,14 +4,17 @@
 # data references interface that we abandoned in favor of the unified resources interface.
 #
 # CLOUD RESOURCE STRUCTURE
-# Each cloud resource has a structure named '{resource-type}Resource';
-# for example, GcsBucketResource. It has two properties: 'metadata' and 'attributes'
+# Each cloud resource has a structure named '{cloud}{resource-type}Resource';
+# for example, GcpGcsBucketResource. It has two properties: 'metadata' and 'attributes'
 #
 # The 'metadata' property is a reference to the common metadata structure for all resource types:
 #  $ref: '#/components/schemas/ResourceMetadata'
+# Metadata includes both the common data for all resources and an optional structure for
+# properties of controlled resources.
 #
 # The 'attributes' property is a reference to a unique structure named '{resource-type}Attributes';
-# for example, GcsBucketAttributes.
+# for example, GcpGcsBucketAttributes. Attributes are specific to the cloud resource so may
+# be a complex structure.
 #
 # The resource structure should be used as the common form of return in the CRUD operations on
 # the object. Well, the CRU ones anyway...
@@ -415,10 +418,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateGcsBucketReferenceRequestBody'
+              $ref: '#/components/schemas/CreateGcpGcsBucketReferenceRequestBody'
       responses:
         '200':
-          $ref: '#/components/responses/GcsBucketReferenceResponse'
+          $ref: '#/components/responses/GcpGcsBucketReferenceResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -438,7 +441,7 @@ paths:
       tags: [ReferencedGcpResource]
       responses:
         '200':
-          $ref: '#/components/responses/GcsBucketReferenceResponse'
+          $ref: '#/components/responses/GcpGcsBucketReferenceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -488,7 +491,7 @@ paths:
       tags: [ReferencedGcpResource]
       responses:
         '200':
-          $ref: '#/components/responses/GcsBucketReferenceResponse'
+          $ref: '#/components/responses/GcpGcsBucketReferenceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -508,10 +511,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateBigQueryDatasetReferenceRequestBody'
+              $ref: '#/components/schemas/CreateGcpBigQueryDatasetReferenceRequestBody'
       responses:
         '200':
-          $ref: '#/components/responses/BigQueryDatasetReferenceResponse'
+          $ref: '#/components/responses/GcpBigQueryDatasetReferenceResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -531,7 +534,7 @@ paths:
       tags: [ReferencedGcpResource]
       responses:
         '200':
-          $ref: '#/components/responses/BigQueryDatasetReferenceResponse'
+          $ref: '#/components/responses/GcpBigQueryDatasetReferenceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -581,7 +584,7 @@ paths:
       tags: [ReferencedGcpResource]
       responses:
         '200':
-          $ref: '#/components/responses/BigQueryDatasetReferenceResponse'
+          $ref: '#/components/responses/GcpBigQueryDatasetReferenceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -769,12 +772,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateControlledGcsBucketRequestBody'
+              $ref: '#/components/schemas/CreateControlledGcpGcsBucketRequestBody'
       responses:
         '200':
-          $ref: '#/components/responses/CreatedControlledGcsBucketResponse'
+          $ref: '#/components/responses/CreatedControlledGcpGcsBucketResponse'
         '202':
-          $ref: '#/components/responses/CreatedControlledGcsBucketResponse'
+          $ref: '#/components/responses/CreatedControlledGcpGcsBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -790,9 +793,9 @@ paths:
       tags: [ControlledGcpResource]
       responses:
         '200':
-          $ref: '#/components/responses/CreatedControlledGcsBucketResponse'
+          $ref: '#/components/responses/CreatedControlledGcpGcsBucketResponse'
         '202':
-          $ref: '#/components/responses/CreatedControlledGcsBucketResponse'
+          $ref: '#/components/responses/CreatedControlledGcpGcsBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -808,7 +811,7 @@ paths:
       tags: [ControlledGcpResource]
       responses:
         '200':
-          $ref: '#/components/responses/GetControlledGcsBucketResponse'
+          $ref: '#/components/responses/GetControlledGcpGcsBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         404:
@@ -828,12 +831,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteControlledGcsBucketRequest'
+              $ref: '#/components/schemas/DeleteControlledGcpGcsBucketRequest'
       responses:
         '200':
-          $ref: '#/components/responses/DeleteControlledGcsBucketResponse'
+          $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
         '202':
-          $ref: '#/components/responses/DeleteControlledGcsBucketResponse'
+          $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -849,9 +852,9 @@ paths:
       tags: [ControlledGcpResource]
       responses:
         '200':
-          $ref: '#/components/responses/DeleteControlledGcsBucketResponse'
+          $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
         '202':
-          $ref: '#/components/responses/DeleteControlledGcsBucketResponse'
+          $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -1384,7 +1387,7 @@ components:
         snapshot:
           $ref: '#/components/schemas/DataRepoSnapshotAttributes'
 
-    CreateGcsBucketReferenceRequestBody:
+    CreateGcpGcsBucketReferenceRequestBody:
       type: object
       description: A request to create a reference to a GCS bucket.
       required: [metadata, bucket]
@@ -1392,9 +1395,9 @@ components:
         metadata:
           $ref: '#/components/schemas/ReferenceResourceCommonFields'
         bucket:
-          $ref: '#/components/schemas/GcsBucketAttributes'
+          $ref: '#/components/schemas/GcpGcsBucketAttributes'
 
-    CreateBigQueryDatasetReferenceRequestBody:
+    CreateGcpBigQueryDatasetReferenceRequestBody:
       type: object
       description: A request to create a reference to a BigQuery dataset.
       required: [metadata, dataset]
@@ -1402,7 +1405,7 @@ components:
         metadata:
           $ref: '#/components/schemas/ReferenceResourceCommonFields'
         dataset:
-          $ref: '#/components/schemas/BigQueryDatasetAttributes'
+          $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
 
     WorkspaceStageModel:
       description: Enum for possible stages of a workspace along the Rawls migration path
@@ -1446,14 +1449,14 @@ components:
         memberEmail:
           type: string
 
-    CreateControlledGcsBucketRequestBody:
+    CreateControlledGcpGcsBucketRequestBody:
       description: Payload for requesting a new controlled resource.
       type: object
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
         gcsBucket:
-          $ref: '#/components/schemas/GcsBucketCreationParameters'
+          $ref: '#/components/schemas/GcpGcsBucketCreationParameters'
 
     ControlledResourceCommonFields:
       type: object
@@ -1505,7 +1508,7 @@ components:
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
 
-    CreatedControlledGcsBucket:
+    CreatedControlledGcpGcsBucket:
       description: Response Payload for requesting a new controlled resource.
       type: object
       properties:
@@ -1516,11 +1519,11 @@ components:
         jobReport:
           $ref: '#/components/schemas/JobReport'
         gcpBucket:
-          $ref: '#/components/schemas/GcsBucketResource'
+          $ref: '#/components/schemas/GcpGcsBucketResource'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
-    GcsBucketCreationParameters:
+    GcpGcsBucketCreationParameters:
       description: >-
         Bucket-specific properties to be set on creation. These are a subset of the
         values accepted by the Gcp Storage API.
@@ -1533,11 +1536,11 @@ components:
           description: A valid bucket location per https://cloud.google.com/storage/docs/locations.
           type: string
         defaultStorageClass:
-          $ref: '#/components/schemas/GcsBucketDefaultStorageClass'
+          $ref: '#/components/schemas/GcpGcsBucketDefaultStorageClass'
         lifecycle:
-          $ref: '#/components/schemas/GcsBucketLifecycle'
+          $ref: '#/components/schemas/GcpGcsBucketLifecycle'
 
-    GcsBucketDefaultStorageClass:
+    GcpGcsBucketDefaultStorageClass:
       description: >-
         Type and availability of objects in a bucket, described at https://cloud.google.com/storage/docs/storage-classes.
         This list does not include legacy types that apply to some existing buckets.
@@ -1547,7 +1550,7 @@ components:
         - NEARLINE
         - COLDLINE
         - ARCHIVE
-    GcsBucketLifecycle:
+    GcpGcsBucketLifecycle:
       description: >-
         Options to control automatic deletion or storage class change for a bucket.
         Described at https://cloud.google.com/storage/docs/lifecycle.
@@ -1557,27 +1560,27 @@ components:
           description: List of rules for this bucket
           type: array
           items:
-            $ref: '#/components/schemas/GcsBucketLifecycleRule'
+            $ref: '#/components/schemas/GcpGcsBucketLifecycleRule'
 
-    GcsBucketLifecycleRule:
+    GcpGcsBucketLifecycleRule:
       description: A lifecycle rule for a bucket.
       type: object
       properties:
         action:
-          $ref: '#/components/schemas/GcsBucketLifecycleRuleAction'
+          $ref: '#/components/schemas/GcpGcsBucketLifecycleRuleAction'
         condition:
-          $ref: '#/components/schemas/GcsBucketLifecycleRuleCondition'
+          $ref: '#/components/schemas/GcpGcsBucketLifecycleRuleCondition'
 
-    GcsBucketLifecycleRuleAction:
+    GcpGcsBucketLifecycleRuleAction:
       description: The lifecycle action to take. See https://cloud.google.com/storage/docs/lifecycle#actions.
       type: object
       properties:
         storageClass:
-          $ref: '#/components/schemas/GcsBucketDefaultStorageClass'
+          $ref: '#/components/schemas/GcpGcsBucketDefaultStorageClass'
         type:
-          $ref: '#/components/schemas/GcsBucketLifecycleRuleActionType'
+          $ref: '#/components/schemas/GcpGcsBucketLifecycleRuleActionType'
 
-    GcsBucketLifecycleRuleActionType:
+    GcpGcsBucketLifecycleRuleActionType:
       description: >-
         Type of action to perform. Formatted like our Java enums, but spelled in Camel case in Gcp API.
       type: string
@@ -1585,7 +1588,7 @@ components:
         - DELETE
         - SET_STORAGE_CLASS
 
-    GcsBucketLifecycleRuleCondition:
+    GcpGcsBucketLifecycleRuleCondition:
       description: The condition(s) under which the action will be taken.
       type: object
       properties:
@@ -1625,7 +1628,7 @@ components:
             "REGIONAL", and "DURABLE_REDUCED_AVAILABILITY".
           type: array
           items:
-            $ref: '#/components/schemas/GcsBucketDefaultStorageClass'
+            $ref: '#/components/schemas/GcpGcsBucketDefaultStorageClass'
         noncurrentTimeBefore:
           description: >-
             Relevant only for versioned objects. This condition is satisfied for objects that became
@@ -1639,14 +1642,14 @@ components:
             of the object.
           type: integer
 
-    DeleteControlledGcsBucketRequest:
+    DeleteControlledGcpGcsBucketRequest:
       type: object
       required: [ jobControl ]
       properties:
         jobControl:
           $ref: '#/components/schemas/JobControl'
 
-    DeleteControlledGcsBucketResult:
+    DeleteControlledGcpGcsBucketResult:
       type: object
       properties:
         jobReport:
@@ -1655,6 +1658,7 @@ components:
           $ref: '#/components/schemas/ErrorReport'
 
     ## Cloud Resource, Attribute, and Enumeration structures ##
+
     ResourceList:
       type: object
       required: [resources]
@@ -1717,13 +1721,13 @@ components:
         based on the ResourceType in the ResourceDescription
       properties:
         gcpBigQuery:
-          $ref: '#/components/schemas/BigQueryDatasetAttributes'
+          $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
         gcpDataRepoSnapshot:
           $ref: '#/components/schemas/DataRepoSnapshotAttributes'
         gcpGcsBucket:
-          $ref: '#/components/schemas/GcsBucketAttributes'
+          $ref: '#/components/schemas/GcpGcsBucketAttributes'
 
-    GcsBucketResource:
+    GcpGcsBucketResource:
       type: object
       description: Description of a GCS bucket.
       required: [metadata, attributes]
@@ -1732,9 +1736,9 @@ components:
           description: the resource metadata common to all resources
           $ref: '#/components/schemas/ResourceMetadata'
         attributes:
-          $ref: '#/components/schemas/GcsBucketAttributes'
+          $ref: '#/components/schemas/GcpGcsBucketAttributes'
 
-    GcsBucketAttributes:
+    GcpGcsBucketAttributes:
       description: >-
         Bucket properties included in post-creation, get, and update. Others must be
         retrieved from GCS using the name.
@@ -1744,7 +1748,7 @@ components:
           description: Name of created bucket (not the resource nmae).
           type: string
 
-    BigQueryDatasetResource:
+    GcpBigQueryDatasetResource:
       type: object
       description: A reference to a BigQuery dataset.
       required: [metadata, dataset]
@@ -1753,9 +1757,9 @@ components:
           description: the resource metadata common to all resources
           $ref: '#/components/schemas/ResourceMetadata'
         attributes:
-          $ref: '#/components/schemas/BigQueryDatasetAttributes'
+          $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
 
-    BigQueryDatasetAttributes:
+    GcpBigQueryDatasetAttributes:
       description: Attributes of a BigQuery dataset
       type: object
       required: [projectId, datasetId]
@@ -1862,19 +1866,19 @@ components:
           schema:
             $ref: '#/components/schemas/DataRepoSnapshotResource'
 
-    GcsBucketReferenceResponse:
+    GcpGcsBucketReferenceResponse:
       description: Response containing a reference to a Gcp bucket.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/GcsBucketResource'
+            $ref: '#/components/schemas/GcpGcsBucketResource'
 
-    BigQueryDatasetReferenceResponse:
+    GcpBigQueryDatasetReferenceResponse:
       description: Response containing a reference to a BiqQuery dataset.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/BigQueryDatasetResource'
+            $ref: '#/components/schemas/GcpBigQueryDatasetResource'
 
     RoleBindingListResponse:
       description: Response to list permissions calls
@@ -1883,26 +1887,26 @@ components:
           schema:
             $ref: '#/components/schemas/RoleBindingList'
 
-    CreatedControlledGcsBucketResponse:
+    CreatedControlledGcpGcsBucketResponse:
       description: Response to Create controlled resource
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CreatedControlledGcsBucket'
+            $ref: '#/components/schemas/CreatedControlledGcpGcsBucket'
 
-    DeleteControlledGcsBucketResponse:
+    DeleteControlledGcpGcsBucketResponse:
       description: Response Payload for deleting a Gcs bucket
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/DeleteControlledGcsBucketResult'
+            $ref: '#/components/schemas/DeleteControlledGcpGcsBucketResult'
 
-    GetControlledGcsBucketResponse:
+    GetControlledGcpGcsBucketResponse:
       description: Response to get bucket
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/GcsBucketResource'
+            $ref: '#/components/schemas/GcpGcsBucketResource'
 
     CreateCloudContextResultResponse:
       description: Job is complete (succeeded or failed)

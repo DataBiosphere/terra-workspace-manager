@@ -8,12 +8,12 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.generated.model.ApiGcsBucketCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcsBucketDefaultStorageClass;
-import bio.terra.workspace.generated.model.ApiGcsBucketLifecycle;
-import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRule;
-import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleAction;
-import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleCondition;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRule;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleAction;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -53,8 +53,8 @@ public class CreateGcsBucketStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
-    ApiGcsBucketCreationParameters creationParameters =
-        inputMap.get(CREATION_PARAMETERS, ApiGcsBucketCreationParameters.class);
+    ApiGcpGcsBucketCreationParameters creationParameters =
+        inputMap.get(CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
     BucketInfo bucketInfo =
         BucketInfo.newBuilder(resource.getBucketName())
@@ -83,7 +83,7 @@ public class CreateGcsBucketStep implements Step {
 
     private ApiConversions() {}
 
-    private static StorageClass toGcsApi(ApiGcsBucketDefaultStorageClass storageClass) {
+    private static StorageClass toGcsApi(ApiGcpGcsBucketDefaultStorageClass storageClass) {
       switch (storageClass) {
         case STANDARD:
           return StorageClass.STANDARD;
@@ -98,18 +98,19 @@ public class CreateGcsBucketStep implements Step {
       }
     }
 
-    private static List<LifecycleRule> toGcsApi(ApiGcsBucketLifecycle lifecycle) {
+    private static List<LifecycleRule> toGcsApi(ApiGcpGcsBucketLifecycle lifecycle) {
       return lifecycle.getRules().stream()
           .map(ApiConversions::toGcsApi)
           .collect(Collectors.toList());
     }
 
-    private static LifecycleRule toGcsApi(ApiGcsBucketLifecycleRule lifecycleRule) {
+    private static LifecycleRule toGcsApi(ApiGcpGcsBucketLifecycleRule lifecycleRule) {
       return new LifecycleRule(
           toGcsApi(lifecycleRule.getAction()), toGcsApi(lifecycleRule.getCondition()));
     }
 
-    private static LifecycleAction toGcsApi(ApiGcsBucketLifecycleRuleAction lifecycleRuleAction) {
+    private static LifecycleAction toGcsApi(
+        ApiGcpGcsBucketLifecycleRuleAction lifecycleRuleAction) {
       switch (lifecycleRuleAction.getType()) {
         case DELETE:
           return LifecycleAction.newDeleteAction();
@@ -122,7 +123,7 @@ public class CreateGcsBucketStep implements Step {
       }
     }
 
-    private static LifecycleCondition toGcsApi(ApiGcsBucketLifecycleRuleCondition condition) {
+    private static LifecycleCondition toGcsApi(ApiGcpGcsBucketLifecycleRuleCondition condition) {
       final LifecycleCondition.Builder resultBuilder = LifecycleCondition.newBuilder();
 
       /* TODO(PF-506): some conditions aren't in the version of the Google Storage API in the

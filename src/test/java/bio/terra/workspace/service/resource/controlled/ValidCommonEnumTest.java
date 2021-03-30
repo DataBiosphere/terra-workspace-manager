@@ -32,6 +32,11 @@ public class ValidCommonEnumTest extends BaseUnitTest {
     assertThrows(MissingRequiredFieldException.class, () -> AccessScopeType.fromApi(null));
 
     assertThrows(SerializationException.class, () -> AccessScopeType.fromSql("xyzzy"));
+
+    assertThat(
+        AccessScopeType.ACCESS_SCOPE_PRIVATE.toApiModel(), equalTo(ApiAccessScope.PRIVATE_ACCESS));
+    assertThat(
+        AccessScopeType.ACCESS_SCOPE_SHARED.toApiModel(), equalTo(ApiAccessScope.SHARED_ACCESS));
   }
 
   @Test
@@ -51,5 +56,9 @@ public class ValidCommonEnumTest extends BaseUnitTest {
     assertThrows(MissingRequiredFieldException.class, () -> ManagedByType.fromApi(null));
 
     assertThrows(SerializationException.class, () -> ManagedByType.fromSql("xyzzy"));
+
+    assertThat(ManagedByType.MANAGED_BY_USER.toApiModel(), equalTo(ApiManagedBy.USER));
+    assertThat(
+        ManagedByType.MANAGED_BY_APPLICATION.toApiModel(), equalTo(ApiManagedBy.APPLICATION));
   }
 }

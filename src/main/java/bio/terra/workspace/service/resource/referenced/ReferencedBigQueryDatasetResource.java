@@ -4,8 +4,8 @@ import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.generated.model.ApiBigQueryDatasetAttributes;
-import bio.terra.workspace.generated.model.ApiBigQueryDatasetResource;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -73,12 +73,14 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
     return datasetName;
   }
 
-  public ApiBigQueryDatasetAttributes toApiAttributes() {
-    return new ApiBigQueryDatasetAttributes().projectId(getProjectId()).datasetId(getDatasetName());
+  public ApiGcpBigQueryDatasetAttributes toApiAttributes() {
+    return new ApiGcpBigQueryDatasetAttributes()
+        .projectId(getProjectId())
+        .datasetId(getDatasetName());
   }
 
-  public ApiBigQueryDatasetResource toApiResource() {
-    return new ApiBigQueryDatasetResource()
+  public ApiGcpBigQueryDatasetResource toApiResource() {
+    return new ApiGcpBigQueryDatasetResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
   }
