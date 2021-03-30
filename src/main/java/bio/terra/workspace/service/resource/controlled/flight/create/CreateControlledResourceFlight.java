@@ -4,10 +4,11 @@ import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.model.ControlledResourceIamRoleList;
+import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import java.util.List;
 
 /**
  * Flight for creation of a controlled resource. Some steps are resource-type-agnostic, and others
@@ -27,9 +28,10 @@ public class CreateControlledResourceFlight extends Flight {
         inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
     final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final ControlledResourceIamRoleList privateResourceIamRole =
-        inputParameters.get(
-            ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, ControlledResourceIamRoleList.class);
+    // Stairway does not provide a way to specify parameterized types for deserialization
+    @SuppressWarnings("unchecked")
+    final List<ControlledResourceIamRole> privateResourceIamRole =
+        inputParameters.get(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, List.class);
 
     switch (resource.getResourceType()) {
       case GCS_BUCKET:

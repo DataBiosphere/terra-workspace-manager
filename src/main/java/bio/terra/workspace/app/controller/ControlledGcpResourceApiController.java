@@ -1,7 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import static java.util.stream.Collectors.toCollection;
-
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
@@ -15,7 +13,6 @@ import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.iam.model.ControlledResourceIamRoleList;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.resource.WsmResource;
@@ -25,8 +22,10 @@ import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.slf4j.Logger;
@@ -78,13 +77,13 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .bucketName(body.getGcsBucket().getName())
             .build();
 
-    ControlledResourceIamRoleList privateRoles =
+    List<ControlledResourceIamRole> privateRoles =
         Optional.ofNullable(body.getCommon().getPrivateResourceUser())
             .map(
                 user ->
                     user.getPrivateResourceIamRoles().stream()
                         .map(ControlledResourceIamRole::fromApiModel)
-                        .collect(toCollection(ControlledResourceIamRoleList::new)))
+                        .collect(Collectors.toList()))
             .orElse(null);
     // Validate that we get the private role when the resource is private and do not get it
     // when the resource is public
