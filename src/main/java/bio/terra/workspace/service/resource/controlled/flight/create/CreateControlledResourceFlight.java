@@ -5,7 +5,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.iam.model.ControlledResourceIamRoleList;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.workspace.flight.SyncSamGroupsStep;
@@ -26,9 +25,10 @@ public class CreateControlledResourceFlight extends Flight {
         inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
     final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    // Stairway does not provide a way to specify parameterized types for deserialization
+    @SuppressWarnings("unchecked")
     final List<ControlledResourceIamRole> privateResourceIamRoles =
-        inputParameters.get(
-            ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, ControlledResourceIamRoleList.class);
+        inputParameters.get(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, List.class);
 
     // store the resource metadata in the WSM database
     addStep(new StoreMetadataStep(flightBeanBag.getResourceDao()));
