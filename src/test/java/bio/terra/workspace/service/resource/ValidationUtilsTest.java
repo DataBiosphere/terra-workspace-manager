@@ -18,10 +18,16 @@ public class ValidationUtilsTest extends BaseUnitTest {
         () -> ValidationUtils.validateAiNotebookInstanceId("-dash-first"));
     assertThrows(
         InvalidReferenceException.class,
-        () -> ValidationUtils.validateAiNotebookInstanceId("no whitespace"));
+        () -> ValidationUtils.validateAiNotebookInstanceId("dash-last-"));
+    assertThrows(
+        InvalidReferenceException.class,
+        () -> ValidationUtils.validateAiNotebookInstanceId("white space"));
     assertThrows(
         InvalidReferenceException.class,
         () -> ValidationUtils.validateAiNotebookInstanceId("other-symbols^&)"));
+    assertThrows(
+        InvalidReferenceException.class,
+        () -> ValidationUtils.validateAiNotebookInstanceId("unicode-\\u00C6"));
     assertThrows(
         InvalidReferenceException.class,
         () ->

@@ -27,8 +27,8 @@ public class ValidationUtils {
       Pattern.compile("^[_a-zA-Z0-9]{1,1024}$");
 
   /**
-   * AI Notebook instances must be 1-62 characters, using lower case letters, numbers, and dashes.
-   * The first character must be a lower case letter.
+   * AI Notebook instances must be 1-63 characters, using lower case letters, numbers, and dashes.
+   * The first character must be a lower case letter, and the last character must not be a dash.
    */
   public static final Pattern AI_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN =
       Pattern.compile("(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)");
