@@ -32,6 +32,6 @@ public class ValidationUtilsTest extends BaseUnitTest {
         InvalidReferenceException.class,
         () ->
             ValidationUtils.validateAiNotebookInstanceId(
-                "more-than-62-chars111111111111111111111111111111111111111111111111111"));
+                "more-than-63-chars111111111111111111111111111111111111111111111111111"));
   }
 }
