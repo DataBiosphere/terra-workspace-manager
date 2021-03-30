@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -45,11 +44,8 @@ public class ResourceDaoTest extends BaseUnitTest {
         ControlledResourceFixtures.makeControlledGcsBucketResource(workspaceId);
     resourceDao.createControlledResource(resource);
 
-    WsmResource wsmResource =
-        resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
-    ControlledGcsBucketResource retrievedResource =
-        wsmResource.castControlledResource().castToGcsBucketResource();
-    assertEquals(resource, retrievedResource);
+    assertEquals(
+        resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
   }
 
   @Test
@@ -59,11 +55,7 @@ public class ResourceDaoTest extends BaseUnitTest {
         ControlledResourceFixtures.makeDefaultAiNotebookInstance().workspaceId(workspaceId).build();
     resourceDao.createControlledResource(resource);
 
-    ControlledAiNotebookInstanceResource retrievedResource =
-        resourceDao
-            .getResource(resource.getWorkspaceId(), resource.getResourceId())
-            .castControlledResource()
-            .castToAiNotebookInstanceResource();
-    assertEquals(resource, retrievedResource);
+    assertEquals(
+        resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
   }
 }
