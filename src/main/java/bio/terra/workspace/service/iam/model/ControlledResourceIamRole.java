@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.iam.model;
 
+import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiControlledResourceIamRole;
 import java.util.Arrays;
 import java.util.Optional;
@@ -25,10 +26,15 @@ public enum ControlledResourceIamRole {
     this.apiRole = apiRole;
   }
 
+  // Some ControlledResourceIamRole.apiRole fields are null, so the below check needs to be careful
+  // not to call .equals on a null role. This also will throw if provided apiModel is null.
   public static ControlledResourceIamRole fromApiModel(ApiControlledResourceIamRole apiModel) {
+    if (apiModel == null) {
+      throw new ValidationException("Non-null ApiControlledResourceIamRole required.");
+    }
     Optional<ControlledResourceIamRole> result =
         Arrays.stream(ControlledResourceIamRole.values())
-            .filter(x -> x.apiRole.equals(apiModel))
+            .filter(x -> apiModel.equals(x.apiRole))
             .findFirst();
     return result.orElseThrow(
         () ->
