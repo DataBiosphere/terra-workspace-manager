@@ -2,14 +2,15 @@ package bio.terra.workspace.common.exception;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.springframework.http.HttpStatus;
 
 /**
- * This base class has data that corresponds to the ApiErrorReport model generated from the
- * OpenAPI yaml. The global exception handler auto-magically converts exceptions of this base class
- * into the appropriate ApiErrorReport REST response.
+ * This base class has data that corresponds to the ApiErrorReport model generated from the OpenAPI
+ * yaml. The global exception handler auto-magically converts exceptions of this base class into the
+ * appropriate ApiErrorReport REST response.
  */
 public abstract class ErrorReportException extends RuntimeException {
   private static final HttpStatus DEFAULT_STATUS = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -38,8 +39,8 @@ public abstract class ErrorReportException extends RuntimeException {
   public ErrorReportException(
       String message, @Nullable List<String> causes, @Nullable HttpStatus statusCode) {
     super(message);
-    this.causes = causes != null ? causes : Collections.emptyList();
-    this.statusCode = statusCode != null ? statusCode : DEFAULT_STATUS;
+    this.causes = Optional.ofNullable(causes).orElse(Collections.emptyList());
+    this.statusCode = Optional.ofNullable(statusCode).orElse(DEFAULT_STATUS);
   }
 
   public ErrorReportException(
@@ -48,8 +49,8 @@ public abstract class ErrorReportException extends RuntimeException {
       @Nullable List<String> causes,
       @Nullable HttpStatus statusCode) {
     super(message, cause);
-    this.causes = causes != null ? causes : Collections.emptyList();
-    this.statusCode = statusCode != null ? statusCode : DEFAULT_STATUS;
+    this.causes = Optional.ofNullable(causes).orElse(Collections.emptyList());
+    this.statusCode = Optional.ofNullable(statusCode).orElse(DEFAULT_STATUS);
   }
 
   public List<String> getCauses() {
