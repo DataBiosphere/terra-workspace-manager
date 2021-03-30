@@ -4,19 +4,21 @@ import bio.terra.workspace.common.exception.InconsistentFieldsException;
 import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.generated.model.ApiGcsBucketAttributes;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
-public class ControlledGcsBucketResource extends ControlledResource {
-  private final String bucketName;
+/** A {@link ControlledResource} for a Google AI Platform Notebook instance. */
+public class ControlledAiNotebookInstanceResource extends ControlledResource {
+  private final String instanceId;
+  private final String location;
 
   @JsonCreator
-  public ControlledGcsBucketResource(
+  public ControlledAiNotebookInstanceResource(
       @JsonProperty("workspaceId") UUID workspaceId,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
@@ -25,8 +27,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
       @JsonProperty("assignedUser") String assignedUser,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
-      @JsonProperty("bucketName") String bucketName) {
-
+      @JsonProperty("instanceId") String instanceId,
+      @JsonProperty("location") String location) {
     super(
         workspaceId,
         resourceId,
@@ -36,50 +38,63 @@ public class ControlledGcsBucketResource extends ControlledResource {
         assignedUser,
         accessScope,
         managedBy);
-    this.bucketName = bucketName;
+    this.instanceId = instanceId;
+    this.location = location;
     validate();
   }
 
-  public ControlledGcsBucketResource(DbResource dbResource) {
+  public ControlledAiNotebookInstanceResource(DbResource dbResource) {
     super(dbResource);
-    ControlledGcsBucketAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ControlledGcsBucketAttributes.class);
-    this.bucketName = attributes.getBucketName();
+    ControlledAiNotebookInstanceAttributes attributes =
+        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAiNotebookInstanceAttributes.class);
+    this.instanceId = attributes.getInstanceId();
+    this.location = attributes.getLocation();
     validate();
   }
 
-  public static ControlledGcsBucketResource.Builder builder() {
-    return new ControlledGcsBucketResource.Builder();
+  public static Builder builder() {
+    return new Builder();
   }
 
-  public String getBucketName() {
-    return bucketName;
+  /** The user specified id of the notebook instance. */
+  public String getInstanceId() {
+    return instanceId;
   }
 
-  public ApiGcsBucketAttributes toApiModel() {
-    return new ApiGcsBucketAttributes().bucketName(getBucketName());
+  /** The Google Cloud Platform location of the notebook instance, e.g. "us-east1-b". */
+  public String getLocation() {
+    return location;
   }
+
+  // TODO(PF-469): Add conversion to API model.
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.GCS_BUCKET;
+    return WsmResourceType.AI_NOTEBOOK_INSTANCE;
   }
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ControlledGcsBucketAttributes(getBucketName()));
+    return DbSerDes.toJson(
+        new ControlledAiNotebookInstanceAttributes(getInstanceId(), getLocation()));
   }
 
   @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.GCS_BUCKET) {
-      throw new InconsistentFieldsException("Expected GCS_BUCKET");
+    if (getResourceType() != WsmResourceType.AI_NOTEBOOK_INSTANCE) {
+      throw new InconsistentFieldsException("Expected AI_NOTEBOOK_INSTANCE");
     }
-    if (getBucketName() == null) {
-      throw new MissingRequiredFieldException("Missing required field for ControlledGcsBucket.");
+    checkFieldNonNull(getInstanceId(), "instanceId");
+    checkFieldNonNull(getLocation(), "location");
+    ValidationUtils.validateAiNotebookInstanceId(getInstanceId());
+  }
+
+  private static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {
+    if (fieldValue == null) {
+      throw new MissingRequiredFieldException(
+          String.format("Missing required field '%s' for ControlledNotebookInstance.", fieldName));
     }
-    ValidationUtils.validateBucketName(getBucketName());
   }
 
   @Override
@@ -88,18 +103,20 @@ public class ControlledGcsBucketResource extends ControlledResource {
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
 
-    ControlledGcsBucketResource that = (ControlledGcsBucketResource) o;
+    ControlledAiNotebookInstanceResource that = (ControlledAiNotebookInstanceResource) o;
 
-    return bucketName.equals(that.bucketName);
+    return instanceId.equals(that.instanceId) && location.equals(that.location);
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + bucketName.hashCode();
+    result = 31 * result + instanceId.hashCode();
+    result = 31 * result + location.hashCode();
     return result;
   }
 
+  /** Builder for {@link ControlledAiNotebookInstanceResource}. */
   public static class Builder {
     private UUID workspaceId;
     private UUID resourceId;
@@ -109,36 +126,41 @@ public class ControlledGcsBucketResource extends ControlledResource {
     private String assignedUser;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
-    private String bucketName;
+    private String instanceId;
+    private String location;
 
-    public ControlledGcsBucketResource.Builder workspaceId(UUID workspaceId) {
+    public Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
       return this;
     }
 
-    public ControlledGcsBucketResource.Builder resourceId(UUID resourceId) {
+    public Builder resourceId(UUID resourceId) {
       this.resourceId = resourceId;
       return this;
     }
 
-    public ControlledGcsBucketResource.Builder name(String name) {
+    public Builder name(String name) {
       this.name = name;
       return this;
     }
 
-    public ControlledGcsBucketResource.Builder description(String description) {
+    public Builder description(String description) {
       this.description = description;
       return this;
     }
 
-    public ControlledGcsBucketResource.Builder cloningInstructions(
-        CloningInstructions cloningInstructions) {
+    public Builder cloningInstructions(CloningInstructions cloningInstructions) {
       this.cloningInstructions = cloningInstructions;
       return this;
     }
 
-    public ControlledGcsBucketResource.Builder bucketName(String bucketName) {
-      this.bucketName = bucketName;
+    public Builder instanceId(String instanceId) {
+      this.instanceId = instanceId;
+      return this;
+    }
+
+    public Builder location(String location) {
+      this.location = location;
       return this;
     }
 
@@ -157,8 +179,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
       return this;
     }
 
-    public ControlledGcsBucketResource build() {
-      return new ControlledGcsBucketResource(
+    public ControlledAiNotebookInstanceResource build() {
+      return new ControlledAiNotebookInstanceResource(
           workspaceId,
           resourceId,
           name,
@@ -167,7 +189,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
           assignedUser,
           accessScope,
           managedBy,
-          bucketName);
+          instanceId,
+          location);
     }
   }
 }

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource;
 
+import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
@@ -19,7 +20,9 @@ public enum WsmResourceType {
       ReferencedGcsBucketResource.class,
       ControlledGcsBucketResource.class),
   BIG_QUERY_DATASET(
-      CloudPlatform.GCP, "BIG_QUERY_DATASET", ReferencedBigQueryDatasetResource.class, null);
+      CloudPlatform.GCP, "BIG_QUERY_DATASET", ReferencedBigQueryDatasetResource.class, null),
+  AI_NOTEBOOK_INSTANCE(
+      CloudPlatform.GCP, "AI_NOTEBOOK_INSTANCE", null, ControlledAiNotebookInstanceResource.class);
 
   private final CloudPlatform cloudPlatform;
   private final String dbString; // serialized form of the resource type
