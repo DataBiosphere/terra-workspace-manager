@@ -5,8 +5,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.db.exception.CloudContextRequiredException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.ControlledResourceInheritanceMapping;
 import bio.terra.workspace.service.iam.CustomGcpIamRole;
@@ -38,7 +36,9 @@ public class GrantGcsBucketIamRolesStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(GrantGcsBucketIamRolesStep.class);
 
   public GrantGcsBucketIamRolesStep(
-      CrlService crlService, ControlledGcsBucketResource resource, WorkspaceService workspaceService) {
+      CrlService crlService,
+      ControlledGcsBucketResource resource,
+      WorkspaceService workspaceService) {
     this.crlService = crlService;
     this.resource = resource;
     this.workspaceService = workspaceService;
