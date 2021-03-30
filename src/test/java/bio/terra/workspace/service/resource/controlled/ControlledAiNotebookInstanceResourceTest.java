@@ -18,10 +18,13 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
   }
 
   @Test
-  public void validateNoInstanceNameThrows() {
+  public void validateNoRequiredFieldThrows() {
     assertThrows(
         MissingRequiredFieldException.class,
         () -> ControlledResourceFixtures.makeDefaultAiNotebookInstance().instanceId(null).build());
+    assertThrows(
+            MissingRequiredFieldException.class,
+            () -> ControlledResourceFixtures.makeDefaultAiNotebookInstance().location(null).build());
   }
 
   @Test
