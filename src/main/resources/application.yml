@@ -84,5 +84,5 @@ terra:
       max-parallel-flights: 50
       migrate-upgrade: false
       quiet-down-timeout: 30s
-      terminate-timeout: 60s
-      tracing-enabled: false
+      terminate-timeout: 30s
+      tracing-enabled: true

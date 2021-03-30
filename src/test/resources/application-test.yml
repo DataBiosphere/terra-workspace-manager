@@ -34,11 +34,5 @@ terra:
   common:
     stairway:
       force-clean-start: true
-      migrate-upgrade: false
-      max-parallel-flights: 10
-      quiet-down-timeout: 10s
-      terminate-timeout: 30s
-      tracing-enabled: true
-      cluster-name: workspace
   tracing:
     stackdriverExportEnabled: false
