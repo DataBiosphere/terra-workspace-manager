@@ -46,6 +46,8 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
+// This test does not use GcpCloudContextTestScriptBase as it also tests the interaction between
+// controlled resources and context creation.
 public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger =
       LoggerFactory.getLogger(CreateGetDeleteControlledGcsBucket.class);

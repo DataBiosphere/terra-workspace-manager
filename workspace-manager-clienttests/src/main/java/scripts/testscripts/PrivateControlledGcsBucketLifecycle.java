@@ -8,12 +8,9 @@ import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.CloudPlatform;
 import bio.terra.workspace.model.ControlledResourceCommonFields;
 import bio.terra.workspace.model.ControlledResourceCommonFields.AccessScopeEnum;
 import bio.terra.workspace.model.ControlledResourceIamRole;
-import bio.terra.workspace.model.CreateCloudContextRequest;
-import bio.terra.workspace.model.CreateCloudContextResult;
 import bio.terra.workspace.model.CreateControlledGcsBucketRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcsBucket;
 import bio.terra.workspace.model.DeleteControlledGcsBucketRequest;
@@ -43,9 +40,9 @@ import org.hamcrest.Matchers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
-import scripts.utils.WorkspaceAllocateTestScriptBase;
+import scripts.utils.GcpCloudContextTestScriptBase;
 
-public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBase {
+public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScriptBase {
   private static final Logger logger =
       LoggerFactory.getLogger(PrivateControlledGcsBucketLifecycle.class);
   private static final long CREATE_BUCKET_POLL_SECONDS = 5;
@@ -85,24 +82,6 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     ControlledGcpResourceApi resourceApi =
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
 
-    // Create the cloud context
-    logger.info("Creating cloud context");
-    String contextJobId = UUID.randomUUID().toString();
-    var createContext =
-        new CreateCloudContextRequest()
-            .cloudPlatform(CloudPlatform.GCP)
-            .jobControl(new JobControl().id(contextJobId));
-    CreateCloudContextResult contextResult =
-        workspaceApi.createCloudContext(createContext, getWorkspaceId());
-    while (ClientTestUtils.jobIsRunning(contextResult.getJobReport())) {
-      TimeUnit.SECONDS.sleep(CREATE_CONTEXT_POLL_SECONDS);
-      contextResult = workspaceApi.getCreateCloudContextResult(getWorkspaceId(), contextJobId);
-    }
-    logger.info("Create context status is {}", contextResult.getJobReport().getStatus().toString());
-    assertThat(contextResult.getJobReport().getStatus(), equalTo(JobReport.StatusEnum.SUCCEEDED));
-    final String projectId = contextResult.getGcpContext().getProjectId();
-    logger.info("Project ID is {}", projectId);
-
     // Create a private bucket
     CreatedControlledGcsBucket bucket = createPrivateBucketAttempt(resourceApi);
     assertThat(bucket.getJobReport().getStatus(), equalTo(JobReport.StatusEnum.SUCCEEDED));
@@ -114,11 +93,11 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     assertThat(gotBucket.getBucketName(), equalTo(bucket.getGcpBucket().getBucketName()));
     assertThat(gotBucket.getBucketName(), equalTo(bucketName));
 
-    Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, projectId);
+    Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, getProjectId());
     Storage privateUserStorageClient =
-        ClientTestUtils.getGcpStorageClient(privateResourceUser, projectId);
+        ClientTestUtils.getGcpStorageClient(privateResourceUser, getProjectId());
     Storage workspaceReaderStorageClient =
-        ClientTestUtils.getGcpStorageClient(workspaceReader, projectId);
+        ClientTestUtils.getGcpStorageClient(workspaceReader, getProjectId());
 
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(workspaceReader.userEmail),
@@ -223,12 +202,6 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     // also verify it was deleted from GCP
     Bucket maybeBucket = ownerStorageClient.get(bucketName);
     assertThat(maybeBucket, Matchers.is(Matchers.nullValue()));
-
-    bucketName = null;
-
-    // Delete the cloud context. This is not required. Just some exercise for deleteCloudContext
-    logger.info("Deleting the cloud context");
-    workspaceApi.deleteCloudContext(getWorkspaceId(), CloudPlatform.GCP);
   }
 
   private CreatedControlledGcsBucket createPrivateBucketAttempt(
