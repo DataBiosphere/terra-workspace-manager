@@ -174,3 +174,7 @@ you can run client tests against that server, e.g.
 export TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-local.json" 
 ./gradlew runTest --args="configs/integration/BasicAuthenticated.json /tmp/TR"
 ```
+
+All current WSM configurations are stored in the [`servers` dir](src/main/resources/servers).
+See [TestRunner repo README](https://github.com/DataBiosphere/terra-test-runner/blob/main/README.md#Override-the-server-from-the-command-line)
+ for more information about this and other available env vars.
