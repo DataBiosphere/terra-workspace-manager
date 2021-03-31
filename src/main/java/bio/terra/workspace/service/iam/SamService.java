@@ -320,23 +320,58 @@ public class SamService {
   @Traced
   public String syncWorkspacePolicy(
       UUID workspaceId, WsmIamRole role, AuthenticatedUserRequest userReq) {
+    String group =
+        syncWorker(
+            SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), userReq);
+    logger.info(
+        "Synced role {} to google group {} in workspace {}", role.toSamRole(), group, workspaceId);
+    return group;
+  }
+
+  /**
+   * Wrapper around Sam client to sync a Sam policy on a controlled resource to a google group and
+   * return the email of that group.
+   *
+   * <p>This should only be called for controlled resources which require permissions granted to
+   * individual users, i.e. private or application-controlled resources.
+   *
+   * <p>This operation in Sam is idempotent, so we don't worry about calling this multiple times.
+   *
+   * @param resource The resource to sync a binding for
+   * @param role The policy to sync in Sam
+   * @param userReq User authentication
+   * @return
+   */
+  @Traced
+  public String syncResourcePolicy(
+      ControlledResource resource,
+      ControlledResourceIamRole role,
+      AuthenticatedUserRequest userReq) {
+    String group =
+        syncWorker(
+            SamControlledResourceNames.get(resource.getAccessScope(), resource.getManagedBy()),
+            resource.getResourceId().toString(),
+            role.toSamRole(),
+            userReq);
+    logger.info(
+        "Synced role {} to google group {} for resource {}",
+        role.toSamRole(),
+        group,
+        resource.getResourceId());
+    return group;
+  }
+
+  private String syncWorker(
+      String resourceTypeName,
+      String resourceId,
+      String policyName,
+      AuthenticatedUserRequest userReq) {
     GoogleApi googleApi = samGoogleApi(userReq.getRequiredToken());
     try {
       // Sam makes no guarantees about what values are returned from the POST call, so we instead
       // fetch the group in a separate call after syncing.
-      googleApi.syncPolicy(
-          SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole());
-      String groupEmail =
-          googleApi
-              .syncStatus(
-                  SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole())
-              .getEmail();
-      logger.info(
-          "Synced role {} to google group {} in workspace {}",
-          role.toSamRole(),
-          groupEmail,
-          workspaceId);
-      return groupEmail;
+      googleApi.syncPolicy(resourceTypeName, resourceId, policyName);
+      return googleApi.syncStatus(resourceTypeName, resourceId, policyName).getEmail();
     } catch (ApiException e) {
       throw new SamApiException(e);
     }

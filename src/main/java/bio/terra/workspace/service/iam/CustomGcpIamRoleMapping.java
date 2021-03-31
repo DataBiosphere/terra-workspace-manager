@@ -5,6 +5,7 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import java.util.Collections;
 
 /**
  * This class specifies a static list of all GCP custom IAM roles that will be created in Workspace
@@ -74,8 +75,11 @@ public class CustomGcpIamRoleMapping {
           "bigquery.tables.delete",
           "bigquery.tables.update");
 
+  // The ASSIGNER resource does not grant GCP permissions, only Sam permissions. It's included in
+  // this map for completeness.
   public static final ImmutableSet<CustomGcpIamRole> CUSTOM_GCP_IAM_ROLES =
       ImmutableSet.of(
+          // GCS bucket
           new CustomGcpIamRole(
               WsmResourceType.GCS_BUCKET,
               ControlledResourceIamRole.READER,
@@ -89,6 +93,11 @@ public class CustomGcpIamRoleMapping {
               ControlledResourceIamRole.EDITOR,
               GCS_BUCKET_EDITOR_PERMISSIONS),
           new CustomGcpIamRole(
+              WsmResourceType.GCS_BUCKET,
+              ControlledResourceIamRole.ASSIGNER,
+              Collections.emptyList()),
+          // BigQuery dataset
+          new CustomGcpIamRole(
               WsmResourceType.BIG_QUERY_DATASET,
               ControlledResourceIamRole.READER,
               BIG_QUERY_DATASET_READER_PERMISSIONS),
@@ -99,5 +108,9 @@ public class CustomGcpIamRoleMapping {
           new CustomGcpIamRole(
               WsmResourceType.BIG_QUERY_DATASET,
               ControlledResourceIamRole.EDITOR,
-              BIG_QUERY_DATASET_EDITOR_PERMISSIONS));
+              BIG_QUERY_DATASET_EDITOR_PERMISSIONS),
+          new CustomGcpIamRole(
+              WsmResourceType.BIG_QUERY_DATASET,
+              ControlledResourceIamRole.ASSIGNER,
+              Collections.emptyList()));
 }

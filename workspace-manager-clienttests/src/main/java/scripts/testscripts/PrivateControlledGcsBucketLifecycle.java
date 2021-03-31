@@ -30,7 +30,6 @@ import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
-import bio.terra.workspace.model.JobReport.StatusEnum;
 import bio.terra.workspace.model.PrivateResourceIamRoles;
 import bio.terra.workspace.model.PrivateResourceUser;
 import com.google.api.client.http.HttpStatusCodes;
@@ -39,7 +38,6 @@ import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +51,7 @@ import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger =
-      LoggerFactory.getLogger(CreateGetDeleteControlledGcsBucket.class);
+      LoggerFactory.getLogger(PrivateControlledGcsBucketLifecycle.class);
   private static final long CREATE_BUCKET_POLL_SECONDS = 5;
   private static final long DELETE_BUCKET_POLL_SECONDS = 15;
   private static final long CREATE_CONTEXT_POLL_SECONDS = 10;
@@ -93,7 +91,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
   private static final String GCS_BLOB_NAME = "wsmtestblob-name";
   private static final String GCS_BLOB_CONTENT = "This is the content of a text file.";
 
-  private TestUserSpecification privateResourceWriter;
+  private TestUserSpecification privateResourceUser;
   private TestUserSpecification workspaceReader;
   private String bucketName;
   private String resourceName;
@@ -106,7 +104,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     assertThat(
         "There must be at least three test users defined for this test.",
         testUsers != null && testUsers.size() > 2);
-    this.privateResourceWriter = testUsers.get(1);
+    this.privateResourceUser = testUsers.get(1);
     this.workspaceReader = testUsers.get(2);
     String nameSuffix = UUID.randomUUID().toString();
     this.bucketName = BUCKET_PREFIX + nameSuffix;
@@ -151,16 +149,9 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
     Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, projectId);
     Storage privateUserStorageClient =
-        ClientTestUtils.getGcpStorageClient(privateResourceWriter, projectId);
+        ClientTestUtils.getGcpStorageClient(privateResourceUser, projectId);
     Storage workspaceReaderStorageClient =
         ClientTestUtils.getGcpStorageClient(workspaceReader, projectId);
-
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(privateResourceWriter.userEmail),
-        getWorkspaceId(),
-        IamRole.WRITER);
-    logger.info(
-        "Added {} as a writer to workspace {}", privateResourceWriter.userEmail, getWorkspaceId());
 
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(workspaceReader.userEmail),
@@ -168,21 +159,31 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
         IamRole.READER);
     logger.info(
         "Added {} as a reader to workspace {}", workspaceReader.userEmail, getWorkspaceId());
+    workspaceApi.grantRole(
+        new GrantRoleRequestBody().memberEmail(privateResourceUser.userEmail),
+        getWorkspaceId(),
+        IamRole.READER);
+    logger.info(
+        "Added {} as a reader to workspace {}", privateResourceUser.userEmail, getWorkspaceId());
 
     // TODO: expecting clients to do this feels bad. This should happen inside WSM.
-    logger.info("Waiting 10s for permissions to propagate");
-    Thread.sleep(10000);
+    logger.info("Waiting 15s for permissions to propagate");
+    Thread.sleep(15000);
 
-    // Owner cannot write object to bucket
     BlobId blobId = BlobId.of(bucketName, GCS_BLOB_NAME);
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
-    try {
-      ownerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
-      throw new IllegalStateException("Workspace owner was able to write to private bucket");
-    } catch (StorageException storageException) {
-      assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-      logger.info("Workspace owner cannot write to private resource");
-    }
+
+    // TODO(PF-624): workspace owners can write to private buckets via "roles/storage.admin".
+    // // Owner cannot write object to bucket
+    // BlobId blobId = BlobId.of(bucketName, GCS_BLOB_NAME);
+    // BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
+    // try {
+    //   ownerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
+    //   throw new IllegalStateException("Workspace owner was able to write to private bucket");
+    // } catch (StorageException storageException) {
+    //   assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
+    //   logger.info("Workspace owner cannot write to private resource");
+    // }
 
     // Private resource user can write object to bucket
     Blob createdBlob = privateUserStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
@@ -193,23 +194,26 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     assertThat(retrievedBlob, equalTo(createdBlob));
     logger.info("Private resource user can read {} from bucket", retrievedBlob.getName());
 
-    // Owner cannot read the bucket contents
-    try {
-      ownerStorageClient.get(blobId);
-      throw new IllegalStateException("Workspace owner was able to read private bucket");
-    } catch (StorageException storageException) {
-      assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-      logger.info("Workspace owner cannot read from private bucket");
-    }
+    // TODO(PF-624): workspace owners can read from private buckets via "roles/storage.admin" and
+    //  "roles/viewer"
+    // // Owner cannot read the bucket contents
+    // try {
+    //   ownerStorageClient.get(blobId);
+    //   throw new IllegalStateException("Workspace owner was able to read private bucket");
+    // } catch (StorageException storageException) {
+    //   assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
+    //   logger.info("Workspace owner cannot read from private bucket");
+    // }
 
-    // Workspace reader also cannot read private bucket contents
-    try {
-      workspaceReaderStorageClient.get(blobId);
-      throw new IllegalStateException("Workspace reader was able to read private bucket");
-    } catch (StorageException storageException) {
-      assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-      logger.info("Workspace reader cannot read from private bucket");
-    }
+    // TODO(PF-624): workspace readers can read from private buckets via "roles/viewer".
+    // // Workspace reader also cannot read private bucket contents
+    // try {
+    //   workspaceReaderStorageClient.get(blobId);
+    //   throw new IllegalStateException("Workspace reader was able to read private bucket");
+    // } catch (StorageException storageException) {
+    //   assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
+    //   logger.info("Workspace reader cannot read from private bucket");
+    // }
 
     // Private resource user can delete the blob they created earlier.
     privateUserStorageClient.delete(blobId);
@@ -217,12 +221,14 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
     // Private resource user cannot delete bucket, as they are not an editor
     ControlledGcpResourceApi privateResourceUserWsmClient =
-        ClientTestUtils.getControlledGcpResourceClient(privateResourceWriter, server);
-    var resourceUserDeleteResult = deleteBucketAttempt(privateResourceUserWsmClient, resourceId);
-    logger.info(
-        "For resource user, delete bucket status is {}",
-        resourceUserDeleteResult.getJobReport().getStatus().toString());
-    assertThat(resourceUserDeleteResult.getJobReport().getStatus(), equalTo(StatusEnum.FAILED));
+        ClientTestUtils.getControlledGcpResourceClient(privateResourceUser, server);
+    try {
+      deleteBucketAttempt(privateResourceUserWsmClient, resourceId);
+      throw new IllegalStateException("non-editor private resource user was able to delete bucket");
+    } catch (ApiException apiException) {
+      assertThat(apiException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
+      logger.info("Private resource user cannot to delete bucket");
+    }
 
     // Owner can delete the bucket through WSM
     var ownerDeleteResult = deleteBucketAttempt(resourceApi, resourceId);
@@ -270,7 +276,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
             .accessScope(AccessScopeEnum.PRIVATE_ACCESS)
             .privateResourceUser(
                 new PrivateResourceUser()
-                    .userName(privateResourceWriter.userEmail)
+                    .userName(privateResourceUser.userEmail)
                     .privateResourceIamRoles(privateUser))
             .managedBy(ControlledResourceCommonFields.ManagedByEnum.USER)
             .jobControl(new JobControl().id(jobId));

@@ -20,6 +20,9 @@ public final class WorkspaceFlightMapKeys {
   public static class ControlledResourceKeys {
     public static final String CREATION_PARAMETERS = "creationParameters";
     public static final String PRIVATE_RESOURCE_IAM_ROLES = "iamRoles";
+    public static final String IAM_RESOURCE_EDITOR_GROUP_EMAIL = "iamResourceEditorGroupEmail";
+    public static final String IAM_RESOURCE_WRITER_GROUP_EMAIL = "iamResourceWriterGroupEmail";
+    public static final String IAM_RESOURCE_READER_GROUP_EMAIL = "iamResourceReaderGroupEmail";
 
     private ControlledResourceKeys() {}
   }

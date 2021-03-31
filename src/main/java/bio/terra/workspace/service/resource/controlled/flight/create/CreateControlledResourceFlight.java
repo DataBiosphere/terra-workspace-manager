@@ -6,7 +6,9 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.workspace.flight.SyncSamGroupsStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.List;
@@ -38,10 +40,16 @@ public class CreateControlledResourceFlight extends Flight {
         new CreateSamResourceStep(
             flightBeanBag.getSamService(), resource, privateResourceIamRoles, userRequest));
 
-    // get google group names from Sam groups and store them in the working map
+    // get google group names for workspace roles from Sam and store them in the working map
     addStep(
         new SyncSamGroupsStep(
             flightBeanBag.getSamService(), resource.getWorkspaceId(), userRequest));
+    // get google group names for resource policies from Sam. These are only used for individual
+    // access (i.e. private resource users and applications).
+    if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE
+        || resource.getManagedBy() == ManagedByType.MANAGED_BY_APPLICATION) {
+      addStep(new SyncResourceSamGroupsStep(flightBeanBag.getSamService(), resource, userRequest));
+    }
 
     // create the cloud resource and grant IAM roles via CRL
     switch (resource.getResourceType()) {

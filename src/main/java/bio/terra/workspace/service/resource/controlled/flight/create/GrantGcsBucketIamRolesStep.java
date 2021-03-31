@@ -11,9 +11,12 @@ import bio.terra.workspace.service.iam.CustomGcpIamRole;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.WsmResourceType;
+import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.cloud.Binding;
 import com.google.cloud.Policy;
 import java.util.ArrayList;
@@ -49,32 +52,54 @@ public class GrantGcsBucketIamRolesStep implements Step {
       throws InterruptedException, RetryException {
     final FlightMap workingMap = flightContext.getWorkingMap();
 
-    String gcpProjectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
 
     // Users do not have read or write access to IAM policies, so this request is executed via
     // WSM's service account.
     Policy currentPolicy =
-        crlService.createStorageCow(gcpProjectId).getIamPolicy(resource.getBucketName());
+        crlService.createStorageCow(projectId).getIamPolicy(resource.getBucketName());
 
-    String readerGroup =
+    String workspaceReaderGroup =
         gcpGroupNameFromSamEmail(
             workingMap.get(WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL, String.class));
-    String writerGroup =
+    String workspaceWriterGroup =
         gcpGroupNameFromSamEmail(
             workingMap.get(WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL, String.class));
-    String applicationGroup =
+    String workspaceApplicationGroup =
         gcpGroupNameFromSamEmail(
             workingMap.get(WorkspaceFlightMapKeys.IAM_APPLICATION_GROUP_EMAIL, String.class));
-    String ownerGroup =
+    String workspaceOwnerGroup =
         gcpGroupNameFromSamEmail(
             workingMap.get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class));
 
     List<Binding> newBindings = new ArrayList<>();
-    newBindings.addAll(bindingsForRole(WsmIamRole.READER, readerGroup, gcpProjectId));
-    newBindings.addAll(bindingsForRole(WsmIamRole.WRITER, writerGroup, gcpProjectId));
-    newBindings.addAll(bindingsForRole(WsmIamRole.APPLICATION, applicationGroup, gcpProjectId));
-    newBindings.addAll(bindingsForRole(WsmIamRole.OWNER, ownerGroup, gcpProjectId));
+    newBindings.addAll(
+        bindingsForWorkspaceRole(WsmIamRole.READER, workspaceReaderGroup, projectId));
+    newBindings.addAll(
+        bindingsForWorkspaceRole(WsmIamRole.WRITER, workspaceWriterGroup, projectId));
+    newBindings.addAll(
+        bindingsForWorkspaceRole(WsmIamRole.APPLICATION, workspaceApplicationGroup, projectId));
+    newBindings.addAll(bindingsForWorkspaceRole(WsmIamRole.OWNER, workspaceOwnerGroup, projectId));
     newBindings.addAll(currentPolicy.getBindingsList());
+
+    // Resources with permissions given to individual users (private or application managed) use
+    // the resource's Sam policies to manage those individuals, so they must be synced here.
+    if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE
+        || resource.getManagedBy() == ManagedByType.MANAGED_BY_APPLICATION) {
+      String resourceReaderGroup =
+          gcpGroupNameFromSamEmail(
+              workingMap.get(ControlledResourceKeys.IAM_RESOURCE_READER_GROUP_EMAIL, String.class));
+      String resourceWriterGroup =
+          gcpGroupNameFromSamEmail(
+              workingMap.get(ControlledResourceKeys.IAM_RESOURCE_WRITER_GROUP_EMAIL, String.class));
+      String resourceEditorGroup =
+          gcpGroupNameFromSamEmail(
+              workingMap.get(ControlledResourceKeys.IAM_RESOURCE_EDITOR_GROUP_EMAIL, String.class));
+
+      newBindings.add(newBinding(ControlledResourceIamRole.READER, projectId, resourceReaderGroup));
+      newBindings.add(newBinding(ControlledResourceIamRole.WRITER, projectId, resourceWriterGroup));
+      newBindings.add(newBinding(ControlledResourceIamRole.EDITOR, projectId, resourceEditorGroup));
+    }
 
     Policy newPolicy =
         Policy.newBuilder()
@@ -85,7 +110,7 @@ public class GrantGcsBucketIamRolesStep implements Step {
     logger.info(
         "Syncing workspace roles to GCP permissions on bucket {}", resource.getBucketName());
 
-    crlService.createStorageCow(gcpProjectId).setIamPolicy(resource.getBucketName(), newPolicy);
+    crlService.createStorageCow(projectId).setIamPolicy(resource.getBucketName(), newPolicy);
     return StepResult.getStepResultSuccess();
   }
 
@@ -105,18 +130,28 @@ public class GrantGcsBucketIamRolesStep implements Step {
    *     GCP.
    * @param projectId The GCP project ID
    */
-  private List<Binding> bindingsForRole(WsmIamRole role, String group, String projectId) {
+  private List<Binding> bindingsForWorkspaceRole(WsmIamRole role, String group, String projectId) {
     return ControlledResourceInheritanceMapping.getInheritanceMapping(
             resource.getAccessScope(), resource.getManagedBy())
         .get(role)
         .stream()
-        .map(
-            resourceRole ->
-                Binding.newBuilder()
-                    .setRole(fullyQualifiedRoleName(resourceRole, projectId))
-                    .setMembers(Collections.singletonList(group))
-                    .build())
+        .map(resourceRole -> newBinding(resourceRole, projectId, group))
         .collect(Collectors.toList());
+  }
+
+  /**
+   * Convenience for building a Binding object for a custom GCP role and single member.
+   *
+   * @param role The role being granted on a resource
+   * @param projectId ID of the GCP project
+   * @param memberEmail The user being granted a role
+   * @return Binding object granting a custom GCP role to provided user.
+   */
+  private Binding newBinding(ControlledResourceIamRole role, String projectId, String memberEmail) {
+    return Binding.newBuilder()
+        .setRole(fullyQualifiedRoleName(role, projectId))
+        .setMembers(Collections.singletonList(memberEmail))
+        .build();
   }
 
   /**

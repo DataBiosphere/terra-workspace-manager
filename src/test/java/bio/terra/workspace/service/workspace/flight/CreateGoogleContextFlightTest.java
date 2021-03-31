@@ -3,6 +3,7 @@ package bio.terra.workspace.service.workspace.flight;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.stairway.FlightMap;
@@ -147,9 +148,16 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
       String fullRoleName =
           "projects/" + project.getProjectId() + "/roles/" + customRole.getRoleName();
       Role gcpRole = crl.getIamCow().projects().roles().get(fullRoleName).execute();
-      assertThat(
-          gcpRole.getIncludedPermissions(),
-          containsInAnyOrder(customRole.getIncludedPermissions().toArray()));
+
+      List<String> expectedPermissions = customRole.getIncludedPermissions();
+      if (expectedPermissions.isEmpty()) {
+        // For some reason, getIncludedPermissions returns null instead of an empty list if a role
+        // grants no permissions.
+        assertNull(gcpRole.getIncludedPermissions());
+      } else {
+        assertThat(
+            gcpRole.getIncludedPermissions(), containsInAnyOrder(expectedPermissions.toArray()));
+      }
     }
   }
 

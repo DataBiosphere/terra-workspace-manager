@@ -181,8 +181,8 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
     logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceId());
 
     // TODO: expecting clients to do this feels bad. This should happen inside WSM.
-    logger.info("Waiting 10s for permissions to propagate");
-    Thread.sleep(10000);
+    logger.info("Waiting 15s for permissions to propagate");
+    Thread.sleep(15000);
 
     // Second user can now read the blob
     Blob readerRetrievedFile = readerStorageClient.get(blobId);
@@ -223,9 +223,9 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
       assertThat(storageEx.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
     }
 
-    // TODO: Owners and writers can actually delete buckets due to workspace-level roles included as
-    //  a temporary workaround. This needs to be removed as we transition onto WSM controlled
-    //  resources.
+    // TODO(PF-624): Owners and writers can actually delete buckets due to workspace-level roles
+    //  included as a temporary workaround. This needs to be removed as we transition onto WSM
+    //  controlled resources.
 
     // Owner also cannot delete the bucket directly
     // try {
