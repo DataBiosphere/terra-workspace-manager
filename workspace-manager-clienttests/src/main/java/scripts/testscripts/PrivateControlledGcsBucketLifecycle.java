@@ -22,10 +22,6 @@ import bio.terra.workspace.model.GcsBucketAttributes;
 import bio.terra.workspace.model.GcsBucketCreationParameters;
 import bio.terra.workspace.model.GcsBucketDefaultStorageClass;
 import bio.terra.workspace.model.GcsBucketLifecycle;
-import bio.terra.workspace.model.GcsBucketLifecycleRule;
-import bio.terra.workspace.model.GcsBucketLifecycleRuleAction;
-import bio.terra.workspace.model.GcsBucketLifecycleRuleActionType;
-import bio.terra.workspace.model.GcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
@@ -38,8 +34,8 @@ import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
-import java.time.LocalDate;
-import java.util.ArrayList;
+import com.google.cloud.storage.StorageException;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -55,35 +51,6 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
   private static final long CREATE_BUCKET_POLL_SECONDS = 5;
   private static final long DELETE_BUCKET_POLL_SECONDS = 15;
   private static final long CREATE_CONTEXT_POLL_SECONDS = 10;
-
-  private static final GcsBucketLifecycleRule LIFECYCLE_RULE_1 =
-      new GcsBucketLifecycleRule()
-          .action(
-              new GcsBucketLifecycleRuleAction()
-                  .type(
-                      GcsBucketLifecycleRuleActionType
-                          .DELETE)) // no storage class required for delete actions
-          .condition(
-              new GcsBucketLifecycleRuleCondition()
-                  .age(64)
-                  .live(true)
-                  .addMatchesStorageClassItem(GcsBucketDefaultStorageClass.ARCHIVE)
-                  .numNewerVersions(2));
-
-  private static final GcsBucketLifecycleRule LIFECYCLE_RULE_2 =
-      new GcsBucketLifecycleRule()
-          .action(
-              new GcsBucketLifecycleRuleAction()
-                  .storageClass(GcsBucketDefaultStorageClass.NEARLINE)
-                  .type(GcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS))
-          .condition(
-              new GcsBucketLifecycleRuleCondition()
-                  .createdBefore(LocalDate.of(2017, 2, 18))
-                  .addMatchesStorageClassItem(GcsBucketDefaultStorageClass.STANDARD));
-
-  // list must not be immutable if deserialization is to work
-  static final List<GcsBucketLifecycleRule> LIFECYCLE_RULES =
-      new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
 
   private static final String BUCKET_LOCATION = "US-CENTRAL1";
   private static final String BUCKET_PREFIX = "wsmtestbucket-";
@@ -175,8 +142,6 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
     // TODO(PF-624): workspace owners can write to private buckets via "roles/storage.admin".
     // // Owner cannot write object to bucket
-    // BlobId blobId = BlobId.of(bucketName, GCS_BLOB_NAME);
-    // BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
     // try {
     //   ownerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
     //   throw new IllegalStateException("Workspace owner was able to write to private bucket");
@@ -184,6 +149,15 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     //   assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
     //   logger.info("Workspace owner cannot write to private resource");
     // }
+
+    // Workspace reader cannot write object to bucket
+    try {
+      workspaceReaderStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
+      throw new IllegalStateException("Workspace reader was able to write to private bucket");
+    } catch (StorageException storageException) {
+      assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
+      logger.info("Workspace reader cannot write to private resource");
+    }
 
     // Private resource user can write object to bucket
     Blob createdBlob = privateUserStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
@@ -265,7 +239,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
             .name(bucketName)
             .location(BUCKET_LOCATION)
             .defaultStorageClass(GcsBucketDefaultStorageClass.STANDARD)
-            .lifecycle(new GcsBucketLifecycle().rules(LIFECYCLE_RULES));
+            .lifecycle(new GcsBucketLifecycle().rules(Collections.emptyList()));
 
     var privateUser = new PrivateResourceIamRoles();
     privateUser.add(ControlledResourceIamRole.WRITER);

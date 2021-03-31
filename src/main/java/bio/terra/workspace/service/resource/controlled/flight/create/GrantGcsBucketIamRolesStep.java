@@ -72,15 +72,13 @@ public class GrantGcsBucketIamRolesStep implements Step {
         gcpGroupNameFromSamEmail(
             workingMap.get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class));
 
-    List<Binding> newBindings = new ArrayList<>();
-    newBindings.addAll(
-        bindingsForWorkspaceRole(WsmIamRole.READER, workspaceReaderGroup, projectId));
-    newBindings.addAll(
-        bindingsForWorkspaceRole(WsmIamRole.WRITER, workspaceWriterGroup, projectId));
-    newBindings.addAll(
+    List<Binding> bindings = new ArrayList<>();
+    bindings.addAll(bindingsForWorkspaceRole(WsmIamRole.READER, workspaceReaderGroup, projectId));
+    bindings.addAll(bindingsForWorkspaceRole(WsmIamRole.WRITER, workspaceWriterGroup, projectId));
+    bindings.addAll(
         bindingsForWorkspaceRole(WsmIamRole.APPLICATION, workspaceApplicationGroup, projectId));
-    newBindings.addAll(bindingsForWorkspaceRole(WsmIamRole.OWNER, workspaceOwnerGroup, projectId));
-    newBindings.addAll(currentPolicy.getBindingsList());
+    bindings.addAll(bindingsForWorkspaceRole(WsmIamRole.OWNER, workspaceOwnerGroup, projectId));
+    bindings.addAll(currentPolicy.getBindingsList());
 
     // Resources with permissions given to individual users (private or application managed) use
     // the resource's Sam policies to manage those individuals, so they must be synced here.
@@ -96,15 +94,15 @@ public class GrantGcsBucketIamRolesStep implements Step {
           gcpGroupNameFromSamEmail(
               workingMap.get(ControlledResourceKeys.IAM_RESOURCE_EDITOR_GROUP_EMAIL, String.class));
 
-      newBindings.add(newBinding(ControlledResourceIamRole.READER, projectId, resourceReaderGroup));
-      newBindings.add(newBinding(ControlledResourceIamRole.WRITER, projectId, resourceWriterGroup));
-      newBindings.add(newBinding(ControlledResourceIamRole.EDITOR, projectId, resourceEditorGroup));
+      bindings.add(buildBinding(ControlledResourceIamRole.READER, projectId, resourceReaderGroup));
+      bindings.add(buildBinding(ControlledResourceIamRole.WRITER, projectId, resourceWriterGroup));
+      bindings.add(buildBinding(ControlledResourceIamRole.EDITOR, projectId, resourceEditorGroup));
     }
 
     Policy newPolicy =
         Policy.newBuilder()
             .setVersion(currentPolicy.getVersion())
-            .setBindings(newBindings)
+            .setBindings(bindings)
             .setEtag(currentPolicy.getEtag())
             .build();
     logger.info(
@@ -135,19 +133,20 @@ public class GrantGcsBucketIamRolesStep implements Step {
             resource.getAccessScope(), resource.getManagedBy())
         .get(role)
         .stream()
-        .map(resourceRole -> newBinding(resourceRole, projectId, group))
+        .map(resourceRole -> buildBinding(resourceRole, projectId, group))
         .collect(Collectors.toList());
   }
 
   /**
-   * Convenience for building a Binding object for a custom GCP role and single member.
+   * Convenience for building a Binding object granting a custom GCP role to a single member.
    *
    * @param role The role being granted on a resource
    * @param projectId ID of the GCP project
    * @param memberEmail The user being granted a role
    * @return Binding object granting a custom GCP role to provided user.
    */
-  private Binding newBinding(ControlledResourceIamRole role, String projectId, String memberEmail) {
+  private Binding buildBinding(
+      ControlledResourceIamRole role, String projectId, String memberEmail) {
     return Binding.newBuilder()
         .setRole(fullyQualifiedRoleName(role, projectId))
         .setMembers(Collections.singletonList(memberEmail))
