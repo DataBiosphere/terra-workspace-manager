@@ -13,7 +13,6 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -82,8 +81,8 @@ public class GrantGcsBucketIamRolesStep implements Step {
 
     // Resources with permissions given to individual users (private or application managed) use
     // the resource's Sam policies to manage those individuals, so they must be synced here.
-    if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE
-        || resource.getManagedBy() == ManagedByType.MANAGED_BY_APPLICATION) {
+    // This section should also run for application managed resources, once those are supported.
+    if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
       String resourceReaderGroup =
           gcpGroupNameFromSamEmail(
               workingMap.get(ControlledResourceKeys.IAM_RESOURCE_READER_GROUP_EMAIL, String.class));

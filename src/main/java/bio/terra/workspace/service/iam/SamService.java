@@ -402,7 +402,7 @@ public class SamService {
 
     addWsmResourceOwnerPolicy(resourceRequest);
     // Only create policies for private resources. Workspace role permissions are handled through
-    // role-based inheritance in Sam instead. This will likely expand to include policies for
+    // role-based inheritance in Sam instead. This should expand to include policies for
     // applications in the future.
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
       addPrivateResourcePolicies(

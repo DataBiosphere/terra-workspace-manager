@@ -9,17 +9,14 @@ import java.util.Collections;
 
 /**
  * This class specifies a static list of all GCP custom IAM roles that will be created in Workspace
- * contexts. To modify a role's permission, edit the appropriate list here. Note that currently
- * OWNER roles also receive all WRITER permissions, and WRITER roles also receive all READER
- * permissions.
+ * contexts. To modify a role's permission, edit the appropriate list here. Unlike workspace roles,
+ * resource roles are not strictly hierarchical. The EDITOR role has a distinct set of permissions
+ * from WRITER, it is not a superset.
  *
- * <p>We expect this mapping to change over time. There is currently no migration infrastructure for
- * these roles in existing projects. Editing these lists will affect newly created workspace
- * contexts, but WSM will not retroactively apply changes to existing projects.
- *
- * <p>Although WSM also supports the EDITOR and APPLICATION workspace IAM roles, these roles only
- * grant additional permissions through Sam. On GCP, those roles have the same permissions as
- * WRITERs.
+ * <p>We expect this mapping to change over time, and new entries should be added as we add new
+ * controlled resource types. There is currently no migration infrastructure for these roles in
+ * existing projects. Editing these lists will affect newly created workspace contexts, but WSM will
+ * not retroactively apply changes to existing projects.
  */
 public class CustomGcpIamRoleMapping {
   @VisibleForTesting

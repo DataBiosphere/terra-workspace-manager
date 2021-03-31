@@ -47,7 +47,6 @@ public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScri
       LoggerFactory.getLogger(PrivateControlledGcsBucketLifecycle.class);
   private static final long CREATE_BUCKET_POLL_SECONDS = 5;
   private static final long DELETE_BUCKET_POLL_SECONDS = 15;
-  private static final long CREATE_CONTEXT_POLL_SECONDS = 10;
 
   private static final String BUCKET_LOCATION = "US-CENTRAL1";
   private static final String BUCKET_PREFIX = "wsmtestbucket-";
