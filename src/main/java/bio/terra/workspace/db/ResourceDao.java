@@ -1,9 +1,5 @@
 package bio.terra.workspace.db;
 
-import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
-import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCED;
-import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
-
 import bio.terra.workspace.db.exception.CloudContextRequiredException;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
@@ -23,11 +19,6 @@ import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapsho
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +31,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
+import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCED;
+import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
 
 @Component
 public class ResourceDao {
@@ -159,6 +161,7 @@ public class ResourceDao {
       @Nullable StewardshipType stewardshipType,
       int offset,
       int limit) {
+    List<UUID> idList = Optional.ofNullable(controlledResourceIds).orElse(new ArrayList<>());
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
@@ -171,30 +174,39 @@ public class ResourceDao {
       sb.append(" AND resource_type = :resource_type");
       params.addValue("resource_type", resourceType.toSql());
     }
-    if (stewardshipType != null) {
-      sb.append(" AND stewardship_type = :stewardship_type");
-      params.addValue("resource_type", stewardshipType.toSql());
-    }
-    // We want to see all reference resources and the controlled resources that are visible to the
-    // caller.
-    // This next phrase will either be:
-    //  (stewardship_type = 'REFERENCED')
-    // or it will be:
-    //  (stewardship_type = 'REFERENCED' OR (stewardship_type = 'CONTROLLED' AND resource_id IN
-    // <inlist>))
-    // Pass in the SQL strings for the enumeration so they are only specified in one place: the
-    // enum.
-    sb.append(" (stewardship_type = :referenced_resource");
-    params.addValue("referenced_resource", REFERENCED.toSql());
 
-    if (controlledResourceIds.isEmpty()) {
-      sb.append(")");
-    } else {
-      sb.append(" (stewardship_type = :referenced_resource OR")
-          .append(" (stewardship_type = :controlled_resource AND")
-          .append(" resource_id IN :id_list))");
+    // There are three cases for the stewardship type filter
+    // 1. If it is REFERENCED, then we ignore idList and just filter
+    //    for referenced resources.
+    // 2. If it is CONTROLLED, and the idList is not empty, then we filter for
+    //    CONTROLLED and require that the resources be in the idList.
+    // 3. If it is null, then we want the OR of 1 and 2
+    // Note that we supply the constant value as a parameter so that the SQL form
+    // is defined in exactly one place.
+    boolean includeReferenced = (stewardshipType == null || stewardshipType == REFERENCED);
+    boolean includeControlled =
+        (!idList.isEmpty() && (stewardshipType == null || (stewardshipType == CONTROLLED)));
+
+    final String referencedPhrase = "stewardship_type = :referenced_resource";
+    final String controlledPhrase =
+        "(stewardship_type = :controlled_resource AND resource_id IN (:id_list))";
+
+    sb.append(" AND ");
+    if (includeReferenced && includeControlled) {
+      sb.append("(").append(referencedPhrase).append(" OR ").append(controlledPhrase).append(")");
+      params.addValue("referenced_resource", REFERENCED.toSql());
       params.addValue("controlled_resource", CONTROLLED.toSql());
-      params.addValue("id_list", controlledResourceIds);
+      params.addValue("id_list", idList);
+    } else if (includeReferenced) {
+      sb.append(referencedPhrase);
+      params.addValue("referenced_resource", REFERENCED.toSql());
+    } else if (includeControlled) {
+      sb.append(controlledPhrase);
+      params.addValue("controlled_resource", CONTROLLED.toSql());
+      params.addValue("id_list", idList);
+    } else {
+      // Nothing is included, so we return an empty result
+      return new ArrayList<WsmResource>();
     }
     sb.append(" ORDER BY name OFFSET :offset LIMIT :limit");
     List<DbResource> dbResourceList =

@@ -61,7 +61,17 @@ public enum WsmResourceType {
         "Deeserialization failed: no matching resource type for " + dbString);
   }
 
+  /**
+   * Convert from api type to WsmResourceType. In some contexts, the API input can be null, so if
+   * the input is null we return null and leave it to the caller to raise any error.
+   *
+   * @param apiResourceType incoming resource type or null
+   * @return valid resource type; null if input is null
+   */
   public static WsmResourceType fromApi(ApiResourceType apiResourceType) {
+    if (apiResourceType == null) {
+      return null;
+    }
     for (WsmResourceType value : values()) {
       if (value.toApiModel() == apiResourceType) {
         return value;

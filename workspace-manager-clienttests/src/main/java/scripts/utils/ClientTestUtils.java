@@ -1,5 +1,8 @@
 package scripts.utils;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
@@ -22,16 +25,12 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ClientTestUtils {
 
@@ -47,15 +46,13 @@ public class ClientTestUtils {
   // Required scopes for client tests include the usual login scopes.
   // We need additional scopes for validating access to cloud resources,
   // including:
+  // - cloud platform
   // - bigquery
   // - gcs
   private static final List<String> testUserScopes =
-      List.of(
-          "openid",
-          "email",
-          "profile",
-          "https://www.googleapis.com/auth/bigquery",
-          "https://www.googleapis.com/auth/devstorage.full_control");
+      List.of("openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
+  // "https://www.googleapis.com/auth/bigquery")
+  // "https://www.googleapis.com/auth/devstorage.full_control");
 
   private ClientTestUtils() {}
 
@@ -109,8 +106,7 @@ public class ClientTestUtils {
 
       // refresh the user token
       GoogleCredentials userCredential =
-          AuthenticationUtils.getDelegatedUserCredential(
-              testUser, AuthenticationUtils.userLoginScopes);
+          AuthenticationUtils.getDelegatedUserCredential(testUser, testUserScopes);
       accessToken = AuthenticationUtils.getAccessToken(userCredential);
     }
 

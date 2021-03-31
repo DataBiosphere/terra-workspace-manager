@@ -1,22 +1,14 @@
 package scripts.testscripts;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AccessScope;
 import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.CloudPlatform;
 import bio.terra.workspace.model.ControlledResourceCommonFields;
-import bio.terra.workspace.model.CreateCloudContextRequest;
-import bio.terra.workspace.model.CreateCloudContextResult;
 import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
-import bio.terra.workspace.model.DeleteControlledGcpGcsBucketRequest;
-import bio.terra.workspace.model.DeleteControlledGcpGcsBucketResult;
 import bio.terra.workspace.model.GcpGcsBucketCreationParameters;
 import bio.terra.workspace.model.GcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.model.GcpGcsBucketLifecycle;
@@ -29,16 +21,22 @@ import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
 import com.google.api.client.http.HttpStatusCodes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import scripts.utils.ClientTestUtils;
+import scripts.utils.CloudContextMaker;
+import scripts.utils.ResourceMaker;
+import scripts.utils.WorkspaceAllocateTestScriptBase;
+
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import scripts.utils.ClientTestUtils;
-import scripts.utils.WorkspaceAllocateTestScriptBase;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger =
@@ -46,7 +44,6 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
   private static final Duration CREATE_BUCKET_POLL_INTERVAL = Duration.ofSeconds(5);
   private static final long CREATE_BUCKET_POLL_SECONDS = 5;
   private static final long DELETE_BUCKET_POLL_SECONDS = 15;
-  private static final long CREATE_CONTEXT_POLL_SECONDS = 10;
 
   private static final GcpGcsBucketLifecycleRule LIFECYCLE_RULE_1 =
       new GcpGcsBucketLifecycleRule()
@@ -113,21 +110,7 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
         bucket.getErrorReport().getStatusCode(), equalTo(HttpStatusCodes.STATUS_CODE_BAD_REQUEST));
 
     // Create the cloud context
-    logger.info("Creating cloud context");
-
-    String contextJobId = UUID.randomUUID().toString();
-    var createContext =
-        new CreateCloudContextRequest()
-            .cloudPlatform(CloudPlatform.GCP)
-            .jobControl(new JobControl().id(contextJobId));
-    CreateCloudContextResult contextResult =
-        workspaceApi.createCloudContext(createContext, getWorkspaceId());
-    while (ClientTestUtils.jobIsRunning(contextResult.getJobReport())) {
-      TimeUnit.SECONDS.sleep(CREATE_CONTEXT_POLL_SECONDS);
-      contextResult = workspaceApi.getCreateCloudContextResult(getWorkspaceId(), contextJobId);
-    }
-    logger.info("Create context status is {}", contextResult.getJobReport().getStatus().toString());
-    assertThat(contextResult.getJobReport().getStatus(), equalTo(JobReport.StatusEnum.SUCCEEDED));
+    CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
 
     // Create the bucket - should work this time
     bucket = createBucketAttempt(resourceApi);
@@ -149,18 +132,7 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
     // - reader cannot delete the bucket
 
     // Delete bucket
-    String deleteJobId = UUID.randomUUID().toString();
-    var deleteRequest =
-        new DeleteControlledGcpGcsBucketRequest().jobControl(new JobControl().id(deleteJobId));
-    logger.info("Deleting bucket resource id {} jobId {}", resourceId, deleteJobId);
-    DeleteControlledGcpGcsBucketResult result =
-        resourceApi.deleteBucket(deleteRequest, getWorkspaceId(), resourceId);
-    while (ClientTestUtils.jobIsRunning(result.getJobReport())) {
-      TimeUnit.SECONDS.sleep(DELETE_BUCKET_POLL_SECONDS);
-      result = resourceApi.getDeleteBucketResult(getWorkspaceId(), deleteJobId);
-    }
-    logger.info("Delete bucket status is {}", result.getJobReport().getStatus().toString());
-    assertThat(result.getJobReport().getStatus(), equalTo(JobReport.StatusEnum.SUCCEEDED));
+    ResourceMaker.deleteControlledGcsBucketUserShared(resourceId, getWorkspaceId(), resourceApi);
 
     // verify it's not there anymore
     // - via metadata
@@ -175,8 +147,7 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
     bucketName = null;
 
     // Delete the cloud context. This is not required. Just some exercise for deleteCloudContext
-    logger.info("Deleting the cloud context");
-    workspaceApi.deleteCloudContext(getWorkspaceId(), CloudPlatform.GCP);
+    CloudContextMaker.deleteGcpCloudContext(getWorkspaceId(), workspaceApi);
   }
 
   private CreatedControlledGcpGcsBucket createBucketAttempt(ControlledGcpResourceApi resourceApi)

@@ -1,7 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.service.resource.model.StewardshipType.fromApi;
-
 import bio.terra.workspace.generated.controller.ResourceApi;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceDescription;
@@ -16,6 +14,7 @@ import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
@@ -62,16 +61,17 @@ public class ResourceController implements ResourceApi {
   @Override
   public ResponseEntity<ApiResourceList> enumerateResources(
       UUID workspaceId,
-      ApiResourceType resourceType,
-      ApiStewardshipType stewardshipType,
       @Min(0) @Valid Integer offset,
-      @Min(1) @Valid Integer limit) {
+      @Min(1) @Valid Integer limit,
+      @Valid ApiResourceType resource,
+      @Valid ApiStewardshipType stewardship) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
     List<WsmResource> wsmResources =
         resourceService.enumerateResources(
             workspaceId,
-            WsmResourceType.fromApi(resourceType),
-            fromApi(stewardshipType),
+            WsmResourceType.fromApi(resource),
+            StewardshipType.fromApi(stewardship),
             offset,
             limit,
             userRequest);

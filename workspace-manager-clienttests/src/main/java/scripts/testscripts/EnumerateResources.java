@@ -1,12 +1,16 @@
 package scripts.testscripts;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
+
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
-import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.ControlledResourceMetadata;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
@@ -16,22 +20,17 @@ import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import scripts.utils.ClientTestUtils;
-import scripts.utils.ResourceMaker;
-import scripts.utils.WorkspaceAllocateTestScriptBase;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.lessThan;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import scripts.utils.ClientTestUtils;
+import scripts.utils.CloudContextMaker;
+import scripts.utils.ResourceMaker;
+import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(EnumerateResources.class);
@@ -74,6 +73,9 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
     referencedGcpResourceApi = new ReferencedGcpResourceApi(apiClient);
     resourceApi = new ResourceApi(apiClient);
 
+    // Create a cloud context for the workspace
+    CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+
     // create the resources for the test
     logger.info("Creating {} resources", RESOURCE_COUNT);
     resourceList =
@@ -83,26 +85,26 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
 
   @Override
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
-      throws ApiException {
+      throws Exception {
 
     // Case 1: fetch all
     ResourceList enumList =
-        resourceApi.enumerateResources(getWorkspaceId(), null, null, 0, RESOURCE_COUNT);
+        resourceApi.enumerateResources(getWorkspaceId(), 0, RESOURCE_COUNT, null, null);
     logResult("fetchall", enumList);
     // Make sure we got all of the expected ids
     matchFullResourceList(enumList.getResources());
 
     // Case 2: fetch by pages
     ResourceList page1List =
-        resourceApi.enumerateResources(getWorkspaceId(), null, null, 0, PAGE_SIZE);
+        resourceApi.enumerateResources(getWorkspaceId(), 0, PAGE_SIZE, null, null);
     logResult("page1", page1List);
     assertThat(page1List.getResources().size(), equalTo(PAGE_SIZE));
     ResourceList page2List =
-        resourceApi.enumerateResources(getWorkspaceId(), null, null, PAGE_SIZE, PAGE_SIZE);
+        resourceApi.enumerateResources(getWorkspaceId(), PAGE_SIZE, PAGE_SIZE, null, null);
     logResult("page2", page2List);
     assertThat(page2List.getResources().size(), equalTo(PAGE_SIZE));
     ResourceList page3List =
-        resourceApi.enumerateResources(getWorkspaceId(), null, null, 2 * PAGE_SIZE, PAGE_SIZE);
+        resourceApi.enumerateResources(getWorkspaceId(), 2 * PAGE_SIZE, PAGE_SIZE, null, null);
     logResult("page3", page3List);
     assertThat(page3List.getResources().size(), lessThan(PAGE_SIZE));
 
@@ -114,48 +116,64 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
 
     // Case 3: no results if offset is too high
     ResourceList enumEmptyList =
-        resourceApi.enumerateResources(getWorkspaceId(), null, null, 10 * PAGE_SIZE, PAGE_SIZE);
+        resourceApi.enumerateResources(getWorkspaceId(), 10 * PAGE_SIZE, PAGE_SIZE, null, null);
     assertThat(enumEmptyList.getResources().size(), equalTo(0));
 
     // Case 4: filter by resource type
     ResourceList snapshots =
         resourceApi.enumerateResources(
-            getWorkspaceId(), ResourceType.DATA_REPO_SNAPSHOT, null, 0, RESOURCE_COUNT);
+            getWorkspaceId(), 0, RESOURCE_COUNT, ResourceType.DATA_REPO_SNAPSHOT, null);
     logResult("snapshots", snapshots);
     long expectedSnapshots =
         resourceList.stream()
             .filter(m -> m.getResourceType() == ResourceType.DATA_REPO_SNAPSHOT)
             .count();
-    assertThat(snapshots.getResources().size(), equalTo(expectedSnapshots));
+    logger.info("Counted {} snapshots created", expectedSnapshots);
+    // Note - assertThat exits out on an int -> long compare, so just don't do that.
+    long actualSnapshots = snapshots.getResources().size();
+    assertThat(actualSnapshots, equalTo(expectedSnapshots));
 
     // Case 5: filter by stewardship type
     ResourceList referencedList =
         resourceApi.enumerateResources(
-            getWorkspaceId(), null, StewardshipType.REFERENCED, 0, RESOURCE_COUNT);
+            getWorkspaceId(), 0, RESOURCE_COUNT, null, StewardshipType.REFERENCED);
     logResult("referenced", referencedList);
     long expectedReferenced =
         resourceList.stream()
             .filter(m -> m.getStewardshipType() == StewardshipType.REFERENCED)
             .count();
-    assertThat(referencedList.getResources().size(), equalTo(expectedReferenced));
+    logger.info("Counted {} referenced created", expectedReferenced);
+    long actualReferenced = referencedList.getResources().size();
+    assertThat(actualReferenced, equalTo(expectedReferenced));
 
     // Case 6: filter by resource and stewardship
     ResourceList controlledBucketList =
         resourceApi.enumerateResources(
             getWorkspaceId(),
-            ResourceType.GCS_BUCKET,
-            StewardshipType.CONTROLLED,
             0,
-            RESOURCE_COUNT);
+            RESOURCE_COUNT,
+            ResourceType.GCS_BUCKET,
+            StewardshipType.CONTROLLED);
     logResult("controlledBucket", controlledBucketList);
     long expectedControlledBuckets =
         resourceList.stream()
             .filter(
                 m ->
-                    (m.getStewardshipType() == StewardshipType.REFERENCED
+                    (m.getStewardshipType() == StewardshipType.CONTROLLED
                         && m.getResourceType() == ResourceType.GCS_BUCKET))
             .count();
-    assertThat(controlledBucketList.getResources().size(), equalTo(expectedControlledBuckets));
+    logger.info("Counted {} controlled buckets created", expectedControlledBuckets);
+    long actualControlledBucket = controlledBucketList.getResources().size();
+    assertThat(actualControlledBucket, equalTo(expectedControlledBuckets));
+
+    // Delete the controlled buckets
+    for (ResourceMetadata metadata : resourceList) {
+      if (metadata.getStewardshipType() == StewardshipType.CONTROLLED
+          && metadata.getResourceType() == ResourceType.GCS_BUCKET) {
+        ResourceMaker.deleteControlledGcsBucketUserShared(
+            metadata.getResourceId(), getWorkspaceId(), controlledGcpResourceApi);
+      }
+    }
   }
 
   private void logResult(String tag, ResourceList resourceList) {
@@ -240,6 +258,11 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
 
         case 3:
           {
+            /*
+            GcpBigQueryDatasetResource resource =
+                ResourceMaker.makeBigQueryReference(referencedGcpResourceApi, workspaceId, name);
+            resourceList.add(resource.getMetadata());
+            */
             GcpGcsBucketResource resource =
                 ResourceMaker.makeControlledGcsBucketUserShared(
                     controlledGcpResourceApi, workspaceId, name);

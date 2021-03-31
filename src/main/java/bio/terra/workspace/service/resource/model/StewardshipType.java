@@ -35,7 +35,17 @@ public enum StewardshipType {
         "Deeserialization failed: no matching stewardship type for " + dbString);
   }
 
+  /**
+   * Convert from api type to StewardshipType. In some contexts, the API input can be null, so if
+   * the input is null we return null and leave it to the caller to raise any error.
+   *
+   * @param apiType incoming stewardship type or null
+   * @return valid stewardship type; null if input is null
+   */
   public static StewardshipType fromApi(ApiStewardshipType apiType) {
+    if (apiType == null) {
+      return null;
+    }
     for (StewardshipType value : values()) {
       if (value.toApiModel() == apiType) {
         return value;

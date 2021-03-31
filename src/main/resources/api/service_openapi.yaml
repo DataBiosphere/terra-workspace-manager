@@ -928,18 +928,18 @@ components:
         format: uuid
 
     ResourceType:
-      name: resourceType
-      in: path
+      name: resource
+      in: query
       description: Filter on a specific resource type
-      required: true
+      required: false
       schema:
         $ref: '#/components/schemas/ResourceType'
 
     StewardshipType:
-      name: stewardshipType
-      in: path
+      name: stewardship
+      in: query
       description: Filter on a stewardship type
-      required: true
+      required: false
       schema:
         $ref: '#/components/schemas/StewardshipType'
 
