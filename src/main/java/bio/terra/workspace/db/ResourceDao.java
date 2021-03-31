@@ -7,6 +7,7 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
@@ -257,19 +258,7 @@ public class ResourceDao {
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public void createReferenceResource(ReferencedResource resource)
       throws DuplicateResourceException {
-    storeResource(
-        resource.getWorkspaceId(),
-        resource.getResourceId(),
-        resource.getName(),
-        resource.getDescription(),
-        REFERENCED,
-        resource.getResourceType(),
-        resource.getCloningInstructions(),
-        resource.attributesToJson(),
-        Optional.empty(),
-        Optional.empty(),
-        Optional.empty(),
-        Optional.empty());
+    storeResource(resource);
   }
 
   // -- Controlled Resource Methods -- //
@@ -322,37 +311,10 @@ public class ResourceDao {
           "No cloud context found in which to create a controlled resource");
     }
 
-    storeResource(
-        controlledResource.getWorkspaceId(),
-        controlledResource.getResourceId(),
-        controlledResource.getName(),
-        controlledResource.getDescription(),
-        CONTROLLED,
-        controlledResource.getResourceType(),
-        controlledResource.getCloningInstructions(),
-        controlledResource.attributesToJson(),
-        // TODO: add this to ControlledResource
-        Optional.of(AccessScopeType.ACCESS_SCOPE_SHARED),
-        Optional.of(ManagedByType.MANAGED_BY_USER),
-        // TODO: add associated app to ControlledResource
-        Optional.empty(),
-        // TODO: rename this
-        controlledResource.getAssignedUser());
+    storeResource(controlledResource);
   }
 
-  private void storeResource(
-      UUID workspaceId,
-      UUID resourceId,
-      String name,
-      String description,
-      StewardshipType stewardshipType,
-      WsmResourceType resourceType,
-      CloningInstructions cloningInstructions,
-      String attributes,
-      Optional<AccessScopeType> accessScope,
-      Optional<ManagedByType> managedBy,
-      Optional<UUID> associatedApp,
-      Optional<String> assignedUser) {
+  private void storeResource(WsmResource resource) {
 
     // TODO: add resource locking to fix this
     //  We create resources in flights, so we have steps that call resource creation that may
@@ -366,7 +328,7 @@ public class ResourceDao {
 
     final String countSql = "SELECT COUNT(*) FROM resource WHERE resource_id = :resource_id";
     MapSqlParameterSource countParams =
-        new MapSqlParameterSource().addValue("resource_id", resourceId.toString());
+        new MapSqlParameterSource().addValue("resource_id", resource.getResourceId().toString());
     Integer count = jdbcTemplate.queryForObject(countSql, countParams, Integer.class);
     if (count != null && count == 1) {
       return;
@@ -382,28 +344,42 @@ public class ResourceDao {
 
     final var params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_platform", resourceType.getCloudPlatform().toString())
-            .addValue("resource_id", resourceId.toString())
-            .addValue("name", name)
-            .addValue("description", description)
-            .addValue("stewardship_type", stewardshipType.toSql())
-            .addValue("resource_type", resourceType.toSql())
-            .addValue("cloning_instructions", cloningInstructions.toSql())
-            .addValue("attributes", attributes)
-            .addValue("access_scope", accessScope.map(AccessScopeType::toSql).orElse(null))
-            .addValue("managed_by", managedBy.map(ManagedByType::toSql).orElse(null))
-            .addValue("associated_app", associatedApp.map(UUID::toString).orElse(null))
-            .addValue("assigned_user", assignedUser.orElse(null));
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
+            .addValue("cloud_platform", resource.getResourceType().getCloudPlatform().toString())
+            .addValue("resource_id", resource.getResourceId().toString())
+            .addValue("name", resource.getName())
+            .addValue("description", resource.getDescription())
+            .addValue("stewardship_type", resource.getStewardshipType().toSql())
+            .addValue("resource_type", resource.getResourceType().toSql())
+            .addValue("cloning_instructions", resource.getCloningInstructions().toSql())
+            .addValue("attributes", resource.attributesToJson());
+    if (resource.getStewardshipType().equals(CONTROLLED)) {
+      ControlledResource controlledResource = resource.castToControlledResource();
+      params
+          .addValue("access_scope", controlledResource.getAccessScope().toSql())
+          .addValue("managed_by", controlledResource.getManagedBy().toSql())
+          // TODO: add associatedApp to ControlledResource
+          .addValue("associated_app", null)
+          .addValue("assigned_user", controlledResource.getAssignedUser().orElse(null));
+    } else {
+      params
+          .addValue("access_scope", null)
+          .addValue("managed_by", null)
+          .addValue("associated_app", null)
+          .addValue("assigned_user", null);
+    }
 
     try {
       jdbcTemplate.update(sql, params);
-      logger.info("Inserted record for resource {} for workspace {}", resourceId, workspaceId);
+      logger.info(
+          "Inserted record for resource {} for workspace {}",
+          resource.getResourceId(),
+          resource.getWorkspaceId());
     } catch (DuplicateKeyException e) {
       throw new DuplicateResourceException(
           String.format(
               "A resource already exists in the workspace that has the same name (%s) or the same id (%s)",
-              name, resourceId.toString()));
+              resource.getName(), resource.getResourceId().toString()));
     }
   }
 
@@ -457,6 +433,8 @@ public class ResourceDao {
         switch (dbResource.getResourceType()) {
           case GCS_BUCKET:
             return new ControlledGcsBucketResource(dbResource);
+          case AI_NOTEBOOK_INSTANCE:
+            return new ControlledAiNotebookInstanceResource(dbResource);
 
           default:
             throw new InvalidMetadataException(

@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource;
 
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiResourceType;
+import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
@@ -13,6 +14,11 @@ import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;
 
 public enum WsmResourceType {
+  AI_NOTEBOOK_INSTANCE(
+          CloudPlatform.GCP,
+          "AI_NOTEBOOK_INSTANCE",
+          ApiResourceType.AI_NOTEBOOK,
+          null, ControlledAiNotebookInstanceResource.class),
   DATA_REPO_SNAPSHOT(
       CloudPlatform.GCP,
       "DATA_REPO_SNAPSHOT",

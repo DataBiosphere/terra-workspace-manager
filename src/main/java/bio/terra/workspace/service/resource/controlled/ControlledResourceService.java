@@ -4,7 +4,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.model.ControlledResourceIamRoleList;
+import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceCreateActions;
 import bio.terra.workspace.service.job.JobBuilder;
@@ -17,6 +17,7 @@ import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -45,7 +46,7 @@ public class ControlledResourceService {
   public String createControlledResource(
       ControlledResource resource,
       ApiGcpGcsBucketCreationParameters creationParameters,
-      ControlledResourceIamRoleList privateResourceIamRoles,
+      List<ControlledResourceIamRole> privateResourceIamRoles,
       ApiJobControl jobControl,
       String resultPath,
       AuthenticatedUserRequest userRequest) {

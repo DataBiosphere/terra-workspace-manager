@@ -8,6 +8,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleAction;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleActionType;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -91,5 +92,25 @@ public class ControlledResourceFixtures {
         AccessScopeType.ACCESS_SCOPE_SHARED,
         ManagedByType.MANAGED_BY_USER,
         BUCKET_NAME);
+  }
+
+  /**
+   * Returns a {@link ControlledAiNotebookInstanceResource.Builder} that is ready to be built.
+   *
+   * <p>Tests should not rely on any particular value for the fields returned by this function and
+   * instead override the values that they care about.
+   */
+  public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance() {
+    return ControlledAiNotebookInstanceResource.builder()
+        .workspaceId(UUID.randomUUID())
+        .resourceId(UUID.randomUUID())
+        .name("my-notebook")
+        .description("my notebook description")
+        .cloningInstructions(CloningInstructions.COPY_NOTHING)
+        .assignedUser(null)
+        .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+        .managedBy(ManagedByType.MANAGED_BY_USER)
+        .instanceId("my-instance-id")
+        .location("us-east1-b");
   }
 }

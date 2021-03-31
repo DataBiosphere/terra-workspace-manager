@@ -1824,6 +1824,7 @@ components:
       description: Enum containing valid resource types. Used for enumeration
       type: string
       enum:
+        - AI_NOTEBOOK
         - BIG_QUERY_DATASET
         - DATA_REPO_SNAPSHOT
         - GCS_BUCKET
