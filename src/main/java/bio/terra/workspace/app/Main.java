@@ -14,14 +14,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
     })
 @ComponentScan(
     basePackages = {
-      // Dependencies for Stairway
-      "bio.terra.common.kubernetes",
       // Scan for logging-related components & configs
       "bio.terra.common.logging",
       // Scan for Liquibase migration components & configs
       "bio.terra.common.migrate",
-      // Stairway initialization and status
-      "bio.terra.common.stairway",
       // Scan for tracing-related components & configs
       "bio.terra.common.tracing",
       // Scan all service-specific packages beneath the current package
