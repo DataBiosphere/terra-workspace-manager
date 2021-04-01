@@ -8,7 +8,11 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Hook to delay a particular step of a given flight by a given duration. */
+/**
+ * Hook to delay a particular step of a given flight by a given duration. This can be useful for
+ * testing and debugging, for example to allow manually introducing faults or killing pods during a
+ * given flight step.
+ */
 public class DelayHook implements StairwayHook {
   private static final Logger logger = LoggerFactory.getLogger(DelayHook.class);
 
@@ -16,7 +20,12 @@ public class DelayHook implements StairwayHook {
   private final String flightClassName;
   private final Duration delay;
 
-  public <T> DelayHook(int stepIndex, String flightClassName, Duration delay) {
+  /**
+   * @param flightClassName - fully qualified class name of a flight
+   * @param stepIndex - index of step, starting with zero, to delay
+   * @param delay - length of delay
+   */
+  public DelayHook(String flightClassName, int stepIndex, Duration delay) {
     this.stepIndex = stepIndex;
     this.flightClassName = flightClassName;
     this.delay = delay;
