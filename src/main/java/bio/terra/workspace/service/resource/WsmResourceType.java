@@ -15,10 +15,11 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum WsmResourceType {
   AI_NOTEBOOK_INSTANCE(
-          CloudPlatform.GCP,
-          "AI_NOTEBOOK_INSTANCE",
-          ApiResourceType.AI_NOTEBOOK,
-          null, ControlledAiNotebookInstanceResource.class),
+      CloudPlatform.GCP,
+      "AI_NOTEBOOK_INSTANCE",
+      ApiResourceType.AI_NOTEBOOK,
+      null,
+      ControlledAiNotebookInstanceResource.class),
   DATA_REPO_SNAPSHOT(
       CloudPlatform.GCP,
       "DATA_REPO_SNAPSHOT",

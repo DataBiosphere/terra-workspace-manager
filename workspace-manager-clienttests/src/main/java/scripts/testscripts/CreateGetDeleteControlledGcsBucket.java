@@ -28,7 +28,6 @@ import scripts.utils.CloudContextMaker;
 import scripts.utils.ResourceMaker;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,9 +40,7 @@ import static org.hamcrest.Matchers.equalTo;
 public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger =
       LoggerFactory.getLogger(CreateGetDeleteControlledGcsBucket.class);
-  private static final Duration CREATE_BUCKET_POLL_INTERVAL = Duration.ofSeconds(5);
   private static final long CREATE_BUCKET_POLL_SECONDS = 5;
-  private static final long DELETE_BUCKET_POLL_SECONDS = 15;
 
   private static final GcpGcsBucketLifecycleRule LIFECYCLE_RULE_1 =
       new GcpGcsBucketLifecycleRule()
@@ -132,7 +129,7 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
     // - reader cannot delete the bucket
 
     // Delete bucket
-    ResourceMaker.deleteControlledGcsBucketUserShared(resourceId, getWorkspaceId(), resourceApi);
+    ResourceMaker.deleteControlledGcsBucket(resourceId, getWorkspaceId(), resourceApi);
 
     // verify it's not there anymore
     // - via metadata
@@ -186,7 +183,7 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
 
   @Override
   protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-      throws ApiException {
+      throws Exception {
     super.doCleanup(testUsers, workspaceApi);
     if (bucketName != null) {
       logger.warn("Test failed to cleanup bucket " + bucketName);

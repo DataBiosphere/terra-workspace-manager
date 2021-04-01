@@ -39,7 +39,7 @@ public class WorkspaceDeleteFlight extends Flight {
     // resource or not, as indicated by the workspace stage enum.
     switch (workspaceStage) {
       case MC_WORKSPACE:
-        addStep(new DeleteWorkspaceAuthzStep(appContext.getSamService(), userReq));
+        addStep(new DeleteWorkspaceAuthzStep(appContext.getSamService(), userReq), retryRule);
         break;
       case RAWLS_WORKSPACE:
         // Do nothing, since WSM does not own the Sam resource.
