@@ -3,7 +3,6 @@ package bio.terra.workspace.service.workspace.flight;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.stairway.FlightMap;
@@ -34,8 +33,10 @@ import com.google.api.services.iam.v1.model.Role;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -149,15 +150,9 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
           "projects/" + project.getProjectId() + "/roles/" + customRole.getRoleName();
       Role gcpRole = crl.getIamCow().projects().roles().get(fullRoleName).execute();
 
-      List<String> expectedPermissions = customRole.getIncludedPermissions();
-      if (expectedPermissions.isEmpty()) {
-        // For some reason, getIncludedPermissions returns null instead of an empty list if a role
-        // grants no permissions.
-        assertNull(gcpRole.getIncludedPermissions());
-      } else {
-        assertThat(
-            gcpRole.getIncludedPermissions(), containsInAnyOrder(expectedPermissions.toArray()));
-      }
+      List<String> gcpPermissions =
+          Optional.ofNullable(gcpRole.getIncludedPermissions()).orElse(Collections.emptyList());
+      assertThat(gcpPermissions, containsInAnyOrder(customRole.getIncludedPermissions().toArray()));
     }
   }
 

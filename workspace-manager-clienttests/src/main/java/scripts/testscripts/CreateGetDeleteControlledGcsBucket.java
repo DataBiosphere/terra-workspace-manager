@@ -174,7 +174,7 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
           "User accessed a controlled workspace bucket without being a workspace member");
     } catch (StorageException storageException) {
       assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-      logger.info("User {} outside of workspace could not access bucket", reader.userEmail);
+      logger.info("User {} outside of workspace could not access bucket as expected", reader.userEmail);
     }
 
     // Owner can add second user as a reader to the workspace
@@ -182,7 +182,7 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
         new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceId(), IamRole.READER);
     logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceId());
 
-    // TODO: expecting clients to do this feels bad. This should happen inside WSM.
+    // TODO(PF-643): this should happen inside WSM.
     logger.info("Waiting 15s for permissions to propagate");
     Thread.sleep(15000);
 
@@ -200,7 +200,7 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
       throw new IllegalStateException("Workspace reader was able to write a file to a bucket!");
     } catch (StorageException storageEx) {
       assertThat(storageEx.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-      logger.info("Failed to write new blob {} as reader", readerBlobId.getName());
+      logger.info("Failed to write new blob {} as reader as expected", readerBlobId.getName());
     }
 
     // Reader cannot delete the blob the owner created.
@@ -209,7 +209,7 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
       throw new IllegalStateException("Workspace reader was able to delete bucket contents!");
     } catch (StorageException storageEx) {
       assertThat(storageEx.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-      logger.info("Reader failed to delete blob {}", blobId);
+      logger.info("Reader failed to delete blob {} as expected", blobId);
     }
 
     // Owner can delete the blob they created earlier.
@@ -221,11 +221,11 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
       readerStorageClient.get(bucketName).delete();
       throw new IllegalStateException("Workspace reader was able to delete a bucket directly!");
     } catch (StorageException storageEx) {
-      logger.info("Failed to delete bucket {} directly as reader", bucketName);
+      logger.info("Failed to delete bucket {} directly as reader as expected", bucketName);
       assertThat(storageEx.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
     }
 
-    // TODO(PF-624): Owners and writers can actually delete buckets due to workspace-level roles
+    // TODO(PF-633): Owners and writers can actually delete buckets due to workspace-level roles
     //  included as a temporary workaround. This needs to be removed as we transition onto WSM
     //  controlled resources.
 
@@ -235,7 +235,7 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
     //   throw new IllegalStateException("Workspace owner was able to delete a bucket directly!");
     // } catch (StorageException storageEx) {
     //   assertThat(storageEx.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-    //   logger.info("Failed to delete bucket {} directly as owner", bucketName);
+    //   logger.info("Failed to delete bucket {} directly as owner as expected", bucketName);
     // }
 
     // Owner can delete the bucket through WSM

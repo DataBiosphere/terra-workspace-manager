@@ -13,7 +13,8 @@ import com.google.common.collect.ImmutableMap;
  *
  * <p>This maps workspace roles to the resource roles, which are used for granting cloud
  * permissions. Sam also has a similar mapping configured for granting Sam permissions. If you
- * change this map, also check that mapping.
+ * change this map, also check that mapping:
+ * https://github.com/broadinstitute/sam/blob/develop/src/main/resources/reference.conf
  *
  * <p>This mapping is slightly different for each category of controlled resource (user-shared,
  * user-private, app-shared, app-private), so this class holds four separate maps.
@@ -57,15 +58,11 @@ public class ControlledResourceInheritanceMapping {
   public static ImmutableMap<WsmIamRole, ImmutableList<ControlledResourceIamRole>>
       APPLICATION_PRIVATE_MAPPING =
           ImmutableMap.of(
-              WsmIamRole.OWNER,
-              ImmutableList.of(ControlledResourceIamRole.EDITOR),
-              WsmIamRole.WRITER,
-              ImmutableList.of(ControlledResourceIamRole.EDITOR),
+              WsmIamRole.OWNER, ImmutableList.of(ControlledResourceIamRole.EDITOR),
+              WsmIamRole.WRITER, ImmutableList.of(ControlledResourceIamRole.EDITOR),
               // Applications and readers have no permissions on private resources.
-              WsmIamRole.APPLICATION,
-              ImmutableList.of(),
-              WsmIamRole.READER,
-              ImmutableList.of());
+              WsmIamRole.APPLICATION, ImmutableList.of(),
+              WsmIamRole.READER, ImmutableList.of());
 
   public static ImmutableMap<WsmIamRole, ImmutableList<ControlledResourceIamRole>>
       getInheritanceMapping(AccessScopeType accessScope, ManagedByType managedBy) {

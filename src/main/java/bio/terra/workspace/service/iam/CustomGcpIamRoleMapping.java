@@ -10,7 +10,7 @@ import java.util.Collections;
 /**
  * This class specifies a static list of all GCP custom IAM roles that will be created in Workspace
  * contexts. To modify a role's permission, edit the appropriate list here. Unlike workspace roles,
- * resource roles are not strictly hierarchical. The EDITOR role has a distinct set of permissions
+ * resource roles are not strictly hierarchical; the EDITOR role has a distinct set of permissions
  * from WRITER, it is not a superset.
  *
  * <p>We expect this mapping to change over time, and new entries should be added as we add new

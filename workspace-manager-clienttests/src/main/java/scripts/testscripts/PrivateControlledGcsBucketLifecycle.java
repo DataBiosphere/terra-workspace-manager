@@ -82,7 +82,7 @@ public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScri
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
 
     // Create a private bucket
-    CreatedControlledGcsBucket bucket = createPrivateBucketAttempt(resourceApi);
+    CreatedControlledGcsBucket bucket = attemptCreatePrivateBucket(resourceApi);
     assertThat(bucket.getJobReport().getStatus(), equalTo(JobReport.StatusEnum.SUCCEEDED));
     UUID resourceId = bucket.getResourceId();
 
@@ -111,21 +111,21 @@ public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScri
     logger.info(
         "Added {} as a reader to workspace {}", privateResourceUser.userEmail, getWorkspaceId());
 
-    // TODO: expecting clients to do this feels bad. This should happen inside WSM.
+    // TODO(PF-643): this should happen inside WSM.
     logger.info("Waiting 15s for permissions to propagate");
     Thread.sleep(15000);
 
     BlobId blobId = BlobId.of(bucketName, GCS_BLOB_NAME);
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
 
-    // TODO(PF-624): workspace owners can write to private buckets via "roles/storage.admin".
+    // TODO(PF-633): workspace owners can write to private buckets via "roles/storage.admin".
     // // Owner cannot write object to bucket
     // try {
     //   ownerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
     //   throw new IllegalStateException("Workspace owner was able to write to private bucket");
     // } catch (StorageException storageException) {
     //   assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-    //   logger.info("Workspace owner cannot write to private resource");
+    //   logger.info("Workspace owner cannot write to private resource as expected");
     // }
 
     // Workspace reader cannot write object to bucket
@@ -134,7 +134,7 @@ public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScri
       throw new IllegalStateException("Workspace reader was able to write to private bucket");
     } catch (StorageException storageException) {
       assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-      logger.info("Workspace reader cannot write to private resource");
+      logger.info("Workspace reader cannot write to private resource as expected");
     }
 
     // Private resource user can write object to bucket
@@ -146,7 +146,7 @@ public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScri
     assertThat(retrievedBlob, equalTo(createdBlob));
     logger.info("Private resource user can read {} from bucket", retrievedBlob.getName());
 
-    // TODO(PF-624): workspace owners can read from private buckets via "roles/storage.admin" and
+    // TODO(PF-633): workspace owners can read from private buckets via "roles/storage.admin" and
     //  "roles/viewer"
     // // Owner cannot read the bucket contents
     // try {
@@ -154,17 +154,17 @@ public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScri
     //   throw new IllegalStateException("Workspace owner was able to read private bucket");
     // } catch (StorageException storageException) {
     //   assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-    //   logger.info("Workspace owner cannot read from private bucket");
+    //   logger.info("Workspace owner cannot read from private bucket as expected");
     // }
 
-    // TODO(PF-624): workspace readers can read from private buckets via "roles/viewer".
+    // TODO(PF-633): workspace readers can read from private buckets via "roles/viewer".
     // // Workspace reader also cannot read private bucket contents
     // try {
     //   workspaceReaderStorageClient.get(blobId);
     //   throw new IllegalStateException("Workspace reader was able to read private bucket");
     // } catch (StorageException storageException) {
     //   assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-    //   logger.info("Workspace reader cannot read from private bucket");
+    //   logger.info("Workspace reader cannot read from private bucket as expected");
     // }
 
     // Private resource user can delete the blob they created earlier.
@@ -203,7 +203,7 @@ public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScri
     assertThat(maybeBucket, Matchers.is(Matchers.nullValue()));
   }
 
-  private CreatedControlledGcsBucket createPrivateBucketAttempt(
+  private CreatedControlledGcsBucket attemptCreatePrivateBucket(
       ControlledGcpResourceApi resourceApi) throws Exception {
     String jobId = UUID.randomUUID().toString();
     var creationParameters =
@@ -212,6 +212,7 @@ public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScri
             .location(BUCKET_LOCATION)
             .defaultStorageClass(GcsBucketDefaultStorageClass.STANDARD)
             .lifecycle(new GcsBucketLifecycle().rules(Collections.emptyList()));
+
 
     var privateUser = new PrivateResourceIamRoles();
     privateUser.add(ControlledResourceIamRole.WRITER);
