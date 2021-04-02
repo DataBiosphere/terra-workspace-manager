@@ -41,7 +41,9 @@ public class ResourceDaoTest extends BaseUnitTest {
   public void createGetControlledGcsBucket() {
     UUID workspaceId = createGcpWorkspace();
     ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeControlledGcsBucketResource(workspaceId);
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
+            .workspaceId(workspaceId)
+            .build();
     resourceDao.createControlledResource(resource);
 
     assertEquals(
