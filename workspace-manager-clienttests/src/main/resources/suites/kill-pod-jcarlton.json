@@ -1,0 +1,9 @@
+{
+  "name": "BasicIntegration",
+  "description": "Integration tests that do not require a K8s setup; for PR merge testing. Please add tests to FullIntegration when you add them here.",
+  "serverSpecificationFile": "workspace-jcarlton.json",
+  "testConfigurationFiles": [
+    "integration/WorkspaceLifecycle.json"
+  ]
+}
+

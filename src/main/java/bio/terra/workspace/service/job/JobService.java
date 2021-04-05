@@ -16,6 +16,7 @@ import bio.terra.stairway.exception.StairwayException;
 import bio.terra.workspace.app.configuration.external.IngressConfiguration;
 import bio.terra.workspace.app.configuration.external.JobConfiguration;
 import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
+import bio.terra.workspace.common.utils.DelayHook;
 import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.MdcHook;
@@ -36,6 +37,7 @@ import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -252,7 +254,13 @@ public class JobService {
     stairwayComponent.initialize(
         stairwayDatabaseConfiguration.getDataSource(),
         flightBeanBag,
-        ImmutableList.of(mdcHook, new TracingHook()));
+        ImmutableList.of(
+            mdcHook,
+            new TracingHook(),
+            new DelayHook(
+                "bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight",
+                1,
+                Duration.ofMinutes(3))));
   }
 
   @Traced

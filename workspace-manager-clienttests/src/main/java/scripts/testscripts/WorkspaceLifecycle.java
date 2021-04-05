@@ -29,7 +29,6 @@ public class WorkspaceLifecycle extends WorkspaceApiTestScriptBase {
         new CreateWorkspaceRequestBody().id(workspaceId).stage(WorkspaceStageModel.MC_WORKSPACE);
     workspaceApi.createWorkspace(requestBody);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "CREATE workspace");
-
     WorkspaceDescription workspaceDescription = workspaceApi.getWorkspace(workspaceId);
     ClientTestUtils.assertHttpSuccess(workspaceApi, "GET workspace");
     assertThat(workspaceDescription.getId(), equalTo(workspaceId));

@@ -35,8 +35,15 @@ public class DelayHook implements StairwayHook {
   public HookAction startStep(FlightContext context) throws InterruptedException {
     if (context.getFlightClassName().equals(flightClassName)
         && context.getStepIndex() == stepIndex) {
-      logger.info("Delaying flight {} step {} by {}", flightClassName, stepIndex, delay.toString());
+      logger.info(
+          "Delaying flight ID {} class {} step {} by {}",
+          context.getFlightId(),
+          flightClassName,
+          stepIndex,
+          delay.toString());
+      // Manual test typically kills pod now
       TimeUnit.MILLISECONDS.sleep(delay.toMillis());
+      logger.info("Resuming flight ID {}", context.getFlightId());
     }
     return HookAction.CONTINUE;
   }
