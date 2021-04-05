@@ -269,3 +269,20 @@ Caused by: java.io.EOFException: null
 
 Flight ID `7028cce9-5017-48dc-9c17-ce8b23517459` is another orphaned
 `RUNNING` flight.
+
+## Notes
+All flights have `rerun=false`, `succeeded=true`, and `status=RUNNING` in the `flightlog` table.
+Not sure if this is by design.
+
+### Misc. Log  messages of interest
+```"KubePodListener caught exception: java.lang.RuntimeException: IO Exception during hasNext method." ```
+
+```
+"Stairway workspacemanager-deployment-864bbbdcf9-xw2bk did not resume flight: 7348bc13-2255-4a50-85b5-fcb5534674cb"
+```
+
+Latest stairway `workspacemanager-deployment-864bbbdcf9-wplqj` has taken over all the RUNNING stuck
+flights in the flight table, but hasn't updated their status. If I kill its
+pod (no test running), then other instance `workspacemanager-deployment-864bbbdcf9-xw2bk`
+grabs them, with one exception (which is now owned by the other
+running instance).
