@@ -189,3 +189,83 @@ STarted 10:38 AM on 4/5/21
 `$ kubectl delete pod workspacemanager-deployment-68f9b944d5-9kgzp --namespace=terra-jcarlton`
 TestRunner test was incomplete.
 Flight `327ae7fe-5225-4299-ab0f-009619b2be63` had already resumed.
+A new pod was spawned
+
+## Test Attempt 4
+deleted pod faster
+flight ID was `7028cce9-5017-48dc-9c17-ce8b23517459`; pod was `workspacemanager-deployment-68f9b944d5-5gwdm`
+
+pod replacement logs:
+```
+2021-04-05 10:48:08.237 EDT
+"MODIFIED : workspacemanager-deployment-68f9b944d5-5gwdm"
+Info
+2021-04-05 10:48:08.317 EDT
+"ADDED : workspacemanager-deployment-68f9b944d5-bj2qd"
+Info
+2021-04-05 10:48:08.318 EDT
+"Added api pod: workspacemanager-deployment-68f9b944d5-bj2qd"
+Info
+2021-04-05 10:48:08.341 EDT
+"MODIFIED : workspacemanager-deployment-68f9b944d5-bj2qd"
+Info
+2021-04-05 10:48:08.345 EDT
+"MODIFIED : workspacemanager-deployment-68f9b944d5-bj2qd"
+Info
+2021-04-05 10:48:08.762 EDT
+"MODIFIED : workspacemanager-deployment-68f9b944d5-bj2qd"
+Info
+2021-04-05 10:48:09.156 EDT
+"MODIFIED : workspacemanager-deployment-68f9b944d5-bj2qd"
+Info
+2021-04-05 10:48:09.294 EDT
+"Caught SQL connection or resource error (08006) - retrying"
+```
+Error in log after pod delete was 
+
+```
+"Global exception handler: cause: bio.terra.workspace.service.job.exception.InternalStairwayException@18e3ef90[causes=[],statusCode=500 INTERNAL_SERVER_ERROR], cause: java.util.concurrent.ExecutionException: bio.terra.stairway.exception.DatabaseOperationException: Database operation failed: flight.getFlightState, cause: bio.terra.stairway.exception.DatabaseOperationException: Database operation failed: flight.getFlightState, cause: org.postgresql.util.PSQLException: An I/O error occurred while sending to the backend., cause: java.io.EOFException, 
+bio.terra.workspace.service.job.exception.InternalStairwayException: null
+...
+Caused by: java.util.concurrent.ExecutionException: bio.terra.stairway.exception.DatabaseOperationException: Database operation failed: flight.getFlightState
+	at java.base/java.util.concurrent.FutureTask.report(Unknown Source)
+	at java.base/java.util.concurrent.FutureTask.get(Unknown Source)
+	at bio.terra.workspace.service.job.JobService.waitForJob(JobService.java:212)
+	... 89 common frames omitted
+Caused by: bio.terra.stairway.exception.DatabaseOperationException: Database operation failed: flight.getFlightState
+	at bio.terra.stairway.DbRetry.perform(DbRetry.java:87)
+	at bio.terra.stairway.DbRetry.retry(DbRetry.java:63)
+	at bio.terra.stairway.FlightDao.getFlightState(FlightDao.java:661)
+	at bio.terra.stairway.Stairway.getFlightState(Stairway.java:763)
+	at bio.terra.workspace.service.job.JobService$PollFlightTask.call(JobService.java:239)
+	at bio.terra.workspace.service.job.JobService$PollFlightTask.call(JobService.java:228)
+	at java.base/java.util.concurrent.FutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	... 1 common frames omitted
+Caused by: org.postgresql.util.PSQLException: An I/O error occurred while sending to the backend.
+	at org.postgresql.core.v3.QueryExecutorImpl.execute(QueryExecutorImpl.java:350)
+	at org.postgresql.jdbc.PgStatement.executeInternal(PgStatement.java:473)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:393)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:322)
+	at org.postgresql.jdbc.PgStatement.executeCachedSql(PgStatement.java:308)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:284)
+	at org.postgresql.jdbc.PgConnection.execSQLUpdate(PgConnection.java:505)
+	at org.postgresql.jdbc.PgConnection.setTransactionIsolation(PgConnection.java:960)
+	at org.apache.commons.dbcp2.DelegatingConnection.setTransactionIsolation(DelegatingConnection.java:573)
+	at org.apache.commons.dbcp2.DelegatingConnection.setTransactionIsolation(DelegatingConnection.java:573)
+	at bio.terra.stairway.DbUtils.startReadOnlyTransaction(DbUtils.java:16)
+	at bio.terra.stairway.FlightDao.getFlightStateInner(FlightDao.java:678)
+	at bio.terra.stairway.FlightDao.lambda$getFlightState$9(FlightDao.java:661)
+	at bio.terra.stairway.DbRetry.perform(DbRetry.java:84)
+	... 10 common frames omitted
+Caused by: java.io.EOFException: null
+	at org.postgresql.core.PGStream.receiveChar(PGStream.java:443)
+	at org.postgresql.core.v3.QueryExecutorImpl.processResults(QueryExecutorImpl.java:2057)
+	at org.postgresql.core.v3.QueryExecutorImpl.execute(QueryExecutorImpl.java:323)
+	... 23 common frames omitted
+```
+
+Flight ID `7028cce9-5017-48dc-9c17-ce8b23517459` is another orphaned
+`RUNNING` flight.
