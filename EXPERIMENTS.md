@@ -285,4 +285,23 @@ Latest stairway `workspacemanager-deployment-864bbbdcf9-wplqj` has taken over al
 flights in the flight table, but hasn't updated their status. If I kill its
 pod (no test running), then other instance `workspacemanager-deployment-864bbbdcf9-xw2bk`
 grabs them, with one exception (which is now owned by the other
-running instance).
+running instance). The resume() code excludes RUNNING in its accepted
+statuses. So these records really are stuck.
+
+#### Dev database
+On `dev`, I see no flights in the RUNNING state. Just 33 ERROR and 2 FATAL. In the `flightlog` table,
+the status of all rows is `RUNNING`, just as in the `jcarlton` database instance.
+
+### Queries
+#### Transpose `flightinput` table
+It's easier to make sense of this table if all values are on one line. Since the map
+is the same for all flight IDs, it suffices to have one column per key.
+```postgresql
+select DISTINCT f.flightid, d.value AS description, w.value AS workspaceId
+from flightinput f
+inner join (select f1.flightId, f1.value from flightinput f1
+    where key = 'description') AS d ON d.flightid = f.flightid
+inner join (select f2.flightid, f2.value from flightinput f2
+    where key = 'workspaceId') AS w ON w.flightid = f.flightid
+```
+etc for remaining keys in the map.
