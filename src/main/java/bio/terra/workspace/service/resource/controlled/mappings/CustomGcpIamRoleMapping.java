@@ -1,17 +1,18 @@
-package bio.terra.workspace.service.iam;
+package bio.terra.workspace.service.resource.controlled.mappings;
 
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.WsmResourceType;
+import bio.terra.workspace.service.resource.controlled.CustomGcpIamRole;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.Collections;
 
 /**
- * This class specifies a static list of all GCP custom IAM roles that will be created in Workspace
- * contexts. To modify a role's permission, edit the appropriate list here. Unlike workspace roles,
- * resource roles are not strictly hierarchical; the EDITOR role has a distinct set of permissions
- * from WRITER, it is not a superset.
+ * This class specifies all of the GCP custom IAM roles that will be created in Workspace contexts.
+ * To modify a role's permission, edit the appropriate list here. Unlike workspace roles, resource
+ * roles are not strictly hierarchical; the EDITOR role has a distinct set of permissions from
+ * WRITER, it is not a superset.
  *
  * <p>We expect this mapping to change over time, and new entries should be added as we add new
  * controlled resource types. There is currently no migration infrastructure for these roles in

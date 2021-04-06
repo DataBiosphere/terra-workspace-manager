@@ -46,7 +46,7 @@ public class SyncResourceSamGroupsStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    // This step only modifies the flight working map, nothing to undo.
+    // Groups cannot be de-synced in Sam so there is nothing to undo.
     return StepResult.getStepResultSuccess();
   }
 }

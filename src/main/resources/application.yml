@@ -56,7 +56,7 @@ workspace:
   sam.base-path: ${env.urls.sam}
 
   stairway-database:
-    force-clean: ${env.db.init}
+    force-clean: true
     migrate-upgrade: true
     password: ${env.db.stairway.pass}
     uri: ${env.db.host}/${env.db.stairway.name}
@@ -67,7 +67,7 @@ workspace:
     staleness-threshold-ms: 600000
 
   workspace-database:
-    initialize-on-start: ${env.db.init}
+    initialize-on-start: true
     password: ${env.db.ws.pass}
     upgrade-on-start: true
     uri: ${env.db.host}/${env.db.ws.name}

@@ -2,6 +2,7 @@ package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -168,14 +169,14 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
     Storage readerStorageClient = ClientTestUtils.getGcpStorageClient(reader, projectId);
 
     // Second user cannot read the object yet.
-    try {
-      readerStorageClient.get(blobId);
-      throw new IllegalStateException(
-          "User accessed a controlled workspace bucket without being a workspace member");
-    } catch (StorageException storageException) {
-      assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-      logger.info("User {} outside of workspace could not access bucket as expected", reader.userEmail);
-    }
+    StorageException userCannotRead =
+        assertThrows(
+            StorageException.class,
+            () -> readerStorageClient.get(blobId),
+            "User accessed a controlled workspace bucket without being a workspace member");
+    assertThat(userCannotRead.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
+    logger.info(
+        "User {} outside of workspace could not access bucket as expected", reader.userEmail);
 
     // Owner can add second user as a reader to the workspace
     workspaceApi.grantRole(
@@ -195,48 +196,49 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
     BlobId readerBlobId = BlobId.of(bucketName, "fake-gcs-name");
     BlobInfo readerBlobInfo =
         BlobInfo.newBuilder(readerBlobId).setContentType("text/plain").build();
-    try {
-      readerStorageClient.create(readerBlobInfo, GCS_BLOB_CONTENT.getBytes());
-      throw new IllegalStateException("Workspace reader was able to write a file to a bucket!");
-    } catch (StorageException storageEx) {
-      assertThat(storageEx.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-      logger.info("Failed to write new blob {} as reader as expected", readerBlobId.getName());
-    }
+    StorageException readerCannotWrite =
+        assertThrows(
+            StorageException.class,
+            () -> readerStorageClient.create(readerBlobInfo, GCS_BLOB_CONTENT.getBytes()),
+            "Workspace reader was able to write a file to a bucket!");
+    assertThat(readerCannotWrite.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
+    logger.info("Failed to write new blob {} as reader as expected", readerBlobId.getName());
 
     // Reader cannot delete the blob the owner created.
-    try {
-      readerStorageClient.delete(blobId);
-      throw new IllegalStateException("Workspace reader was able to delete bucket contents!");
-    } catch (StorageException storageEx) {
-      assertThat(storageEx.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-      logger.info("Reader failed to delete blob {} as expected", blobId);
-    }
+    StorageException readerCannotDeleteBlob =
+        assertThrows(
+            StorageException.class,
+            () -> readerStorageClient.delete(blobId),
+            "Workspace reader was able to delete bucket contents!");
+    assertThat(readerCannotDeleteBlob.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
+    logger.info("Reader failed to delete blob {} as expected", blobId);
 
     // Owner can delete the blob they created earlier.
     ownerStorageClient.delete(blobId);
     logger.info("Owner successfully deleted blob {}", blobId.getName());
 
     // Reader cannot delete the bucket directly
-    try {
-      readerStorageClient.get(bucketName).delete();
-      throw new IllegalStateException("Workspace reader was able to delete a bucket directly!");
-    } catch (StorageException storageEx) {
-      logger.info("Failed to delete bucket {} directly as reader as expected", bucketName);
-      assertThat(storageEx.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-    }
+    StorageException readerCannotDeleteBucket =
+        assertThrows(
+            StorageException.class,
+            () -> readerStorageClient.get(bucketName).delete(),
+            "Workspace reader was able to delete a bucket directly!");
+    assertThat(readerCannotDeleteBucket.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
+    logger.info("Failed to delete bucket {} directly as reader as expected", bucketName);
 
     // TODO(PF-633): Owners and writers can actually delete buckets due to workspace-level roles
     //  included as a temporary workaround. This needs to be removed as we transition onto WSM
     //  controlled resources.
 
-    // Owner also cannot delete the bucket directly
-    // try {
-    //   ownerStorageClient.get(bucketName).delete();
-    //   throw new IllegalStateException("Workspace owner was able to delete a bucket directly!");
-    // } catch (StorageException storageEx) {
-    //   assertThat(storageEx.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-    //   logger.info("Failed to delete bucket {} directly as owner as expected", bucketName);
-    // }
+    // // Owner also cannot delete the bucket directly
+    // StorageException ownerCannotDeleteBucket =
+    //     assertThrows(
+    //         StorageException.class,
+    //         () -> ownerStorageClient.get(bucketName).delete(),
+    //         "Workspace owner was able to delete a bucket directly!");
+    // assertThat(ownerCannotDeleteBucket.getCode(),
+    // equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
+    // logger.info("Failed to delete bucket {} directly as owner as expected", bucketName);
 
     // Owner can delete the bucket through WSM
     String deleteJobId = UUID.randomUUID().toString();
@@ -253,12 +255,12 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
     assertThat(result.getJobReport().getStatus(), equalTo(JobReport.StatusEnum.SUCCEEDED));
 
     // verify the bucket was deleted from WSM metadata
-    try {
-      resourceApi.getBucket(getWorkspaceId(), resourceId);
-      throw new IllegalStateException("Incorrectly found a deleted bucket!");
-    } catch (ApiException ex) {
-      assertThat(ex.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
-    }
+    ApiException bucketNotFound =
+        assertThrows(
+            ApiException.class,
+            () -> resourceApi.getBucket(getWorkspaceId(), resourceId),
+            "Incorrectly found a deleted bucket!");
+    assertThat(bucketNotFound.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
 
     // also verify it was deleted from GCP
     Bucket maybeBucket = ownerStorageClient.get(bucketName);

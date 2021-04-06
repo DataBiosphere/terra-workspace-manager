@@ -29,6 +29,7 @@ dependencies {
         logback = "1.2.3"
         slf4j = "1.7.25"
         hamcrest = "2.1"
+        jUnit = "5.7.0"
         swaggerAnnotations = "2.1.5"
 
         googleApi = "1.23.0"
@@ -41,6 +42,7 @@ dependencies {
         testRunner = "0.0.3-SNAPSHOT"
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
+    implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"
     compileOnly "com.google.code.findbugs:annotations:${findbugsAnnotations}"
     implementation group: 'com.google.guava', name: 'guava', version: "${guava}"
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson}"

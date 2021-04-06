@@ -13,14 +13,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** A step for granting cloud permissions on resources to workspace members. */
-public class GrantGcsBucketIamRolesStep implements Step {
+public class GcsBucketCloudSyncStep implements Step {
 
   private final CrlService crlService;
   private final ControlledGcsBucketResource resource;
   private final WorkspaceService workspaceService;
-  private final Logger logger = LoggerFactory.getLogger(GrantGcsBucketIamRolesStep.class);
+  private final Logger logger = LoggerFactory.getLogger(GcsBucketCloudSyncStep.class);
 
-  public GrantGcsBucketIamRolesStep(
+  public GcsBucketCloudSyncStep(
       CrlService crlService,
       ControlledGcsBucketResource resource,
       WorkspaceService workspaceService) {

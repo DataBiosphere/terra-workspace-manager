@@ -13,12 +13,12 @@ import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.CustomGcpIamRole;
-import bio.terra.workspace.service.iam.CustomGcpIamRoleMapping;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.CustomGcpIamRole;
+import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRoleMapping;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -150,6 +150,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
           "projects/" + project.getProjectId() + "/roles/" + customRole.getRoleName();
       Role gcpRole = crl.getIamCow().projects().roles().get(fullRoleName).execute();
 
+      // Role.getIncludedPermissions returns null instead of an empty list, so we handle that here.
       List<String> gcpPermissions =
           Optional.ofNullable(gcpRole.getIncludedPermissions()).orElse(Collections.emptyList());
       assertThat(gcpPermissions, containsInAnyOrder(customRole.getIncludedPermissions().toArray()));

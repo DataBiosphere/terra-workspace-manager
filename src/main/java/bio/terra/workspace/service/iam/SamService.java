@@ -321,7 +321,7 @@ public class SamService {
   public String syncWorkspacePolicy(
       UUID workspaceId, WsmIamRole role, AuthenticatedUserRequest userReq) {
     String group =
-        syncWorker(
+        syncPolicyOnObject(
             SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), userReq);
     logger.info(
         "Synced role {} to google group {} in workspace {}", role.toSamRole(), group, workspaceId);
@@ -348,7 +348,7 @@ public class SamService {
       ControlledResourceIamRole role,
       AuthenticatedUserRequest userReq) {
     String group =
-        syncWorker(
+        syncPolicyOnObject(
             SamControlledResourceNames.get(resource.getAccessScope(), resource.getManagedBy()),
             resource.getResourceId().toString(),
             role.toSamRole(),
@@ -361,7 +361,16 @@ public class SamService {
     return group;
   }
 
-  private String syncWorker(
+  /**
+   * Common implementation for syncing a policy to a Google group on an object in Sam.
+   *
+   * @param resourceTypeName The type of the Sam object, as configured with Sam.
+   * @param resourceId The ID of the resource to sync a policy for
+   * @param policyName The name of the policy to sync
+   * @param userReq User credentials to pass to Sam
+   * @return The name of the Google group whose membership is synced to the specified policy.
+   */
+  private String syncPolicyOnObject(
       String resourceTypeName,
       String resourceId,
       String policyName,

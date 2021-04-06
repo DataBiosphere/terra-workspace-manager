@@ -59,7 +59,7 @@ public class CreateControlledResourceFlight extends Flight {
                 resource.castToGcsBucketResource(),
                 flightBeanBag.getWorkspaceService()));
         addStep(
-            new GrantGcsBucketIamRolesStep(
+            new GcsBucketCloudSyncStep(
                 flightBeanBag.getCrlService(),
                 resource.castToGcsBucketResource(),
                 flightBeanBag.getWorkspaceService()));

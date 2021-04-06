@@ -213,7 +213,6 @@ public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScri
             .defaultStorageClass(GcsBucketDefaultStorageClass.STANDARD)
             .lifecycle(new GcsBucketLifecycle().rules(Collections.emptyList()));
 
-
     var privateUser = new PrivateResourceIamRoles();
     privateUser.add(ControlledResourceIamRole.WRITER);
     var commonParameters =

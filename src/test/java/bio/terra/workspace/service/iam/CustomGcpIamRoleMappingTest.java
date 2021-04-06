@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.in;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRoleMapping;
 import org.junit.jupiter.api.Test;
 
 /**
