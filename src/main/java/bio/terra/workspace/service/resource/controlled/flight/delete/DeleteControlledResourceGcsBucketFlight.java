@@ -42,9 +42,11 @@ public class DeleteControlledResourceGcsBucketFlight extends Flight {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
-    final UUID workspaceId = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    final UUID workspaceId =
+        UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     final UUID resourceId =
-        inputParameters.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, UUID.class);
+        UUID.fromString(
+            inputParameters.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, String.class));
     final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 

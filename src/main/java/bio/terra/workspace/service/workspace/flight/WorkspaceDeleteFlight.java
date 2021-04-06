@@ -23,7 +23,8 @@ public class WorkspaceDeleteFlight extends Flight {
     AuthenticatedUserRequest userReq =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     WorkspaceStage workspaceStage =
-        inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStage.class);
+        WorkspaceStage.valueOf(
+            inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, String.class));
     // TODO: we still need the following steps once their features are supported:
     // 1. delete controlled resources using the Cloud Resource Manager library
     // 2. Notify all registered applications of deletion, once applications are supported
