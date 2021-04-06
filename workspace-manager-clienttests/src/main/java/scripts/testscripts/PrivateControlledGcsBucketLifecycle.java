@@ -1,7 +1,9 @@
 package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -36,7 +38,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import org.hamcrest.Matchers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
@@ -82,15 +83,15 @@ public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScri
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
 
     // Create a private bucket
-    CreatedControlledGcsBucket bucket = attemptCreatePrivateBucket(resourceApi);
-    assertThat(bucket.getJobReport().getStatus(), equalTo(JobReport.StatusEnum.SUCCEEDED));
+    CreatedControlledGcsBucket bucket = createPrivateBucket(resourceApi);
+    assertEquals(bucket.getJobReport().getStatus(), JobReport.StatusEnum.SUCCEEDED);
     UUID resourceId = bucket.getResourceId();
 
     // Retrieve the bucket resource from WSM
     logger.info("Retrieving bucket resource id {}", resourceId.toString());
     GcsBucketAttributes gotBucket = resourceApi.getBucket(getWorkspaceId(), resourceId);
-    assertThat(gotBucket.getBucketName(), equalTo(bucket.getGcpBucket().getBucketName()));
-    assertThat(gotBucket.getBucketName(), equalTo(bucketName));
+    assertEquals(gotBucket.getBucketName(), bucket.getGcpBucket().getBucketName());
+    assertEquals(gotBucket.getBucketName(), bucketName);
 
     Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, getProjectId());
     Storage privateUserStorageClient =
@@ -120,22 +121,22 @@ public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScri
 
     // TODO(PF-633): workspace owners can write to private buckets via "roles/storage.admin".
     // // Owner cannot write object to bucket
-    // try {
-    //   ownerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
-    //   throw new IllegalStateException("Workspace owner was able to write to private bucket");
-    // } catch (StorageException storageException) {
-    //   assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-    //   logger.info("Workspace owner cannot write to private resource as expected");
-    // }
+    // StorageException ownerCannotWritePrivateBucket =
+    //     assertThrows(
+    //         StorageException.class,
+    //         () -> ownerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes()),
+    //         "Workspace owner was able to write to private bucket");
+    // assertEquals(ownerCannotWritePrivateBucket.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    // logger.info("Workspace owner cannot write to private resource as expected");
 
     // Workspace reader cannot write object to bucket
-    try {
-      workspaceReaderStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
-      throw new IllegalStateException("Workspace reader was able to write to private bucket");
-    } catch (StorageException storageException) {
-      assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-      logger.info("Workspace reader cannot write to private resource as expected");
-    }
+    StorageException readerCannotWriteBucket =
+        assertThrows(
+            StorageException.class,
+            () -> workspaceReaderStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes()),
+            "Workspace reader was able to write to private bucket");
+    assertEquals(readerCannotWriteBucket.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    logger.info("Workspace reader cannot write to private resource as expected");
 
     // Private resource user can write object to bucket
     Blob createdBlob = privateUserStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
@@ -143,29 +144,29 @@ public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScri
 
     // Private user can read their bucket
     Blob retrievedBlob = privateUserStorageClient.get(blobId);
-    assertThat(retrievedBlob, equalTo(createdBlob));
+    assertEquals(retrievedBlob, createdBlob);
     logger.info("Private resource user can read {} from bucket", retrievedBlob.getName());
 
     // TODO(PF-633): workspace owners can read from private buckets via "roles/storage.admin" and
     //  "roles/viewer"
     // // Owner cannot read the bucket contents
-    // try {
-    //   ownerStorageClient.get(blobId);
-    //   throw new IllegalStateException("Workspace owner was able to read private bucket");
-    // } catch (StorageException storageException) {
-    //   assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-    //   logger.info("Workspace owner cannot read from private bucket as expected");
-    // }
+    // StorageException ownerCannotReadPrivateBucket =
+    //     assertThrows(
+    //         StorageException.class,
+    //         () -> ownerStorageClient.get(blobId),
+    //         "Workspace owner was able to read private bucket");
+    // assertEquals(ownerCannotReadPrivateBucket.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    // logger.info("Workspace owner cannot read from private bucket as expected");
 
     // TODO(PF-633): workspace readers can read from private buckets via "roles/viewer".
     // // Workspace reader also cannot read private bucket contents
-    // try {
-    //   workspaceReaderStorageClient.get(blobId);
-    //   throw new IllegalStateException("Workspace reader was able to read private bucket");
-    // } catch (StorageException storageException) {
-    //   assertThat(storageException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-    //   logger.info("Workspace reader cannot read from private bucket as expected");
-    // }
+    // StorageException readerCannotReadPrivateBucket =
+    //     assertThrows(
+    //         StorageException.class,
+    //         () -> workspaceReaderStorageClient.get(blobId),
+    //         "Workspace reader was able to read private bucket");
+    // assertEquals(readerCannotReadPrivateBucket.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    // logger.info("Workspace reader cannot read from private bucket as expected");
 
     // Private resource user can delete the blob they created earlier.
     privateUserStorageClient.delete(blobId);
@@ -174,37 +175,36 @@ public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScri
     // Private resource user cannot delete bucket, as they are not an editor
     ControlledGcpResourceApi privateResourceUserWsmClient =
         ClientTestUtils.getControlledGcpResourceClient(privateResourceUser, server);
-    try {
-      deleteBucketAttempt(privateResourceUserWsmClient, resourceId);
-      throw new IllegalStateException("non-editor private resource user was able to delete bucket");
-    } catch (ApiException apiException) {
-      assertThat(apiException.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-      logger.info("Private resource user cannot to delete bucket");
-    }
+    ApiException userCannotDeleteBucket =
+        assertThrows(
+            ApiException.class,
+            () -> deleteBucket(privateResourceUserWsmClient, resourceId),
+            "Non-editor private resource user was able to delete bucket");
+    assertEquals(userCannotDeleteBucket.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    logger.info("Private resource user cannot to delete bucket");
 
     // Owner can delete the bucket through WSM
-    var ownerDeleteResult = deleteBucketAttempt(resourceApi, resourceId);
+    var ownerDeleteResult = deleteBucket(resourceApi, resourceId);
     logger.info(
         "For owner, delete bucket status is {}",
         ownerDeleteResult.getJobReport().getStatus().toString());
-    assertThat(
-        ownerDeleteResult.getJobReport().getStatus(), equalTo(JobReport.StatusEnum.SUCCEEDED));
+    assertEquals(ownerDeleteResult.getJobReport().getStatus(), JobReport.StatusEnum.SUCCEEDED);
 
     // verify the bucket was deleted from WSM metadata
-    try {
-      resourceApi.getBucket(getWorkspaceId(), resourceId);
-      throw new IllegalStateException("Incorrectly found a deleted bucket!");
-    } catch (ApiException ex) {
-      assertThat(ex.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
-    }
+    ApiException bucketIsMissing =
+        assertThrows(
+            ApiException.class,
+            () -> resourceApi.getBucket(getWorkspaceId(), resourceId),
+            "Incorrectly found a deleted bucket!");
+    assertEquals(bucketIsMissing.getCode(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
 
     // also verify it was deleted from GCP
     Bucket maybeBucket = ownerStorageClient.get(bucketName);
-    assertThat(maybeBucket, Matchers.is(Matchers.nullValue()));
+    assertNull(maybeBucket);
   }
 
-  private CreatedControlledGcsBucket attemptCreatePrivateBucket(
-      ControlledGcpResourceApi resourceApi) throws Exception {
+  private CreatedControlledGcsBucket createPrivateBucket(ControlledGcpResourceApi resourceApi)
+      throws Exception {
     String jobId = UUID.randomUUID().toString();
     var creationParameters =
         new GcsBucketCreationParameters()
@@ -246,7 +246,7 @@ public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScri
     return bucket;
   }
 
-  private DeleteControlledGcsBucketResult deleteBucketAttempt(
+  private DeleteControlledGcsBucketResult deleteBucket(
       ControlledGcpResourceApi resourceApi, UUID resourceId) throws Exception {
     String deleteJobId = UUID.randomUUID().toString();
     var deleteRequest =
@@ -259,14 +259,5 @@ public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScri
       result = resourceApi.getDeleteBucketResult(getWorkspaceId(), deleteJobId);
     }
     return result;
-  }
-
-  @Override
-  protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-      throws ApiException {
-    super.doCleanup(testUsers, workspaceApi);
-    if (bucketName != null) {
-      logger.warn("Test failed to cleanup bucket " + bucketName);
-    }
   }
 }

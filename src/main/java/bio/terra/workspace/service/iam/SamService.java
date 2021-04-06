@@ -12,6 +12,7 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.stage.StageService;
+import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -333,7 +334,9 @@ public class SamService {
    * return the email of that group.
    *
    * <p>This should only be called for controlled resources which require permissions granted to
-   * individual users, i.e. private or application-controlled resources.
+   * individual users, i.e. private or application-controlled resources. All other cases are handled
+   * by the permissions that workspace-level roles inherit on resources, and do not use the policies
+   * synced by this function.
    *
    * <p>This operation in Sam is idempotent, so we don't worry about calling this multiple times.
    *
@@ -343,10 +346,16 @@ public class SamService {
    * @return
    */
   @Traced
-  public String syncResourcePolicy(
+  public String syncPrivateResourcePolicy(
       ControlledResource resource,
       ControlledResourceIamRole role,
       AuthenticatedUserRequest userReq) {
+    // TODO: in the future, this function will also be called for application managed resources,
+    //  including app-shared. This check should be modified appropriately.
+    if (resource.getAccessScope() != AccessScopeType.ACCESS_SCOPE_PRIVATE) {
+      throw new InternalLogicException(
+          "syncPrivateResourcePolicy should not be called for shared resources!");
+    }
     String group =
         syncPolicyOnObject(
             SamControlledResourceNames.get(resource.getAccessScope(), resource.getManagedBy()),

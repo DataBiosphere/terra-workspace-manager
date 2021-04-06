@@ -34,13 +34,13 @@ public class SyncResourceSamGroupsStep implements Step {
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(
         ControlledResourceKeys.IAM_RESOURCE_EDITOR_GROUP_EMAIL,
-        samService.syncResourcePolicy(resource, ControlledResourceIamRole.EDITOR, userReq));
+        samService.syncPrivateResourcePolicy(resource, ControlledResourceIamRole.EDITOR, userReq));
     workingMap.put(
         ControlledResourceKeys.IAM_RESOURCE_WRITER_GROUP_EMAIL,
-        samService.syncResourcePolicy(resource, ControlledResourceIamRole.WRITER, userReq));
+        samService.syncPrivateResourcePolicy(resource, ControlledResourceIamRole.WRITER, userReq));
     workingMap.put(
         ControlledResourceKeys.IAM_RESOURCE_READER_GROUP_EMAIL,
-        samService.syncResourcePolicy(resource, ControlledResourceIamRole.READER, userReq));
+        samService.syncPrivateResourcePolicy(resource, ControlledResourceIamRole.READER, userReq));
     return StepResult.getStepResultSuccess();
   }
 

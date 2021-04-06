@@ -51,7 +51,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
   public void testCreatesBucket() throws RetryException, InterruptedException {
     CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
-            mockCrlService, ControlledResourceFixtures.BUCKET_RESOURCE, FAKE_PROJECT_ID);
+            mockCrlService, ControlledResourceFixtures.BUCKET_RESOURCE, mockWorkspaceService);
 
     when(mockCrlService.createStorageCow(FAKE_PROJECT_ID, mockUserRequest))
         .thenReturn(mockStorageCow);

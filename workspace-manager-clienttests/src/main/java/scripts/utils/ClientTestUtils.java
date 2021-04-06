@@ -93,8 +93,8 @@ public class ClientTestUtils {
       logger.debug(
           "Fetching credentials and building Workspace Manager ApiClient object for test user: {}",
           testUser.name);
-      // TODO: TestRunner caches delegated credentials by TestUser, ignoring scopes. This should
-      //  change, but for now I include all scopes we'll need on this user in the first call.
+      // TODO(PF-657): TestRunner caches delegated credentials by TestUser, ignoring scopes. This
+      //  should change, but for now I include all scopes we'll need on this user in the first call.
       GoogleCredentials userCredential =
           AuthenticationUtils.getDelegatedUserCredential(testUser, FULL_OAUTH_SCOPES);
       accessToken = AuthenticationUtils.getAccessToken(userCredential);

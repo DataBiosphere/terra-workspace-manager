@@ -5,8 +5,8 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 
 /**
  * Static mappings of workspace-level IAM roles to resource-level IAM roles.
@@ -29,47 +29,37 @@ import com.google.common.collect.ImmutableMap;
 public class ControlledResourceInheritanceMapping {
   // Currently, shared resources have the same permission inheritance regardless of whether they
   // are user- or application-controlled. This list is pulled out separately as a convenience.
-  private static final ImmutableMap<WsmIamRole, ImmutableList<ControlledResourceIamRole>>
-      SHARED_RESOURCE_MAPPING =
-          ImmutableMap.of(
+  private static final Multimap<WsmIamRole, ControlledResourceIamRole> SHARED_RESOURCE_MAPPING =
+      new ImmutableMultimap.Builder<WsmIamRole, ControlledResourceIamRole>()
+          .putAll(
+              WsmIamRole.OWNER, ControlledResourceIamRole.EDITOR, ControlledResourceIamRole.WRITER)
+          .putAll(
+              WsmIamRole.WRITER, ControlledResourceIamRole.EDITOR, ControlledResourceIamRole.WRITER)
+          .putAll(WsmIamRole.READER, ControlledResourceIamRole.READER)
+          .build();
+
+  private static final Multimap<WsmIamRole, ControlledResourceIamRole> USER_SHARED_MAPPING =
+      SHARED_RESOURCE_MAPPING;
+
+  private static final Multimap<WsmIamRole, ControlledResourceIamRole> APPLICATION_SHARED_MAPPING =
+      SHARED_RESOURCE_MAPPING;
+
+  // Applications and readers have no permissions on private resources, and MultiMaps ignore keys
+  // without values, so we do not add them here.
+  private static final Multimap<WsmIamRole, ControlledResourceIamRole> USER_PRIVATE_MAPPING =
+      new ImmutableMultimap.Builder<WsmIamRole, ControlledResourceIamRole>()
+          .putAll(
               WsmIamRole.OWNER,
-              ImmutableList.of(ControlledResourceIamRole.EDITOR, ControlledResourceIamRole.WRITER),
-              WsmIamRole.WRITER,
-              ImmutableList.of(ControlledResourceIamRole.EDITOR, ControlledResourceIamRole.WRITER),
-              // Applications are granted permissions individually, not as a role.
-              WsmIamRole.APPLICATION,
-              ImmutableList.of(),
-              WsmIamRole.READER,
-              ImmutableList.of(ControlledResourceIamRole.READER));
+              ControlledResourceIamRole.ASSIGNER,
+              ControlledResourceIamRole.EDITOR)
+          .putAll(WsmIamRole.WRITER, ControlledResourceIamRole.EDITOR)
+          .build();
 
-  public static final ImmutableMap<WsmIamRole, ImmutableList<ControlledResourceIamRole>>
-      USER_SHARED_MAPPING = SHARED_RESOURCE_MAPPING;
-
-  public static final ImmutableMap<WsmIamRole, ImmutableList<ControlledResourceIamRole>>
-      APPLICATION_SHARED_MAPPING = SHARED_RESOURCE_MAPPING;
-
-  public static final ImmutableMap<WsmIamRole, ImmutableList<ControlledResourceIamRole>>
-      USER_PRIVATE_MAPPING =
-          ImmutableMap.of(
-              WsmIamRole.OWNER,
-              ImmutableList.of(
-                  ControlledResourceIamRole.ASSIGNER, ControlledResourceIamRole.EDITOR),
-              WsmIamRole.WRITER,
-              ImmutableList.of(ControlledResourceIamRole.EDITOR),
-              // Applications and readers have no permissions on private resources.
-              WsmIamRole.APPLICATION,
-              ImmutableList.of(),
-              WsmIamRole.READER,
-              ImmutableList.of());
-
-  public static final ImmutableMap<WsmIamRole, ImmutableList<ControlledResourceIamRole>>
-      APPLICATION_PRIVATE_MAPPING =
-          ImmutableMap.of(
-              WsmIamRole.OWNER, ImmutableList.of(ControlledResourceIamRole.EDITOR),
-              WsmIamRole.WRITER, ImmutableList.of(ControlledResourceIamRole.EDITOR),
-              // Applications and readers have no permissions on private resources.
-              WsmIamRole.APPLICATION, ImmutableList.of(),
-              WsmIamRole.READER, ImmutableList.of());
+  private static final Multimap<WsmIamRole, ControlledResourceIamRole> APPLICATION_PRIVATE_MAPPING =
+      new ImmutableMultimap.Builder<WsmIamRole, ControlledResourceIamRole>()
+          .putAll(WsmIamRole.OWNER, ControlledResourceIamRole.EDITOR)
+          .putAll(WsmIamRole.WRITER, ControlledResourceIamRole.EDITOR)
+          .build();
 
   /**
    * Returns the resource-level roles that each workspace-level role inherits on the specified
@@ -78,8 +68,8 @@ public class ControlledResourceInheritanceMapping {
    * @return A map whose keys are workspace-level roles and values are the corresponding inherited
    *     resource-level roles for the specified resource category.
    */
-  public static ImmutableMap<WsmIamRole, ImmutableList<ControlledResourceIamRole>>
-      getInheritanceMapping(AccessScopeType accessScope, ManagedByType managedBy) {
+  public static Multimap<WsmIamRole, ControlledResourceIamRole> getInheritanceMapping(
+      AccessScopeType accessScope, ManagedByType managedBy) {
     if (accessScope == AccessScopeType.ACCESS_SCOPE_SHARED) {
       if (managedBy == ManagedByType.MANAGED_BY_USER) {
         return USER_SHARED_MAPPING;
@@ -95,7 +85,7 @@ public class ControlledResourceInheritanceMapping {
     }
     throw new InternalLogicException(
         String.format(
-            "Inheritance map not specified for access scope %s and ManagedByType %s",
+            "Inheritance map not specified for AccessScopeType %s and ManagedByType %s",
             accessScope.toString(), managedBy.toString()));
   }
 }

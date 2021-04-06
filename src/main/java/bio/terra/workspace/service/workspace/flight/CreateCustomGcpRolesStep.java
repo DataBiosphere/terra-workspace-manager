@@ -7,7 +7,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.service.resource.controlled.CustomGcpIamRole;
+import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRole;
 import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRoleMapping;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.iam.v1.model.CreateRoleRequest;
@@ -31,7 +31,7 @@ public class CreateCustomGcpRolesStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     String projectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
-    for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES) {
+    for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES.values()) {
       try {
         Role gcpRole = new Role().setIncludedPermissions(customRole.getIncludedPermissions());
         CreateRoleRequest request =

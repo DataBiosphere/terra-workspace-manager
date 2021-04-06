@@ -6,8 +6,9 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.CustomGcpIamRole;
 import bio.terra.workspace.service.resource.controlled.mappings.ControlledResourceInheritanceMapping;
+import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRole;
+import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRoleMapping;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.cloud.Binding;
@@ -153,20 +154,11 @@ public class ControlledResourceCloudSyncUtils {
       ControlledResourceIamRole resourceRole,
       String projectId,
       String memberIdentifier) {
+    CustomGcpIamRole customRole =
+        CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES.get(resourceType, resourceRole);
     return Binding.newBuilder()
-        .setRole(fullyQualifiedRoleName(resourceType, resourceRole, projectId))
+        .setRole(customRole.getFullyQualifiedRoleName(projectId))
         .setMembers(Collections.singletonList(memberIdentifier))
         .build();
-  }
-
-  /**
-   * Return the name of the GCP custom IAM role defined for a given resource role and resource type.
-   * This is the same naming function used when building the roles at project creation time, which
-   * ensures they exist and that their names match here.
-   */
-  private static String fullyQualifiedRoleName(
-      WsmResourceType resourceType, ControlledResourceIamRole role, String projectId) {
-    String roleName = CustomGcpIamRole.customGcpRoleName(resourceType, role);
-    return String.format("projects/%s/roles/%s", projectId, roleName);
   }
 }

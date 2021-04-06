@@ -17,7 +17,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.CustomGcpIamRole;
+import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRole;
 import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRoleMapping;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
@@ -145,7 +145,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
    * CustomGcpIamRoleMapping}
    */
   private void assertRolesExist(Project project) throws IOException {
-    for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES) {
+    for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES.values()) {
       String fullRoleName =
           "projects/" + project.getProjectId() + "/roles/" + customRole.getRoleName();
       Role gcpRole = crl.getIamCow().projects().roles().get(fullRoleName).execute();

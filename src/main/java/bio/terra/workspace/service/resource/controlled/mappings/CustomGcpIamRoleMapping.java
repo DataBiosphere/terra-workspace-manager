@@ -2,10 +2,10 @@ package bio.terra.workspace.service.resource.controlled.mappings;
 
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.WsmResourceType;
-import bio.terra.workspace.service.resource.controlled.CustomGcpIamRole;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableTable;
+import com.google.common.collect.Table;
 import java.util.Collections;
 
 /**
@@ -73,42 +73,68 @@ public class CustomGcpIamRoleMapping {
           "bigquery.tables.delete",
           "bigquery.tables.update");
 
-  // The ASSIGNER resource does not grant GCP permissions, only Sam permissions. It's included in
+  // The ASSIGNER role does not grant GCP permissions, only Sam permissions. It's included in
   // this map for completeness.
-  public static final ImmutableSet<CustomGcpIamRole> CUSTOM_GCP_IAM_ROLES =
-      ImmutableSet.of(
-          // GCS bucket
-          new CustomGcpIamRole(
-              WsmResourceType.GCS_BUCKET,
-              ControlledResourceIamRole.READER,
-              GCS_BUCKET_READER_PERMISSIONS),
-          new CustomGcpIamRole(
-              WsmResourceType.GCS_BUCKET,
-              ControlledResourceIamRole.WRITER,
-              GCS_BUCKET_WRITER_PERMISSIONS),
-          new CustomGcpIamRole(
-              WsmResourceType.GCS_BUCKET,
-              ControlledResourceIamRole.EDITOR,
-              GCS_BUCKET_EDITOR_PERMISSIONS),
-          new CustomGcpIamRole(
-              WsmResourceType.GCS_BUCKET,
-              ControlledResourceIamRole.ASSIGNER,
-              Collections.emptyList()),
-          // BigQuery dataset
-          new CustomGcpIamRole(
-              WsmResourceType.BIG_QUERY_DATASET,
-              ControlledResourceIamRole.READER,
-              BIG_QUERY_DATASET_READER_PERMISSIONS),
-          new CustomGcpIamRole(
-              WsmResourceType.BIG_QUERY_DATASET,
-              ControlledResourceIamRole.WRITER,
-              BIG_QUERY_DATASET_WRITER_PERMISSIONS),
-          new CustomGcpIamRole(
-              WsmResourceType.BIG_QUERY_DATASET,
-              ControlledResourceIamRole.EDITOR,
-              BIG_QUERY_DATASET_EDITOR_PERMISSIONS),
-          new CustomGcpIamRole(
-              WsmResourceType.BIG_QUERY_DATASET,
-              ControlledResourceIamRole.ASSIGNER,
-              Collections.emptyList()));
+  public static final Table<WsmResourceType, ControlledResourceIamRole, CustomGcpIamRole>
+      CUSTOM_GCP_IAM_ROLES =
+          new ImmutableTable.Builder<WsmResourceType, ControlledResourceIamRole, CustomGcpIamRole>()
+              // GCS bucket
+              .put(
+                  WsmResourceType.GCS_BUCKET,
+                  ControlledResourceIamRole.READER,
+                  new CustomGcpIamRole(
+                      WsmResourceType.GCS_BUCKET,
+                      ControlledResourceIamRole.READER,
+                      GCS_BUCKET_READER_PERMISSIONS))
+              .put(
+                  WsmResourceType.GCS_BUCKET,
+                  ControlledResourceIamRole.WRITER,
+                  new CustomGcpIamRole(
+                      WsmResourceType.GCS_BUCKET,
+                      ControlledResourceIamRole.WRITER,
+                      GCS_BUCKET_WRITER_PERMISSIONS))
+              .put(
+                  WsmResourceType.GCS_BUCKET,
+                  ControlledResourceIamRole.EDITOR,
+                  new CustomGcpIamRole(
+                      WsmResourceType.GCS_BUCKET,
+                      ControlledResourceIamRole.EDITOR,
+                      GCS_BUCKET_EDITOR_PERMISSIONS))
+              .put(
+                  WsmResourceType.GCS_BUCKET,
+                  ControlledResourceIamRole.ASSIGNER,
+                  new CustomGcpIamRole(
+                      WsmResourceType.GCS_BUCKET,
+                      ControlledResourceIamRole.ASSIGNER,
+                      Collections.emptyList()))
+              // BigQuery dataset
+              .put(
+                  WsmResourceType.BIG_QUERY_DATASET,
+                  ControlledResourceIamRole.READER,
+                  new CustomGcpIamRole(
+                      WsmResourceType.BIG_QUERY_DATASET,
+                      ControlledResourceIamRole.READER,
+                      BIG_QUERY_DATASET_READER_PERMISSIONS))
+              .put(
+                  WsmResourceType.BIG_QUERY_DATASET,
+                  ControlledResourceIamRole.WRITER,
+                  new CustomGcpIamRole(
+                      WsmResourceType.BIG_QUERY_DATASET,
+                      ControlledResourceIamRole.WRITER,
+                      BIG_QUERY_DATASET_WRITER_PERMISSIONS))
+              .put(
+                  WsmResourceType.BIG_QUERY_DATASET,
+                  ControlledResourceIamRole.EDITOR,
+                  new CustomGcpIamRole(
+                      WsmResourceType.BIG_QUERY_DATASET,
+                      ControlledResourceIamRole.EDITOR,
+                      BIG_QUERY_DATASET_EDITOR_PERMISSIONS))
+              .put(
+                  WsmResourceType.BIG_QUERY_DATASET,
+                  ControlledResourceIamRole.ASSIGNER,
+                  new CustomGcpIamRole(
+                      WsmResourceType.BIG_QUERY_DATASET,
+                      ControlledResourceIamRole.ASSIGNER,
+                      Collections.emptyList()))
+              .build();
 }
