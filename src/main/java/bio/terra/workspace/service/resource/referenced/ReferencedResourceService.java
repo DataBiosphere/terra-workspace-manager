@@ -61,7 +61,8 @@ public class ReferencedResourceService {
                 resource,
                 userReq)
             .addParameter(
-                WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, resource.getResourceType());
+                WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE,
+                resource.getResourceType().name());
 
     UUID resourceIdResult = createJob.submitAndWait(UUID.class);
     if (!resourceIdResult.equals(resource.getResourceId())) {

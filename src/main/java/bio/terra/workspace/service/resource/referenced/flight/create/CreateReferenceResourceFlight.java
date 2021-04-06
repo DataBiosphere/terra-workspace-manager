@@ -16,8 +16,8 @@ public class CreateReferenceResourceFlight extends Flight {
 
     // Perform access verification separately by resource type
     WsmResourceType resourceType =
-        inputParameters.get(
-            WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, WsmResourceType.class);
+        WsmResourceType.valueOf(
+            inputParameters.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, String.class));
     switch (resourceType) {
       case BIG_QUERY_DATASET:
         addStep(new CreateReferenceVerifyAccessBigQueryDatasetStep(appContext.getCrlService()));

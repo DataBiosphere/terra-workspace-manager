@@ -74,14 +74,15 @@ public class WorkspaceService {
         jobService
             .newJob(
                 description, workspaceRequest.jobId(), WorkspaceCreateFlight.class, null, userReq)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceRequest.workspaceId());
+            .addParameter(
+                WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceRequest.workspaceId().toString());
     if (workspaceRequest.spendProfileId().isPresent()) {
       createJob.addParameter(
           WorkspaceFlightMapKeys.SPEND_PROFILE_ID, workspaceRequest.spendProfileId().get().id());
     }
 
     createJob.addParameter(
-        WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceRequest.workspaceStage());
+        WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceRequest.workspaceStage().name());
 
     createJob.addParameter(
         WorkspaceFlightMapKeys.DISPLAY_NAME_ID, workspaceRequest.displayName().orElse(""));
@@ -168,8 +169,9 @@ public class WorkspaceService {
                 WorkspaceDeleteFlight.class,
                 null, // Delete does not have a useful request body
                 userReq)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage());
+            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id.toString())
+            .addParameter(
+                WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
     deleteJob.submitAndWait(null);
   }
 
@@ -213,7 +215,7 @@ public class WorkspaceService {
             CreateGcpContextFlight.class,
             /* request= */ null,
             userReq)
-        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
         .addParameter(
             WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendProfile.billingAccountId().get())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
@@ -236,7 +238,7 @@ public class WorkspaceService {
             DeleteGcpContextFlight.class,
             /* request= */ null,
             userReq)
-        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
         .submitAndWait(null);
   }
 
