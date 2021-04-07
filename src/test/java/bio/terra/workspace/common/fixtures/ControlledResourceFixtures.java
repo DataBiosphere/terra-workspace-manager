@@ -12,10 +12,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInsta
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import java.time.Instant;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -50,9 +47,7 @@ public class ControlledResourceFixtures {
                   .type(ApiGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS))
           .condition(
               new ApiGcsBucketLifecycleRuleCondition()
-                  .createdBefore(
-                      OffsetDateTime.ofInstant(
-                          Instant.parse("2007-01-03T00:00:00.00Z"), ZoneOffset.UTC))
+                  .createdBefore(OffsetDateTime.parse("2007-01-03T00:00:00.00Z"))
                   .addMatchesStorageClassItem(ApiGcsBucketDefaultStorageClass.STANDARD));
   // list must not be immutable if deserialization is to work
   static final List<ApiGcsBucketLifecycleRule> LIFECYCLE_RULES =
