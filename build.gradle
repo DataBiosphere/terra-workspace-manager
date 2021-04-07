@@ -72,7 +72,7 @@ dependencies {
 	// hk2 is required for datarepo client, but not correctly included
 	implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2", version: "2.32"
 	implementation group: "bio.terra", name: "stairway", version: "0.0.41-SNAPSHOT"
-	implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.25-SNAPSHOT"
+	implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.37-SNAPSHOT"
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-billing', version: '0.4.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery', version: '0.4.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager', version: '0.4.0'
