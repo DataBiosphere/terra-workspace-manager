@@ -29,7 +29,10 @@ public class SyncSamGroupsStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     UUID workspaceId =
-        flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+        UUID.fromString(
+            flightContext
+                .getInputParameters()
+                .get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     AuthenticatedUserRequest userReq =
         flightContext
             .getInputParameters()
