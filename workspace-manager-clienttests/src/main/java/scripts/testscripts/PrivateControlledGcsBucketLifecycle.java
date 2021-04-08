@@ -41,9 +41,10 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
-import scripts.utils.GcpCloudContextTestScriptBase;
+import scripts.utils.CloudContextMaker;
+import scripts.utils.WorkspaceAllocateTestScriptBase;
 
-public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScriptBase {
+public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger =
       LoggerFactory.getLogger(PrivateControlledGcsBucketLifecycle.class);
   private static final long CREATE_BUCKET_POLL_SECONDS = 5;
@@ -79,6 +80,8 @@ public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScri
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
 
+    String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+
     ControlledGcpResourceApi resourceApi =
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
 
@@ -93,11 +96,11 @@ public class PrivateControlledGcsBucketLifecycle extends GcpCloudContextTestScri
     assertEquals(gotBucket.getBucketName(), bucket.getGcpBucket().getBucketName());
     assertEquals(gotBucket.getBucketName(), bucketName);
 
-    Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, getProjectId());
+    Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, projectId);
     Storage privateUserStorageClient =
-        ClientTestUtils.getGcpStorageClient(privateResourceUser, getProjectId());
+        ClientTestUtils.getGcpStorageClient(privateResourceUser, projectId);
     Storage workspaceReaderStorageClient =
-        ClientTestUtils.getGcpStorageClient(workspaceReader, getProjectId());
+        ClientTestUtils.getGcpStorageClient(workspaceReader, projectId);
 
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(workspaceReader.userEmail),

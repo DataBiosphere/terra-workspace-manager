@@ -9,7 +9,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 
 /**
- * Static mappings of workspace-level IAM roles to resource-level IAM roles.
+ * Static mappings of the resource-level IAM roles inherited by workspace-level IAM roles.
  *
  * <p>This mapping represents which resource-level roles are granted to workspace members based on
  * their workspace-level role. This mapping is slightly different for each category of controlled
@@ -21,12 +21,17 @@ import com.google.common.collect.Multimap;
  * below, where WsmIamRole.READER maps to ControlledResourceIamRole.READER for shared resources but
  * that entry is not present for private resources.
  *
- * <p>This maps workspace roles to the resource roles, which are used for granting cloud
- * permissions. Sam also has a similar mapping configured for granting Sam permissions. If you
- * change this map, also check that mapping:
+ * <p>This mapping is implemented in Sam using hierarchical resources: workspaces are "parent"
+ * objects, and controlled resources are "child" objects which inherit permissions from the
+ * workspace. As part of this, Sam also has a similar mapping configured for granting permissions.
+ * If you change this map, also check the definitions of the reader, writer, and editor roles on
+ * 'workspace' resources in that mapping:
  * https://github.com/broadinstitute/sam/blob/develop/src/main/resources/reference.conf
  */
 public class ControlledResourceInheritanceMapping {
+
+  private ControlledResourceInheritanceMapping() {}
+
   // Currently, shared resources have the same permission inheritance regardless of whether they
   // are user- or application-controlled. This list is pulled out separately as a convenience.
   private static final Multimap<WsmIamRole, ControlledResourceIamRole> SHARED_RESOURCE_MAPPING =

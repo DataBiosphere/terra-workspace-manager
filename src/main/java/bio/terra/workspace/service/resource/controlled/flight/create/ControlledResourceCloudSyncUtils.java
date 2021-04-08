@@ -13,7 +13,9 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.cloud.Binding;
 import com.google.cloud.Policy;
+import com.google.common.collect.Multimap;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -128,10 +130,11 @@ public class ControlledResourceCloudSyncUtils {
    */
   private static List<Binding> bindingsForWorkspaceRole(
       ControlledResource resource, WsmIamRole workspaceRole, String group, String projectId) {
-    return ControlledResourceInheritanceMapping.getInheritanceMapping(
-            resource.getAccessScope(), resource.getManagedBy())
-        .get(workspaceRole)
-        .stream()
+    Multimap<WsmIamRole, ControlledResourceIamRole> roleInheritanceMap =
+        ControlledResourceInheritanceMapping.getInheritanceMapping(
+            resource.getAccessScope(), resource.getManagedBy());
+    Collection<ControlledResourceIamRole> resourceRoles = roleInheritanceMap.get(workspaceRole);
+    return resourceRoles.stream()
         .map(
             resourceRole ->
                 buildBinding(resource.getResourceType(), resourceRole, projectId, group))

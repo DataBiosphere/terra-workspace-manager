@@ -335,8 +335,8 @@ public class SamService {
    *
    * <p>This should only be called for controlled resources which require permissions granted to
    * individual users, i.e. private or application-controlled resources. All other cases are handled
-   * by the permissions that workspace-level roles inherit on resources, and do not use the policies
-   * synced by this function.
+   * by the permissions that workspace-level roles inherit on resources via Sam's hierarchical
+   * resources, and do not use the policies synced by this function.
    *
    * <p>This operation in Sam is idempotent, so we don't worry about calling this multiple times.
    *
@@ -373,11 +373,11 @@ public class SamService {
   /**
    * Common implementation for syncing a policy to a Google group on an object in Sam.
    *
-   * @param resourceTypeName The type of the Sam object, as configured with Sam.
-   * @param resourceId The ID of the resource to sync a policy for
+   * @param resourceTypeName The type of the Sam resource, as configured with Sam.
+   * @param resourceId The Sam ID of the resource to sync a policy for
    * @param policyName The name of the policy to sync
    * @param userReq User credentials to pass to Sam
-   * @return The name of the Google group whose membership is synced to the specified policy.
+   * @return The Google group whose membership is synced to the specified policy.
    */
   private String syncPolicyOnObject(
       String resourceTypeName,
