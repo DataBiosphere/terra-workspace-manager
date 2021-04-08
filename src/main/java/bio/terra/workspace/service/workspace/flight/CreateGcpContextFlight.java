@@ -37,7 +37,8 @@ public class CreateGcpContextFlight extends Flight {
             BUFFER_MAX_INTERVAL_SECONDS,
             BUFFER_MAX_OPERATION_TIME_SECONDS);
 
-    UUID workspaceId = inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    UUID workspaceId =
+        UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     AuthenticatedUserRequest userReq =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 

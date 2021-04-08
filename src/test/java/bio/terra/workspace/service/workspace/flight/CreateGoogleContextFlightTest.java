@@ -134,7 +134,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   private static FlightMap createInputParameters(
       UUID workspaceId, String billingAccountId, AuthenticatedUserRequest userReq) {
     FlightMap inputs = new FlightMap();
-    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
+    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
     inputs.put(WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, billingAccountId);
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userReq);
     return inputs;
