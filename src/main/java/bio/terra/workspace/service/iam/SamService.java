@@ -40,6 +40,7 @@ import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
 import org.broadinstitute.dsde.workbench.client.sam.model.SubsystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -403,18 +404,20 @@ public class SamService {
    * across the four types of controlled resources.
    */
   @Traced
-  public List<UUID> listControlledResourceIds(
-      AuthenticatedUserRequest userReq, String controlledResourceName) {
+  public List<String> listControlledResourceIds(
+      AuthenticatedUserRequest userReq, String samResourceTypeName) {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
-    List<UUID> workspaceIds = new ArrayList<>();
+    List<String> controlledResourceIds = new ArrayList<>();
     try {
-      for (var resourceAndPolicy : resourceApi.listResourcesAndPolicies(controlledResourceName)) {
-        workspaceIds.add(UUID.fromString(resourceAndPolicy.getResourceId()));
+      List<UserResourcesResponse> userResources =
+          resourceApi.listResourcesAndPoliciesV2(samResourceTypeName);
+      for (UserResourcesResponse userResource : userResources) {
+        controlledResourceIds.add(userResource.getResourceId());
       }
     } catch (ApiException samException) {
       throw new SamApiException(samException);
     }
-    return workspaceIds;
+    return controlledResourceIds;
   }
 
   public ApiSystemStatusSystems status() {

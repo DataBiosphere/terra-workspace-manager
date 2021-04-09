@@ -1,10 +1,5 @@
 package scripts.testscripts;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.lessThan;
-
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
@@ -20,10 +15,6 @@ import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +22,16 @@ import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.ResourceMaker;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
 
 public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(EnumerateResources.class);
@@ -43,8 +44,6 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
   // Page size to use for enumeration paging
   private static final int PAGE_SIZE = 4;
 
-  // Control whether the test logs the results of the enumeration call.
-  // It is nice to eyeball the results, but might be noisy.
   private ControlledGcpResourceApi controlledGcpResourceApi;
   private ReferencedGcpResourceApi referencedGcpResourceApi;
   private ResourceApi resourceApi;
@@ -110,11 +109,11 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
     logResult("page3", page3List);
     assertThat(page3List.getResources().size(), lessThan(PAGE_SIZE));
 
-    List<ResourceDescription> descList = new ArrayList<>();
-    descList.addAll(page1List.getResources());
-    descList.addAll(page2List.getResources());
-    descList.addAll(page3List.getResources());
-    matchFullResourceList(descList);
+    List<ResourceDescription> descriptionList = new ArrayList<>();
+    descriptionList.addAll(page1List.getResources());
+    descriptionList.addAll(page2List.getResources());
+    descriptionList.addAll(page3List.getResources());
+    matchFullResourceList(descriptionList);
 
     // Case 3: no results if offset is too high
     ResourceList enumEmptyList =
@@ -165,8 +164,8 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
                         && m.getResourceType() == ResourceType.GCS_BUCKET))
             .count();
     logger.info("Counted {} controlled buckets created", expectedControlledBuckets);
-    long actualControlledBucket = controlledBucketList.getResources().size();
-    assertThat(actualControlledBucket, equalTo(expectedControlledBuckets));
+    long actualControlledBuckets = controlledBucketList.getResources().size();
+    assertThat(actualControlledBuckets, equalTo(expectedControlledBuckets));
   }
 
   @Override
@@ -265,20 +264,10 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
 
         case 3:
           {
-            GcpBigQueryDatasetResource resource =
-                ResourceMaker.makeBigQueryReference(referencedGcpResourceApi, workspaceId, name);
-            resourceList.add(resource.getMetadata());
-            /*
-            TODO: REVIEWERS: something isn't working right with the permissions on controlled resources
-             Either the query in ResourceDao is broken or the permissions are not getting
-             setup properly. I probably don't have time to debug it before we leave for
-             vacation. So in the interest of getting this code in sooner, changing this
-             test to only make referenced resources.
             GcpGcsBucketResource resource =
                 ResourceMaker.makeControlledGcsBucketUserShared(
                     controlledGcpResourceApi, workspaceId, name);
             resourceList.add(resource.getMetadata());
-            */
             break;
           }
       }

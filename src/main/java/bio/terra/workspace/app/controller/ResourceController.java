@@ -70,21 +70,21 @@ public class ResourceController implements ResourceApi {
     List<WsmResource> wsmResources =
         resourceService.enumerateResources(
             workspaceId,
-            WsmResourceType.fromApi(resource),
-            StewardshipType.fromApi(stewardship),
+            WsmResourceType.fromApiOptional(resource),
+            StewardshipType.fromApiOptional(stewardship),
             offset,
             limit,
             userRequest);
 
     List<ApiResourceDescription> apiResourceDescriptionList =
-        wsmResources.stream().map(this::toApiModel).collect(Collectors.toList());
+        wsmResources.stream().map(this::makeApiResourceDescription).collect(Collectors.toList());
 
     var apiResourceList = new ApiResourceList().resources(apiResourceDescriptionList);
     return new ResponseEntity<>(apiResourceList, HttpStatus.OK);
   }
 
   // Convert a WsmResource into the API format for enumeration
-  private ApiResourceDescription toApiModel(WsmResource wsmResource) {
+  private ApiResourceDescription makeApiResourceDescription(WsmResource wsmResource) {
 
     ApiResourceMetadata common = wsmResource.toApiMetadata();
     var union = new ApiResourceAttributesUnion();
@@ -117,7 +117,7 @@ public class ResourceController implements ResourceApi {
 
           default:
             throw new InternalLogicException(
-                "Unknown resource type: " + wsmResource.getResourceType());
+                "Unknown referenced resource type: " + wsmResource.getResourceType());
         }
         break; // referenced
 
@@ -131,11 +131,14 @@ public class ResourceController implements ResourceApi {
               break;
             }
 
-          case BIG_QUERY_DATASET:
-          case DATA_REPO_SNAPSHOT:
-          default:
+          case BIG_QUERY_DATASET: // will be implemented soon
+          case DATA_REPO_SNAPSHOT: // there is a use case for this, but low priority
             throw new InternalLogicException(
                 "Unimplemented controlled resource type: " + wsmResource.getResourceType());
+
+          default:
+            throw new InternalLogicException(
+                "Unknown controlled resource type: " + wsmResource.getResourceType());
         }
         break; // controlled
 

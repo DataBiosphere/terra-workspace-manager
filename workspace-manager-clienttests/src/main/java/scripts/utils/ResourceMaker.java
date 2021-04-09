@@ -1,9 +1,5 @@
 package scripts.utils;
 
-import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_NAME;
-import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_PROJECT;
-import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
-
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.client.ApiException;
@@ -34,12 +30,17 @@ import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.ReferenceResourceCommonFields;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_NAME;
+import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_PROJECT;
+import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
 
 // Static methods to create resources
 public class ResourceMaker {
@@ -55,7 +56,7 @@ public class ResourceMaker {
             .metadata(
                 new ReferenceResourceCommonFields()
                     .cloningInstructions(CloningInstructionsEnum.NOTHING)
-                    .description("Descriptiono of " + name)
+                    .description("Description of " + name)
                     .name(name))
             .dataset(
                 new GcpBigQueryDatasetAttributes()
@@ -73,7 +74,7 @@ public class ResourceMaker {
             .metadata(
                 new ReferenceResourceCommonFields()
                     .cloningInstructions(CloningInstructionsEnum.NOTHING)
-                    .description("Descriptiono of " + name)
+                    .description("Description of " + name)
                     .name(name))
             .snapshot(
                 new DataRepoSnapshotAttributes()
@@ -91,7 +92,7 @@ public class ResourceMaker {
             .metadata(
                 new ReferenceResourceCommonFields()
                     .cloningInstructions(CloningInstructionsEnum.NOTHING)
-                    .description("Descriptiono of " + name)
+                    .description("Description of " + name)
                     .name(name))
             .bucket(new GcpGcsBucketAttributes().bucketName(TEST_BUCKET_NAME));
 
@@ -166,7 +167,7 @@ public class ResourceMaker {
     }
     logger.info("Delete bucket status is {}", result.getJobReport().getStatus().toString());
     if (result.getJobReport().getStatus() != JobReport.StatusEnum.SUCCEEDED) {
-      throw new RuntimeException("Delte bucket failed: " + result.getErrorReport().getMessage());
+      throw new RuntimeException("Delete bucket failed: " + result.getErrorReport().getMessage());
     }
   }
 }

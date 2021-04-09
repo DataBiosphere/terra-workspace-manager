@@ -297,7 +297,8 @@ paths:
     get:
       summary: |
         Enumerate resources in a workspace. The visible resources depend on the permissions of the caller.
-        These are presented sorted by ascending resource name.
+        These are presented sorted by ascending resource name. The offset and limit parameters allow paging
+        through the results. You can also filter by a resource type and by a stewardship type.
       operationId: enumerateResources
       tags: [Resource]
       responses:
@@ -867,7 +868,7 @@ components:
     ReferenceId:
       name: referenceId
       in: path
-      description: A UUID used to identify a data reference in a workspace.
+      description: (DEPRECATED) A UUID used to identify a data reference in a workspace.
       required: true
       schema:
         type: string
@@ -877,7 +878,7 @@ components:
     ReferenceType:
       name: referenceType
       in: path
-      description: The type of a data reference in a workspace
+      description: (DEPRECATED) The type of a data reference in a workspace
       required: true
       schema:
         $ref: '#/components/schemas/ReferenceTypeEnum'
@@ -979,6 +980,7 @@ components:
     ### DEPRECATED SCHEMAS ###
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     CreateDataReferenceRequestBody:
+      deprecated: true
       type: object
       required: [name, cloningInstructions]
       properties:
@@ -1000,9 +1002,10 @@ components:
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceRequestMetadata:
+      deprecated: true
       type: object
       required: [name, cloningInstructions]
-      description: Common information shared across all types of data reference requests.
+      description: (DEPRECATED) Common information shared across all types of data reference requests.
       properties:
         ## TODO: This is not implemented as a name. It used as if it is a snapshot identifier (UUID)
         ##   So either this is a misnomer, or we are doing it wrong.
@@ -1016,6 +1019,7 @@ components:
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceDescription:
+      deprecated: true
       type: object
       required: [referenceId, name, description, workspaceId, cloningInstructions]
       properties:
@@ -1046,8 +1050,9 @@ components:
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     ReferenceTypeEnum:
+      deprecated: true
       type: string
-      description: The type of a reference, if an uncontrolled resource
+      description: (DEPRECATED) The type of a reference, if an uncontrolled resource
       # TODO: swagger-codegen always looks for and removes a common prefix for
       # enum values, which breaks enums that only have a single value.
       # PLACEHOLDER_VALUE should be removed when we have an actual second value
@@ -1056,6 +1061,7 @@ components:
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceList:
+      deprecated: true
       type: object
       required: [resources]
       properties:
@@ -1067,6 +1073,7 @@ components:
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     UpdateDataReferenceRequestBody:
+      deprecated: true
       type: object
       properties:
         name:
@@ -1076,9 +1083,10 @@ components:
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceMetadata:
+      deprecated: true
       type: object
       required: [referenceId, name, workspaceId, cloningInstructions]
-      description: Information common across all types of references.
+      description: (DEPRECATED) Information common across all types of references.
       properties:
         referenceId:
           description: The ID of the data reference
@@ -1100,7 +1108,7 @@ components:
     DataRepoSnapshotReference:
       deprecated: true
       type: object
-      description: A reference to a Data Repo snapshot.
+      description: (DEPRECATED) A reference to a Data Repo snapshot.
       required: [metadata, snapshot]
       properties:
         metadata:
@@ -1110,7 +1118,8 @@ components:
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataRepoSnapshot:
-      description: A reference to a snapshot in Data Repo.
+      deprecated: true
+      description: (DEPRECATED) A reference to a snapshot in Data Repo.
       type: object
       required: [instanceName, snapshot]
       properties:
@@ -1123,7 +1132,8 @@ components:
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DeprecatedResourceDescription:
-      description: Description of the workspace resource, if this is a controlled reference.
+      deprecated: true
+      description: (DEPRECATED) Description of the workspace resource, if this is a controlled reference.
       type: object
       required: [resourceId, workspaceId, isVisible]
       properties:
@@ -1658,16 +1668,98 @@ components:
           $ref: '#/components/schemas/ErrorReport'
 
     ## Cloud Resource, Attribute, and Enumeration structures ##
+    ## Resources and attributes are in alphabetical order
+    ## followed by enumerations in alphabetical order.
 
-    ResourceList:
+    ControlledResourceMetadata:
       type: object
-      required: [resources]
       properties:
-        resources:
-          description: Enumerated list of controlled and referenced resources
-          type: array
-          items:
-            $ref: '#/components/schemas/ResourceDescription'
+        accessScope:
+          $ref: '#/components/schemas/AccessScope'
+        managedBy:
+          $ref: '#/components/schemas/ManagedBy'
+        privateResourceUser:
+          $ref: '#/components/schemas/PrivateResourceUser'
+
+    DataRepoSnapshotAttributes:
+      description: Attributes of a data repository snapshot
+      type: object
+      required: [instanceName, snapshot]
+      properties:
+        instanceName:
+          description: The name of the Data Repo instance
+          type: string
+        snapshot:
+          description: The ID of the Data Repo snapshot
+          type: string
+
+    DataRepoSnapshotResource:
+      deprecated: true
+      type: object
+      description: A Data Repo snapshot resource
+      required: [metadata, snapshot]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/DataRepoSnapshotAttributes'
+
+    GcpBigQueryDatasetAttributes:
+      description: Attributes of a BigQuery dataset
+      type: object
+      required: [projectId, datasetId]
+      properties:
+        projectId:
+          type: string
+        datasetId:
+          type: string
+
+    GcpBigQueryDatasetResource:
+      type: object
+      description: A reference to a BigQuery dataset.
+      required: [metadata, dataset]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
+
+    GcpGcsBucketAttributes:
+      description: >-
+        Bucket properties included in post-creation, get, and update. Others must be
+        retrieved from GCS using the name.
+      type: object
+      properties:
+        bucketName:
+          description: Name of created bucket (not the resource name).
+          type: string
+
+    GcpGcsBucketResource:
+      type: object
+      description: Description of a GCS bucket.
+      required: [metadata, attributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/GcpGcsBucketAttributes'
+
+    ResourceAttributesUnion:
+      type: object
+      description: |
+        This object contains a reference to an object for each resource type.
+        Exactly one will be populated based on the ResourceType in the
+        ResourceDescription. The value of the other references is undefined.
+      properties:
+        gcpBigQuery:
+          $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
+        gcpDataRepoSnapshot:
+          $ref: '#/components/schemas/DataRepoSnapshotAttributes'
+        gcpGcsBucket:
+          $ref: '#/components/schemas/GcpGcsBucketAttributes'
 
     ResourceDescription:
       type: object
@@ -1678,6 +1770,16 @@ components:
         resourceAttributes:
           description: Data specific to the type of resource and whether it is controlled or not
           $ref: '#/components/schemas/ResourceAttributesUnion'
+
+    ResourceList:
+      type: object
+      required: [resources]
+      properties:
+        resources:
+          description: Enumerated list of controlled and referenced resources
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceDescription'
 
     ResourceMetadata:
       type: object
@@ -1704,98 +1806,7 @@ components:
           description: Present if stewardship type is CONTROLLED
           $ref: '#/components/schemas/ControlledResourceMetadata'
 
-    ControlledResourceMetadata:
-      type: object
-      properties:
-        accessScope:
-          $ref: '#/components/schemas/AccessScope'
-        managedBy:
-          $ref: '#/components/schemas/ManagedBy'
-        privateResourceUser:
-          $ref: '#/components/schemas/PrivateResourceUser'
-
-    ResourceAttributesUnion:
-      type: object
-      description: |
-        There is a reference to an object for each resource type. Exactly one will be populated
-        based on the ResourceType in the ResourceDescription
-      properties:
-        gcpBigQuery:
-          $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
-        gcpDataRepoSnapshot:
-          $ref: '#/components/schemas/DataRepoSnapshotAttributes'
-        gcpGcsBucket:
-          $ref: '#/components/schemas/GcpGcsBucketAttributes'
-
-    GcpGcsBucketResource:
-      type: object
-      description: Description of a GCS bucket.
-      required: [metadata, attributes]
-      properties:
-        metadata:
-          description: the resource metadata common to all resources
-          $ref: '#/components/schemas/ResourceMetadata'
-        attributes:
-          $ref: '#/components/schemas/GcpGcsBucketAttributes'
-
-    GcpGcsBucketAttributes:
-      description: >-
-        Bucket properties included in post-creation, get, and update. Others must be
-        retrieved from GCS using the name.
-      type: object
-      properties:
-        bucketName:
-          description: Name of created bucket (not the resource nmae).
-          type: string
-
-    GcpBigQueryDatasetResource:
-      type: object
-      description: A reference to a BigQuery dataset.
-      required: [metadata, dataset]
-      properties:
-        metadata:
-          description: the resource metadata common to all resources
-          $ref: '#/components/schemas/ResourceMetadata'
-        attributes:
-          $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
-
-    GcpBigQueryDatasetAttributes:
-      description: Attributes of a BigQuery dataset
-      type: object
-      required: [projectId, datasetId]
-      properties:
-        projectId:
-          type: string
-        datasetId:
-          type: string
-
-    DataRepoSnapshotResource:
-      deprecated: true
-      type: object
-      description: A Data Repo snapshot resource
-      required: [metadata, snapshot]
-      properties:
-        metadata:
-          description: the resource metadata common to all resources
-          $ref: '#/components/schemas/ResourceMetadata'
-        attributes:
-          $ref: '#/components/schemas/DataRepoSnapshotAttributes'
-
-    DataRepoSnapshotAttributes:
-      description: Attributes of a data repository snapshot
-      type: object
-      required: [instanceName, snapshot]
-      properties:
-        instanceName:
-          description: The name of the Data Repo instance
-          type: string
-        snapshot:
-          description: The ID of the Data Repo snapshot
-          type: string
-
-    # NOTE TO REVIEWERS: I have started collecting enumerations here and alphabetizing them.
-    # The ones I moved are the ones most related to resources. Is this a useful organization,
-    # or should we leave others (like the IAM ones) in other places?
+    # Enumerations (related to resources) in alphabetical order.
     AccessScope:
       type: string
       description: Specifies the resource as shared or private
@@ -1816,10 +1827,7 @@ components:
       description: Specifies the controller of the resource, workspace users or an application
       enum: [ 'USER', 'APPLICATION' ]
 
-    ## NOTE TO REVIEWERS: this varies from the approach I took in the code where we do not assume
-    ## that the data associated with a referenced resource is the same as the controlled resource.
-    ## The stakes are higher here for getting it wrong.
-    ## Let me know what you think!
+    # The resource types are common to both stewardship types
     ResourceType:
       description: Enum containing valid resource types. Used for enumeration
       type: string

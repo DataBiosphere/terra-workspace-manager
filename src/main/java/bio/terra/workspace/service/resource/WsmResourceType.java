@@ -10,6 +10,7 @@ import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapsho
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;
 
@@ -69,13 +70,15 @@ public enum WsmResourceType {
   }
 
   /**
-   * Convert from api type to WsmResourceType. In some contexts, the API input can be null, so if
-   * the input is null we return null and leave it to the caller to raise any error.
+   * Convert from an optional api type to WsmResourceType. This method handles the case where the
+   * API input is optional/can be null. If the input is null we return null and leave it to the
+   * caller to raise any error.
    *
    * @param apiResourceType incoming resource type or null
    * @return valid resource type; null if input is null
    */
-  public static WsmResourceType fromApi(ApiResourceType apiResourceType) {
+  public static @Nullable WsmResourceType fromApiOptional(
+      @Nullable ApiResourceType apiResourceType) {
     if (apiResourceType == null) {
       return null;
     }

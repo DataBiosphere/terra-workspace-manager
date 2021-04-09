@@ -99,8 +99,9 @@ public abstract class WsmResource {
   public abstract String attributesToJson();
 
   /**
-   * Create the part of the common resource description that comes from this class. Subclasses
-   * should override this and fill in their specific info.
+   * The API metadata object contains the data for both referenced and controlled resources. This
+   * class fills in the common part. Referenced resources have no additional data to fill in.
+   * Controlled resources overrides this method to fill in the controlled resource specifics.
    *
    * @return partially constructed Api Model common resource description
    */

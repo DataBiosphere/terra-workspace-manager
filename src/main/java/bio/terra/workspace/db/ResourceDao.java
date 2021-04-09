@@ -3,6 +3,7 @@ package bio.terra.workspace.db;
 import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
+import static java.util.stream.Collectors.toList;
 
 import bio.terra.workspace.db.exception.CloudContextRequiredException;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
@@ -24,11 +25,10 @@ import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapsho
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -138,10 +138,24 @@ public class ResourceDao {
     return dbResourceList.stream()
         .map(this::constructResource)
         .map(ReferencedResource.class::cast)
-        .collect(Collectors.toList());
+        .collect(toList());
   }
 
   /**
+   * Resource enumeration
+   *
+   * <p>The default behavior of resource enumeration is to find all resources that are visible to
+   * the caller. If the caller has gotten this far, then they are allowed to see all referenced
+   * resources. We know which controlled resources they are allowed to see from the list provided as
+   * input.
+   *
+   * <p>The enumeration can be filtered by a resource type. If a resource type is specified, then
+   * only that type of resource is returned.
+   *
+   * <p>The enumeration can also be filtered by a stewardship type. The implementation of the
+   * stewardship type filter is more complex than simply filtering by type. That is because the
+   * placeholder substitution for the IN list yields invalid SQL if the list is empty.
+   *
    * @param workspaceId identifier for work space to enumerate
    * @param controlledResourceIds identifiers of controlled resources visible to the caller
    * @param resourceType filter by this resource type - optional
@@ -156,18 +170,22 @@ public class ResourceDao {
       readOnly = true)
   public List<WsmResource> enumerateResources(
       UUID workspaceId,
-      List<UUID> controlledResourceIds,
+      @Nullable List<String> controlledResourceIds,
       @Nullable WsmResourceType resourceType,
       @Nullable StewardshipType stewardshipType,
       int offset,
       int limit) {
-    List<UUID> idList = Optional.ofNullable(controlledResourceIds).orElse(new ArrayList<>());
 
+    // We supply the toSql() forms of the stewardship values as parameters, so that string is only
+    // defined in one place. We do not always use the stewardship values, but there is no harm
+    // in having extra params.
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("offset", offset)
-            .addValue("limit", limit);
+            .addValue("limit", limit)
+            .addValue("referenced_resource", REFERENCED.toSql())
+            .addValue("controlled_resource", CONTROLLED.toSql());
 
     StringBuilder sb = new StringBuilder(RESOURCE_SELECT_SQL);
     if (resourceType != null) {
@@ -176,16 +194,16 @@ public class ResourceDao {
     }
 
     // There are three cases for the stewardship type filter
-    // 1. If it is REFERENCED, then we ignore idList and just filter
+    // 1. If it is REFERENCED, then we ignore id list and just filter
     //    for referenced resources.
-    // 2. If it is CONTROLLED, and the idList is not empty, then we filter for
-    //    CONTROLLED and require that the resources be in the idList.
-    // 3. If it is null, then we want the OR of 1 and 2
-    // Note that we supply the constant value as a parameter so that the SQL form
-    // is defined in exactly one place.
+    // 2. If it is CONTROLLED, and the id list is not empty, then we filter for
+    //    CONTROLLED and require that the resources be in the id list.
+    // 3. If no filter is specified (it is null), then we want both REFERENCED
+    //    and CONTROLLED resources; that is, we want the OR of 1 and 2
     boolean includeReferenced = (stewardshipType == null || stewardshipType == REFERENCED);
     boolean includeControlled =
-        (!idList.isEmpty() && (stewardshipType == null || (stewardshipType == CONTROLLED)));
+        ((controlledResourceIds != null && !controlledResourceIds.isEmpty())
+            && (stewardshipType == null || (stewardshipType == CONTROLLED)));
 
     final String referencedPhrase = "stewardship_type = :referenced_resource";
     final String controlledPhrase =
@@ -194,25 +212,21 @@ public class ResourceDao {
     sb.append(" AND ");
     if (includeReferenced && includeControlled) {
       sb.append("(").append(referencedPhrase).append(" OR ").append(controlledPhrase).append(")");
-      params.addValue("referenced_resource", REFERENCED.toSql());
-      params.addValue("controlled_resource", CONTROLLED.toSql());
-      params.addValue("id_list", idList);
+      params.addValue("id_list", controlledResourceIds);
     } else if (includeReferenced) {
       sb.append(referencedPhrase);
-      params.addValue("referenced_resource", REFERENCED.toSql());
     } else if (includeControlled) {
       sb.append(controlledPhrase);
-      params.addValue("controlled_resource", CONTROLLED.toSql());
-      params.addValue("id_list", idList);
+      params.addValue("id_list", controlledResourceIds);
     } else {
       // Nothing is included, so we return an empty result
-      return new ArrayList<WsmResource>();
+      return Collections.emptyList();
     }
     sb.append(" ORDER BY name OFFSET :offset LIMIT :limit");
     List<DbResource> dbResourceList =
         jdbcTemplate.query(sb.toString(), params, DB_RESOURCE_ROW_MAPPER);
 
-    return dbResourceList.stream().map(this::constructResource).collect(Collectors.toList());
+    return dbResourceList.stream().map(this::constructResource).collect(toList());
   }
 
   /**

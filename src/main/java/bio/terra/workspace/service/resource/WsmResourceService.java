@@ -47,7 +47,7 @@ public class WsmResourceService {
     // controlled_application_shared, controlled_application_private). Then we can make a single
     // query that will return all referenced resources and only controlled resources filtered by Sam
     // visibility.
-    List<UUID> controlledResourceIds = new ArrayList<>();
+    List<String> controlledResourceIds = new ArrayList<>();
     controlledResourceIds.addAll(
         samService.listControlledResourceIds(
             userRequest,
