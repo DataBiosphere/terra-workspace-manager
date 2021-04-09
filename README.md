@@ -167,20 +167,15 @@ Workspace Manager publishes an API client library based on the OpenAPI Spec v3.
 
 ### Usage (Gradle)
 ```gradle
-implementation(group: 'bio.terra', name: 'terra-workspace-manager-client', version: '0.11.0-SNAPSHOT')
+implementation(group: 'bio.terra', name: 'terra-workspace-manager-client', version: 'x.x.x')
 ```
+See [build.gradle](build.gradle) for current version information.
 
 Note that the publishing of this artifact is currently manual. Whenever the OpenAPI definitions change,
 we should publish a new version of this library to artifactory. Backwards compatible changes should
 have a minor version bump, and breaking changes should have a major version bump. We will try to avoid
 breaking changes at all costs.
 
-### Publishing
-
-To publish, you will need to export the `ARTIFACTORY_USERNAME` and `ARTIFACTORY_PASSWORD` environment variables for the Broad artifactory. To build and publish:
-
-```sh
-./gradlew workspace-manager-client:artifactoryPublish
-```
+See the Publishing section of [DEVELOPMENT.md](DEVELOPMENT.md#publishing) for more information on publishing new releases.
 blah
 foo
