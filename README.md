@@ -183,3 +183,4 @@ To publish, you will need to export the `ARTIFACTORY_USERNAME` and `ARTIFACTORY_
 ./gradlew workspace-manager-client:artifactoryPublish
 ```
 blah
+foo
