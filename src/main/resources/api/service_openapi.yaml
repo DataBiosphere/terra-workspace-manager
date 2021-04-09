@@ -1514,7 +1514,6 @@ components:
           $ref: "#/components/schemas/Name"
         description:
           type: string
-          default: ""
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
 

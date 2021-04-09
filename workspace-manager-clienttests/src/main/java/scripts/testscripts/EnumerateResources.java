@@ -171,7 +171,6 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
   @Override
   protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
-    super.doCleanup(testUsers, workspaceApi);
     // Delete the controlled buckets
     for (ResourceMetadata metadata : resourceList) {
       if (metadata.getStewardshipType() == StewardshipType.CONTROLLED
@@ -180,6 +179,8 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
             metadata.getResourceId(), getWorkspaceId(), controlledGcpResourceApi);
       }
     }
+    // Cleanup the workspace after we cleanup the the buckets!
+    super.doCleanup(testUsers, workspaceApi);
   }
 
   private void logResult(String tag, ResourceList resourceList) {

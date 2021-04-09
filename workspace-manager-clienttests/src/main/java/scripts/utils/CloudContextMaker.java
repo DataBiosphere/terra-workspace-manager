@@ -1,19 +1,18 @@
 package scripts.utils;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.model.CloudPlatform;
 import bio.terra.workspace.model.CreateCloudContextRequest;
 import bio.terra.workspace.model.CreateCloudContextResult;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CloudContextMaker {
   private static final Logger logger = LoggerFactory.getLogger(CloudContextMaker.class);
@@ -34,8 +33,7 @@ public class CloudContextMaker {
       TimeUnit.SECONDS.sleep(CREATE_CONTEXT_POLL_SECONDS);
       contextResult = workspaceApi.getCreateCloudContextResult(workspaceId, contextJobId);
     }
-    logger.info(
-        "Create GCP context status is {}", contextResult.getJobReport().getStatus());
+    logger.info("Create GCP context status is {}", contextResult.getJobReport().getStatus());
     assertThat(contextResult.getJobReport().getStatus(), equalTo(JobReport.StatusEnum.SUCCEEDED));
   }
 

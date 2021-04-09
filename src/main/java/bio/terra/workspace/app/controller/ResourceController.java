@@ -20,18 +20,20 @@ import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapsho
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 // TODO: GENERAL - add request validation
 
@@ -84,7 +86,8 @@ public class ResourceController implements ResourceApi {
   }
 
   // Convert a WsmResource into the API format for enumeration
-  private ApiResourceDescription makeApiResourceDescription(WsmResource wsmResource) {
+  @VisibleForTesting
+  public ApiResourceDescription makeApiResourceDescription(WsmResource wsmResource) {
 
     ApiResourceMetadata common = wsmResource.toApiMetadata();
     var union = new ApiResourceAttributesUnion();
