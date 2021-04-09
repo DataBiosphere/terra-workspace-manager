@@ -72,8 +72,6 @@ workspace:
     username: ${env.db.ws.user}
 
 terra.common:
-  kubernetes:
-    in-kubernetes: true
   stairway:
     cluster-name-suffix: workspace-stairway
     force-clean-start: false # ${env.db.init}

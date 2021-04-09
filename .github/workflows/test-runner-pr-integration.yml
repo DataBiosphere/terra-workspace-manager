@@ -71,6 +71,8 @@ jobs:
 
     # Spin up a local server.
     - name: Run local server (in background)
+      env:
+        TERRA_COMMON_KUBERNETES_IN_KUBERNETES: false
       run: ./gradlew bootRun &
     - name: Wait for local server to start
       # With a timeout of 300 seconds, try to connect to localhost:8080 every 1 second.
