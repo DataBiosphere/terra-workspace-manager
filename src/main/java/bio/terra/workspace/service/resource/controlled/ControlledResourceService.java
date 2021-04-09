@@ -17,6 +17,7 @@ import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,8 +105,8 @@ public class ControlledResourceService {
                 DeleteControlledResourceGcsBucketFlight.class,
                 null,
                 userRequest)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
-            .addParameter(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, resourceId)
+            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
+            .addParameter(ResourceKeys.RESOURCE_ID, resourceId.toString())
             .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
 
     return jobBuilder.submit();

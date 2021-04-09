@@ -49,7 +49,7 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
     UUID workspaceId = createWorkspace();
     FlightMap createParameters = new FlightMap();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
-    createParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
+    createParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
     createParameters.put(
         WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendUtils.defaultBillingAccountId());
     createParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userReq);
@@ -73,7 +73,7 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
 
     // Delete the google context.
     FlightMap deleteParameters = new FlightMap();
-    deleteParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
+    deleteParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
     flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
@@ -97,7 +97,7 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
     assertTrue(workspace.getGcpCloudContext().isEmpty());
 
     FlightMap inputParameters = new FlightMap();
-    inputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
+    inputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),

@@ -27,7 +27,8 @@ public class DeleteWorkspaceAuthzStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
-    UUID workspaceID = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    UUID workspaceID =
+        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     try {
       samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);
     } catch (SamApiException e) {

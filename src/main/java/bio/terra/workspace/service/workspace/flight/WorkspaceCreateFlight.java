@@ -19,7 +19,8 @@ public class WorkspaceCreateFlight extends Flight {
     AuthenticatedUserRequest userReq =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     WorkspaceStage workspaceStage =
-        inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStage.class);
+        WorkspaceStage.valueOf(
+            inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, String.class));
 
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
     // resource or not, as indicated by the workspace stage enum.
