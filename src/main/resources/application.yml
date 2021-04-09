@@ -71,16 +71,17 @@ workspace:
     uri: ${env.db.host}/${env.db.ws.name}
     username: ${env.db.ws.user}
 
-terra:
-  common:
-    tracing:
-        stackdriverExportEnabled: ${env.tracing.exportEnabled}
-        samplingRate: ${env.tracing.samplingRate}
-    stairway:
-      cluster-name-suffix: workspace-stairway
-      force-clean-start: false # ${env.db.init}
-      max-parallel-flights: 50
-      migrate-upgrade: false # true
-      quiet-down-timeout: 30s
-      terminate-timeout: 30s
-      tracing-enabled: true
+terra.common:
+  kubernetes:
+    in-kubernetes: true
+  stairway:
+    cluster-name-suffix: workspace-stairway
+    force-clean-start: false # ${env.db.init}
+    max-parallel-flights: 50
+    migrate-upgrade: false # true
+    quiet-down-timeout: 30s
+    terminate-timeout: 30s
+    tracing-enabled: true
+  tracing:
+    stackdriverExportEnabled: ${env.tracing.exportEnabled}
+    samplingRate: ${env.tracing.samplingRate}

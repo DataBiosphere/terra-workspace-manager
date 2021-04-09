@@ -30,10 +30,12 @@ workspace:
     password: dbpwd
     uri: jdbc:postgresql://127.0.0.1:5432/testdb
     username: dbuser
-terra:
-  common:
-    stairway:
-      force-clean-start: true
-      migrate-upgrade: false
-    tracing:
-      stackdriverExportEnabled: false
+
+terra.common:
+  kubernetes:
+    in-kubernetes: false
+  tracing:
+    stackdriverExportEnabled: false
+  stairway:
+    force-clean-start: true
+    migrate-upgrade: false
