@@ -35,5 +35,5 @@ terra:
     stairway:
       force-clean-start: true
       migrate-upgrade: false
-  tracing:
-    stackdriverExportEnabled: false
+    tracing:
+      stackdriverExportEnabled: false
