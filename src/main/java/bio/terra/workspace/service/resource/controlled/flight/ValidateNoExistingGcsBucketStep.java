@@ -21,7 +21,8 @@ public class ValidateNoExistingGcsBucketStep implements Step {
   private final ControlledGcsBucketResource resource;
   private final WorkspaceService workspaceService;
 
-  public ValidateNoExistingGcsBucketStep(CrlService crlService,
+  public ValidateNoExistingGcsBucketStep(
+      CrlService crlService,
       ControlledGcsBucketResource resource,
       WorkspaceService workspaceService) {
     this.crlService = crlService;
