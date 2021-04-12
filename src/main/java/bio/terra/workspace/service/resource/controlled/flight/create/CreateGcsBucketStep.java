@@ -139,6 +139,7 @@ public class CreateGcsBucketStep implements Step {
       return resultBuilder.build();
     }
 
+    @Nullable
     private static DateTime toDateTime(@Nullable OffsetDateTime offsetDateTime) {
       return Optional.ofNullable(offsetDateTime)
           .map(OffsetDateTime::toInstant)
