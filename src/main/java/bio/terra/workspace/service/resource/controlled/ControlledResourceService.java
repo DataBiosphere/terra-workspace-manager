@@ -10,6 +10,7 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceC
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.job.JobService.JobResultOrException;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceGcsBucketFlight;
@@ -44,10 +45,35 @@ public class ControlledResourceService {
     this.stageService = stageService;
   }
 
-  public ControlledResource createControlledResource(
+  public ControlledResource syncCreateControlledResource(
       ControlledResource resource,
       ApiGcsBucketCreationParameters creationParameters,
       List<ControlledResourceIamRole> privateResourceIamRoles,
+      AuthenticatedUserRequest userRequest) {
+    ApiJobControl syncJobControl = new ApiJobControl().id(UUID.randomUUID().toString());
+    String jobId =
+        createControlledResource(
+            resource,
+            creationParameters,
+            privateResourceIamRoles,
+            syncJobControl,
+            null,
+            userRequest);
+    jobService.waitForJob(jobId);
+    JobResultOrException<ControlledResource> jobResult =
+        jobService.retrieveJobResult(jobId, ControlledResource.class, userRequest);
+    if (jobResult.getException() != null) {
+      throw jobResult.getException();
+    }
+    return jobResult.getResult();
+  }
+
+  public String createControlledResource(
+      ControlledResource resource,
+      ApiGcsBucketCreationParameters creationParameters,
+      List<ControlledResourceIamRole> privateResourceIamRoles,
+      ApiJobControl jobControl,
+      String resultPath,
       AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
     workspaceService.validateWorkspaceAndAction(
@@ -63,14 +89,15 @@ public class ControlledResourceService {
         jobService
             .newJob(
                 jobDescription,
-                UUID.randomUUID().toString(),
+                jobControl.getId(),
                 CreateControlledResourceFlight.class,
                 resource,
                 userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters)
             .addParameter(
-                ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, privateResourceIamRoles);
-    return jobBuilder.submitAndWait(ControlledResource.class);
+                ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, privateResourceIamRoles)
+            .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
+    return jobBuilder.submit();
   }
 
   public ControlledResource getControlledResource(

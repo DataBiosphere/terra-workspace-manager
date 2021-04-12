@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.flight;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 
 import bio.terra.stairway.FlightContext;
@@ -25,7 +24,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 
 public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
   @Autowired private WorkspaceDao workspaceDao;
@@ -55,10 +53,8 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(JobMapKeys.REQUEST.getKeyName(), bucketResource);
     inputFlightMap.makeImmutable();
-    final FlightMap workingMap = new FlightMap();
 
     doReturn(inputFlightMap).when(mockFlightContext).getInputParameters();
-    doReturn(workingMap).when(mockFlightContext).getWorkingMap();
 
     final StepResult result = storeGoogleBucketMetadataStep.doStep(mockFlightContext);
     assertThat(result, equalTo(StepResult.getStepResultSuccess()));
@@ -69,12 +65,5 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
 
     ControlledGcsBucketResource daoBucket = (ControlledGcsBucketResource) daoResource;
     assertThat(bucketResource, equalTo(daoBucket));
-
-    ControlledGcsBucketResource flightResult =
-        workingMap.get(JobMapKeys.RESPONSE.getKeyName(), ControlledGcsBucketResource.class);
-    assertEquals(flightResult, bucketResource);
-    HttpStatus flightResponseStatus =
-        workingMap.get(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class);
-    assertEquals(flightResponseStatus, HttpStatus.OK);
   }
 }
