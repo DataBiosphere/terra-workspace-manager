@@ -128,4 +128,11 @@ public class MdcHook implements StairwayHook {
     }
     return mdcContext;
   }
+
+  @Override
+  public HookAction stateTransition(FlightContext context) throws InterruptedException {
+    logger.info(
+        "Flight ID {} changed status to {}.", context.getFlightId(), context.getFlightStatus());
+    return HookAction.CONTINUE;
+  }
 }
