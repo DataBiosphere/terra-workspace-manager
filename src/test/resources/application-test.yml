@@ -1,7 +1,7 @@
 workspace:
   buffer:
     enabled: true
-    pool-id: workspace_manager_v3
+    pool-id: workspace_manager_v6
     instance-url: https://buffer.tools.integ.envs.broadinstitute.org
     client-credential-file-path: rendered/buffer-client-sa-account.json
 
@@ -32,5 +32,10 @@ workspace:
     username: dbuser
 
 terra.common:
+  kubernetes:
+    in-kubernetes: false
   tracing:
     stackdriverExportEnabled: false
+  stairway:
+    force-clean-start: true
+    migrate-upgrade: false
