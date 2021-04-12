@@ -56,8 +56,6 @@ workspace:
   sam.base-path: ${env.urls.sam}
 
   stairway-database:
-    force-clean: ${env.db.init}
-    migrate-upgrade: true
     password: ${env.db.stairway.pass}
     uri: ${env.db.host}/${env.db.stairway.name}
     username: ${env.db.stairway.user}
@@ -74,6 +72,16 @@ workspace:
     username: ${env.db.ws.user}
 
 terra.common:
+  kubernetes:
+    in-kubernetes: false
+  stairway:
+    cluster-name-suffix: workspace-stairway
+    force-clean-start: false # ${env.db.init}
+    max-parallel-flights: 50
+    migrate-upgrade: true
+    quiet-down-timeout: 30s
+    terminate-timeout: 30s
+    tracing-enabled: true
   tracing:
     stackdriverExportEnabled: ${env.tracing.exportEnabled}
     samplingRate: ${env.tracing.samplingRate}

@@ -15,7 +15,7 @@ plugins {
 }
 
 sourceCompatibility = JavaVersion.VERSION_11
-
+def useMavenLocal = false
 allprojects {
 	group = "bio.terra"
 	version = "0.19.0-SNAPSHOT"
@@ -53,6 +53,9 @@ allprojects {
 }
 
 repositories {
+	if (useMavenLocal) {
+		mavenLocal()
+	}
 	maven {
 		// Terra proxy for maven central
 		url "https://broadinstitute.jfrog.io/broadinstitute/maven-central/"
