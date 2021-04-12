@@ -4,8 +4,8 @@ import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.generated.model.ApiBigQueryDatasetReference;
-import bio.terra.workspace.generated.model.ApiGoogleBigQueryDatasetUid;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -61,6 +61,10 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
     this.datasetName = attributes.getDatasetName();
   }
 
+  public static ReferencedBigQueryDatasetResource.Builder builder() {
+    return new ReferencedBigQueryDatasetResource.Builder();
+  }
+
   public String getProjectId() {
     return projectId;
   }
@@ -69,13 +73,16 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
     return datasetName;
   }
 
-  public ApiBigQueryDatasetReference toApiModel() {
-    return new ApiBigQueryDatasetReference()
+  public ApiGcpBigQueryDatasetAttributes toApiAttributes() {
+    return new ApiGcpBigQueryDatasetAttributes()
+        .projectId(getProjectId())
+        .datasetId(getDatasetName());
+  }
+
+  public ApiGcpBigQueryDatasetResource toApiResource() {
+    return new ApiGcpBigQueryDatasetResource()
         .metadata(super.toApiMetadata())
-        .dataset(
-            new ApiGoogleBigQueryDatasetUid()
-                .projectId(getProjectId())
-                .datasetId(getDatasetName()));
+        .attributes(toApiAttributes());
   }
 
   @Override
@@ -97,10 +104,6 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
           "Missing required field for ReferenceBigQueryDatasetAttributes.");
     }
     ValidationUtils.validateBqDatasetName(getDatasetName());
-  }
-
-  public static ReferencedBigQueryDatasetResource.Builder builder() {
-    return new ReferencedBigQueryDatasetResource.Builder();
   }
 
   public static class Builder {
