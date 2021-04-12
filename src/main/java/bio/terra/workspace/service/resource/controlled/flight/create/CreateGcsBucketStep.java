@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.flight.create;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS;
 
+import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -33,9 +34,11 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CreateGcsBucketStep implements Step {
-
+  private static final Logger logger = LoggerFactory.getLogger(CreateGcsBucketStep.class);
   private final CrlService crlService;
   private final ControlledGcsBucketResource resource;
   private final WorkspaceService workspaceService;
@@ -64,7 +67,15 @@ public class CreateGcsBucketStep implements Step {
             .build();
 
     StorageCow storageCow = crlService.createStorageCow(projectId);
-    storageCow.create(bucketInfo);
+
+    // Don't try to create it if it already exists. At this point the assumption is
+    // this is a redo and this step created it already.
+    BucketCow existingBucket = storageCow.get(resource.getBucketName());
+    if (existingBucket == null) {
+      storageCow.create(bucketInfo);
+    } else {
+      logger.info("Bucket {} already exists. Continuing.", resource.getBucketName());
+    }
 
     return StepResult.getStepResultSuccess();
   }
