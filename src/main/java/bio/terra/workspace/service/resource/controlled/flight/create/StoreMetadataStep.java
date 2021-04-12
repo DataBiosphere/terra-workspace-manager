@@ -5,9 +5,11 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import org.springframework.http.HttpStatus;
 
 public class StoreMetadataStep implements Step {
   private final ResourceDao resourceDao;
@@ -24,6 +26,7 @@ public class StoreMetadataStep implements Step {
         inputMap.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
 
     resourceDao.createControlledResource(resource);
+    FlightUtils.setResponse(flightContext, resource, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }
 

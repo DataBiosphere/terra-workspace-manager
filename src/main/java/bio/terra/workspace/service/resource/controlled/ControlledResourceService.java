@@ -44,12 +44,10 @@ public class ControlledResourceService {
     this.stageService = stageService;
   }
 
-  public String createControlledResource(
+  public ControlledResource createControlledResource(
       ControlledResource resource,
       ApiGcsBucketCreationParameters creationParameters,
       List<ControlledResourceIamRole> privateResourceIamRoles,
-      ApiJobControl jobControl,
-      String resultPath,
       AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
     workspaceService.validateWorkspaceAndAction(
@@ -65,15 +63,14 @@ public class ControlledResourceService {
         jobService
             .newJob(
                 jobDescription,
-                jobControl.getId(),
+                UUID.randomUUID().toString(),
                 CreateControlledResourceFlight.class,
                 resource,
                 userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters)
             .addParameter(
-                ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, privateResourceIamRoles)
-            .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
-    return jobBuilder.submit();
+                ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, privateResourceIamRoles);
+    return jobBuilder.submitAndWait(ControlledResource.class);
   }
 
   public ControlledResource getControlledResource(
