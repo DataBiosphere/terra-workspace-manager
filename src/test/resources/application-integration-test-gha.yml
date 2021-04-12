@@ -1,4 +1,0 @@
-terra:
-  common:
-    kubernetes:
-      in-kubernetes: false
