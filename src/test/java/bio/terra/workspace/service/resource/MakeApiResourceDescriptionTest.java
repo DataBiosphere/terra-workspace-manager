@@ -152,7 +152,7 @@ public class MakeApiResourceDescriptionTest  extends BaseUnitTest {
                 managedByType,
                 bucketName);
 
-            ApiResourceDescription resourceDescription = resourceController.makeApiResourceDescription((WsmResource) resource);
+            ApiResourceDescription resourceDescription = resourceController.makeApiResourceDescription(resource);
             validateControlledResource(resourceDescription);
             ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
             ApiGcpGcsBucketAttributes attributes = union.getGcpGcsBucket();
