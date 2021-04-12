@@ -28,7 +28,8 @@ workspace:
       dev: https://workspace.dsde-dev.broadinstitute.org/
       alpha: https://workspace.dsde-alpha.broadinstitute.org/
       staging: https://workspace.dsde-staging.broadinstitute.org/
-terra:
-  common:
-    kubernetes:
-      in-kubernetes: false
+# Did this make a difference?
+#terra:
+#  common:
+#    kubernetes:
+#      in-kubernetes: false
