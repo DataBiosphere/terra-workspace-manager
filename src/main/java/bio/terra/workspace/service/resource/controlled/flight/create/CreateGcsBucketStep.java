@@ -25,9 +25,7 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
 import com.google.cloud.storage.StorageClass;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -141,10 +139,9 @@ public class CreateGcsBucketStep implements Step {
       return resultBuilder.build();
     }
 
-    private static DateTime toDateTime(@Nullable LocalDate localDate) {
-      return Optional.ofNullable(localDate)
-          .map(LocalDate::atStartOfDay)
-          .map(ldt -> ldt.atOffset(ZoneOffset.UTC))
+    @Nullable
+    private static DateTime toDateTime(@Nullable OffsetDateTime offsetDateTime) {
+      return Optional.ofNullable(offsetDateTime)
           .map(OffsetDateTime::toInstant)
           .map(Instant::toEpochMilli)
           .map(DateTime::new)
