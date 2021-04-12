@@ -76,7 +76,7 @@ terra.common:
     cluster-name-suffix: workspace-stairway
     force-clean-start: false # ${env.db.init}
     max-parallel-flights: 50
-    migrate-upgrade: false # true
+    migrate-upgrade: true
     quiet-down-timeout: 30s
     terminate-timeout: 30s
     tracing-enabled: true
