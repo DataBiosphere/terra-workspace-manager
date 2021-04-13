@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,9 @@ import org.slf4j.LoggerFactory;
  * <p>The "modify" part of this step specifically adds GCP bindings as specified in {@link
  * CloudSyncRoleMapping}. Note that the bindings list sent to GCP may contain multiple entries with
  * the same role. This is valid, though GCP will condense them into one binding per role internally.
+ *
+ * <p>TODO(PF-624): this step is only used for granting project-level permissions. Once we
+ * transition to fully using resource-level permissions, this step can be deleted.
  */
 public class GcpCloudSyncStep implements Step {
 
@@ -50,34 +54,25 @@ public class GcpCloudSyncStep implements Step {
       throws InterruptedException, RetryException {
     String gcpProjectName = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
     FlightMap workingMap = flightContext.getWorkingMap();
+    // Read Sam groups for each workspace role. Stairway does not
+    // have a cleaner way of deserializing parameterized types, so we suppress warnings here.
+    @SuppressWarnings("unchecked")
+    Map<WsmIamRole, String> workspaceRoleGroupsMap =
+        workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, Map.class);
     try {
       Policy currentPolicy =
           resourceManagerCow
               .projects()
               .getIamPolicy(gcpProjectName, new GetIamPolicyRequest())
               .execute();
-      List<Binding> existingBindings = currentPolicy.getBindings();
 
-      String readerGroup =
-          gcpGroupNameFromSamEmail(
-              workingMap.get(WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL, String.class));
-      String writerGroup =
-          gcpGroupNameFromSamEmail(
-              workingMap.get(WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL, String.class));
-      String applicationGroup =
-          gcpGroupNameFromSamEmail(
-              workingMap.get(WorkspaceFlightMapKeys.IAM_APPLICATION_GROUP_EMAIL, String.class));
-      String ownerGroup =
-          gcpGroupNameFromSamEmail(
-              workingMap.get(WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL, String.class));
       List<Binding> newBindings = new ArrayList<>();
-      newBindings.addAll(bindingsForRole(WsmIamRole.READER, readerGroup));
-      newBindings.addAll(bindingsForRole(WsmIamRole.WRITER, writerGroup));
-      newBindings.addAll(bindingsForRole(WsmIamRole.APPLICATION, applicationGroup));
-      newBindings.addAll(bindingsForRole(WsmIamRole.OWNER, ownerGroup));
-
       // Add all existing bindings to ensure we don't accidentally clobber existing permissions.
-      newBindings.addAll(existingBindings);
+      newBindings.addAll(currentPolicy.getBindings());
+      for (Map.Entry<WsmIamRole, String> entry : workspaceRoleGroupsMap.entrySet()) {
+        newBindings.addAll(bindingsForRole(entry.getKey(), entry.getValue()));
+      }
+
       Policy newPolicy =
           new Policy()
               .setVersion(currentPolicy.getVersion())
@@ -95,7 +90,7 @@ public class GcpCloudSyncStep implements Step {
   /**
    * GCP expects all groups to be prepended with the literal "group:" in IAM permissions bindings.
    */
-  private String gcpGroupNameFromSamEmail(String samEmail) {
+  private String toMemberIdentifier(String samEmail) {
     return "group:" + samEmail;
   }
 
@@ -103,12 +98,15 @@ public class GcpCloudSyncStep implements Step {
    * Build a list of role bindings for a given group, using CloudSyncRoleMapping.
    *
    * @param role The role granted to this user. Translated to GCP roles using CloudSyncRoleMapping.
-   * @param group The group being granted a role. Should be prefixed with the literal "group:" for
-   *     GCP.
+   * @param email The email of the Google group being granted a role.
    */
-  private List<Binding> bindingsForRole(WsmIamRole role, String group) {
+  private List<Binding> bindingsForRole(WsmIamRole role, String email) {
     return CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(role).stream()
-        .map(gcpRole -> new Binding().setRole(gcpRole).setMembers(Collections.singletonList(group)))
+        .map(
+            gcpRole ->
+                new Binding()
+                    .setRole(gcpRole)
+                    .setMembers(Collections.singletonList(toMemberIdentifier(email))))
         .collect(Collectors.toList());
   }
 

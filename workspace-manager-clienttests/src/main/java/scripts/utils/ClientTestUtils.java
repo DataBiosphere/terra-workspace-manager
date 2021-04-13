@@ -24,6 +24,8 @@ import bio.terra.workspace.model.RoleBindingList;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.List;
@@ -49,7 +51,7 @@ public class ClientTestUtils {
   // - cloud platform
   // - bigquery
   // - gcs
-  private static final List<String> testUserScopes =
+  private static final List<String> TEST_USER_SCOPES =
       List.of("openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
   // "https://www.googleapis.com/auth/bigquery")
   // "https://www.googleapis.com/auth/devstorage.full_control");
@@ -103,14 +105,23 @@ public class ClientTestUtils {
       logger.debug(
           "Fetching credentials and building Workspace Manager ApiClient object for test user: {}",
           testUser.name);
-
-      // refresh the user token
+      // TODO(PF-657): TestRunner caches delegated credentials by TestUser, ignoring scopes. This
+      //  should change, but for now I include all scopes we'll need on this user in the first call.
       GoogleCredentials userCredential =
-          AuthenticationUtils.getDelegatedUserCredential(testUser, testUserScopes);
+          AuthenticationUtils.getDelegatedUserCredential(testUser, TEST_USER_SCOPES);
       accessToken = AuthenticationUtils.getAccessToken(userCredential);
     }
 
     return buildClient(accessToken, server);
+  }
+
+  public static Storage getGcpStorageClient(TestUserSpecification testUser, String projectId)
+      throws IOException {
+    GoogleCredentials userCredential =
+        AuthenticationUtils.getDelegatedUserCredential(testUser, TEST_USER_SCOPES);
+    StorageOptions options =
+        StorageOptions.newBuilder().setCredentials(userCredential).setProjectId(projectId).build();
+    return options.getService();
   }
 
   public static WorkspaceApi getWorkspaceClient(
@@ -119,7 +130,7 @@ public class ClientTestUtils {
     return new WorkspaceApi(apiClient);
   }
 
-  public static ControlledGcpResourceApi getControlledGpcResourceClient(
+  public static ControlledGcpResourceApi getControlledGcpResourceClient(
       TestUserSpecification testUser, ServerSpecification server) throws IOException {
     final ApiClient apiClient = getClientForTestUser(testUser, server);
     return new ControlledGcpResourceApi(apiClient);

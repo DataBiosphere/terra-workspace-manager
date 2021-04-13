@@ -5,6 +5,14 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 
+/**
+ * This mapping describes the project-level GCP roles granted to members of a workspace.
+ *
+ * <p>Granting these roles at the project level was implemented as a temporary workaround to support
+ * objects in a cloud context before controlled resources were built. As controlled resources become
+ * available, roles should be granted directly on controlled resources instead (see {@code
+ * CustomGcpIamRoleMapping}), and should be removed from this list.
+ */
 public class CloudSyncRoleMapping {
   private static final List<String> READER_PERMISSIONS = ImmutableList.of("roles/viewer");
   private static final List<String> WRITER_PERMISSIONS =
