@@ -1,20 +1,19 @@
 package scripts.utils;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.WorkspaceStageModel;
+import java.util.List;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.testscripts.GetWorkspace;
-
-import java.util.List;
-import java.util.UUID;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 
 /**
  * Fixture for tests that use a single workspace as a fixture. The expectation is that the workspace
@@ -92,7 +91,7 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
    */
   @Override
   protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-      throws ApiException {
+      throws Exception {
     workspaceApi.deleteWorkspace(workspaceId);
   }
 

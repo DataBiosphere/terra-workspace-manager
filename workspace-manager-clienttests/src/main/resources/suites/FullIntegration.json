@@ -9,7 +9,8 @@
     "integration/EnumerateDataReferences.json",
     "integration/GetRoles.json",
     "integration/WorkspaceLifecycle.json",
-    "integration/CreateGetDeleteControlledGcsBucket.json"
+    "integration/CreateGetDeleteControlledGcsBucket.json",
+    "integration/EnumerateResources.json"
   ]
 }
 

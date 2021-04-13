@@ -7,6 +7,8 @@ import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
+import bio.terra.workspace.api.ReferencedGcpResourceApi;
+import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
@@ -35,8 +37,22 @@ public class ClientTestUtils {
   public static final String DATA_REFERENCE_NAME_PREFIX = "REF_";
   public static final String TEST_SNAPSHOT = "97b5559a-2f8f-4df3-89ae-5a249173ee0c";
   public static final String TERRA_DATA_REPO_INSTANCE = "terra";
-
+  public static final String TEST_BUCKET_NAME = "terra_wsm_test_resource";
+  public static final String TEST_BQ_DATASET_NAME = "terra_wsm_test_dataset";
+  public static final String TEST_BQ_DATASET_PROJECT = "terra-kernel-k8s";
+  public static final String BUCKET_NAME_PREFIX = "terratest";
   private static final Logger logger = LoggerFactory.getLogger(ClientTestUtils.class);
+
+  // Required scopes for client tests include the usual login scopes.
+  // We need additional scopes for validating access to cloud resources,
+  // including:
+  // - cloud platform
+  // - bigquery
+  // - gcs
+  private static final List<String> testUserScopes =
+      List.of("openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
+  // "https://www.googleapis.com/auth/bigquery")
+  // "https://www.googleapis.com/auth/devstorage.full_control");
 
   private ClientTestUtils() {}
 
@@ -90,8 +106,7 @@ public class ClientTestUtils {
 
       // refresh the user token
       GoogleCredentials userCredential =
-          AuthenticationUtils.getDelegatedUserCredential(
-              testUser, AuthenticationUtils.userLoginScopes);
+          AuthenticationUtils.getDelegatedUserCredential(testUser, testUserScopes);
       accessToken = AuthenticationUtils.getAccessToken(userCredential);
     }
 
@@ -108,6 +123,18 @@ public class ClientTestUtils {
       TestUserSpecification testUser, ServerSpecification server) throws IOException {
     final ApiClient apiClient = getClientForTestUser(testUser, server);
     return new ControlledGcpResourceApi(apiClient);
+  }
+
+  public static ReferencedGcpResourceApi getReferencedGpcResourceClient(
+      TestUserSpecification testUser, ServerSpecification server) throws IOException {
+    final ApiClient apiClient = getClientForTestUser(testUser, server);
+    return new ReferencedGcpResourceApi(apiClient);
+  }
+
+  public static ResourceApi getResourceClient(
+      TestUserSpecification testUser, ServerSpecification server) throws IOException {
+    final ApiClient apiClient = getClientForTestUser(testUser, server);
+    return new ResourceApi(apiClient);
   }
 
   /**
@@ -151,10 +178,11 @@ public class ClientTestUtils {
    * with underscores). This method is useful when creating references on the same workspace from
    * multiple threads.
    *
-   * @return
+   * @return unique data reference name
    */
   public static String getUniqueDataReferenceName() {
-    return DATA_REFERENCE_NAME_PREFIX + UUID.randomUUID().toString().replace("-", "_");
+    String name = DATA_REFERENCE_NAME_PREFIX + UUID.randomUUID().toString();
+    return name.replace("-", "_");
   }
 
   public static DataRepoSnapshot getTestDataRepoSnapshot() {
@@ -192,5 +220,11 @@ public class ClientTestUtils {
 
   public static boolean jobIsRunning(JobReport jobReport) {
     return jobReport.getStatus().equals(JobReport.StatusEnum.RUNNING);
+  }
+
+  /** @return unique test bucket name */
+  public static String getTestBucketName() {
+    String name = BUCKET_NAME_PREFIX + UUID.randomUUID().toString();
+    return name.replace("-", "_");
   }
 }

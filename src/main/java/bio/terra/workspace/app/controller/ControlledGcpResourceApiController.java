@@ -3,11 +3,11 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
-import bio.terra.workspace.generated.model.ApiCreateControlledGcsBucketRequestBody;
-import bio.terra.workspace.generated.model.ApiCreatedControlledGcsBucket;
-import bio.terra.workspace.generated.model.ApiDeleteControlledGcsBucketRequest;
-import bio.terra.workspace.generated.model.ApiDeleteControlledGcsBucketResult;
-import bio.terra.workspace.generated.model.ApiGcsBucketAttributes;
+import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
+import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketRequest;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketResult;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -57,8 +57,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   }
 
   @Override
-  public ResponseEntity<ApiCreatedControlledGcsBucket> createBucket(
-      UUID workspaceId, @Valid ApiCreateControlledGcsBucketRequestBody body) {
+  public ResponseEntity<ApiCreatedControlledGcpGcsBucket> createBucket(
+      UUID workspaceId, @Valid ApiCreateControlledGcpGcsBucketRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     ControlledGcsBucketResource resource =
@@ -109,8 +109,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   }
 
   @Override
-  public ResponseEntity<ApiDeleteControlledGcsBucketResult> deleteBucket(
-      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledGcsBucketRequest body) {
+  public ResponseEntity<ApiDeleteControlledGcpGcsBucketResult> deleteBucket(
+      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledGcpGcsBucketRequest body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ApiJobControl jobControl = body.getJobControl();
     logger.info(
@@ -126,18 +126,18 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   }
 
   @Override
-  public ResponseEntity<ApiDeleteControlledGcsBucketResult> getDeleteBucketResult(
+  public ResponseEntity<ApiDeleteControlledGcpGcsBucketResult> getDeleteBucketResult(
       UUID workspaceId, String jobId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     return getDeleteResult(jobId, userRequest);
   }
 
-  private ResponseEntity<ApiDeleteControlledGcsBucketResult> getDeleteResult(
+  private ResponseEntity<ApiDeleteControlledGcpGcsBucketResult> getDeleteResult(
       String jobId, AuthenticatedUserRequest userRequest) {
     final AsyncJobResult<Void> jobResult =
         jobService.retrieveAsyncJobResult(jobId, Void.class, userRequest);
     var response =
-        new ApiDeleteControlledGcsBucketResult()
+        new ApiDeleteControlledGcpGcsBucketResult()
             .jobReport(jobResult.getJobReport())
             .errorReport(jobResult.getApiErrorReport());
     return new ResponseEntity<>(
@@ -145,39 +145,39 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   }
 
   @Override
-  public ResponseEntity<ApiCreatedControlledGcsBucket> getCreateBucketResult(
+  public ResponseEntity<ApiCreatedControlledGcpGcsBucket> getCreateBucketResult(
       UUID id, String jobId) {
-    final ApiCreatedControlledGcsBucket response = fetchGcsBucketResult(jobId);
+    final ApiCreatedControlledGcpGcsBucket response = fetchGcsBucketResult(jobId);
     return new ResponseEntity<>(
         response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));
   }
 
   @Override
-  public ResponseEntity<ApiGcsBucketAttributes> getBucket(UUID id, UUID resourceId) {
+  public ResponseEntity<ApiGcpGcsBucketResource> getBucket(UUID id, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResource controlledResource =
         controlledResourceService.getControlledResource(id, resourceId, userRequest);
-    ApiGcsBucketAttributes response = controlledResource.castToGcsBucketResource().toApiModel();
+    ApiGcpGcsBucketResource response = controlledResource.castToGcsBucketResource().toApiResource();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
-  private ApiCreatedControlledGcsBucket fetchGcsBucketResult(String jobId) {
+  private ApiCreatedControlledGcpGcsBucket fetchGcsBucketResult(String jobId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final AsyncJobResult<ControlledResource> jobResult =
         jobService.retrieveAsyncJobResult(jobId, ControlledResource.class, userRequest);
 
     ControlledResource resource = jobResult.getResult();
     UUID resourceId = Optional.ofNullable(resource).map(WsmResource::getResourceId).orElse(null);
-    ApiGcsBucketAttributes gcpBucket =
+    ApiGcpGcsBucketResource apiGcsBucketResource =
         Optional.ofNullable(resource)
-            .map(r -> r.castToGcsBucketResource().toApiModel())
+            .map(r -> r.castToGcsBucketResource().toApiResource())
             .orElse(null);
 
-    return new ApiCreatedControlledGcsBucket()
+    return new ApiCreatedControlledGcpGcsBucket()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .resourceId(resourceId)
-        .gcpBucket(gcpBucket);
+        .gcpBucket(apiGcsBucketResource);
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
