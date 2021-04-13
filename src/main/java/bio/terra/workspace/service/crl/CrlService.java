@@ -7,6 +7,7 @@ import bio.terra.cloudres.google.bigquery.DatasetCow;
 import bio.terra.cloudres.google.billing.CloudBillingClientCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.cloudres.google.iam.IamCow;
+import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
@@ -43,6 +44,7 @@ public class CrlService {
 
   private final ClientConfig clientConfig;
   private final CrlConfiguration crlConfig;
+  private final AIPlatformNotebooksCow crlNotebooksCow;
   private final CloudResourceManagerCow crlResourceManagerCow;
   private final CloudBillingClientCow crlBillingClientCow;
   private final IamCow crlIamCow;
@@ -56,6 +58,7 @@ public class CrlService {
       GoogleCredentials creds = getApplicationCredentials();
       clientConfig = buildClientConfig();
       try {
+        this.crlNotebooksCow = AIPlatformNotebooksCow.create(clientConfig, creds);
         this.crlResourceManagerCow = CloudResourceManagerCow.create(clientConfig, creds);
         this.crlBillingClientCow = new CloudBillingClientCow(clientConfig, creds);
         this.crlIamCow = IamCow.create(clientConfig, creds);
@@ -66,11 +69,17 @@ public class CrlService {
       }
     } else {
       clientConfig = null;
+      crlNotebooksCow = null;
       crlResourceManagerCow = null;
       crlBillingClientCow = null;
       crlIamCow = null;
       crlServiceUsageCow = null;
     }
+  }
+  /** @return CRL {@link AIPlatformNotebooksCow} which wraps Google AI Platform Notebooks API */
+  public AIPlatformNotebooksCow getAIPlatformNotebooksCow() {
+    assertCrlInUse();
+    return crlNotebooksCow;
   }
 
   /** @return CRL {@link CloudResourceManagerCow} which wraps Google Cloud Resource Manager API */

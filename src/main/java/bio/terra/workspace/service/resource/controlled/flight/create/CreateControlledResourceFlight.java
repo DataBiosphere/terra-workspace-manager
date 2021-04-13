@@ -7,6 +7,9 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateAiNotebookInstanceStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateServiceAccountStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.GenerateServiceAccountIdStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.List;
 
@@ -42,6 +45,21 @@ public class CreateControlledResourceFlight extends Flight {
                 flightBeanBag.getWorkspaceService()));
         break;
       case BIG_QUERY_DATASET:
+        break;
+      case AI_NOTEBOOK_INSTANCE:
+        addStep(new GenerateServiceAccountIdStep());
+        addStep(
+            new CreateServiceAccountStep(
+                flightBeanBag.getCrlService(),
+                flightBeanBag.getWorkspaceService(),
+                resource.castToAiNotebookInstanceResource()));
+        addStep(
+            new CreateAiNotebookInstanceStep(
+                flightBeanBag.getCrlService(),
+                resource.castToAiNotebookInstanceResource(),
+                flightBeanBag.getWorkspaceService()));
+        // TODO(PF-469): Set permissions.
+        break;
       default:
         throw new IllegalStateException(
             String.format("Unrecognized resource type %s", resource.getResourceType()));
