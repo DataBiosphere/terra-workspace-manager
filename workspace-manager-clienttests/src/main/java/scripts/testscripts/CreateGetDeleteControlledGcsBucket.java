@@ -63,7 +63,7 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
                   .type(GcpGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS))
           .condition(
               new GcpGcsBucketLifecycleRuleCondition()
-                  .createdBefore(LocalDate.of(2017, 2, 18))
+                  .createdBefore(OffsetDateTime.parse("2007-01-03T00:00:00.00Z"))
                   .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.STANDARD));
 
   // list must not be immutable if deserialization is to work
