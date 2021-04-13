@@ -1607,6 +1607,7 @@ components:
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
+    # TODO(PF-469): Add the creation endpoint.
     GcsAiNotebookInstanceCreationParameters:
       description: >-
         AI Platform Notebook instance specific properties to be set on creation. These are a subset of the
