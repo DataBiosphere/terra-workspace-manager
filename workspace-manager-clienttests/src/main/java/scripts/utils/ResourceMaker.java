@@ -1,5 +1,9 @@
 package scripts.utils;
 
+import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_NAME;
+import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_PROJECT;
+import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
+
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.client.ApiException;
@@ -30,17 +34,12 @@ import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.ReferenceResourceCommonFields;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_NAME;
-import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_PROJECT;
-import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // Static methods to create resources
 public class ResourceMaker {
