@@ -6,6 +6,9 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.RetryRuleExponentialBackoff;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
+import java.util.UUID;
 
 /**
  * A {@link Flight} for creating a Google cloud context for a workspace using Buffer Service to
@@ -34,6 +37,11 @@ public class CreateGcpContextFlight extends Flight {
             BUFFER_MAX_INTERVAL_SECONDS,
             BUFFER_MAX_OPERATION_TIME_SECONDS);
 
+    UUID workspaceId =
+        UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+    AuthenticatedUserRequest userReq =
+        inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+
     addStep(new GenerateProjectIdStep());
     addStep(
         new PullProjectFromPoolStep(
@@ -45,8 +53,8 @@ public class CreateGcpContextFlight extends Flight {
             INITIAL_INTERVAL_SECONDS, MAX_INTERVAL_SECONDS, MAX_OPERATION_TIME_SECONDS);
     addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()));
     addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), retryRule);
-    addStep(new StoreGcpContextStep(appContext.getWorkspaceDao()), retryRule);
-    addStep(new SyncSamGroupsStep(appContext.getSamService()), retryRule);
+    addStep(new StoreGcpContextStep(appContext.getWorkspaceDao(), workspaceId), retryRule);
+    addStep(new SyncSamGroupsStep(appContext.getSamService(), workspaceId, userReq), retryRule);
     addStep(new GcpCloudSyncStep(crl.getCloudResourceManagerCow()), retryRule);
     addStep(new SetGcpContextOutputStep());
   }

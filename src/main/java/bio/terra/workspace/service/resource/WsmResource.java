@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource;
 import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -96,6 +97,25 @@ public abstract class WsmResource {
    * @return json string
    */
   public abstract String attributesToJson();
+
+  /**
+   * The API metadata object contains the data for both referenced and controlled resources. This
+   * class fills in the common part. Referenced resources have no additional data to fill in.
+   * Controlled resources overrides this method to fill in the controlled resource specifics.
+   *
+   * @return partially constructed Api Model common resource description
+   */
+  public ApiResourceMetadata toApiMetadata() {
+    return new ApiResourceMetadata()
+        .workspaceId(workspaceId)
+        .resourceId(resourceId)
+        .name(name)
+        .description(description)
+        .resourceType(getResourceType().toApiModel())
+        .stewardshipType(getStewardshipType().toApiModel())
+        .cloudPlatform(getResourceType().getCloudPlatform().toApiModel())
+        .cloningInstructions(cloningInstructions.toApiModel());
+  }
 
   /**
    * Validate the state of to this object. Subclasses should override this method, calling super()
