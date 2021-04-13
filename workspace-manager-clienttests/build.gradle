@@ -29,7 +29,6 @@ dependencies {
         logback = "1.2.3"
         slf4j = "1.7.25"
         hamcrest = "2.1"
-        jUnitApi = "5.7.0"
         jUnit = "5.7.0"
         swaggerAnnotations = "2.1.5"
 

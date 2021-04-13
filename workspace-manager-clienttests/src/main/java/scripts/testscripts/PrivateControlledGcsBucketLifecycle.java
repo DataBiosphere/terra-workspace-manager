@@ -88,7 +88,6 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
     // Create a private bucket
     CreatedControlledGcpGcsBucket bucket = createPrivateBucket(resourceApi);
-    assertEquals(bucket.getJobReport().getStatus(), JobReport.StatusEnum.SUCCEEDED);
     UUID resourceId = bucket.getResourceId();
 
     // Retrieve the bucket resource from WSM
@@ -211,7 +210,6 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
   private CreatedControlledGcpGcsBucket createPrivateBucket(ControlledGcpResourceApi resourceApi)
       throws Exception {
-    String jobId = UUID.randomUUID().toString();
     var creationParameters =
         new GcpGcsBucketCreationParameters()
             .name(bucketName)
@@ -230,26 +228,15 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
                 new PrivateResourceUser()
                     .userName(privateResourceUser.userEmail)
                     .privateResourceIamRoles(privateUser))
-            .managedBy(ManagedBy.USER)
-            .jobControl(new JobControl().id(jobId));
+            .managedBy(ManagedBy.USER);
 
     var body =
         new CreateControlledGcpGcsBucketRequestBody()
             .gcsBucket(creationParameters)
             .common(commonParameters);
 
-    logger.info(
-        "Attempting to create bucket {} jobId {} workspace {}",
-        bucketName,
-        jobId,
-        getWorkspaceId());
-    CreatedControlledGcpGcsBucket bucket = resourceApi.createBucket(body, getWorkspaceId());
-    while (ClientTestUtils.jobIsRunning(bucket.getJobReport())) {
-      TimeUnit.SECONDS.sleep(CREATE_BUCKET_POLL_SECONDS);
-      bucket = resourceApi.getCreateBucketResult(getWorkspaceId(), jobId);
-    }
-    logger.info("Create bucket status is {}", bucket.getJobReport().getStatus().toString());
-    return bucket;
+    logger.info("Attempting to create bucket {} workspace {}", bucketName, getWorkspaceId());
+    return resourceApi.createBucket(body, getWorkspaceId());
   }
 
   private DeleteControlledGcpGcsBucketResult deleteBucket(
