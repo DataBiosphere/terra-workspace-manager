@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.flight.create;
 
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
-import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRole;
 import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRoleMapping;
@@ -36,13 +35,12 @@ public class GcpPolicyBuilder {
   }
 
   public GcpPolicyBuilder addWorkspaceBinding(WsmIamRole role, String email) {
-    bindings.addAll(bindingsForWorkspaceRole(resource, role, toMemberIdentifier(email), projectId));
+    bindings.addAll(bindingsForWorkspaceRole(role, toMemberIdentifier(email)));
     return this;
   }
 
   public GcpPolicyBuilder addResourceBinding(ControlledResourceIamRole role, String email) {
-    bindings.add(
-        buildBinding(resource.getResourceType(), role, projectId, toMemberIdentifier(email)));
+    bindings.add(buildBinding(role, toMemberIdentifier(email)));
     return this;
   }
 
@@ -65,22 +63,18 @@ public class GcpPolicyBuilder {
    * Build a list of role bindings for a given workspace-level role on a controlled resource, using
    * ControlledResourceInheritanceMapping.
    *
-   * @param resource The resource these bindings will apply to.
    * @param workspaceRole The workspace-level role granted to this user. Translated to GCP
    *     resource-specific roles using ControlledResourceInheritanceMapping.
-   * @param group The group being granted a role. Should be prefixed with the literal "group:" for
-   *     GCP.
-   * @param projectId The GCP project ID
+   * @param memberIdentifier The member being granted a role. Should be prefixed with the literal
+   *     "group:" for groups on GCP.
    */
-  private static List<Binding> bindingsForWorkspaceRole(
-      ControlledResource resource, WsmIamRole workspaceRole, String group, String projectId) {
+  private List<Binding> bindingsForWorkspaceRole(
+      WsmIamRole workspaceRole, String memberIdentifier) {
     Multimap<WsmIamRole, ControlledResourceIamRole> roleInheritanceMap =
         resource.getCategory().getInheritanceMapping();
     Collection<ControlledResourceIamRole> resourceRoles = roleInheritanceMap.get(workspaceRole);
     return resourceRoles.stream()
-        .map(
-            resourceRole ->
-                buildBinding(resource.getResourceType(), resourceRole, projectId, group))
+        .map(resourceRole -> buildBinding(resourceRole, memberIdentifier))
         .collect(Collectors.toList());
   }
 
@@ -88,20 +82,14 @@ public class GcpPolicyBuilder {
    * Convenience for building a Binding object granting a custom GCP role on a resource to a single
    * member.
    *
-   * @param resourceType The type of resource this binding will apply to
    * @param resourceRole The role being granted on a resource
-   * @param projectId ID of the GCP project
    * @param memberIdentifier The member being granted a role. This should be a member as specified
    *     by GCP, e.g. groups should be prefixed with the literal 'group:'.
    * @return Binding object granting a custom GCP role to provided user.
    */
-  private static Binding buildBinding(
-      WsmResourceType resourceType,
-      ControlledResourceIamRole resourceRole,
-      String projectId,
-      String memberIdentifier) {
+  private Binding buildBinding(ControlledResourceIamRole resourceRole, String memberIdentifier) {
     CustomGcpIamRole customRole =
-        CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES.get(resourceType, resourceRole);
+        CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES.get(resource.getResourceType(), resourceRole);
     return Binding.newBuilder()
         .setRole(customRole.getFullyQualifiedRoleName(projectId))
         .setMembers(Collections.singletonList(memberIdentifier))
