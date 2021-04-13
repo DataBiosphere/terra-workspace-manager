@@ -8,6 +8,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import java.util.HashMap;
 import java.util.UUID;
 
 /**
@@ -32,19 +33,20 @@ public class SyncSamGroupsStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    FlightMap workingMap = flightContext.getWorkingMap();
-    workingMap.put(
-        WorkspaceFlightMapKeys.IAM_OWNER_GROUP_EMAIL,
-        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.OWNER, userReq));
-    workingMap.put(
-        WorkspaceFlightMapKeys.IAM_APPLICATION_GROUP_EMAIL,
+    // This cannot be an ImmutableMap, as those do not deserialize properly with Jackson.
+    var workspaceRoleGroupMap = new HashMap<WsmIamRole, String>();
+    workspaceRoleGroupMap.put(
+        WsmIamRole.OWNER, samService.syncWorkspacePolicy(workspaceId, WsmIamRole.OWNER, userReq));
+    workspaceRoleGroupMap.put(
+        WsmIamRole.APPLICATION,
         samService.syncWorkspacePolicy(workspaceId, WsmIamRole.APPLICATION, userReq));
-    workingMap.put(
-        WorkspaceFlightMapKeys.IAM_WRITER_GROUP_EMAIL,
-        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.WRITER, userReq));
-    workingMap.put(
-        WorkspaceFlightMapKeys.IAM_READER_GROUP_EMAIL,
-        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.READER, userReq));
+    workspaceRoleGroupMap.put(
+        WsmIamRole.WRITER, samService.syncWorkspacePolicy(workspaceId, WsmIamRole.WRITER, userReq));
+    workspaceRoleGroupMap.put(
+        WsmIamRole.READER, samService.syncWorkspacePolicy(workspaceId, WsmIamRole.READER, userReq));
+
+    FlightMap workingMap = flightContext.getWorkingMap();
+    workingMap.put(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, workspaceRoleGroupMap);
 
     return StepResult.getStepResultSuccess();
   }
