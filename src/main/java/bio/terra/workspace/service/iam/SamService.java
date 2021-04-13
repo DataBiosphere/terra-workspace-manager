@@ -209,29 +209,39 @@ public class SamService {
       String accessToken, String iamResourceType, String resourceId, String action) {
     ResourcesApi resourceApi = samResourcesApi(accessToken);
     try {
-      return resourceApi.resourcePermission(iamResourceType, resourceId, action);
+      return resourceApi.resourcePermissionV2(iamResourceType, resourceId, action);
     } catch (ApiException samException) {
       throw new SamApiException(samException);
     }
   }
 
+  /**
+   * Wrapper around isAuthorized which throws an appropriate exception if a user does not have
+   * access to a resource. The wrapped call will perform a check for the appropriate permission in
+   * Sam. This call answers the question "does user X have permission to do action Y on resource Z".
+   *
+   * @param userReq Credentials of the user whose permissions are being checked
+   * @param resourceType The Sam type of the resource being checked
+   * @param resourceId The ID of the resource being checked
+   * @param action The action being checked on the resource
+   */
   @Traced
-  public void workspaceAuthzOnly(
-      AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
+  public void checkAuthz(
+      AuthenticatedUserRequest userReq, String resourceType, String resourceId, String action) {
     boolean isAuthorized =
-        isAuthorized(
-            userReq.getRequiredToken(),
-            SamConstants.SAM_WORKSPACE_RESOURCE,
-            workspaceId.toString(),
-            action);
+        isAuthorized(userReq.getRequiredToken(), resourceType, resourceId, action);
     if (!isAuthorized)
       throw new SamUnauthorizedException(
           String.format(
-              "User %s is not authorized to %s workspace %s",
-              userReq.getEmail(), action, workspaceId));
+              "User %s is not authorized to %s resource %s of type %s",
+              userReq.getEmail(), action, resourceId, resourceType));
     else
       logger.info(
-          "User {} is authorized to {} workspace {}", userReq.getEmail(), action, workspaceId);
+          "User {} is authorized to {} resource {} of type {}",
+          userReq.getEmail(),
+          action,
+          resourceId,
+          resourceType);
   }
 
   /**
@@ -250,7 +260,11 @@ public class SamService {
   public void grantWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, WsmIamRole role, String email) {
     stageService.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
-    workspaceAuthzOnly(userReq, workspaceId, samActionToModifyRole(role));
+    checkAuthz(
+        userReq,
+        SamConstants.SAM_WORKSPACE_RESOURCE,
+        workspaceId.toString(),
+        samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       resourceApi.addUserToPolicy(
@@ -273,7 +287,11 @@ public class SamService {
   public void removeWorkspaceRole(
       UUID workspaceId, AuthenticatedUserRequest userReq, WsmIamRole role, String email) {
     stageService.assertMcWorkspace(workspaceId, "removeWorkspaceRole");
-    workspaceAuthzOnly(userReq, workspaceId, samActionToModifyRole(role));
+    checkAuthz(
+        userReq,
+        SamConstants.SAM_WORKSPACE_RESOURCE,
+        workspaceId.toString(),
+        samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       resourceApi.removeUserFromPolicy(
@@ -294,7 +312,11 @@ public class SamService {
   @Traced
   public List<RoleBinding> listRoleBindings(UUID workspaceId, AuthenticatedUserRequest userReq) {
     stageService.assertMcWorkspace(workspaceId, "listRoleBindings");
-    workspaceAuthzOnly(userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_IAM_ACTION);
+    checkAuthz(
+        userReq,
+        SamConstants.SAM_WORKSPACE_RESOURCE,
+        workspaceId.toString(),
+        SamConstants.SAM_WORKSPACE_READ_IAM_ACTION);
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       List<AccessPolicyResponseEntry> samResult =
