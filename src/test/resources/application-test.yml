@@ -32,5 +32,10 @@ workspace:
     username: dbuser
 
 terra.common:
+  kubernetes:
+    in-kubernetes: false
   tracing:
     stackdriverExportEnabled: false
+  stairway:
+    force-clean-start: true
+    migrate-upgrade: false

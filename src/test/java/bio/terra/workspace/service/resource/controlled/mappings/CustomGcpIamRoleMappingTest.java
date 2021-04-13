@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.iam;
+package bio.terra.workspace.service.resource.controlled.mappings;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
@@ -8,9 +8,8 @@ import bio.terra.workspace.common.BaseUnitTest;
 import org.junit.jupiter.api.Test;
 
 /**
- * We currently enforce that in WSM, IAM roles are hierarchical: writers have all permissions of
- * readers, and owners have all permissions of writers. This holds for the definitions of our custom
- * GCP IAM roles.
+ * WSM resource role definitions currently assume that the WRITER resource-level role is a superset
+ * of the READER resource-level role. These tests validate that assumption.
  */
 public class CustomGcpIamRoleMappingTest extends BaseUnitTest {
   @Test
@@ -21,23 +20,9 @@ public class CustomGcpIamRoleMappingTest extends BaseUnitTest {
   }
 
   @Test
-  void bucketOwnerContainsWriter() {
-    assertThat(
-        CustomGcpIamRoleMapping.GCS_BUCKET_WRITER_PERMISSIONS,
-        everyItem(in(CustomGcpIamRoleMapping.GCS_BUCKET_OWNER_PERMISSIONS)));
-  }
-
-  @Test
   void bqDatasetWriterContainsReader() {
     assertThat(
         CustomGcpIamRoleMapping.BIG_QUERY_DATASET_READER_PERMISSIONS,
         everyItem(in(CustomGcpIamRoleMapping.BIG_QUERY_DATASET_WRITER_PERMISSIONS)));
-  }
-
-  @Test
-  void bqDatasetOwnerContainsWriter() {
-    assertThat(
-        CustomGcpIamRoleMapping.BIG_QUERY_DATASET_WRITER_PERMISSIONS,
-        everyItem(in(CustomGcpIamRoleMapping.BIG_QUERY_DATASET_OWNER_PERMISSIONS)));
   }
 }

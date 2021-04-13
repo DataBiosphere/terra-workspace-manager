@@ -1,12 +1,11 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.generated.model.ApiGcsBucketCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.SamConstants;
-import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceCreateActions;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
@@ -47,7 +46,7 @@ public class ControlledResourceService {
 
   public ControlledResource syncCreateControlledResource(
       ControlledResource resource,
-      ApiGcsBucketCreationParameters creationParameters,
+      ApiGcpGcsBucketCreationParameters creationParameters,
       List<ControlledResourceIamRole> privateResourceIamRoles,
       AuthenticatedUserRequest userRequest) {
     ApiJobControl syncJobControl = new ApiJobControl().id(UUID.randomUUID().toString());
@@ -70,7 +69,7 @@ public class ControlledResourceService {
 
   public String createControlledResource(
       ControlledResource resource,
-      ApiGcsBucketCreationParameters creationParameters,
+      ApiGcpGcsBucketCreationParameters creationParameters,
       List<ControlledResourceIamRole> privateResourceIamRoles,
       ApiJobControl jobControl,
       String resultPath,
@@ -79,7 +78,7 @@ public class ControlledResourceService {
     workspaceService.validateWorkspaceAndAction(
         userRequest,
         resource.getWorkspaceId(),
-        SamControlledResourceCreateActions.get(resource.getAccessScope(), resource.getManagedBy()));
+        resource.getCategory().getSamCreateResourceAction());
     final String jobDescription =
         String.format(
             "Create controlled resource %s; id %s; name %s",

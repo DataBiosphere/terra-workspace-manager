@@ -11,7 +11,6 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 /** Test Stairway serialization of the ControlledGcsBucketResource class */
@@ -20,7 +19,7 @@ public class ControlledGcsBucketResourceTest extends BaseUnitTest {
   @Test
   public void testValidateOk() {
     ControlledGcsBucketResource gcsBucketResource =
-        ControlledResourceFixtures.makeControlledGcsBucketResource(UUID.randomUUID());
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource().build();
     // will throw if anything is amiss
     gcsBucketResource.validate();
   }
@@ -29,13 +28,16 @@ public class ControlledGcsBucketResourceTest extends BaseUnitTest {
   public void testValidateThrows() {
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> ControlledResourceFixtures.makeControlledGcsBucketResource(null));
+        () ->
+            ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
+                .workspaceId(null)
+                .build());
   }
 
   @Test
   public void testSerialization() throws JsonProcessingException {
     ControlledGcsBucketResource gcsBucketResource =
-        ControlledResourceFixtures.makeControlledGcsBucketResource(UUID.randomUUID());
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource().build();
 
     final ObjectMapper objectMapper = StairwayMapper.getObjectMapper();
     final String serialized = objectMapper.writeValueAsString(gcsBucketResource);

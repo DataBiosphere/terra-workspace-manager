@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.referenced;
 
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.generated.model.ApiDataReferenceMetadata;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -24,15 +23,6 @@ public abstract class ReferencedResource extends WsmResource {
     if (dbResource.getStewardshipType() != StewardshipType.REFERENCED) {
       throw new InvalidMetadataException("Expected REFERENCE");
     }
-  }
-
-  public ApiDataReferenceMetadata toApiMetadata() {
-    return new ApiDataReferenceMetadata()
-        .referenceId(getResourceId())
-        .workspaceId(getWorkspaceId())
-        .name(getName())
-        .description(getDescription())
-        .cloningInstructions(getCloningInstructions().toApiModel());
   }
 
   @Override

@@ -2,27 +2,24 @@ package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.SerializationException;
-import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
+import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import org.apache.commons.lang3.StringUtils;
 
 /** Controlled resources can be shared by all users in a workspace or be private to a single user */
 public enum AccessScopeType {
-  ACCESS_SCOPE_SHARED("ACCESS_SHARED"),
-  ACCESS_SCOPE_PRIVATE("ACCESS_PRIVATE");
+  ACCESS_SCOPE_SHARED("ACCESS_SHARED", ApiAccessScope.SHARED_ACCESS),
+  ACCESS_SCOPE_PRIVATE("ACCESS_PRIVATE", ApiAccessScope.PRIVATE_ACCESS);
 
   private final String dbString;
+  private final ApiAccessScope apiAccessScope;
 
-  AccessScopeType(String dbString) {
+  AccessScopeType(String dbString, ApiAccessScope apiAccessScope) {
     this.dbString = dbString;
+    this.apiAccessScope = apiAccessScope;
   }
 
-  public String toSql() {
-    return dbString;
-  }
-
-  public static AccessScopeType fromApi(
-      ApiControlledResourceCommonFields.AccessScopeEnum apiAccessScope) {
+  public static AccessScopeType fromApi(ApiAccessScope apiAccessScope) {
     if (apiAccessScope == null) {
       throw new MissingRequiredFieldException("Valid accessScope is required");
     }
@@ -45,5 +42,13 @@ public enum AccessScopeType {
     }
     throw new SerializationException(
         "Deeserialization failed: no matching access scope type for " + dbString);
+  }
+
+  public String toSql() {
+    return dbString;
+  }
+
+  public ApiAccessScope toApiModel() {
+    return apiAccessScope;
   }
 }

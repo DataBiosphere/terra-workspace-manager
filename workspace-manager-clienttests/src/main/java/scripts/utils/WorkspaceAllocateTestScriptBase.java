@@ -91,7 +91,7 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
    */
   @Override
   protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-      throws ApiException {
+      throws Exception {
     workspaceApi.deleteWorkspace(workspaceId);
   }
 

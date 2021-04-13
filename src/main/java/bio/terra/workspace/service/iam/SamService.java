@@ -7,11 +7,11 @@ import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
-import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceNames;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.stage.StageService;
+import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,6 +40,7 @@ import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
 import org.broadinstitute.dsde.workbench.client.sam.model.SubsystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -320,23 +321,75 @@ public class SamService {
   @Traced
   public String syncWorkspacePolicy(
       UUID workspaceId, WsmIamRole role, AuthenticatedUserRequest userReq) {
+    String group =
+        syncPolicyOnObject(
+            SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), userReq);
+    logger.info(
+        "Synced role {} to google group {} in workspace {}", role.toSamRole(), group, workspaceId);
+    return group;
+  }
+
+  /**
+   * Wrapper around Sam client to sync a Sam policy on a controlled resource to a google group and
+   * return the email of that group.
+   *
+   * <p>This should only be called for controlled resources which require permissions granted to
+   * individual users, i.e. private or application-controlled resources. All other cases are handled
+   * by the permissions that workspace-level roles inherit on resources via Sam's hierarchical
+   * resources, and do not use the policies synced by this function.
+   *
+   * <p>This operation in Sam is idempotent, so we don't worry about calling this multiple times.
+   *
+   * @param resource The resource to sync a binding for
+   * @param role The policy to sync in Sam
+   * @param userReq User authentication
+   * @return
+   */
+  @Traced
+  public String syncPrivateResourcePolicy(
+      ControlledResource resource,
+      ControlledResourceIamRole role,
+      AuthenticatedUserRequest userReq) {
+    // TODO: in the future, this function will also be called for application managed resources,
+    //  including app-shared. This check should be modified appropriately.
+    if (resource.getAccessScope() != AccessScopeType.ACCESS_SCOPE_PRIVATE) {
+      throw new InternalLogicException(
+          "syncPrivateResourcePolicy should not be called for shared resources!");
+    }
+    String group =
+        syncPolicyOnObject(
+            resource.getCategory().getSamResourceName(),
+            resource.getResourceId().toString(),
+            role.toSamRole(),
+            userReq);
+    logger.info(
+        "Synced role {} to google group {} for resource {}",
+        role.toSamRole(),
+        group,
+        resource.getResourceId());
+    return group;
+  }
+
+  /**
+   * Common implementation for syncing a policy to a Google group on an object in Sam.
+   *
+   * @param resourceTypeName The type of the Sam resource, as configured with Sam.
+   * @param resourceId The Sam ID of the resource to sync a policy for
+   * @param policyName The name of the policy to sync
+   * @param userReq User credentials to pass to Sam
+   * @return The Google group whose membership is synced to the specified policy.
+   */
+  private String syncPolicyOnObject(
+      String resourceTypeName,
+      String resourceId,
+      String policyName,
+      AuthenticatedUserRequest userReq) {
     GoogleApi googleApi = samGoogleApi(userReq.getRequiredToken());
     try {
       // Sam makes no guarantees about what values are returned from the POST call, so we instead
       // fetch the group in a separate call after syncing.
-      googleApi.syncPolicy(
-          SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole());
-      String groupEmail =
-          googleApi
-              .syncStatus(
-                  SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole())
-              .getEmail();
-      logger.info(
-          "Synced role {} to google group {} in workspace {}",
-          role.toSamRole(),
-          groupEmail,
-          workspaceId);
-      return groupEmail;
+      googleApi.syncPolicy(resourceTypeName, resourceId, policyName);
+      return googleApi.syncStatus(resourceTypeName, resourceId, policyName).getEmail();
     } catch (ApiException e) {
       throw new SamApiException(e);
     }
@@ -367,7 +420,7 @@ public class SamService {
 
     addWsmResourceOwnerPolicy(resourceRequest);
     // Only create policies for private resources. Workspace role permissions are handled through
-    // role-based inheritance in Sam instead. This will likely expand to include policies for
+    // role-based inheritance in Sam instead. This should expand to include policies for
     // applications in the future.
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
       addPrivateResourcePolicies(
@@ -375,9 +428,7 @@ public class SamService {
     }
 
     try {
-      resourceApi.createResourceV2(
-          SamControlledResourceNames.get(resource.getAccessScope(), resource.getManagedBy()),
-          resourceRequest);
+      resourceApi.createResourceV2(resource.getCategory().getSamResourceName(), resourceRequest);
       logger.info("Created Sam controlled resource {}", resource.getResourceId());
     } catch (ApiException e) {
       throw new SamApiException(e);
@@ -390,12 +441,32 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       resourceApi.deleteResourceV2(
-          SamControlledResourceNames.get(resource.getAccessScope(), resource.getManagedBy()),
-          resource.getResourceId().toString());
+          resource.getCategory().getSamResourceName(), resource.getResourceId().toString());
       logger.info("Deleted Sam controlled resource {}", resource.getResourceId());
     } catch (ApiException apiException) {
       throw new SamApiException(apiException);
     }
+  }
+
+  /**
+   * Generate a list of the controlled resource ids in Sam that this user has access to. This builds
+   * a list for a specific type of controlled resource (user shared, application private, etc).
+   */
+  @Traced
+  public List<String> listControlledResourceIds(
+      AuthenticatedUserRequest userReq, String samResourceTypeName) {
+    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+    List<String> controlledResourceIds = new ArrayList<>();
+    try {
+      List<UserResourcesResponse> userResources =
+          resourceApi.listResourcesAndPoliciesV2(samResourceTypeName);
+      for (UserResourcesResponse userResource : userResources) {
+        controlledResourceIds.add(userResource.getResourceId());
+      }
+    } catch (ApiException samException) {
+      throw new SamApiException(samException);
+    }
+    return controlledResourceIds;
   }
 
   public ApiSystemStatusSystems status() {
