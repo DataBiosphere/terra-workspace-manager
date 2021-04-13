@@ -220,14 +220,14 @@ public class SamService {
    * access to a resource. The wrapped call will perform a check for the appropriate permission in
    * Sam. This call answers the question "does user X have permission to do action Y on resource Z".
    *
-   * @param resourceId The ID of the resource being checked
-   * @param resourceType The Sam type of the resource being checked
-   * @param action The action being checked on the resource
    * @param userReq Credentials of the user whose permissions are being checked
+   * @param resourceType The Sam type of the resource being checked
+   * @param resourceId The ID of the resource being checked
+   * @param action The action being checked on the resource
    */
   @Traced
   public void checkAuthz(
-      String resourceId, String resourceType, String action, AuthenticatedUserRequest userReq) {
+      AuthenticatedUserRequest userReq, String resourceType, String resourceId, String action) {
     boolean isAuthorized =
         isAuthorized(userReq.getRequiredToken(), resourceType, resourceId, action);
     if (!isAuthorized)
@@ -261,10 +261,10 @@ public class SamService {
       UUID workspaceId, AuthenticatedUserRequest userReq, WsmIamRole role, String email) {
     stageService.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
     checkAuthz(
-        workspaceId.toString(),
+        userReq,
         SamConstants.SAM_WORKSPACE_RESOURCE,
-        samActionToModifyRole(role),
-        userReq);
+        workspaceId.toString(),
+        samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       resourceApi.addUserToPolicy(
@@ -288,10 +288,10 @@ public class SamService {
       UUID workspaceId, AuthenticatedUserRequest userReq, WsmIamRole role, String email) {
     stageService.assertMcWorkspace(workspaceId, "removeWorkspaceRole");
     checkAuthz(
-        workspaceId.toString(),
+        userReq,
         SamConstants.SAM_WORKSPACE_RESOURCE,
-        samActionToModifyRole(role),
-        userReq);
+        workspaceId.toString(),
+        samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       resourceApi.removeUserFromPolicy(
@@ -313,10 +313,10 @@ public class SamService {
   public List<RoleBinding> listRoleBindings(UUID workspaceId, AuthenticatedUserRequest userReq) {
     stageService.assertMcWorkspace(workspaceId, "listRoleBindings");
     checkAuthz(
-        workspaceId.toString(),
+        userReq,
         SamConstants.SAM_WORKSPACE_RESOURCE,
-        SamConstants.SAM_WORKSPACE_READ_IAM_ACTION,
-        userReq);
+        workspaceId.toString(),
+        SamConstants.SAM_WORKSPACE_READ_IAM_ACTION);
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       List<AccessPolicyResponseEntry> samResult =

@@ -114,7 +114,7 @@ public class WorkspaceService {
       AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
     Workspace workspace = workspaceDao.getWorkspace(workspaceId);
     samService.checkAuthz(
-        workspaceId.toString(), SamConstants.SAM_WORKSPACE_RESOURCE, action, userReq);
+        userReq, SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), action);
     return workspace;
   }
 

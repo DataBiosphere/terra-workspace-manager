@@ -12,4 +12,11 @@ public class SamConstants {
   public static final String SAM_DELETE_REFERENCED_RESOURCE = "delete_referenced_resource";
   public static final String SPEND_PROFILE_RESOURCE = "spend-profile";
   public static final String SPEND_PROFILE_LINK_ACTION = "link";
+
+  public static class SamControlledResourceActions {
+    public static final String READ_ACTION = "read";
+    public static final String DELETE_ACTION = "delete";
+
+    private SamControlledResourceActions() {}
+  }
 }

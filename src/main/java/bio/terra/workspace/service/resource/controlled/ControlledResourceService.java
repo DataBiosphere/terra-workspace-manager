@@ -6,7 +6,6 @@ import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -58,6 +57,8 @@ public class ControlledResourceService {
    * <p>Throws ResourceNotFound from getResource if the workspace does not exist in the specified
    * workspace, regardless of the user's permission.
    *
+   * <p>Throws
+   *
    * <p>Throws InvalidControlledResourceException if the given resource is not controlled.
    *
    * <p>Throws SamUnauthorizedException if the user is not permitted to perform the specified action
@@ -76,16 +77,17 @@ public class ControlledResourceService {
   public ControlledResource validateControlledResourceAndAction(
       AuthenticatedUserRequest userReq, UUID workspaceId, UUID resourceId, String action) {
     WsmResource resource = resourceDao.getResource(workspaceId, resourceId);
+    // TODO(PF-640): also check that the user has
     if (resource.getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InvalidControlledResourceException(
-          "Specified resource ID is not a controlled resource.");
+          String.format("Resource %s is not a controlled resource.", resource.getResourceId()));
     }
     ControlledResource controlledResource = resource.castToControlledResource();
     samService.checkAuthz(
-        resourceId.toString(),
+        userReq,
         controlledResource.getCategory().getSamResourceName(),
-        action,
-        userReq);
+        resourceId.toString(),
+        action);
     return controlledResource;
   }
 
