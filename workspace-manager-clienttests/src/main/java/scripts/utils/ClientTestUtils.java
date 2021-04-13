@@ -118,7 +118,7 @@ public class ClientTestUtils {
   public static Storage getGcpStorageClient(TestUserSpecification testUser, String projectId)
       throws IOException {
     GoogleCredentials userCredential =
-        AuthenticationUtils.getDelegatedUserCredential(testUser, FULL_OAUTH_SCOPES);
+        AuthenticationUtils.getDelegatedUserCredential(testUser, TEST_USER_SCOPES);
     StorageOptions options =
         StorageOptions.newBuilder().setCredentials(userCredential).setProjectId(projectId).build();
     return options.getService();
