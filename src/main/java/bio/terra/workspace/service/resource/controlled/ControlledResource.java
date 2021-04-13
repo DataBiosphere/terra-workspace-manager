@@ -63,6 +63,10 @@ public abstract class ControlledResource extends WsmResource {
     return managedBy;
   }
 
+  public ControlledResourceCategory getCategory() {
+    return ControlledResourceCategory.get(accessScope, managedBy);
+  }
+
   @Override
   public void validate() {
     super.validate();

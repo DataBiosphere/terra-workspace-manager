@@ -14,7 +14,6 @@ import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.flight.create.ControlledResourceCloudSyncUtils;
-import bio.terra.workspace.service.resource.controlled.mappings.ControlledResourceInheritanceMapping;
 import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRole;
 import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRoleMapping;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -56,11 +55,7 @@ public class ControlledResourceCloudSyncUtilsTest extends BaseUnitTest {
     assertFalse(modifiedPolicy.getBindingsList().isEmpty());
 
     // There should be exactly one binding for each entry of the IAM inheritance mapping.
-
-    int expectedNumBindings =
-        ControlledResourceInheritanceMapping.getInheritanceMapping(
-                AccessScopeType.ACCESS_SCOPE_SHARED, ManagedByType.MANAGED_BY_USER)
-            .size();
+    int expectedNumBindings = resource.getCategory().getInheritanceMapping().size();
     assertThat(modifiedPolicy.getBindingsList().size(), equalTo(expectedNumBindings));
     // All Bindings should be for our pre-defined custom roles.
     assertCustomRoleNames(modifiedPolicy);
@@ -89,11 +84,7 @@ public class ControlledResourceCloudSyncUtilsTest extends BaseUnitTest {
 
     // There should be exactly one binding for each entry of the IAM inheritance mapping, plus
     // one binding for each of the READER, WRITER, and EDITOR synced resource-level roles.
-    int expectedNumBindings =
-        ControlledResourceInheritanceMapping.getInheritanceMapping(
-                    AccessScopeType.ACCESS_SCOPE_PRIVATE, ManagedByType.MANAGED_BY_USER)
-                .size()
-            + 3;
+    int expectedNumBindings = resource.getCategory().getInheritanceMapping().size() + 3;
     assertThat(modifiedPolicy.getBindingsList().size(), equalTo(expectedNumBindings));
     // All Bindings should be for our pre-defined custom roles.
     assertCustomRoleNames(modifiedPolicy);

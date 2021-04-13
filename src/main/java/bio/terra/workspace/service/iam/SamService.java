@@ -7,7 +7,6 @@ import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
-import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceNames;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -358,7 +357,7 @@ public class SamService {
     }
     String group =
         syncPolicyOnObject(
-            SamControlledResourceNames.get(resource.getAccessScope(), resource.getManagedBy()),
+            resource.getCategory().getSamResourceName(),
             resource.getResourceId().toString(),
             role.toSamRole(),
             userReq);
@@ -428,9 +427,7 @@ public class SamService {
     }
 
     try {
-      resourceApi.createResourceV2(
-          SamControlledResourceNames.get(resource.getAccessScope(), resource.getManagedBy()),
-          resourceRequest);
+      resourceApi.createResourceV2(resource.getCategory().getSamResourceName(), resourceRequest);
       logger.info("Created Sam controlled resource {}", resource.getResourceId());
     } catch (ApiException e) {
       throw new SamApiException(e);
@@ -443,8 +440,7 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       resourceApi.deleteResourceV2(
-          SamControlledResourceNames.get(resource.getAccessScope(), resource.getManagedBy()),
-          resource.getResourceId().toString());
+          resource.getCategory().getSamResourceName(), resource.getResourceId().toString());
       logger.info("Deleted Sam controlled resource {}", resource.getResourceId());
     } catch (ApiException apiException) {
       throw new SamApiException(apiException);

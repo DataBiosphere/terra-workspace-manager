@@ -6,7 +6,6 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.mappings.ControlledResourceInheritanceMapping;
 import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRole;
 import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRoleMapping;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -131,8 +130,7 @@ public class ControlledResourceCloudSyncUtils {
   private static List<Binding> bindingsForWorkspaceRole(
       ControlledResource resource, WsmIamRole workspaceRole, String group, String projectId) {
     Multimap<WsmIamRole, ControlledResourceIamRole> roleInheritanceMap =
-        ControlledResourceInheritanceMapping.getInheritanceMapping(
-            resource.getAccessScope(), resource.getManagedBy());
+        resource.getCategory().getInheritanceMapping();
     Collection<ControlledResourceIamRole> resourceRoles = roleInheritanceMap.get(workspaceRole);
     return resourceRoles.stream()
         .map(
