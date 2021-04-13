@@ -40,6 +40,7 @@ import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
 import org.broadinstitute.dsde.workbench.client.sam.model.SubsystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -445,6 +446,27 @@ public class SamService {
     } catch (ApiException apiException) {
       throw new SamApiException(apiException);
     }
+  }
+
+  /**
+   * Generate a list of the controlled resource ids in Sam that this user has access to. This builds
+   * a list for a specific type of controlled resource (user shared, application private, etc).
+   */
+  @Traced
+  public List<String> listControlledResourceIds(
+      AuthenticatedUserRequest userReq, String samResourceTypeName) {
+    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+    List<String> controlledResourceIds = new ArrayList<>();
+    try {
+      List<UserResourcesResponse> userResources =
+          resourceApi.listResourcesAndPoliciesV2(samResourceTypeName);
+      for (UserResourcesResponse userResource : userResources) {
+        controlledResourceIds.add(userResource.getResourceId());
+      }
+    } catch (ApiException samException) {
+      throw new SamApiException(samException);
+    }
+    return controlledResourceIds;
   }
 
   public ApiSystemStatusSystems status() {

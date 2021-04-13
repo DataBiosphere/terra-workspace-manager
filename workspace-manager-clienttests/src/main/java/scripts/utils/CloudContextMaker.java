@@ -11,7 +11,6 @@ import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
 import java.time.Duration;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,9 +21,7 @@ public class CloudContextMaker {
 
   private CloudContextMaker() {}
 
-  /**
-   * Creates a GCP cloud context for a given workspace. Returns the GCP project ID as a string.
-   */
+  /** Creates a GCP cloud context for a given workspace. Returns the GCP project ID as a string. */
   public static String createGcpCloudContext(UUID workspaceId, WorkspaceApi workspaceApi)
       throws Exception {
     String contextJobId = UUID.randomUUID().toString();

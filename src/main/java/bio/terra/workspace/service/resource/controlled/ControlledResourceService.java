@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.generated.model.ApiGcsBucketCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -45,7 +45,7 @@ public class ControlledResourceService {
 
   public String createControlledResource(
       ControlledResource resource,
-      ApiGcsBucketCreationParameters creationParameters,
+      ApiGcpGcsBucketCreationParameters creationParameters,
       List<ControlledResourceIamRole> privateResourceIamRoles,
       ApiJobControl jobControl,
       String resultPath,

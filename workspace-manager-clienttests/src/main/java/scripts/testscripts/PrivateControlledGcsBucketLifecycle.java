@@ -9,22 +9,23 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
+import bio.terra.workspace.model.AccessScope;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.ControlledResourceCommonFields;
-import bio.terra.workspace.model.ControlledResourceCommonFields.AccessScopeEnum;
 import bio.terra.workspace.model.ControlledResourceIamRole;
-import bio.terra.workspace.model.CreateControlledGcsBucketRequestBody;
-import bio.terra.workspace.model.CreatedControlledGcsBucket;
-import bio.terra.workspace.model.DeleteControlledGcsBucketRequest;
-import bio.terra.workspace.model.DeleteControlledGcsBucketResult;
-import bio.terra.workspace.model.GcsBucketAttributes;
-import bio.terra.workspace.model.GcsBucketCreationParameters;
-import bio.terra.workspace.model.GcsBucketDefaultStorageClass;
-import bio.terra.workspace.model.GcsBucketLifecycle;
+import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
+import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
+import bio.terra.workspace.model.DeleteControlledGcpGcsBucketRequest;
+import bio.terra.workspace.model.DeleteControlledGcpGcsBucketResult;
+import bio.terra.workspace.model.GcpGcsBucketCreationParameters;
+import bio.terra.workspace.model.GcpGcsBucketDefaultStorageClass;
+import bio.terra.workspace.model.GcpGcsBucketLifecycle;
+import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
+import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceIamRoles;
 import bio.terra.workspace.model.PrivateResourceUser;
 import com.google.api.client.http.HttpStatusCodes;
@@ -86,15 +87,17 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
 
     // Create a private bucket
-    CreatedControlledGcsBucket bucket = createPrivateBucket(resourceApi);
+    CreatedControlledGcpGcsBucket bucket = createPrivateBucket(resourceApi);
     assertEquals(bucket.getJobReport().getStatus(), JobReport.StatusEnum.SUCCEEDED);
     UUID resourceId = bucket.getResourceId();
 
     // Retrieve the bucket resource from WSM
     logger.info("Retrieving bucket resource id {}", resourceId.toString());
-    GcsBucketAttributes gotBucket = resourceApi.getBucket(getWorkspaceId(), resourceId);
-    assertEquals(gotBucket.getBucketName(), bucket.getGcpBucket().getBucketName());
-    assertEquals(gotBucket.getBucketName(), bucketName);
+    GcpGcsBucketResource gotBucket = resourceApi.getBucket(getWorkspaceId(), resourceId);
+    assertEquals(
+        gotBucket.getAttributes().getBucketName(),
+        bucket.getGcpBucket().getAttributes().getBucketName());
+    assertEquals(gotBucket.getAttributes().getBucketName(), bucketName);
 
     Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, projectId);
     Storage privateUserStorageClient =
@@ -206,15 +209,15 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     assertNull(maybeBucket);
   }
 
-  private CreatedControlledGcsBucket createPrivateBucket(ControlledGcpResourceApi resourceApi)
+  private CreatedControlledGcpGcsBucket createPrivateBucket(ControlledGcpResourceApi resourceApi)
       throws Exception {
     String jobId = UUID.randomUUID().toString();
     var creationParameters =
-        new GcsBucketCreationParameters()
+        new GcpGcsBucketCreationParameters()
             .name(bucketName)
             .location(BUCKET_LOCATION)
-            .defaultStorageClass(GcsBucketDefaultStorageClass.STANDARD)
-            .lifecycle(new GcsBucketLifecycle().rules(Collections.emptyList()));
+            .defaultStorageClass(GcpGcsBucketDefaultStorageClass.STANDARD)
+            .lifecycle(new GcpGcsBucketLifecycle().rules(Collections.emptyList()));
 
     var privateUser = new PrivateResourceIamRoles();
     privateUser.add(ControlledResourceIamRole.WRITER);
@@ -222,16 +225,16 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
         new ControlledResourceCommonFields()
             .name(resourceName)
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
-            .accessScope(AccessScopeEnum.PRIVATE_ACCESS)
+            .accessScope(AccessScope.PRIVATE_ACCESS)
             .privateResourceUser(
                 new PrivateResourceUser()
                     .userName(privateResourceUser.userEmail)
                     .privateResourceIamRoles(privateUser))
-            .managedBy(ControlledResourceCommonFields.ManagedByEnum.USER)
+            .managedBy(ManagedBy.USER)
             .jobControl(new JobControl().id(jobId));
 
     var body =
-        new CreateControlledGcsBucketRequestBody()
+        new CreateControlledGcpGcsBucketRequestBody()
             .gcsBucket(creationParameters)
             .common(commonParameters);
 
@@ -240,7 +243,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
         bucketName,
         jobId,
         getWorkspaceId());
-    CreatedControlledGcsBucket bucket = resourceApi.createBucket(body, getWorkspaceId());
+    CreatedControlledGcpGcsBucket bucket = resourceApi.createBucket(body, getWorkspaceId());
     while (ClientTestUtils.jobIsRunning(bucket.getJobReport())) {
       TimeUnit.SECONDS.sleep(CREATE_BUCKET_POLL_SECONDS);
       bucket = resourceApi.getCreateBucketResult(getWorkspaceId(), jobId);
@@ -249,13 +252,13 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     return bucket;
   }
 
-  private DeleteControlledGcsBucketResult deleteBucket(
+  private DeleteControlledGcpGcsBucketResult deleteBucket(
       ControlledGcpResourceApi resourceApi, UUID resourceId) throws Exception {
     String deleteJobId = UUID.randomUUID().toString();
     var deleteRequest =
-        new DeleteControlledGcsBucketRequest().jobControl(new JobControl().id(deleteJobId));
+        new DeleteControlledGcpGcsBucketRequest().jobControl(new JobControl().id(deleteJobId));
     logger.info("Deleting bucket resource id {} jobId {}", resourceId, deleteJobId);
-    DeleteControlledGcsBucketResult result =
+    DeleteControlledGcpGcsBucketResult result =
         resourceApi.deleteBucket(deleteRequest, getWorkspaceId(), resourceId);
     while (ClientTestUtils.jobIsRunning(result.getJobReport())) {
       TimeUnit.SECONDS.sleep(DELETE_BUCKET_POLL_SECONDS);
