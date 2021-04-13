@@ -86,6 +86,7 @@ public enum ControlledResourceCategory {
           default:
             break;
         }
+        break;
       case ACCESS_SCOPE_PRIVATE:
         switch (managedByType) {
           case MANAGED_BY_USER:
@@ -95,6 +96,7 @@ public enum ControlledResourceCategory {
           default:
             break;
         }
+        break;
     }
     throw new IllegalStateException(
         String.format(
