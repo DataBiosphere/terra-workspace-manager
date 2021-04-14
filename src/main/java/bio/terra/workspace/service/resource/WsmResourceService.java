@@ -4,6 +4,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceCategory;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.ArrayList;
@@ -48,20 +49,10 @@ public class WsmResourceService {
     // query that will return all referenced resources and only controlled resources filtered by Sam
     // visibility.
     List<String> controlledResourceIds = new ArrayList<>();
-    controlledResourceIds.addAll(
-        samService.listControlledResourceIds(
-            userRequest,
-            SamConstants.SamControlledResourceNames.CONTROLLED_APPLICATION_SHARED_RESOURCE));
-    controlledResourceIds.addAll(
-        samService.listControlledResourceIds(
-            userRequest,
-            SamConstants.SamControlledResourceNames.CONTROLLED_APPLICATION_PRIVATE_RESOURCE));
-    controlledResourceIds.addAll(
-        samService.listControlledResourceIds(
-            userRequest, SamConstants.SamControlledResourceNames.CONTROLLED_USER_SHARED_RESOURCE));
-    controlledResourceIds.addAll(
-        samService.listControlledResourceIds(
-            userRequest, SamConstants.SamControlledResourceNames.CONTROLLED_USER_PRIVATE_RESOURCE));
+    for (ControlledResourceCategory category : ControlledResourceCategory.values()) {
+      controlledResourceIds.addAll(
+          samService.listControlledResourceIds(userRequest, category.getSamResourceName()));
+    }
 
     return resourceDao.enumerateResources(
         workspaceId, controlledResourceIds, resourceType, stewardshipType, offset, limit);

@@ -777,26 +777,6 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/CreatedControlledGcpGcsBucketResponse'
-        '202':
-          $ref: '#/components/responses/CreatedControlledGcpGcsBucketResponse'
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '500':
-          $ref: '#/components/responses/ServerError'
-
-  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/result/{jobId}:
-    parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/JobId'
-    get:
-      summary: Retrieve information about a gcp bucket creation job.
-      operationId: getCreateBucketResult
-      tags: [ControlledGcpResource]
-      responses:
-        '200':
-          $ref: '#/components/responses/CreatedControlledGcpGcsBucketResponse'
-        '202':
-          $ref: '#/components/responses/CreatedControlledGcpGcsBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -1460,7 +1440,7 @@ components:
           type: string
 
     CreateControlledGcpGcsBucketRequestBody:
-      description: Payload for requesting a new controlled resource.
+      description: Payload for requesting a new controlled GCS bucket resource.
       type: object
       properties:
         common:
@@ -1470,10 +1450,8 @@ components:
 
     ControlledResourceCommonFields:
       type: object
-      required: [ name, cloningInstructions, jobControl, accessScope, managedBy ]
+      required: [ name, cloningInstructions, accessScope, managedBy ]
       properties:
-        jobControl:
-          $ref: '#/components/schemas/JobControl'
         name:
           $ref: "#/components/schemas/Name"
         description:
@@ -1525,12 +1503,8 @@ components:
           description: UUID of a newly-created resource. Null if not created yet.
           type: string
           format: uuid
-        jobReport:
-          $ref: '#/components/schemas/JobReport'
         gcpBucket:
           $ref: '#/components/schemas/GcpGcsBucketResource'
-        errorReport:
-          $ref: '#/components/schemas/ErrorReport'
 
     GcpGcsBucketCreationParameters:
       description: >-

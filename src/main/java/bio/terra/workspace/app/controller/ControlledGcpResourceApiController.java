@@ -15,7 +15,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
-import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -96,16 +95,15 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
           "At least one IAM role is required for private resources and the field must be omitted for shared resources");
     }
 
-    ApiJobControl jobControl = body.getCommon().getJobControl();
-    final String jobId =
-        controlledResourceService.createBucket(
-            resource,
-            body.getGcsBucket(),
-            privateRoles,
-            jobControl.getId(),
-            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId()),
-            userRequest);
-    return getCreateBucketResult(workspaceId, jobId);
+    final ControlledGcsBucketResource createdBucket =
+        controlledResourceService
+            .syncCreateControlledResource(resource, body.getGcsBucket(), privateRoles, userRequest)
+            .castToGcsBucketResource();
+    var response =
+        new ApiCreatedControlledGcpGcsBucket()
+            .resourceId(createdBucket.getResourceId())
+            .gcpBucket(createdBucket.toApiResource());
+    return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
@@ -145,39 +143,12 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   }
 
   @Override
-  public ResponseEntity<ApiCreatedControlledGcpGcsBucket> getCreateBucketResult(
-      UUID id, String jobId) {
-    final ApiCreatedControlledGcpGcsBucket response = fetchGcsBucketResult(jobId);
-    return new ResponseEntity<>(
-        response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));
-  }
-
-  @Override
   public ResponseEntity<ApiGcpGcsBucketResource> getBucket(UUID id, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResource controlledResource =
         controlledResourceService.getControlledResource(id, resourceId, userRequest);
     ApiGcpGcsBucketResource response = controlledResource.castToGcsBucketResource().toApiResource();
     return new ResponseEntity<>(response, HttpStatus.OK);
-  }
-
-  private ApiCreatedControlledGcpGcsBucket fetchGcsBucketResult(String jobId) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final AsyncJobResult<ControlledResource> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, ControlledResource.class, userRequest);
-
-    ControlledResource resource = jobResult.getResult();
-    UUID resourceId = Optional.ofNullable(resource).map(WsmResource::getResourceId).orElse(null);
-    ApiGcpGcsBucketResource apiGcsBucketResource =
-        Optional.ofNullable(resource)
-            .map(r -> r.castToGcsBucketResource().toApiResource())
-            .orElse(null);
-
-    return new ApiCreatedControlledGcpGcsBucket()
-        .jobReport(jobResult.getJobReport())
-        .errorReport(jobResult.getApiErrorReport())
-        .resourceId(resourceId)
-        .gcpBucket(apiGcsBucketResource);
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {

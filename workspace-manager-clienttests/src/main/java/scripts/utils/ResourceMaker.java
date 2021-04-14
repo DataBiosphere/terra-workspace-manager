@@ -14,7 +14,6 @@ import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpGcsBucketReferenceRequestBody;
-import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.DataRepoSnapshotAttributes;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.DeleteControlledGcpGcsBucketRequest;
@@ -120,7 +119,6 @@ public class ResourceMaker {
     List<GcpGcsBucketLifecycleRule> lifecycleRules = new ArrayList<>(List.of(lifecycleRule));
 
     String bucketName = ClientTestUtils.getTestBucketName();
-    String jobId = UUID.randomUUID().toString();
     var body =
         new CreateControlledGcpGcsBucketRequestBody()
             .common(
@@ -129,8 +127,7 @@ public class ResourceMaker {
                     .managedBy(ManagedBy.USER)
                     .cloningInstructions(CloningInstructionsEnum.NOTHING)
                     .description("Description of " + name)
-                    .name(name)
-                    .jobControl(new JobControl().id(jobId)))
+                    .name(name))
             .gcsBucket(
                 new GcpGcsBucketCreationParameters()
                     .name(bucketName)
@@ -138,18 +135,8 @@ public class ResourceMaker {
                     .lifecycle(new GcpGcsBucketLifecycle().rules(lifecycleRules))
                     .location("US-CENTRAL1"));
 
-    logger.info("Creating bucket {} jobId {} workspace {}", bucketName, jobId, workspaceId);
-    CreatedControlledGcpGcsBucket createdBucket = resourceApi.createBucket(body, workspaceId);
-    while (ClientTestUtils.jobIsRunning(createdBucket.getJobReport())) {
-      TimeUnit.SECONDS.sleep(CREATE_BUCKET_POLL_SECONDS);
-      createdBucket = resourceApi.getCreateBucketResult(workspaceId, jobId);
-    }
-    logger.info("Create bucket status is {}", createdBucket.getJobReport().getStatus().toString());
-    if (createdBucket.getJobReport().getStatus() != JobReport.StatusEnum.SUCCEEDED) {
-      throw new RuntimeException(
-          "Create bucket failed: " + createdBucket.getErrorReport().getMessage());
-    }
-    return createdBucket.getGcpBucket();
+    logger.info("Creating bucket {} workspace {}", bucketName, workspaceId);
+    return resourceApi.createBucket(body, workspaceId).getGcpBucket();
   }
 
   public static void deleteControlledGcsBucket(

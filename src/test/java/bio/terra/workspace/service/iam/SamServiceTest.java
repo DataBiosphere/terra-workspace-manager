@@ -20,11 +20,11 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
-import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceNames;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceCategory;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
@@ -266,7 +266,7 @@ class SamServiceTest extends BaseConnectedTest {
     assertTrue(
         samService.isAuthorized(
             secondaryUserRequest().getRequiredToken(),
-            SamControlledResourceNames.CONTROLLED_USER_SHARED_RESOURCE,
+            ControlledResourceCategory.USER_SHARED.getSamResourceName(),
             bucketResource.getResourceId().toString(),
             SamConstants.SAM_WORKSPACE_READ_ACTION));
 
@@ -295,14 +295,14 @@ class SamServiceTest extends BaseConnectedTest {
     assertFalse(
         samService.isAuthorized(
             secondaryUserRequest().getRequiredToken(),
-            SamControlledResourceNames.CONTROLLED_USER_PRIVATE_RESOURCE,
+            ControlledResourceCategory.USER_PRIVATE.getSamResourceName(),
             bucketResource.getResourceId().toString(),
             SamConstants.SAM_WORKSPACE_READ_ACTION));
     // However, the assigned user should have read access.
     assertTrue(
         samService.isAuthorized(
             defaultUserRequest().getRequiredToken(),
-            SamControlledResourceNames.CONTROLLED_USER_PRIVATE_RESOURCE,
+            ControlledResourceCategory.USER_PRIVATE.getSamResourceName(),
             bucketResource.getResourceId().toString(),
             SamConstants.SAM_WORKSPACE_READ_ACTION));
 

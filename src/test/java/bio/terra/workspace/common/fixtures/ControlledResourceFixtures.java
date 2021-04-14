@@ -93,18 +93,24 @@ public class ControlledResourceFixtures {
 
   private ControlledResourceFixtures() {}
 
-  public static ControlledGcsBucketResource makeControlledGcsBucketResource(UUID workspaceId) {
+  /**
+   * Returns a {@link ControlledGcsBucketResource.Builder} that is ready to be built.
+   *
+   * <p>Tests should not rely on any particular value for the fields returned by this function and
+   * instead override the values that they care about.
+   */
+  public static ControlledGcsBucketResource.Builder makeDefaultControlledGcsBucketResource() {
     UUID resourceId = UUID.randomUUID();
-    return new ControlledGcsBucketResource(
-        workspaceId,
-        resourceId,
-        "testgcs-" + resourceId,
-        RESOURCE_DESCRIPTION,
-        CLONING_INSTRUCTIONS,
-        null,
-        AccessScopeType.ACCESS_SCOPE_SHARED,
-        ManagedByType.MANAGED_BY_USER,
-        BUCKET_NAME);
+    return new ControlledGcsBucketResource.Builder()
+        .workspaceId(UUID.randomUUID())
+        .resourceId(resourceId)
+        .name("testgcs-" + resourceId)
+        .description(RESOURCE_DESCRIPTION)
+        .cloningInstructions(CLONING_INSTRUCTIONS)
+        .assignedUser(null)
+        .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+        .managedBy(ManagedByType.MANAGED_BY_USER)
+        .bucketName(BUCKET_NAME);
   }
 
   /**
