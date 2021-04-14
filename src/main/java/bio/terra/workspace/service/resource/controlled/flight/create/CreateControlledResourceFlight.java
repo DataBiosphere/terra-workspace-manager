@@ -57,7 +57,7 @@ public class CreateControlledResourceFlight extends Flight {
                 flightBeanBag.getCrlService(),
                 resource.castToGcsBucketResource(),
                 flightBeanBag.getWorkspaceService()));
-addStep(
+        addStep(
             new CreateGcsBucketStep(
                 flightBeanBag.getCrlService(),
                 resource.castToGcsBucketResource(),
