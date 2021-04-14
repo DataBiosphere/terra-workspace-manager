@@ -1,0 +1,12 @@
+{
+  "name": "SummariesToBigQuery",
+  "description": "Upload test summary results to the `terra-kernel-k8s.test_runner_results` dataset",
+  "uploaderServiceAccountFile": "testrunner-sa.json",
+  "uploadScripts": [
+    {
+      "name": "SummariesToBigQuery",
+      "description": "Write the summary results to BigQuery with the Test Runner schema.",
+      "parameters": ["terra-kernel-k8s", "test_runner_results"]
+    }
+  ]
+}

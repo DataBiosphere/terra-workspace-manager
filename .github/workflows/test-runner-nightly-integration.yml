@@ -6,7 +6,7 @@ name: Test Runner Nightly Integration Tests
 on:
   workflow_dispatch: {}
   schedule:
-  - cron: '0 7 * * *' # run at 7 AM UTC, 2 AM ET.
+    - cron: '0 7 * * *' # run at 7 AM UTC, 2 AM ET.
 
 jobs:
   test-runner-integration:
@@ -56,6 +56,8 @@ jobs:
           cd workspace-manager-clienttests
           echo "Test Runner config"
           ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
+          ./render-k8s-config.sh wsmtest ${{ steps.vault-token-step.outputs.vault-token }}
+          export TEST_RUNNER_SERVER_SPECIFICATION_FILE=workspace-wsmtest.json
           echo "Running test suite"
           ./gradlew runTest --args="suites/BasicIntegration.json /tmp/TestRunnerResults"
 
@@ -64,11 +66,11 @@ jobs:
         run: |
           cd workspace-manager-clienttests
           echo "Upload test results to Google Bucket"
-          ./gradlew uploadResults --args="CompressDirectoryToBucket.json /tmp/TestRunnerResults"
+          ./gradlew uploadResults --args="CompressDirectoryToTerraKernelK8S.json /tmp/TestRunnerResults"
 
       - name: Upload test results to BigQuery Test Runner Dataset
         if: ${{ always() }}
         run: |
           cd workspace-manager-clienttests
           echo "Upload test results to BigQuery Test Runner Dataset"
-          ./gradlew uploadResults --args="SummariesToBigQuery.json /tmp/TestRunnerResults"
+          ./gradlew uploadResults --args="SummariesToTerraKernelK8SBigQuery.json /tmp/TestRunnerResults"
