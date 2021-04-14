@@ -113,7 +113,8 @@ public class WorkspaceService {
   public Workspace validateWorkspaceAndAction(
       AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
     Workspace workspace = workspaceDao.getWorkspace(workspaceId);
-    samService.workspaceAuthzOnly(userReq, workspaceId, action);
+    samService.checkAuthz(
+        userReq, SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), action);
     return workspace;
   }
 

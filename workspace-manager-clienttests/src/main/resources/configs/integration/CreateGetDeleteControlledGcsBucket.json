@@ -14,5 +14,5 @@
       "parameters": ["wm-default-spend-profile"]
     }
   ],
-  "testUserFiles": ["william.json","neville.json"]
+  "testUserFiles": ["bella.json", "neville.json"]
 }

@@ -1,83 +1,89 @@
 package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
+import bio.terra.workspace.model.AccessScope;
 import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.CloudPlatform;
 import bio.terra.workspace.model.ControlledResourceCommonFields;
-import bio.terra.workspace.model.CreateCloudContextRequest;
-import bio.terra.workspace.model.CreateCloudContextResult;
-import bio.terra.workspace.model.CreateControlledGcsBucketRequestBody;
-import bio.terra.workspace.model.CreatedControlledGcsBucket;
-import bio.terra.workspace.model.DeleteControlledGcsBucketRequest;
-import bio.terra.workspace.model.DeleteControlledGcsBucketResult;
-import bio.terra.workspace.model.GcsBucketAttributes;
-import bio.terra.workspace.model.GcsBucketCreationParameters;
-import bio.terra.workspace.model.GcsBucketDefaultStorageClass;
-import bio.terra.workspace.model.GcsBucketLifecycle;
-import bio.terra.workspace.model.GcsBucketLifecycleRule;
-import bio.terra.workspace.model.GcsBucketLifecycleRuleAction;
-import bio.terra.workspace.model.GcsBucketLifecycleRuleActionType;
-import bio.terra.workspace.model.GcsBucketLifecycleRuleCondition;
-import bio.terra.workspace.model.JobControl;
-import bio.terra.workspace.model.JobReport;
+import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
+import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
+import bio.terra.workspace.model.GcpGcsBucketCreationParameters;
+import bio.terra.workspace.model.GcpGcsBucketDefaultStorageClass;
+import bio.terra.workspace.model.GcpGcsBucketLifecycle;
+import bio.terra.workspace.model.GcpGcsBucketLifecycleRule;
+import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleAction;
+import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleActionType;
+import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleCondition;
+import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GrantRoleRequestBody;
+import bio.terra.workspace.model.IamRole;
+import bio.terra.workspace.model.ManagedBy;
 import com.google.api.client.http.HttpStatusCodes;
-import java.time.Duration;
-import java.time.LocalDate;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageException;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
+import scripts.utils.CloudContextMaker;
+import scripts.utils.ResourceMaker;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
+// This test does not use GcpCloudContextTestScriptBase as it also tests the interaction between
+// controlled resources and context creation.
 public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger =
       LoggerFactory.getLogger(CreateGetDeleteControlledGcsBucket.class);
-  private static final Duration CREATE_BUCKET_POLL_INTERVAL = Duration.ofSeconds(5);
   private static final long CREATE_BUCKET_POLL_SECONDS = 5;
-  private static final long DELETE_BUCKET_POLL_SECONDS = 15;
-  private static final long CREATE_CONTEXT_POLL_SECONDS = 10;
 
-  private static final GcsBucketLifecycleRule LIFECYCLE_RULE_1 =
-      new GcsBucketLifecycleRule()
+  private static final GcpGcsBucketLifecycleRule LIFECYCLE_RULE_1 =
+      new GcpGcsBucketLifecycleRule()
           .action(
-              new GcsBucketLifecycleRuleAction()
+              new GcpGcsBucketLifecycleRuleAction()
                   .type(
-                      GcsBucketLifecycleRuleActionType
+                      GcpGcsBucketLifecycleRuleActionType
                           .DELETE)) // no storage class required for delete actions
           .condition(
-              new GcsBucketLifecycleRuleCondition()
+              new GcpGcsBucketLifecycleRuleCondition()
                   .age(64)
                   .live(true)
-                  .addMatchesStorageClassItem(GcsBucketDefaultStorageClass.ARCHIVE)
+                  .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.ARCHIVE)
                   .numNewerVersions(2));
 
-  private static final GcsBucketLifecycleRule LIFECYCLE_RULE_2 =
-      new GcsBucketLifecycleRule()
+  private static final GcpGcsBucketLifecycleRule LIFECYCLE_RULE_2 =
+      new GcpGcsBucketLifecycleRule()
           .action(
-              new GcsBucketLifecycleRuleAction()
-                  .storageClass(GcsBucketDefaultStorageClass.NEARLINE)
-                  .type(GcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS))
+              new GcpGcsBucketLifecycleRuleAction()
+                  .storageClass(GcpGcsBucketDefaultStorageClass.NEARLINE)
+                  .type(GcpGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS))
           .condition(
-              new GcsBucketLifecycleRuleCondition()
-                  .createdBefore(LocalDate.of(2017, 2, 18))
-                  .addMatchesStorageClassItem(GcsBucketDefaultStorageClass.STANDARD));
+              new GcpGcsBucketLifecycleRuleCondition()
+                  .createdBefore(OffsetDateTime.parse("2007-01-03T00:00:00.00Z"))
+                  .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.STANDARD));
 
   // list must not be immutable if deserialization is to work
-  static final List<GcsBucketLifecycleRule> LIFECYCLE_RULES =
+  static final List<GcpGcsBucketLifecycleRule> LIFECYCLE_RULES =
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
 
   private static final String BUCKET_LOCATION = "US-CENTRAL1";
   private static final String BUCKET_PREFIX = "wsmtestbucket-";
   private static final String RESOURCE_PREFIX = "wsmtestresource-";
+  private static final String GCS_BLOB_NAME = "wsmtestblob-name";
+  private static final String GCS_BLOB_CONTENT = "This is the content of a text file.";
 
   private TestUserSpecification reader;
   private String bucketName;
@@ -102,116 +108,166 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
       throws Exception {
 
     ControlledGcpResourceApi resourceApi =
-        ClientTestUtils.getControlledGpcResourceClient(testUser, server);
+        ClientTestUtils.getControlledGcpResourceClient(testUser, server);
 
     // Create a user-shared controlled GCS bucket - should fail due to no cloud context
-    CreatedControlledGcsBucket bucket = createBucketAttempt(resourceApi);
-    assertThat(bucket.getJobReport().getStatus(), equalTo(JobReport.StatusEnum.FAILED));
-    assertThat(
-        bucket.getErrorReport().getStatusCode(), equalTo(HttpStatusCodes.STATUS_CODE_BAD_REQUEST));
+    ApiException createBucketFails =
+        assertThrows(ApiException.class, () -> createBucketAttempt(resourceApi));
+    assertEquals(createBucketFails.getCode(), HttpStatusCodes.STATUS_CODE_BAD_REQUEST);
+    logger.info("Failed to create bucket, as expected");
 
     // Create the cloud context
-    logger.info("Creating cloud context");
-
-    String contextJobId = UUID.randomUUID().toString();
-    var createContext =
-        new CreateCloudContextRequest()
-            .cloudPlatform(CloudPlatform.GCP)
-            .jobControl(new JobControl().id(contextJobId));
-    CreateCloudContextResult contextResult =
-        workspaceApi.createCloudContext(createContext, getWorkspaceId());
-    while (ClientTestUtils.jobIsRunning(contextResult.getJobReport())) {
-      TimeUnit.SECONDS.sleep(CREATE_CONTEXT_POLL_SECONDS);
-      contextResult = workspaceApi.getCreateCloudContextResult(getWorkspaceId(), contextJobId);
-    }
-    logger.info("Create context status is {}", contextResult.getJobReport().getStatus().toString());
-    assertThat(contextResult.getJobReport().getStatus(), equalTo(JobReport.StatusEnum.SUCCEEDED));
+    String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    logger.info("Created project {}", projectId);
 
     // Create the bucket - should work this time
-    bucket = createBucketAttempt(resourceApi);
-    assertThat(bucket.getJobReport().getStatus(), equalTo(JobReport.StatusEnum.SUCCEEDED));
+    CreatedControlledGcpGcsBucket bucket = createBucketAttempt(resourceApi);
     UUID resourceId = bucket.getResourceId();
 
     // Retrieve the bucket resource
     logger.info("Retrieving bucket resource id {}", resourceId.toString());
-    GcsBucketAttributes gotBucket = resourceApi.getBucket(getWorkspaceId(), resourceId);
-    assertThat(gotBucket.getBucketName(), equalTo(bucket.getGcpBucket().getBucketName()));
+    GcpGcsBucketResource gotBucket = resourceApi.getBucket(getWorkspaceId(), resourceId);
+    assertEquals(
+        gotBucket.getAttributes().getBucketName(),
+        bucket.getGcpBucket().getAttributes().getBucketName());
+    assertEquals(gotBucket.getAttributes().getBucketName(), bucketName);
 
-    // TODO: Check access:
-    // - writer can add the file
-    // - writer can read the file
-    // - reader can read the file
-    // - reader cannot write a file
-    // - reader cannot delete the bucket
+    Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, projectId);
 
-    // Delete bucket
-    String deleteJobId = UUID.randomUUID().toString();
-    var deleteRequest =
-        new DeleteControlledGcsBucketRequest().jobControl(new JobControl().id(deleteJobId));
-    logger.info("Deleting bucket resource id {} jobId {}", resourceId, deleteJobId);
-    DeleteControlledGcsBucketResult result =
-        resourceApi.deleteBucket(deleteRequest, getWorkspaceId(), resourceId);
-    while (ClientTestUtils.jobIsRunning(result.getJobReport())) {
-      TimeUnit.SECONDS.sleep(DELETE_BUCKET_POLL_SECONDS);
-      result = resourceApi.getDeleteBucketResult(getWorkspaceId(), deleteJobId);
-    }
-    logger.info("Delete bucket status is {}", result.getJobReport().getStatus().toString());
-    assertThat(result.getJobReport().getStatus(), equalTo(JobReport.StatusEnum.SUCCEEDED));
+    // Owner can write object to bucket
+    BlobId blobId = BlobId.of(bucketName, GCS_BLOB_NAME);
+    BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
+    Blob createdFile = ownerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
+    logger.info("Wrote blob {} to bucket", createdFile.getBlobId());
 
-    // verify it's not there anymore
-    // - via metadata
-    // TODO: via GCP access
+    // Owner can read the object they created
+    Blob retrievedFile = ownerStorageClient.get(blobId);
+    assertEquals(retrievedFile.getBlobId(), createdFile.getBlobId());
+    logger.info("Read existing blob {} from bucket as owner", retrievedFile.getBlobId());
 
-    try {
-      resourceApi.getBucket(getWorkspaceId(), resourceId);
-      throw new IllegalStateException("Incorrectly found a deleted bucket!");
-    } catch (ApiException ex) {
-      assertThat(ex.getCode(), equalTo(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
-    }
+    // Second user has not yet been added to the workspace, so calls will be rejected.
+    Storage readerStorageClient = ClientTestUtils.getGcpStorageClient(reader, projectId);
+
+    // Second user cannot read the object yet.
+    StorageException userCannotRead =
+        assertThrows(
+            StorageException.class,
+            () -> readerStorageClient.get(blobId),
+            "User accessed a controlled workspace bucket without being a workspace member");
+    assertEquals(userCannotRead.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    logger.info(
+        "User {} outside of workspace could not access bucket as expected", reader.userEmail);
+
+    // Owner can add second user as a reader to the workspace
+    workspaceApi.grantRole(
+        new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceId(), IamRole.READER);
+    logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceId());
+
+    // TODO(PF-643): this should happen inside WSM.
+    logger.info("Waiting 15s for permissions to propagate");
+    Thread.sleep(15000);
+
+    // Second user can now read the blob
+    Blob readerRetrievedFile = readerStorageClient.get(blobId);
+    assertEquals(readerRetrievedFile.getBlobId(), createdFile.getBlobId());
+    logger.info("Read existing blob {} from bucket as reader", retrievedFile.getBlobId());
+
+    // Reader cannot write an object
+    BlobId readerBlobId = BlobId.of(bucketName, "fake-gcs-name");
+    BlobInfo readerBlobInfo =
+        BlobInfo.newBuilder(readerBlobId).setContentType("text/plain").build();
+    StorageException readerCannotWrite =
+        assertThrows(
+            StorageException.class,
+            () -> readerStorageClient.create(readerBlobInfo, GCS_BLOB_CONTENT.getBytes()),
+            "Workspace reader was able to write a file to a bucket!");
+    assertEquals(readerCannotWrite.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    logger.info("Failed to write new blob {} as reader as expected", readerBlobId.getName());
+
+    // Reader cannot delete the blob the owner created.
+    StorageException readerCannotDeleteBlob =
+        assertThrows(
+            StorageException.class,
+            () -> readerStorageClient.delete(blobId),
+            "Workspace reader was able to delete bucket contents!");
+    assertEquals(readerCannotDeleteBlob.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    logger.info("Reader failed to delete blob {} as expected", blobId);
+
+    // Owner can delete the blob they created earlier.
+    ownerStorageClient.delete(blobId);
+    logger.info("Owner successfully deleted blob {}", blobId.getName());
+
+    // Reader cannot delete the bucket directly
+    StorageException readerCannotDeleteBucket =
+        assertThrows(
+            StorageException.class,
+            () -> readerStorageClient.get(bucketName).delete(),
+            "Workspace reader was able to delete a bucket directly!");
+    assertEquals(readerCannotDeleteBucket.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    logger.info("Failed to delete bucket {} directly as reader as expected", bucketName);
+
+    // TODO(PF-633): Owners and writers can actually delete buckets due to workspace-level roles
+    //  included as a temporary workaround. This needs to be removed as we transition onto WSM
+    //  controlled resources.
+
+    // // Owner also cannot delete the bucket directly
+    // StorageException ownerCannotDeleteBucket =
+    //     assertThrows(
+    //         StorageException.class,
+    //         () -> ownerStorageClient.get(bucketName).delete(),
+    //         "Workspace owner was able to delete a bucket directly!");
+    // assertEquals(ownerCannotDeleteBucket.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    // logger.info("Failed to delete bucket {} directly as owner as expected", bucketName);
+
+    // Owner can delete the bucket through WSM
+    ResourceMaker.deleteControlledGcsBucket(resourceId, getWorkspaceId(), resourceApi);
+
+    // verify the bucket was deleted from WSM metadata
+    ApiException bucketNotFound =
+        assertThrows(
+            ApiException.class,
+            () -> resourceApi.getBucket(getWorkspaceId(), resourceId),
+            "Incorrectly found a deleted bucket!");
+    assertEquals(bucketNotFound.getCode(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+
+    // also verify it was deleted from GCP
+    Bucket maybeBucket = ownerStorageClient.get(bucketName);
+    assertNull(maybeBucket);
+
     bucketName = null;
 
     // Delete the cloud context. This is not required. Just some exercise for deleteCloudContext
-    logger.info("Deleting the cloud context");
-    workspaceApi.deleteCloudContext(getWorkspaceId(), CloudPlatform.GCP);
+    CloudContextMaker.deleteGcpCloudContext(getWorkspaceId(), workspaceApi);
   }
 
-  private CreatedControlledGcsBucket createBucketAttempt(ControlledGcpResourceApi resourceApi)
+  private CreatedControlledGcpGcsBucket createBucketAttempt(ControlledGcpResourceApi resourceApi)
       throws Exception {
-    String jobId = UUID.randomUUID().toString();
     var creationParameters =
-        new GcsBucketCreationParameters()
+        new GcpGcsBucketCreationParameters()
             .name(bucketName)
             .location(BUCKET_LOCATION)
-            .defaultStorageClass(GcsBucketDefaultStorageClass.STANDARD)
-            .lifecycle(new GcsBucketLifecycle().rules(LIFECYCLE_RULES));
+            .defaultStorageClass(GcpGcsBucketDefaultStorageClass.STANDARD)
+            .lifecycle(new GcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
 
     var commonParameters =
         new ControlledResourceCommonFields()
             .name(resourceName)
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
-            .accessScope(ControlledResourceCommonFields.AccessScopeEnum.SHARED_ACCESS)
-            .managedBy(ControlledResourceCommonFields.ManagedByEnum.USER)
-            .jobControl(new JobControl().id(jobId));
+            .accessScope(AccessScope.SHARED_ACCESS)
+            .managedBy(ManagedBy.USER);
 
     var body =
-        new CreateControlledGcsBucketRequestBody()
+        new CreateControlledGcpGcsBucketRequestBody()
             .gcsBucket(creationParameters)
             .common(commonParameters);
 
-    logger.info(
-        "Attempt to creating bucket {} jobId {} workspace {}", bucketName, jobId, getWorkspaceId());
-    CreatedControlledGcsBucket bucket = resourceApi.createBucket(body, getWorkspaceId());
-    while (ClientTestUtils.jobIsRunning(bucket.getJobReport())) {
-      TimeUnit.SECONDS.sleep(CREATE_BUCKET_POLL_SECONDS);
-      bucket = resourceApi.getCreateBucketResult(getWorkspaceId(), jobId);
-    }
-    logger.info("Create bucket status is {}", bucket.getJobReport().getStatus().toString());
-    return bucket;
+    logger.info("Attempting to create bucket {} workspace {}", bucketName, getWorkspaceId());
+    return resourceApi.createBucket(body, getWorkspaceId());
   }
 
   @Override
   protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-      throws ApiException {
+      throws Exception {
     super.doCleanup(testUsers, workspaceApi);
     if (bucketName != null) {
       logger.warn("Test failed to cleanup bucket " + bucketName);

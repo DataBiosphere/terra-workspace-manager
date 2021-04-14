@@ -4,8 +4,8 @@ import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.generated.model.ApiDataRepoSnapshot;
-import bio.terra.workspace.generated.model.ApiDataRepoSnapshotReference;
+import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
+import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -59,6 +59,10 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
     this.snapshotId = attributes.getSnapshotId();
   }
 
+  public static ReferencedDataRepoSnapshotResource.Builder builder() {
+    return new ReferencedDataRepoSnapshotResource.Builder();
+  }
+
   public String getInstanceName() {
     return instanceName;
   }
@@ -67,11 +71,16 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
     return snapshotId;
   }
 
-  public ApiDataRepoSnapshotReference toApiModel() {
-    return new ApiDataRepoSnapshotReference()
+  public ApiDataRepoSnapshotAttributes toApiAttributes() {
+    return new ApiDataRepoSnapshotAttributes()
+        .instanceName(getInstanceName())
+        .snapshot(getSnapshotId());
+  }
+
+  public ApiDataRepoSnapshotResource toApiResource() {
+    return new ApiDataRepoSnapshotResource()
         .metadata(super.toApiMetadata())
-        .snapshot(
-            new ApiDataRepoSnapshot().instanceName(getInstanceName()).snapshot(getSnapshotId()));
+        .attributes(toApiAttributes());
   }
 
   @Override
@@ -92,10 +101,6 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
       throw new MissingRequiredFieldException(
           "Missing required field for ReferenceDataRepoSnapshotAttributes.");
     }
-  }
-
-  public static ReferencedDataRepoSnapshotResource.Builder builder() {
-    return new ReferencedDataRepoSnapshotResource.Builder();
   }
 
   public static class Builder {

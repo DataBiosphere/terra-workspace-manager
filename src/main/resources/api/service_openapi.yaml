@@ -1,3 +1,30 @@
+# DEVELOPER NOTES
+#
+# There are three sections of the file bracketed with ## ## that are deprecated. They are the
+# data references interface that we abandoned in favor of the unified resources interface.
+#
+# CLOUD RESOURCE STRUCTURE
+# Each cloud resource has a structure named '{cloud}{resource-type}Resource';
+# for example, GcpGcsBucketResource. It has two properties: 'metadata' and 'attributes'
+#
+# The 'metadata' property is a reference to the common metadata structure for all resource types:
+#  $ref: '#/components/schemas/ResourceMetadata'
+# Metadata includes both the common data for all resources and an optional structure for
+# properties of controlled resources.
+#
+# The 'attributes' property is a reference to a unique structure named '{resource-type}Attributes';
+# for example, GcpGcsBucketAttributes. Attributes are specific to the cloud resource so may
+# be a complex structure.
+#
+# The resource structure should be used as the common form of return in the CRUD operations on
+# the object. Well, the CRU ones anyway...
+#
+# ENUMERATION STRUCTURE
+# Resource enumeration returns ResourceList - a list of ResourceDescription. Each description
+# provides the common metadata, as described above and then a union structure with an entry
+# for the metadata for each cloud resource type. It is a bit clumsy, but provides complete
+# description for a resource.
+#
 openapi: 3.0.3
 info:
   title: Workspace Manager API
@@ -136,6 +163,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  ## DEPRECATED PATHS ##
   # TODO(PF-404): remove this in favor of reference-type specific objects.
   /api/workspaces/v1/{workspaceId}/datareferences:
     parameters:
@@ -259,6 +287,33 @@ paths:
           $ref: '#/components/responses/ServerError'
 
 
+  /api/workspaces/v1/{workspaceId}/resources:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/Offset'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/ResourceType'
+      - $ref: '#/components/parameters/StewardshipType'
+    get:
+      summary: |
+        Enumerate resources in a workspace. The visible resources depend on the permissions of the caller.
+        These are presented sorted by ascending resource name. The offset and limit parameters allow paging
+        through the results. You can also filter by a resource type and by a stewardship type.
+      operationId: enumerateResources
+      tags: [Resource]
+      responses:
+        '200':
+          $ref: '#/components/responses/EnumerateResourcesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  ## END OF DEPRECATED PATHS ##
+
   /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
@@ -364,10 +419,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateGcsBucketReferenceRequestBody'
+              $ref: '#/components/schemas/CreateGcpGcsBucketReferenceRequestBody'
       responses:
         '200':
-          $ref: '#/components/responses/GcsBucketReferenceResponse'
+          $ref: '#/components/responses/GcpGcsBucketReferenceResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -387,7 +442,7 @@ paths:
       tags: [ReferencedGcpResource]
       responses:
         '200':
-          $ref: '#/components/responses/GcsBucketReferenceResponse'
+          $ref: '#/components/responses/GcpGcsBucketReferenceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -437,7 +492,7 @@ paths:
       tags: [ReferencedGcpResource]
       responses:
         '200':
-          $ref: '#/components/responses/GcsBucketReferenceResponse'
+          $ref: '#/components/responses/GcpGcsBucketReferenceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -457,10 +512,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateBigQueryDatasetReferenceRequestBody'
+              $ref: '#/components/schemas/CreateGcpBigQueryDatasetReferenceRequestBody'
       responses:
         '200':
-          $ref: '#/components/responses/BigQueryDatasetReferenceResponse'
+          $ref: '#/components/responses/GcpBigQueryDatasetReferenceResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -480,7 +535,7 @@ paths:
       tags: [ReferencedGcpResource]
       responses:
         '200':
-          $ref: '#/components/responses/BigQueryDatasetReferenceResponse'
+          $ref: '#/components/responses/GcpBigQueryDatasetReferenceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -530,7 +585,7 @@ paths:
       tags: [ReferencedGcpResource]
       responses:
         '200':
-          $ref: '#/components/responses/BigQueryDatasetReferenceResponse'
+          $ref: '#/components/responses/GcpBigQueryDatasetReferenceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -718,30 +773,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateControlledGcsBucketRequestBody'
+              $ref: '#/components/schemas/CreateControlledGcpGcsBucketRequestBody'
       responses:
         '200':
-          $ref: '#/components/responses/CreatedControlledGcsBucketResponse'
-        '202':
-          $ref: '#/components/responses/CreatedControlledGcsBucketResponse'
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '500':
-          $ref: '#/components/responses/ServerError'
-
-  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/result/{jobId}:
-    parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/JobId'
-    get:
-      summary: Retrieve information about a gcp bucket creation job.
-      operationId: getCreateBucketResult
-      tags: [ControlledGcpResource]
-      responses:
-        '200':
-          $ref: '#/components/responses/CreatedControlledGcsBucketResponse'
-        '202':
-          $ref: '#/components/responses/CreatedControlledGcsBucketResponse'
+          $ref: '#/components/responses/CreatedControlledGcpGcsBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -757,7 +792,7 @@ paths:
       tags: [ControlledGcpResource]
       responses:
         '200':
-          $ref: '#/components/responses/GetControlledGcsBucketResponse'
+          $ref: '#/components/responses/GetControlledGcpGcsBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         404:
@@ -777,12 +812,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteControlledGcsBucketRequest'
+              $ref: '#/components/schemas/DeleteControlledGcpGcsBucketRequest'
       responses:
         '200':
-          $ref: '#/components/responses/DeleteControlledGcsBucketResponse'
+          $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
         '202':
-          $ref: '#/components/responses/DeleteControlledGcsBucketResponse'
+          $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -798,9 +833,9 @@ paths:
       tags: [ControlledGcpResource]
       responses:
         '200':
-          $ref: '#/components/responses/DeleteControlledGcsBucketResponse'
+          $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
         '202':
-          $ref: '#/components/responses/DeleteControlledGcsBucketResponse'
+          $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -808,6 +843,27 @@ paths:
 
 components:
   parameters:
+    ## DEPRECATED PARAMETERS ##
+    # TODO(PF-404): remove this in favor of reference-type specific objects.
+    ReferenceId:
+      name: referenceId
+      in: path
+      description: (DEPRECATED) A UUID used to identify a data reference in a workspace.
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    # TODO(PF-404): remove this in favor of reference-type specific objects.
+    ReferenceType:
+      name: referenceType
+      in: path
+      description: (DEPRECATED) The type of a data reference in a workspace
+      required: true
+      schema:
+        $ref: '#/components/schemas/ReferenceTypeEnum'
+    ## END OF DEPRECATED PARAMETERS ##
+
     WorkspaceId:
       name: workspaceId
       in: path
@@ -843,33 +899,30 @@ components:
         minimum: 1
         default: 10
 
-    # TODO(PF-404): remove this in favor of reference-type specific objects.
-    ReferenceId:
-      name: referenceId
-      in: path
-      description: A UUID used to identify a data reference in a workspace.
-      required: true
-      schema:
-        type: string
-        format: uuid
-
-    # TODO(PF-404): remove this in favor of reference-type specific objects.
-    ReferenceType:
-      name: referenceType
-      in: path
-      description: The type of a data reference in a workspace
-      required: true
-      schema:
-        $ref: '#/components/schemas/ReferenceTypeEnum'
-
     ResourceId:
       name: resourceId
       in: path
-      description: A UUID used to identify a controlled resource in a workspace. Will be merged with ReferenceId soon.
+      description: A UUID used to identify a controlled resource in a workspace.
       required: true
       schema:
         type: string
         format: uuid
+
+    ResourceType:
+      name: resource
+      in: query
+      description: Filter on a specific resource type
+      required: false
+      schema:
+        $ref: '#/components/schemas/ResourceType'
+
+    StewardshipType:
+      name: stewardship
+      in: query
+      description: Filter on a stewardship type
+      required: false
+      schema:
+        $ref: '#/components/schemas/StewardshipType'
 
     Name:
       name: name
@@ -907,6 +960,7 @@ components:
     ### DEPRECATED SCHEMAS ###
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     CreateDataReferenceRequestBody:
+      deprecated: true
       type: object
       required: [name, cloningInstructions]
       properties:
@@ -928,9 +982,10 @@ components:
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceRequestMetadata:
+      deprecated: true
       type: object
       required: [name, cloningInstructions]
-      description: Common information shared across all types of data reference requests.
+      description: (DEPRECATED) Common information shared across all types of data reference requests.
       properties:
         ## TODO: This is not implemented as a name. It used as if it is a snapshot identifier (UUID)
         ##   So either this is a misnomer, or we are doing it wrong.
@@ -944,6 +999,7 @@ components:
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceDescription:
+      deprecated: true
       type: object
       required: [referenceId, name, description, workspaceId, cloningInstructions]
       properties:
@@ -961,7 +1017,7 @@ components:
           type: string
           format: uuid
         resourceDescription:
-          $ref: '#/components/schemas/ResourceDescription'
+          $ref: '#/components/schemas/DeprecatedResourceDescription'
         referenceType:
           $ref: '#/components/schemas/ReferenceTypeEnum'
         reference:
@@ -974,8 +1030,9 @@ components:
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     ReferenceTypeEnum:
+      deprecated: true
       type: string
-      description: The type of a reference, if an uncontrolled resource
+      description: (DEPRECATED) The type of a reference, if an uncontrolled resource
       # TODO: swagger-codegen always looks for and removes a common prefix for
       # enum values, which breaks enums that only have a single value.
       # PLACEHOLDER_VALUE should be removed when we have an actual second value
@@ -984,6 +1041,7 @@ components:
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceList:
+      deprecated: true
       type: object
       required: [resources]
       properties:
@@ -995,11 +1053,89 @@ components:
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     UpdateDataReferenceRequestBody:
+      deprecated: true
       type: object
       properties:
         name:
           $ref: "#/components/schemas/Name"
         description:
+          type: string
+
+    # TODO(PF-404): remove this in favor of reference-type specific objects.
+    DataReferenceMetadata:
+      deprecated: true
+      type: object
+      required: [referenceId, name, workspaceId, cloningInstructions]
+      description: (DEPRECATED) Information common across all types of references.
+      properties:
+        referenceId:
+          description: The ID of the data reference
+          type: string
+          format: uuid
+        name:
+          description: The name of the data reference; used to refer to the reference
+          type: string
+        description:
+          type: string
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        workspaceId:
+          description: The ID of the workspace containing the reference
+          type: string
+          format: uuid
+
+    # TODO(PF-404): remove this in favor of reference-type specific objects.
+    DataRepoSnapshotReference:
+      deprecated: true
+      type: object
+      description: (DEPRECATED) A reference to a Data Repo snapshot.
+      required: [metadata, snapshot]
+      properties:
+        metadata:
+          $ref: '#/components/schemas/DataReferenceMetadata'
+        snapshot:
+          $ref: '#/components/schemas/DataRepoSnapshot'
+
+    # TODO(PF-404): remove this in favor of reference-type specific objects.
+    DataRepoSnapshot:
+      deprecated: true
+      description: (DEPRECATED) A reference to a snapshot in Data Repo.
+      type: object
+      required: [instanceName, snapshot]
+      properties:
+        instanceName:
+          description: The name of the Data Repo instance
+          type: string
+        snapshot:
+          description: The ID of the Data Repo snapshot
+          type: string
+
+    # TODO(PF-404): remove this in favor of reference-type specific objects.
+    DeprecatedResourceDescription:
+      deprecated: true
+      description: (DEPRECATED) Description of the workspace resource, if this is a controlled reference.
+      type: object
+      required: [resourceId, workspaceId, isVisible]
+      properties:
+        resourceId:
+          description: The ID of the resource
+          type: string
+          format: uuid
+        workspaceId:
+          description: The ID of the workspace holding the resource
+          type: string
+          format: uuid
+        applicationId:
+          description: ID of application this resource is associated with, if any
+          type: string
+        isVisible:
+          description: Whether this resource is visible or not
+          type: boolean
+        owner:
+          description: ID of owner. null for shared resources
+          type: string
+        attributes:
+          description: JSON map of user-provided attributes
           type: string
 
     ### END OF DEPRECATED SCHEMAS ###
@@ -1196,16 +1332,6 @@ components:
           items:
             $ref: '#/components/schemas/WorkspaceDescription'
 
-    CloningInstructionsEnum:
-      type: string
-      description: Instructions for copying this reference when cloning the workspace
-      enum: ['COPY_NOTHING', 'COPY_DEFINITION', 'COPY_RESOURCE', 'COPY_REFERENCE']
-
-    CloudPlatform:
-      type: string
-      description: Enum representing a cloud platform type.
-      enum: ['GCP']
-
     CreateCloudContextRequest:
       type: object
       required: [cloudPlatform, jobControl]
@@ -1247,118 +1373,29 @@ components:
       required: [metadata, snapshot]
       properties:
         metadata:
-          $ref: '#/components/schemas/DataReferenceRequestMetadata'
+          $ref: '#/components/schemas/ReferenceResourceCommonFields'
         snapshot:
-          $ref: '#/components/schemas/DataRepoSnapshot'
+          $ref: '#/components/schemas/DataRepoSnapshotAttributes'
 
-    CreateGcsBucketReferenceRequestBody:
+    CreateGcpGcsBucketReferenceRequestBody:
       type: object
       description: A request to create a reference to a GCS bucket.
       required: [metadata, bucket]
       properties:
         metadata:
-          $ref: '#/components/schemas/DataReferenceRequestMetadata'
+          $ref: '#/components/schemas/ReferenceResourceCommonFields'
         bucket:
-          $ref: 'common/cloud_resources_uid.yaml#/components/schemas/GoogleBucketUid'
+          $ref: '#/components/schemas/GcpGcsBucketAttributes'
 
-    CreateBigQueryDatasetReferenceRequestBody:
+    CreateGcpBigQueryDatasetReferenceRequestBody:
       type: object
       description: A request to create a reference to a BigQuery dataset.
       required: [metadata, dataset]
       properties:
         metadata:
-          $ref: '#/components/schemas/DataReferenceRequestMetadata'
+          $ref: '#/components/schemas/ReferenceResourceCommonFields'
         dataset:
-          $ref: 'common/cloud_resources_uid.yaml#/components/schemas/GoogleBigQueryDatasetUid'
-
-    ResourceDescription:
-      description: Description of the workspace resource, if this is a controlled reference.
-      type: object
-      required: [resourceId, workspaceId, isVisible]
-      properties:
-        resourceId:
-          description: The ID of the resource
-          type: string
-          format: uuid
-        workspaceId:
-          description: The ID of the workspace holding the resource
-          type: string
-          format: uuid
-        applicationId:
-          description: ID of application this resource is associated with, if any
-          type: string
-        isVisible:
-          description: Whether this resource is visible or not
-          type: boolean
-        owner:
-          description: ID of owner. null for shared resources
-          type: string
-        attributes:
-          description: JSON map of user-provided attributes
-          type: string
-
-    DataReferenceMetadata:
-      type: object
-      required: [referenceId, name, workspaceId, cloningInstructions]
-      description: Information common across all types of references.
-      properties:
-        referenceId:
-          description: The ID of the data reference
-          type: string
-          format: uuid
-        name:
-          description: The name of the data reference; used to refer to the reference
-          type: string
-        description:
-          type: string
-        cloningInstructions:
-          $ref: '#/components/schemas/CloningInstructionsEnum'
-        workspaceId:
-          description: The ID of the workspace containing the reference
-          type: string
-          format: uuid
-
-    DataRepoSnapshotReference:
-      type: object
-      description: A reference to a Data Repo snapshot.
-      required: [metadata, snapshot]
-      properties:
-        metadata:
-          $ref: '#/components/schemas/DataReferenceMetadata'
-        snapshot:
-          $ref: '#/components/schemas/DataRepoSnapshot'
-
-    GcsBucketReference:
-      type: object
-      description: A reference to a GCS bucket.
-      required: [metadata, bucket]
-      properties:
-        metadata:
-          $ref: '#/components/schemas/DataReferenceMetadata'
-        bucket:
-          $ref: 'common/cloud_resources_uid.yaml#/components/schemas/GoogleBucketUid'
-
-    BigQueryDatasetReference:
-      type: object
-      description: A reference to a BigQuery dataset.
-      required: [metadata, dataset]
-      properties:
-        metadata:
-          $ref: '#/components/schemas/DataReferenceMetadata'
-        dataset:
-          $ref: 'common/cloud_resources_uid.yaml#/components/schemas/GoogleBigQueryDatasetUid'
-
-    DataRepoSnapshot:
-      description: A reference to a snapshot in Data Repo.
-      type: object
-      required: [instanceName, snapshot]
-      properties:
-        instanceName:
-          description: The name of the Data Repo instance
-          type: string
-        snapshot:
-          description: The ID of the Data Repo snapshot
-          type: string
+          $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
 
     WorkspaceStageModel:
       description: Enum for possible stages of a workspace along the Rawls migration path
@@ -1402,21 +1439,19 @@ components:
         memberEmail:
           type: string
 
-    CreateControlledGcsBucketRequestBody:
-      description: Payload for requesting a new controlled resource.
+    CreateControlledGcpGcsBucketRequestBody:
+      description: Payload for requesting a new controlled GCS bucket resource.
       type: object
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
         gcsBucket:
-          $ref: '#/components/schemas/GcsBucketCreationParameters'
+          $ref: '#/components/schemas/GcpGcsBucketCreationParameters'
 
     ControlledResourceCommonFields:
       type: object
-      required: [ name, cloningInstructions, jobControl, accessScope, managedBy ]
+      required: [ name, cloningInstructions, accessScope, managedBy ]
       properties:
-        jobControl:
-          $ref: '#/components/schemas/JobControl'
         name:
           $ref: "#/components/schemas/Name"
         description:
@@ -1424,11 +1459,9 @@ components:
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
         accessScope:
-          type: string
-          enum: [ 'SHARED_ACCESS', 'PRIVATE_ACCESS' ]
+          $ref: '#/components/schemas/AccessScope'
         managedBy:
-          type: string
-          enum: [ 'USER', 'APPLICATION' ]
+          $ref: '#/components/schemas/ManagedBy'
         privateResourceUser:
           $ref: '#/components/schemas/PrivateResourceUser'
 
@@ -1450,7 +1483,19 @@ components:
       items:
         $ref: '#/components/schemas/ControlledResourceIamRole'
 
-    CreatedControlledGcsBucket:
+    ReferenceResourceCommonFields:
+      type: object
+      required: [name, cloningInstructions]
+      description: Common information used in all reference requests
+      properties:
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+
+    CreatedControlledGcpGcsBucket:
       description: Response Payload for requesting a new controlled resource.
       type: object
       properties:
@@ -1458,14 +1503,10 @@ components:
           description: UUID of a newly-created resource. Null if not created yet.
           type: string
           format: uuid
-        jobReport:
-          $ref: '#/components/schemas/JobReport'
         gcpBucket:
-          $ref: '#/components/schemas/GcsBucketAttributes'
-        errorReport:
-          $ref: '#/components/schemas/ErrorReport'
+          $ref: '#/components/schemas/GcpGcsBucketResource'
 
-    GcsBucketCreationParameters:
+    GcpGcsBucketCreationParameters:
       description: >-
         Bucket-specific properties to be set on creation. These are a subset of the
         values accepted by the Gcp Storage API.
@@ -1478,19 +1519,11 @@ components:
           description: A valid bucket location per https://cloud.google.com/storage/docs/locations.
           type: string
         defaultStorageClass:
-          $ref: '#/components/schemas/GcsBucketDefaultStorageClass'
+          $ref: '#/components/schemas/GcpGcsBucketDefaultStorageClass'
         lifecycle:
-          $ref: '#/components/schemas/GcsBucketLifecycle'
-    GcsBucketAttributes:
-      description: >-
-        Bucket properties included in post-creation, get, and update. Others must be
-        retrieved from GCS using the name.
-      type: object
-      properties:
-        bucketName:
-          description: Name of created bucket (not the resource nmae).
-          type: string
-    GcsBucketDefaultStorageClass:
+          $ref: '#/components/schemas/GcpGcsBucketLifecycle'
+
+    GcpGcsBucketDefaultStorageClass:
       description: >-
         Type and availability of objects in a bucket, described at https://cloud.google.com/storage/docs/storage-classes.
         This list does not include legacy types that apply to some existing buckets.
@@ -1500,7 +1533,7 @@ components:
         - NEARLINE
         - COLDLINE
         - ARCHIVE
-    GcsBucketLifecycle:
+    GcpGcsBucketLifecycle:
       description: >-
         Options to control automatic deletion or storage class change for a bucket.
         Described at https://cloud.google.com/storage/docs/lifecycle.
@@ -1510,27 +1543,27 @@ components:
           description: List of rules for this bucket
           type: array
           items:
-            $ref: '#/components/schemas/GcsBucketLifecycleRule'
+            $ref: '#/components/schemas/GcpGcsBucketLifecycleRule'
 
-    GcsBucketLifecycleRule:
+    GcpGcsBucketLifecycleRule:
       description: A lifecycle rule for a bucket.
       type: object
       properties:
         action:
-          $ref: '#/components/schemas/GcsBucketLifecycleRuleAction'
+          $ref: '#/components/schemas/GcpGcsBucketLifecycleRuleAction'
         condition:
-          $ref: '#/components/schemas/GcsBucketLifecycleRuleCondition'
+          $ref: '#/components/schemas/GcpGcsBucketLifecycleRuleCondition'
 
-    GcsBucketLifecycleRuleAction:
+    GcpGcsBucketLifecycleRuleAction:
       description: The lifecycle action to take. See https://cloud.google.com/storage/docs/lifecycle#actions.
       type: object
       properties:
         storageClass:
-          $ref: '#/components/schemas/GcsBucketDefaultStorageClass'
+          $ref: '#/components/schemas/GcpGcsBucketDefaultStorageClass'
         type:
-          $ref: '#/components/schemas/GcsBucketLifecycleRuleActionType'
+          $ref: '#/components/schemas/GcpGcsBucketLifecycleRuleActionType'
 
-    GcsBucketLifecycleRuleActionType:
+    GcpGcsBucketLifecycleRuleActionType:
       description: >-
         Type of action to perform. Formatted like our Java enums, but spelled in Camel case in Gcp API.
       type: string
@@ -1538,7 +1571,7 @@ components:
         - DELETE
         - SET_STORAGE_CLASS
 
-    GcsBucketLifecycleRuleCondition:
+    GcpGcsBucketLifecycleRuleCondition:
       description: The condition(s) under which the action will be taken.
       type: object
       properties:
@@ -1548,13 +1581,13 @@ components:
         createdBefore:
           description: This condition is satisfied when an object is created before midnight of the specified date in UTC.
           type: string
-          format: date
+          format: date-time
         customTimeBefore:
           description: >-
             This condition is satisfied when the customTime metadata for the object is set to an
             earlier date than the date used in this lifecycle condition.
           type: string
-          format: date
+          format: date-time
         daysSinceCustomTime:
           description: >-
             Days since the date set in the customTime metadata for the object. This condition is
@@ -1578,13 +1611,13 @@ components:
             "REGIONAL", and "DURABLE_REDUCED_AVAILABILITY".
           type: array
           items:
-            $ref: '#/components/schemas/GcsBucketDefaultStorageClass'
+            $ref: '#/components/schemas/GcpGcsBucketDefaultStorageClass'
         noncurrentTimeBefore:
           description: >-
             Relevant only for versioned objects. This condition is satisfied for objects that became
             noncurrent on a date prior to the one specified in this condition.
           type: string
-          format: date
+          format: date-time
         numNewerVersions:
           description: >-
             Relevant only for versioned objects. If the value is N, this condition is satisfied
@@ -1592,20 +1625,195 @@ components:
             of the object.
           type: integer
 
-    DeleteControlledGcsBucketRequest:
+    DeleteControlledGcpGcsBucketRequest:
       type: object
       required: [ jobControl ]
       properties:
         jobControl:
           $ref: '#/components/schemas/JobControl'
 
-    DeleteControlledGcsBucketResult:
+    DeleteControlledGcpGcsBucketResult:
       type: object
       properties:
         jobReport:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
+
+    ## Cloud Resource, Attribute, and Enumeration structures ##
+    ## Resources and attributes are in alphabetical order
+    ## followed by enumerations in alphabetical order.
+
+    ControlledResourceMetadata:
+      type: object
+      properties:
+        accessScope:
+          $ref: '#/components/schemas/AccessScope'
+        managedBy:
+          $ref: '#/components/schemas/ManagedBy'
+        privateResourceUser:
+          $ref: '#/components/schemas/PrivateResourceUser'
+
+    DataRepoSnapshotAttributes:
+      description: Attributes of a data repository snapshot
+      type: object
+      required: [instanceName, snapshot]
+      properties:
+        instanceName:
+          description: The name of the Data Repo instance
+          type: string
+        snapshot:
+          description: The ID of the Data Repo snapshot
+          type: string
+
+    DataRepoSnapshotResource:
+      deprecated: true
+      type: object
+      description: A Data Repo snapshot resource
+      required: [metadata, snapshot]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/DataRepoSnapshotAttributes'
+
+    GcpBigQueryDatasetAttributes:
+      description: Attributes of a BigQuery dataset
+      type: object
+      required: [projectId, datasetId]
+      properties:
+        projectId:
+          type: string
+        datasetId:
+          type: string
+
+    GcpBigQueryDatasetResource:
+      type: object
+      description: A reference to a BigQuery dataset.
+      required: [metadata, dataset]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
+
+    GcpGcsBucketAttributes:
+      description: >-
+        Bucket properties included in post-creation, get, and update. Others must be
+        retrieved from GCS using the name.
+      type: object
+      properties:
+        bucketName:
+          description: Name of created bucket (not the resource name).
+          type: string
+
+    GcpGcsBucketResource:
+      type: object
+      description: Description of a GCS bucket.
+      required: [metadata, attributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/GcpGcsBucketAttributes'
+
+    ResourceAttributesUnion:
+      type: object
+      description: |
+        This object contains a reference to an object for each resource type.
+        Exactly one will be populated based on the ResourceType in the
+        ResourceDescription. The value of the other references is undefined.
+      properties:
+        gcpBigQuery:
+          $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
+        gcpDataRepoSnapshot:
+          $ref: '#/components/schemas/DataRepoSnapshotAttributes'
+        gcpGcsBucket:
+          $ref: '#/components/schemas/GcpGcsBucketAttributes'
+
+    ResourceDescription:
+      type: object
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        resourceAttributes:
+          description: Data specific to the type of resource and whether it is controlled or not
+          $ref: '#/components/schemas/ResourceAttributesUnion'
+
+    ResourceList:
+      type: object
+      required: [resources]
+      properties:
+        resources:
+          description: Enumerated list of controlled and referenced resources
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceDescription'
+
+    ResourceMetadata:
+      type: object
+      properties:
+        workspaceId:
+          type: string
+          format: uuid
+        resourceId:
+          type: string
+          format: uuid
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        resourceType:
+          $ref: '#/components/schemas/ResourceType'
+        stewardshipType:
+          $ref: '#/components/schemas/StewardshipType'
+        cloudPlatform:
+          $ref: '#/components/schemas/CloudPlatform'
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        controlledResourceMetadata:
+          description: Present if stewardship type is CONTROLLED
+          $ref: '#/components/schemas/ControlledResourceMetadata'
+
+    # Enumerations (related to resources) in alphabetical order.
+    AccessScope:
+      type: string
+      description: Specifies the resource as shared or private
+      enum: ['SHARED_ACCESS', 'PRIVATE_ACCESS']
+
+    CloudPlatform:
+      type: string
+      description: Enum representing a cloud platform type.
+      enum: ['GCP']
+
+    CloningInstructionsEnum:
+      type: string
+      description: Instructions for copying this reference when cloning the workspace
+      enum: ['COPY_NOTHING', 'COPY_DEFINITION', 'COPY_RESOURCE', 'COPY_REFERENCE']
+
+    ManagedBy:
+      type: string
+      description: Specifies the controller of the resource, workspace users or an application
+      enum: [ 'USER', 'APPLICATION' ]
+
+    # The resource types are common to both stewardship types
+    ResourceType:
+      description: Enum containing valid resource types. Used for enumeration
+      type: string
+      enum:
+        - AI_NOTEBOOK
+        - BIG_QUERY_DATASET
+        - DATA_REPO_SNAPSHOT
+        - GCS_BUCKET
+
+    StewardshipType:
+      description: Enum containing valid stewardship types. Used for enumeration
+      type: string
+      enum: ['REFERENCED', 'CONTROLLED']
 
   responses:
     ### DEPRECATED RESPONSES ###
@@ -1638,21 +1846,21 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/DataRepoSnapshotReference'
+            $ref: '#/components/schemas/DataRepoSnapshotResource'
 
-    GcsBucketReferenceResponse:
+    GcpGcsBucketReferenceResponse:
       description: Response containing a reference to a Gcp bucket.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/GcsBucketReference'
+            $ref: '#/components/schemas/GcpGcsBucketResource'
 
-    BigQueryDatasetReferenceResponse:
+    GcpBigQueryDatasetReferenceResponse:
       description: Response containing a reference to a BiqQuery dataset.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/BigQueryDatasetReference'
+            $ref: '#/components/schemas/GcpBigQueryDatasetResource'
 
     RoleBindingListResponse:
       description: Response to list permissions calls
@@ -1661,26 +1869,26 @@ components:
           schema:
             $ref: '#/components/schemas/RoleBindingList'
 
-    CreatedControlledGcsBucketResponse:
+    CreatedControlledGcpGcsBucketResponse:
       description: Response to Create controlled resource
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CreatedControlledGcsBucket'
+            $ref: '#/components/schemas/CreatedControlledGcpGcsBucket'
 
-    DeleteControlledGcsBucketResponse:
+    DeleteControlledGcpGcsBucketResponse:
       description: Response Payload for deleting a Gcs bucket
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/DeleteControlledGcsBucketResult'
+            $ref: '#/components/schemas/DeleteControlledGcpGcsBucketResult'
 
-    GetControlledGcsBucketResponse:
+    GetControlledGcpGcsBucketResponse:
       description: Response to get bucket
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/GcsBucketAttributes'
+            $ref: '#/components/schemas/GcpGcsBucketResource'
 
     CreateCloudContextResultResponse:
       description: Job is complete (succeeded or failed)
@@ -1702,6 +1910,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/JobReport'
+
+    EnumerateResourcesResponse:
+      description: Listing of resources
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceList'
 
     # Error Responses
     BadRequest:

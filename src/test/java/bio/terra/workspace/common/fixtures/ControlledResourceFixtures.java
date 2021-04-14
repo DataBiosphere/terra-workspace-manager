@@ -1,18 +1,18 @@
 package bio.terra.workspace.common.fixtures;
 
-import bio.terra.workspace.generated.model.ApiGcsBucketCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcsBucketDefaultStorageClass;
-import bio.terra.workspace.generated.model.ApiGcsBucketLifecycle;
-import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRule;
-import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleAction;
-import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleActionType;
-import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleCondition;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRule;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleAction;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleActionType;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -25,41 +25,41 @@ public class ControlledResourceFixtures {
   public static final UUID DATA_REFERENCE_ID =
       UUID.fromString("33333333-fcf0-4981-bb96-6b8dd634e7c0");
   public static final String OWNER_EMAIL = "jay@all-the-bits-thats-fit-to-blit.dev";
-  public static final ApiGcsBucketLifecycleRule LIFECYCLE_RULE_1 =
-      new ApiGcsBucketLifecycleRule()
+  public static final ApiGcpGcsBucketLifecycleRule LIFECYCLE_RULE_1 =
+      new ApiGcpGcsBucketLifecycleRule()
           .action(
-              new ApiGcsBucketLifecycleRuleAction()
+              new ApiGcpGcsBucketLifecycleRuleAction()
                   .type(
-                      ApiGcsBucketLifecycleRuleActionType
+                      ApiGcpGcsBucketLifecycleRuleActionType
                           .DELETE)) // no storage class require for delete actions
           .condition(
-              new ApiGcsBucketLifecycleRuleCondition()
+              new ApiGcpGcsBucketLifecycleRuleCondition()
                   .age(64)
                   .live(true)
-                  .addMatchesStorageClassItem(ApiGcsBucketDefaultStorageClass.ARCHIVE)
+                  .addMatchesStorageClassItem(ApiGcpGcsBucketDefaultStorageClass.ARCHIVE)
                   .numNewerVersions(2));
 
-  public static final ApiGcsBucketLifecycleRule LIFECYCLE_RULE_2 =
-      new ApiGcsBucketLifecycleRule()
+  public static final ApiGcpGcsBucketLifecycleRule LIFECYCLE_RULE_2 =
+      new ApiGcpGcsBucketLifecycleRule()
           .action(
-              new ApiGcsBucketLifecycleRuleAction()
-                  .storageClass(ApiGcsBucketDefaultStorageClass.NEARLINE)
-                  .type(ApiGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS))
+              new ApiGcpGcsBucketLifecycleRuleAction()
+                  .storageClass(ApiGcpGcsBucketDefaultStorageClass.NEARLINE)
+                  .type(ApiGcpGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS))
           .condition(
-              new ApiGcsBucketLifecycleRuleCondition()
-                  .createdBefore(LocalDate.of(2017, 2, 18))
-                  .addMatchesStorageClassItem(ApiGcsBucketDefaultStorageClass.STANDARD));
+              new ApiGcpGcsBucketLifecycleRuleCondition()
+                  .createdBefore(OffsetDateTime.parse("2007-01-03T00:00:00.00Z"))
+                  .addMatchesStorageClassItem(ApiGcpGcsBucketDefaultStorageClass.STANDARD));
   // list must not be immutable if deserialization is to work
-  static final List<ApiGcsBucketLifecycleRule> LIFECYCLE_RULES =
+  static final List<ApiGcpGcsBucketLifecycleRule> LIFECYCLE_RULES =
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
   public static final String BUCKET_NAME = "my-bucket";
   public static final String BUCKET_LOCATION = "US-CENTRAL1";
-  public static final ApiGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS =
-      new ApiGcsBucketCreationParameters()
+  public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS =
+      new ApiGcpGcsBucketCreationParameters()
           .name(BUCKET_NAME)
           .location(BUCKET_LOCATION)
-          .defaultStorageClass(ApiGcsBucketDefaultStorageClass.STANDARD)
-          .lifecycle(new ApiGcsBucketLifecycle().rules(LIFECYCLE_RULES));
+          .defaultStorageClass(ApiGcpGcsBucketDefaultStorageClass.STANDARD)
+          .lifecycle(new ApiGcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
 
   public static final String RESOURCE_NAME = "my_first_bucket";
 
@@ -80,18 +80,24 @@ public class ControlledResourceFixtures {
 
   private ControlledResourceFixtures() {}
 
-  public static ControlledGcsBucketResource makeControlledGcsBucketResource(UUID workspaceId) {
+  /**
+   * Returns a {@link ControlledGcsBucketResource.Builder} that is ready to be built.
+   *
+   * <p>Tests should not rely on any particular value for the fields returned by this function and
+   * instead override the values that they care about.
+   */
+  public static ControlledGcsBucketResource.Builder makeDefaultControlledGcsBucketResource() {
     UUID resourceId = UUID.randomUUID();
-    return new ControlledGcsBucketResource(
-        workspaceId,
-        resourceId,
-        "testgcs-" + resourceId,
-        RESOURCE_DESCRIPTION,
-        CLONING_INSTRUCTIONS,
-        null,
-        AccessScopeType.ACCESS_SCOPE_SHARED,
-        ManagedByType.MANAGED_BY_USER,
-        BUCKET_NAME);
+    return new ControlledGcsBucketResource.Builder()
+        .workspaceId(UUID.randomUUID())
+        .resourceId(resourceId)
+        .name("testgcs-" + resourceId)
+        .description(RESOURCE_DESCRIPTION)
+        .cloningInstructions(CLONING_INSTRUCTIONS)
+        .assignedUser(null)
+        .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+        .managedBy(ManagedByType.MANAGED_BY_USER)
+        .bucketName(BUCKET_NAME);
   }
 
   /**

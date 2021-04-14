@@ -4,6 +4,9 @@ import bio.terra.workspace.common.exception.InconsistentFieldsException;
 import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
+import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
+import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.exception.ControlledResourceNotImplementedException;
@@ -61,6 +64,24 @@ public abstract class ControlledResource extends WsmResource {
 
   public ManagedByType getManagedBy() {
     return managedBy;
+  }
+
+  public ControlledResourceCategory getCategory() {
+    return ControlledResourceCategory.get(accessScope, managedBy);
+  }
+
+  @Override
+  public ApiResourceMetadata toApiMetadata() {
+    ApiResourceMetadata metadata = super.toApiMetadata();
+    var controlled =
+        new ApiControlledResourceMetadata()
+            .accessScope(accessScope.toApiModel())
+            .managedBy(managedBy.toApiModel())
+            .privateResourceUser(
+                // TODO: PF-616 figure out how to supply the assigned user's role
+                new ApiPrivateResourceUser().userName(assignedUser));
+    metadata.controlledResourceMetadata(controlled);
+    return metadata;
   }
 
   @Override
