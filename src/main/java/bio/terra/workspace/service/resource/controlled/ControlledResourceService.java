@@ -102,14 +102,7 @@ public class ControlledResourceService {
         commonCreationJobBuilder(
                 resource, privateResourceIamRoles, UUID.randomUUID().toString(), null, userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    String jobId = jobBuilder.submit();
-    jobService.waitForJob(jobId);
-    JobResultOrException<ControlledGcsBucketResource> jobResult =
-        jobService.retrieveJobResult(jobId, ControlledGcsBucketResource.class, userRequest);
-    if (jobResult.getException() != null) {
-      throw jobResult.getException();
-    }
-    return jobResult.getResult();
+    return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
   }
 
   /** Create a JobBuilder for creating controlled resources with the common parameters populated. */
