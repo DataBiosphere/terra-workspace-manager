@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
@@ -88,14 +89,6 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
     return authenticatedUserRequestFactory.from(request);
-  }
-
-  // Returns the result endpoint corresponding to an async request, prefixed with a / character.
-  // Used to build a ApiJobReport. This assumes the result endpoint is at /result/{jobId} relative
-  // to
-  // the async endpoint, which is standard but not enforced.
-  private String getAsyncResultEndpoint(String jobId) {
-    return String.format("%s/result/%s", request.getServletPath(), jobId);
   }
 
   @Override
@@ -402,7 +395,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     ControllerValidationUtils.validateCloudPlatform(body.getCloudPlatform());
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     String jobId = body.getJobControl().getId();
-    String resultPath = getAsyncResultEndpoint(jobId);
+    String resultPath = ControllerUtils.getAsyncResultEndpoint(request, jobId);
 
     // For now, the cloud type is always GCP and that is guaranteed in the validate.
     workspaceService.createGcpCloudContext(id, jobId, resultPath, userReq);

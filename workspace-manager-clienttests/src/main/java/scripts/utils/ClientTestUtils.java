@@ -6,6 +6,9 @@ import static org.hamcrest.Matchers.equalTo;
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
+import bio.terra.workspace.api.ControlledGcpResourceApi;
+import bio.terra.workspace.api.ReferencedGcpResourceApi;
+import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
@@ -15,15 +18,19 @@ import bio.terra.workspace.model.DataReferenceDescription;
 import bio.terra.workspace.model.DataReferenceList;
 import bio.terra.workspace.model.DataRepoSnapshot;
 import bio.terra.workspace.model.IamRole;
+import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ReferenceTypeEnum;
 import bio.terra.workspace.model.RoleBindingList;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,8 +39,22 @@ public class ClientTestUtils {
   public static final String DATA_REFERENCE_NAME_PREFIX = "REF_";
   public static final String TEST_SNAPSHOT = "97b5559a-2f8f-4df3-89ae-5a249173ee0c";
   public static final String TERRA_DATA_REPO_INSTANCE = "terra";
-
+  public static final String TEST_BUCKET_NAME = "terra_wsm_test_resource";
+  public static final String TEST_BQ_DATASET_NAME = "terra_wsm_test_dataset";
+  public static final String TEST_BQ_DATASET_PROJECT = "terra-kernel-k8s";
+  public static final String BUCKET_NAME_PREFIX = "terratest";
   private static final Logger logger = LoggerFactory.getLogger(ClientTestUtils.class);
+
+  // Required scopes for client tests include the usual login scopes.
+  // We need additional scopes for validating access to cloud resources,
+  // including:
+  // - cloud platform
+  // - bigquery
+  // - gcs
+  private static final List<String> TEST_USER_SCOPES =
+      List.of("openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
+  // "https://www.googleapis.com/auth/bigquery")
+  // "https://www.googleapis.com/auth/devstorage.full_control");
 
   private ClientTestUtils() {}
 
@@ -84,21 +105,47 @@ public class ClientTestUtils {
       logger.debug(
           "Fetching credentials and building Workspace Manager ApiClient object for test user: {}",
           testUser.name);
-
-      // refresh the user token
+      // TODO(PF-657): TestRunner caches delegated credentials by TestUser, ignoring scopes. This
+      //  should change, but for now I include all scopes we'll need on this user in the first call.
       GoogleCredentials userCredential =
-          AuthenticationUtils.getDelegatedUserCredential(
-              testUser, AuthenticationUtils.userLoginScopes);
+          AuthenticationUtils.getDelegatedUserCredential(testUser, TEST_USER_SCOPES);
       accessToken = AuthenticationUtils.getAccessToken(userCredential);
     }
 
     return buildClient(accessToken, server);
   }
 
+  public static Storage getGcpStorageClient(TestUserSpecification testUser, String projectId)
+      throws IOException {
+    GoogleCredentials userCredential =
+        AuthenticationUtils.getDelegatedUserCredential(testUser, TEST_USER_SCOPES);
+    StorageOptions options =
+        StorageOptions.newBuilder().setCredentials(userCredential).setProjectId(projectId).build();
+    return options.getService();
+  }
+
   public static WorkspaceApi getWorkspaceClient(
       TestUserSpecification testUser, ServerSpecification server) throws IOException {
     final ApiClient apiClient = getClientForTestUser(testUser, server);
     return new WorkspaceApi(apiClient);
+  }
+
+  public static ControlledGcpResourceApi getControlledGcpResourceClient(
+      TestUserSpecification testUser, ServerSpecification server) throws IOException {
+    final ApiClient apiClient = getClientForTestUser(testUser, server);
+    return new ControlledGcpResourceApi(apiClient);
+  }
+
+  public static ReferencedGcpResourceApi getReferencedGpcResourceClient(
+      TestUserSpecification testUser, ServerSpecification server) throws IOException {
+    final ApiClient apiClient = getClientForTestUser(testUser, server);
+    return new ReferencedGcpResourceApi(apiClient);
+  }
+
+  public static ResourceApi getResourceClient(
+      TestUserSpecification testUser, ServerSpecification server) throws IOException {
+    final ApiClient apiClient = getClientForTestUser(testUser, server);
+    return new ResourceApi(apiClient);
   }
 
   /**
@@ -113,8 +160,8 @@ public class ClientTestUtils {
     return buildClient(null, server);
   }
 
-  private static ApiClient buildClient(AccessToken accessToken, ServerSpecification server)
-      throws IOException {
+  private static ApiClient buildClient(
+      @Nullable AccessToken accessToken, ServerSpecification server) throws IOException {
     if (Strings.isNullOrEmpty(server.workspaceManagerUri)) {
       throw new IllegalArgumentException("Workspace Manager Service URI cannot be empty");
     }
@@ -142,10 +189,11 @@ public class ClientTestUtils {
    * with underscores). This method is useful when creating references on the same workspace from
    * multiple threads.
    *
-   * @return
+   * @return unique data reference name
    */
   public static String getUniqueDataReferenceName() {
-    return DATA_REFERENCE_NAME_PREFIX + UUID.randomUUID().toString().replace("-", "_");
+    String name = DATA_REFERENCE_NAME_PREFIX + UUID.randomUUID().toString();
+    return name.replace("-", "_");
   }
 
   public static DataRepoSnapshot getTestDataRepoSnapshot() {
@@ -168,16 +216,26 @@ public class ClientTestUtils {
   }
 
   /**
-   * True if the role binding list contains a binding for a given user and Iam Role.
+   * Checks if a user email is in a role binding list
    *
    * @param roleBindings - list of role bindings, as retrieved via getRoles()
    * @param userEmail - user to check for
    * @param role - role to check
-   * @return
+   * @return True if the role binding list contains a binding for a given user and Iam Role.
    */
   public static boolean containsBinding(
       RoleBindingList roleBindings, String userEmail, IamRole role) {
     return roleBindings.stream()
         .anyMatch(rb -> rb.getRole() == role && rb.getMembers().contains(userEmail));
+  }
+
+  public static boolean jobIsRunning(JobReport jobReport) {
+    return jobReport.getStatus().equals(JobReport.StatusEnum.RUNNING);
+  }
+
+  /** @return unique test bucket name */
+  public static String getTestBucketName() {
+    String name = BUCKET_NAME_PREFIX + UUID.randomUUID().toString();
+    return name.replace("-", "_");
   }
 }

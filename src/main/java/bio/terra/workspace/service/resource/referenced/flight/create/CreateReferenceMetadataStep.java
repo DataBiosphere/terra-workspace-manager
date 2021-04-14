@@ -44,7 +44,8 @@ public class CreateReferenceMetadataStep implements Step {
   private ReferencedResource getReferenceResource(FlightContext flightContext) {
     FlightMap inputMap = flightContext.getInputParameters();
     WsmResourceType resourceType =
-        inputMap.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, WsmResourceType.class);
+        WsmResourceType.valueOf(
+            inputMap.get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, String.class));
 
     // Use the resource type to deserialize the right class
     return inputMap.get(JobMapKeys.REQUEST.getKeyName(), resourceType.getReferenceClass());

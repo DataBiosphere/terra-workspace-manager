@@ -30,7 +30,8 @@ public class CreateWorkspaceStep implements Step {
   public StepResult doStep(FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
 
-    UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    UUID workspaceId =
+        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
 
     String spendProfileIdString =
         inputMap.get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, String.class);
@@ -41,7 +42,7 @@ public class CreateWorkspaceStep implements Step {
     String description = inputMap.get(WorkspaceFlightMapKeys.DESCRIPTION_ID, String.class);
 
     WorkspaceStage workspaceStage =
-        inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, WorkspaceStage.class);
+        WorkspaceStage.valueOf(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, String.class));
     Workspace workspaceToCreate =
         Workspace.builder()
             .workspaceId(workspaceId)
@@ -62,7 +63,8 @@ public class CreateWorkspaceStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) {
     FlightMap inputMap = flightContext.getInputParameters();
-    UUID workspaceId = inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+    UUID workspaceId =
+        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     // Ignore return value, as we don't care whether a workspace was deleted or just not found.
     workspaceDao.deleteWorkspace(workspaceId);
     return StepResult.getStepResultSuccess();

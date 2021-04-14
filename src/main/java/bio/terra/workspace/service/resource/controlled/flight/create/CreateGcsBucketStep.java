@@ -8,18 +8,16 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.db.exception.CloudContextRequiredException;
-import bio.terra.workspace.generated.model.ApiGcsBucketCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcsBucketDefaultStorageClass;
-import bio.terra.workspace.generated.model.ApiGcsBucketLifecycle;
-import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRule;
-import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleAction;
-import bio.terra.workspace.generated.model.ApiGcsBucketLifecycleRuleCondition;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRule;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleAction;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.api.client.util.DateTime;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
@@ -27,11 +25,10 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
 import com.google.cloud.storage.StorageClass;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -39,58 +36,44 @@ public class CreateGcsBucketStep implements Step {
 
   private final CrlService crlService;
   private final ControlledGcsBucketResource resource;
-  private final WorkspaceDao workspaceDao;
-  private final AuthenticatedUserRequest userRequest;
+  private final WorkspaceService workspaceService;
 
   public CreateGcsBucketStep(
       CrlService crlService,
       ControlledGcsBucketResource resource,
-      WorkspaceDao workspaceDao,
-      AuthenticatedUserRequest userRequest) {
+      WorkspaceService workspaceService) {
     this.crlService = crlService;
     this.resource = resource;
-    this.workspaceDao = workspaceDao;
-    this.userRequest = userRequest;
+    this.workspaceService = workspaceService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
-    ApiGcsBucketCreationParameters creationParameters =
-        inputMap.get(CREATION_PARAMETERS, ApiGcsBucketCreationParameters.class);
-    String gcpProjectId =
-        workspaceDao
-            .getGcpCloudContext(resource.getWorkspaceId())
-            .orElseThrow(
-                () ->
-                    new CloudContextRequiredException(
-                        "No cloud context found in which to create a controlled resource"))
-            .getGcpProjectId();
-
-    final BucketInfo bucketInfo =
+    ApiGcpGcsBucketCreationParameters creationParameters =
+        inputMap.get(CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
+    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+    BucketInfo bucketInfo =
         BucketInfo.newBuilder(resource.getBucketName())
             .setLocation(creationParameters.getLocation())
             .setStorageClass(ApiConversions.toGcsApi(creationParameters.getDefaultStorageClass()))
             .setLifecycleRules(ApiConversions.toGcsApi(creationParameters.getLifecycle()))
             .build();
 
-    final StorageCow storageCow = crlService.createStorageCow(gcpProjectId, userRequest);
+    StorageCow storageCow = crlService.createStorageCow(projectId);
     storageCow.create(bucketInfo);
+
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    String gcpProjectId =
-        workspaceDao
-            .getGcpCloudContext(resource.getWorkspaceId())
-            .map(GcpCloudContext::getGcpProjectId)
-            .orElseThrow(
-                () ->
-                    new CloudContextRequiredException(
-                        "No cloud context found in which to create a controlled resource"));
-    final StorageCow storageCow = crlService.createStorageCow(gcpProjectId, userRequest);
+    FlightMap inputMap = flightContext.getInputParameters();
+    UUID workspaceId =
+        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+    String projectId = workspaceService.getRequiredGcpProject(workspaceId);
+    final StorageCow storageCow = crlService.createStorageCow(projectId);
     storageCow.delete(resource.getBucketName());
     return StepResult.getStepResultSuccess();
   }
@@ -99,7 +82,7 @@ public class CreateGcsBucketStep implements Step {
 
     private ApiConversions() {}
 
-    private static StorageClass toGcsApi(ApiGcsBucketDefaultStorageClass storageClass) {
+    private static StorageClass toGcsApi(ApiGcpGcsBucketDefaultStorageClass storageClass) {
       switch (storageClass) {
         case STANDARD:
           return StorageClass.STANDARD;
@@ -114,18 +97,19 @@ public class CreateGcsBucketStep implements Step {
       }
     }
 
-    private static List<LifecycleRule> toGcsApi(ApiGcsBucketLifecycle lifecycle) {
+    private static List<LifecycleRule> toGcsApi(ApiGcpGcsBucketLifecycle lifecycle) {
       return lifecycle.getRules().stream()
           .map(ApiConversions::toGcsApi)
           .collect(Collectors.toList());
     }
 
-    private static LifecycleRule toGcsApi(ApiGcsBucketLifecycleRule lifecycleRule) {
+    private static LifecycleRule toGcsApi(ApiGcpGcsBucketLifecycleRule lifecycleRule) {
       return new LifecycleRule(
           toGcsApi(lifecycleRule.getAction()), toGcsApi(lifecycleRule.getCondition()));
     }
 
-    private static LifecycleAction toGcsApi(ApiGcsBucketLifecycleRuleAction lifecycleRuleAction) {
+    private static LifecycleAction toGcsApi(
+        ApiGcpGcsBucketLifecycleRuleAction lifecycleRuleAction) {
       switch (lifecycleRuleAction.getType()) {
         case DELETE:
           return LifecycleAction.newDeleteAction();
@@ -138,7 +122,7 @@ public class CreateGcsBucketStep implements Step {
       }
     }
 
-    private static LifecycleCondition toGcsApi(ApiGcsBucketLifecycleRuleCondition condition) {
+    private static LifecycleCondition toGcsApi(ApiGcpGcsBucketLifecycleRuleCondition condition) {
       final LifecycleCondition.Builder resultBuilder = LifecycleCondition.newBuilder();
 
       /* TODO(PF-506): some conditions aren't in the version of the Google Storage API in the
@@ -156,10 +140,9 @@ public class CreateGcsBucketStep implements Step {
       return resultBuilder.build();
     }
 
-    private static DateTime toDateTime(@Nullable LocalDate localDate) {
-      return Optional.ofNullable(localDate)
-          .map(LocalDate::atStartOfDay)
-          .map(ldt -> ldt.atOffset(ZoneOffset.UTC))
+    @Nullable
+    private static DateTime toDateTime(@Nullable OffsetDateTime offsetDateTime) {
+      return Optional.ofNullable(offsetDateTime)
           .map(OffsetDateTime::toInstant)
           .map(Instant::toEpochMilli)
           .map(DateTime::new)

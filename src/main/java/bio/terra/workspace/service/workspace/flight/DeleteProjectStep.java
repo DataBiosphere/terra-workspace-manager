@@ -64,7 +64,10 @@ public class DeleteProjectStep implements Step {
 
   private Optional<GcpCloudContext> getContext(FlightContext flightContext) {
     UUID workspaceId =
-        flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+        UUID.fromString(
+            flightContext
+                .getInputParameters()
+                .get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     return workspaceDao.getGcpCloudContext(workspaceId);
   }
 }

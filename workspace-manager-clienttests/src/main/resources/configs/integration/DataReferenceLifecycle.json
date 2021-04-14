@@ -10,7 +10,8 @@
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 2,
       "expectedTimeForEach": 5,
-      "expectedTimeForEachUnit": "SECONDS"
+      "expectedTimeForEachUnit": "SECONDS",
+      "parameters": ["wm-default-spend-profile"]
     }
   ],
   "testUserFiles": ["william.json"]

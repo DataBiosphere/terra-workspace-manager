@@ -4,13 +4,13 @@ import bio.terra.workspace.common.exception.InconsistentFieldsException;
 import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.generated.model.ApiGcsBucketStoredAttributes;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Optional;
 import java.util.UUID;
 
 public class ControlledGcsBucketResource extends ControlledResource {
@@ -57,8 +57,14 @@ public class ControlledGcsBucketResource extends ControlledResource {
     return bucketName;
   }
 
-  public ApiGcsBucketStoredAttributes toApiModel() {
-    return new ApiGcsBucketStoredAttributes().bucketName(getBucketName());
+  public ApiGcpGcsBucketAttributes toApiAttributes() {
+    return new ApiGcpGcsBucketAttributes().bucketName(getBucketName());
+  }
+
+  public ApiGcpGcsBucketResource toApiResource() {
+    return new ApiGcpGcsBucketResource()
+        .metadata(super.toApiMetadata())
+        .attributes(toApiAttributes());
   }
 
   @Override
@@ -159,10 +165,9 @@ public class ControlledGcsBucketResource extends ControlledResource {
     }
 
     public ControlledGcsBucketResource build() {
-      // On the create path, we can omit the resourceId and have it filled in by the builder.
       return new ControlledGcsBucketResource(
           workspaceId,
-          Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
+          resourceId,
           name,
           description,
           cloningInstructions,

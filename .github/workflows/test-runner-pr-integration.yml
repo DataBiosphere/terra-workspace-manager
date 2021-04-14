@@ -73,8 +73,8 @@ jobs:
     - name: Run local server (in background)
       run: ./gradlew bootRun &
     - name: Wait for local server to start
-      # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
-      run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
+      # With a timeout of 300 seconds, try to connect to localhost:8080 every 1 second.
+      run: timeout 300 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
 
     - name: Run the Basic Integration test suite
       # The ./render-k8s-config.sh step renders k8s credentials for running resiliency tests against k8s.
@@ -88,7 +88,6 @@ jobs:
         echo "Running test suite"
         export TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-local.json"
         ./gradlew runTest --args="suites/BasicIntegration.json /tmp/TestRunnerResults"
-
     - name: Upload test results to Google Bucket
       if: ${{ always() }}
       run: |

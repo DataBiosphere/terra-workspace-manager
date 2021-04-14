@@ -29,7 +29,10 @@ public class CheckSamWorkspaceAuthzStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     UUID workspaceID =
-        flightContext.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, UUID.class);
+        UUID.fromString(
+            flightContext
+                .getInputParameters()
+                .get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     if (!canReadExistingWorkspace(workspaceID)) {
       throw new WorkspaceNotFoundException(
           String.format(

@@ -1,0 +1,18 @@
+{
+  "name": "CreateGetDeleteControlledGcsBucket",
+  "description": "CRUD controlled GCS bucket tests.",
+  "serverSpecificationFile": "workspace-dev.json",
+  "kubernetes": {},
+  "application": {},
+  "testScripts": [
+    {
+      "name": "CreateGetDeleteControlledGcsBucket",
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 2,
+      "expectedTimeForEach": 5,
+      "expectedTimeForEachUnit": "MINUTES",
+      "parameters": ["wm-default-spend-profile"]
+    }
+  ],
+  "testUserFiles": ["bella.json", "neville.json"]
+}

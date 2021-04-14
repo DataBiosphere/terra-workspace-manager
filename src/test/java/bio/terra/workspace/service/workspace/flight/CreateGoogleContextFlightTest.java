@@ -13,12 +13,12 @@ import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.CustomGcpIamRole;
-import bio.terra.workspace.service.iam.CustomGcpIamRoleMapping;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRole;
+import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRoleMapping;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -33,8 +33,10 @@ import com.google.api.services.iam.v1.model.Role;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -132,7 +134,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   private static FlightMap createInputParameters(
       UUID workspaceId, String billingAccountId, AuthenticatedUserRequest userReq) {
     FlightMap inputs = new FlightMap();
-    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId);
+    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
     inputs.put(WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, billingAccountId);
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userReq);
     return inputs;
@@ -143,13 +145,15 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
    * CustomGcpIamRoleMapping}
    */
   private void assertRolesExist(Project project) throws IOException {
-    for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES) {
+    for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES.values()) {
       String fullRoleName =
           "projects/" + project.getProjectId() + "/roles/" + customRole.getRoleName();
       Role gcpRole = crl.getIamCow().projects().roles().get(fullRoleName).execute();
-      assertThat(
-          gcpRole.getIncludedPermissions(),
-          containsInAnyOrder(customRole.getIncludedPermissions().toArray()));
+
+      // Role.getIncludedPermissions returns null instead of an empty list, so we handle that here.
+      List<String> gcpPermissions =
+          Optional.ofNullable(gcpRole.getIncludedPermissions()).orElse(Collections.emptyList());
+      assertThat(gcpPermissions, containsInAnyOrder(customRole.getIncludedPermissions().toArray()));
     }
   }
 

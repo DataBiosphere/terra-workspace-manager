@@ -3,6 +3,7 @@ package bio.terra.workspace.db;
 import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
+import static java.util.stream.Collectors.toList;
 
 import bio.terra.workspace.db.exception.CloudContextRequiredException;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
@@ -11,6 +12,7 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
@@ -23,10 +25,11 @@ import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapsho
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,6 +119,10 @@ public class ResourceDao {
    * @param limit paging support
    * @return list of reference resources
    */
+  @Transactional(
+      propagation = Propagation.REQUIRED,
+      isolation = Isolation.SERIALIZABLE,
+      readOnly = true)
   public List<ReferencedResource> enumerateReferences(UUID workspaceId, int offset, int limit) {
     String sql =
         RESOURCE_SELECT_SQL
@@ -131,7 +138,95 @@ public class ResourceDao {
     return dbResourceList.stream()
         .map(this::constructResource)
         .map(ReferencedResource.class::cast)
-        .collect(Collectors.toList());
+        .collect(toList());
+  }
+
+  /**
+   * Resource enumeration
+   *
+   * <p>The default behavior of resource enumeration is to find all resources that are visible to
+   * the caller. If the caller has gotten this far, then they are allowed to see all referenced
+   * resources. We know which controlled resources they are allowed to see from the list provided as
+   * input.
+   *
+   * <p>The enumeration can be filtered by a resource type. If a resource type is specified, then
+   * only that type of resource is returned.
+   *
+   * <p>The enumeration can also be filtered by a stewardship type. The implementation of the
+   * stewardship type filter is more complex than simply filtering by type. That is because the
+   * placeholder substitution for the IN list yields invalid SQL if the list is empty.
+   *
+   * @param workspaceId identifier for work space to enumerate
+   * @param controlledResourceIds identifiers of controlled resources visible to the caller
+   * @param resourceType filter by this resource type - optional
+   * @param stewardshipType filtered by this stewardship type - optional
+   * @param offset starting row for result
+   * @param limit maximum number of rows to return
+   * @return list of resources
+   */
+  @Transactional(
+      propagation = Propagation.REQUIRED,
+      isolation = Isolation.SERIALIZABLE,
+      readOnly = true)
+  public List<WsmResource> enumerateResources(
+      UUID workspaceId,
+      @Nullable List<String> controlledResourceIds,
+      @Nullable WsmResourceType resourceType,
+      @Nullable StewardshipType stewardshipType,
+      int offset,
+      int limit) {
+
+    // We supply the toSql() forms of the stewardship values as parameters, so that string is only
+    // defined in one place. We do not always use the stewardship values, but there is no harm
+    // in having extra params.
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("offset", offset)
+            .addValue("limit", limit)
+            .addValue("referenced_resource", REFERENCED.toSql())
+            .addValue("controlled_resource", CONTROLLED.toSql());
+
+    StringBuilder sb = new StringBuilder(RESOURCE_SELECT_SQL);
+    if (resourceType != null) {
+      sb.append(" AND resource_type = :resource_type");
+      params.addValue("resource_type", resourceType.toSql());
+    }
+
+    // There are three cases for the stewardship type filter
+    // 1. If it is REFERENCED, then we ignore id list and just filter
+    //    for referenced resources.
+    // 2. If it is CONTROLLED, and the id list is not empty, then we filter for
+    //    CONTROLLED and require that the resources be in the id list.
+    // 3. If no filter is specified (it is null), then we want both REFERENCED
+    //    and CONTROLLED resources; that is, we want the OR of 1 and 2
+    boolean includeReferenced = (stewardshipType == null || stewardshipType == REFERENCED);
+    boolean includeControlled =
+        ((controlledResourceIds != null && !controlledResourceIds.isEmpty())
+            && (stewardshipType == null || (stewardshipType == CONTROLLED)));
+
+    final String referencedPhrase = "stewardship_type = :referenced_resource";
+    final String controlledPhrase =
+        "(stewardship_type = :controlled_resource AND resource_id IN (:id_list))";
+
+    sb.append(" AND ");
+    if (includeReferenced && includeControlled) {
+      sb.append("(").append(referencedPhrase).append(" OR ").append(controlledPhrase).append(")");
+      params.addValue("id_list", controlledResourceIds);
+    } else if (includeReferenced) {
+      sb.append(referencedPhrase);
+    } else if (includeControlled) {
+      sb.append(controlledPhrase);
+      params.addValue("id_list", controlledResourceIds);
+    } else {
+      // Nothing is included, so we return an empty result
+      return Collections.emptyList();
+    }
+    sb.append(" ORDER BY name OFFSET :offset LIMIT :limit");
+    List<DbResource> dbResourceList =
+        jdbcTemplate.query(sb.toString(), params, DB_RESOURCE_ROW_MAPPER);
+
+    return dbResourceList.stream().map(this::constructResource).collect(toList());
   }
 
   /**
@@ -176,19 +271,7 @@ public class ResourceDao {
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public void createReferenceResource(ReferencedResource resource)
       throws DuplicateResourceException {
-    storeResource(
-        resource.getWorkspaceId(),
-        resource.getResourceId(),
-        resource.getName(),
-        resource.getDescription(),
-        REFERENCED,
-        resource.getResourceType(),
-        resource.getCloningInstructions(),
-        resource.attributesToJson(),
-        Optional.empty(),
-        Optional.empty(),
-        Optional.empty(),
-        Optional.empty());
+    storeResource(resource);
   }
 
   // -- Controlled Resource Methods -- //
@@ -241,37 +324,10 @@ public class ResourceDao {
           "No cloud context found in which to create a controlled resource");
     }
 
-    storeResource(
-        controlledResource.getWorkspaceId(),
-        controlledResource.getResourceId(),
-        controlledResource.getName(),
-        controlledResource.getDescription(),
-        CONTROLLED,
-        controlledResource.getResourceType(),
-        controlledResource.getCloningInstructions(),
-        controlledResource.attributesToJson(),
-        // TODO: add this to ControlledResource
-        Optional.of(AccessScopeType.ACCESS_SCOPE_SHARED),
-        Optional.of(ManagedByType.MANAGED_BY_USER),
-        // TODO: add associated app to ControlledResource
-        Optional.empty(),
-        // TODO: rename this
-        controlledResource.getAssignedUser());
+    storeResource(controlledResource);
   }
 
-  private void storeResource(
-      UUID workspaceId,
-      UUID resourceId,
-      String name,
-      String description,
-      StewardshipType stewardshipType,
-      WsmResourceType resourceType,
-      CloningInstructions cloningInstructions,
-      String attributes,
-      Optional<AccessScopeType> accessScope,
-      Optional<ManagedByType> managedBy,
-      Optional<UUID> associatedApp,
-      Optional<String> assignedUser) {
+  private void storeResource(WsmResource resource) {
 
     // TODO: add resource locking to fix this
     //  We create resources in flights, so we have steps that call resource creation that may
@@ -285,7 +341,7 @@ public class ResourceDao {
 
     final String countSql = "SELECT COUNT(*) FROM resource WHERE resource_id = :resource_id";
     MapSqlParameterSource countParams =
-        new MapSqlParameterSource().addValue("resource_id", resourceId.toString());
+        new MapSqlParameterSource().addValue("resource_id", resource.getResourceId().toString());
     Integer count = jdbcTemplate.queryForObject(countSql, countParams, Integer.class);
     if (count != null && count == 1) {
       return;
@@ -296,33 +352,47 @@ public class ResourceDao {
             + " resource_type, cloning_instructions, attributes,"
             + " access_scope, managed_by, associated_app, assigned_user)"
             + " VALUES (:workspace_id, :cloud_platform, :resource_id, :name, :description, :stewardship_type,"
-            + " :resource_type, :cloning_instructions, cast(:attributes AS json),"
+            + " :resource_type, :cloning_instructions, cast(:attributes AS jsonb),"
             + " :access_scope, :managed_by, :associated_app, :assigned_user)";
 
     final var params =
         new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_platform", resourceType.getCloudPlatform().toString())
-            .addValue("resource_id", resourceId.toString())
-            .addValue("name", name)
-            .addValue("description", description)
-            .addValue("stewardship_type", stewardshipType.toSql())
-            .addValue("resource_type", resourceType.toSql())
-            .addValue("cloning_instructions", cloningInstructions.toSql())
-            .addValue("attributes", attributes)
-            .addValue("access_scope", accessScope.map(AccessScopeType::toSql).orElse(null))
-            .addValue("managed_by", managedBy.map(ManagedByType::toSql).orElse(null))
-            .addValue("associated_app", associatedApp.map(UUID::toString).orElse(null))
-            .addValue("assigned_user", assignedUser.orElse(null));
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
+            .addValue("cloud_platform", resource.getResourceType().getCloudPlatform().toString())
+            .addValue("resource_id", resource.getResourceId().toString())
+            .addValue("name", resource.getName())
+            .addValue("description", resource.getDescription())
+            .addValue("stewardship_type", resource.getStewardshipType().toSql())
+            .addValue("resource_type", resource.getResourceType().toSql())
+            .addValue("cloning_instructions", resource.getCloningInstructions().toSql())
+            .addValue("attributes", resource.attributesToJson());
+    if (resource.getStewardshipType().equals(CONTROLLED)) {
+      ControlledResource controlledResource = resource.castToControlledResource();
+      params
+          .addValue("access_scope", controlledResource.getAccessScope().toSql())
+          .addValue("managed_by", controlledResource.getManagedBy().toSql())
+          // TODO: add associatedApp to ControlledResource
+          .addValue("associated_app", null)
+          .addValue("assigned_user", controlledResource.getAssignedUser().orElse(null));
+    } else {
+      params
+          .addValue("access_scope", null)
+          .addValue("managed_by", null)
+          .addValue("associated_app", null)
+          .addValue("assigned_user", null);
+    }
 
     try {
       jdbcTemplate.update(sql, params);
-      logger.info("Inserted record for resource {} for workspace {}", resourceId, workspaceId);
+      logger.info(
+          "Inserted record for resource {} for workspace {}",
+          resource.getResourceId(),
+          resource.getWorkspaceId());
     } catch (DuplicateKeyException e) {
       throw new DuplicateResourceException(
           String.format(
               "A resource already exists in the workspace that has the same name (%s) or the same id (%s)",
-              name, resourceId.toString()));
+              resource.getName(), resource.getResourceId().toString()));
     }
   }
 
@@ -376,13 +446,14 @@ public class ResourceDao {
         switch (dbResource.getResourceType()) {
           case GCS_BUCKET:
             return new ControlledGcsBucketResource(dbResource);
+          case AI_NOTEBOOK_INSTANCE:
+            return new ControlledAiNotebookInstanceResource(dbResource);
 
           default:
             throw new InvalidMetadataException(
                 "Invalid controlled resource type" + dbResource.getResourceType().toString());
         }
 
-      case MONITORED:
       default:
         throw new InvalidMetadataException(
             "Invalid stewardship type" + dbResource.getStewardshipType().toString());

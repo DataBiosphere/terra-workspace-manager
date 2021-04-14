@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.referenced;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
@@ -22,18 +21,13 @@ import org.springframework.stereotype.Component;
 public class ReferencedResourceService {
   private final JobService jobService;
   private final ResourceDao resourceDao;
-  private final SamService samService;
   private final WorkspaceService workspaceService;
 
   @Autowired
   public ReferencedResourceService(
-      JobService jobService,
-      ResourceDao resourceDao,
-      SamService samService,
-      WorkspaceService workspaceService) {
+      JobService jobService, ResourceDao resourceDao, WorkspaceService workspaceService) {
     this.jobService = jobService;
     this.resourceDao = resourceDao;
-    this.samService = samService;
     this.workspaceService = workspaceService;
   }
 
@@ -41,7 +35,7 @@ public class ReferencedResourceService {
   public ReferencedResource createReferenceResource(
       ReferencedResource resource, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
-        userReq, resource.getWorkspaceId(), SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+        userReq, resource.getWorkspaceId(), SamConstants.SAM_CREATE_REFERENCED_RESOURCE);
     resource.validate();
 
     String jobDescription =
@@ -61,7 +55,8 @@ public class ReferencedResourceService {
                 resource,
                 userReq)
             .addParameter(
-                WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, resource.getResourceType());
+                WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE,
+                resource.getResourceType().name());
 
     UUID resourceIdResult = createJob.submitAndWait(UUID.class);
     if (!resourceIdResult.equals(resource.getResourceId())) {
@@ -87,7 +82,7 @@ public class ReferencedResourceService {
       @Nullable String description,
       AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
-        userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+        userReq, workspaceId, SamConstants.SAM_UPDATE_REFERENCED_RESOURCE);
     resourceDao.updateReferenceResource(workspaceId, resourceId, name, description);
   }
 
@@ -102,7 +97,7 @@ public class ReferencedResourceService {
   public void deleteReferenceResource(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
-        userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+        userReq, workspaceId, SamConstants.SAM_DELETE_REFERENCED_RESOURCE);
     resourceDao.deleteResource(workspaceId, resourceId);
   }
 
@@ -111,7 +106,7 @@ public class ReferencedResourceService {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
-    return wsmResource.castReferenceResource();
+    return wsmResource.castToReferenceResource();
   }
 
   public ReferencedResource getReferenceResourceByName(
@@ -119,7 +114,7 @@ public class ReferencedResourceService {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     WsmResource wsmResource = resourceDao.getResourceByName(workspaceId, name);
-    return wsmResource.castReferenceResource();
+    return wsmResource.castToReferenceResource();
   }
 
   public List<ReferencedResource> enumerateReferences(

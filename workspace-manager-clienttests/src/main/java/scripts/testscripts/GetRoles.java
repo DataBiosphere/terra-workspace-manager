@@ -14,15 +14,15 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
-import scripts.utils.WorkspaceFixtureTestScriptBase;
+import scripts.utils.WorkspaceAllocateTestScriptBase;
 
-public class GetRoles extends WorkspaceFixtureTestScriptBase {
+public class GetRoles extends WorkspaceAllocateTestScriptBase {
   private static final IamRole IAM_ROLE = IamRole.WRITER;
   private static final Logger logger = LoggerFactory.getLogger(GetRoles.class);
 
   @Override
   public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-      throws ApiException {
+      throws Exception {
     super.doSetup(testUsers, workspaceApi);
 
     for (TestUserSpecification testUser : testUsers) {
