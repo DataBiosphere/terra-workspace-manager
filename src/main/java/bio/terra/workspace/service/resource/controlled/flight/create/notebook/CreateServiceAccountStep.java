@@ -50,13 +50,16 @@ public class CreateServiceAccountStep implements Step {
     CreateServiceAccountRequest createRequest =
         new CreateServiceAccountRequest()
             .setAccountId(
-                flightContext
-                    .getWorkingMap()
-                    .get(CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID, String.class));
-    ServiceAccount serviceAccount;
+                flightContext.getWorkingMap().get(CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID, String.class))
+            .setServiceAccount(
+                new ServiceAccount()
+                    // Set a description to help with debugging.
+                    .setDescription(
+                        String.format(
+                            "SA for AI Notebook Instance id %s in location %s",
+                            resource.getInstanceId(), resource.getLocation())));
     try {
-      serviceAccount =
-          iam.projects().serviceAccounts().create("projects/" + projectId, createRequest).execute();
+      iam.projects().serviceAccounts().create("projects/" + projectId, createRequest).execute();
     } catch (GoogleJsonResponseException e) {
       // If the service account already exists, this step must have run already.
       // Otherwise throw a retry exception.

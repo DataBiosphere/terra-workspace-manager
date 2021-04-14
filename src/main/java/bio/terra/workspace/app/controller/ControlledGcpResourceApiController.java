@@ -98,11 +98,11 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
     ApiJobControl jobControl = body.getCommon().getJobControl();
     final String jobId =
-        controlledResourceService.createControlledResource(
+        controlledResourceService.createBucket(
             resource,
             body.getGcsBucket(),
             privateRoles,
-            jobControl,
+            jobControl.getId(),
             ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId()),
             userRequest);
     return getCreateBucketResult(workspaceId, jobId);

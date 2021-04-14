@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -44,11 +45,38 @@ public class ControlledResourceService {
     this.stageService = stageService;
   }
 
-  public String createControlledResource(
-      ControlledResource resource,
+  /** Starts a create controlled bucket resource job, returning the job id. */
+  public String createBucket(
+      ControlledGcsBucketResource resource,
       ApiGcpGcsBucketCreationParameters creationParameters,
       List<ControlledResourceIamRole> privateResourceIamRoles,
-      ApiJobControl jobControl,
+      String jobId,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(resource, privateResourceIamRoles, jobId, resultPath, userRequest);
+    jobBuilder.addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    return jobBuilder.submit();
+  }
+
+  /** Starts a create controlled AI Notebook instance resource job, returning the job id. */
+  public String createAiNotebookInstance(
+      ControlledAiNotebookInstanceResource resource,
+      ApiGcpAiNotebookInstanceCreationParameters creationParameters,
+      List<ControlledResourceIamRole> privateResourceIamRoles,
+      String jobId,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(resource, privateResourceIamRoles, jobId, resultPath, userRequest);
+    jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
+    return jobBuilder.submit();
+  }
+
+  private JobBuilder commonCreationJobBuilder(
+      ControlledResource resource,
+      List<ControlledResourceIamRole> privateResourceIamRoles,
+      String jobId,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
@@ -64,16 +92,11 @@ public class ControlledResourceService {
     final JobBuilder jobBuilder =
         jobService
             .newJob(
-                jobDescription,
-                jobControl.getId(),
-                CreateControlledResourceFlight.class,
-                resource,
-                userRequest)
-            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters)
+                jobDescription, jobId, CreateControlledResourceFlight.class, resource, userRequest)
             .addParameter(
                 ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, privateResourceIamRoles)
             .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
-    return jobBuilder.submit();
+    return jobBuilder;
   }
 
   public ControlledResource getControlledResource(

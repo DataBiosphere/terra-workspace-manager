@@ -12,12 +12,13 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.generated.model.ApiGcsAiNotebookInstanceContainerImage;
-import bio.terra.workspace.generated.model.ApiGcsAiNotebookInstanceCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcsAiNotebookInstanceVmImage;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.notebooks.v1.model.ContainerImage;
 import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.api.services.notebooks.v1.model.Operation;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 
 public class CreateAiNotebookInstanceStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(CreateAiNotebookInstanceStep.class);
@@ -47,10 +49,10 @@ public class CreateAiNotebookInstanceStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
-    ApiGcsAiNotebookInstanceCreationParameters creationParameters =
+    ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         flightContext
             .getInputParameters()
-            .get(CREATE_NOTEBOOK_PARAMETERS, ApiGcsAiNotebookInstanceCreationParameters.class);
+            .get(CREATE_NOTEBOOK_PARAMETERS, ApiGcpAiNotebookInstanceCreationParameters.class);
     Instance instance = createInstance(flightContext, projectId);
     InstanceName instanceName =
         InstanceName.builder()
@@ -84,10 +86,10 @@ public class CreateAiNotebookInstanceStep implements Step {
 
   private static Instance createInstance(FlightContext flightContext, String projectId) {
     Instance instance = new Instance();
-    ApiGcsAiNotebookInstanceCreationParameters creationParameters =
+    ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         flightContext
             .getInputParameters()
-            .get(CREATE_NOTEBOOK_PARAMETERS, ApiGcsAiNotebookInstanceCreationParameters.class);
+            .get(CREATE_NOTEBOOK_PARAMETERS, ApiGcpAiNotebookInstanceCreationParameters.class);
     setFields(creationParameters, instance);
 
     String serviceAccountEmail =
@@ -108,22 +110,26 @@ public class CreateAiNotebookInstanceStep implements Step {
   }
 
   private static void setFields(
-      ApiGcsAiNotebookInstanceCreationParameters creationParameters, Instance instance) {
+      ApiGcpAiNotebookInstanceCreationParameters creationParameters, Instance instance) {
     instance
         .setPostStartupScript(creationParameters.getPostStartupScript())
         .setMachineType(creationParameters.getMachineType());
-    ApiGcsAiNotebookInstanceVmImage vmImageParameters = creationParameters.getVmImage();
-    instance.setVmImage(
-        new VmImage()
-            .setProject(vmImageParameters.getProjectId())
-            .setImageFamily(vmImageParameters.getImageFamily())
-            .setImageName(vmImageParameters.getImageName()));
-    ApiGcsAiNotebookInstanceContainerImage containerImageParameters =
+    ApiGcpAiNotebookInstanceVmImage vmImageParameters = creationParameters.getVmImage();
+    if (vmImageParameters != null) {
+      instance.setVmImage(
+          new VmImage()
+              .setProject(vmImageParameters.getProjectId())
+              .setImageFamily(vmImageParameters.getImageFamily())
+              .setImageName(vmImageParameters.getImageName()));
+    }
+    ApiGcpAiNotebookInstanceContainerImage containerImageParameters =
         creationParameters.getContainerImage();
-    instance.setContainerImage(
-        new ContainerImage()
-            .setRepository(containerImageParameters.getRepository())
-            .setTag(containerImageParameters.getTag()));
+    if (containerImageParameters != null) {
+      instance.setContainerImage(
+          new ContainerImage()
+              .setRepository(containerImageParameters.getRepository())
+              .setTag(containerImageParameters.getTag()));
+    }
   }
 
   private static void setNetworks(Instance instance, String projectId, String location) {
@@ -137,29 +143,39 @@ public class CreateAiNotebookInstanceStep implements Step {
     instance.setSubnet("projects/" + projectId + "/regions/" + zone + "/subnetworks/subnetwork");
   }
 
-  private static InstanceName createInstanceName(
-      String projectId, ApiGcsAiNotebookInstanceCreationParameters creationParameters) {
+  private InstanceName createInstanceName(String projectId) {
     return InstanceName.builder()
         .projectId(projectId)
-        .location(creationParameters.getLocation())
-        .instanceId(creationParameters.getInstanceId())
+        .location(resource.getLocation())
+        .instanceId(resource.getInstanceId())
         .build();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
-    ApiGcsAiNotebookInstanceCreationParameters creationParameters =
+    ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         flightContext
             .getInputParameters()
-            .get(CREATE_NOTEBOOK_PARAMETERS, ApiGcsAiNotebookInstanceCreationParameters.class);
-    InstanceName instanceName = createInstanceName(projectId, creationParameters);
+            .get(CREATE_NOTEBOOK_PARAMETERS, ApiGcpAiNotebookInstanceCreationParameters.class);
+    InstanceName instanceName = createInstanceName(projectId);
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
       // DO NOT SUBMIT - what if never created or already deleted?
-      OperationCow<Operation> deletionOperation =
-          notebooks.operations().operationCow(notebooks.instances().delete(instanceName).execute());
+      OperationCow<Operation> deletionOperation;
+      try {
+        deletionOperation =
+            notebooks
+                .operations()
+                .operationCow(notebooks.instances().delete(instanceName).execute());
+      } catch (GoogleJsonResponseException e) {
+        if (e.getStatusCode() == HttpStatus.NOT_FOUND.value()) {
+          logger.debug("No notebook instance to delete.");
+          return StepResult.getStepResultSuccess();
+        }
+        throw e;
+      }
       deletionOperation =
           OperationUtils.pollUntilComplete(
               deletionOperation, Duration.ofSeconds(20), Duration.ofMinutes(12));

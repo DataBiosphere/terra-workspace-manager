@@ -1667,7 +1667,7 @@ components:
           $ref: '#/components/schemas/ErrorReport'
 
     # TODO(PF-469): Add the creation endpoint.
-    GcsAiNotebookInstanceCreationParameters:
+    GcpAiNotebookInstanceCreationParameters:
       description: >-
         AI Platform Notebook instance specific properties to be set on creation. These are a subset of the
         values accepted by the GCP AI Platforms API. See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances/create
@@ -1692,12 +1692,12 @@ components:
             The path must be a URL or Cloud Storage path (gs://path-to-file/file-name).
           type: string
         vmImage:
-          $ref: '#/components/schemas/GcsAiNotebookInstanceVmImage'
+          $ref: '#/components/schemas/GcpAiNotebookInstanceVmImage'
         containerImage:
-          $ref: '#/components/schemas/GcsAiNotebookInstanceContainerImage'
+          $ref: '#/components/schemas/GcpAiNotebookInstanceContainerImage'
         # TODO(PF-469) Add support for more fields.
 
-    GcsAiNotebookInstanceVmImage:
+    GcpAiNotebookInstanceVmImage:
       description: >-
         Either this or containerImage must be specified. Definition of a custom Compute Engine
         virtual machine image for starting a notebook instance with the environment installed
@@ -1720,7 +1720,7 @@ components:
             the newest image in this family will be used.
           type: string
 
-    GcsAiNotebookInstanceContainerImage:
+    GcpAiNotebookInstanceContainerImage:
       description: >-
         Either this or vmImage must be specified. Definition of a container image for starting a
         notebook instance with the environment installed in a container. See
