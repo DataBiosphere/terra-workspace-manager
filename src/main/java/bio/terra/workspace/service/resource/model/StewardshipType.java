@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.model;
 
-import bio.terra.workspace.common.exception.ValidationException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.SerializationException;

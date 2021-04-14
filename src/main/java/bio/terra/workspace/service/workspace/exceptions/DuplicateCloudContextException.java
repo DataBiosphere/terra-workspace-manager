@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace.exceptions;
 
-import bio.terra.workspace.common.exception.ConflictException;
+import bio.terra.common.exception.ConflictException;
 
 /**
  * Exception thrown when attempting to create a cloud context in a workspace which already has one

@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import bio.terra.workspace.common.exception.InconsistentFieldsException;
-import bio.terra.workspace.common.exception.MissingRequiredFieldException;
+import bio.terra.common.exception.InconsistentFieldsException;
+import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
