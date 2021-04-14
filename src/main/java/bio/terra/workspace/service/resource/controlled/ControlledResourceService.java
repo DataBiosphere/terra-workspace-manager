@@ -93,41 +93,23 @@ public class ControlledResourceService {
     return controlledResource;
   }
 
-  public ControlledResource syncCreateControlledResource(
-      ControlledResource resource,
+  /** Starts a create controlled bucket resource, blocking until its job is finished. */
+  public ControlledGcsBucketResource syncCreateBucket(
+      ControlledGcsBucketResource resource,
       ApiGcpGcsBucketCreationParameters creationParameters,
       List<ControlledResourceIamRole> privateResourceIamRoles,
       AuthenticatedUserRequest userRequest) {
-    ApiJobControl syncJobControl = new ApiJobControl().id(UUID.randomUUID().toString());
-    String jobId =
-        createControlledResource(
-            resource,
-            creationParameters,
-            privateResourceIamRoles,
-            syncJobControl,
-            null,
-            userRequest);
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(resource, privateResourceIamRoles, UUID.randomUUID().toString(), null, userRequest);
+    jobBuilder.addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    String jobId = jobBuilder.submit();
     jobService.waitForJob(jobId);
-    JobResultOrException<ControlledResource> jobResult =
-        jobService.retrieveJobResult(jobId, ControlledResource.class, userRequest);
+    JobResultOrException<ControlledGcsBucketResource> jobResult =
+            jobService.retrieveJobResult(jobId, ControlledGcsBucketResource.class, userRequest);
     if (jobResult.getException() != null) {
       throw jobResult.getException();
     }
     return jobResult.getResult();
-  }
-
-  /** Starts a create controlled bucket resource job, returning the job id. */
-  public String createBucket(
-      ControlledGcsBucketResource resource,
-      ApiGcpGcsBucketCreationParameters creationParameters,
-      List<ControlledResourceIamRole> privateResourceIamRoles,
-      String jobId,
-      String resultPath,
-      AuthenticatedUserRequest userRequest) {
-    JobBuilder jobBuilder =
-        commonCreationJobBuilder(resource, privateResourceIamRoles, jobId, resultPath, userRequest);
-    jobBuilder.addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    return jobBuilder.submit();
   }
 
   /** Starts a create controlled AI Notebook instance resource job, returning the job id. */
