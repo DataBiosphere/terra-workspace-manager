@@ -261,7 +261,7 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
             .gcsBucket(creationParameters)
             .common(commonParameters);
 
-    logger.info("Attempt to creating bucket {} workspace {}", bucketName, getWorkspaceId());
+    logger.info("Attempting to create bucket {} workspace {}", bucketName, getWorkspaceId());
     return resourceApi.createBucket(body, getWorkspaceId());
   }
 
