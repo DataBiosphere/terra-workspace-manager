@@ -198,7 +198,6 @@ public class JobService {
     return resultOrException.getResult();
   }
 
-  @VisibleForTesting
   public void waitForJob(String jobId) {
     try {
       int pollSeconds = jobConfig.getPollingIntervalSeconds();
