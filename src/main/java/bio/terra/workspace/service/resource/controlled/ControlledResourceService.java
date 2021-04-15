@@ -10,7 +10,6 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceA
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.job.JobService.JobResultOrException;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -92,32 +91,26 @@ public class ControlledResourceService {
     return controlledResource;
   }
 
-  public ControlledResource syncCreateControlledResource(
-      ControlledResource resource,
+  /** Starts a create controlled bucket resource, blocking until its job is finished. */
+  public ControlledGcsBucketResource syncCreateBucket(
+      ControlledGcsBucketResource resource,
       ApiGcpGcsBucketCreationParameters creationParameters,
       List<ControlledResourceIamRole> privateResourceIamRoles,
       AuthenticatedUserRequest userRequest) {
-    ApiJobControl syncJobControl = new ApiJobControl().id(UUID.randomUUID().toString());
-    String jobId =
-        createControlledResource(
-            resource,
-            creationParameters,
-            privateResourceIamRoles,
-            syncJobControl,
-            null,
-            userRequest);
-    jobService.waitForJob(jobId);
-    JobResultOrException<ControlledResource> jobResult =
-        jobService.retrieveJobResult(jobId, ControlledResource.class, userRequest);
-    if (jobResult.getException() != null) {
-      throw jobResult.getException();
-    }
-    return jobResult.getResult();
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(
+                resource,
+                privateResourceIamRoles,
+                new ApiJobControl().id(UUID.randomUUID().toString()),
+                null,
+                userRequest)
+            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
   }
 
-  public String createControlledResource(
+  /** Create a JobBuilder for creating controlled resources with the common parameters populated. */
+  private JobBuilder commonCreationJobBuilder(
       ControlledResource resource,
-      ApiGcpGcsBucketCreationParameters creationParameters,
       List<ControlledResourceIamRole> privateResourceIamRoles,
       ApiJobControl jobControl,
       String resultPath,
@@ -140,11 +133,10 @@ public class ControlledResourceService {
                 CreateControlledResourceFlight.class,
                 resource,
                 userRequest)
-            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters)
             .addParameter(
                 ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, privateResourceIamRoles)
             .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
-    return jobBuilder.submit();
+    return jobBuilder;
   }
 
   public ControlledResource getControlledResource(
