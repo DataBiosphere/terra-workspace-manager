@@ -324,6 +324,21 @@ public class ResourceDao {
           "No cloud context found in which to create a controlled resource");
     }
 
+    // scan entire attributes column for existing controlled resource
+    // TODO: use a dedicated URI column to make this more efficient PF-690
+    final String attributesSql =
+        String.format(
+            "SELECT attributes FROM resource "
+                + "WHERE resource_type = '%s' "
+                + "AND stewardship_type = 'CONTROLLED'",
+            controlledResource.getResourceType().toSql());
+    final List<String> attributesList =
+        jdbcTemplate.queryForList(attributesSql, Collections.emptyMap(), String.class);
+    final boolean exists =
+        attributesList.stream().anyMatch(controlledResource::matchesUniqueAttributes);
+    if (exists) {
+      throw new DuplicateResourceException("Controlled resource already exists in database.");
+    }
     storeResource(controlledResource);
   }
 

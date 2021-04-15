@@ -79,7 +79,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
 
   @Override
   public boolean matchesUniqueAttributes(String attributesJson) {
-    final ControlledGcsBucketAttributes attributes = DbSerDes.fromJson(attributesJson, ControlledGcsBucketAttributes.class);
+    final ControlledGcsBucketAttributes attributes =
+        DbSerDes.fromJson(attributesJson, ControlledGcsBucketAttributes.class);
     return getBucketName().equals(attributes.getBucketName());
   }
 

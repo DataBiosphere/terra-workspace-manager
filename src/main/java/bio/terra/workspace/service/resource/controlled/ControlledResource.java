@@ -15,7 +15,6 @@ import bio.terra.workspace.service.resource.model.StewardshipType;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.BiFunction;
 
 /**
  * Class for all controlled resource fields that are not common to all resource stewardship types
@@ -130,8 +129,7 @@ public abstract class ControlledResource extends WsmResource {
 
     ControlledResource that = (ControlledResource) o;
 
-    if (!Objects.equals(assignedUser, that.assignedUser))
-      return false;
+    if (!Objects.equals(assignedUser, that.assignedUser)) return false;
     if (accessScope != that.accessScope) return false;
     return managedBy == that.managedBy;
   }
@@ -145,5 +143,13 @@ public abstract class ControlledResource extends WsmResource {
     return result;
   }
 
+  /**
+   * Compare this controlled resource to the one described by its JSON attributes string. This will
+   * be used to avoid creating duplicate controlled resources by being compared to other entries in
+   * the database.
+   *
+   * @param attributesJson JSON attributes from the resource table
+   * @return true if the attributes match this object
+   */
   public abstract boolean matchesUniqueAttributes(String attributesJson);
 }

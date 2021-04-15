@@ -10,7 +10,6 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
-import java.util.function.BiFunction;
 import javax.annotation.Nullable;
 
 /** A {@link ControlledResource} for a Google AI Platform Notebook instance. */
@@ -82,7 +81,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
   @Override
   public boolean matchesUniqueAttributes(String attributesJson) {
-    final ControlledAiNotebookInstanceAttributes attributes = DbSerDes.fromJson(attributesJson, ControlledAiNotebookInstanceAttributes.class);
+    final ControlledAiNotebookInstanceAttributes attributes =
+        DbSerDes.fromJson(attributesJson, ControlledAiNotebookInstanceAttributes.class);
     return getInstanceId().equals(attributes.getInstanceId());
   }
 
