@@ -95,7 +95,8 @@ public class ResourceDaoTest extends BaseUnitTest {
   }
 
   // AI Notebooks are unique on the tuple {instanceId, location, projectId } in addition
-  // to the underlying requirement that resource ID and resource names are unique within a workspace.
+  // to the underlying requirement that resource ID and resource names are unique within a
+  // workspace.
   @Test
   public void duplicateNotebookIsRejected() {
     final UUID workspaceId1 = createGcpWorkspace();

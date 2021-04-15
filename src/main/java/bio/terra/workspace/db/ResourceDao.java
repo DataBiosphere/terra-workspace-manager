@@ -346,10 +346,12 @@ public class ResourceDao {
     String bucketSql =
         "SELECT COUNT(1)"
             + " FROM resource"
-            + " WHERE resource_type = 'GCS_BUCKET'"
+            + " WHERE resource_type = :resource_type"
             + " AND attributes->>'bucketName' = :bucket_name";
     MapSqlParameterSource bucketParams =
-        new MapSqlParameterSource().addValue("bucket_name", bucketResource.getBucketName());
+        new MapSqlParameterSource()
+            .addValue("bucket_name", bucketResource.getBucketName())
+            .addValue("resource_type", WsmResourceType.GCS_BUCKET.toSql());
     Integer matchingBucketCount =
         jdbcTemplate.queryForObject(bucketSql, bucketParams, Integer.class);
     if (matchingBucketCount != null && matchingBucketCount > 0) {
@@ -364,12 +366,13 @@ public class ResourceDao {
     String sql =
         "SELECT COUNT(1)"
             + " FROM resource R"
-            + " WHERE R.resource_type = 'AI_NOTEBOOK_INSTANCE'"
+            + " WHERE R.resource_type = :resource_type"
             + " AND R.workspace_id = :workspace_id"
             + " AND R.attributes->>'instanceId' = :instance_id"
             + " AND R.attributes->>'location' = :location";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AI_NOTEBOOK_INSTANCE.toSql())
             .addValue("workspace_id", notebookResource.getWorkspaceId().toString())
             .addValue("instance_id", notebookResource.getInstanceId())
             .addValue("location", notebookResource.getLocation());
