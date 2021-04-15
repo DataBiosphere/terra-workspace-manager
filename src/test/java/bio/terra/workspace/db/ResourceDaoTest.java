@@ -141,7 +141,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     // clean up
     resourceDao.deleteResource(resource1.getWorkspaceId(), resource1.getResourceId());
-    resourceDao.deleteResource(resource2.getWorkspaceId(), resource2.getResourceId());
+    // resource2 never got created
     resourceDao.deleteResource(resource3.getWorkspaceId(), resource3.getResourceId());
     resourceDao.deleteResource(resource4.getWorkspaceId(), resource4.getResourceId());
   }
