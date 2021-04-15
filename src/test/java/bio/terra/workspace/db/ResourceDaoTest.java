@@ -51,6 +51,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     assertEquals(
         resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
+    resourceDao.deleteResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
   @Test
@@ -62,6 +63,8 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     assertEquals(
         resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
+
+    resourceDao.deleteResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
   @Test
@@ -85,9 +88,14 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     assertThrows(
         DuplicateResourceException.class, () -> resourceDao.createControlledResource(resource2));
+
+    // clean up
+    resourceDao.deleteResource(resource1.getWorkspaceId(), resource1.getResourceId());
+    resourceDao.deleteResource(resource2.getWorkspaceId(), resource2.getResourceId());
   }
 
-  // AI Notebooks are unique on the tuple {instanceId, location, projectId }
+  // AI Notebooks are unique on the tuple {instanceId, location, projectId } in addition
+  // to the underlying requirement that resource ID and resource names are unique within a workspace.
   @Test
   public void duplicateNotebookIsRejected() {
     final UUID workspaceId1 = createGcpWorkspace();
@@ -130,5 +138,11 @@ public class ResourceDaoTest extends BaseUnitTest {
     resourceDao.createControlledResource(resource4);
     assertEquals(
         resource4, resourceDao.getResource(resource4.getWorkspaceId(), resource4.getResourceId()));
+
+    // clean up
+    resourceDao.deleteResource(resource1.getWorkspaceId(), resource1.getResourceId());
+    resourceDao.deleteResource(resource2.getWorkspaceId(), resource2.getResourceId());
+    resourceDao.deleteResource(resource3.getWorkspaceId(), resource3.getResourceId());
+    resourceDao.deleteResource(resource4.getWorkspaceId(), resource4.getResourceId());
   }
 }
