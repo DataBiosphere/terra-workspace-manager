@@ -80,13 +80,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   }
 
   @Override
-  public boolean matchesUniqueAttributes(String attributesJson) {
-    final ControlledAiNotebookInstanceAttributes attributes =
-        DbSerDes.fromJson(attributesJson, ControlledAiNotebookInstanceAttributes.class);
-    return getInstanceId().equals(attributes.getInstanceId());
-  }
-
-  @Override
   public void validate() {
     super.validate();
     if (getResourceType() != WsmResourceType.AI_NOTEBOOK_INSTANCE) {

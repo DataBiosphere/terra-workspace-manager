@@ -8,7 +8,6 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.flight.ValidateNoExistingGcsBucketStep;
 import bio.terra.workspace.service.workspace.flight.SyncSamGroupsStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.List;
@@ -54,11 +53,6 @@ public class CreateControlledResourceFlight extends Flight {
     // create the cloud resource and grant IAM roles via CRL
     switch (resource.getResourceType()) {
       case GCS_BUCKET:
-        addStep(
-            new ValidateNoExistingGcsBucketStep(
-                flightBeanBag.getCrlService(),
-                resource.castToGcsBucketResource(),
-                flightBeanBag.getWorkspaceService()));
         addStep(
             new CreateGcsBucketStep(
                 flightBeanBag.getCrlService(),

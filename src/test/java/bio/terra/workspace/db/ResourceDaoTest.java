@@ -1,12 +1,15 @@
 package bio.terra.workspace.db;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BUCKET_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -59,5 +62,73 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     assertEquals(
         resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
+  }
+
+  @Test
+  public void duplicateControlledBucketNameRejected() {
+    final UUID workspaceId1 = createGcpWorkspace();
+    final ControlledGcsBucketResource resource1 =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
+            .workspaceId(workspaceId1)
+            .bucketName(BUCKET_NAME)
+            .build();
+
+    resourceDao.createControlledResource(resource1);
+
+    final UUID workspaceId2 = createGcpWorkspace();
+    final ControlledGcsBucketResource resource2 =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
+            .workspaceId(workspaceId2)
+            .name("another-bucket-resource")
+            .bucketName(BUCKET_NAME)
+            .build();
+
+    assertThrows(
+        DuplicateResourceException.class, () -> resourceDao.createControlledResource(resource2));
+  }
+
+  // AI Notebooks are unique on the tuple {instanceId, location, projectId }
+  @Test
+  public void duplicateNotebookIsRejected() {
+    final UUID workspaceId1 = createGcpWorkspace();
+    final ControlledResource resource1 =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+            .workspaceId(workspaceId1)
+            .build();
+    resourceDao.createControlledResource(resource1);
+    assertEquals(
+        resource1, resourceDao.getResource(resource1.getWorkspaceId(), resource1.getResourceId()));
+
+    final ControlledResource resource2 =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+            .workspaceId(workspaceId1)
+            .name("resource-2")
+            .build();
+    assertThrows(
+        DuplicateResourceException.class, () -> resourceDao.createControlledResource(resource2));
+
+    final ControlledResource resource3 =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+            .workspaceId(createGcpWorkspace())
+            .name("resource-3")
+            .build();
+
+    // should be fine: separate workspaces implies separate gcp projects
+    resourceDao.createControlledResource(resource3);
+
+    assertEquals(
+        resource3, resourceDao.getResource(resource3.getWorkspaceId(), resource3.getResourceId()));
+
+    final ControlledResource resource4 =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+            .workspaceId(workspaceId1)
+            .name("resource-4")
+            .location("somewhere-else")
+            .build();
+
+    // same project & instance ID but different location from resource1
+    resourceDao.createControlledResource(resource4);
+    assertEquals(
+        resource4, resourceDao.getResource(resource4.getWorkspaceId(), resource4.getResourceId()));
   }
 }

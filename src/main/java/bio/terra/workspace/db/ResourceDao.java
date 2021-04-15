@@ -324,22 +324,62 @@ public class ResourceDao {
           "No cloud context found in which to create a controlled resource");
     }
 
-    // scan entire attributes column for existing controlled resource
-    // TODO: use a dedicated URI column to make this more efficient PF-690
-    final String attributesSql =
-        String.format(
-            "SELECT attributes FROM resource "
-                + "WHERE resource_type = '%s' "
-                + "AND stewardship_type = 'CONTROLLED'",
-            controlledResource.getResourceType().toSql());
-    final List<String> attributesList =
-        jdbcTemplate.queryForList(attributesSql, Collections.emptyMap(), String.class);
-    final boolean exists =
-        attributesList.stream().anyMatch(controlledResource::matchesUniqueAttributes);
-    if (exists) {
-      throw new DuplicateResourceException("Controlled resource already exists in database.");
+    switch (controlledResource.getResourceType()) {
+      case GCS_BUCKET:
+        validateUniqueGcsBucket((ControlledGcsBucketResource) controlledResource);
+        break;
+      case AI_NOTEBOOK_INSTANCE:
+        validateUniqueAiNotebookInstance((ControlledAiNotebookInstanceResource) controlledResource);
+        break;
+      case DATA_REPO_SNAPSHOT:
+      case BIG_QUERY_DATASET:
+      default:
+        throw new IllegalArgumentException(
+            String.format(
+                "Resource type %s not supported", controlledResource.getResourceType().toString()));
     }
+
     storeResource(controlledResource);
+  }
+
+  private void validateUniqueGcsBucket(ControlledGcsBucketResource bucketResource) {
+    String bucketSql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = 'GCS_BUCKET'"
+            + " AND attributes->>'bucketName' = :bucket_name";
+    MapSqlParameterSource bucketParams =
+        new MapSqlParameterSource().addValue("bucket_name", bucketResource.getBucketName());
+    Integer matchingBucketCount =
+        jdbcTemplate.queryForObject(bucketSql, bucketParams, Integer.class);
+    if (matchingBucketCount != null && matchingBucketCount > 0) {
+      throw new DuplicateResourceException(
+          String.format(
+              "A GCS bucket resource named %s already exists", bucketResource.getBucketName()));
+    }
+  }
+
+  private void validateUniqueAiNotebookInstance(
+      ControlledAiNotebookInstanceResource notebookResource) {
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource R"
+            + " WHERE R.resource_type = 'AI_NOTEBOOK_INSTANCE'"
+            + " AND R.workspace_id = :workspace_id"
+            + " AND R.attributes->>'instanceId' = :instance_id"
+            + " AND R.attributes->>'location' = :location";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", notebookResource.getWorkspaceId().toString())
+            .addValue("instance_id", notebookResource.getInstanceId())
+            .addValue("location", notebookResource.getLocation());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format(
+              "An AI Notebook instance with ID %s already exists",
+              notebookResource.getInstanceId()));
+    }
   }
 
   private void storeResource(WsmResource resource) {
