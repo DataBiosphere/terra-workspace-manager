@@ -96,7 +96,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     }
 
     final ControlledGcsBucketResource createdBucket =
-        controlledResourceService.syncCreateBucket(resource, body.getGcsBucket(), privateRoles, userRequest);
+        controlledResourceService.syncCreateBucket(
+            resource, body.getGcsBucket(), privateRoles, userRequest);
     var response =
         new ApiCreatedControlledGcpGcsBucket()
             .resourceId(createdBucket.getResourceId())
