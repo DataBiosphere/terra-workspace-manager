@@ -15,8 +15,7 @@ plugins {
 }
 
 sourceCompatibility = JavaVersion.VERSION_11
-// DO NOT SUBMIT
-def useMavenLocal = true
+def useMavenLocal = false
 allprojects {
 	group = "bio.terra"
 	version = "0.21.0-SNAPSHOT"
