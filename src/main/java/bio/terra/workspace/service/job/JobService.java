@@ -3,6 +3,7 @@ package bio.terra.workspace.service.job;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.common.stairway.TracingHook;
 import bio.terra.stairway.Flight;
+import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightFilter;
 import bio.terra.stairway.FlightFilterOp;
 import bio.terra.stairway.FlightMap;
@@ -61,6 +62,7 @@ public class JobService {
   private final MdcHook mdcHook;
   private final StairwayComponent stairwayComponent;
   private final FlightBeanBag flightBeanBag;
+  private FlightDebugInfo flightDebugInfo;
 
   private final Logger logger = LoggerFactory.getLogger(JobService.class);
 
@@ -165,7 +167,10 @@ public class JobService {
   protected String submit(
       Class<? extends Flight> flightClass, FlightMap parameterMap, String jobId) {
     try {
-      stairwayComponent.get().submit(jobId, flightClass, parameterMap);
+      stairwayComponent
+          .get()
+          .submitWithDebugInfo(
+              jobId, flightClass, parameterMap, /* shouldQueue= */ false, flightDebugInfo);
     } catch (DuplicateFlightIdSubmittedException ex) {
       // DuplicateFlightIdSubmittedException is a more specific StairwayException, and so needs to
       // be checked separately. Allowing duplicate FlightIds is useful for ensuring idempotent
@@ -484,5 +489,15 @@ public class JobService {
   @VisibleForTesting
   public Stairway getStairway() {
     return stairwayComponent.get();
+  }
+
+  /**
+   * Sets the {@link FlightDebugInfo} to manipulate future Stairway Flight submissions for testing.
+   *
+   * <p>This is useful for causing failures on submitted jobs. This should only be used for testing.
+   */
+  @VisibleForTesting
+  public void setFlightDebugInfoForTest(FlightDebugInfo flightDebugInfo) {
+    this.flightDebugInfo = flightDebugInfo;
   }
 }
