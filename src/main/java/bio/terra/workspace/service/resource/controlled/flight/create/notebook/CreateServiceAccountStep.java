@@ -47,10 +47,11 @@ public class CreateServiceAccountStep implements Step {
       throws InterruptedException, RetryException {
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
     IamCow iam = crlService.getIamCow();
+    String serviceAccountId =
+        flightContext.getWorkingMap().get(CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID, String.class);
     CreateServiceAccountRequest createRequest =
         new CreateServiceAccountRequest()
-            .setAccountId(
-                flightContext.getWorkingMap().get(CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID, String.class))
+            .setAccountId(serviceAccountId)
             .setServiceAccount(
                 new ServiceAccount()
                     // Set a description to help with debugging.
@@ -66,7 +67,10 @@ public class CreateServiceAccountStep implements Step {
       if (e.getStatusCode() != HttpStatus.CONFLICT.value()) {
         throw new RetryException(e);
       }
-      logger.debug("Service account already created for notebook instance.");
+      String serviceAccountEmail =
+          CreateServiceAccountStep.serviceAccountEmail(serviceAccountId, projectId);
+      logger.debug(
+          "Service account {} already created for notebook instance.", serviceAccountEmail);
     } catch (IOException e) {
       throw new RetryException(e);
     }
@@ -83,12 +87,16 @@ public class CreateServiceAccountStep implements Step {
             flightContext.getWorkingMap().get(CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID, String.class),
             projectId);
     try {
-      iam.projects().serviceAccounts().delete(serviceAccountEmail).execute();
+      iam.projects()
+          .serviceAccounts()
+          .delete("projects/" + projectId + "/serviceAccounts/" + serviceAccountEmail)
+          .execute();
     } catch (GoogleJsonResponseException e) {
-      // The service account may never have been created successfully.
+      // The service account may never have been created successfully or have already been deleted.
       if (e.getStatusCode() != HttpStatus.NOT_FOUND.value()) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
       }
+      logger.debug("No service account {} found to be deleted.", serviceAccountEmail);
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }

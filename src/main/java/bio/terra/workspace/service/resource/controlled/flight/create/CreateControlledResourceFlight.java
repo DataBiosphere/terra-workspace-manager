@@ -2,6 +2,8 @@ package bio.terra.workspace.service.resource.controlled.flight.create;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.RetryRule;
+import bio.terra.stairway.RetryRuleExponentialBackoff;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -20,6 +22,15 @@ import java.util.List;
  * depend on the resource type. The latter must be passed in via the input parameters map with keys
  */
 public class CreateControlledResourceFlight extends Flight {
+  /**
+   * Retry rule for Notebook GCP steps. If GCP is down, we don't know when it will be back, so don't
+   * wait forever.
+   */
+  private static final RetryRule NOTEBOOK_GCP_RETRY_RULE =
+      new RetryRuleExponentialBackoff(
+          /* initialIntervalSeconds= */ 1,
+          /* maxIntervalSeconds= */ 8,
+          /* maxOperationTimeSeconds= */ 30);
 
   public CreateControlledResourceFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
@@ -75,12 +86,14 @@ public class CreateControlledResourceFlight extends Flight {
             new CreateServiceAccountStep(
                 flightBeanBag.getCrlService(),
                 flightBeanBag.getWorkspaceService(),
-                resource.castToAiNotebookInstanceResource()));
+                resource.castToAiNotebookInstanceResource()),
+            NOTEBOOK_GCP_RETRY_RULE);
         addStep(
             new CreateAiNotebookInstanceStep(
                 flightBeanBag.getCrlService(),
                 resource.castToAiNotebookInstanceResource(),
-                flightBeanBag.getWorkspaceService()));
+                flightBeanBag.getWorkspaceService()),
+            NOTEBOOK_GCP_RETRY_RULE);
         // TODO(PF-469): Set permissions.
         break;
       default:

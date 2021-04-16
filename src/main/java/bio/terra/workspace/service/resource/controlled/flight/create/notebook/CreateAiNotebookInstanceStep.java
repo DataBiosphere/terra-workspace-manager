@@ -75,7 +75,8 @@ public class CreateAiNotebookInstanceStep implements Step {
       if (creationOperation.getOperation().getError() != null) {
         throw new RetryException(
             String.format(
-                "Error creating notebook instance. {}",
+                "Error creating notebook instance {}. {}",
+                instanceName.formatName(),
                 creationOperation.getOperation().getError()));
       }
     } catch (IOException e) {
@@ -171,7 +172,7 @@ public class CreateAiNotebookInstanceStep implements Step {
                 .operationCow(notebooks.instances().delete(instanceName).execute());
       } catch (GoogleJsonResponseException e) {
         if (e.getStatusCode() == HttpStatus.NOT_FOUND.value()) {
-          logger.debug("No notebook instance to delete.");
+          logger.debug("No notebook instance {} to delete.", instanceName.formatName());
           return StepResult.getStepResultSuccess();
         }
         throw e;
@@ -181,7 +182,9 @@ public class CreateAiNotebookInstanceStep implements Step {
               deletionOperation, Duration.ofSeconds(20), Duration.ofMinutes(12));
       if (deletionOperation.getOperation().getError() != null) {
         logger.debug(
-            "Error deleting notebook instance. {}", deletionOperation.getOperation().getError());
+            "Error deleting notebook instance {}. {}",
+            instanceName.formatName(),
+            deletionOperation.getOperation().getError());
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
       }
     } catch (IOException e) {
