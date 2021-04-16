@@ -114,11 +114,12 @@ public class ControlledResourceService {
       ControlledAiNotebookInstanceResource resource,
       ApiGcpAiNotebookInstanceCreationParameters creationParameters,
       List<ControlledResourceIamRole> privateResourceIamRoles,
-      String jobId,
+      ApiJobControl jobControl,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
     JobBuilder jobBuilder =
-        commonCreationJobBuilder(resource, privateResourceIamRoles, jobId, resultPath, userRequest);
+        commonCreationJobBuilder(
+            resource, privateResourceIamRoles, jobControl, resultPath, userRequest);
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
     return jobBuilder.submit();
   }

@@ -10,6 +10,7 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
+import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
@@ -17,8 +18,9 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.api.services.notebooks.v1.model.Instance;
-import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
@@ -60,11 +62,13 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         controlledResourceService.createAiNotebookInstance(
             resource,
             creationParameters,
-            List.of(
-                ControlledResourceIamRole.OWNER,
-                ControlledResourceIamRole.WRITER,
-                ControlledResourceIamRole.EDITOR),
-            UUID.randomUUID().toString(),
+            // Need to be careful about what subclass of List gets put in a FlightMap.
+            Stream.of(
+                    ControlledResourceIamRole.OWNER,
+                    ControlledResourceIamRole.WRITER,
+                    ControlledResourceIamRole.EDITOR)
+                .collect(Collectors.toList()),
+            new ApiJobControl().id(UUID.randomUUID().toString()),
             "fakeResultPath",
             userAccessUtils.defaultUserAuthRequest());
     jobService.waitForJob(jobId);
@@ -81,8 +85,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                     .build())
             .execute();
 
-    assertThat(instance.getMetadata(), Matchers.hasEntry("proxy_mode", "service_account"));
-    // TODO test user has permission on service account.
+    assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_account"));
+    // TODO test user has permission on service account. Or single user mode?
 
     assertEquals(
         resource,
