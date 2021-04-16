@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.stairway.FlightDebugInfo;
+import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -18,6 +19,7 @@ import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -160,9 +162,11 @@ class JobServiceTest extends BaseUnitTest {
 
   @Test
   void setFlightDebugInfoForTest() {
-    // Set a FlightDebugInfo so that any job submission should fail on the last step.
+    // Set a FlightDebugInfo so that any job submission should fail on the first step.
     jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
+        FlightDebugInfo.newBuilder()
+            .failAtSteps(Map.of(0, StepStatus.STEP_RESULT_FAILURE_FATAL))
+            .build());
 
     String jobId = runFlight("fail for FlightDebugInfo");
     assertThrows(
