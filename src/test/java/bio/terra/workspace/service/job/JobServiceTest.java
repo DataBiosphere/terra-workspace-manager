@@ -7,17 +7,20 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 
+import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.exception.InvalidJobIdException;
+import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -44,6 +47,15 @@ class JobServiceTest extends BaseUnitTest {
     } catch (Exception e) {
       // How does a mock even throw an exception?
     }
+  }
+
+  /**
+   * Reset the {@link JobService} {@link FlightDebugInfo} after each test so that future submissions
+   * aren't affected.
+   */
+  @AfterEach
+  void clearFlightDebugInfo() {
+    jobService.setFlightDebugInfoForTest(null);
   }
 
   @Test
@@ -144,6 +156,18 @@ class JobServiceTest extends BaseUnitTest {
     assertThrows(
         JobNotFoundException.class,
         () -> jobService.retrieveJobResult("abcdef", Object.class, testUser));
+  }
+
+  @Test
+  void setFlightDebugInfoForTest() {
+    // Set a FlightDebugInfo so that any job submission should fail on the last step.
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
+
+    String jobId = runFlight("fail for FlightDebugInfo");
+    assertThrows(
+        InvalidResultStateException.class,
+        () -> jobService.retrieveJobResult(jobId, String.class, testUser));
   }
 
   private void validateJobReport(ApiJobReport jr, int index, List<String> fids) {
