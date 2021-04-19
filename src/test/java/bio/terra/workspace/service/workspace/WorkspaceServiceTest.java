@@ -9,10 +9,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
+import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.common.exception.UnauthorizedException;
+import bio.terra.common.sam.exception.SamExceptionFactory;
+import bio.terra.common.sam.exception.SamInternalServerErrorException;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.exception.SamApiException;
-import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.crl.CrlService;
@@ -41,6 +43,7 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import java.util.Optional;
 import java.util.UUID;
+import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
@@ -102,7 +105,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void testGetForbiddenMissingWorkspace() {
-    doThrow(new SamUnauthorizedException("forbid!"))
+    doThrow(new UnauthorizedException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
     assertThrows(
@@ -115,11 +118,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    doThrow(new SamUnauthorizedException("forbid!"))
+    doThrow(new UnauthorizedException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
     assertThrows(
-        SamUnauthorizedException.class,
+        UnauthorizedException.class,
         () -> workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST));
   }
 
@@ -180,19 +183,19 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void duplicateOperationSharesFailureResponse() {
     String errorMsg = "fake SAM error message";
-    doThrow(new SamApiException(errorMsg))
+    doThrow(SamExceptionFactory.create(errorMsg, new ApiException(("test"))))
         .when(mockSamService)
         .createWorkspaceWithDefaults(any(), any());
 
     assertThrows(
-        SamApiException.class,
+        ErrorReportException.class,
         () ->
             workspaceService.createWorkspace(
                 defaultRequestBuilder(UUID.randomUUID()).build(), USER_REQUEST));
-    // This second call shares the above operation ID, and so should return the same SamApiException
+    // This second call shares the above operation ID, and so should return the same exception
     // instead of a more generic internal Stairway exception.
     assertThrows(
-        SamApiException.class,
+        ErrorReportException.class,
         () ->
             workspaceService.createWorkspace(
                 defaultRequestBuilder(UUID.randomUUID()).build(), USER_REQUEST));
@@ -269,18 +272,17 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void testHandlesSamError() {
     String errorMsg = "fake SAM error message";
-
-    doThrow(new SamApiException(errorMsg))
-        .when(mockSamService)
-        .createWorkspaceWithDefaults(any(), any());
-
-    SamApiException exception =
+    String apiErrorMsg = "test";
+    ErrorReportException testex =
+        SamExceptionFactory.create(errorMsg, new ApiException(apiErrorMsg));
+    doThrow(testex).when(mockSamService).createWorkspaceWithDefaults(any(), any());
+    ErrorReportException exception =
         assertThrows(
-            SamApiException.class,
+            SamInternalServerErrorException.class,
             () ->
                 workspaceService.createWorkspace(
                     defaultRequestBuilder(UUID.randomUUID()).build(), USER_REQUEST));
-    assertEquals(errorMsg, exception.getMessage());
+    assertEquals(errorMsg + ": " + apiErrorMsg, exception.getMessage());
   }
 
   @Test
@@ -296,7 +298,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void deleteForbiddenMissingWorkspace() {
-    doThrow(new SamUnauthorizedException("forbid!"))
+    doThrow(new UnauthorizedException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
 
@@ -310,12 +312,12 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
-    doThrow(new SamUnauthorizedException("forbid!"))
+    doThrow(new UnauthorizedException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
 
     assertThrows(
-        SamUnauthorizedException.class,
+        UnauthorizedException.class,
         () -> workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST));
   }
 

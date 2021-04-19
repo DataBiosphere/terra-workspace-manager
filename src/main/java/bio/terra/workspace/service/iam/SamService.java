@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.iam;
 
+import bio.terra.common.exception.UnauthorizedException;
+import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
-import bio.terra.workspace.common.exception.SamApiException;
-import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
@@ -106,7 +106,6 @@ public class SamService {
       logger.warn("Failed to register WSM service account in Sam. This is expected for tests.", e);
       return;
     }
-
     UsersApi usersApi = samUsersApi(wsmAccessToken);
     if (!wsmServiceAccountRegistered(usersApi)) {
       registerWsmServiceAccount(usersApi);
@@ -121,11 +120,11 @@ public class SamService {
       usersApi.getUserStatusInfo();
       logger.info("WSM service account already registered in Sam");
       return true;
-    } catch (ApiException userStatusException) {
-      if (userStatusException.getCode() == HttpStatus.NOT_FOUND.value()) {
+    } catch (ApiException apiException) {
+      if (apiException.getCode() == HttpStatus.NOT_FOUND.value()) {
         return false;
       } else {
-        throw new SamApiException(userStatusException);
+        throw SamExceptionFactory.create("Error checking user status in Sam", apiException);
       }
     }
   }
@@ -133,9 +132,9 @@ public class SamService {
   private void registerWsmServiceAccount(UsersApi usersApi) {
     try {
       usersApi.createUserV2();
-    } catch (ApiException createUserException) {
-      throw new SamApiException(
-          "Error registering WSM service account with Sam", createUserException);
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create(
+          "Error registering WSM service account with Sam", apiException);
     }
   }
 
@@ -143,8 +142,8 @@ public class SamService {
    * Wrapper around the Sam client to create a workspace resource in Sam.
    *
    * <p>This creates a workspace with the provided ID and requesting user as the sole Owner. Empty
-   * reader and writer policies are also created. Errors from the Sam client will be thrown as
-   * SamApiExceptions, which wrap the underlying error and expose its status code.
+   * reader and writer policies are also created. Errors from the Sam client will be thrown as Sam
+   * specific exception types.
    */
   @Traced
   public void createWorkspaceWithDefaults(AuthenticatedUserRequest userReq, UUID id) {
@@ -163,7 +162,7 @@ public class SamService {
       resourceApi.createResourceV2(SamConstants.SAM_WORKSPACE_RESOURCE, workspaceRequest);
       logger.info("Created Sam resource for workspace {}", id);
     } catch (ApiException apiException) {
-      throw new SamApiException(apiException);
+      throw SamExceptionFactory.create("Error creating a Workspace resource in Sam", apiException);
     }
   }
 
@@ -187,8 +186,8 @@ public class SamService {
           continue;
         }
       }
-    } catch (ApiException samException) {
-      throw new SamApiException(samException);
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error listing Workspace Ids in Sam", apiException);
     }
     return workspaceIds;
   }
@@ -200,7 +199,13 @@ public class SamService {
       resourceApi.deleteResource(SamConstants.SAM_WORKSPACE_RESOURCE, id.toString());
       logger.info("Deleted Sam resource for workspace {}", id);
     } catch (ApiException apiException) {
-      throw new SamApiException(apiException);
+      logger.debug("Sam API error while deleting workspace, code is " + apiException.getCode());
+      // Do nothing if the resource to delete is not found, this may not be the first time undo is
+      // called. Other exceptions still need to be surfaced.
+      if (apiException.getCode() == HttpStatus.NOT_FOUND.value()) {
+        return;
+      }
+      throw SamExceptionFactory.create("Error deleting a workspace in Sam", apiException);
     }
   }
 
@@ -208,10 +213,12 @@ public class SamService {
   public boolean isAuthorized(
       String accessToken, String iamResourceType, String resourceId, String action) {
     ResourcesApi resourceApi = samResourcesApi(accessToken);
+    logger.info("*** in is authorized");
     try {
       return resourceApi.resourcePermissionV2(iamResourceType, resourceId, action);
-    } catch (ApiException samException) {
-      throw new SamApiException(samException);
+    } catch (ApiException apiException) {
+      logger.info("exception!" + apiException);
+      throw SamExceptionFactory.create("Error checking resource permission in Sam", apiException);
     }
   }
 
@@ -231,7 +238,7 @@ public class SamService {
     boolean isAuthorized =
         isAuthorized(userReq.getRequiredToken(), resourceType, resourceId, action);
     if (!isAuthorized)
-      throw new SamUnauthorizedException(
+      throw new UnauthorizedException(
           String.format(
               "User %s is not authorized to %s resource %s of type %s",
               userReq.getEmail(), action, resourceId, resourceType));
@@ -271,8 +278,8 @@ public class SamService {
           SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), email);
       logger.info(
           "Granted role {} to user {} in workspace {}", role.toSamRole(), email, workspaceId);
-    } catch (ApiException e) {
-      throw new SamApiException(e);
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error granting workspace role in Sam", apiException);
     }
   }
 
@@ -298,8 +305,8 @@ public class SamService {
           SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), email);
       logger.info(
           "Removed role {} from user {} in workspace {}", role.toSamRole(), email, workspaceId);
-    } catch (ApiException e) {
-      throw new SamApiException(e);
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error removing workspace role in Sam", apiException);
     }
   }
 
@@ -330,8 +337,8 @@ public class SamService {
                       .users(entry.getPolicy().getMemberEmails())
                       .build())
           .collect(Collectors.toList());
-    } catch (ApiException e) {
-      throw new SamApiException(e);
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error listing role bindings in Sam", apiException);
     }
   }
 
@@ -412,8 +419,8 @@ public class SamService {
       // fetch the group in a separate call after syncing.
       googleApi.syncPolicy(resourceTypeName, resourceId, policyName);
       return googleApi.syncStatus(resourceTypeName, resourceId, policyName).getEmail();
-    } catch (ApiException e) {
-      throw new SamApiException(e);
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error syncing policy in Sam", apiException);
     }
   }
 
@@ -452,8 +459,17 @@ public class SamService {
     try {
       resourceApi.createResourceV2(resource.getCategory().getSamResourceName(), resourceRequest);
       logger.info("Created Sam controlled resource {}", resource.getResourceId());
-    } catch (ApiException e) {
-      throw new SamApiException(e);
+    } catch (ApiException apiException) {
+      // Do nothing if the resource to create already exists, this may not be the first time do is
+      // called. Other exceptions still need to be surfaced.
+      // Resource IDs are randomly generated, so we trust that the caller must have created
+      // an existing Sam resource.
+      logger.debug(
+          "Sam API error while creating a controlled resource, code is " + apiException.getCode());
+      if (apiException.getCode() == HttpStatus.CONFLICT.value()) {
+        return;
+      }
+      throw SamExceptionFactory.create("Error creating controlled resource in Sam", apiException);
     }
   }
 
@@ -466,7 +482,14 @@ public class SamService {
           resource.getCategory().getSamResourceName(), resource.getResourceId().toString());
       logger.info("Deleted Sam controlled resource {}", resource.getResourceId());
     } catch (ApiException apiException) {
-      throw new SamApiException(apiException);
+      // Do nothing if the resource to delete is not found, this may not be the first time delete is
+      // called. Other exceptions still need to be surfaced.
+      logger.debug(
+          "Sam API error while deleting a controlled resource, code is " + apiException.getCode());
+      if (apiException.getCode() == HttpStatus.NOT_FOUND.value()) {
+        return;
+      }
+      throw SamExceptionFactory.create("Error deleting controlled resource in Sam", apiException);
     }
   }
 
@@ -486,7 +509,8 @@ public class SamService {
         controlledResourceIds.add(userResource.getResourceId());
       }
     } catch (ApiException samException) {
-      throw new SamApiException(samException);
+      throw SamExceptionFactory.create(
+          "Error listing controlled resource ids in Sam", samException);
     }
     return controlledResourceIds;
   }
@@ -611,8 +635,8 @@ public class SamService {
     UsersApi usersApi = samUsersApi(authToken);
     try {
       return usersApi.getUserStatusInfo().getUserEmail();
-    } catch (ApiException samException) {
-      throw new SamApiException(samException);
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error getting user email from Sam", apiException);
     }
   }
 

@@ -10,9 +10,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
+import bio.terra.common.exception.UnauthorizedException;
+import bio.terra.common.sam.exception.SamBadRequestException;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.exception.SamApiException;
-import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
@@ -45,7 +45,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpStatus;
 
 class SamServiceTest extends BaseConnectedTest {
 
@@ -75,7 +74,7 @@ class SamServiceTest extends BaseConnectedTest {
     UUID workspaceId = createWorkspaceDefaultUser();
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
-        SamUnauthorizedException.class,
+        UnauthorizedException.class,
         () -> workspaceService.getWorkspace(workspaceId, secondaryUserRequest()));
     // After being granted permission, secondary user can read the workspace.
     samService.grantWorkspaceRole(
@@ -93,7 +92,7 @@ class SamServiceTest extends BaseConnectedTest {
 
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
-        SamUnauthorizedException.class,
+        UnauthorizedException.class,
         () ->
             referenceResourceService.createReferenceResource(
                 referenceResource, secondaryUserRequest()));
@@ -113,7 +112,7 @@ class SamServiceTest extends BaseConnectedTest {
     UUID workspaceId = createWorkspaceDefaultUser();
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
-        SamUnauthorizedException.class,
+        UnauthorizedException.class,
         () -> workspaceService.getWorkspace(workspaceId, secondaryUserRequest()));
     // After being granted permission, secondary user can read the workspace.
     samService.grantWorkspaceRole(
@@ -124,7 +123,7 @@ class SamServiceTest extends BaseConnectedTest {
     samService.removeWorkspaceRole(
         workspaceId, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
     assertThrows(
-        SamUnauthorizedException.class,
+        UnauthorizedException.class,
         () -> workspaceService.getWorkspace(workspaceId, secondaryUserRequest()));
   }
 
@@ -134,7 +133,7 @@ class SamServiceTest extends BaseConnectedTest {
     // Note that this request uses the secondary user's authentication token, when only the first
     // user is an owner.
     assertThrows(
-        SamUnauthorizedException.class,
+        UnauthorizedException.class,
         () ->
             samService.grantWorkspaceRole(
                 workspaceId,
@@ -172,7 +171,7 @@ class SamServiceTest extends BaseConnectedTest {
   void invalidUserEmailRejected() {
     UUID workspaceId = createWorkspaceDefaultUser();
     assertThrows(
-        SamApiException.class,
+        SamBadRequestException.class,
         () ->
             samService.grantWorkspaceRole(
                 workspaceId,
@@ -217,7 +216,7 @@ class SamServiceTest extends BaseConnectedTest {
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), WsmIamRole.WRITER, userAccessUtils.getSecondUserEmail());
     assertThrows(
-        SamUnauthorizedException.class,
+        UnauthorizedException.class,
         () -> samService.listRoleBindings(workspaceId, secondaryUserRequest()));
   }
 
@@ -307,40 +306,6 @@ class SamServiceTest extends BaseConnectedTest {
             SamConstants.SAM_WORKSPACE_READ_ACTION));
 
     samService.deleteControlledResource(bucketResource, defaultUserRequest());
-  }
-
-  // Duplicate execution during flights is handled using Sam error codes, so this verifies expected
-  // behavior in SamService.
-  @Test
-  void duplicateResourceCreateThrows() {
-    UUID workspaceId = createWorkspaceDefaultUser();
-
-    ControlledResource bucketResource = defaultBucket(workspaceId).build();
-    samService.createControlledResource(bucketResource, null, defaultUserRequest());
-
-    SamApiException exception =
-        assertThrows(
-            SamApiException.class,
-            () -> samService.createControlledResource(bucketResource, null, defaultUserRequest()));
-    assertEquals(HttpStatus.CONFLICT.value(), exception.getApiExceptionStatus());
-  }
-
-  // Undoing the create resource step relies on Sam error codes, so this test asserts we get a
-  // NOT_FOUND when we send multiple delete requests.
-  @Test
-  void duplicateResourceDeleteThrows() {
-    UUID workspaceId = createWorkspaceDefaultUser();
-
-    ControlledResource bucketResource = defaultBucket(workspaceId).build();
-    samService.createControlledResource(bucketResource, null, defaultUserRequest());
-
-    samService.deleteControlledResource(bucketResource, defaultUserRequest());
-
-    SamApiException exception =
-        assertThrows(
-            SamApiException.class,
-            () -> samService.deleteControlledResource(bucketResource, defaultUserRequest()));
-    assertEquals(HttpStatus.NOT_FOUND.value(), exception.getApiExceptionStatus());
   }
 
   /**

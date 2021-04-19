@@ -61,8 +61,8 @@ public class ControlledResourceService {
    *
    * <p>Throws InvalidControlledResourceException if the given resource is not controlled.
    *
-   * <p>Throws SamUnauthorizedException if the user is not permitted to perform the specified action
-   * on the resource in question.
+   * <p>Throws UnauthorizedException if the user is not permitted to perform the specified action on
+   * the resource in question.
    *
    * <p>Returns the controlled resource object if it exists and the user is permitted to perform the
    * specified action.
