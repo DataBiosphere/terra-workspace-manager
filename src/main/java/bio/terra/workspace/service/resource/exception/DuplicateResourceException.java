@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.exception;
 
-import bio.terra.workspace.common.exception.ConflictException;
+import bio.terra.common.exception.ConflictException;
 
 public class DuplicateResourceException extends ConflictException {
 

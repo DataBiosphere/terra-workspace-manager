@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.job.exception;
 
-import bio.terra.workspace.common.exception.BadRequestException;
+import bio.terra.common.exception.BadRequestException;
 
 public class JobNotCompleteException extends BadRequestException {
   public JobNotCompleteException(String message) {

@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource;
 
-import bio.terra.workspace.common.exception.MissingRequiredFieldException;
+import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;

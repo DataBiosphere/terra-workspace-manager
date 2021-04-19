@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.spendprofile.exceptions;
 
-import bio.terra.workspace.common.exception.ForbiddenException;
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 
 public class SpendUnauthorizedException extends ForbiddenException {
