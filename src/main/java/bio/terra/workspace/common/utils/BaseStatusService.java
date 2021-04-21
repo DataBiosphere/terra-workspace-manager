@@ -42,7 +42,7 @@ public class BaseStatusService {
 
   @PostConstruct
   public void startStatusChecking() {
-    scheduler.scheduleAtFixedRate(this::checkSubsystems, 1, 1, TimeUnit.MINUTES);
+    scheduler.scheduleAtFixedRate(this::checkSubsystems, 5, 60, TimeUnit.SECONDS);
   }
 
   protected void registerSubsystem(String name, StatusSubsystem subsystem) {
