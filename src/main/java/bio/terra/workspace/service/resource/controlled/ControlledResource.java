@@ -113,6 +113,11 @@ public abstract class ControlledResource extends WsmResource {
     return (ControlledAiNotebookInstanceResource) this;
   }
 
+  public ControlledBigQueryDatasetResource castToBigQueryDatasetResource() {
+    validateSubclass(WsmResourceType.BIG_QUERY_DATASET);
+    return (ControlledBigQueryDatasetResource) this;
+  }
+
   private void validateSubclass(WsmResourceType expectedType) {
     if (getResourceType() != expectedType) {
       throw new InvalidMetadataException(

@@ -97,6 +97,12 @@ public class CrlService {
     return crlServiceUsageCow;
   }
 
+  // TODO javadoc
+  public BigQueryCow createBigQueryCow(String projectId) {
+    assertCrlInUse();
+    return new BigQueryCow(
+        clientConfig, BigQueryOptions.newBuilder().setProjectId(projectId).build());
+  }
   /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
   public BigQueryCow createBigQueryCow(String projectId, AuthenticatedUserRequest userReq) {
     assertCrlInUse();

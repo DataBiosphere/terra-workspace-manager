@@ -12,6 +12,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.WsmResourceType;
+import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -133,7 +134,13 @@ public class ResourceController implements ResourceApi {
               break;
             }
 
-          case BIG_QUERY_DATASET: // will be implemented soon
+          case BIG_QUERY_DATASET:
+            {
+              ControlledBigQueryDatasetResource resource =
+                  controlledResource.castToBigQueryDatasetResource();
+              union.gcpBigQuery(resource.toApiAttributes());
+              break;
+            }
           case DATA_REPO_SNAPSHOT: // there is a use case for this, but low priority
             throw new InternalLogicException(
                 "Unimplemented controlled resource type: " + wsmResource.getResourceType());

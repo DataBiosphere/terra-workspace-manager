@@ -55,7 +55,7 @@ public class GcpPolicyBuilder {
   /**
    * GCP expects all groups to be prepended with the literal "group:" in IAM permissions bindings.
    */
-  private static String toMemberIdentifier(String samGroupEmail) {
+  public static String toMemberIdentifier(String samGroupEmail) {
     return "group:" + samGroupEmail;
   }
 

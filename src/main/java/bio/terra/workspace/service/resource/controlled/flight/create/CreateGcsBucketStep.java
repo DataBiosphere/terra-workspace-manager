@@ -17,7 +17,6 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.api.client.util.DateTime;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
@@ -28,7 +27,6 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -70,9 +68,7 @@ public class CreateGcsBucketStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     FlightMap inputMap = flightContext.getInputParameters();
-    UUID workspaceId =
-        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    String projectId = workspaceService.getRequiredGcpProject(workspaceId);
+    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
     final StorageCow storageCow = crlService.createStorageCow(projectId);
     storageCow.delete(resource.getBucketName());
     return StepResult.getStepResultSuccess();

@@ -78,6 +78,7 @@ dependencies {
 	implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.37-SNAPSHOT"
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-billing', version: '0.6.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery', version: '0.6.0'
+	implementation group: 'com.google.apis', name: 'google-api-services-bigquery', version: 'v2-rev20201030-1.30.10'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager', version: '0.6.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-serviceusage', version: '0.6.0'
 	implementation group: 'bio.terra.cloud-resource-lib', name: 'google-storage', version: '0.7.0'

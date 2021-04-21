@@ -13,6 +13,7 @@ import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
@@ -448,7 +449,8 @@ public class ResourceDao {
             return new ControlledGcsBucketResource(dbResource);
           case AI_NOTEBOOK_INSTANCE:
             return new ControlledAiNotebookInstanceResource(dbResource);
-
+          case BIG_QUERY_DATASET:
+            return new ControlledBigQueryDatasetResource(dbResource);
           default:
             throw new InvalidMetadataException(
                 "Invalid controlled resource type" + dbResource.getResourceType().toString());

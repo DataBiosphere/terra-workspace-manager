@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -94,7 +93,7 @@ public class ControlledResourceService {
 
   public ControlledResource syncCreateControlledResource(
       ControlledResource resource,
-      ApiGcpGcsBucketCreationParameters creationParameters,
+      Object creationParameters,
       List<ControlledResourceIamRole> privateResourceIamRoles,
       AuthenticatedUserRequest userRequest) {
     ApiJobControl syncJobControl = new ApiJobControl().id(UUID.randomUUID().toString());
@@ -117,7 +116,7 @@ public class ControlledResourceService {
 
   public String createControlledResource(
       ControlledResource resource,
-      ApiGcpGcsBucketCreationParameters creationParameters,
+      Object creationParameters,
       List<ControlledResourceIamRole> privateResourceIamRoles,
       ApiJobControl jobControl,
       String resultPath,

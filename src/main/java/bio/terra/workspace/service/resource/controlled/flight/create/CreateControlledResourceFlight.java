@@ -65,6 +65,13 @@ public class CreateControlledResourceFlight extends Flight {
                 flightBeanBag.getWorkspaceService()));
         break;
       case BIG_QUERY_DATASET:
+        addStep(
+            new CreateBigQueryDatasetStep(
+                flightBeanBag.getCrlService(), resource.castToBigQueryDatasetResource()));
+        addStep(
+            new BigQueryDatasetCloudSyncStep(
+                flightBeanBag.getCrlService(), resource.castToBigQueryDatasetResource()));
+        break;
       default:
         throw new IllegalStateException(
             String.format("Unrecognized resource type %s", resource.getResourceType()));
