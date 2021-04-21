@@ -30,6 +30,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
+/**
+ * A step for creating the AI Platform notebook instance in the Google cloud.
+ *
+ * <p>Undo deletes the created notebook instance.
+ */
 public class CreateAiNotebookInstanceStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(CreateAiNotebookInstanceStep.class);
   private final CrlService crlService;
@@ -49,17 +54,8 @@ public class CreateAiNotebookInstanceStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
-    ApiGcpAiNotebookInstanceCreationParameters creationParameters =
-        flightContext
-            .getInputParameters()
-            .get(CREATE_NOTEBOOK_PARAMETERS, ApiGcpAiNotebookInstanceCreationParameters.class);
-    Instance instance = createInstance(flightContext, projectId);
-    InstanceName instanceName =
-        InstanceName.builder()
-            .projectId(projectId)
-            .location(creationParameters.getLocation())
-            .instanceId(creationParameters.getInstanceId())
-            .build();
+    InstanceName instanceName = createInstanceName(projectId);
+    Instance instance = createInstanceModel(flightContext, projectId);
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
@@ -70,11 +66,13 @@ public class CreateAiNotebookInstanceStep implements Step {
                 .operations()
                 .operationCow(notebooks.instances().create(instanceName, instance).execute());
       } catch (GoogleJsonResponseException e) {
+        // If the instance already exists, this step must have already run successfully. Otherwise
+        // retry.
         if (HttpStatus.CONFLICT.value() == e.getStatusCode()) {
           logger.debug("Notebook instance {} already created.", instanceName.formatName());
           return StepResult.getStepResultSuccess();
         }
-        throw e;
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
 
       creationOperation =
@@ -93,7 +91,7 @@ public class CreateAiNotebookInstanceStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private static Instance createInstance(FlightContext flightContext, String projectId) {
+  private static Instance createInstanceModel(FlightContext flightContext, String projectId) {
     Instance instance = new Instance();
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         flightContext
@@ -107,7 +105,8 @@ public class CreateAiNotebookInstanceStep implements Step {
             projectId);
     instance.setServiceAccount(serviceAccountEmail);
 
-    // Create the AI Notebook instance in the service account proxy mode.
+    // Create the AI Notebook instance in the service account proxy mode to control proxy access by
+    // means of IAM permissions on the service account.
     // https://cloud.google.com/ai-platform/notebooks/docs/troubleshooting#opening_a_notebook_results_in_a_403_forbidden_error
     ImmutableMap<String, String> metadata =
         new ImmutableMap.Builder<String, String>().put("proxy-mode", "service_account").build();
@@ -174,11 +173,12 @@ public class CreateAiNotebookInstanceStep implements Step {
                 .operations()
                 .operationCow(notebooks.instances().delete(instanceName).execute());
       } catch (GoogleJsonResponseException e) {
+        // The AI notebook instance may never have been created or have already been deleted.
         if (e.getStatusCode() == HttpStatus.NOT_FOUND.value()) {
           logger.debug("No notebook instance {} to delete.", instanceName.formatName());
           return StepResult.getStepResultSuccess();
         }
-        throw e;
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
       deletionOperation =
           OperationUtils.pollUntilComplete(

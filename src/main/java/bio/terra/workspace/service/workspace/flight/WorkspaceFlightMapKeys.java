@@ -23,8 +23,6 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
     public static final String CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID =
         "createNotebookServiceAccountId";
-    public static final String CREATE_NOTEBOOK_SERVICE_ACCOUNT_EMAIL =
-        "createNotebookServiceAccountEmail";
 
     private ControlledResourceKeys() {}
   }

@@ -20,11 +20,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 /**
- * Creates a Service Account to be used on the Notebook Instance VM.
+ * Creates a Service Account to be used on the Notebook Instance VM. Deletes the service account on
+ * undo.
  *
  * <p>We create a service account for each notebook instance as a mechanism to control access to the
  * notebook instance via the AI notebooks proxy running in service account mode. Only users with the
  * 'iam.serviceAccounts.actAs' permission on the service account are allowed through the proxy.
+ *
+ * <p>{@see
+ * https://cloud.google.com/ai-platform/notebooks/docs/troubleshooting#opening_a_notebook_results_in_a_403_forbidden_error}
  */
 public class CreateServiceAccountStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(CreateServiceAccountStep.class);
@@ -74,7 +78,6 @@ public class CreateServiceAccountStep implements Step {
     } catch (IOException e) {
       throw new RetryException(e);
     }
-    // TODO(PF-469): Set permissions on service account.
     return StepResult.getStepResultSuccess();
   }
 

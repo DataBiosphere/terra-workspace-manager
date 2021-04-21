@@ -178,7 +178,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         FlightDebugInfo.newBuilder()
             // Fail after the last step to test that everything is deleted on undo.
             .lastStepFailure(true)
-            .doStepFailures(retrySteps)
+            .undoStepFailures(retrySteps)
             .build());
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
