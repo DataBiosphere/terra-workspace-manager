@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.iam;
 
-import bio.terra.workspace.common.exception.ApiException;
+import bio.terra.common.exception.ApiException;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Optional;
 import java.util.UUID;

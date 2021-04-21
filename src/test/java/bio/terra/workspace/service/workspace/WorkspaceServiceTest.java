@@ -9,9 +9,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
+import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.exception.DuplicateWorkspaceException;
-import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.exception.SamUnauthorizedException;
 import bio.terra.workspace.db.ResourceDao;
@@ -31,6 +30,7 @@ import bio.terra.workspace.service.resource.referenced.ReferencedResourceService
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
+import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;

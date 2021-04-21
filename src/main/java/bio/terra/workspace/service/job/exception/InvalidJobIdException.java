@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.job.exception;
 
-import bio.terra.workspace.common.exception.BadRequestException;
+import bio.terra.common.exception.BadRequestException;
 
 /** An exception indicating an invalid jobId string value. Error code is 400 Bad Request. */
 public class InvalidJobIdException extends BadRequestException {

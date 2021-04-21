@@ -3,9 +3,9 @@ package bio.terra.workspace.service.resource.controlled;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import org.junit.jupiter.api.Test;

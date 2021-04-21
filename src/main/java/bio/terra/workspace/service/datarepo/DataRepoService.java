@@ -1,11 +1,11 @@
 package bio.terra.workspace.service.datarepo;
 
+import bio.terra.common.exception.ValidationException;
 import bio.terra.datarepo.api.RepositoryApi;
 import bio.terra.datarepo.api.UnauthenticatedApi;
 import bio.terra.datarepo.client.ApiClient;
 import bio.terra.datarepo.client.ApiException;
 import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
-import bio.terra.workspace.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
 import bio.terra.workspace.service.datarepo.exception.DataRepoAuthorizationException;
 import bio.terra.workspace.service.datarepo.exception.DataRepoInternalServerErrorException;

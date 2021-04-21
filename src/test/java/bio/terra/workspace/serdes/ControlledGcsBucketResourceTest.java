@@ -4,9 +4,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.StairwayMapper;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import com.fasterxml.jackson.core.JsonProcessingException;

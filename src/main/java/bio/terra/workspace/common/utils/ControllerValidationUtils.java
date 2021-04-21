@@ -1,6 +1,6 @@
 package bio.terra.workspace.common.utils;
 
-import bio.terra.workspace.common.exception.ValidationException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateDataReferenceRequestBody;
 import bio.terra.workspace.service.resource.controlled.exception.ControlledResourceNotImplementedException;

@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.exception;
 
+import bio.terra.common.exception.ErrorReportException;
 import java.util.Collections;
 import java.util.List;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;

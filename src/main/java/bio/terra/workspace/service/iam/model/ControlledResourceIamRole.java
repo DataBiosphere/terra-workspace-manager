@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.iam.model;
 
-import bio.terra.workspace.common.exception.ValidationException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiControlledResourceIamRole;
 import java.util.Arrays;
 import java.util.Optional;

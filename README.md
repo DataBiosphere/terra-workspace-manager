@@ -14,7 +14,7 @@ A swagger-ui page is available at /swagger-ui.html on any running instance. For 
 - perf: https://workspace.dsde-perf.broadinstitute.org/swagger-ui.html
 - prod: https://workspace.dsde-prod.broadinstitute.org/swagger-ui.html 
 
-We currently do not deploy to a production environment.
+If you can't load any of the swagger pages, check that you are on **non-split** VPN before troubleshooting further.
 
 ## Spring Boot
 We use Spring Boot as our framework for REST servers. The objective is to use a minimal set

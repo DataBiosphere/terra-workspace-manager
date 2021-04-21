@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.crl.exception;
 
-import bio.terra.workspace.common.exception.InternalServerErrorException;
+import bio.terra.common.exception.InternalServerErrorException;
 
 /** An attempt was made to use the Cloud Resource Library, but it is set not to be used. */
 public class CrlNotInUseException extends InternalServerErrorException {
