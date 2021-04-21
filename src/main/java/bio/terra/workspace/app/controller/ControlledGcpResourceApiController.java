@@ -1,6 +1,6 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.workspace.common.exception.ValidationException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
@@ -88,9 +88,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
 
     final ControlledGcsBucketResource createdBucket =
-        controlledResourceService
-            .syncCreateControlledResource(resource, body.getGcsBucket(), privateRoles, userRequest)
-            .castToGcsBucketResource();
+        controlledResourceService.syncCreateBucket(
+            resource, body.getGcsBucket(), privateRoles, userRequest);
     var response =
         new ApiCreatedControlledGcpGcsBucket()
             .resourceId(createdBucket.getResourceId())
@@ -172,7 +171,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
     final ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService
-            .syncCreateControlledResource(resource, body.getDataset(), privateRoles, userRequest)
+            .syncCreateBqDataset(resource, body.getDataset(), privateRoles, userRequest)
             .castToBigQueryDatasetResource();
     var response =
         new ApiCreatedControlledGcpBigQueryDataset()

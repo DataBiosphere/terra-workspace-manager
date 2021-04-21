@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace.exceptions;
 
-import bio.terra.workspace.common.exception.BadRequestException;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 
 /**

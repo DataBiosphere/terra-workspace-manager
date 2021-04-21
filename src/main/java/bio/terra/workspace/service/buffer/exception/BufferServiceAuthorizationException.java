@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.buffer.exception;
 
-import bio.terra.workspace.common.exception.ForbiddenException;
+import bio.terra.common.exception.ForbiddenException;
 
 public class BufferServiceAuthorizationException extends ForbiddenException {
 

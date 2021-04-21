@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.job.exception;
 
-import bio.terra.workspace.common.exception.NotFoundException;
+import bio.terra.common.exception.NotFoundException;
 
 public class JobNotFoundException extends NotFoundException {
   public JobNotFoundException(String message) {

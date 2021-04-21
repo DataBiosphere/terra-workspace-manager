@@ -6,10 +6,11 @@ name: Test Runner Nightly Perf Tests
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: '0 6 * * *' # run at 6 AM UTC, 1 AM ET.
+    - cron: '0 8 * * *' # run at 8 AM UTC, 3 AM ET.
 
 jobs:
-  test-runner-integration:
+  test-runner-perf:
+
     runs-on: ubuntu-latest
 
     steps:
@@ -34,9 +35,8 @@ jobs:
       - name: Render configs for Test Runner
         run: |
           cd ${GITHUB_WORKSPACE}/${workingDir}/workspace-manager-clienttests
-          chmod +x render-config.sh
-          ./render-config.sh dev ${{ steps.vault-token-step.outputs.vault-token }}
-          chmod +r rendered
+          ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
+          ./render-k8s-config.sh wsmtest ${{ steps.vault-token-step.outputs.vault-token }}
       - name: Cache Gradle packages
         uses: actions/cache@v2
         with:
@@ -49,4 +49,20 @@ jobs:
         run: |
           ./gradlew :workspace-manager-client:build
           cd workspace-manager-clienttests
+          export TEST_RUNNER_SERVER_SPECIFICATION_FILE=workspace-wsmtest.json
+          echo "Running test suite"
           ./gradlew runTest --args="suites/BasicPerf.json /tmp/TestRunnerResults"
+
+      - name: Upload test results to Google Bucket
+        if: ${{ always() }}
+        run: |
+          cd workspace-manager-clienttests
+          echo "Upload test results to Google Bucket"
+          ./gradlew uploadResults --args="CompressDirectoryToTerraKernelK8S.json /tmp/TestRunnerResults"
+
+      - name: Upload test results to BigQuery Test Runner Results Dataset
+        if: ${{ always() }}
+        run: |
+          cd workspace-manager-clienttests
+          echo "Upload test results to BigQuery Test Runner Dataset"
+          ./gradlew uploadResults --args="SummariesToTerraKernelK8SBigQuery.json /tmp/TestRunnerResults"

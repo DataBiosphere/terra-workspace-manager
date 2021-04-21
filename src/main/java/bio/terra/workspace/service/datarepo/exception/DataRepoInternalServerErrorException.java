@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.datarepo.exception;
 
-import bio.terra.workspace.common.exception.InternalServerErrorException;
+import bio.terra.common.exception.InternalServerErrorException;
 
 public class DataRepoInternalServerErrorException extends InternalServerErrorException {
 

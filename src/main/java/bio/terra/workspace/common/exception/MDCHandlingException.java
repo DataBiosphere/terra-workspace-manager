@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.exception;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import java.util.List;
 
 public class MDCHandlingException extends InternalServerErrorException {

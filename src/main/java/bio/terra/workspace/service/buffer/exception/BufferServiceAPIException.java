@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.buffer.exception;
 
 import bio.terra.buffer.client.ApiException;
-import bio.terra.workspace.common.exception.ErrorReportException;
+import bio.terra.common.exception.ErrorReportException;
 import java.util.Collections;
 import java.util.List;
 import org.springframework.http.HttpStatus;
