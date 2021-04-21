@@ -49,6 +49,7 @@ public class CreateControlledResourceFlight extends Flight {
     addStep(new StoreMetadataStep(flightBeanBag.getResourceDao()));
 
     // create the Sam resource associated with the resource
+    // TODO consider adding retry rules for Sam steps.
     addStep(
         new CreateSamResourceStep(
             flightBeanBag.getSamService(), resource, privateResourceIamRoles, userRequest));
@@ -94,7 +95,7 @@ public class CreateControlledResourceFlight extends Flight {
                 resource.castToAiNotebookInstanceResource(),
                 flightBeanBag.getWorkspaceService()),
             NOTEBOOK_GCP_RETRY_RULE);
-        // TODO(PF-469): Set permissions.
+        // TODO(PF-469): Set permissions on service account and notebook instances.
         break;
       default:
         throw new IllegalStateException(

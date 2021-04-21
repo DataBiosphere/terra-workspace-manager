@@ -10,6 +10,7 @@ import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightStatus;
+import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -19,13 +20,16 @@ import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateServiceAccountStep;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.notebooks.v1.model.Instance;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -99,9 +103,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .location(location)
             .build();
 
-    // Test idempotency of steps by restarting every one.
+    // Test idempotency of steps by retrying them once.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(CreateServiceAccountStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        CreateAiNotebookInstanceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().restartEachStep(true).build());
+        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+
     String jobId =
         controlledResourceService.createAiNotebookInstance(
             resource,
@@ -111,6 +120,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             "fakeResultPath",
             userAccessUtils.defaultUserAuthRequest());
     jobService.waitForJob(jobId);
+    assertEquals(
+        FlightStatus.SUCCESS, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     Instance instance =
@@ -125,7 +136,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .execute();
 
     assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_account"));
-    // TODO test user has permission on service account. Or single user mode?
+    // TODO(PF-469): Test that the user has permission to act as the service account.
 
     assertEquals(
         resource,
@@ -158,9 +169,20 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .location(location)
             .build();
 
-    // Fail after the last step to test that everything is deleted on undo.
+    // Test idempotency of undo steps by retrying them once.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(CreateServiceAccountStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        CreateAiNotebookInstanceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder()
+            // Fail after the last step to test that everything is deleted on undo.
+            .lastStepFailure(true)
+            .doStepFailures(retrySteps)
+            .build());
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().lastStepFailure(true).build());
+
     String jobId =
         controlledResourceService.createAiNotebookInstance(
             resource,
@@ -196,6 +218,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .getResultMap()
             .get()
             .get(CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID, String.class);
+    // TODO(PF-469): Use service account "get" to check for existence instead of "delete" once we
+    // have that method in CRL.
     GoogleJsonResponseException serviceAccountException =
         assertThrows(
             GoogleJsonResponseException.class,

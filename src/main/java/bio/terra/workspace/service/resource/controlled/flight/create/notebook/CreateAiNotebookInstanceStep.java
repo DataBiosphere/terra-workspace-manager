@@ -63,12 +63,20 @@ public class CreateAiNotebookInstanceStep implements Step {
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
-      // DO NOT SUBMIT previously created?
-      // DO NOT SUBMIT check on cloud URI uniqueness?
-      OperationCow<Operation> creationOperation =
-          notebooks
-              .operations()
-              .operationCow(notebooks.instances().create(instanceName, instance).execute());
+      OperationCow<Operation> creationOperation;
+      try {
+        creationOperation =
+            notebooks
+                .operations()
+                .operationCow(notebooks.instances().create(instanceName, instance).execute());
+      } catch (GoogleJsonResponseException e) {
+        if (HttpStatus.CONFLICT.value() == e.getStatusCode()) {
+          logger.debug("Notebook instance {} already created.", instanceName.formatName());
+          return StepResult.getStepResultSuccess();
+        }
+        throw e;
+      }
+
       creationOperation =
           OperationUtils.pollUntilComplete(
               creationOperation, Duration.ofSeconds(20), Duration.ofMinutes(12));
@@ -155,15 +163,10 @@ public class CreateAiNotebookInstanceStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
-    ApiGcpAiNotebookInstanceCreationParameters creationParameters =
-        flightContext
-            .getInputParameters()
-            .get(CREATE_NOTEBOOK_PARAMETERS, ApiGcpAiNotebookInstanceCreationParameters.class);
     InstanceName instanceName = createInstanceName(projectId);
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
-      // DO NOT SUBMIT - what if never created or already deleted?
       OperationCow<Operation> deletionOperation;
       try {
         deletionOperation =
