@@ -3,7 +3,7 @@ package bio.terra.workspace.service.resource.controlled.flight.create;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
-import bio.terra.stairway.RetryRuleExponentialBackoff;
+import bio.terra.stairway.RetryRuleFixedInterval;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -27,10 +27,7 @@ public class CreateControlledResourceFlight extends Flight {
    * wait forever.
    */
   private static final RetryRule NOTEBOOK_GCP_RETRY_RULE =
-      new RetryRuleExponentialBackoff(
-          /* initialIntervalSeconds= */ 1,
-          /* maxIntervalSeconds= */ 8,
-          /* maxOperationTimeSeconds= */ 30);
+      new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount=  */ 10);
 
   public CreateControlledResourceFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
@@ -49,7 +46,6 @@ public class CreateControlledResourceFlight extends Flight {
     addStep(new StoreMetadataStep(flightBeanBag.getResourceDao()));
 
     // create the Sam resource associated with the resource
-    // TODO consider adding retry rules for Sam steps.
     addStep(
         new CreateSamResourceStep(
             flightBeanBag.getSamService(), resource, privateResourceIamRoles, userRequest));
@@ -79,8 +75,6 @@ public class CreateControlledResourceFlight extends Flight {
                 resource.castToGcsBucketResource(),
                 flightBeanBag.getWorkspaceService()));
         break;
-      case BIG_QUERY_DATASET:
-        break;
       case AI_NOTEBOOK_INSTANCE:
         addStep(new GenerateServiceAccountIdStep());
         addStep(
@@ -97,6 +91,7 @@ public class CreateControlledResourceFlight extends Flight {
             NOTEBOOK_GCP_RETRY_RULE);
         // TODO(PF-469): Set permissions on service account and notebook instances.
         break;
+      case BIG_QUERY_DATASET:
       default:
         throw new IllegalStateException(
             String.format("Unrecognized resource type %s", resource.getResourceType()));

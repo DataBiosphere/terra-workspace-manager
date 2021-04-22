@@ -1649,17 +1649,20 @@ components:
       properties:
         instanceId:
           description: >-
-            Required. A instanceId unique to this project and location. Must be 1-63 characters, using lower
+            An instanceId unique to this project and location. Must be 1-63 characters, using lower
             case letters, numbers, and dashes. The first character must be a lower case letter,
             and the last character must not be a dash.
           type: string
+          required: true
         location:
-          description: Required. The canonical GCP id for this location. For example, \'us-east1\'.
+          description: The canonical GCP id for this location. For example, \'us-east1\'.
           type: string
+          required: true
         machineType:
-          description: Required. The Compute Engine machine type of this instance, see
+          description: The Compute Engine machine type of this instance, see
             https://cloud.google.com/compute/docs/machine-types
           type: string
+          required: true
         postStartupScript:
           description: >-
             Path to a Bash script that automatically runs after a notebook instance fully boots up.
@@ -1681,9 +1684,10 @@ components:
       properties:
         projectId:
           description: >-
-            Required. The name of the Google Cloud project that this VM image belongs to. Format:
+            The name of the Google Cloud project that this VM image belongs to. Format:
             'projects/{project_id}'
           type: string
+          required: true
         imageName:
           description: >-
             Either this or imageFamily must be specified. Use VM image name to find the image.
@@ -1706,6 +1710,7 @@ components:
             Required. The path to the container image repository. For example:
             'gcr.io/{project_id}/{imageName}'
           type: string
+          required: true
         tag:
           description: >-
             The tag of the container image. If not specified, this defaults to the latest tag.

@@ -180,8 +180,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .lastStepFailure(true)
             .undoStepFailures(retrySteps)
             .build());
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
 
     String jobId =
         controlledResourceService.createAiNotebookInstance(

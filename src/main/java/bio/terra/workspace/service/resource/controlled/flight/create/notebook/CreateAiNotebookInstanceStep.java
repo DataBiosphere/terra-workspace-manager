@@ -23,6 +23,7 @@ import com.google.api.services.notebooks.v1.model.ContainerImage;
 import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.api.services.notebooks.v1.model.Operation;
 import com.google.api.services.notebooks.v1.model.VmImage;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.time.Duration;
@@ -142,9 +143,10 @@ public class CreateAiNotebookInstanceStep implements Step {
 
   private static void setNetworks(Instance instance, String projectId, String location) {
     // 'network' is the name of the VPC network instance created by the Buffer Service.
-    // Instead of hard coding this, we could try to look up the name of the network on the project.
+    // TODO(PPF-469): Instead of hard coding this, look up the name of the network on the project.
     instance.setNetwork("projects/" + projectId + "/global/networks/network");
     // Assume the zone is related to the location like 'us-west1' is to 'us-west1-b'.
+    Preconditions.checkArgument(location.length() > 2, "Invalid location '%s'", location);
     String zone = location.substring(0, location.length() - 2);
     // Like 'network', 'subnetwork' is the name of the subnetwork created by the Buffer Service in
     // each zone.
