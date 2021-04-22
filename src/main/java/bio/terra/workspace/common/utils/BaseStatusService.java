@@ -4,10 +4,13 @@ import bio.terra.workspace.generated.model.ApiSystemStatus;
 import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
 
 /*
  BaseStatusService is a Spring replacement for workbench-libs' HealthMonitor utilities. It checks
@@ -25,6 +28,7 @@ public class BaseStatusService {
   private long lastUpdatedTimestampMillis;
   private final ApiSystemStatus currentStatus;
   private final long staleThresholdMillis;
+  private final ScheduledExecutorService scheduler;
 
   private static final Logger logger = LoggerFactory.getLogger(BaseStatusService.class);
 
@@ -33,13 +37,18 @@ public class BaseStatusService {
     currentStatus = new ApiSystemStatus().ok(false);
     lastUpdatedTimestampMillis = 0;
     this.staleThresholdMillis = staleThresholdMillis;
+    this.scheduler = Executors.newScheduledThreadPool(1);
+  }
+
+  @PostConstruct
+  public void startStatusChecking() {
+    scheduler.scheduleAtFixedRate(this::checkSubsystems, 5, 60, TimeUnit.SECONDS);
   }
 
   protected void registerSubsystem(String name, StatusSubsystem subsystem) {
     subsystems.put(name, subsystem);
   }
 
-  @Scheduled(cron = "${workspace.status-check.cron}")
   public void checkSubsystems() {
     // SystemStatus uses the thread-unsafe HashMap to hold ApiSystemStatusSystems objects by
     // default.
