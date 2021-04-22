@@ -105,7 +105,10 @@ public class CrlService {
     }
   }
 
-  /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API using the WSM service account's credentials. */
+  /**
+   * @return CRL {@link BigQueryCow} which wraps Google BigQuery API using the WSM service account's
+   *     credentials.
+   */
   public BigQueryCow createWsmSaBigQueryCow() {
     assertCrlInUse();
     try {
@@ -114,7 +117,6 @@ public class CrlService {
       throw new CrlInternalException("Error creating BigQuery API wrapper", e);
     }
   }
-
 
   /**
    * Wrap the BigQuery existence check in its own method. That allows unit tests to mock this

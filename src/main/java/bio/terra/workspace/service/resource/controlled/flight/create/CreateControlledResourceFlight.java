@@ -2,6 +2,8 @@ package bio.terra.workspace.service.resource.controlled.flight.create;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.RetryRule;
+import bio.terra.stairway.RetryRuleFixedInterval;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -67,10 +69,8 @@ public class CreateControlledResourceFlight extends Flight {
       case BIG_QUERY_DATASET:
         addStep(
             new CreateBigQueryDatasetStep(
-                flightBeanBag.getCrlService(), resource.castToBigQueryDatasetResource()));
-        addStep(
-            new BigQueryDatasetCloudSyncStep(
-                flightBeanBag.getCrlService(), resource.castToBigQueryDatasetResource()));
+                flightBeanBag.getCrlService(), resource.castToBigQueryDatasetResource()),
+            defaultRetryRule());
         break;
       default:
         throw new IllegalStateException(
@@ -78,5 +78,14 @@ public class CreateControlledResourceFlight extends Flight {
     }
     // Populate the return response
     addStep(new SetCreateResponseStep(resource));
+  }
+
+  /**
+   * Create a new fixed-interval retry rule with 6 attempts of 10s backoff each, for a total delay
+   * of 1 minute. These numbers are arbitrarily selected as a reasonable backoff timer for
+   * intermittent issues, as we should not hold a flight forever in case of a longer cloud outage.
+   */
+  private static RetryRule defaultRetryRule() {
+    return new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount= */ 6);
   }
 }

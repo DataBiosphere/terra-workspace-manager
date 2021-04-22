@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
@@ -118,11 +117,11 @@ public class ControlledResourceService {
       AuthenticatedUserRequest userRequest) {
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
-            resource,
-            privateResourceIamRoles,
-            new ApiJobControl().id(UUID.randomUUID().toString()),
-            null,
-            userRequest)
+                resource,
+                privateResourceIamRoles,
+                new ApiJobControl().id(UUID.randomUUID().toString()),
+                null,
+                userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return jobBuilder.submitAndWait(ControlledBigQueryDatasetResource.class);
   }
