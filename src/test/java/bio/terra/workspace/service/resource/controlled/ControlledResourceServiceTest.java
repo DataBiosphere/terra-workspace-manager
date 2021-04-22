@@ -243,4 +243,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 resource.getResourceId(),
                 userAccessUtils.defaultUserAuthRequest()));
   }
+
+  // TODO(PF-469): Add a test verifying that a controlled resource can't be created for an instance
+  // that already exists once we're ensuring cloud URI uniqueness for controlled resources.
 }
