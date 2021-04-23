@@ -145,12 +145,12 @@ public class CreateAiNotebookInstanceStep implements Step {
     // 'network' is the name of the VPC network instance created by the Buffer Service.
     // TODO(PPF-469): Instead of hard coding this, look up the name of the network on the project.
     instance.setNetwork("projects/" + projectId + "/global/networks/network");
-    // Assume the zone is related to the location like 'us-west1' is to 'us-west1-b'.
+    // Assume the region is related to the location like 'us-west1' is to 'us-west1-b'.
     Preconditions.checkArgument(location.length() > 2, "Invalid location '%s'", location);
-    String zone = location.substring(0, location.length() - 2);
+    String region = location.substring(0, location.length() - 2);
     // Like 'network', 'subnetwork' is the name of the subnetwork created by the Buffer Service in
-    // each zone.
-    instance.setSubnet("projects/" + projectId + "/regions/" + zone + "/subnetworks/subnetwork");
+    // each region.
+    instance.setSubnet("projects/" + projectId + "/regions/" + region + "/subnetworks/subnetwork");
   }
 
   private InstanceName createInstanceName(String projectId) {
