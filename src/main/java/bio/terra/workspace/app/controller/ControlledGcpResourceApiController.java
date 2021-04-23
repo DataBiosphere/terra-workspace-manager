@@ -88,7 +88,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
 
     final ControlledGcsBucketResource createdBucket =
-        controlledResourceService.syncCreateBucket(
+        controlledResourceService.createBucket(
             resource, body.getGcsBucket(), privateRoles, userRequest);
     var response =
         new ApiCreatedControlledGcpGcsBucket()
@@ -171,7 +171,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
     final ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService
-            .syncCreateBqDataset(resource, body.getDataset(), privateRoles, userRequest)
+            .createBqDataset(resource, body.getDataset(), privateRoles, userRequest)
             .castToBigQueryDatasetResource();
     var response =
         new ApiCreatedControlledGcpBigQueryDataset()

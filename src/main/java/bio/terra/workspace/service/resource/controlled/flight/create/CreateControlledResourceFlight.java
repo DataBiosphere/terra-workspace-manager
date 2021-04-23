@@ -24,6 +24,10 @@ public class CreateControlledResourceFlight extends Flight {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
+    // These numbers are arbitrarily selected as a reasonable backoff timer for intermittent issues,
+    // as we should not hold a flight forever in case of a longer cloud outage.
+    RetryRule cloudRetryRule = new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount= */ 6);
+
     final ControlledResource resource =
         inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
     final AuthenticatedUserRequest userRequest =
@@ -70,7 +74,7 @@ public class CreateControlledResourceFlight extends Flight {
         addStep(
             new CreateBigQueryDatasetStep(
                 flightBeanBag.getCrlService(), resource.castToBigQueryDatasetResource()),
-            defaultRetryRule());
+            cloudRetryRule);
         break;
       default:
         throw new IllegalStateException(
@@ -78,14 +82,5 @@ public class CreateControlledResourceFlight extends Flight {
     }
     // Populate the return response
     addStep(new SetCreateResponseStep(resource));
-  }
-
-  /**
-   * Create a new fixed-interval retry rule with 6 attempts of 10s backoff each, for a total delay
-   * of 1 minute. These numbers are arbitrarily selected as a reasonable backoff timer for
-   * intermittent issues, as we should not hold a flight forever in case of a longer cloud outage.
-   */
-  private static RetryRule defaultRetryRule() {
-    return new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount= */ 6);
   }
 }

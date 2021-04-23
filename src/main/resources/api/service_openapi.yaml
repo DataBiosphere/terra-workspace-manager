@@ -1742,6 +1742,7 @@ components:
           type: string
         datasetId:
           type: string
+
     GcpBigQueryDatasetResource:
       type: object
       description: A reference to a BigQuery dataset.
