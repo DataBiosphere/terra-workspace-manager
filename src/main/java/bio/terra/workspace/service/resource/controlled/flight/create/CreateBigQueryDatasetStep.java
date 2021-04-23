@@ -78,7 +78,7 @@ public class CreateBigQueryDatasetStep implements Step {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
       if (e.getStatusCode() == HttpStatus.SC_CONFLICT) {
-        logger.debug(
+        logger.info(
             "BQ dataset {} in project {} already exists",
             resource.getDatasetName(),
             resource.getProjectId());
@@ -167,7 +167,7 @@ public class CreateBigQueryDatasetStep implements Step {
     } catch (GoogleJsonResponseException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
       if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-        logger.debug(
+        logger.info(
             "BQ dataset {} in project {} already deleted",
             resource.getDatasetName(),
             resource.getProjectId());

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -42,6 +43,21 @@ public class ResourceDaoTest extends BaseUnitTest {
     UUID workspaceId = createGcpWorkspace();
     ControlledGcsBucketResource resource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
+            .workspaceId(workspaceId)
+            .build();
+    resourceDao.createControlledResource(resource);
+
+    assertEquals(
+        resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
+  }
+
+  @Test
+  public void createGetControlledBigQueryDataset() {
+    UUID workspaceId = createGcpWorkspace();
+    // The project ID of this resource does not match the project ID for the created workspace, but
+    // this is fine because this is a unit test and neither project actually exists.
+    ControlledBigQueryDatasetResource resource =
+        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
             .workspaceId(workspaceId)
             .build();
     resourceDao.createControlledResource(resource);
