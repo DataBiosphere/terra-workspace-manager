@@ -122,6 +122,9 @@ public class SamService {
       return true;
     } catch (ApiException apiException) {
       if (apiException.getCode() == HttpStatus.NOT_FOUND.value()) {
+        logger.info(
+            "Sam error was NOT_FOUND when checking user registration. This means the "
+                + " user is not registered but is not an exception. Returning false.");
         return false;
       } else {
         throw SamExceptionFactory.create("Error checking user status in Sam", apiException);
@@ -199,10 +202,13 @@ public class SamService {
       resourceApi.deleteResource(SamConstants.SAM_WORKSPACE_RESOURCE, id.toString());
       logger.info("Deleted Sam resource for workspace {}", id);
     } catch (ApiException apiException) {
-      logger.debug("Sam API error while deleting workspace, code is " + apiException.getCode());
+      logger.info("Sam API error while deleting workspace, code is " + apiException.getCode());
       // Do nothing if the resource to delete is not found, this may not be the first time undo is
       // called. Other exceptions still need to be surfaced.
       if (apiException.getCode() == HttpStatus.NOT_FOUND.value()) {
+        logger.info(
+            "Sam error was NOT_FOUND on a deletion call. "
+                + "This just means the deletion was tried twice so no error thrown.");
         return;
       }
       throw SamExceptionFactory.create("Error deleting a workspace in Sam", apiException);
@@ -213,11 +219,9 @@ public class SamService {
   public boolean isAuthorized(
       String accessToken, String iamResourceType, String resourceId, String action) {
     ResourcesApi resourceApi = samResourcesApi(accessToken);
-    logger.info("*** in is authorized");
     try {
       return resourceApi.resourcePermissionV2(iamResourceType, resourceId, action);
     } catch (ApiException apiException) {
-      logger.info("exception!" + apiException);
       throw SamExceptionFactory.create("Error checking resource permission in Sam", apiException);
     }
   }
@@ -464,9 +468,12 @@ public class SamService {
       // called. Other exceptions still need to be surfaced.
       // Resource IDs are randomly generated, so we trust that the caller must have created
       // an existing Sam resource.
-      logger.debug(
+      logger.info(
           "Sam API error while creating a controlled resource, code is " + apiException.getCode());
       if (apiException.getCode() == HttpStatus.CONFLICT.value()) {
+        logger.info(
+            "Sam error was CONFLICT on creation request. This means the resource already "
+                + "exists but is not an error so no exception thrown.");
         return;
       }
       throw SamExceptionFactory.create("Error creating controlled resource in Sam", apiException);
@@ -484,9 +491,12 @@ public class SamService {
     } catch (ApiException apiException) {
       // Do nothing if the resource to delete is not found, this may not be the first time delete is
       // called. Other exceptions still need to be surfaced.
-      logger.debug(
+      logger.info(
           "Sam API error while deleting a controlled resource, code is " + apiException.getCode());
       if (apiException.getCode() == HttpStatus.NOT_FOUND.value()) {
+        logger.info(
+            "Sam error was NOT_FOUND on a deletion call. "
+                + "This just means the deletion was tried twice so no error thrown.");
         return;
       }
       throw SamExceptionFactory.create("Error deleting controlled resource in Sam", apiException);

@@ -27,8 +27,6 @@ public class DeleteWorkspaceAuthzStep implements Step {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceID =
         UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    // Sam Service will take care of retrying any retry-able errors. Failures will be bubbled up
-    // as derivatives of ErrorReportException.
     samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);
     return StepResult.getStepResultSuccess().getStepResultSuccess();
   }

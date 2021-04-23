@@ -308,6 +308,27 @@ class SamServiceTest extends BaseConnectedTest {
     samService.deleteControlledResource(bucketResource, defaultUserRequest());
   }
 
+  @Test
+  void duplicateResourceCreateIgnored() {
+    UUID workspaceId = createWorkspaceDefaultUser();
+
+    ControlledResource bucketResource = defaultBucket(workspaceId).build();
+    samService.createControlledResource(bucketResource, null, defaultUserRequest());
+    // This duplicate call should complete without throwing.
+    samService.createControlledResource(bucketResource, null, defaultUserRequest());
+  }
+
+  @Test
+  void duplicateResourceDeleteIgnored() {
+    UUID workspaceId = createWorkspaceDefaultUser();
+
+    ControlledResource bucketResource = defaultBucket(workspaceId).build();
+    samService.createControlledResource(bucketResource, null, defaultUserRequest());
+
+    samService.deleteControlledResource(bucketResource, defaultUserRequest());
+    samService.deleteControlledResource(bucketResource, defaultUserRequest());
+  }
+
   /**
    * Convenience method to build an AuthenticatedUserRequest from utils' default user.
    *
