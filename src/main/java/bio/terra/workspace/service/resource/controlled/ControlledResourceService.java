@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -106,6 +107,21 @@ public class ControlledResourceService {
                 userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
+  }
+
+  /** Starts a create controlled AI Notebook instance resource job, returning the job id. */
+  public String createAiNotebookInstance(
+      ControlledAiNotebookInstanceResource resource,
+      ApiGcpAiNotebookInstanceCreationParameters creationParameters,
+      List<ControlledResourceIamRole> privateResourceIamRoles,
+      ApiJobControl jobControl,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(
+            resource, privateResourceIamRoles, jobControl, resultPath, userRequest);
+    jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
+    return jobBuilder.submit();
   }
 
   /** Create a JobBuilder for creating controlled resources with the common parameters populated. */

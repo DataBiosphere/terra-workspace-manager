@@ -53,7 +53,7 @@ public class ValidationUtils {
     if (!AI_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
       logger.warn("Invalid AI Notebook instance name {}", name);
       throw new InvalidReferenceException(
-          "Invalid AI Notebook instance name specified. Name must be 1 to 62 alphanumeric characters or underscores, where the first letter is a lower case letter.");
+          "Invalid AI Notebook instance name specified. Name must be 1 to 62 alphanumeric lower case characters or underscores, where the first letter is a lower case letter.");
     }
   }
 
