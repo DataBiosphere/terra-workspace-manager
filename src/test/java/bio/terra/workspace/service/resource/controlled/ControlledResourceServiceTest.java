@@ -269,7 +269,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .datasetName(datasetId)
             .build();
 
-    // Test idempotency of BQ-specific step by retrying it once.
+    // Test idempotency of dataset-specific step by retrying it once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(CreateBigQueryDatasetStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
@@ -328,7 +328,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .build());
 
     // JobService throws a InvalidResultStateException when a synchronous flight fails without an
-    // exception, which occurs when flights fails via debugInfo.
+    // exception, which occurs when a flight fails via debugInfo.
     assertThrows(
         InvalidResultStateException.class,
         () ->
