@@ -882,6 +882,24 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled AI Notebook instance resource
+      operationId: getAiNotebookInstance
+      tags: [ControlledGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledGcpAiNotebookInstanceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        404:
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 components:
   parameters:
     ## DEPRECATED PARAMETERS ##
@@ -2064,6 +2082,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreatedControlledGcpAiNotebookInstanceResult'
+
+    GetControlledGcpAiNotebookInstanceResponse:
+      description: Response to get AI Notebook instance.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GcpAiNotebookInstanceResource'
 
     CreateCloudContextResultResponse:
       description: Job is complete (succeeded or failed)

@@ -166,6 +166,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, @Valid ApiCreateControlledGcpAiNotebookInstanceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
+    // DO NOT SUBMIT write validation of creation parameters & common fields.
+
     ControlledAiNotebookInstanceResource resource =
         ControlledAiNotebookInstanceResource.builder()
             .workspaceId(workspaceId)
@@ -227,6 +229,19 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .aiNotebookInstance(apiResource);
+  }
+
+  @Override
+  public ResponseEntity<ApiGcpAiNotebookInstanceResource> getAiNotebookInstance(
+      UUID workspaceId, UUID resourceId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledResource controlledResource =
+        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+    ApiGcpAiNotebookInstanceResource response =
+        controlledResource
+            .castToAiNotebookInstanceResource()
+            .toApiResource(workspaceService.getRequiredGcpProject(workspaceId));
+    return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   private static List<ControlledResourceIamRole> getAndValidatePrivateRoles(
