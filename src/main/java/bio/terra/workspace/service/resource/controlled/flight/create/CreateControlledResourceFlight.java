@@ -22,21 +22,18 @@ import java.util.List;
  * depend on the resource type. The latter must be passed in via the input parameters map with keys
  */
 public class CreateControlledResourceFlight extends Flight {
+
   /**
-   * Retry rule for Notebook GCP steps. If GCP is down, we don't know when it will be back, so don't
-   * wait forever.
+   * Retry rule for steps interacting with GCP. If GCP is down, we don't know when it will be back,
+   * so don't wait forever. Note that RetryRules can be re-used within but not across Flight
+   * instances.
    */
-  private static final RetryRule NOTEBOOK_GCP_RETRY_RULE =
+  private final RetryRule gcpRetryRule =
       new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount=  */ 10);
 
   public CreateControlledResourceFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
-
-    // These numbers are arbitrarily selected as a reasonable backoff timer for intermittent issues,
-    // as we should not hold a flight forever in case of a longer cloud outage.
-    RetryRule cloudRetryRule =
-        new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount= */ 6);
 
     final ControlledResource resource =
         inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
@@ -69,6 +66,7 @@ public class CreateControlledResourceFlight extends Flight {
     // create the cloud resource and grant IAM roles via CRL
     switch (resource.getResourceType()) {
       case GCS_BUCKET:
+        // TODO(PF-589): apply gcpRetryRule to these steps once they are idempotent.
         addStep(
             new CreateGcsBucketStep(
                 flightBeanBag.getCrlService(),
@@ -87,20 +85,20 @@ public class CreateControlledResourceFlight extends Flight {
                 flightBeanBag.getCrlService(),
                 flightBeanBag.getWorkspaceService(),
                 resource.castToAiNotebookInstanceResource()),
-            NOTEBOOK_GCP_RETRY_RULE);
+            gcpRetryRule);
         addStep(
             new CreateAiNotebookInstanceStep(
                 flightBeanBag.getCrlService(),
                 resource.castToAiNotebookInstanceResource(),
                 flightBeanBag.getWorkspaceService()),
-            NOTEBOOK_GCP_RETRY_RULE);
+            gcpRetryRule);
         // TODO(PF-469): Set permissions on service account and notebook instances.
         break;
       case BIG_QUERY_DATASET:
         addStep(
             new CreateBigQueryDatasetStep(
                 flightBeanBag.getCrlService(), resource.castToBigQueryDatasetResource()),
-            cloudRetryRule);
+            gcpRetryRule);
         break;
       default:
         throw new IllegalStateException(
