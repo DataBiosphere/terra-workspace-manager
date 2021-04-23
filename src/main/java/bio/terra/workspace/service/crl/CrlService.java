@@ -3,7 +3,6 @@ package bio.terra.workspace.service.crl;
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.common.cleanup.CleanupConfig;
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
-import bio.terra.cloudres.google.bigquery.DatasetCow;
 import bio.terra.cloudres.google.billing.CloudBillingClientCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.cloudres.google.iam.IamCow;
@@ -16,12 +15,10 @@ import bio.terra.workspace.service.crl.exception.CrlNotInUseException;
 import bio.terra.workspace.service.crl.exception.CrlSecurityException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
-import com.google.cloud.bigquery.BigQueryException;
-import com.google.cloud.bigquery.BigQueryOptions;
-import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
 import java.io.FileInputStream;
@@ -30,6 +27,7 @@ import java.security.GeneralSecurityException;
 import java.time.Duration;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -98,14 +96,13 @@ public class CrlService {
   }
 
   /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
-  public BigQueryCow createBigQueryCow(String projectId, AuthenticatedUserRequest userReq) {
+  public BigQueryCow createBigQueryCow(AuthenticatedUserRequest userReq) {
     assertCrlInUse();
-    return new BigQueryCow(
-        clientConfig,
-        BigQueryOptions.newBuilder()
-            .setCredentials(googleCredentialsFromUserReq(userReq))
-            .setProjectId(projectId)
-            .build());
+    try {
+      return BigQueryCow.create(clientConfig, googleCredentialsFromUserReq(userReq));
+    } catch (IOException | GeneralSecurityException e) {
+      throw new CrlInternalException("Error creating BigQuery API wrapper", e);
+    }
   }
 
   /**
@@ -120,13 +117,15 @@ public class CrlService {
   public boolean bigQueryDatasetExists(
       String projectId, String datasetName, AuthenticatedUserRequest userRequest) {
     try {
-      DatasetId datasetId = DatasetId.of(projectId, datasetName);
-      // BigQueryCow.get() returns null if the bucket does not exist or a user does not have access,
-      // which fails validation.
-      DatasetCow dataset = createBigQueryCow(projectId, userRequest).getDataset(datasetId);
-      return (dataset != null);
-    } catch (BigQueryException e) {
-      throw new InvalidReferenceException("Error while trying to access BigQuery dataset", e);
+      createBigQueryCow(userRequest).datasets().get(projectId, datasetName).execute();
+      return true;
+    } catch (GoogleJsonResponseException ex) {
+      if (ex.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        return false;
+      }
+      throw new InvalidReferenceException("Error while trying to access BigQuery dataset", ex);
+    } catch (IOException ex) {
+      throw new InvalidReferenceException("Error while trying to access BigQuery dataset", ex);
     }
   }
 
