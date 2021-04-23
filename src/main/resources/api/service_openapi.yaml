@@ -1695,6 +1695,84 @@ components:
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
+    # TODO(PF-469): Add the creation endpoint.
+    GcpAiNotebookInstanceCreationParameters:
+      description: >-
+        AI Platform Notebook instance specific properties to be set on creation. These are a subset of the
+        values accepted by the GCP AI Platforms API. See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances/create
+      type: object
+      properties:
+        instanceId:
+          description: >-
+            An instanceId unique to this project and location. Must be 1-63 characters, using lower
+            case letters, numbers, and dashes. The first character must be a lower case letter,
+            and the last character must not be a dash.
+          type: string
+          required: true
+        location:
+          description: The canonical GCP id for this location. For example, \'us-east1\'.
+          type: string
+          required: true
+        machineType:
+          description: The Compute Engine machine type of this instance, see
+            https://cloud.google.com/compute/docs/machine-types
+          type: string
+          required: true
+        postStartupScript:
+          description: >-
+            Path to a Bash script that automatically runs after a notebook instance fully boots up.
+            The path must be a URL or Cloud Storage path (gs://path-to-file/file-name). If the path
+            is a cloud storage path, the created VM instance's service account's credentials is used
+            to access it.
+          type: string
+        vmImage:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceVmImage'
+        containerImage:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceContainerImage'
+        # TODO(PF-469) Add support for more fields.
+
+    GcpAiNotebookInstanceVmImage:
+      description: >-
+        Either this or containerImage must be specified. Definition of a custom Compute Engine
+        virtual machine image for starting a notebook instance with the environment installed
+        directly on the VM. See
+        https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/VmImage
+      type: object
+      properties:
+        projectId:
+          description: >-
+            The name of the Google Cloud project that this VM image belongs to. Format:
+            'projects/{project_id}'
+          type: string
+          required: true
+        imageName:
+          description: >-
+            Either this or imageFamily must be specified. Use VM image name to find the image.
+          type: string
+        imageFamily:
+          description: >-
+            Either this or imageName must be specified. Use this VM image family to find the image;
+            the newest image in this family will be used.
+          type: string
+
+    GcpAiNotebookInstanceContainerImage:
+      description: >-
+        Either this or vmImage must be specified. Definition of a container image for starting a
+        notebook instance with the environment installed in a container. See
+        https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/ContainerImage
+      type: object
+      properties:
+        repository:
+          description: >-
+            Required. The path to the container image repository. For example:
+            'gcr.io/{project_id}/{imageName}'
+          type: string
+          required: true
+        tag:
+          description: >-
+            The tag of the container image. If not specified, this defaults to the latest tag.
+          type: string
+
     ## Cloud Resource, Attribute, and Enumeration structures ##
     ## Resources and attributes are in alphabetical order
     ## followed by enumerations in alphabetical order.

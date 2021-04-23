@@ -10,6 +10,9 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateAiNotebookInstanceStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateServiceAccountStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.GenerateServiceAccountIdStep;
 import bio.terra.workspace.service.workspace.flight.SyncSamGroupsStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.List;
@@ -19,6 +22,12 @@ import java.util.List;
  * depend on the resource type. The latter must be passed in via the input parameters map with keys
  */
 public class CreateControlledResourceFlight extends Flight {
+  /**
+   * Retry rule for Notebook GCP steps. If GCP is down, we don't know when it will be back, so don't
+   * wait forever.
+   */
+  private static final RetryRule NOTEBOOK_GCP_RETRY_RULE =
+      new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount=  */ 10);
 
   public CreateControlledResourceFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
@@ -26,7 +35,8 @@ public class CreateControlledResourceFlight extends Flight {
 
     // These numbers are arbitrarily selected as a reasonable backoff timer for intermittent issues,
     // as we should not hold a flight forever in case of a longer cloud outage.
-    RetryRule cloudRetryRule = new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount= */ 6);
+    RetryRule cloudRetryRule =
+        new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount= */ 6);
 
     final ControlledResource resource =
         inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
@@ -69,6 +79,22 @@ public class CreateControlledResourceFlight extends Flight {
                 flightBeanBag.getCrlService(),
                 resource.castToGcsBucketResource(),
                 flightBeanBag.getWorkspaceService()));
+        break;
+      case AI_NOTEBOOK_INSTANCE:
+        addStep(new GenerateServiceAccountIdStep());
+        addStep(
+            new CreateServiceAccountStep(
+                flightBeanBag.getCrlService(),
+                flightBeanBag.getWorkspaceService(),
+                resource.castToAiNotebookInstanceResource()),
+            NOTEBOOK_GCP_RETRY_RULE);
+        addStep(
+            new CreateAiNotebookInstanceStep(
+                flightBeanBag.getCrlService(),
+                resource.castToAiNotebookInstanceResource(),
+                flightBeanBag.getWorkspaceService()),
+            NOTEBOOK_GCP_RETRY_RULE);
+        // TODO(PF-469): Set permissions on service account and notebook instances.
         break;
       case BIG_QUERY_DATASET:
         addStep(

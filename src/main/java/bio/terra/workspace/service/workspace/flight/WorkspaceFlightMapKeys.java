@@ -19,6 +19,11 @@ public final class WorkspaceFlightMapKeys {
     public static final String PRIVATE_RESOURCE_IAM_ROLES = "iamRoles";
     public static final String IAM_RESOURCE_GROUP_EMAIL_MAP = "iamResourceGroupEmailMap";
 
+    // Notebooks keys
+    public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
+    public static final String CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID =
+        "createNotebookServiceAccountId";
+
     private ControlledResourceKeys() {}
   }
 
