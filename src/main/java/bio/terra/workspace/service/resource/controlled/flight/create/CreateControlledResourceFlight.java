@@ -82,13 +82,13 @@ public class CreateControlledResourceFlight extends Flight {
                 flightBeanBag.getCrlService(),
                 flightBeanBag.getWorkspaceService(),
                 resource.castToAiNotebookInstanceResource()),
-                notebookGcpRetryRule);
+            notebookGcpRetryRule);
         addStep(
             new CreateAiNotebookInstanceStep(
                 flightBeanBag.getCrlService(),
                 resource.castToAiNotebookInstanceResource(),
                 flightBeanBag.getWorkspaceService()),
-                notebookGcpRetryRule);
+            notebookGcpRetryRule);
         // TODO(PF-469): Set permissions on service account and notebook instances.
         break;
       case BIG_QUERY_DATASET:
