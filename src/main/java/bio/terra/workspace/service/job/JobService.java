@@ -179,7 +179,7 @@ public class JobService {
   public void initialize() {
     stairwayComponent.initialize(
         stairwayComponent
-            .newInitializeBuilder()
+            .newStairwayOptionsBuilder()
             .dataSource(stairwayDatabaseConfiguration.getDataSource())
             .context(flightBeanBag)
             .addHook(mdcHook)
