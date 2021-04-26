@@ -99,7 +99,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         creationResult.getAiNotebookInstance().getAttributes().getInstanceId());
 
     // TODO(PF-626): Test cloud permissions for the users.
-    // TODO(PF-712): Test notebook instance deletion. DO NOT SUBMIT file ticket.
+    // TODO(PF-712): Test notebook instance deletion.
   }
 
   private CreatedControlledGcpAiNotebookInstanceResult createPrivateNotebook(
