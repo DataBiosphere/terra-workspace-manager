@@ -1677,7 +1677,7 @@ components:
           description: A valid dataset name per https://cloud.google.com/bigquery/docs/datasets#dataset-naming
           type: string
         location:
-          description: A valid dataset name per https://cloud.google.com/bigquery/docs/locations.
+          description: A valid dataset location per https://cloud.google.com/bigquery/docs/locations.
           type: string
 
     DeleteControlledGcpGcsBucketRequest:
@@ -1860,7 +1860,7 @@ components:
         Exactly one will be populated based on the ResourceType in the
         ResourceDescription. The value of the other references is undefined.
       properties:
-        gcpBigQuery:
+        gcpBqDataset:
           $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
         gcpDataRepoSnapshot:
           $ref: '#/components/schemas/DataRepoSnapshotAttributes'

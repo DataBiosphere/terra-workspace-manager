@@ -11,6 +11,7 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
 import java.util.UUID;
 
 public class ControlledBigQueryDatasetResource extends ControlledResource {
@@ -118,10 +119,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
 
   @Override
   public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + datasetName.hashCode();
-    result = 31 * result + projectId.hashCode();
-    return result;
+    return Objects.hash(super.hashCode(), datasetName, projectId);
   }
 
   public static class Builder {

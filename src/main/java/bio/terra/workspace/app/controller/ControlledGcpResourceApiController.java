@@ -26,6 +26,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -196,15 +197,16 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
                     user.getPrivateResourceIamRoles().stream()
                         .map(ControlledResourceIamRole::fromApiModel)
                         .collect(Collectors.toList()))
-            .orElse(null);
+            .orElse(Collections.emptyList());
     // Validate that we get the private role when the resource is private and do not get it
     // when the resource is public
     AccessScopeType accessScope = AccessScopeType.fromApi(commonFields.getAccessScope());
-    boolean privateRoleOmitted = (privateRoles == null || privateRoles.isEmpty());
-    if ((accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE && privateRoleOmitted)
-        || (accessScope == AccessScopeType.ACCESS_SCOPE_SHARED && !privateRoleOmitted)) {
+    if (accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE && privateRoles.isEmpty()) {
+      throw new ValidationException("At least one IAM role is required for private resources");
+    }
+    if (accessScope == AccessScopeType.ACCESS_SCOPE_SHARED && !privateRoles.isEmpty()) {
       throw new ValidationException(
-          "At least one IAM role is required for private resources and the field must be omitted for shared resources");
+          "Private resource IAM roles are not allowed for shared resources");
     }
     return privateRoles;
   }

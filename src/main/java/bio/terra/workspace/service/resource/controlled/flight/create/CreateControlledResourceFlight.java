@@ -96,6 +96,8 @@ public class CreateControlledResourceFlight extends Flight {
         // TODO(PF-469): Set permissions on service account and notebook instances.
         break;
       case BIG_QUERY_DATASET:
+        // Unlike other resources, BigQuery datasets set IAM permissions at creation time to avoid
+        // unwanted defaults from GCP.
         addStep(
             new CreateBigQueryDatasetStep(
                 flightBeanBag.getCrlService(), resource.castToBigQueryDatasetResource()),

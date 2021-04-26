@@ -60,7 +60,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
         resourceController.makeApiResourceDescription((WsmResource) resource);
     validateWsmResource(resourceDescription);
     ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
-    ApiGcpBigQueryDatasetAttributes attributes = union.getGcpBigQuery();
+    ApiGcpBigQueryDatasetAttributes attributes = union.getGcpBqDataset();
     assertThat(attributes, is(notNullValue()));
     assertThat(attributes.getDatasetId(), equalTo(datasetName));
     assertThat(attributes.getProjectId(), equalTo(projectId));

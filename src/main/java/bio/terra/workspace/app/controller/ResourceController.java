@@ -99,7 +99,7 @@ public class ResourceController implements ResourceApi {
             {
               ReferencedBigQueryDatasetResource resource =
                   referencedResource.castToBigQueryDatasetResource();
-              union.gcpBigQuery(resource.toApiAttributes());
+              union.gcpBqDataset(resource.toApiAttributes());
               break;
             }
 
@@ -138,7 +138,7 @@ public class ResourceController implements ResourceApi {
             {
               ControlledBigQueryDatasetResource resource =
                   controlledResource.castToBigQueryDatasetResource();
-              union.gcpBigQuery(resource.toApiAttributes());
+              union.gcpBqDataset(resource.toApiAttributes());
               break;
             }
           case DATA_REPO_SNAPSHOT: // there is a use case for this, but low priority

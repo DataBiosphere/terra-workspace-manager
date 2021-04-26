@@ -54,11 +54,10 @@ public class ResourceDaoTest extends BaseUnitTest {
   @Test
   public void createGetControlledBigQueryDataset() {
     UUID workspaceId = createGcpWorkspace();
-    // The project ID of this resource does not match the project ID for the created workspace, but
-    // this is fine because this is a unit test and neither project actually exists.
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
             .workspaceId(workspaceId)
+            .projectId("my-project-id")
             .build();
     resourceDao.createControlledResource(resource);
 
