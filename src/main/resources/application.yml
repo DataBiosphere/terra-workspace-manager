@@ -70,25 +70,6 @@ workspace:
     uri: ${env.db.host}/${env.db.ws.name}
     username: ${env.db.ws.user}
 
-  # DO NOT SUBMIT adding buffer and crl for boot run spring profile...
-  buffer:
-    enabled: true
-    pool-id: workspace_manager_v6
-    instance-url: https://buffer.tools.integ.envs.broadinstitute.org
-    client-credential-file-path: rendered/buffer-client-sa-account.json
-
-  crl:
-    janitor-client-credential-file-path: rendered/janitor-client-sa-account.json
-    janitor-track-resource-project-id: terra-kernel-k8s
-    janitor-track-resource-topic-id: crljanitor-tools-pubsub-topic
-  spend:
-    spend-profiles:
-      -
-        # This is the id of a 'spend-profile' resource on dev Sam.
-        id: wm-default-spend-profile
-        # The billing account workspace-dev has access to.
-        billing-account-id: 01A82E-CA8A14-367457
-
 terra.common:
   kubernetes:
     in-kubernetes: false

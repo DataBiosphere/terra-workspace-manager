@@ -18,7 +18,7 @@ sourceCompatibility = JavaVersion.VERSION_11
 def useMavenLocal = false
 allprojects {
 	group = "bio.terra"
-	version = "0.22.0-SNAPSHOT"
+	version = "0.21.0-SNAPSHOT"
 	ext {
 		artifactGroup = "${group}.workspace"
 		swaggerOutputDir = "${buildDir}/swagger-code"
