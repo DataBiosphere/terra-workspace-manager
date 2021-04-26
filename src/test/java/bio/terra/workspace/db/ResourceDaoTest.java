@@ -70,16 +70,16 @@ public class ResourceDaoTest extends BaseUnitTest {
   @Test
   public void duplicateControlledBucketNameRejected() {
     final UUID workspaceId1 = createGcpWorkspace();
-    final ControlledGcsBucketResource resource1 =
+    final ControlledGcsBucketResource initialResource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
             .workspaceId(workspaceId1)
             .bucketName(BUCKET_NAME)
             .build();
 
-    resourceDao.createControlledResource(resource1);
+    resourceDao.createControlledResource(initialResource);
 
     final UUID workspaceId2 = createGcpWorkspace();
-    final ControlledGcsBucketResource resource2 =
+    final ControlledGcsBucketResource duplicatingResource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
             .workspaceId(workspaceId2)
             .name("another-bucket-resource")
@@ -87,11 +87,13 @@ public class ResourceDaoTest extends BaseUnitTest {
             .build();
 
     assertThrows(
-        DuplicateResourceException.class, () -> resourceDao.createControlledResource(resource2));
+        DuplicateResourceException.class,
+        () -> resourceDao.createControlledResource(duplicatingResource));
 
     // clean up
-    resourceDao.deleteResource(resource1.getWorkspaceId(), resource1.getResourceId());
-    resourceDao.deleteResource(resource2.getWorkspaceId(), resource2.getResourceId());
+    resourceDao.deleteResource(initialResource.getWorkspaceId(), initialResource.getResourceId());
+    resourceDao.deleteResource(
+        duplicatingResource.getWorkspaceId(), duplicatingResource.getResourceId());
   }
 
   // AI Notebooks are unique on the tuple {instanceId, location, projectId } in addition
@@ -100,35 +102,40 @@ public class ResourceDaoTest extends BaseUnitTest {
   @Test
   public void duplicateNotebookIsRejected() {
     final UUID workspaceId1 = createGcpWorkspace();
-    final ControlledResource resource1 =
+    final ControlledResource initialResource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .workspaceId(workspaceId1)
             .build();
-    resourceDao.createControlledResource(resource1);
+    resourceDao.createControlledResource(initialResource);
     assertEquals(
-        resource1, resourceDao.getResource(resource1.getWorkspaceId(), resource1.getResourceId()));
+        initialResource,
+        resourceDao.getResource(initialResource.getWorkspaceId(), initialResource.getResourceId()));
 
-    final ControlledResource resource2 =
+    final ControlledResource duplicatingResource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .workspaceId(workspaceId1)
             .name("resource-2")
             .build();
     assertThrows(
-        DuplicateResourceException.class, () -> resourceDao.createControlledResource(resource2));
+        DuplicateResourceException.class,
+        () -> resourceDao.createControlledResource(duplicatingResource));
 
-    final ControlledResource resource3 =
+    final ControlledResource resourceWithDifferentWorkspaceId =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .workspaceId(createGcpWorkspace())
             .name("resource-3")
             .build();
 
     // should be fine: separate workspaces implies separate gcp projects
-    resourceDao.createControlledResource(resource3);
+    resourceDao.createControlledResource(resourceWithDifferentWorkspaceId);
 
     assertEquals(
-        resource3, resourceDao.getResource(resource3.getWorkspaceId(), resource3.getResourceId()));
+        resourceWithDifferentWorkspaceId,
+        resourceDao.getResource(
+            resourceWithDifferentWorkspaceId.getWorkspaceId(),
+            resourceWithDifferentWorkspaceId.getResourceId()));
 
-    final ControlledResource resource4 =
+    final ControlledResource resourceWithDifferentLocation =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .workspaceId(workspaceId1)
             .name("resource-4")
@@ -136,14 +143,21 @@ public class ResourceDaoTest extends BaseUnitTest {
             .build();
 
     // same project & instance ID but different location from resource1
-    resourceDao.createControlledResource(resource4);
+    resourceDao.createControlledResource(resourceWithDifferentLocation);
     assertEquals(
-        resource4, resourceDao.getResource(resource4.getWorkspaceId(), resource4.getResourceId()));
+        resourceWithDifferentLocation,
+        resourceDao.getResource(
+            resourceWithDifferentLocation.getWorkspaceId(),
+            resourceWithDifferentLocation.getResourceId()));
 
     // clean up
-    resourceDao.deleteResource(resource1.getWorkspaceId(), resource1.getResourceId());
+    resourceDao.deleteResource(initialResource.getWorkspaceId(), initialResource.getResourceId());
     // resource2 never got created
-    resourceDao.deleteResource(resource3.getWorkspaceId(), resource3.getResourceId());
-    resourceDao.deleteResource(resource4.getWorkspaceId(), resource4.getResourceId());
+    resourceDao.deleteResource(
+        resourceWithDifferentWorkspaceId.getWorkspaceId(),
+        resourceWithDifferentWorkspaceId.getResourceId());
+    resourceDao.deleteResource(
+        resourceWithDifferentLocation.getWorkspaceId(),
+        resourceWithDifferentLocation.getResourceId());
   }
 }

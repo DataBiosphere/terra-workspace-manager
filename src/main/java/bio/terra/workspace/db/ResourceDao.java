@@ -324,12 +324,15 @@ public class ResourceDao {
           "No cloud context found in which to create a controlled resource");
     }
 
+    // Validate that the resource to be created doesn't already exist according to per-resource type
+    // uniqueness rules. This prevents a race condition allowing a new resource to point to the same
+    // cloud artifact as another, even if it has a different resource name and ID.
     switch (controlledResource.getResourceType()) {
       case GCS_BUCKET:
-        validateUniqueGcsBucket((ControlledGcsBucketResource) controlledResource);
+        validateUniqueGcsBucket(controlledResource.castToGcsBucketResource());
         break;
       case AI_NOTEBOOK_INSTANCE:
-        validateUniqueAiNotebookInstance((ControlledAiNotebookInstanceResource) controlledResource);
+        validateUniqueAiNotebookInstance(controlledResource.castToAiNotebookInstanceResource());
         break;
       case DATA_REPO_SNAPSHOT:
       case BIG_QUERY_DATASET:
@@ -363,13 +366,15 @@ public class ResourceDao {
 
   private void validateUniqueAiNotebookInstance(
       ControlledAiNotebookInstanceResource notebookResource) {
+    // Workspace ID is a proxy for project ID, which works because there is a permanent, 1:1
+    // correspondence between workspaces and GCP projects.
     String sql =
         "SELECT COUNT(1)"
-            + " FROM resource R"
-            + " WHERE R.resource_type = :resource_type"
-            + " AND R.workspace_id = :workspace_id"
-            + " AND R.attributes->>'instanceId' = :instance_id"
-            + " AND R.attributes->>'location' = :location";
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND workspace_id = :workspace_id"
+            + " AND attributes->>'instanceId' = :instance_id"
+            + " AND attributes->>'location' = :location";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
             .addValue("resource_type", WsmResourceType.AI_NOTEBOOK_INSTANCE.toSql())
