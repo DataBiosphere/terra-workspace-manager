@@ -24,9 +24,9 @@ import java.util.List;
 public class CreateControlledResourceFlight extends Flight {
   /**
    * Retry rule for Notebook GCP steps. If GCP is down, we don't know when it will be back, so don't
-   * wait forever.
+   * wait forever. Note that RetryRules can be re-used within but not across Flight instances.
    */
-  private static final RetryRule NOTEBOOK_GCP_RETRY_RULE =
+  private final RetryRule notebookGcpRetryRule =
       new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount=  */ 10);
 
   public CreateControlledResourceFlight(FlightMap inputParameters, Object beanBag) {
@@ -82,13 +82,13 @@ public class CreateControlledResourceFlight extends Flight {
                 flightBeanBag.getCrlService(),
                 flightBeanBag.getWorkspaceService(),
                 resource.castToAiNotebookInstanceResource()),
-            NOTEBOOK_GCP_RETRY_RULE);
+            notebookGcpRetryRule);
         addStep(
             new CreateAiNotebookInstanceStep(
                 flightBeanBag.getCrlService(),
                 resource.castToAiNotebookInstanceResource(),
                 flightBeanBag.getWorkspaceService()),
-            NOTEBOOK_GCP_RETRY_RULE);
+            notebookGcpRetryRule);
         // TODO(PF-626): Set permissions on service account and notebook instances.
         break;
       case BIG_QUERY_DATASET:
