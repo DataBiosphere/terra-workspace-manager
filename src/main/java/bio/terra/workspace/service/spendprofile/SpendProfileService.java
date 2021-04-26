@@ -44,7 +44,7 @@ public class SpendProfileService {
    */
   public SpendProfile authorizeLinking(
       SpendProfileId spendProfileId, AuthenticatedUserRequest userRequest) {
-    if (!samService.isAuthorized(
+    if (!samService.isAuthorizedWrapped(
         userRequest.getRequiredToken(),
         SamConstants.SPEND_PROFILE_RESOURCE,
         spendProfileId.id(),

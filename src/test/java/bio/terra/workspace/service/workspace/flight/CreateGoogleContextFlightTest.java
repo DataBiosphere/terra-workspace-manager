@@ -166,7 +166,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
                     Function.identity(),
                     role ->
                         "group:"
-                            + samService.syncWorkspacePolicy(
+                            + samService.syncWorkspacePolicyWrapped(
                                 workspaceId, role, userAccessUtils.defaultUserAuthRequest())));
     Policy currentPolicy =
         crl.getCloudResourceManagerCow()

@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.iam;
 
 import bio.terra.common.exception.UnauthorizedException;
+import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
@@ -38,6 +39,7 @@ import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembership
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntry;
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
+import org.broadinstitute.dsde.workbench.client.sam.model.ResourceAndAccessPolicy;
 import org.broadinstitute.dsde.workbench.client.sam.model.SubsystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
@@ -47,6 +49,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
+/**
+ * SamService encapsulates logic for interacting with Sam. HTTP Statuses returned by Sam are
+ * interpreted by the functions in this class.
+ *
+ * <p>This class is used both by Flights and outside of Flights. Within flights,
+ * InterruptedExceptions need to be raised and handled by Stairway. Outside of flights, they are
+ * unexpected and will be converted into SamUnavailableExceptions which are unchecked.
+ */
 @Component
 public class SamService {
   private final SamConfiguration samConfig;
@@ -106,18 +116,22 @@ public class SamService {
       logger.warn("Failed to register WSM service account in Sam. This is expected for tests.", e);
       return;
     }
-    UsersApi usersApi = samUsersApi(wsmAccessToken);
-    if (!wsmServiceAccountRegistered(usersApi)) {
-      registerWsmServiceAccount(usersApi);
+    try {
+      UsersApi usersApi = samUsersApi(wsmAccessToken);
+      if (!wsmServiceAccountRegistered(usersApi)) {
+        registerWsmServiceAccount(usersApi);
+      }
+    } catch (InterruptedException interruptedException) {
+      throw SamExceptionFactory.create("Interrupted while initializing Sam", interruptedException);
     }
   }
 
   @VisibleForTesting
-  public boolean wsmServiceAccountRegistered(UsersApi usersApi) {
+  public boolean wsmServiceAccountRegistered(UsersApi usersApi) throws InterruptedException {
     try {
       // getUserStatusInfo throws a 404 if the calling user is not registered, which will happen
       // the first time WSM is run in each environment.
-      usersApi.getUserStatusInfo();
+      SamRetry.retry(() -> usersApi.getUserStatusInfo());
       logger.info("WSM service account already registered in Sam");
       return true;
     } catch (ApiException apiException) {
@@ -132,9 +146,9 @@ public class SamService {
     }
   }
 
-  private void registerWsmServiceAccount(UsersApi usersApi) {
+  private void registerWsmServiceAccount(UsersApi usersApi) throws InterruptedException {
     try {
-      usersApi.createUserV2();
+      SamRetry.retry(() -> usersApi.createUserV2());
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create(
           "Error registering WSM service account with Sam", apiException);
@@ -149,7 +163,8 @@ public class SamService {
    * specific exception types.
    */
   @Traced
-  public void createWorkspaceWithDefaults(AuthenticatedUserRequest userReq, UUID id) {
+  public void createWorkspaceWithDefaults(AuthenticatedUserRequest userReq, UUID id)
+      throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     // Sam will throw an error if no owner is specified, so the caller's email is required. It can
     // be looked up using the auth token if that's all the caller provides.
@@ -162,7 +177,9 @@ public class SamService {
             .resourceId(id.toString())
             .policies(defaultWorkspacePolicies(callerEmail));
     try {
-      resourceApi.createResourceV2(SamConstants.SAM_WORKSPACE_RESOURCE, workspaceRequest);
+      SamRetry.retry(
+          () ->
+              resourceApi.createResourceV2(SamConstants.SAM_WORKSPACE_RESOURCE, workspaceRequest));
       logger.info("Created Sam resource for workspace {}", id);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error creating a Workspace resource in Sam", apiException);
@@ -178,8 +195,10 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     List<UUID> workspaceIds = new ArrayList<>();
     try {
-      for (var resourceAndPolicy :
-          resourceApi.listResourcesAndPolicies(SamConstants.SAM_WORKSPACE_RESOURCE)) {
+      List<ResourceAndAccessPolicy> resourceAndPolicies =
+          SamRetry.retry(
+              () -> resourceApi.listResourcesAndPolicies(SamConstants.SAM_WORKSPACE_RESOURCE));
+      for (var resourceAndPolicy : resourceAndPolicies) {
         try {
           workspaceIds.add(UUID.fromString(resourceAndPolicy.getResourceId()));
         } catch (IllegalArgumentException e) {
@@ -191,15 +210,19 @@ public class SamService {
       }
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error listing Workspace Ids in Sam", apiException);
+    } catch (InterruptedException interruptedException) {
+      throw SamExceptionFactory.create(
+          "Interrupted while listing workspace Ids in Sam (or retrying)", interruptedException);
     }
     return workspaceIds;
   }
 
   @Traced
-  public void deleteWorkspace(String authToken, UUID id) {
+  public void deleteWorkspace(String authToken, UUID id) throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
-      resourceApi.deleteResource(SamConstants.SAM_WORKSPACE_RESOURCE, id.toString());
+      SamRetry.retry(
+          () -> resourceApi.deleteResource(SamConstants.SAM_WORKSPACE_RESOURCE, id.toString()));
       logger.info("Deleted Sam resource for workspace {}", id);
     } catch (ApiException apiException) {
       logger.info("Sam API error while deleting workspace, code is " + apiException.getCode());
@@ -216,11 +239,25 @@ public class SamService {
   }
 
   @Traced
-  public boolean isAuthorized(
+  public boolean isAuthorizedWrapped(
       String accessToken, String iamResourceType, String resourceId, String action) {
+    try {
+      return isAuthorized(accessToken, iamResourceType, resourceId, action);
+    } catch (InterruptedException interruptedException) {
+      throw SamExceptionFactory.create(
+          "Interrupted while checking resource permission in Sam (or while retrying)",
+          interruptedException);
+    }
+  }
+
+  @Traced
+  public boolean isAuthorized(
+      String accessToken, String iamResourceType, String resourceId, String action)
+      throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(accessToken);
     try {
-      return resourceApi.resourcePermissionV2(iamResourceType, resourceId, action);
+      return SamRetry.retry(
+          () -> resourceApi.resourcePermissionV2(iamResourceType, resourceId, action));
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error checking resource permission in Sam", apiException);
     }
@@ -240,7 +277,7 @@ public class SamService {
   public void checkAuthz(
       AuthenticatedUserRequest userReq, String resourceType, String resourceId, String action) {
     boolean isAuthorized =
-        isAuthorized(userReq.getRequiredToken(), resourceType, resourceId, action);
+        isAuthorizedWrapped(userReq.getRequiredToken(), resourceType, resourceId, action);
     if (!isAuthorized)
       throw new UnauthorizedException(
           String.format(
@@ -278,12 +315,20 @@ public class SamService {
         samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
-      resourceApi.addUserToPolicy(
-          SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), email);
+      SamRetry.retry(
+          () ->
+              resourceApi.addUserToPolicy(
+                  SamConstants.SAM_WORKSPACE_RESOURCE,
+                  workspaceId.toString(),
+                  role.toSamRole(),
+                  email));
       logger.info(
           "Granted role {} to user {} in workspace {}", role.toSamRole(), email, workspaceId);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error granting workspace role in Sam", apiException);
+    } catch (InterruptedException interruptedException) {
+      throw SamExceptionFactory.create(
+          "Interrupted while granting workspace role in Sam (or retrying)", interruptedException);
     }
   }
 
@@ -305,12 +350,20 @@ public class SamService {
         samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
-      resourceApi.removeUserFromPolicy(
-          SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), email);
+      SamRetry.retry(
+          () ->
+              resourceApi.removeUserFromPolicy(
+                  SamConstants.SAM_WORKSPACE_RESOURCE,
+                  workspaceId.toString(),
+                  role.toSamRole(),
+                  email));
       logger.info(
           "Removed role {} from user {} in workspace {}", role.toSamRole(), email, workspaceId);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error removing workspace role in Sam", apiException);
+    } catch (InterruptedException interruptedException) {
+      throw SamExceptionFactory.create(
+          "Interrupted while removing workspace role in Sam (or retrying)", interruptedException);
     }
   }
 
@@ -331,8 +384,10 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
       List<AccessPolicyResponseEntry> samResult =
-          resourceApi.listResourcePolicies(
-              SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString());
+          SamRetry.retry(
+              () ->
+                  resourceApi.listResourcePolicies(
+                      SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString()));
       return samResult.stream()
           .map(
               entry ->
@@ -343,6 +398,24 @@ public class SamService {
           .collect(Collectors.toList());
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error listing role bindings in Sam", apiException);
+    } catch (InterruptedException interruptedException) {
+      throw SamExceptionFactory.create(
+          "Sam interrupted while listing role bindings (or retrying)", interruptedException);
+    }
+  }
+
+  /**
+   * Wrapper around syncWorkspacePolicy that catches and re-throws InterruptedException as an
+   * unchecked exception.
+   */
+  @Traced
+  public String syncWorkspacePolicyWrapped(
+      UUID workspaceId, WsmIamRole role, AuthenticatedUserRequest userReq) {
+    try {
+      return syncWorkspacePolicy(workspaceId, role, userReq);
+    } catch (InterruptedException interruptedException) {
+      throw SamExceptionFactory.create(
+          "Sam interrupted while syncing workspace policy (or retrying)", interruptedException);
     }
   }
 
@@ -353,7 +426,8 @@ public class SamService {
    */
   @Traced
   public String syncWorkspacePolicy(
-      UUID workspaceId, WsmIamRole role, AuthenticatedUserRequest userReq) {
+      UUID workspaceId, WsmIamRole role, AuthenticatedUserRequest userReq)
+      throws InterruptedException {
     String group =
         syncPolicyOnObject(
             SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), userReq);
@@ -380,9 +454,8 @@ public class SamService {
    */
   @Traced
   public String syncPrivateResourcePolicy(
-      ControlledResource resource,
-      ControlledResourceIamRole role,
-      AuthenticatedUserRequest userReq) {
+      ControlledResource resource, ControlledResourceIamRole role, AuthenticatedUserRequest userReq)
+      throws InterruptedException {
     // TODO: in the future, this function will also be called for application managed resources,
     //  including app-shared. This check should be modified appropriately.
     if (resource.getAccessScope() != AccessScopeType.ACCESS_SCOPE_PRIVATE) {
@@ -416,13 +489,15 @@ public class SamService {
       String resourceTypeName,
       String resourceId,
       String policyName,
-      AuthenticatedUserRequest userReq) {
+      AuthenticatedUserRequest userReq)
+      throws InterruptedException {
     GoogleApi googleApi = samGoogleApi(userReq.getRequiredToken());
     try {
       // Sam makes no guarantees about what values are returned from the POST call, so we instead
       // fetch the group in a separate call after syncing.
-      googleApi.syncPolicy(resourceTypeName, resourceId, policyName);
-      return googleApi.syncStatus(resourceTypeName, resourceId, policyName).getEmail();
+      SamRetry.retry(() -> googleApi.syncPolicy(resourceTypeName, resourceId, policyName));
+      return SamRetry.retry(() -> googleApi.syncStatus(resourceTypeName, resourceId, policyName))
+          .getEmail();
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error syncing policy in Sam", apiException);
     }
@@ -440,7 +515,8 @@ public class SamService {
   public void createControlledResource(
       ControlledResource resource,
       List<ControlledResourceIamRole> privateIamRoles,
-      AuthenticatedUserRequest userReq) {
+      AuthenticatedUserRequest userReq)
+      throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     FullyQualifiedResourceId workspaceParentFqId =
         new FullyQualifiedResourceId()
@@ -461,7 +537,10 @@ public class SamService {
     }
 
     try {
-      resourceApi.createResourceV2(resource.getCategory().getSamResourceName(), resourceRequest);
+      SamRetry.retry(
+          () ->
+              resourceApi.createResourceV2(
+                  resource.getCategory().getSamResourceName(), resourceRequest));
       logger.info("Created Sam controlled resource {}", resource.getResourceId());
     } catch (ApiException apiException) {
       // Do nothing if the resource to create already exists, this may not be the first time do is
@@ -482,11 +561,14 @@ public class SamService {
 
   @Traced
   public void deleteControlledResource(
-      ControlledResource resource, AuthenticatedUserRequest userReq) {
+      ControlledResource resource, AuthenticatedUserRequest userReq) throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     try {
-      resourceApi.deleteResourceV2(
-          resource.getCategory().getSamResourceName(), resource.getResourceId().toString());
+      SamRetry.retry(
+          () ->
+              resourceApi.deleteResourceV2(
+                  resource.getCategory().getSamResourceName(),
+                  resource.getResourceId().toString()));
       logger.info("Deleted Sam controlled resource {}", resource.getResourceId());
     } catch (ApiException apiException) {
       // Do nothing if the resource to delete is not found, this may not be the first time delete is
@@ -514,13 +596,17 @@ public class SamService {
     List<String> controlledResourceIds = new ArrayList<>();
     try {
       List<UserResourcesResponse> userResources =
-          resourceApi.listResourcesAndPoliciesV2(samResourceTypeName);
+          SamRetry.retry(() -> resourceApi.listResourcesAndPoliciesV2(samResourceTypeName));
       for (UserResourcesResponse userResource : userResources) {
         controlledResourceIds.add(userResource.getResourceId());
       }
     } catch (ApiException samException) {
       throw SamExceptionFactory.create(
           "Error listing controlled resource ids in Sam", samException);
+    } catch (InterruptedException interruptedException) {
+      throw SamExceptionFactory.create(
+          "Sam interrupted while listing controlled resource ids (or retrying the call)",
+          interruptedException);
     }
     return controlledResourceIds;
   }
@@ -535,7 +621,7 @@ public class SamService {
       // Additionally, Sam's codegen API makes no guarantees about the shape of its subsystems,
       // so SystemStatus.getSystems() returns an Object. We serialize and de-serialize it to get
       // proper types.
-      SystemStatus samStatus = statusApi.getSystemStatus();
+      SystemStatus samStatus = SamRetry.retry(() -> statusApi.getSystemStatus());
       String serializedStatus = objectMapper.writeValueAsString(samStatus.getSystems());
       TypeReference<Map<String, SubsystemStatus>> typeRef = new TypeReference<>() {};
       Map<String, SubsystemStatus> subsystemStatusMap =
@@ -548,7 +634,8 @@ public class SamService {
               .collect(Collectors.toList());
 
       return new ApiSystemStatusSystems().ok(samStatus.getOk()).messages(subsystemStatusMessages);
-    } catch (ApiException | JsonProcessingException e) {
+    } catch (ApiException | JsonProcessingException | InterruptedException e) {
+      //  If any exception was thrown during the status check, return that the system is not OK.
       return new ApiSystemStatusSystems().ok(false).addMessagesItem(e.getLocalizedMessage());
     }
   }
@@ -588,7 +675,8 @@ public class SamService {
    * reassignment of resources. This assumes samService.initialize() has already been called, which
    * should happen on start.
    */
-  private void addWsmResourceOwnerPolicy(CreateResourceRequestV2 request) {
+  private void addWsmResourceOwnerPolicy(CreateResourceRequestV2 request)
+      throws InterruptedException {
     try {
       String wsmSaEmail = getEmailFromToken(getWsmServiceAccountToken());
       AccessPolicyMembershipV2 ownerPolicy =
@@ -641,10 +729,10 @@ public class SamService {
   }
 
   /** Fetch the email associated with an authToken from Sam. */
-  private String getEmailFromToken(String authToken) {
+  private String getEmailFromToken(String authToken) throws InterruptedException {
     UsersApi usersApi = samUsersApi(authToken);
     try {
-      return usersApi.getUserStatusInfo().getUserEmail();
+      return SamRetry.retry(() -> usersApi.getUserStatusInfo().getUserEmail());
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error getting user email from Sam", apiException);
     }
