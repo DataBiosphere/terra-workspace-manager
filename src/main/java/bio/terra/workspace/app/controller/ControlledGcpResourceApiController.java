@@ -20,6 +20,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
+import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
@@ -166,7 +167,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, @Valid ApiCreateControlledGcpAiNotebookInstanceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
-    // DO NOT SUBMIT write validation of creation parameters & common fields.
+    ValidationUtils.validate(body.getAiNotebookInstance());
 
     ControlledAiNotebookInstanceResource resource =
         ControlledAiNotebookInstanceResource.builder()
@@ -244,6 +245,13 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
+  /**
+   * Extract a list of ControlledResourceIamRoles from the common fields of a controlled resource
+   * request body, and validate that it's shaped appropriately for the specified AccessScopeType.
+   *
+   * <p>Shared access resources must not specify private resource roles. Private access resources
+   * must specify at least one private resource role.
+   */
   private static List<ControlledResourceIamRole> getAndValidatePrivateRoles(
       ApiControlledResourceCommonFields commonFields, ControlledResource resource) {
     List<ControlledResourceIamRole> privateRoles =
