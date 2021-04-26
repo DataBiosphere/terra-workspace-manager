@@ -89,7 +89,7 @@ public class CreateControlledResourceFlight extends Flight {
                 resource.castToAiNotebookInstanceResource(),
                 flightBeanBag.getWorkspaceService()),
             NOTEBOOK_GCP_RETRY_RULE);
-        // TODO(PF-469): Set permissions on service account and notebook instances.
+        // TODO(PF-626): Set permissions on service account and notebook instances.
         break;
       case BIG_QUERY_DATASET:
       default:
