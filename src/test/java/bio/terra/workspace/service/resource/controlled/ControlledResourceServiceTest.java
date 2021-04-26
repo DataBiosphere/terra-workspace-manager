@@ -250,6 +250,46 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 userAccessUtils.defaultUserAuthRequest()));
   }
 
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  public void createGetUpdateDeleteBqDataset() throws Exception {
+    Workspace workspace = reusableWorkspace();
+
+    String datasetId = "my_test_dataset";
+    String location = "us-central1";
+
+    ApiGcpBigQueryDatasetCreationParameters creationParameters =
+        new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
+    ControlledBigQueryDatasetResource resource =
+        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
+            .workspaceId(workspace.getWorkspaceId())
+            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .projectId(workspace.getGcpCloudContext().get().getGcpProjectId())
+            .datasetName(datasetId)
+            .build();
+    ControlledBigQueryDatasetResource createdDataset =
+        controlledResourceService.createBqDataset(
+            resource,
+            creationParameters,
+            Collections.emptyList(),
+            userAccessUtils.defaultUserAuthRequest());
+    assertEquals(resource, createdDataset);
+
+    ControlledBigQueryDatasetResource getDataset = controlledResourceService.getControlledResource(workspace.getWorkspaceId(), resource.getResourceId(), userAccessUtils.defaultUserAuthRequest()).castToBigQueryDatasetResource();
+    assertEquals(resource, getDataset);
+
+    String newName = "newResourceName";
+    String newDescription = "new resource description";
+    controlledResourceService.updateControlledResourceMetadata(workspace.getWorkspaceId(), resource.getResourceId(), newName, newDescription,
+        userAccessUtils.defaultUserAuthRequest());
+
+    ControlledBigQueryDatasetResource updatedResource = controlledResourceService.getControlledResource(workspace.getWorkspaceId(), resource.getResourceId(), userAccessUtils.defaultUserAuthRequest()).castToBigQueryDatasetResource();
+    assertEquals(newName, updatedResource.getName());
+    assertEquals(newDescription, updatedResource.getDescription());
+  }
+
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
   public void createBqDatasetDo() throws Exception {
@@ -354,6 +394,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 resource.getResourceId(),
                 userAccessUtils.defaultUserAuthRequest()));
   }
+
 
   // TODO(PF-469): Add a test verifying that a controlled resource can't be created for an instance
   // that already exists once we're ensuring cloud URI uniqueness for controlled resources.

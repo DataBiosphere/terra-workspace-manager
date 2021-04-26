@@ -25,6 +25,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -180,6 +181,27 @@ public class ControlledResourceService {
         userReq, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION);
     WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
     return wsmResource.castToControlledResource();
+  }
+
+  /**
+   * Update the name and description metadata fields of a controlled resource. These are only stored
+   * inside WSM, so this does not require any calls to clouds.
+   *
+   * @param workspaceId workspace of interest
+   * @param resourceId resource to update
+   * @param name name to change - may be null
+   * @param description description to change - may be null
+   */
+  public void updateControlledResourceMetadata(
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      AuthenticatedUserRequest userReq) {
+    stageService.assertMcWorkspace(workspaceId, "updateControlledResource");
+    validateControlledResourceAndAction(
+        userReq, workspaceId, resourceId, SamControlledResourceActions.EDIT_ACTION);
+    resourceDao.updateResource(workspaceId, resourceId, name, description);
   }
 
   public String deleteControlledGcsBucket(

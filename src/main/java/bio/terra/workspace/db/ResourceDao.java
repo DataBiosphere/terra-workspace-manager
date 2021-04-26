@@ -275,11 +275,9 @@ public class ResourceDao {
     storeResource(resource);
   }
 
-  // -- Controlled Resource Methods -- //
-
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public boolean updateReferenceResource(
-      UUID workspaceId, UUID referenceId, String name, String description) {
+  public boolean updateResource(
+      UUID workspaceId, UUID resourceId, String name, String description) {
     if (name == null && description == null) {
       throw new InvalidDaoRequestException("Must specify name or description to update.");
     }
@@ -294,7 +292,7 @@ public class ResourceDao {
       params.addValue("description", description);
     }
 
-    return updateResource(workspaceId, referenceId, params);
+    return updateResource(workspaceId, resourceId, params);
   }
 
   // -- Private Methods -- //
