@@ -9,6 +9,8 @@ plugins {
 sourceCompatibility = JavaVersion.VERSION_1_8 // Rawls consumes this and is Java 8
 
 repositories {
+	// DO NOT SUBMIT remove mavenLocal
+	mavenLocal()
 	mavenCentral()
 }
 
