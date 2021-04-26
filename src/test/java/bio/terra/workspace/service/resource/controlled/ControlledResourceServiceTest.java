@@ -26,6 +26,7 @@ import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateServiceAccountStep;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -337,6 +338,61 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 creationParameters,
                 Collections.emptyList(),
                 userAccessUtils.defaultUserAuthRequest()));
+
+    BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
+    GoogleJsonResponseException getException =
+        assertThrows(
+            GoogleJsonResponseException.class,
+            () ->
+                bqCow.datasets().get(resource.getProjectId(), resource.getDatasetName()).execute());
+    assertEquals(HttpStatus.NOT_FOUND.value(), getException.getStatusCode());
+
+    assertThrows(
+        ResourceNotFoundException.class,
+        () ->
+            controlledResourceService.getControlledResource(
+                workspace.getWorkspaceId(),
+                resource.getResourceId(),
+                userAccessUtils.defaultUserAuthRequest()));
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  public void deleteBqDataset() throws Exception {
+    Workspace workspace = reusableWorkspace();
+
+    String datasetId = "my_test_dataset";
+    String location = "us-central1";
+
+    ApiGcpBigQueryDatasetCreationParameters creationParameters =
+        new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
+    ControlledBigQueryDatasetResource resource =
+        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
+            .workspaceId(workspace.getWorkspaceId())
+            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .projectId(workspace.getGcpCloudContext().get().getGcpProjectId())
+            .datasetName(datasetId)
+            .build();
+
+    ControlledBigQueryDatasetResource createdDataset =
+        controlledResourceService.createBqDataset(
+            resource,
+            creationParameters,
+            Collections.emptyList(),
+            userAccessUtils.defaultUserAuthRequest());
+    assertEquals(resource, createdDataset);
+
+    // Test idempotency of delete by retrying BQ specific steps once.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(DeleteBigQueryDatasetStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+
+    controlledResourceService.deleteControlledResourceSync(
+        resource.getWorkspaceId(),
+        resource.getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
 
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     GoogleJsonResponseException getException =
