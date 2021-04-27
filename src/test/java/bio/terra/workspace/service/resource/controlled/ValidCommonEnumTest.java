@@ -4,9 +4,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.common.exception.SerializationException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.exception.MissingRequiredFieldException;
-import bio.terra.workspace.common.exception.SerializationException;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import org.junit.jupiter.api.Test;

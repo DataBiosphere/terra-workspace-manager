@@ -5,7 +5,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(
     exclude = {
@@ -27,7 +26,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
       // Scan all service-specific packages beneath the current package
       "bio.terra.workspace"
     })
-@EnableScheduling
 public class Main {
   public static void main(String[] args) {
     new SpringApplicationBuilder(Main.class).initializers(new LoggingInitializer()).run(args);

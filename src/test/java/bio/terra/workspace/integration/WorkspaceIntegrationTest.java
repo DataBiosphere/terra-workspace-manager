@@ -34,6 +34,8 @@ import org.springframework.http.HttpStatus;
 
 class WorkspaceIntegrationTest extends BaseIntegrationTest {
 
+  // TODO: Migrate the tests here from JUnit to TestRunner
+  // https://broadworkbench.atlassian.net/browse/AS-723
   // TODO: As this class grows, consider if it's worth breaking down these workspace tests into
   //  different class files based on the the type of workspace action (Create, Get, Delete, etc).
 

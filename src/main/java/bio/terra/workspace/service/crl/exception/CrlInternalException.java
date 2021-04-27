@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.crl.exception;
 
-import bio.terra.workspace.common.exception.InternalServerErrorException;
+import bio.terra.common.exception.InternalServerErrorException;
 
 /** Runtime exception to propagate CRL object creation internal server failure */
 public class CrlInternalException extends InternalServerErrorException {

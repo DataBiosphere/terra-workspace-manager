@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.referenced.exception;
 
-import bio.terra.workspace.common.exception.BadRequestException;
+import bio.terra.common.exception.BadRequestException;
 
 public class InvalidReferenceException extends BadRequestException {
 

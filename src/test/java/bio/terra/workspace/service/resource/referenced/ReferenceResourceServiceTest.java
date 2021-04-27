@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
+import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;

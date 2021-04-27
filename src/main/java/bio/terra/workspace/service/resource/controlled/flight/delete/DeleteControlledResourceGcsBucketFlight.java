@@ -8,7 +8,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
@@ -28,7 +27,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 
 /**
  * Flight for deletion of a Gcs Bucket resource. This resource is deleted in a particular way and
@@ -99,23 +97,9 @@ public class DeleteControlledResourceGcsBucketFlight extends Flight {
     @Override
     public StepResult doStep(FlightContext flightContext)
         throws InterruptedException, RetryException {
-
       WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
       ControlledResource resource = wsmResource.castToControlledResource();
-
-      try {
-        samService.deleteControlledResource(resource, userRequest);
-      } catch (SamApiException samApiException) {
-        // The Sam resource might be not found for two reasons. First, the failure causing
-        // this undo might be that we failed to create the resource. Second, if there is a
-        // system failure during undo, this step might be called twice and might have already
-        // done the resource delete.
-        if (samApiException.getApiExceptionStatus() == HttpStatus.NOT_FOUND.value()) {
-          logger.debug("No Sam resource found for resource {}", resourceId);
-        } else {
-          throw samApiException;
-        }
-      }
+      samService.deleteControlledResource(resource, userRequest);
       return StepResult.getStepResultSuccess();
     }
 

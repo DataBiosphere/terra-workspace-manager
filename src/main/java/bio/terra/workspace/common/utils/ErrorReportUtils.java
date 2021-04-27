@@ -1,6 +1,6 @@
 package bio.terra.workspace.common.utils;
 
-import bio.terra.workspace.common.exception.ErrorReportException;
+import bio.terra.common.exception.ErrorReportException;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import org.springframework.http.HttpStatus;
 

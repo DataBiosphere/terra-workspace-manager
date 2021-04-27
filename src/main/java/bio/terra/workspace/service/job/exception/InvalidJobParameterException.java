@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.job.exception;
 
-import bio.terra.workspace.common.exception.BadRequestException;
+import bio.terra.common.exception.BadRequestException;
 
 public class InvalidJobParameterException extends BadRequestException {
   public InvalidJobParameterException(String message) {
