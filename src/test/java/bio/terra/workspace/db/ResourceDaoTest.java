@@ -174,4 +174,46 @@ public class ResourceDaoTest extends BaseUnitTest {
         resourceWithDifferentLocation.getWorkspaceId(),
         resourceWithDifferentLocation.getResourceId());
   }
+
+  @Test
+  public void duplicateBigQueryDatasetRejected() {
+    String datasetName1 = "dataset1";
+    final UUID workspaceId1 = createGcpWorkspace();
+    final ControlledBigQueryDatasetResource initialResource =
+        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
+            .workspaceId(workspaceId1)
+            .datasetName(datasetName1)
+            .build();
+
+    resourceDao.createControlledResource(initialResource);
+
+    final UUID workspaceId2 = createGcpWorkspace();
+    // This is in a different workspace (and so a different cloud context), so it is not a conflict
+    // even with the same Dataset ID.
+    final ControlledBigQueryDatasetResource uniqueResource =
+        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
+            .workspaceId(workspaceId2)
+            .name("uniqueResourceName")
+            .datasetName(datasetName1)
+            .build();
+    resourceDao.createControlledResource(uniqueResource);
+
+    // This is in the same workspace as initialResource, so it should be a conflict.
+    final ControlledBigQueryDatasetResource duplicatingResource =
+        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
+            .workspaceId(workspaceId1)
+            .name("differentResourceName")
+            .datasetName(datasetName1)
+            .build();
+
+    assertThrows(
+        DuplicateResourceException.class,
+        () -> resourceDao.createControlledResource(duplicatingResource));
+
+    // clean up
+    resourceDao.deleteResource(initialResource.getWorkspaceId(), initialResource.getResourceId());
+    resourceDao.deleteResource(uniqueResource.getWorkspaceId(), uniqueResource.getResourceId());
+    resourceDao.deleteResource(
+        duplicatingResource.getWorkspaceId(), duplicatingResource.getResourceId());
+  }
 }

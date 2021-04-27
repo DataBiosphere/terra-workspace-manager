@@ -335,8 +335,10 @@ public class ResourceDao {
       case AI_NOTEBOOK_INSTANCE:
         validateUniqueAiNotebookInstance(controlledResource.castToAiNotebookInstanceResource());
         break;
-      case DATA_REPO_SNAPSHOT:
       case BIG_QUERY_DATASET:
+        validateUniqueBigQueryDataset(controlledResource.castToBigQueryDatasetResource());
+        break;
+      case DATA_REPO_SNAPSHOT:
       default:
         throw new IllegalArgumentException(
             String.format(
@@ -388,6 +390,28 @@ public class ResourceDao {
           String.format(
               "An AI Notebook instance with ID %s already exists",
               notebookResource.getInstanceId()));
+    }
+  }
+
+  private void validateUniqueBigQueryDataset(ControlledBigQueryDatasetResource datasetResource) {
+    // Workspace ID is a proxy for project ID, which works because there is a permanent, 1:1
+    // correspondence between workspaces and GCP projects.
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND workspace_id = :workspace_id"
+            + " AND attributes->>'datasetName' = :datasetName";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.BIG_QUERY_DATASET.toSql())
+            .addValue("workspace_id", datasetResource.getWorkspaceId().toString())
+            .addValue("datasetName", datasetResource.getDatasetName());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format(
+              "A BigQuery dataset with ID %s already exists", datasetResource.getDatasetName()));
     }
   }
 
