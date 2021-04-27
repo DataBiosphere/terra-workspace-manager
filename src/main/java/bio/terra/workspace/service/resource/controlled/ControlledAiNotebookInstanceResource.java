@@ -71,11 +71,14 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   public ApiGcpAiNotebookInstanceResource toApiResource(String workspaceProjectId) {
     return new ApiGcpAiNotebookInstanceResource()
         .metadata(toApiMetadata())
-        .attributes(
-            new ApiGcpAiNotebookInstanceAttributes()
-                .projectId(workspaceProjectId)
-                .location(getLocation())
-                .instanceId(getInstanceId()));
+        .attributes(toApiAttributes(workspaceProjectId));
+  }
+
+  public ApiGcpAiNotebookInstanceAttributes toApiAttributes(String workspaceProjectId) {
+    return new ApiGcpAiNotebookInstanceAttributes()
+        .projectId(workspaceProjectId)
+        .location(getLocation())
+        .instanceId(getInstanceId());
   }
 
   @Override
