@@ -33,12 +33,9 @@ env:
   SERVICE_NAME: ${{ github.event.repository.name }}
   GOOGLE_PROJECT: terra-kernel-k8s
   GKE_CLUSTER: terra-kernel-k8s
-  VAULT_PATH_GCR: secret/dsde/terra/kernel/test
-  VAULT_ADDR: https://clotho.broadinstitute.org:8200
-  ARTIFACTORY_ACCOUNT_PATH: secret/dsp/accts/artifactory/dsdejenkins
 jobs:
 # TODO: rename to something else
-  tag-build-push:
+  on-pr-merge:
     runs-on: ubuntu-latest
     steps:
     - name: Set part of semantic version to bump
@@ -64,20 +61,20 @@ jobs:
         DEFAULT_BUMP: ${{ steps.semver.outputs.semver-part }}
         RELEASE_BRANCHES: dev
         VERSION_FILE_PATH: build.gradle
-        VERSION_LINE_MATCH: ^version
+        VERSION_LINE_MATCH: "^	version = \".*\""
         VERSION_SUFFIX: SNAPSHOT
     - name: "Publish to Artifactory"
       run: ./gradlew artifactoryPublish
       env:
-        ARTIFACTORY_USERNAME: ${{ steps.vault-secret-step.outputs.artifactory-username }}
-        ARTIFACTORY_PASSWORD: ${{ steps.vault-secret-step.outputs.artifactory-password }}
+        ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+        ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
         ARTIFACTORY_REPO_KEY: "libs-snapshot-local"
     - name: Auth to GCR
       uses: google-github-actions/setup-gcloud@master
       with:
         version: '270.0.0'
-        service_account_email: ${{ steps.vault-secret-step.outputs.gcr-email }}
-        service_account_key: ${{ steps.vault-secret-step.outputs.gcr-key }}
+        service_account_email: ${{ secrets.GCR_PUBLISH_EMAIL }}
+        service_account_key: ${{ secrets.GCR_PUBLISH_KEY }}
     - name: Explicitly auth Docker for GCR
       run: gcloud auth configure-docker --quiet
     - name: Set up AdoptOpenJDK 11
