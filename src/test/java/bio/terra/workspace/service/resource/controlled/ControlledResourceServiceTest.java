@@ -26,6 +26,7 @@ import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateServiceAccountStep;
+import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -99,15 +100,15 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(location);
-    ControlledAiNotebookInstanceResource resource =
+    ControlledAiNotebookInstanceResource.Builder resourceBuilder =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .workspaceId(workspace.getWorkspaceId())
             .assignedUser(userAccessUtils.getDefaultUserEmail())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
             .instanceId(instanceId)
-            .location(location)
-            .build();
+            .location(location);
+    ControlledAiNotebookInstanceResource resource = resourceBuilder.build();
 
     // Test idempotency of steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -150,6 +151,29 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             workspace.getWorkspaceId(),
             resource.getResourceId(),
             userAccessUtils.defaultUserAuthRequest()));
+
+    // Creating a controlled resource with a duplicate underlying notebook instance is not allowed.
+    ControlledAiNotebookInstanceResource duplicateResource =
+        resourceBuilder
+            .resourceId(UUID.randomUUID())
+            .name("new-name-same-notebook-instance")
+            .build();
+    String duplicateResourceJobId =
+        controlledResourceService.createAiNotebookInstance(
+            duplicateResource,
+            creationParameters,
+            DEFAULT_ROLES,
+            new ApiJobControl().id(UUID.randomUUID().toString()),
+            "fakeResultPath",
+            userAccessUtils.defaultUserAuthRequest());
+
+    jobService.waitForJob(duplicateResourceJobId);
+    JobService.JobResultOrException<ControlledAiNotebookInstanceResource> duplicateJobResult =
+        jobService.retrieveJobResult(
+            duplicateResourceJobId,
+            ControlledAiNotebookInstanceResource.class,
+            userAccessUtils.defaultUserAuthRequest());
+    assertEquals(duplicateJobResult.getException().getClass(), DuplicateResourceException.class);
   }
 
   @Test
@@ -350,7 +374,4 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 resource.getResourceId(),
                 userAccessUtils.defaultUserAuthRequest()));
   }
-
-  // TODO(PF-469): Add a test verifying that a controlled resource can't be created for an instance
-  // that already exists once we're ensuring cloud URI uniqueness for controlled resources.
 }
