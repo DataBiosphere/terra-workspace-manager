@@ -92,22 +92,22 @@ jobs:
         echo ::add-mask::$ARTIFACTORY_USERNAME
         echo ::set-output name=artifactory-password::$ARTIFACTORY_PASSWORD
         echo ::add-mask::$ARTIFACTORY_PASSWORD
-      - name: "Bump the tag to a new version"
-        uses: databiosphere/github-actions/actions/bumper@v0.0.3
-        id: tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.BROADBOT_GITHUB_TOKEN }}
-          DEFAULT_BUMP: patch${{ steps.semver.outputs.semver-part }}
-          RELEASE_BRANCHES: dev
-          VERSION_FILE_PATH: build.gradle
-          VERSION_LINE_MATCH: ^version
-          VERSION_SUFFIX: SNAPSHOT
-      - name: "Publish to Artifactory"
-        run: ./gradlew artifactoryPublish
-        env:
-          ARTIFACTORY_USERNAME: ${{ steps.vault-secret-step.outputs.artifactory-username }}
-          ARTIFACTORY_PASSWORD: ${{ steps.vault-secret-step.outputs.artifactory-password }}
-          ARTIFACTORY_REPO_KEY: "libs-snapshot-local"
+    - name: "Bump the tag to a new version"
+      uses: databiosphere/github-actions/actions/bumper@v0.0.3
+      id: tag
+      env:
+        GITHUB_TOKEN: ${{ secrets.BROADBOT_GITHUB_TOKEN }}
+        DEFAULT_BUMP: patch${{ steps.semver.outputs.semver-part }}
+        RELEASE_BRANCHES: dev
+        VERSION_FILE_PATH: build.gradle
+        VERSION_LINE_MATCH: ^version
+        VERSION_SUFFIX: SNAPSHOT
+    - name: "Publish to Artifactory"
+      run: ./gradlew artifactoryPublish
+      env:
+        ARTIFACTORY_USERNAME: ${{ steps.vault-secret-step.outputs.artifactory-username }}
+        ARTIFACTORY_PASSWORD: ${{ steps.vault-secret-step.outputs.artifactory-password }}
+        ARTIFACTORY_REPO_KEY: "libs-snapshot-local"
     - name: Auth to GCR
       uses: google-github-actions/setup-gcloud@master
       with:
