@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
+import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.common.stairway.StairwayComponent;
@@ -246,8 +247,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .getResultMap()
             .get()
             .get(CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID, String.class);
-    // TODO(PF-469): Use service account "get" to check for existence instead of "delete" once we
-    // have that method in CRL.
     GoogleJsonResponseException serviceAccountException =
         assertThrows(
             GoogleJsonResponseException.class,
@@ -256,12 +255,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                     .getIamCow()
                     .projects()
                     .serviceAccounts()
-                    .delete(
-                        "projects/"
-                            + projectId
-                            + "/serviceAccounts/"
-                            + CreateServiceAccountStep.serviceAccountEmail(
-                                serviceAccountId, projectId))
+                    .get(
+                        ServiceAccountName.builder()
+                            .projectId(projectId)
+                            .email(
+                                ServiceAccountName.emailFromAccountId(serviceAccountId, projectId))
+                            .build())
                     .execute());
     assertEquals(HttpStatus.NOT_FOUND.value(), serviceAccountException.getStatusCode());
 
