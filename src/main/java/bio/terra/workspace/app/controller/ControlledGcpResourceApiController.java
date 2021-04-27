@@ -4,21 +4,27 @@ import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
+import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
+import bio.terra.workspace.generated.model.ApiCreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketResult;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
+import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -177,6 +183,88 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         new ApiCreatedControlledGcpBigQueryDataset()
             .resourceId(createdDataset.getResourceId())
             .bigQueryDataset(createdDataset.toApiResource(projectId));
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCreatedControlledGcpAiNotebookInstanceResult> createAiNotebookInstance(
+      UUID workspaceId, @Valid ApiCreateControlledGcpAiNotebookInstanceRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
+    ValidationUtils.validate(body.getAiNotebookInstance());
+
+    ControlledAiNotebookInstanceResource resource =
+        ControlledAiNotebookInstanceResource.builder()
+            .workspaceId(workspaceId)
+            .resourceId(UUID.randomUUID())
+            .name(body.getCommon().getName())
+            .description(body.getCommon().getDescription())
+            .cloningInstructions(
+                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
+            .assignedUser(
+                Optional.ofNullable(body.getCommon().getPrivateResourceUser())
+                    .map(ApiPrivateResourceUser::getUserName)
+                    .orElse(null))
+            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
+            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .location(body.getAiNotebookInstance().getLocation())
+            .instanceId(body.getAiNotebookInstance().getInstanceId())
+            .build();
+
+    List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
+
+    String jobId =
+        controlledResourceService.createAiNotebookInstance(
+            resource,
+            body.getAiNotebookInstance(),
+            privateRoles,
+            body.getJobControl(),
+            ControllerUtils.getAsyncResultEndpoint(
+                request, body.getJobControl().getId(), "create-result"),
+            userRequest);
+
+    ApiCreatedControlledGcpAiNotebookInstanceResult result =
+        fetchNotebookInstanceResult(jobId, userRequest);
+    return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
+  }
+
+  @Override
+  public ResponseEntity<ApiCreatedControlledGcpAiNotebookInstanceResult>
+      getCreateAiNotebookInstanceResult(UUID workspaceId, String jobId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ApiCreatedControlledGcpAiNotebookInstanceResult result =
+        fetchNotebookInstanceResult(jobId, userRequest);
+    return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
+  }
+
+  private ApiCreatedControlledGcpAiNotebookInstanceResult fetchNotebookInstanceResult(
+      String jobId, AuthenticatedUserRequest userRequest) {
+    AsyncJobResult<ControlledAiNotebookInstanceResource> jobResult =
+        jobService.retrieveAsyncJobResult(
+            jobId, ControlledAiNotebookInstanceResource.class, userRequest);
+
+    ApiGcpAiNotebookInstanceResource apiResource = null;
+    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
+      ControlledAiNotebookInstanceResource resource = jobResult.getResult();
+      String workspaceProjectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+      apiResource = resource.toApiResource(workspaceProjectId);
+    }
+    return new ApiCreatedControlledGcpAiNotebookInstanceResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .aiNotebookInstance(apiResource);
+  }
+
+  @Override
+  public ResponseEntity<ApiGcpAiNotebookInstanceResource> getAiNotebookInstance(
+      UUID workspaceId, UUID resourceId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledResource controlledResource =
+        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+    ApiGcpAiNotebookInstanceResource response =
+        controlledResource
+            .castToAiNotebookInstanceResource()
+            .toApiResource(workspaceService.getRequiredGcpProject(workspaceId));
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 

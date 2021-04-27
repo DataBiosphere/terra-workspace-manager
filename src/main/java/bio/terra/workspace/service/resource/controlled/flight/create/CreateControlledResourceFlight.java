@@ -92,8 +92,7 @@ public class CreateControlledResourceFlight extends Flight {
                 resource.castToAiNotebookInstanceResource(),
                 flightBeanBag.getWorkspaceService()),
             gcpRetryRule);
-
-        // TODO(PF-469): Set permissions on service account and notebook instances.
+        // TODO(PF-626): Set permissions on service account and notebook instances.
         break;
       case BIG_QUERY_DATASET:
         // Unlike other resources, BigQuery datasets set IAM permissions at creation time to avoid

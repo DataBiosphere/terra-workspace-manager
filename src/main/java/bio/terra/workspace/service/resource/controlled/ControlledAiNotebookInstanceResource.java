@@ -4,6 +4,8 @@ import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAttributes;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -66,7 +68,15 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     return location;
   }
 
-  // TODO(PF-469): Add conversion to API model.
+  public ApiGcpAiNotebookInstanceResource toApiResource(String workspaceProjectId) {
+    return new ApiGcpAiNotebookInstanceResource()
+        .metadata(toApiMetadata())
+        .attributes(
+            new ApiGcpAiNotebookInstanceAttributes()
+                .projectId(workspaceProjectId)
+                .location(getLocation())
+                .instanceId(getInstanceId()));
+  }
 
   @Override
   public WsmResourceType getResourceType() {
