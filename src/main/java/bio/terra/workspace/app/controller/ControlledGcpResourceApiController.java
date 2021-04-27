@@ -89,23 +89,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .bucketName(body.getGcsBucket().getName())
             .build();
 
-    List<ControlledResourceIamRole> privateRoles =
-        Optional.ofNullable(body.getCommon().getPrivateResourceUser())
-            .map(
-                user ->
-                    user.getPrivateResourceIamRoles().stream()
-                        .map(ControlledResourceIamRole::fromApiModel)
-                        .collect(Collectors.toList()))
-            .orElse(null);
-    // Validate that we get the private role when the resource is private and do not get it
-    // when the resource is public
-    boolean privateRoleOmitted = (privateRoles == null || privateRoles.isEmpty());
-    if ((resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE && privateRoleOmitted)
-        || (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_SHARED
-            && !privateRoleOmitted)) {
-      throw new ValidationException(
-          "At least one IAM role is required for private resources and the field must be omitted for shared resources");
-    }
+    List<ControlledResourceIamRole> privateRoles = getAndValidatePrivateRoles(body.getCommon(), resource);
 
     final ControlledGcsBucketResource createdBucket =
         controlledResourceService.syncCreateBucket(

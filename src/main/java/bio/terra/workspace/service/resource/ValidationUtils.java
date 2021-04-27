@@ -77,7 +77,7 @@ public class ValidationUtils {
     }
     if ((vmImage.getImageName() == null) == (vmImage.getImageFamily() == null)) {
       throw new InconsistentFieldsException(
-          "Exactly one of imageName or imageFaily must be specified for a valid vmImage.");
+          "Exactly one of imageName or imageFamily must be specified for a valid vmImage.");
     }
   }
 

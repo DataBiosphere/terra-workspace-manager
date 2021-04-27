@@ -1880,7 +1880,7 @@ components:
     GcpAiNotebookInstanceAttributes:
       description: >-
         AI Notebook instance properties included in post-creation, get, and update. Others must be
-        retrieved from GCS using the specification.
+        retrieved from GCP using the specification.
       type: object
       properties:
         projectId:
