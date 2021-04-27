@@ -84,7 +84,8 @@ public class CreateControlledResourceFlight extends Flight {
             new RetrieveNetworkNameStep(
                 flightBeanBag.getCrlService(),
                 resource.castToAiNotebookInstanceResource(),
-                flightBeanBag.getWorkspaceService()));
+                flightBeanBag.getWorkspaceService()),
+            gcpRetryRule);
         addStep(new GenerateServiceAccountIdStep());
         addStep(
             new CreateServiceAccountStep(
