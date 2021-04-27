@@ -144,7 +144,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .execute();
 
     assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_account"));
-    // TODO(PF-469): Test that the user has permission to act as the service account.
+    // TODO(PF-626): Test that the user has permission to act as the service account.
 
     assertEquals(
         resource,

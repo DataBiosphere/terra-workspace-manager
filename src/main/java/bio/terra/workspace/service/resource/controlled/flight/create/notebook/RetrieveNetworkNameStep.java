@@ -65,7 +65,7 @@ public class RetrieveNetworkNameStep implements Step {
       // same id as a GCE zone. Use the location to look up the zone.
       Zone zone =
           crlService.getCloudComputeCow().zones().get(projectId, resource.getLocation()).execute();
-      return zone.getRegion();
+      return extractNameFromUrl(zone.getRegion());
     } catch (GoogleJsonResponseException e) {
       if (e.getStatusCode() == HttpStatus.NOT_FOUND.value()) {
         // Throw a better error message if the location isn't known.
@@ -84,22 +84,22 @@ public class RetrieveNetworkNameStep implements Step {
     // Arbitrarily grab the first subnetwork. We don't have a use case for multiple subnetworks or
     // them mattering yet, so use any available subnetwork.
     Subnetwork subnetwork = subnetworks.getItems().get(0);
-    workingMap.put(
-        CREATE_NOTEBOOK_NETWORK_NAME, extractNetworkNameFromUrl(subnetwork.getNetwork()));
+    workingMap.put(CREATE_NOTEBOOK_NETWORK_NAME, extractNameFromUrl(subnetwork.getNetwork()));
     workingMap.put(CREATE_NOTEBOOK_SUBNETWORK_NAME, subnetwork.getName());
   }
 
   /**
-   * Extract the network name from a network url like
-   * "https://www.googleapis.com/compute/v1/projects/{PROJECT_ID}/global/networks/{NAME}".
+   * Extract the name from a network URL like
+   * "https://www.googleapis.com/compute/v1/projects/{PROJECT_ID}/global/networks/{NAME}" or route
+   * URL like ""https://www.googleapis.com/compute/v1/projects/{PROJECT_ID}/regions/{REGION_NAME}"
    */
-  private String extractNetworkNameFromUrl(String networkUrl) {
-    int slashIndex = networkUrl.lastIndexOf('/');
-    if (slashIndex == -1) {
+  private String extractNameFromUrl(String url) {
+    int lastSlashIndex = url.lastIndexOf('/');
+    if (lastSlashIndex == -1) {
       throw new InternalServerErrorException(
-          String.format("Unable to extract network name from %s", networkUrl));
+          String.format("Unable to extract network name from %s", url));
     }
-    return networkUrl.substring(slashIndex + 1);
+    return url.substring(lastSlashIndex + 1);
   }
 
   @Override
