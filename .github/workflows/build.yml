@@ -1,12 +1,5 @@
 name: Tag, Build, and Push Image
-# The purpose of the workflow is to:
-#  1. Bump the version number
-#  2. Build and publish the build to Artifactory
-#  3. Build docker image and publish to GCR
-#  4. Trigger deployment to the dev environment
-#
-# When run on merge to dev, it bumps the patch version
-# When run manually, you can specify the part of the semantic version to bump
+
 on:
   push:
     branches:
@@ -15,38 +8,31 @@ on:
     - 'README.md'
     - '.github/**'
     - 'local-dev/**'
-  workflow_dispatch:
-    inputs:
-      bump:
-        description: 'Part of the version to bump: major, minor, patch'
-        required: false
-        default: 'patch'
+  pull_request:
+    branches:
+    - dev
+    paths-ignore:
+    - 'README.md'
+    - 'local-dev/**'
 env:
   SERVICE_NAME: ${{ github.event.repository.name }}
   GOOGLE_PROJECT: terra-kernel-k8s
   GKE_CLUSTER: terra-kernel-k8s
   VAULT_PATH_GCR: secret/dsde/terra/kernel/test
   VAULT_ADDR: https://clotho.broadinstitute.org:8200
-  ARTIFACTORY_ACCOUNT_PATH: secret/dsp/accts/artifactory/dsdejenkins
 jobs:
   tag-build-push:
     runs-on: ubuntu-latest
     steps:
-    - name: Set part of semantic version to bump
-      id: semver
-      run: |
-        SEMVER_PART=""
-        if ${{github.event_name == 'push' }}; then
-          SEMVER_PART="patch"
-        elif ${{github.event_name == 'workflow_dispatch' }}; then
-          SEMVER_PART=${{ github.event.inputs.bump }}
-        fi
-        echo ::set-output name=semver-part::$SEMVER_PART
     - name: Checkout current code
       uses: actions/checkout@v2
-      with:
-        ref: dev
-        token: ${{ secrets.BROADBOT_GITHUB_TOKEN }}
+    - name: Bump version and push tag
+      id: tag
+      uses: broadinstitute/github-tag-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        WITH_V: false
+        RELEASE_BRANCHES: dev
     - name: Pull Vault image
       run: docker pull vault:1.1.0
     # Currently, there's no way to add capabilities to Docker actions on Git, and Vault needs IPC_LOCK to run.
@@ -64,16 +50,6 @@ jobs:
     - name: Get Vault secrets
       id: vault-secret-step
       run: |
-        ARTIFACTORY_USERNAME=$(docker run --rm --cap-add IPC_LOCK \
-          -e "VAULT_TOKEN=${{ steps.vault-token-step.outputs.vault-token }}" \
-          -e "VAULT_ADDR=${VAULT_ADDR}" \
-          vault:1.1.0 \
-          vault read -field username ${ARTIFACTORY_ACCOUNT_PATH})
-        ARTIFACTORY_PASSWORD=$(docker run --rm --cap-add IPC_LOCK \
-          -e "VAULT_TOKEN=${{ steps.vault-token-step.outputs.vault-token }}" \
-          -e "VAULT_ADDR=${VAULT_ADDR}" \
-          vault:1.1.0 \
-          vault read -field password ${ARTIFACTORY_ACCOUNT_PATH})
         GCR_EMAIL=$(docker run --rm --cap-add IPC_LOCK \
           -e "VAULT_TOKEN=${{ steps.vault-token-step.outputs.vault-token }}" \
           -e "VAULT_ADDR=${VAULT_ADDR}" \
@@ -88,26 +64,6 @@ jobs:
         echo ::add-mask::$GCR_EMAIL
         echo ::set-output name=gcr-key::$GCR_KEY
         echo ::add-mask::$GCR_KEY
-        echo ::set-output name=artifactory-username::$ARTIFACTORY_USERNAME
-        echo ::add-mask::$ARTIFACTORY_USERNAME
-        echo ::set-output name=artifactory-password::$ARTIFACTORY_PASSWORD
-        echo ::add-mask::$ARTIFACTORY_PASSWORD
-    - name: "Bump the tag to a new version"
-      uses: databiosphere/github-actions/actions/bumper@v0.0.3
-      id: tag
-      env:
-        GITHUB_TOKEN: ${{ secrets.BROADBOT_GITHUB_TOKEN }}
-        DEFAULT_BUMP: patch${{ steps.semver.outputs.semver-part }}
-        RELEASE_BRANCHES: dev
-        VERSION_FILE_PATH: build.gradle
-        VERSION_LINE_MATCH: ^version
-        VERSION_SUFFIX: SNAPSHOT
-    - name: "Publish to Artifactory"
-      run: ./gradlew artifactoryPublish
-      env:
-        ARTIFACTORY_USERNAME: ${{ steps.vault-secret-step.outputs.artifactory-username }}
-        ARTIFACTORY_PASSWORD: ${{ steps.vault-secret-step.outputs.artifactory-password }}
-        ARTIFACTORY_REPO_KEY: "libs-snapshot-local"
     - name: Auth to GCR
       uses: google-github-actions/setup-gcloud@master
       with:
