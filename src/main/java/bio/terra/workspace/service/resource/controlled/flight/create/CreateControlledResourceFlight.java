@@ -22,11 +22,13 @@ import java.util.List;
  * depend on the resource type. The latter must be passed in via the input parameters map with keys
  */
 public class CreateControlledResourceFlight extends Flight {
+
   /**
-   * Retry rule for Notebook GCP steps. If GCP is down, we don't know when it will be back, so don't
-   * wait forever. Note that RetryRules can be re-used within but not across Flight instances.
+   * Retry rule for steps interacting with GCP. If GCP is down, we don't know when it will be back,
+   * so don't wait forever. Note that RetryRules can be re-used within but not across Flight
+   * instances.
    */
-  private final RetryRule notebookGcpRetryRule =
+  private final RetryRule gcpRetryRule =
       new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount=  */ 10);
 
   public CreateControlledResourceFlight(FlightMap inputParameters, Object beanBag) {
@@ -64,6 +66,7 @@ public class CreateControlledResourceFlight extends Flight {
     // create the cloud resource and grant IAM roles via CRL
     switch (resource.getResourceType()) {
       case GCS_BUCKET:
+        // TODO(PF-589): apply gcpRetryRule to these steps once they are idempotent.
         addStep(
             new CreateGcsBucketStep(
                 flightBeanBag.getCrlService(),
@@ -82,16 +85,25 @@ public class CreateControlledResourceFlight extends Flight {
                 flightBeanBag.getCrlService(),
                 flightBeanBag.getWorkspaceService(),
                 resource.castToAiNotebookInstanceResource()),
-            notebookGcpRetryRule);
+            gcpRetryRule);
         addStep(
             new CreateAiNotebookInstanceStep(
                 flightBeanBag.getCrlService(),
                 resource.castToAiNotebookInstanceResource(),
                 flightBeanBag.getWorkspaceService()),
-            notebookGcpRetryRule);
+            gcpRetryRule);
         // TODO(PF-626): Set permissions on service account and notebook instances.
         break;
       case BIG_QUERY_DATASET:
+        // Unlike other resources, BigQuery datasets set IAM permissions at creation time to avoid
+        // unwanted defaults from GCP.
+        addStep(
+            new CreateBigQueryDatasetStep(
+                flightBeanBag.getCrlService(),
+                resource.castToBigQueryDatasetResource(),
+                flightBeanBag.getWorkspaceService()),
+            gcpRetryRule);
+        break;
       default:
         throw new IllegalStateException(
             String.format("Unrecognized resource type %s", resource.getResourceType()));

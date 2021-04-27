@@ -841,6 +841,27 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled BigQuery dataset
+      operationId: createBigQueryDataset
+      tags: [ControlledGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledGcpBigQueryDatasetRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledGcpBigQueryDatasetResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -1507,6 +1528,16 @@ components:
         gcsBucket:
           $ref: '#/components/schemas/GcpGcsBucketCreationParameters'
 
+    CreateControlledGcpBigQueryDatasetRequestBody:
+      description: Payload for requesting a new controlled BigQuery dataset resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        dataset:
+          $ref: '#/components/schemas/GcpBigQueryDatasetCreationParameters'
+
+
     CreateControlledGcpAiNotebookInstanceRequestBody:
       description: Payload for requesting a new controlled GCS bucket resource.
       type: object
@@ -1566,7 +1597,7 @@ components:
           $ref: '#/components/schemas/CloningInstructionsEnum'
 
     CreatedControlledGcpGcsBucket:
-      description: Response Payload for requesting a new controlled resource.
+      description: Response Payload for requesting a new controlled GCS bucket.
       type: object
       properties:
         resourceId:
@@ -1575,6 +1606,17 @@ components:
           format: uuid
         gcpBucket:
           $ref: '#/components/schemas/GcpGcsBucketResource'
+
+    CreatedControlledGcpBigQueryDataset:
+      description: Response Payload for requesting a new controlled BigQuery dataset.
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource. Null if not created yet.
+          type: string
+          format: uuid
+        bigQueryDataset:
+          $ref: '#/components/schemas/GcpBigQueryDatasetResource'
 
     GcpGcsBucketCreationParameters:
       description: >-
@@ -1694,6 +1736,19 @@ components:
             when there are at least N versions (including the live version) newer than this version
             of the object.
           type: integer
+
+    GcpBigQueryDatasetCreationParameters:
+      description: >-
+        Dataset-specific properties to be set on creation. These are a subset of the
+        values accepted by the BigQuery API.
+      type: object
+      properties:
+        datasetId:
+          description: A valid dataset name per https://cloud.google.com/bigquery/docs/datasets#dataset-naming
+          type: string
+        location:
+          description: A valid dataset location per https://cloud.google.com/bigquery/docs/locations.
+          type: string
 
     DeleteControlledGcpGcsBucketRequest:
       type: object
@@ -1911,7 +1966,7 @@ components:
         Exactly one will be populated based on the ResourceType in the
         ResourceDescription. The value of the other references is undefined.
       properties:
-        gcpBigQuery:
+        gcpBqDataset:
           $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
         gcpDataRepoSnapshot:
           $ref: '#/components/schemas/DataRepoSnapshotAttributes'
@@ -2056,7 +2111,7 @@ components:
             $ref: '#/components/schemas/RoleBindingList'
 
     CreatedControlledGcpGcsBucketResponse:
-      description: Response to Create controlled resource
+      description: Response to Create controlled Gcs bucket
       content:
         application/json:
           schema:
@@ -2075,6 +2130,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GcpGcsBucketResource'
+
+    CreatedControlledGcpBigQueryDatasetResponse:
+      description: Response to Create controlled BigQuery dataset
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledGcpBigQueryDataset'
 
     CreatedControlledGcpAiNotebookInstanceResponse:
       description: Response to Create controlled resource

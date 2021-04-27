@@ -11,6 +11,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleActionTyp
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -111,6 +112,27 @@ public class ControlledResourceFixtures {
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
         .managedBy(ManagedByType.MANAGED_BY_USER)
         .bucketName(BUCKET_NAME);
+  }
+
+  /**
+   * Returns a {@link ControlledBigQueryDatasetResource.Builder} that is ready to be built.
+   *
+   * <p>Tests should not rely on any particular value for the fields returned by this function and
+   * instead override the values that they care about.
+   */
+  public static ControlledBigQueryDatasetResource.Builder
+      makeDefaultControlledBigQueryDatasetResource() {
+    UUID resourceId = UUID.randomUUID();
+    return new ControlledBigQueryDatasetResource.Builder()
+        .workspaceId(UUID.randomUUID())
+        .resourceId(resourceId)
+        .name("test_dataset")
+        .description("how much data could a dataset set if a dataset could set data?")
+        .cloningInstructions(CLONING_INSTRUCTIONS)
+        .assignedUser(null)
+        .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+        .managedBy(ManagedByType.MANAGED_BY_USER)
+        .datasetName("test_dataset");
   }
 
   /**
