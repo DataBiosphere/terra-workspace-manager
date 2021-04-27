@@ -401,12 +401,12 @@ public class ResourceDao {
             + " FROM resource"
             + " WHERE resource_type = :resource_type"
             + " AND workspace_id = :workspace_id"
-            + " AND attributes->>'datasetName' = :datasetName";
+            + " AND attributes->>'datasetName' = :dataset_name";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
             .addValue("resource_type", WsmResourceType.BIG_QUERY_DATASET.toSql())
             .addValue("workspace_id", datasetResource.getWorkspaceId().toString())
-            .addValue("datasetName", datasetResource.getDatasetName());
+            .addValue("dataset_name", datasetResource.getDatasetName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
     if (matchingCount != null && matchingCount > 0) {
       throw new DuplicateResourceException(
