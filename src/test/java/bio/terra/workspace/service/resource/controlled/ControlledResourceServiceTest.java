@@ -12,7 +12,6 @@ import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightStatus;
-import bio.terra.stairway.Step;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
