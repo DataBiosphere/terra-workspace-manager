@@ -132,7 +132,6 @@ public class ControlledResourceFixtures {
         .assignedUser(null)
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
         .managedBy(ManagedByType.MANAGED_BY_USER)
-        .projectId("fake-project-id")
         .datasetName("test_dataset");
   }
 

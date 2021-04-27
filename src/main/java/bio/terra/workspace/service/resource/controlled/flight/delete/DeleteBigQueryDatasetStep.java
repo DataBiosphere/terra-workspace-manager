@@ -8,6 +8,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import java.io.IOException;
 import org.apache.http.HttpStatus;
@@ -22,32 +23,35 @@ public class DeleteBigQueryDatasetStep implements Step {
 
   private final ControlledBigQueryDatasetResource resource;
   private final CrlService crlService;
+  private final WorkspaceService workspaceService;
 
   private final Logger logger = LoggerFactory.getLogger(DeleteBigQueryDatasetStep.class);
 
   public DeleteBigQueryDatasetStep(
-      ControlledBigQueryDatasetResource resource, CrlService crlService) {
+      ControlledBigQueryDatasetResource resource,
+      CrlService crlService,
+      WorkspaceService workspaceService) {
     this.resource = resource;
     this.crlService = crlService;
+    this.workspaceService = workspaceService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     try {
       // With deleteContents set to true, this will delete the dataset even if it still has tables.
       bqCow
           .datasets()
-          .delete(resource.getProjectId(), resource.getDatasetName())
+          .delete(projectId, resource.getDatasetName())
           .setDeleteContents(true)
           .execute();
     } catch (GoogleJsonResponseException e) {
       if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
         logger.info(
-            "BQ dataset {} in project {} already deleted",
-            resource.getDatasetName(),
-            resource.getProjectId());
+            "BQ dataset {} in project {} already deleted", resource.getDatasetName(), projectId);
         return StepResult.getStepResultSuccess();
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
@@ -61,10 +65,12 @@ public class DeleteBigQueryDatasetStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     // Deletes cannot be undone, so we log a warning and continue the flight.
+    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+
     logger.warn(
         "Cannot undo delete of BQ dataset {} in project {}. Continuing flight.",
         resource.getDatasetName(),
-        resource.getProjectId());
+        projectId);
     return StepResult.getStepResultSuccess();
   }
 }

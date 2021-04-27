@@ -68,7 +68,9 @@ public class DeleteControlledResourceFlight extends Flight {
       case BIG_QUERY_DATASET:
         addStep(
             new DeleteBigQueryDatasetStep(
-                resource.castToBigQueryDatasetResource(), flightBeanBag.getCrlService()),
+                resource.castToBigQueryDatasetResource(),
+                flightBeanBag.getCrlService(),
+                flightBeanBag.getWorkspaceService()),
             syncCloudRetryRule);
         break;
       case AI_NOTEBOOK_INSTANCE:

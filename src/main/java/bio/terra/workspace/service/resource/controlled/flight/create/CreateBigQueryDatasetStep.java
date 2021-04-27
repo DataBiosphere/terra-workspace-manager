@@ -15,6 +15,7 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -37,19 +38,24 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Unlike other steps which create controlled resources, this step also syncs Sam policy groups
  * to cloud permissions on the new object. This is because BigQuery will default to granting legacy
- * BQ roles to project readers, editors, and owners if no IAM policy is specified at creation time.
+ * BQ roles to project readers, editors, and owners if no IAM policy is specified at creation time:
+ * see https://cloud.google.com/bigquery/docs/access-control-basic-roles
  */
 public class CreateBigQueryDatasetStep implements Step {
 
   private final CrlService crlService;
   private final ControlledBigQueryDatasetResource resource;
+  private final WorkspaceService workspaceService;
 
   private final Logger logger = LoggerFactory.getLogger(CreateBigQueryDatasetStep.class);
 
   public CreateBigQueryDatasetStep(
-      CrlService crlService, ControlledBigQueryDatasetResource resource) {
+      CrlService crlService,
+      ControlledBigQueryDatasetResource resource,
+      WorkspaceService workspaceService) {
     this.crlService = crlService;
     this.resource = resource;
+    this.workspaceService = workspaceService;
   }
 
   @Override
@@ -59,29 +65,26 @@ public class CreateBigQueryDatasetStep implements Step {
     FlightMap workingMap = flightContext.getWorkingMap();
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         inputMap.get(CREATION_PARAMETERS, ApiGcpBigQueryDatasetCreationParameters.class);
+    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
 
-    List<Access> iamConfiguration = buildDatasetIamConfiguration(workingMap);
+    List<Access> accessConfiguration = buildDatasetAccessConfiguration(workingMap, projectId);
     DatasetReference datasetId =
-        new DatasetReference()
-            .setProjectId(resource.getProjectId())
-            .setDatasetId(resource.getDatasetName());
+        new DatasetReference().setProjectId(projectId).setDatasetId(resource.getDatasetName());
     Dataset datasetToCreate =
         new Dataset()
             .setDatasetReference(datasetId)
             .setLocation(creationParameters.getLocation())
-            .setAccess(iamConfiguration);
+            .setAccess(accessConfiguration);
 
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     try {
-      bqCow.datasets().insert(resource.getProjectId(), datasetToCreate).execute();
+      bqCow.datasets().insert(projectId, datasetToCreate).execute();
     } catch (GoogleJsonResponseException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
       if (e.getStatusCode() == HttpStatus.SC_CONFLICT) {
         logger.info(
-            "BQ dataset {} in project {} already exists",
-            resource.getDatasetName(),
-            resource.getProjectId());
+            "BQ dataset {} in project {} already exists", resource.getDatasetName(), projectId);
         return StepResult.getStepResultSuccess();
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
@@ -100,31 +103,27 @@ public class CreateBigQueryDatasetStep implements Step {
    * translation, that means this can still use the resource-type-agnostic policy-building code from
    * {@link GcpPolicyBuilder}.
    */
-  private List<Access> buildDatasetIamConfiguration(FlightMap workingMap) {
+  private List<Access> buildDatasetAccessConfiguration(FlightMap workingMap, String projectId) {
     // As this is a new dataset, we pass an empty Policy object as the initial state to
     // GcpPolicyBuilder.
     GcpPolicyBuilder policyBuilder =
-        new GcpPolicyBuilder(resource, resource.getProjectId(), Policy.newBuilder().build());
+        new GcpPolicyBuilder(resource, projectId, Policy.newBuilder().build());
 
     // Read Sam groups for each workspace role. Stairway does not
     // have a cleaner way of deserializing parameterized types, so we suppress warnings here.
     @SuppressWarnings("unchecked")
-    Map<WsmIamRole, String> workspaceRoleGroupsMap =
+    Map<WsmIamRole, String> workspaceRoleGroupMap =
         workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, Map.class);
-    for (Map.Entry<WsmIamRole, String> entry : workspaceRoleGroupsMap.entrySet()) {
-      policyBuilder.addWorkspaceBinding(entry.getKey(), entry.getValue());
-    }
+    workspaceRoleGroupMap.forEach(policyBuilder::addWorkspaceBinding);
 
     // Resources with permissions given to individual users (private or application managed) use
     // the resource's Sam policies to manage those individuals, so they must be synced here.
     // This section should also run for application managed resources, once those are supported.
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
       @SuppressWarnings("unchecked")
-      Map<ControlledResourceIamRole, String> resourceRoleGroupsMap =
+      Map<ControlledResourceIamRole, String> resourceRoleGroupMap =
           workingMap.get(ControlledResourceKeys.IAM_RESOURCE_GROUP_EMAIL_MAP, Map.class);
-      for (Map.Entry<ControlledResourceIamRole, String> entry : resourceRoleGroupsMap.entrySet()) {
-        policyBuilder.addResourceBinding(entry.getKey(), entry.getValue());
-      }
+      resourceRoleGroupMap.forEach(policyBuilder::addResourceBinding);
     }
 
     Policy updatedPolicy = policyBuilder.build();
@@ -154,6 +153,7 @@ public class CreateBigQueryDatasetStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
 
     try {
@@ -161,16 +161,14 @@ public class CreateBigQueryDatasetStep implements Step {
       // to clean up tables or data.
       bqCow
           .datasets()
-          .delete(resource.getProjectId(), resource.getDatasetName())
+          .delete(projectId, resource.getDatasetName())
           .setDeleteContents(true)
           .execute();
     } catch (GoogleJsonResponseException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
       if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
         logger.info(
-            "BQ dataset {} in project {} already deleted",
-            resource.getDatasetName(),
-            resource.getProjectId());
+            "BQ dataset {} in project {} already deleted", resource.getDatasetName(), projectId);
         return StepResult.getStepResultSuccess();
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
