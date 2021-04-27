@@ -16,6 +16,7 @@ import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceDescription;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -57,10 +58,10 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             workspaceId, resourceId, resourceName, description, cloning, projectId, datasetName);
 
     ApiResourceDescription resourceDescription =
-        resourceController.makeApiResourceDescription((WsmResource) resource);
+        resourceController.makeApiResourceDescription((WsmResource) resource, null);
     validateWsmResource(resourceDescription);
     ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
-    ApiGcpBigQueryDatasetAttributes attributes = union.getGcpBigQuery();
+    ApiGcpBigQueryDatasetAttributes attributes = union.getGcpBqDataset();
     assertThat(attributes, is(notNullValue()));
     assertThat(attributes.getDatasetId(), equalTo(datasetName));
     assertThat(attributes.getProjectId(), equalTo(projectId));
@@ -76,7 +77,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             workspaceId, resourceId, resourceName, description, cloning, instanceName, snapshotId);
 
     ApiResourceDescription resourceDescription =
-        resourceController.makeApiResourceDescription((WsmResource) resource);
+        resourceController.makeApiResourceDescription((WsmResource) resource, null);
     validateWsmResource(resourceDescription);
     ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
     ApiDataRepoSnapshotAttributes attributes = union.getGcpDataRepoSnapshot();
@@ -94,7 +95,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
             workspaceId, resourceId, resourceName, description, cloning, bucketName);
 
     ApiResourceDescription resourceDescription =
-        resourceController.makeApiResourceDescription((WsmResource) resource);
+        resourceController.makeApiResourceDescription((WsmResource) resource, null);
     validateWsmResource(resourceDescription);
     ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
     ApiGcpGcsBucketAttributes attributes = union.getGcpGcsBucket();
@@ -141,12 +142,39 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               bucketName);
 
       ApiResourceDescription resourceDescription =
-          resourceController.makeApiResourceDescription(resource);
+          resourceController.makeApiResourceDescription(resource, null);
       validateControlledResource(resourceDescription);
       ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
       ApiGcpGcsBucketAttributes attributes = union.getGcpGcsBucket();
       assertThat(attributes, is(notNullValue()));
       assertThat(attributes.getBucketName(), equalTo(bucketName));
+    }
+
+    @Test
+    public void mapControlledBigQueryDatasetTest() throws Exception {
+      String datasetName = RandomStringUtils.randomAlphabetic(5).toLowerCase();
+
+      var resource =
+          new ControlledBigQueryDatasetResource(
+              workspaceId,
+              resourceId,
+              resourceName,
+              description,
+              cloning,
+              assignedUser,
+              accessScopeType,
+              managedByType,
+              datasetName);
+
+      String projectId = "my-project-id";
+      ApiResourceDescription resourceDescription =
+          resourceController.makeApiResourceDescription(resource, projectId);
+      validateControlledResource(resourceDescription);
+      ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
+      ApiGcpBigQueryDatasetAttributes attributes = union.getGcpBqDataset();
+      assertThat(attributes, is(notNullValue()));
+      assertThat(attributes.getDatasetId(), equalTo(datasetName));
+      assertThat(attributes.getProjectId(), equalTo(projectId));
     }
 
     public void validateControlledResource(ApiResourceDescription resourceDescription) {
