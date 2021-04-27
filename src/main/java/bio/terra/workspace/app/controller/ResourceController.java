@@ -12,6 +12,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.WsmResourceType;
+import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -105,7 +106,6 @@ public class ResourceController implements ResourceApi {
       case REFERENCED:
         ReferencedResource referencedResource = wsmResource.castToReferenceResource();
         switch (wsmResource.getResourceType()) {
-            // TODO(PF-469): Add support for AI_NOTEBOOK_INSTANCE.
           case BIG_QUERY_DATASET:
             {
               ReferencedBigQueryDatasetResource resource =
@@ -138,6 +138,13 @@ public class ResourceController implements ResourceApi {
       case CONTROLLED:
         ControlledResource controlledResource = wsmResource.castToControlledResource();
         switch (wsmResource.getResourceType()) {
+          case AI_NOTEBOOK_INSTANCE:
+            {
+              ControlledAiNotebookInstanceResource resource =
+                  controlledResource.castToAiNotebookInstanceResource();
+              union.gcpAiNotebookInstance(resource.toApiResource(gcpProjectId).getAttributes());
+              break;
+            }
           case GCS_BUCKET:
             {
               ControlledGcsBucketResource resource = controlledResource.castToGcsBucketResource();
