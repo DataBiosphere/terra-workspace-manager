@@ -32,8 +32,8 @@ import bio.terra.workspace.service.job.exception.JobNotCompleteException;
 import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import bio.terra.workspace.service.job.exception.JobResponseException;
 import bio.terra.workspace.service.job.exception.JobUnauthorizedException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.nio.file.Path;
@@ -62,9 +62,9 @@ public class JobService {
   private final MdcHook mdcHook;
   private final StairwayComponent stairwayComponent;
   private final FlightBeanBag flightBeanBag;
-  private FlightDebugInfo flightDebugInfo;
-
   private final Logger logger = LoggerFactory.getLogger(JobService.class);
+  private final ObjectMapper objectMapper;
+  private FlightDebugInfo flightDebugInfo;
 
   @Autowired
   public JobService(
@@ -73,7 +73,8 @@ public class JobService {
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
       MdcHook mdcHook,
       StairwayComponent stairwayComponent,
-      FlightBeanBag flightBeanBag) {
+      FlightBeanBag flightBeanBag,
+      ObjectMapper objectMapper) {
     this.jobConfig = jobConfig;
     this.ingressConfig = ingressConfig;
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
@@ -81,65 +82,7 @@ public class JobService {
     this.mdcHook = mdcHook;
     this.stairwayComponent = stairwayComponent;
     this.flightBeanBag = flightBeanBag;
-  }
-
-  @SuppressFBWarnings(value = "NM_CLASS_NOT_EXCEPTION", justification = "Non-exception by design.")
-  public static class JobResultOrException<T> {
-    private T result;
-    private RuntimeException exception;
-
-    public T getResult() {
-      return result;
-    }
-
-    public JobResultOrException<T> result(T result) {
-      this.result = result;
-      return this;
-    }
-
-    public RuntimeException getException() {
-      return exception;
-    }
-
-    public JobResultOrException<T> exception(RuntimeException exception) {
-      this.exception = exception;
-      return this;
-    }
-  }
-
-  // The result of an asynchronous job is a ApiJobReport and exactly one of a job result
-  // or an ApiErrorReport. If the job is incomplete, only jobReport will be present.
-  public static class AsyncJobResult<T> {
-    private ApiJobReport jobReport;
-    private T result;
-    private ApiErrorReport errorReport;
-
-    public T getResult() {
-      return result;
-    }
-
-    public AsyncJobResult<T> result(T result) {
-      this.result = result;
-      return this;
-    }
-
-    public ApiErrorReport getApiErrorReport() {
-      return errorReport;
-    }
-
-    public AsyncJobResult<T> errorReport(ApiErrorReport errorReport) {
-      this.errorReport = errorReport;
-      return this;
-    }
-
-    public ApiJobReport getJobReport() {
-      return jobReport;
-    }
-
-    public AsyncJobResult<T> jobReport(ApiJobReport jobReport) {
-      this.jobReport = jobReport;
-      return this;
-    }
+    this.objectMapper = objectMapper;
   }
 
   // creates a new JobBuilder object and returns it.
@@ -227,26 +170,6 @@ public class JobService {
     throw new InternalStairwayException("Flight did not complete in the allowed wait time");
   }
 
-  private static class PollFlightTask implements Callable<FlightState> {
-    private final Stairway stairway;
-    private final String flightId;
-
-    public PollFlightTask(Stairway stairway, String flightId) {
-      this.stairway = stairway;
-      this.flightId = flightId;
-    }
-
-    @Override
-    public FlightState call() throws Exception {
-      FlightState state = stairway.getFlightState(flightId);
-      if (!state.isActive()) {
-        return state;
-      } else {
-        return null;
-      }
-    }
-  }
-
   /**
    * This method is called from StartupInitializer as part of the sequence of migrating databases
    * and recovering any jobs; i.e., Stairway flights. It is moved here so that JobService
@@ -254,9 +177,13 @@ public class JobService {
    */
   public void initialize() {
     stairwayComponent.initialize(
-        stairwayDatabaseConfiguration.getDataSource(),
-        flightBeanBag,
-        ImmutableList.of(mdcHook, new TracingHook()));
+        stairwayComponent
+            .newStairwayOptionsBuilder()
+            .dataSource(stairwayDatabaseConfiguration.getDataSource())
+            .context(flightBeanBag)
+            .addHook(mdcHook)
+            .addHook(new TracingHook())
+            .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
   }
 
   @Traced
@@ -499,5 +426,84 @@ public class JobService {
   @VisibleForTesting
   public void setFlightDebugInfoForTest(FlightDebugInfo flightDebugInfo) {
     this.flightDebugInfo = flightDebugInfo;
+  }
+
+  @SuppressFBWarnings(value = "NM_CLASS_NOT_EXCEPTION", justification = "Non-exception by design.")
+  public static class JobResultOrException<T> {
+    private T result;
+    private RuntimeException exception;
+
+    public T getResult() {
+      return result;
+    }
+
+    public JobResultOrException<T> result(T result) {
+      this.result = result;
+      return this;
+    }
+
+    public RuntimeException getException() {
+      return exception;
+    }
+
+    public JobResultOrException<T> exception(RuntimeException exception) {
+      this.exception = exception;
+      return this;
+    }
+  }
+
+  // The result of an asynchronous job is a ApiJobReport and exactly one of a job result
+  // or an ApiErrorReport. If the job is incomplete, only jobReport will be present.
+  public static class AsyncJobResult<T> {
+    private ApiJobReport jobReport;
+    private T result;
+    private ApiErrorReport errorReport;
+
+    public T getResult() {
+      return result;
+    }
+
+    public AsyncJobResult<T> result(T result) {
+      this.result = result;
+      return this;
+    }
+
+    public ApiErrorReport getApiErrorReport() {
+      return errorReport;
+    }
+
+    public AsyncJobResult<T> errorReport(ApiErrorReport errorReport) {
+      this.errorReport = errorReport;
+      return this;
+    }
+
+    public ApiJobReport getJobReport() {
+      return jobReport;
+    }
+
+    public AsyncJobResult<T> jobReport(ApiJobReport jobReport) {
+      this.jobReport = jobReport;
+      return this;
+    }
+  }
+
+  private static class PollFlightTask implements Callable<FlightState> {
+    private final Stairway stairway;
+    private final String flightId;
+
+    public PollFlightTask(Stairway stairway, String flightId) {
+      this.stairway = stairway;
+      this.flightId = flightId;
+    }
+
+    @Override
+    public FlightState call() throws Exception {
+      FlightState state = stairway.getFlightState(flightId);
+      if (!state.isActive()) {
+        return state;
+      } else {
+        return null;
+      }
+    }
   }
 }
