@@ -105,6 +105,7 @@ public class ResourceController implements ResourceApi {
       case REFERENCED:
         ReferencedResource referencedResource = wsmResource.castToReferenceResource();
         switch (wsmResource.getResourceType()) {
+          // TODO(PF-469): Add support for AI_NOTEBOOK_INSTANCE.
           case BIG_QUERY_DATASET:
             {
               ReferencedBigQueryDatasetResource resource =
