@@ -15,7 +15,6 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class ControlledBigQueryDatasetResource extends ControlledResource {
-  private final String projectId;
   private final String datasetName;
 
   @JsonCreator
@@ -28,7 +27,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       @JsonProperty("assignedUser") String assignedUser,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
-      @JsonProperty("projectId") String projectId,
       @JsonProperty("datasetName") String datasetName) {
 
     super(
@@ -40,7 +38,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         assignedUser,
         accessScope,
         managedBy);
-    this.projectId = projectId;
     this.datasetName = datasetName;
     validate();
   }
@@ -49,7 +46,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     super(dbResource);
     ControlledBigQueryDatasetAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledBigQueryDatasetAttributes.class);
-    this.projectId = attributes.getProjectId();
     this.datasetName = attributes.getDatasetName();
     validate();
   }
@@ -58,24 +54,18 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     return new ControlledBigQueryDatasetResource.Builder();
   }
 
-  public String getProjectId() {
-    return projectId;
-  }
-
   public String getDatasetName() {
     return datasetName;
   }
 
-  public ApiGcpBigQueryDatasetAttributes toApiAttributes() {
-    return new ApiGcpBigQueryDatasetAttributes()
-        .projectId(getProjectId())
-        .datasetId(getDatasetName());
+  public ApiGcpBigQueryDatasetAttributes toApiAttributes(String projectId) {
+    return new ApiGcpBigQueryDatasetAttributes().projectId(projectId).datasetId(getDatasetName());
   }
 
-  public ApiGcpBigQueryDatasetResource toApiResource() {
+  public ApiGcpBigQueryDatasetResource toApiResource(String projectId) {
     return new ApiGcpBigQueryDatasetResource()
         .metadata(super.toApiMetadata())
-        .attributes(toApiAttributes());
+        .attributes(toApiAttributes(projectId));
   }
 
   @Override
@@ -85,8 +75,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(
-        new ControlledBigQueryDatasetAttributes(getProjectId(), getDatasetName()));
+    return DbSerDes.toJson(new ControlledBigQueryDatasetAttributes(getDatasetName()));
   }
 
   @Override
@@ -94,10 +83,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     super.validate();
     if (getResourceType() != WsmResourceType.BIG_QUERY_DATASET) {
       throw new InconsistentFieldsException("Expected BIG_QUERY_DATASET");
-    }
-    if (getProjectId() == null) {
-      throw new MissingRequiredFieldException(
-          "Missing required field projectId for BigQuery dataset.");
     }
     if (getDatasetName() == null) {
       throw new MissingRequiredFieldException(
@@ -114,12 +99,12 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
 
     ControlledBigQueryDatasetResource that = (ControlledBigQueryDatasetResource) o;
 
-    return (datasetName.equals(that.datasetName) && projectId.equals(that.projectId));
+    return (datasetName.equals(that.datasetName));
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), datasetName, projectId);
+    return Objects.hash(super.hashCode(), datasetName);
   }
 
   public static class Builder {
@@ -131,7 +116,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     private String assignedUser;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
-    private String projectId;
     private String datasetName;
 
     public ControlledBigQueryDatasetResource.Builder workspaceId(UUID workspaceId) {
@@ -157,11 +141,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     public ControlledBigQueryDatasetResource.Builder cloningInstructions(
         CloningInstructions cloningInstructions) {
       this.cloningInstructions = cloningInstructions;
-      return this;
-    }
-
-    public ControlledBigQueryDatasetResource.Builder projectId(String projectId) {
-      this.projectId = projectId;
       return this;
     }
 
@@ -195,7 +174,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
           assignedUser,
           accessScope,
           managedBy,
-          projectId,
           datasetName);
     }
   }

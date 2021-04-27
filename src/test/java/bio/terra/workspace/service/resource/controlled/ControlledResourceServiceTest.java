@@ -254,6 +254,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
   public void createBqDatasetDo() throws Exception {
     Workspace workspace = reusableWorkspace();
+    String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
 
     String datasetId = "my_test_dataset";
     String location = "us-central1";
@@ -265,7 +266,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .workspaceId(workspace.getWorkspaceId())
             .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
             .managedBy(ManagedByType.MANAGED_BY_USER)
-            .projectId(workspace.getGcpCloudContext().get().getGcpProjectId())
             .datasetName(datasetId)
             .build();
 
@@ -284,10 +284,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     Dataset cloudDataset =
-        bqCow
-            .datasets()
-            .get(createdDataset.getProjectId(), createdDataset.getDatasetName())
-            .execute();
+        bqCow.datasets().get(projectId, createdDataset.getDatasetName()).execute();
     assertEquals(cloudDataset.getLocation(), location);
 
     assertEquals(
@@ -302,6 +299,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
   public void createBqDatasetUndo() throws Exception {
     Workspace workspace = reusableWorkspace();
+    String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
 
     String datasetId = "my_undo_test_dataset";
     String location = "us-central1";
@@ -313,7 +311,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .workspaceId(workspace.getWorkspaceId())
             .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
             .managedBy(ManagedByType.MANAGED_BY_USER)
-            .projectId(workspace.getGcpCloudContext().get().getGcpProjectId())
             .datasetName(datasetId)
             .build();
 
@@ -342,8 +339,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     GoogleJsonResponseException getException =
         assertThrows(
             GoogleJsonResponseException.class,
-            () ->
-                bqCow.datasets().get(resource.getProjectId(), resource.getDatasetName()).execute());
+            () -> bqCow.datasets().get(projectId, resource.getDatasetName()).execute());
     assertEquals(HttpStatus.NOT_FOUND.value(), getException.getStatusCode());
 
     assertThrows(

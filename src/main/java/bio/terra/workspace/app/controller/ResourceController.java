@@ -20,11 +20,13 @@ import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataset
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -41,6 +43,7 @@ import org.springframework.stereotype.Controller;
 public class ResourceController implements ResourceApi {
 
   private final WsmResourceService resourceService;
+  private final WorkspaceService workspaceService;
 
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
@@ -49,9 +52,11 @@ public class ResourceController implements ResourceApi {
   @Autowired
   public ResourceController(
       WsmResourceService resourceService,
+      WorkspaceService workspaceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request) {
     this.resourceService = resourceService;
+    this.workspaceService = workspaceService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
   }
@@ -77,9 +82,13 @@ public class ResourceController implements ResourceApi {
             offset,
             limit,
             userRequest);
+    // projectId
+    String gcpProjectId = workspaceService.getGcpProject(workspaceId).orElse(null);
 
     List<ApiResourceDescription> apiResourceDescriptionList =
-        wsmResources.stream().map(this::makeApiResourceDescription).collect(Collectors.toList());
+        wsmResources.stream()
+            .map(r -> makeApiResourceDescription(r, gcpProjectId))
+            .collect(Collectors.toList());
 
     var apiResourceList = new ApiResourceList().resources(apiResourceDescriptionList);
     return new ResponseEntity<>(apiResourceList, HttpStatus.OK);
@@ -87,7 +96,8 @@ public class ResourceController implements ResourceApi {
 
   // Convert a WsmResource into the API format for enumeration
   @VisibleForTesting
-  public ApiResourceDescription makeApiResourceDescription(WsmResource wsmResource) {
+  public ApiResourceDescription makeApiResourceDescription(
+      WsmResource wsmResource, @Nullable String gcpProjectId) {
 
     ApiResourceMetadata common = wsmResource.toApiMetadata();
     var union = new ApiResourceAttributesUnion();
@@ -138,7 +148,7 @@ public class ResourceController implements ResourceApi {
             {
               ControlledBigQueryDatasetResource resource =
                   controlledResource.castToBigQueryDatasetResource();
-              union.gcpBqDataset(resource.toApiAttributes());
+              union.gcpBqDataset(resource.toApiAttributes(gcpProjectId));
               break;
             }
           case DATA_REPO_SNAPSHOT: // there is a use case for this, but low priority

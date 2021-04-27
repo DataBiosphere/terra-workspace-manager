@@ -57,7 +57,6 @@ public class ResourceDaoTest extends BaseUnitTest {
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
             .workspaceId(workspaceId)
-            .projectId("my-project-id")
             .build();
     resourceDao.createControlledResource(resource);
 

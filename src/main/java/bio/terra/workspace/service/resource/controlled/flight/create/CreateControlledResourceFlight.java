@@ -100,7 +100,9 @@ public class CreateControlledResourceFlight extends Flight {
         // unwanted defaults from GCP.
         addStep(
             new CreateBigQueryDatasetStep(
-                flightBeanBag.getCrlService(), resource.castToBigQueryDatasetResource()),
+                flightBeanBag.getCrlService(),
+                resource.castToBigQueryDatasetResource(),
+                flightBeanBag.getWorkspaceService()),
             gcpRetryRule);
         break;
       default:

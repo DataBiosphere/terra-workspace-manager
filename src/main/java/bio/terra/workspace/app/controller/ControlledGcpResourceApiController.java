@@ -164,7 +164,6 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
                     .orElse(null))
             .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
             .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
-            .projectId(projectId)
             .datasetName(body.getDataset().getDatasetId())
             .build();
 
@@ -177,7 +176,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     var response =
         new ApiCreatedControlledGcpBigQueryDataset()
             .resourceId(createdDataset.getResourceId())
-            .bigQueryDataset(createdDataset.toApiResource());
+            .bigQueryDataset(createdDataset.toApiResource(projectId));
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
