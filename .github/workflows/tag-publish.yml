@@ -1,17 +1,19 @@
-name: Tag, Build, and Push Image
+name: PR Merge Actions
 # The purpose of the workflow is to:
-#  1. Bump the version number
-#  2. Build and publish the build to Artifactory
+#  1. Bump the version number and tag the release
+#  2. Build and publish the client to Artifactory
 #  3. Build docker image and publish to GCR
 #  4. Trigger deployment to the dev environment
 #
 # When run on merge to dev, it bumps the patch version
 # When run manually, you can specify the part of the semantic version to bump
 #
-# Note: the secret REPO_ACCESS_TOKEN is the github token to use for github
-# operations, since it avoids the two reviewer requirement.
-# In the future, we may want to retrieve it from vault.
-
+# The workflow relies on github secrets:
+# - REPO_ACCESS_TOKEN - the broadbot token, so we can avoid two reviewer rule on GHA operations
+# - GCR_PUBLISH_KEY   - key and email for publishing the docker to GCR
+# - GCR_PUBLISH_EMAIL
+# - ARTIFACTORY_USERNAME - username and password for publishing the client to artifactory
+# - ARTIFACTORY_PASSWORD
 on:
 # TODO: add this back in
 #  push:
@@ -26,7 +28,7 @@ on:
       bump:
         description: 'Part of the version to bump: major, minor, patch'
         required: false
-        default: 'patch'
+        default: 'minor'
 env:
   SERVICE_NAME: ${{ github.event.repository.name }}
   GOOGLE_PROJECT: terra-kernel-k8s
@@ -35,7 +37,7 @@ env:
   VAULT_ADDR: https://clotho.broadinstitute.org:8200
   ARTIFACTORY_ACCOUNT_PATH: secret/dsp/accts/artifactory/dsdejenkins
 jobs:
-# TODO: rename to tag-publish
+# TODO: rename to something else
   tag-build-push:
     runs-on: ubuntu-latest
     steps:
@@ -44,7 +46,7 @@ jobs:
       run: |
         SEMVER_PART=""
         if ${{github.event_name == 'push' }}; then
-          SEMVER_PART="patch"
+          SEMVER_PART="minor"
         elif ${{github.event_name == 'workflow_dispatch' }}; then
           SEMVER_PART=${{ github.event.inputs.bump }}
         fi
@@ -54,57 +56,12 @@ jobs:
       with:
         ref: dev
         token: ${{ secrets.REPO_ACCESS_TOKEN }}
-    - name: Pull Vault image
-      run: docker pull vault:1.1.0
-    # Currently, there's no way to add capabilities to Docker actions on Git, and Vault needs IPC_LOCK to run.
-    - name: Get Vault token
-      id: vault-token-step
-      run: |
-        VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
-          -e "VAULT_ADDR=${VAULT_ADDR}" \
-          vault:1.1.0 \
-          vault write -field token \
-            auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
-            secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
-        echo ::set-output name=vault-token::$VAULT_TOKEN
-        echo ::add-mask::$VAULT_TOKEN
-    - name: Get Vault secrets
-      id: vault-secret-step
-      run: |
-        ARTIFACTORY_USERNAME=$(docker run --rm --cap-add IPC_LOCK \
-          -e "VAULT_TOKEN=${{ steps.vault-token-step.outputs.vault-token }}" \
-          -e "VAULT_ADDR=${VAULT_ADDR}" \
-          vault:1.1.0 \
-          vault read -field username ${ARTIFACTORY_ACCOUNT_PATH})
-        ARTIFACTORY_PASSWORD=$(docker run --rm --cap-add IPC_LOCK \
-          -e "VAULT_TOKEN=${{ steps.vault-token-step.outputs.vault-token }}" \
-          -e "VAULT_ADDR=${VAULT_ADDR}" \
-          vault:1.1.0 \
-          vault read -field password ${ARTIFACTORY_ACCOUNT_PATH})
-        GCR_EMAIL=$(docker run --rm --cap-add IPC_LOCK \
-          -e "VAULT_TOKEN=${{ steps.vault-token-step.outputs.vault-token }}" \
-          -e "VAULT_ADDR=${VAULT_ADDR}" \
-          vault:1.1.0 \
-          vault read -field ci-gcr-sa-email ${VAULT_PATH_GCR})
-        GCR_KEY=$(docker run --rm --cap-add IPC_LOCK \
-          -e "VAULT_TOKEN=${{ steps.vault-token-step.outputs.vault-token }}" \
-          -e "VAULT_ADDR=${VAULT_ADDR}" \
-          vault:1.1.0 \
-          vault read -field ci-gcr-sa-key ${VAULT_PATH_GCR})
-        echo ::set-output name=gcr-email::$GCR_EMAIL
-        echo ::add-mask::$GCR_EMAIL
-        echo ::set-output name=gcr-key::$GCR_KEY
-        echo ::add-mask::$GCR_KEY
-        echo ::set-output name=artifactory-username::$ARTIFACTORY_USERNAME
-        echo ::add-mask::$ARTIFACTORY_USERNAME
-        echo ::set-output name=artifactory-password::$ARTIFACTORY_PASSWORD
-        echo ::add-mask::$ARTIFACTORY_PASSWORD
     - name: "Bump the tag to a new version"
       uses: databiosphere/github-actions/actions/bumper@v0.0.3
       id: tag
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
-        DEFAULT_BUMP: patch${{ steps.semver.outputs.semver-part }}
+        DEFAULT_BUMP: ${{ steps.semver.outputs.semver-part }}
         RELEASE_BRANCHES: dev
         VERSION_FILE_PATH: build.gradle
         VERSION_LINE_MATCH: ^version
@@ -140,12 +97,7 @@ jobs:
     - name: Construct docker image name and tag
       id: image-name
       run: |
-        DOCKER_TAG=""
-        if ${{github.event_name == 'pull_request' }}; then
-          DOCKER_TAG=pr${{ github.event.number }}-$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)
-        elif ${{github.event_name == 'push' }}; then
-          DOCKER_TAG=${{ steps.tag.outputs.tag }}
-        fi
+        DOCKER_TAG=${{ steps.tag.outputs.tag }}
         echo ::set-output name=name::gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:${DOCKER_TAG}
     - name: Build image locally with jib
       run: "./gradlew jibDockerBuild --image=${{ steps.image-name.outputs.name }} -Djib.console=plain"
