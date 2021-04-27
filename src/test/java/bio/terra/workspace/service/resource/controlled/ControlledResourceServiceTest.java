@@ -94,15 +94,15 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(location);
-    ControlledAiNotebookInstanceResource resource =
+    ControlledAiNotebookInstanceResource.Builder resourceBuilder =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .workspaceId(workspace.getWorkspaceId())
             .assignedUser(userAccessUtils.getDefaultUserEmail())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
             .instanceId(instanceId)
-            .location(location)
-            .build();
+            .location(location);
+    ControlledAiNotebookInstanceResource resource = resourceBuilder.build();
 
     // Test idempotency of steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -148,15 +148,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // Creating a controlled resource with a duplicate underlying notebook instance is not allowed.
     ControlledAiNotebookInstanceResource duplicateResource =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+        resourceBuilder
             .resourceId(UUID.randomUUID())
             .name("new-name-same-notebook-instance")
-            .workspaceId(workspace.getWorkspaceId())
-            .assignedUser(userAccessUtils.getDefaultUserEmail())
-            .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-            .managedBy(ManagedByType.MANAGED_BY_USER)
-            .instanceId(instanceId)
-            .location(location)
             .build();
     String duplicateResourceJobId =
         controlledResourceService.createAiNotebookInstance(
