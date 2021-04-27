@@ -23,7 +23,7 @@ public class DeleteControlledResourceFlight extends Flight {
    * instances.
    */
   private final RetryRule syncCloudRetryRule =
-      new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount=  */ 10);
+      new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount=  */ 2);
 
   public DeleteControlledResourceFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
