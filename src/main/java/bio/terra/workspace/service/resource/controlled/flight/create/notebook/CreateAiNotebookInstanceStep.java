@@ -7,11 +7,13 @@ import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.cloudres.google.api.services.common.OperationUtils;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
@@ -19,14 +21,18 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.services.notebooks.v1.model.AcceleratorConfig;
 import com.google.api.services.notebooks.v1.model.ContainerImage;
 import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.api.services.notebooks.v1.model.Operation;
 import com.google.api.services.notebooks.v1.model.VmImage;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -37,6 +43,9 @@ import org.springframework.http.HttpStatus;
  * <p>Undo deletes the created notebook instance.
  */
 public class CreateAiNotebookInstanceStep implements Step {
+  /** The Notebook instance metadata key used to control proxy mode. */
+  private static final String PROXY_MODE_METADATA_KEY = "proxy-mode";
+
   private final Logger logger = LoggerFactory.getLogger(CreateAiNotebookInstanceStep.class);
   private final CrlService crlService;
   private final ControlledAiNotebookInstanceResource resource;
@@ -98,31 +107,50 @@ public class CreateAiNotebookInstanceStep implements Step {
         flightContext
             .getInputParameters()
             .get(CREATE_NOTEBOOK_PARAMETERS, ApiGcpAiNotebookInstanceCreationParameters.class);
-    setFields(creationParameters, instance);
-
     String serviceAccountEmail =
         CreateServiceAccountStep.serviceAccountEmail(
             flightContext.getWorkingMap().get(CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID, String.class),
             projectId);
-    instance.setServiceAccount(serviceAccountEmail);
-
-    // Create the AI Notebook instance in the service account proxy mode to control proxy access by
-    // means of IAM permissions on the service account.
-    // https://cloud.google.com/ai-platform/notebooks/docs/troubleshooting#opening_a_notebook_results_in_a_403_forbidden_error
-    ImmutableMap<String, String> metadata =
-        new ImmutableMap.Builder<String, String>().put("proxy-mode", "service_account").build();
-    instance.setMetadata(metadata);
-
+    setFields(creationParameters, serviceAccountEmail, instance);
     setNetworks(instance, projectId, creationParameters.getLocation());
-
     return instance;
   }
 
-  private static void setFields(
-      ApiGcpAiNotebookInstanceCreationParameters creationParameters, Instance instance) {
+  @VisibleForTesting
+  static Instance setFields(
+      ApiGcpAiNotebookInstanceCreationParameters creationParameters,
+      String serviceAccountEmail,
+      Instance instance) {
     instance
         .setPostStartupScript(creationParameters.getPostStartupScript())
-        .setMachineType(creationParameters.getMachineType());
+        .setMachineType(creationParameters.getMachineType())
+        .setInstallGpuDriver(creationParameters.isInstallGpuDriver())
+        .setCustomGpuDriverPath(creationParameters.getCustomGpuDriverPath())
+        .setBootDiskType(creationParameters.getBootDiskType())
+        .setBootDiskSizeGb(creationParameters.getBootDiskSizeGb())
+        .setDataDiskType(creationParameters.getDataDiskType())
+        .setDataDiskSizeGb(creationParameters.getDataDiskSizeGb())
+        .setLabels(creationParameters.getLabels());
+
+    Map<String, String> metadata = new HashMap<>();
+    Optional.ofNullable(creationParameters.getMetadata()).ifPresent(metadata::putAll);
+    // Create the AI Notebook instance in the service account proxy mode to control proxy access by
+    // means of IAM permissions on the service account.
+    // https://cloud.google.com/ai-platform/notebooks/docs/troubleshooting#opening_a_notebook_results_in_a_403_forbidden_error
+    if (metadata.put(PROXY_MODE_METADATA_KEY, "service_account") != null) {
+      throw new BadRequestException("proxy-mode metadata is reserved for Terra.");
+    }
+    instance.setMetadata(metadata);
+    instance.setServiceAccount(serviceAccountEmail);
+
+    ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig =
+        creationParameters.getAcceleratorConfig();
+    if (acceleratorConfig != null) {
+      instance.setAcceleratorConfig(
+          new AcceleratorConfig()
+              .setType(acceleratorConfig.getType())
+              .setCoreCount(acceleratorConfig.getCoreCount()));
+    }
     ApiGcpAiNotebookInstanceVmImage vmImageParameters = creationParameters.getVmImage();
     if (vmImageParameters != null) {
       instance.setVmImage(
@@ -139,6 +167,7 @@ public class CreateAiNotebookInstanceStep implements Step {
               .setRepository(containerImageParameters.getRepository())
               .setTag(containerImageParameters.getTag()));
     }
+    return instance;
   }
 
   private static void setNetworks(Instance instance, String projectId, String location) {
