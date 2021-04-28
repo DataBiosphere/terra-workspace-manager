@@ -20,9 +20,12 @@ public final class WorkspaceFlightMapKeys {
     public static final String IAM_RESOURCE_GROUP_EMAIL_MAP = "iamResourceGroupEmailMap";
 
     // Notebooks keys
+    public static final String CREATE_NOTEBOOK_NETWORK_NAME = "createNotebookNetworkName";
     public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
+    public static final String CREATE_NOTEBOOK_REGION = "createNotebookRegion";
     public static final String CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID =
         "createNotebookServiceAccountId";
+    public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
 
     private ControlledResourceKeys() {}
   }
