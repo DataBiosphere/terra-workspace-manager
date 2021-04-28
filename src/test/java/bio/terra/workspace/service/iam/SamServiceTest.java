@@ -69,7 +69,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void addedReaderCanRead() {
+  void addedReaderCanRead() throws Exception {
     UUID workspaceId = createWorkspaceDefaultUser();
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
@@ -83,7 +83,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void addedWriterCanWrite() {
+  void addedWriterCanWrite() throws Exception {
     UUID workspaceId = createWorkspaceDefaultUser();
 
     ReferencedDataRepoSnapshotResource referenceResource =
@@ -107,7 +107,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void removedReaderCannotRead() {
+  void removedReaderCannotRead() throws Exception {
     UUID workspaceId = createWorkspaceDefaultUser();
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
@@ -180,7 +180,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void listPermissionsIncludesAddedUsers() {
+  void listPermissionsIncludesAddedUsers() throws Exception {
     UUID workspaceId = createWorkspaceDefaultUser();
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
@@ -210,7 +210,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void writerCannotListPermissions() {
+  void writerCannotListPermissions() throws Exception {
     UUID workspaceId = createWorkspaceDefaultUser();
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), WsmIamRole.WRITER, userAccessUtils.getSecondUserEmail());
@@ -241,7 +241,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void listWorkspacesIncludesWsmWorkspace() {
+  void listWorkspacesIncludesWsmWorkspace() throws Exception {
     // This call cannot use william.thunderlord's account in dev Sam. Sam will return 500, as it
     // cannot handle his tens of thousands of workspaces.
     UUID workspaceId = createWorkspaceSecondaryUser();

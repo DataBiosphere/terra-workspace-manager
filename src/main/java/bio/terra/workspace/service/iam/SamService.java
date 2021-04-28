@@ -55,7 +55,7 @@ import org.springframework.stereotype.Component;
  *
  * <p>This class is used both by Flights and outside of Flights. Within flights,
  * InterruptedExceptions need to be raised and handled by Stairway. Outside of flights, they are
- * unexpected and will be converted into SamUnavailableExceptions which are unchecked.
+ * unexpected and will be converted into {@link SamInterruptedException} which are unchecked.
  */
 @Component
 public class SamService {
@@ -102,11 +102,35 @@ public class SamService {
     return creds.getAccessToken().getTokenValue();
   }
 
+  @FunctionalInterface
+  public interface InterruptedSupplier<R> {
+    R apply() throws InterruptedException;
+  }
+
+  public interface VoidInterruptedSupplier {
+    void apply() throws InterruptedException;
+  }
+
+  public static <T> T rethrowIfSamInterrupted(InterruptedSupplier<T> function, String operation) {
+    try {
+      return function.apply();
+    } catch (InterruptedException e) {
+      throw SamExceptionFactory.create("Interrupted during Sam operation " + operation, e);
+    }
+  }
+
+  public static void rethrowIfSamInterrupted(VoidInterruptedSupplier function, String operation) {
+    try {
+      function.apply();
+    } catch (InterruptedException e) {
+      throw SamExceptionFactory.create("Interrupted during Sam operation " + operation, e);
+    }
+  }
   /**
    * Register WSM's service account as a user in Sam if it isn't already. This is called on every
    * WSM startup, but should only need to register with Sam once per environment.
    */
-  public void initialize() {
+  public void initialize() throws InterruptedException {
     String wsmAccessToken;
     try {
       wsmAccessToken = getWsmServiceAccountToken();
@@ -116,13 +140,9 @@ public class SamService {
       logger.warn("Failed to register WSM service account in Sam. This is expected for tests.", e);
       return;
     }
-    try {
-      UsersApi usersApi = samUsersApi(wsmAccessToken);
-      if (!wsmServiceAccountRegistered(usersApi)) {
-        registerWsmServiceAccount(usersApi);
-      }
-    } catch (InterruptedException interruptedException) {
-      throw SamExceptionFactory.create("Interrupted while initializing Sam", interruptedException);
+    UsersApi usersApi = samUsersApi(wsmAccessToken);
+    if (!wsmServiceAccountRegistered(usersApi)) {
+      registerWsmServiceAccount(usersApi);
     }
   }
 
@@ -191,7 +211,7 @@ public class SamService {
    * Rawls, some of these workspaces will be Rawls managed and WSM will not know about them.
    */
   @Traced
-  public List<UUID> listWorkspaceIds(AuthenticatedUserRequest userReq) {
+  public List<UUID> listWorkspaceIds(AuthenticatedUserRequest userReq) throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     List<UUID> workspaceIds = new ArrayList<>();
     try {
@@ -210,9 +230,6 @@ public class SamService {
       }
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error listing Workspace Ids in Sam", apiException);
-    } catch (InterruptedException interruptedException) {
-      throw SamExceptionFactory.create(
-          "Interrupted while listing workspace Ids in Sam (or retrying)", interruptedException);
     }
     return workspaceIds;
   }
@@ -235,18 +252,6 @@ public class SamService {
         return;
       }
       throw SamExceptionFactory.create("Error deleting a workspace in Sam", apiException);
-    }
-  }
-
-  @Traced
-  public boolean isAuthorizedWrapped(
-      String accessToken, String iamResourceType, String resourceId, String action) {
-    try {
-      return isAuthorized(accessToken, iamResourceType, resourceId, action);
-    } catch (InterruptedException interruptedException) {
-      throw SamExceptionFactory.create(
-          "Interrupted while checking resource permission in Sam (or while retrying)",
-          interruptedException);
     }
   }
 
@@ -275,9 +280,10 @@ public class SamService {
    */
   @Traced
   public void checkAuthz(
-      AuthenticatedUserRequest userReq, String resourceType, String resourceId, String action) {
+      AuthenticatedUserRequest userReq, String resourceType, String resourceId, String action)
+      throws InterruptedException {
     boolean isAuthorized =
-        isAuthorizedWrapped(userReq.getRequiredToken(), resourceType, resourceId, action);
+        isAuthorized(userReq.getRequiredToken(), resourceType, resourceId, action);
     if (!isAuthorized)
       throw new UnauthorizedException(
           String.format(
@@ -306,7 +312,8 @@ public class SamService {
    */
   @Traced
   public void grantWorkspaceRole(
-      UUID workspaceId, AuthenticatedUserRequest userReq, WsmIamRole role, String email) {
+      UUID workspaceId, AuthenticatedUserRequest userReq, WsmIamRole role, String email)
+      throws InterruptedException {
     stageService.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
     checkAuthz(
         userReq,
@@ -326,9 +333,6 @@ public class SamService {
           "Granted role {} to user {} in workspace {}", role.toSamRole(), email, workspaceId);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error granting workspace role in Sam", apiException);
-    } catch (InterruptedException interruptedException) {
-      throw SamExceptionFactory.create(
-          "Interrupted while granting workspace role in Sam (or retrying)", interruptedException);
     }
   }
 
@@ -341,7 +345,8 @@ public class SamService {
    */
   @Traced
   public void removeWorkspaceRole(
-      UUID workspaceId, AuthenticatedUserRequest userReq, WsmIamRole role, String email) {
+      UUID workspaceId, AuthenticatedUserRequest userReq, WsmIamRole role, String email)
+      throws InterruptedException {
     stageService.assertMcWorkspace(workspaceId, "removeWorkspaceRole");
     checkAuthz(
         userReq,
@@ -361,9 +366,6 @@ public class SamService {
           "Removed role {} from user {} in workspace {}", role.toSamRole(), email, workspaceId);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error removing workspace role in Sam", apiException);
-    } catch (InterruptedException interruptedException) {
-      throw SamExceptionFactory.create(
-          "Interrupted while removing workspace role in Sam (or retrying)", interruptedException);
     }
   }
 
@@ -374,7 +376,8 @@ public class SamService {
    * permissions directly on other workspaces.
    */
   @Traced
-  public List<RoleBinding> listRoleBindings(UUID workspaceId, AuthenticatedUserRequest userReq) {
+  public List<RoleBinding> listRoleBindings(UUID workspaceId, AuthenticatedUserRequest userReq)
+      throws InterruptedException {
     stageService.assertMcWorkspace(workspaceId, "listRoleBindings");
     checkAuthz(
         userReq,
@@ -398,24 +401,6 @@ public class SamService {
           .collect(Collectors.toList());
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error listing role bindings in Sam", apiException);
-    } catch (InterruptedException interruptedException) {
-      throw SamExceptionFactory.create(
-          "Sam interrupted while listing role bindings (or retrying)", interruptedException);
-    }
-  }
-
-  /**
-   * Wrapper around syncWorkspacePolicy that catches and re-throws InterruptedException as an
-   * unchecked exception.
-   */
-  @Traced
-  public String syncWorkspacePolicyWrapped(
-      UUID workspaceId, WsmIamRole role, AuthenticatedUserRequest userReq) {
-    try {
-      return syncWorkspacePolicy(workspaceId, role, userReq);
-    } catch (InterruptedException interruptedException) {
-      throw SamExceptionFactory.create(
-          "Sam interrupted while syncing workspace policy (or retrying)", interruptedException);
     }
   }
 
@@ -591,7 +576,7 @@ public class SamService {
    */
   @Traced
   public List<String> listControlledResourceIds(
-      AuthenticatedUserRequest userReq, String samResourceTypeName) {
+      AuthenticatedUserRequest userReq, String samResourceTypeName) throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     List<String> controlledResourceIds = new ArrayList<>();
     try {
@@ -603,10 +588,6 @@ public class SamService {
     } catch (ApiException samException) {
       throw SamExceptionFactory.create(
           "Error listing controlled resource ids in Sam", samException);
-    } catch (InterruptedException interruptedException) {
-      throw SamExceptionFactory.create(
-          "Sam interrupted while listing controlled resource ids (or retrying the call)",
-          interruptedException);
     }
     return controlledResourceIds;
   }

@@ -357,8 +357,11 @@ public class WorkspaceApiController implements WorkspaceApi {
       throw new InvalidRoleException(
           "Users cannot grant role APPLICATION. Use application registration instead.");
     }
-    samService.grantWorkspaceRole(
-        id, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail());
+    SamService.rethrowIfSamInterrupted(
+        () ->
+            samService.grantWorkspaceRole(
+                id, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
+        "grantWorkspaceRole");
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -372,15 +375,19 @@ public class WorkspaceApiController implements WorkspaceApi {
       throw new InvalidRoleException(
           "Users cannot remove role APPLICATION. Use application registration instead.");
     }
-    samService.removeWorkspaceRole(
-        id, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), memberEmail);
+    SamService.rethrowIfSamInterrupted(
+        () ->
+            samService.removeWorkspaceRole(
+                id, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), memberEmail),
+        "removeWorkspaceRole");
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
   public ResponseEntity<ApiRoleBindingList> getRoles(@PathVariable("workspaceId") UUID id) {
     List<bio.terra.workspace.service.iam.model.RoleBinding> bindingList =
-        samService.listRoleBindings(id, getAuthenticatedInfo());
+        SamService.rethrowIfSamInterrupted(
+            () -> samService.listRoleBindings(id, getAuthenticatedInfo()), "listRoleBindings");
     ApiRoleBindingList responseList = new ApiRoleBindingList();
     for (bio.terra.workspace.service.iam.model.RoleBinding roleBinding : bindingList) {
       responseList.add(

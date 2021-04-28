@@ -81,13 +81,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                 Mockito.any(),
                 Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
         .thenReturn(true);
-    Mockito.when(
-            mockSamService.isAuthorizedWrapped(
-                Mockito.any(),
-                Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
-                Mockito.any(),
-                Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
-        .thenReturn(true);
     // Return a valid google group for cloud sync, as Google validates groups added to GCP projects.
     Mockito.when(mockSamService.syncWorkspacePolicy(any(), any(), any()))
         .thenReturn("terra-workspace-manager-test-group@googlegroups.com");
@@ -111,7 +104,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void testGetForbiddenMissingWorkspace() {
+  void testGetForbiddenMissingWorkspace() throws Exception {
     doThrow(new UnauthorizedException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
@@ -121,7 +114,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void testGetForbiddenExistingWorkspace() {
+  void testGetForbiddenExistingWorkspace() throws Exception {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
@@ -302,7 +295,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void deleteForbiddenMissingWorkspace() {
+  void deleteForbiddenMissingWorkspace() throws Exception {
     doThrow(new UnauthorizedException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
@@ -313,7 +306,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void deleteForbiddenExistingWorkspace() {
+  void deleteForbiddenExistingWorkspace() throws Exception {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
@@ -473,13 +466,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                 Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
         .thenReturn(false);
 
-    Mockito.when(
-            mockSamService.isAuthorizedWrapped(
-                Mockito.eq(USER_REQUEST.getRequiredToken()),
-                Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
-                Mockito.any(),
-                Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
-        .thenReturn(false);
     assertThrows(
         SpendUnauthorizedException.class,
         () ->

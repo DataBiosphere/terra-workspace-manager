@@ -113,8 +113,11 @@ public class WorkspaceService {
   public Workspace validateWorkspaceAndAction(
       AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
     Workspace workspace = workspaceDao.getWorkspace(workspaceId);
-    samService.checkAuthz(
-        userReq, SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), action);
+    SamService.rethrowIfSamInterrupted(
+        () ->
+            samService.checkAuthz(
+                userReq, SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), action),
+        "checkAuthz");
     return workspace;
   }
 
@@ -127,7 +130,9 @@ public class WorkspaceService {
    */
   @Traced
   public List<Workspace> listWorkspaces(AuthenticatedUserRequest userReq, int offset, int limit) {
-    List<UUID> samWorkspaceIds = samService.listWorkspaceIds(userReq);
+    List<UUID> samWorkspaceIds =
+        SamService.rethrowIfSamInterrupted(
+            () -> samService.listWorkspaceIds(userReq), "listWorkspaceIds");
     return workspaceDao.getWorkspacesMatchingList(samWorkspaceIds, offset, limit);
   }
 
