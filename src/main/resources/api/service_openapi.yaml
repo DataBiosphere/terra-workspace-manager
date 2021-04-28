@@ -1825,7 +1825,7 @@ components:
           $ref: '#/components/schemas/GcpAiNotebookInstanceVmImage'
         containerImage:
           $ref: '#/components/schemas/GcpAiNotebookInstanceContainerImage'
-        # TODO(PF-469) Add support for more fields.
+        # TODO(PF-715) Add support for more fields.
 
     GcpAiNotebookInstanceVmImage:
       description: >-
