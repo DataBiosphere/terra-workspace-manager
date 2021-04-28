@@ -59,7 +59,7 @@ public class DeleteProjectStep implements Step {
     // TODO: investigate recovering projects if this happens often and recovery works as a "undo."
     String projectId = cloudContext.get().getGcpProjectId();
     logger.error("Unable to undo deletion of project [{}]", projectId);
-    return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
+    return flightContext.getResult();
   }
 
   private Optional<GcpCloudContext> getContext(FlightContext flightContext) {
