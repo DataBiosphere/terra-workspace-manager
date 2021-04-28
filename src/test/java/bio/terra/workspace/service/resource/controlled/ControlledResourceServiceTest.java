@@ -27,6 +27,8 @@ import bio.terra.workspace.service.resource.controlled.flight.create.CreateBigQu
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateServiceAccountStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteBigQueryDatasetStep;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteSamResourceStep;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
@@ -403,9 +405,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             userAccessUtils.defaultUserAuthRequest());
     assertEquals(resource, createdDataset);
 
-    // Test idempotency of delete by retrying BQ specific steps once.
+    // Test idempotency of delete by retrying steps once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(DeleteSamResourceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(DeleteMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(DeleteBigQueryDatasetStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    // Do not test lastStepFailure, as this flight has no undo steps, only dismal failure.
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 

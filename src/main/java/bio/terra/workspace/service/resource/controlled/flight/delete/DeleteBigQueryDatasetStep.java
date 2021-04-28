@@ -67,10 +67,9 @@ public class DeleteBigQueryDatasetStep implements Step {
     // Deletes cannot be undone, so we log a warning and continue the flight.
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
 
-    logger.warn(
-        "Cannot undo delete of BQ dataset {} in project {}. Continuing flight.",
-        resource.getDatasetName(),
-        projectId);
-    return StepResult.getStepResultSuccess();
+    logger.error(
+        "Cannot undo delete of BQ dataset {} in project {}.", resource.getDatasetName(), projectId);
+    // Surface whatever error caused Stairway to begin undoing.
+    return flightContext.getResult();
   }
 }

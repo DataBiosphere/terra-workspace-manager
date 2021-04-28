@@ -185,12 +185,9 @@ public class ControlledResourceService {
   /** Synchronously delete a controlled resource. */
   public void deleteControlledResourceSync(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
-    stageService.assertMcWorkspace(workspaceId, "deleteControlledResourceSync");
-    validateControlledResourceAndAction(
-        userRequest, workspaceId, resourceId, SamControlledResourceActions.DELETE_ACTION);
 
     JobBuilder deleteJob =
-        deleteControlledResourceJobBuilder(
+        commonDeletionJobBuilder(
             UUID.randomUUID().toString(), workspaceId, resourceId, null, userRequest);
     // Delete flight does not produce a result, so the resultClass parameter here is never used.
     deleteJob.submitAndWait(Void.class);
@@ -206,12 +203,9 @@ public class ControlledResourceService {
       UUID resourceId,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
-    stageService.assertMcWorkspace(workspaceId, "deleteControlledResourceAsync");
-    validateControlledResourceAndAction(
-        userRequest, workspaceId, resourceId, SamControlledResourceActions.DELETE_ACTION);
 
     JobBuilder deleteJob =
-        deleteControlledResourceJobBuilder(
+        commonDeletionJobBuilder(
             jobControl.getId(), workspaceId, resourceId, resultPath, userRequest);
     return deleteJob.submit();
   }
@@ -220,12 +214,15 @@ public class ControlledResourceService {
    * Creates and returns a JobBuilder object for deleting a controlled resource. Depending on the
    * type of resource being deleted, this job may need to run asynchronously.
    */
-  private JobBuilder deleteControlledResourceJobBuilder(
+  private JobBuilder commonDeletionJobBuilder(
       String jobId,
       UUID workspaceId,
       UUID resourceId,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
+    stageService.assertMcWorkspace(workspaceId, "deleteControlledResource");
+    validateControlledResourceAndAction(
+        userRequest, workspaceId, resourceId, SamControlledResourceActions.DELETE_ACTION);
     final String jobDescription = "Delete controlled resource; id: " + resourceId.toString();
 
     return jobService

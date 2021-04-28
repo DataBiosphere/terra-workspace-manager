@@ -25,6 +25,20 @@ public class DeleteControlledResourceFlight extends Flight {
   private final RetryRule syncCloudRetryRule =
       new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount=  */ 2);
 
+  /**
+   * Retry rule for handling unexpected timeouts with Sam. Note that some errors from Sam (like
+   * NOT_FOUND responses to resources which were already deleted) are not handled by retries.
+   */
+  private final RetryRule samRetryRule =
+      new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount=  */ 2);
+
+  /**
+   * Retry rule for immediately retrying a failed step twice. This is useful for retrying operations
+   * where waiting is not necessary, e.g. retrying conflicted SQL transactions.
+   */
+  private final RetryRule immediateRetryRule =
+      new RetryRuleFixedInterval(/*intervalSeconds= */ 0, /* maxCount= */ 2);
+
   public DeleteControlledResourceFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
@@ -53,7 +67,8 @@ public class DeleteControlledResourceFlight extends Flight {
             flightBeanBag.getSamService(),
             workspaceId,
             resourceId,
-            userRequest));
+            userRequest),
+        samRetryRule);
 
     switch (resource.getResourceType()) {
       case GCS_BUCKET:
@@ -79,6 +94,8 @@ public class DeleteControlledResourceFlight extends Flight {
             "Delete not yet implemented for resource type " + resource.getResourceType());
     }
 
-    addStep(new DeleteMetadataStep(flightBeanBag.getResourceDao(), workspaceId, resourceId));
+    addStep(
+        new DeleteMetadataStep(flightBeanBag.getResourceDao(), workspaceId, resourceId),
+        immediateRetryRule);
   }
 }

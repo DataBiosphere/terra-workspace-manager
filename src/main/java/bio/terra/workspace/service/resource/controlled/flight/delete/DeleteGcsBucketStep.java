@@ -112,6 +112,9 @@ public class DeleteGcsBucketStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    return StepResult.getStepResultSuccess();
+    logger.error(
+        "Cannot undo delete of GCS bucket resource {} in workspace {}.", resourceId, workspaceId);
+    // Surface whatever error caused Stairway to begin undoing.
+    return flightContext.getResult();
   }
 }
