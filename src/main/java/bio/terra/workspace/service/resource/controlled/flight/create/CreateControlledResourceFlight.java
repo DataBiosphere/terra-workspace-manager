@@ -13,6 +13,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateServiceAccountStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.GenerateServiceAccountIdStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.RetrieveNetworkNameStep;
 import bio.terra.workspace.service.workspace.flight.SyncSamGroupsStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.List;
@@ -79,6 +80,12 @@ public class CreateControlledResourceFlight extends Flight {
                 flightBeanBag.getWorkspaceService()));
         break;
       case AI_NOTEBOOK_INSTANCE:
+        addStep(
+            new RetrieveNetworkNameStep(
+                flightBeanBag.getCrlService(),
+                resource.castToAiNotebookInstanceResource(),
+                flightBeanBag.getWorkspaceService()),
+            gcpRetryRule);
         addStep(new GenerateServiceAccountIdStep());
         addStep(
             new CreateServiceAccountStep(

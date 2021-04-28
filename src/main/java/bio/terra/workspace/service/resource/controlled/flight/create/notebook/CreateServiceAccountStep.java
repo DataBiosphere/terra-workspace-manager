@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.flight.create.notebook;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID;
 
 import bio.terra.cloudres.google.iam.IamCow;
+import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -72,7 +73,7 @@ public class CreateServiceAccountStep implements Step {
         throw new RetryException(e);
       }
       String serviceAccountEmail =
-          CreateServiceAccountStep.serviceAccountEmail(serviceAccountId, projectId);
+          ServiceAccountName.emailFromAccountId(serviceAccountId, projectId);
       logger.debug(
           "Service account {} already created for notebook instance.", serviceAccountEmail);
     } catch (IOException e) {
@@ -86,7 +87,7 @@ public class CreateServiceAccountStep implements Step {
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
     IamCow iam = crlService.getIamCow();
     String serviceAccountEmail =
-        serviceAccountEmail(
+        ServiceAccountName.emailFromAccountId(
             flightContext.getWorkingMap().get(CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID, String.class),
             projectId);
     try {
@@ -104,10 +105,5 @@ public class CreateServiceAccountStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     return StepResult.getStepResultSuccess();
-  }
-
-  /** Returns the service account email based on the project id and the service account id. */
-  public static String serviceAccountEmail(String accountId, String projectId) {
-    return String.format("%s@%s.iam.gserviceaccount.com", accountId, projectId);
   }
 }

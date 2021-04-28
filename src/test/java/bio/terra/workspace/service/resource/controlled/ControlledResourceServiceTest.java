@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
+import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.common.stairway.StairwayComponent;
@@ -26,6 +27,7 @@ import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateServiceAccountStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.RetrieveNetworkNameStep;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
@@ -112,6 +114,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // Test idempotency of steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(RetrieveNetworkNameStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(CreateServiceAccountStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         CreateAiNotebookInstanceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -143,7 +146,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .execute();
 
     assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_account"));
-    // TODO(PF-469): Test that the user has permission to act as the service account.
+    // TODO(PF-626): Test that the user has permission to act as the service account.
 
     assertEquals(
         resource,
@@ -246,8 +249,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .getResultMap()
             .get()
             .get(CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID, String.class);
-    // TODO(PF-469): Use service account "get" to check for existence instead of "delete" once we
-    // have that method in CRL.
     GoogleJsonResponseException serviceAccountException =
         assertThrows(
             GoogleJsonResponseException.class,
@@ -256,12 +257,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                     .getIamCow()
                     .projects()
                     .serviceAccounts()
-                    .delete(
-                        "projects/"
-                            + projectId
-                            + "/serviceAccounts/"
-                            + CreateServiceAccountStep.serviceAccountEmail(
-                                serviceAccountId, projectId))
+                    .get(
+                        ServiceAccountName.builder()
+                            .projectId(projectId)
+                            .email(
+                                ServiceAccountName.emailFromAccountId(serviceAccountId, projectId))
+                            .build())
                     .execute());
     assertEquals(HttpStatus.NOT_FOUND.value(), serviceAccountException.getStatusCode());
 
