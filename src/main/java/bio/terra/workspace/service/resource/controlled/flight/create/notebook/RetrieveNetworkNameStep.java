@@ -97,7 +97,7 @@ public class RetrieveNetworkNameStep implements Step {
     int lastSlashIndex = url.lastIndexOf('/');
     if (lastSlashIndex == -1) {
       throw new InternalServerErrorException(
-          String.format("Unable to extract network name from %s", url));
+          String.format("Unable to extract resource name from '%s'", url));
     }
     return url.substring(lastSlashIndex + 1);
   }
