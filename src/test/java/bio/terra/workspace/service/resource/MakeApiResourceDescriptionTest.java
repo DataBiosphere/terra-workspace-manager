@@ -4,11 +4,13 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.app.controller.ResourceController;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
@@ -16,6 +18,7 @@ import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceDescription;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
@@ -175,6 +178,36 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
       assertThat(attributes, is(notNullValue()));
       assertThat(attributes.getDatasetId(), equalTo(datasetName));
       assertThat(attributes.getProjectId(), equalTo(projectId));
+    }
+
+    @Test
+    public void mapControlledAiNotebookInstanceTest() throws Exception {
+      String instanceId = RandomStringUtils.randomAlphabetic(5).toLowerCase();
+
+      var resource =
+          ControlledAiNotebookInstanceResource.builder()
+              .workspaceId(workspaceId)
+              .resourceId(resourceId)
+              .name(resourceName)
+              .description(description)
+              .cloningInstructions(cloning)
+              .assignedUser(assignedUser)
+              .accessScope(accessScopeType)
+              .managedBy(managedByType)
+              .location("us-east1-b")
+              .instanceId(instanceId)
+              .build();
+
+      String projectId = "my-project-id";
+      ApiResourceDescription resourceDescription =
+          resourceController.makeApiResourceDescription(resource, projectId);
+      validateControlledResource(resourceDescription);
+      ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
+      ApiGcpAiNotebookInstanceAttributes attributes = union.getGcpAiNotebookInstance();
+      assertThat(attributes, is(notNullValue()));
+      assertEquals("us-east1-b", attributes.getLocation());
+      assertEquals(instanceId, attributes.getInstanceId());
+      assertEquals(projectId, attributes.getProjectId());
     }
 
     public void validateControlledResource(ApiResourceDescription resourceDescription) {

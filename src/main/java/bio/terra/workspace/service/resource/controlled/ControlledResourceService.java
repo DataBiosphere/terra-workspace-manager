@@ -15,7 +15,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceGcsBucketFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -204,30 +204,53 @@ public class ControlledResourceService {
     resourceDao.updateResource(workspaceId, resourceId, name, description);
   }
 
-  public String deleteControlledGcsBucket(
+  /** Synchronously delete a controlled resource. */
+  public void deleteControlledResourceSync(
+      UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
+
+    JobBuilder deleteJob =
+        commonDeletionJobBuilder(
+            UUID.randomUUID().toString(), workspaceId, resourceId, null, userRequest);
+    // Delete flight does not produce a result, so the resultClass parameter here is never used.
+    deleteJob.submitAndWait(Void.class);
+  }
+
+  /**
+   * Asynchronously delete a controlled resource. Returns the ID of the flight running the delete
+   * job.
+   */
+  public String deleteControlledResourceAsync(
       ApiJobControl jobControl,
       UUID workspaceId,
       UUID resourceId,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
-    stageService.assertMcWorkspace(workspaceId, "deleteControlledGcsBucket");
+
+    JobBuilder deleteJob =
+        commonDeletionJobBuilder(
+            jobControl.getId(), workspaceId, resourceId, resultPath, userRequest);
+    return deleteJob.submit();
+  }
+
+  /**
+   * Creates and returns a JobBuilder object for deleting a controlled resource. Depending on the
+   * type of resource being deleted, this job may need to run asynchronously.
+   */
+  private JobBuilder commonDeletionJobBuilder(
+      String jobId,
+      UUID workspaceId,
+      UUID resourceId,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
+    stageService.assertMcWorkspace(workspaceId, "deleteControlledResource");
     validateControlledResourceAndAction(
         userRequest, workspaceId, resourceId, SamControlledResourceActions.DELETE_ACTION);
-    final String jobDescription =
-        "Delete controlled GCS bucket resource; id: " + resourceId.toString();
+    final String jobDescription = "Delete controlled resource; id: " + resourceId.toString();
 
-    final JobBuilder jobBuilder =
-        jobService
-            .newJob(
-                jobDescription,
-                jobControl.getId(),
-                DeleteControlledResourceGcsBucketFlight.class,
-                null,
-                userRequest)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
-            .addParameter(ResourceKeys.RESOURCE_ID, resourceId.toString())
-            .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
-
-    return jobBuilder.submit();
+    return jobService
+        .newJob(jobDescription, jobId, DeleteControlledResourceFlight.class, null, userRequest)
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
+        .addParameter(ResourceKeys.RESOURCE_ID, resourceId.toString())
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
   }
 }

@@ -116,7 +116,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     logger.info(
         "deleteBucket workspace {} resource {}", workspaceId.toString(), resourceId.toString());
     final String jobId =
-        controlledResourceService.deleteControlledGcsBucket(
+        controlledResourceService.deleteControlledResourceAsync(
             jobControl,
             workspaceId,
             resourceId,
@@ -240,6 +240,17 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .resourceId(createdDataset.getResourceId())
             .bigQueryDataset(createdDataset.toApiResource(projectId));
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> deleteBigQueryDataset(UUID workspaceId, UUID resourceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    logger.info(
+        "Deleting controlled BQ dataset resource {} in workspace {}",
+        resourceId.toString(),
+        workspaceId.toString());
+    controlledResourceService.deleteControlledResourceSync(workspaceId, resourceId, userRequest);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
