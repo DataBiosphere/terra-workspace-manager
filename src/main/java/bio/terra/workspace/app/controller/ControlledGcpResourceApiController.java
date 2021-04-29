@@ -334,7 +334,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
               .castToAiNotebookInstanceResource()
               .toApiResource(workspaceService.getRequiredGcpProject(workspaceId));
       return new ResponseEntity<>(response, HttpStatus.OK);
-    } catch(InvalidMetadataException ex) {
+    } catch (InvalidMetadataException ex) {
       throw new BadRequestException(
           String.format(
               "Resource %s in workspace %s is not a controlled AI Notebook Instance.",
