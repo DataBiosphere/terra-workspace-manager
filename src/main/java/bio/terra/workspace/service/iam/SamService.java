@@ -10,6 +10,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -653,5 +654,22 @@ public class SamService {
   /** Returns the Sam action for modifying a given IAM role. */
   private String samActionToModifyRole(WsmIamRole role) {
     return String.format("share_policy::%s", role.toSamRole());
+  }
+
+  /**
+   * Return all the roles for this user on a given workspace
+   * @param controlledResource
+   * @param userRequest
+   * @param userEmail
+   * @return
+   */
+  public List<WsmIamRole> getWorkspaceRolesForUser(UUID workspaceId,
+      AuthenticatedUserRequest userRequest, String userEmail) {
+    final List<RoleBinding> roleBindings = listRoleBindings(workspaceId, userRequest);
+    // find roles on this workspace for assignee user
+    return roleBindings.stream()
+        .filter(rb -> rb.users().contains(userEmail))
+        .map(RoleBinding::role)
+        .collect(Collectors.toList());
   }
 }

@@ -7,7 +7,9 @@ import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
@@ -22,7 +24,9 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -136,6 +140,7 @@ public class ControlledResourceService {
         userRequest,
         resource.getWorkspaceId(),
         resource.getCategory().getSamCreateResourceAction());
+    validateOnlySelfAssignmentForWorkspaceWriter(resource, userRequest);
     final String jobDescription =
         String.format(
             "Create controlled resource %s; id %s; name %s",
@@ -190,4 +195,50 @@ public class ControlledResourceService {
 
     return jobBuilder.submit();
   }
+
+  /**
+   * Users who are READERS on the workspace may only have READER  on a private resource.
+   * WRITER workspace users may have either READER or WRITER assigned to them.
+   */
+  private void validateUserWorkspaceRole() {
+
+  }
+
+  private void validateOnlySelfAssignmentForWorkspaceWriter(ControlledResource controlledResource, AuthenticatedUserRequest userRequest) {
+    boolean resourceIsPrivateAccessScope = controlledResource.getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE);
+    boolean userIsWriterOnWorkspace = samService.isAuthorized(
+        userRequest.getRequiredToken(),
+        SamConstants.SAM_WORKSPACE_RESOURCE,
+        controlledResource.getWorkspaceId().toString(),
+        SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+    if (resourceIsPrivateAccessScope && userIsWriterOnWorkspace) {
+      boolean isAllowed = controlledResource
+                  .getAssignedUser()
+                  .map(u -> u.equals(userRequest.getEmail()))
+                  .orElse(false);
+      if (!isAllowed) {
+        throw new IllegalStateException(
+            "Workspace Writer User may only assign a private controlled resource to themselves.");
+      }
+    }
+  }
+
+  /**
+   * Workspace READERs may only have READER permission on controlled resources to which they are
+   * assigned. WRITERs may have either READER or WRITER permission, and OWNERS are unrestricted.
+   * @param controlledResource - controlled resource to check permission match on
+   * @param userRequest - current request
+   */
+  private void validateResourceAssigneeHasSameWorkspacePermissionAsResource(ControlledResource controlledResource, AuthenticatedUserRequest userRequest) {
+    final List<WsmIamRole> roles =
+        controlledResource
+            .getAssignedUser()
+            .map(
+                user ->
+                    samService.getWorkspaceRolesForUser(
+                        controlledResource.getWorkspaceId(), userRequest, user))
+            .orElse(Collections.emptyList());
+//    get the role on the resource for this assigned user and ensure it's one of the roles from the workspace
+  }
+
 }
