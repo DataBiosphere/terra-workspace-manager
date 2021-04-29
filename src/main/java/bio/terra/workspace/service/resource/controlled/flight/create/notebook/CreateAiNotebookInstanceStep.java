@@ -32,8 +32,6 @@ import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.api.services.notebooks.v1.model.Operation;
 import com.google.api.services.notebooks.v1.model.VmImage;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.HashMap;
