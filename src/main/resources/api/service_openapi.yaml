@@ -1840,12 +1840,6 @@ components:
             of 64000 GB (64 TB). If not specified, this defaults to 100.
           type: integer
           format: int64
-        labels:
-          description: >-
-            Labels to apply to this instance.
-          type: object
-          additionalProperties:
-            type: string
         metadata:
           description: >-
             Custom metadata to apply to this instance. Some metadata keys are reserved by Terra and

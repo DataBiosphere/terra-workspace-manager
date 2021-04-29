@@ -129,8 +129,7 @@ public class CreateAiNotebookInstanceStep implements Step {
         .setBootDiskType(creationParameters.getBootDiskType())
         .setBootDiskSizeGb(creationParameters.getBootDiskSizeGb())
         .setDataDiskType(creationParameters.getDataDiskType())
-        .setDataDiskSizeGb(creationParameters.getDataDiskSizeGb())
-        .setLabels(creationParameters.getLabels());
+        .setDataDiskSizeGb(creationParameters.getDataDiskSizeGb());
 
     Map<String, String> metadata = new HashMap<>();
     Optional.ofNullable(creationParameters.getMetadata()).ifPresent(metadata::putAll);

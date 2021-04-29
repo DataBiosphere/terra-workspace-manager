@@ -28,7 +28,6 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
             .bootDiskSizeGb(111L)
             .dataDiskType("data-disk-type")
             .dataDiskSizeGb(222L)
-            .labels(Map.of("label-key", "label-value"))
             .metadata(Map.of("metadata-key", "metadata-value"))
             .acceleratorConfig(
                 new ApiGcpAiNotebookInstanceAcceleratorConfig()
@@ -51,7 +50,6 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
     assertEquals(111L, instance.getBootDiskSizeGb());
     assertEquals("data-disk-type", instance.getDataDiskType());
     assertEquals(222L, instance.getDataDiskSizeGb());
-    assertThat(instance.getLabels(), Matchers.hasEntry("label-key", "label-value"));
     assertThat(instance.getMetadata(), Matchers.aMapWithSize(2));
     assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_account"));
     assertThat(instance.getMetadata(), Matchers.hasEntry("metadata-key", "metadata-value"));
