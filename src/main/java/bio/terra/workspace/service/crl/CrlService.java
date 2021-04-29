@@ -5,6 +5,7 @@ import bio.terra.cloudres.common.cleanup.CleanupConfig;
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.billing.CloudBillingClientCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
+import bio.terra.cloudres.google.compute.CloudComputeCow;
 import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
@@ -45,6 +46,7 @@ public class CrlService {
   private final AIPlatformNotebooksCow crlNotebooksCow;
   private final CloudResourceManagerCow crlResourceManagerCow;
   private final CloudBillingClientCow crlBillingClientCow;
+  private final CloudComputeCow crlComputeCow;
   private final IamCow crlIamCow;
   private final ServiceUsageCow crlServiceUsageCow;
 
@@ -59,6 +61,7 @@ public class CrlService {
         this.crlNotebooksCow = AIPlatformNotebooksCow.create(clientConfig, creds);
         this.crlResourceManagerCow = CloudResourceManagerCow.create(clientConfig, creds);
         this.crlBillingClientCow = new CloudBillingClientCow(clientConfig, creds);
+        this.crlComputeCow = CloudComputeCow.create(clientConfig, creds);
         this.crlIamCow = IamCow.create(clientConfig, creds);
         this.crlServiceUsageCow = ServiceUsageCow.create(clientConfig, creds);
 
@@ -70,6 +73,7 @@ public class CrlService {
       crlNotebooksCow = null;
       crlResourceManagerCow = null;
       crlBillingClientCow = null;
+      crlComputeCow = null;
       crlIamCow = null;
       crlServiceUsageCow = null;
     }
@@ -90,6 +94,12 @@ public class CrlService {
   public CloudBillingClientCow getCloudBillingClientCow() {
     assertCrlInUse();
     return crlBillingClientCow;
+  }
+
+  /** Returns the CRL {@link CloudComputeCow} which wraps Google Compute Engine API. */
+  public CloudComputeCow getCloudComputeCow() {
+    assertCrlInUse();
+    return crlComputeCow;
   }
 
   /** Returns the CRL {@link IamCow} which wraps Google IAM API. */

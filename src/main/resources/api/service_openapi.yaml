@@ -862,6 +862,24 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/{resourceId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    delete:
+      summary: Delete a controlled Bigquery dataset
+      operationId: deleteBigQueryDataset
+      tags: [ ControlledGcpResource ]
+      responses:
+        '204':
+          description: Success
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -916,7 +934,7 @@ paths:
           $ref: '#/components/responses/GetControlledGcpAiNotebookInstanceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
@@ -1537,7 +1555,6 @@ components:
         dataset:
           $ref: '#/components/schemas/GcpBigQueryDatasetCreationParameters'
 
-
     CreateControlledGcpAiNotebookInstanceRequestBody:
       description: Payload for requesting a new controlled GCS bucket resource.
       type: object
@@ -1792,11 +1809,6 @@ components:
           description: The canonical GCP id for this location. For example, \'us-east1\'.
           type: string
           required: true
-        machineType:
-          description: The Compute Engine machine type of this instance, see
-            https://cloud.google.com/compute/docs/machine-types
-          type: string
-          required: true
         postStartupScript:
           description: >-
             Path to a Bash script that automatically runs after a notebook instance fully boots up.
@@ -1804,11 +1816,73 @@ components:
             is a cloud storage path, the created VM instance's service account's credentials is used
             to access it.
           type: string
+        machineType:
+          description: The Compute Engine machine type of this instance, see
+            https://cloud.google.com/compute/docs/machine-types
+          type: string
+          required: true
+        acceleratorConfig:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceAcceleratorConfig'
+        installGpuDriver:
+          description: >-
+            Whether the end user authorizes Google Cloud to install GPU driver on this instance. If
+            this field is empty or set to false, the GPU driver won't be installed. Only applicable
+            to instances with GPUs.
+          type: boolean
+        customGpuDriverPath:
+          description: >-
+            Specify a custom Cloud Storage path where the GPU driver is stored. If not specified,
+            we'll automatically choose from official GPU drivers.
+          type: string
+        bootDiskType:
+          description: >-
+            The type of the boot disk attached to this instance, defaults to standard persistent
+            disk (PD_STANDARD). See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances#DiskType
+          type: string
+        bootDiskSizeGb:
+          description: >-
+            Input only. The size of the boot disk in GB attached to this instance, up to a maximum
+            of 64000 GB (64 TB). The minimum recommended value is 100 GB. If not specified, this
+            defaults to 100.
+          type: integer
+          format: int64
+        dataDiskType:
+          description: >-
+            Input only. The type of the data disk attached to this instance, defaults to standard
+            persistent disk (PD_STANDARD). See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances#DiskType
+          type: string
+        dataDiskSizeGb:
+          description: >-
+            Input only. The size of the data disk in GB attached to this instance, up to a maximum
+            of 64000 GB (64 TB). If not specified, this defaults to 100.
+          type: integer
+          format: int64
+        metadata:
+          description: >-
+            Custom metadata to apply to this instance. Some metadata keys are reserved by Terra and
+            will throw a bad request error if specified: 'proxy-mode'.
+          type: object
+          additionalProperties:
+            type: string
         vmImage:
           $ref: '#/components/schemas/GcpAiNotebookInstanceVmImage'
         containerImage:
           $ref: '#/components/schemas/GcpAiNotebookInstanceContainerImage'
-        # TODO(PF-715) Add support for more fields.
+
+    GcpAiNotebookInstanceAcceleratorConfig:
+      description: >-
+        The hardware accelerator used on this instance. If you use accelerators, make sure that your
+        configuration has enough vCPUs and memory to support the machineType you have selected.
+        See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances#AcceleratorConfig
+      type: object
+      properties:
+        type:
+          description: Type of this accelerator
+          type: string
+        coreCount:
+          description: Count of cores of this accelerator.
+          type: integer
+          format: int64
 
     GcpAiNotebookInstanceVmImage:
       description: >-
