@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -97,7 +98,7 @@ public class ControlledResourceService {
   }
 
   /** Starts a create controlled bucket resource, blocking until its job is finished. */
-  public ControlledGcsBucketResource syncCreateBucket(
+  public ControlledGcsBucketResource createBucket(
       ControlledGcsBucketResource resource,
       ApiGcpGcsBucketCreationParameters creationParameters,
       List<ControlledResourceIamRole> privateResourceIamRoles,
@@ -111,6 +112,23 @@ public class ControlledResourceService {
                 userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
+  }
+
+  /** Starts a create controlled BigQuery dataset resource, blocking until its job is finished. */
+  public ControlledBigQueryDatasetResource createBqDataset(
+      ControlledBigQueryDatasetResource resource,
+      ApiGcpBigQueryDatasetCreationParameters creationParameters,
+      List<ControlledResourceIamRole> privateResourceIamRoles,
+      AuthenticatedUserRequest userRequest) {
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(
+                resource,
+                privateResourceIamRoles,
+                new ApiJobControl().id(UUID.randomUUID().toString()),
+                null,
+                userRequest)
+            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    return jobBuilder.submitAndWait(ControlledBigQueryDatasetResource.class);
   }
 
   /** Starts a create controlled AI Notebook instance resource job, returning the job id. */
