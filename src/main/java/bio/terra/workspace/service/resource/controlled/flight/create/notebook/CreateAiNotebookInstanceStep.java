@@ -1,14 +1,19 @@
 package bio.terra.workspace.service.resource.controlled.flight.create.notebook;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_NETWORK_NAME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_REGION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_SUBNETWORK_NAME;
 
 import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.cloudres.google.api.services.common.OperationUtils;
+import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
@@ -28,6 +33,7 @@ import com.google.api.services.notebooks.v1.model.Operation;
 import com.google.api.services.notebooks.v1.model.VmImage;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.HashMap;
@@ -108,11 +114,11 @@ public class CreateAiNotebookInstanceStep implements Step {
             .getInputParameters()
             .get(CREATE_NOTEBOOK_PARAMETERS, ApiGcpAiNotebookInstanceCreationParameters.class);
     String serviceAccountEmail =
-        CreateServiceAccountStep.serviceAccountEmail(
+        ServiceAccountName.emailFromAccountId(
             flightContext.getWorkingMap().get(CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID, String.class),
             projectId);
     setFields(creationParameters, serviceAccountEmail, instance);
-    setNetworks(instance, projectId, creationParameters.getLocation());
+    setNetworks(instance, projectId, flightContext.getWorkingMap());
     return instance;
   }
 
@@ -169,16 +175,13 @@ public class CreateAiNotebookInstanceStep implements Step {
     return instance;
   }
 
-  private static void setNetworks(Instance instance, String projectId, String location) {
-    // 'network' is the name of the VPC network instance created by the Buffer Service.
-    // TODO(PPF-469): Instead of hard coding this, look up the name of the network on the project.
-    instance.setNetwork("projects/" + projectId + "/global/networks/network");
-    // Assume the region is related to the location like 'us-west1' is to 'us-west1-b'.
-    Preconditions.checkArgument(location.length() > 2, "Invalid location '%s'", location);
-    String region = location.substring(0, location.length() - 2);
-    // Like 'network', 'subnetwork' is the name of the subnetwork created by the Buffer Service in
-    // each region.
-    instance.setSubnet("projects/" + projectId + "/regions/" + region + "/subnetworks/subnetwork");
+  private static void setNetworks(Instance instance, String projectId, FlightMap workingMap) {
+    String region = workingMap.get(CREATE_NOTEBOOK_REGION, String.class);
+    String networkName = workingMap.get(CREATE_NOTEBOOK_NETWORK_NAME, String.class);
+    String subnetworkName = workingMap.get(CREATE_NOTEBOOK_SUBNETWORK_NAME, String.class);
+    instance.setNetwork("projects/" + projectId + "/global/networks/" + networkName);
+    instance.setSubnet(
+        "projects/" + projectId + "/regions/" + region + "/subnetworks/" + subnetworkName);
   }
 
   private InstanceName createInstanceName(String projectId) {

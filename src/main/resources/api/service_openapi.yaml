@@ -862,6 +862,24 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/{resourceId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    delete:
+      summary: Delete a controlled Bigquery dataset
+      operationId: deleteBigQueryDataset
+      tags: [ ControlledGcpResource ]
+      responses:
+        '204':
+          description: Success
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -916,7 +934,7 @@ paths:
           $ref: '#/components/responses/GetControlledGcpAiNotebookInstanceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
@@ -1536,7 +1554,6 @@ components:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
         dataset:
           $ref: '#/components/schemas/GcpBigQueryDatasetCreationParameters'
-
 
     CreateControlledGcpAiNotebookInstanceRequestBody:
       description: Payload for requesting a new controlled GCS bucket resource.

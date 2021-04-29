@@ -56,7 +56,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void createGetControlledBigQueryDataset() {
+  public void createGetDeleteControlledBigQueryDataset() {
     UUID workspaceId = createGcpWorkspace();
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
@@ -66,6 +66,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     assertEquals(
         resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
+    resourceDao.deleteResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
   @Test
