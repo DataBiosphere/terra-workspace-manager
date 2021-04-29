@@ -340,12 +340,21 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
+    // Test "undo" flight with lastStepFailure. Because deletion cannot be undone, this workspace
+    // will still be deleted after "undoing" the flight.
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
     jobService.setFlightDebugInfoForTest(debugInfo);
 
+    // When a flight fails with no error message (e.g. because of debugInfo), Stairway will return
+    // an InvalidResultStateException.
     assertThrows(
         InvalidResultStateException.class,
         () -> workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST));
+
+    // Even though the "undo" ran for this flight, the workspace should still be deleted.
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () -> workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST));
   }
 
   @Test
