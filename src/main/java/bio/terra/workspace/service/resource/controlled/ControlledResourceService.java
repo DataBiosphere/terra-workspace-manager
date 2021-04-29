@@ -223,17 +223,23 @@ public class ControlledResourceService {
   }
 
   private void validateOnlySelfAssignmentForWorkspaceWriter(ControlledResource controlledResource, AuthenticatedUserRequest userRequest) {
-    boolean resourceIsPrivateAccessScope = controlledResource.getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE);
-    boolean userIsWriterOnWorkspace = samService.isAuthorized(
+    if (!controlledResource.getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
+      // No need to handle SHARED resources
+      return;
+    }
+    final boolean userIsWriterOnWorkspace = samService.isAuthorized(
         userRequest.getRequiredToken(),
         SamConstants.SAM_WORKSPACE_RESOURCE,
         controlledResource.getWorkspaceId().toString(),
         SamConstants.SAM_WORKSPACE_WRITE_ACTION);
-    if (resourceIsPrivateAccessScope && userIsWriterOnWorkspace) {
-      boolean isAllowed = controlledResource
+    if (userIsWriterOnWorkspace) {
+      // UserEmail field isn't always populated for requests going through Swagger, so get it the hard way
+      final String requestUserEmail = samService.getEmailFromToken(userRequest.getRequiredToken());
+
+      final boolean isAllowed = controlledResource
                   .getAssignedUser()
-                  .map(u -> u.equals(userRequest.getEmail()))
-                  .orElse(false);
+                  .map(requestUserEmail::equals)
+                  .orElseThrow(() -> new IllegalStateException("Assigned User field is required for private controlled resources."));
       if (!isAllowed) {
         throw new IllegalStateException(
             "Workspace Writer User may only assign a private controlled resource to themselves.");
@@ -248,7 +254,7 @@ public class ControlledResourceService {
    * @param userRequest - current request
    */
   private void validateResourceAssigneeHasSameWorkspacePermissionAsResource(ControlledResource controlledResource, AuthenticatedUserRequest userRequest) {
-    final List<WsmIamRole> roles =
+    final List<WsmIamRole> workspaceRoles =
         controlledResource
             .getAssignedUser()
             .map(
@@ -257,6 +263,11 @@ public class ControlledResourceService {
                         controlledResource.getWorkspaceId(), userRequest, user))
             .orElse(Collections.emptyList());
 //    get the role on the resource for this assigned user and ensure it's one of the roles from the workspace
+    final boolean isResourceReader = samService.isAuthorized(
+        userRequest.getRequiredToken(),
+        controlledResource.getResourceType().toString(), // FIXME
+        controlledResource.getResourceId().toString(),
+        SamConstants.SAM_WORKSPACE_READ_ACTION);
   }
 
 }

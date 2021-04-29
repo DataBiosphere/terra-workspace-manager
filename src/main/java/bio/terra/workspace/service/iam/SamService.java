@@ -642,7 +642,7 @@ public class SamService {
   }
 
   /** Fetch the email associated with an authToken from Sam. */
-  private String getEmailFromToken(String authToken) {
+  public String getEmailFromToken(String authToken) {
     UsersApi usersApi = samUsersApi(authToken);
     try {
       return usersApi.getUserStatusInfo().getUserEmail();
