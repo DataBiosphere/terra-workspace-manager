@@ -328,11 +328,18 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResource controlledResource =
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    ApiGcpAiNotebookInstanceResource response =
-        controlledResource
-            .castToAiNotebookInstanceResource()
-            .toApiResource(workspaceService.getRequiredGcpProject(workspaceId));
-    return new ResponseEntity<>(response, HttpStatus.OK);
+    try {
+      ApiGcpAiNotebookInstanceResource response =
+          controlledResource
+              .castToAiNotebookInstanceResource()
+              .toApiResource(workspaceService.getRequiredGcpProject(workspaceId));
+      return new ResponseEntity<>(response, HttpStatus.OK);
+    } catch(InvalidMetadataException ex) {
+      throw new BadRequestException(
+          String.format(
+              "Resource %s in workspace %s is not a controlled AI Notebook Instance.",
+              resourceId, workspaceId));
+    }
   }
 
   /**

@@ -280,7 +280,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
-  public void createGetUpdateBqDataset() throws Exception {
+  public void createGetUpdateDeleteBqDataset() throws Exception {
     Workspace workspace = reusableWorkspace();
 
     String datasetId = "my_test_dataset";
@@ -330,6 +330,19 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castToBigQueryDatasetResource();
     assertEquals(newName, updatedResource.getName());
     assertEquals(newDescription, updatedResource.getDescription());
+
+    controlledResourceService.deleteControlledResourceSync(
+        resource.getWorkspaceId(),
+        resource.getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
+
+    assertThrows(
+        ResourceNotFoundException.class,
+        () ->
+            controlledResourceService.getControlledResource(
+                workspace.getWorkspaceId(),
+                resource.getResourceId(),
+                userAccessUtils.defaultUserAuthRequest()));
   }
 
   @Test
