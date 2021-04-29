@@ -13,6 +13,7 @@ import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
@@ -324,7 +325,94 @@ public class ResourceDao {
           "No cloud context found in which to create a controlled resource");
     }
 
+    // Validate that the resource to be created doesn't already exist according to per-resource type
+    // uniqueness rules. This prevents a race condition allowing a new resource to point to the same
+    // cloud artifact as another, even if it has a different resource name and ID.
+    switch (controlledResource.getResourceType()) {
+      case GCS_BUCKET:
+        validateUniqueGcsBucket(controlledResource.castToGcsBucketResource());
+        break;
+      case AI_NOTEBOOK_INSTANCE:
+        validateUniqueAiNotebookInstance(controlledResource.castToAiNotebookInstanceResource());
+        break;
+      case BIG_QUERY_DATASET:
+        validateUniqueBigQueryDataset(controlledResource.castToBigQueryDatasetResource());
+        break;
+      case DATA_REPO_SNAPSHOT:
+      default:
+        throw new IllegalArgumentException(
+            String.format(
+                "Resource type %s not supported", controlledResource.getResourceType().toString()));
+    }
+
     storeResource(controlledResource);
+  }
+
+  private void validateUniqueGcsBucket(ControlledGcsBucketResource bucketResource) {
+    String bucketSql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND attributes->>'bucketName' = :bucket_name";
+    MapSqlParameterSource bucketParams =
+        new MapSqlParameterSource()
+            .addValue("bucket_name", bucketResource.getBucketName())
+            .addValue("resource_type", WsmResourceType.GCS_BUCKET.toSql());
+    Integer matchingBucketCount =
+        jdbcTemplate.queryForObject(bucketSql, bucketParams, Integer.class);
+    if (matchingBucketCount != null && matchingBucketCount > 0) {
+      throw new DuplicateResourceException(
+          String.format(
+              "A GCS bucket resource named %s already exists", bucketResource.getBucketName()));
+    }
+  }
+
+  private void validateUniqueAiNotebookInstance(
+      ControlledAiNotebookInstanceResource notebookResource) {
+    // Workspace ID is a proxy for project ID, which works because there is a permanent, 1:1
+    // correspondence between workspaces and GCP projects.
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND workspace_id = :workspace_id"
+            + " AND attributes->>'instanceId' = :instance_id"
+            + " AND attributes->>'location' = :location";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AI_NOTEBOOK_INSTANCE.toSql())
+            .addValue("workspace_id", notebookResource.getWorkspaceId().toString())
+            .addValue("instance_id", notebookResource.getInstanceId())
+            .addValue("location", notebookResource.getLocation());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format(
+              "An AI Notebook instance with ID %s already exists",
+              notebookResource.getInstanceId()));
+    }
+  }
+
+  private void validateUniqueBigQueryDataset(ControlledBigQueryDatasetResource datasetResource) {
+    // Workspace ID is a proxy for project ID, which works because there is a permanent, 1:1
+    // correspondence between workspaces and GCP projects.
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND workspace_id = :workspace_id"
+            + " AND attributes->>'datasetName' = :dataset_name";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.BIG_QUERY_DATASET.toSql())
+            .addValue("workspace_id", datasetResource.getWorkspaceId().toString())
+            .addValue("dataset_name", datasetResource.getDatasetName());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format(
+              "A BigQuery dataset with ID %s already exists", datasetResource.getDatasetName()));
+    }
   }
 
   private void storeResource(WsmResource resource) {
@@ -448,7 +536,8 @@ public class ResourceDao {
             return new ControlledGcsBucketResource(dbResource);
           case AI_NOTEBOOK_INSTANCE:
             return new ControlledAiNotebookInstanceResource(dbResource);
-
+          case BIG_QUERY_DATASET:
+            return new ControlledBigQueryDatasetResource(dbResource);
           default:
             throw new InvalidMetadataException(
                 "Invalid controlled resource type" + dbResource.getResourceType().toString());

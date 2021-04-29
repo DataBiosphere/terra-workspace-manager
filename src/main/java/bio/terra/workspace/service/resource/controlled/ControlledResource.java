@@ -12,6 +12,7 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -113,6 +114,11 @@ public abstract class ControlledResource extends WsmResource {
     return (ControlledAiNotebookInstanceResource) this;
   }
 
+  public ControlledBigQueryDatasetResource castToBigQueryDatasetResource() {
+    validateSubclass(WsmResourceType.BIG_QUERY_DATASET);
+    return (ControlledBigQueryDatasetResource) this;
+  }
+
   private void validateSubclass(WsmResourceType expectedType) {
     if (getResourceType() != expectedType) {
       throw new InvalidMetadataException(
@@ -128,8 +134,7 @@ public abstract class ControlledResource extends WsmResource {
 
     ControlledResource that = (ControlledResource) o;
 
-    if (assignedUser != null ? !assignedUser.equals(that.assignedUser) : that.assignedUser != null)
-      return false;
+    if (!Objects.equals(assignedUser, that.assignedUser)) return false;
     if (accessScope != that.accessScope) return false;
     return managedBy == that.managedBy;
   }

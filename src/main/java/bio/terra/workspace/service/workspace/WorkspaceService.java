@@ -26,6 +26,7 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -263,5 +264,15 @@ public class WorkspaceService {
             .orElseThrow(
                 () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
     return gcpCloudContext.getGcpProjectId();
+  }
+
+  /**
+   * Helper method for looking up the GCP project ID for a given workspace ID, if one exists. Unlike
+   * {@link #getRequiredGcpProject(UUID)}, this returns an empty Optional instead of throwing if the
+   * given workspace does not have a GCP cloud context.
+   */
+  public Optional<String> getGcpProject(UUID workspaceId) {
+    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
+    return workspace.getGcpCloudContext().map(GcpCloudContext::getGcpProjectId);
   }
 }
