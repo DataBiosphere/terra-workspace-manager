@@ -53,9 +53,9 @@ import org.springframework.stereotype.Component;
  * SamService encapsulates logic for interacting with Sam. HTTP Statuses returned by Sam are
  * interpreted by the functions in this class.
  *
- * <p>This class is used both by Flights and outside of Flights. Within flights,
- * InterruptedExceptions need to be raised and handled by Stairway. Outside of flights, they are
- * unexpected and will be converted into {@link SamInterruptedException} which are unchecked.
+ * <p>This class is used both by Flights and outside of Flights. Flights need the
+ * InterruptedExceptions to be thrown. Outside of flights, use the rethrowIfSamInterrupted. See
+ * comment there for more detail.
  */
 @Component
 public class SamService {
@@ -102,15 +102,34 @@ public class SamService {
     return creds.getAccessToken().getTokenValue();
   }
 
+  /**
+   * For use with rethrowIfSamInterrupted.
+   *
+   * @param <R>
+   */
   @FunctionalInterface
   public interface InterruptedSupplier<R> {
     R apply() throws InterruptedException;
   }
 
+  /** For use with rethrowIfSamInterrupted. */
   public interface VoidInterruptedSupplier {
     void apply() throws InterruptedException;
   }
 
+  /**
+   * Use this function outside of Flights. In that case, we do not expect SamRetry to be interrupted
+   * so the interruption is unexpected and should be surfaced all the way up as an unchecked
+   * exception, which this function does.
+   *
+   * <p>Usage: SamService.rethrowIfSamInterrupted(() -> samService.isAuthorized(...),
+   * "isAuthorized")) {
+   *
+   * @param function The SamService function to call.
+   * @param operation The name of the function to use in the error message.
+   * @param <T> The return type of the function to call.
+   * @return The return value of the function to call.
+   */
   public static <T> T rethrowIfSamInterrupted(InterruptedSupplier<T> function, String operation) {
     try {
       return function.apply();
@@ -119,6 +138,12 @@ public class SamService {
     }
   }
 
+  /**
+   * Like above, but for functions that return void.
+   *
+   * @param function The SamService function to call.
+   * @param operation The name of the function to use in the error message.
+   */
   public static void rethrowIfSamInterrupted(VoidInterruptedSupplier function, String operation) {
     try {
       function.apply();
