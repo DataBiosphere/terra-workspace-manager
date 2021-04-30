@@ -95,9 +95,8 @@ public class CreateAiNotebookInstanceStep implements Step {
       if (creationOperation.getOperation().getError() != null) {
         throw new RetryException(
             String.format(
-                "Error creating notebook instance {}. {}",
-                instanceName.formatName(),
-                creationOperation.getOperation().getError()));
+                "Error creating notebook instance %s. %s",
+                instanceName.formatName(), creationOperation.getOperation().getError()));
       }
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
