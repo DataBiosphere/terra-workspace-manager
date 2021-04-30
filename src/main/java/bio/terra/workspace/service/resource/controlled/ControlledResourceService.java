@@ -12,6 +12,7 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceA
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -189,8 +190,9 @@ public class ControlledResourceService {
    *
    * @param workspaceId workspace of interest
    * @param resourceId resource to update
-   * @param name name to change - may be null
-   * @param description description to change - may be null
+   * @param name name to change - may be null, in which case resource name will not be changed.
+   * @param description description to change - may be null, in which case resource description will
+   *     not be changed.
    */
   public void updateControlledResourceMetadata(
       UUID workspaceId,
@@ -201,6 +203,10 @@ public class ControlledResourceService {
     stageService.assertMcWorkspace(workspaceId, "updateControlledResource");
     validateControlledResourceAndAction(
         userReq, workspaceId, resourceId, SamControlledResourceActions.EDIT_ACTION);
+    // Name may be null if the user is not updating it in this request.
+    if (name != null) {
+      ValidationUtils.validateResourceName(name);
+    }
     resourceDao.updateResource(workspaceId, resourceId, name, description);
   }
 

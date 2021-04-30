@@ -185,10 +185,6 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, UUID resourceId, ApiUpdateControlledResourceRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String projectId = workspaceService.getRequiredGcpProject(workspaceId);
-    // Name may be null if the user is not updating it in this request.
-    if (body.getName() != null) {
-      ValidationUtils.validateResourceName(body.getName());
-    }
     controlledResourceService.updateControlledResourceMetadata(
         workspaceId, resourceId, body.getName(), body.getDescription(), userRequest);
     ControlledResource controlledResource =

@@ -303,14 +303,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             userAccessUtils.defaultUserAuthRequest());
     assertEquals(resource, createdDataset);
 
-    ControlledBigQueryDatasetResource getDataset =
+    ControlledBigQueryDatasetResource fetchedDataset =
         controlledResourceService
             .getControlledResource(
                 workspace.getWorkspaceId(),
                 resource.getResourceId(),
                 userAccessUtils.defaultUserAuthRequest())
             .castToBigQueryDatasetResource();
-    assertEquals(resource, getDataset);
+    assertEquals(resource, fetchedDataset);
 
     String newName = "newResourceName";
     String newDescription = "new resource description";
