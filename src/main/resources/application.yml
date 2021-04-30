@@ -70,6 +70,21 @@ workspace:
     uri: ${env.db.host}/${env.db.ws.name}
     username: ${env.db.ws.user}
 
+  # Local servers will point to Tools RBS by default.
+  # These values may be overridden by Helm.
+  buffer:
+    enabled: true
+    client-credential-file-path: rendered/buffer-client-sa-account.json
+    instanceUrl: https://buffer.tools.integ.envs.broadinstitute.org
+    poolId: workspace_manager_v6
+
+  spend:
+    spend-profiles:
+    - # A default spend profile available in dev Sam.
+      id: wm-default-spend-profile
+      # The billing account workspace-dev has access to.
+      billing-account-id: 01A82E-CA8A14-367457
+
 terra.common:
   kubernetes:
     in-kubernetes: false

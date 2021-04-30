@@ -51,7 +51,7 @@ jobs:
       # We can also set the env var in the GH action script to specify which server we are testing against.
       # This will be particularly helpful once we switch over to testing against any test env -- then it's just a change to the env var.
       # Please refer to https://github.com/DataBiosphere/terra-test-runner#override-the-server-from-the-command-line for more information.
-      - name: Run the Basic Integration test suite
+      - name: Run the Full Integration test suite
         run: |
           cd workspace-manager-clienttests
           echo "Test Runner config"
@@ -59,7 +59,7 @@ jobs:
           ./render-k8s-config.sh wsmtest ${{ steps.vault-token-step.outputs.vault-token }}
           export TEST_RUNNER_SERVER_SPECIFICATION_FILE=workspace-wsmtest.json
           echo "Running test suite"
-          ./gradlew runTest --args="suites/BasicIntegration.json /tmp/TestRunnerResults"
+          ./gradlew runTest --args="suites/FullIntegration.json /tmp/TestRunnerResults"
 
       - name: Upload test results to Google Bucket
         if: ${{ always() }}
