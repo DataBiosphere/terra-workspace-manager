@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.iam;
 
-import bio.terra.common.exception.UnauthorizedException;
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
@@ -310,9 +310,9 @@ public class SamService {
     boolean isAuthorized =
         isAuthorized(userReq.getRequiredToken(), resourceType, resourceId, action);
     if (!isAuthorized)
-      throw new UnauthorizedException(
+      throw new ForbiddenException(
           String.format(
-              "User %s is not authorized to %s resource %s of type %s",
+              "User %s is not allowed to %s resource %s of type %s",
               userReq.getEmail(), action, resourceId, resourceType));
     else
       logger.info(
