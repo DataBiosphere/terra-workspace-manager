@@ -154,7 +154,7 @@ public class ControlledResourceService {
       String resultPath,
       AuthenticatedUserRequest userRequest) {
     // Pre-flight assertions
-    validateFlightPrerequisites(resource, userRequest, privateResourceIamRoles);
+    validateFlightPrerequisites(resource, userRequest);
 
     final String jobDescription =
         String.format(
@@ -177,17 +177,13 @@ public class ControlledResourceService {
 
   private void validateFlightPrerequisites(
       ControlledResource resource,
-      AuthenticatedUserRequest userRequest,
-      List<ControlledResourceIamRole> privateResourceIamRoles) {
+      AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
     workspaceService.validateWorkspaceAndAction(
         userRequest,
         resource.getWorkspaceId(),
         resource.getCategory().getSamCreateResourceAction());
-    validateAssigneeForPrivateResourceIsWorkspaceMember(resource, userRequest);
-    validateOnlySelfAssignmentForWorkspaceWriter(resource, userRequest);
-    validateWorkspaceReadersOnlyHaveReaderRoleOnResources(
-        resource, userRequest, privateResourceIamRoles);
+    validateOnlySelfAssignment(resource, userRequest);
   }
 
   public ControlledResource getControlledResource(
@@ -226,108 +222,22 @@ public class ControlledResourceService {
     return jobBuilder.submit();
   }
 
-  private void validateOnlySelfAssignmentForWorkspaceWriter(
+  private void validateOnlySelfAssignment(
       ControlledResource controlledResource, AuthenticatedUserRequest userRequest) {
     if (!controlledResource.getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
       // No need to handle SHARED resources
       return;
     }
-    final boolean userIsWriterOnWorkspace =
-        samService.isAuthorized(
-            userRequest.getRequiredToken(),
-            SamConstants.SAM_WORKSPACE_RESOURCE,
-            controlledResource.getWorkspaceId().toString(),
-            SamConstants.SAM_WORKSPACE_WRITE_ACTION);
-    if (userIsWriterOnWorkspace) {
-      // UserEmail field isn't always populated for requests going through Swagger, so get it the
-      // hard way
       final String requestUserEmail = samService.getEmailFromToken(userRequest.getRequiredToken());
 
       final boolean isAllowed =
           controlledResource
               .getAssignedUser()
               .map(requestUserEmail::equals)
-              .orElseThrow(
-                  () ->
-                      new BadRequestException(
-                          "Assigned User field is required for private controlled resources."));
+              .orElse(true);
       if (!isAllowed) {
         throw new BadRequestException(
             "Workspace Writer User may only assign a private controlled resource to themselves.");
       }
     }
-  }
-
-  /**
-   * Workspace READERs may only have READER permission on private controlled resources to which they are
-   * assigned. WRITERs may have either READER or WRITER permission, and OWNERS are unrestricted.
-   *
-   * @param controlledResource - controlled resource to check permission match on
-   * @param userRequest - current request
-   */
-  private void validateWorkspaceReadersOnlyHaveReaderRoleOnResources(
-      ControlledResource controlledResource,
-      AuthenticatedUserRequest userRequest,
-      List<ControlledResourceIamRole> privateResourceIamRoles) {
-    final List<WsmIamRole> workspaceRoles =
-        controlledResource
-            .getAssignedUser()
-            .map(
-                user ->
-                    samService.getWorkspaceRolesForUser(
-                        controlledResource.getWorkspaceId(), userRequest, user))
-            .orElse(Collections.emptyList());
-    if (workspaceRoles.isEmpty()) {
-      throw new BadRequestException(
-          String.format(
-              "Assigned user %s has no roles on workspace %s",
-              controlledResource.getAssignedUser().orElse("N/A"),
-              controlledResource.getWorkspaceId().toString()));
-    }
-    final boolean isWriterOrGreater =
-        workspaceRoles.contains(WsmIamRole.WRITER) || workspaceRoles.contains(WsmIamRole.OWNER);
-    if (!isWriterOrGreater) {
-      if (workspaceRoles.contains(WsmIamRole.READER)) {
-        // readers may only have READER role
-        if (!privateResourceIamRoles.contains(ControlledResourceIamRole.READER)) {
-          throw new BadRequestException(
-              "A workspace reader may only have READER role on private resources.");
-        }
-      } else {
-        throw new BadRequestException(
-            String.format(
-                "Unrecognized role(s) for private resource: %s",
-                privateResourceIamRoles.toString()));
-      }
-    }
-    // All roles on the resource are permissible
-  }
-
-  /** Check to see that the assigned user is a member of the workspace of the controlled resource */
-  private void validateAssigneeForPrivateResourceIsWorkspaceMember(
-      ControlledResource controlledResource, AuthenticatedUserRequest userRequest) {
-    switch (controlledResource.getAccessScope()) {
-      default:
-      case ACCESS_SCOPE_SHARED:
-        // no restriction
-        break;
-      case ACCESS_SCOPE_PRIVATE:
-        final String assignee =
-            controlledResource
-                .getAssignedUser()
-                .orElseThrow(
-                    () ->
-                        new BadRequestException(
-                            "Private controlled resources must have an assigned user."));
-        final List<WsmIamRole> assigneeRoles =
-            samService.getWorkspaceRolesForUser(
-                controlledResource.getWorkspaceId(), userRequest, assignee);
-        if (assigneeRoles.isEmpty()) {
-          throw new BadRequestException(
-              String.format(
-                  "User %s is not a member of workspace %s and may not be assigned a controlled resource there.",
-                  assignee, controlledResource.getWorkspaceId().toString()));
-        }
-    }
-  }
 }
