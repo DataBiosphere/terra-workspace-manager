@@ -70,7 +70,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @MockBean private SamService mockSamService;
 
   @BeforeEach
-  void setup() {
+  void setup() throws Exception {
     doReturn(true).when(dataRepoService).snapshotExists(any(), any(), any());
     // By default, allow all spend link calls as authorized. (All other isAuthorized calls return
     // false by Mockito default.
@@ -104,7 +104,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void testGetForbiddenMissingWorkspace() {
+  void testGetForbiddenMissingWorkspace() throws Exception {
     doThrow(new UnauthorizedException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
@@ -114,7 +114,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void testGetForbiddenExistingWorkspace() {
+  void testGetForbiddenExistingWorkspace() throws Exception {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
@@ -181,7 +181,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void duplicateOperationSharesFailureResponse() {
+  void duplicateOperationSharesFailureResponse() throws Exception {
     String errorMsg = "fake SAM error message";
     doThrow(SamExceptionFactory.create(errorMsg, new ApiException(("test"))))
         .when(mockSamService)
@@ -270,7 +270,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void testHandlesSamError() {
+  void testHandlesSamError() throws Exception {
     String apiErrorMsg = "test";
     ErrorReportException testex = new SamInternalServerErrorException(apiErrorMsg);
     doThrow(testex).when(mockSamService).createWorkspaceWithDefaults(any(), any());
@@ -295,7 +295,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void deleteForbiddenMissingWorkspace() {
+  void deleteForbiddenMissingWorkspace() throws Exception {
     doThrow(new UnauthorizedException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
@@ -306,7 +306,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void deleteForbiddenExistingWorkspace() {
+  void deleteForbiddenExistingWorkspace() throws Exception {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
@@ -408,7 +408,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void createGoogleContextRawlsStageThrows() {
+  void createGoogleContextRawlsStageThrows() throws Exception {
     // RAWLS_WORKSPACE stage workspaces use existing Sam resources instead of owning them, so the
     // mock pretends our user has access to any workspace we ask about.
     Mockito.when(
@@ -449,7 +449,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void createGoogleContextSpendLinkingUnauthorizedThrows() {
+  void createGoogleContextSpendLinkingUnauthorizedThrows() throws Exception {
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())
             .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
@@ -465,6 +465,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                 Mockito.any(),
                 Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
         .thenReturn(false);
+
     assertThrows(
         SpendUnauthorizedException.class,
         () ->

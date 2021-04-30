@@ -29,7 +29,8 @@ public class CreateWorkspaceAuthzStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) throws RetryException {
+  public StepResult doStep(FlightContext flightContext)
+      throws RetryException, InterruptedException {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceID =
         UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
@@ -43,7 +44,7 @@ public class CreateWorkspaceAuthzStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext flightContext) {
+  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceID =
         UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
@@ -51,7 +52,7 @@ public class CreateWorkspaceAuthzStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private boolean canReadExistingWorkspace(UUID workspaceID) {
+  private boolean canReadExistingWorkspace(UUID workspaceID) throws InterruptedException {
     return samService.isAuthorized(
         userReq.getRequiredToken(),
         SamConstants.SAM_WORKSPACE_RESOURCE,

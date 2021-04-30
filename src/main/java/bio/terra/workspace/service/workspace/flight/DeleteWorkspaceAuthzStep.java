@@ -23,7 +23,8 @@ public class DeleteWorkspaceAuthzStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) throws RetryException {
+  public StepResult doStep(FlightContext flightContext)
+      throws RetryException, InterruptedException {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceID =
         UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
