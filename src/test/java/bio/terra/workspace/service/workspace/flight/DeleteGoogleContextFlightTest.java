@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.common.sam.exception.SamBadRequestException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
