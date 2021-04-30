@@ -85,11 +85,14 @@ public class ControlledResourceService {
           String.format("Resource %s is not a controlled resource.", resource.getResourceId()));
     }
     ControlledResource controlledResource = resource.castToControlledResource();
-    samService.checkAuthz(
-        userReq,
-        controlledResource.getCategory().getSamResourceName(),
-        resourceId.toString(),
-        action);
+    SamService.rethrowIfSamInterrupted(
+        () ->
+            samService.checkAuthz(
+                userReq,
+                controlledResource.getCategory().getSamResourceName(),
+                resourceId.toString(),
+                action),
+        "checkAuthz");
     return controlledResource;
   }
 

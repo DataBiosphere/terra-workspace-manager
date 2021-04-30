@@ -44,11 +44,14 @@ public class SpendProfileService {
    */
   public SpendProfile authorizeLinking(
       SpendProfileId spendProfileId, AuthenticatedUserRequest userRequest) {
-    if (!samService.isAuthorized(
-        userRequest.getRequiredToken(),
-        SamConstants.SPEND_PROFILE_RESOURCE,
-        spendProfileId.id(),
-        SamConstants.SPEND_PROFILE_LINK_ACTION)) {
+    if (!SamService.rethrowIfSamInterrupted(
+        () ->
+            samService.isAuthorized(
+                userRequest.getRequiredToken(),
+                SamConstants.SPEND_PROFILE_RESOURCE,
+                spendProfileId.id(),
+                SamConstants.SPEND_PROFILE_LINK_ACTION),
+        "isAuthorized")) {
       throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
     }
     SpendProfile spend = spendProfiles.get(spendProfileId);
