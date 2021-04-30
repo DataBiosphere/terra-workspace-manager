@@ -55,6 +55,11 @@ public abstract class ControlledResource extends WsmResource {
     return StewardshipType.CONTROLLED;
   }
 
+  /**
+   * If specified, the assigned user must be equal to the user making the request.
+   * @return
+   */
+  @Deprecated
   public Optional<String> getAssignedUser() {
     return Optional.ofNullable(assignedUser);
   }

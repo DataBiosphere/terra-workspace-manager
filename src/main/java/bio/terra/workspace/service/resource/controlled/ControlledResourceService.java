@@ -229,7 +229,7 @@ public class ControlledResourceService {
       return;
     }
       final String requestUserEmail = samService.getEmailFromToken(userRequest.getRequiredToken());
-
+      // If there is no assigned user, this condition is satisfied.
       final boolean isAllowed =
           controlledResource
               .getAssignedUser()
