@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
@@ -185,7 +186,7 @@ public class ControlledResourceService {
         resource.getCategory().getSamCreateResourceAction());
     validateAssigneeForPrivateResourceIsWorkspaceMember(resource, userRequest);
     validateOnlySelfAssignmentForWorkspaceWriter(resource, userRequest);
-    validateWorkspaceReadersCanOnlyHaveReaderRoleOnResources(
+    validateWorkspaceReadersOnlyHaveReaderRoleOnResources(
         resource, userRequest, privateResourceIamRoles);
   }
 
@@ -248,23 +249,23 @@ public class ControlledResourceService {
               .map(requestUserEmail::equals)
               .orElseThrow(
                   () ->
-                      new IllegalStateException(
+                      new BadRequestException(
                           "Assigned User field is required for private controlled resources."));
       if (!isAllowed) {
-        throw new IllegalStateException(
+        throw new BadRequestException(
             "Workspace Writer User may only assign a private controlled resource to themselves.");
       }
     }
   }
 
   /**
-   * Workspace READERs may only have READER permission on controlled resources to which they are
+   * Workspace READERs may only have READER permission on private controlled resources to which they are
    * assigned. WRITERs may have either READER or WRITER permission, and OWNERS are unrestricted.
    *
    * @param controlledResource - controlled resource to check permission match on
    * @param userRequest - current request
    */
-  private void validateWorkspaceReadersCanOnlyHaveReaderRoleOnResources(
+  private void validateWorkspaceReadersOnlyHaveReaderRoleOnResources(
       ControlledResource controlledResource,
       AuthenticatedUserRequest userRequest,
       List<ControlledResourceIamRole> privateResourceIamRoles) {
@@ -277,10 +278,10 @@ public class ControlledResourceService {
                         controlledResource.getWorkspaceId(), userRequest, user))
             .orElse(Collections.emptyList());
     if (workspaceRoles.isEmpty()) {
-      throw new IllegalStateException(
+      throw new BadRequestException(
           String.format(
-              "User %s has no roles on workspace %s",
-              controlledResource.getAssignedUser().get(),
+              "Assigned user %s has no roles on workspace %s",
+              controlledResource.getAssignedUser().orElse("N/A"),
               controlledResource.getWorkspaceId().toString()));
     }
     final boolean isWriterOrGreater =
@@ -289,11 +290,11 @@ public class ControlledResourceService {
       if (workspaceRoles.contains(WsmIamRole.READER)) {
         // readers may only have READER role
         if (!privateResourceIamRoles.contains(ControlledResourceIamRole.READER)) {
-          throw new IllegalStateException(
+          throw new BadRequestException(
               "A workspace reader may only have READER role on private resources.");
         }
       } else {
-        throw new IllegalStateException(
+        throw new BadRequestException(
             String.format(
                 "Unrecognized role(s) for private resource: %s",
                 privateResourceIamRoles.toString()));
@@ -305,21 +306,28 @@ public class ControlledResourceService {
   /** Check to see that the assigned user is a member of the workspace of the controlled resource */
   private void validateAssigneeForPrivateResourceIsWorkspaceMember(
       ControlledResource controlledResource, AuthenticatedUserRequest userRequest) {
-    if (controlledResource.getAssignedUser().isEmpty()) {
-      // expected for shared resources
-      return;
-    }
-    if (controlledResource.getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
-      final String assignee = controlledResource.getAssignedUser().get();
-      final List<WsmIamRole> assigneeRoles =
-          samService.getWorkspaceRolesForUser(
-              controlledResource.getWorkspaceId(), userRequest, assignee);
-      if (assigneeRoles.isEmpty()) {
-        throw new IllegalStateException(
-            String.format(
-                "User %s is not a member of workspace %s and may not be assigned a controlled resource there.",
-                assignee, controlledResource.getWorkspaceId().toString()));
-      }
+    switch (controlledResource.getAccessScope()) {
+      default:
+      case ACCESS_SCOPE_SHARED:
+        // no restriction
+        break;
+      case ACCESS_SCOPE_PRIVATE:
+        final String assignee =
+            controlledResource
+                .getAssignedUser()
+                .orElseThrow(
+                    () ->
+                        new BadRequestException(
+                            "Private controlled resources must have an assigned user."));
+        final List<WsmIamRole> assigneeRoles =
+            samService.getWorkspaceRolesForUser(
+                controlledResource.getWorkspaceId(), userRequest, assignee);
+        if (assigneeRoles.isEmpty()) {
+          throw new BadRequestException(
+              String.format(
+                  "User %s is not a member of workspace %s and may not be assigned a controlled resource there.",
+                  assignee, controlledResource.getWorkspaceId().toString()));
+        }
     }
   }
 }
