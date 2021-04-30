@@ -4,7 +4,6 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -36,7 +35,11 @@ public class DeleteWorkspaceAuthzStep implements Step {
   public StepResult undoStep(FlightContext flightContext) {
     // Sam does not allow Workspace ID re-use, so a delete really can't be undone. We retry on Sam
     // API errors in the do-step to try avoiding the undo step, but if we get this far there's
-    // nothing to do but tell Stairway we're stuck.
-    return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
+    // nothing to do but tell Stairway we're stuck and surface the error from the DO step.
+    FlightMap inputMap = flightContext.getInputParameters();
+    UUID workspaceID =
+        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+    logger.error("Unable to undo deletion of workspace {} in WSM DB", workspaceID);
+    return flightContext.getResult();
   }
 }
