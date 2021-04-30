@@ -111,11 +111,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ControlledAiNotebookInstanceResource.Builder resourceBuilder =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .workspaceId(workspace.getWorkspaceId())
+            .name(instanceId)
             .assignedUser(userAccessUtils.getDefaultUserEmail())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
             .instanceId(instanceId)
-            .location(location);
+            .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource = resourceBuilder.build();
 
     // Test idempotency of steps by retrying them once.
@@ -206,6 +207,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ControlledAiNotebookInstanceResource resource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .workspaceId(workspace.getWorkspaceId())
+            .name(instanceId)
             .assignedUser(userAccessUtils.getDefaultUserEmail())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
@@ -312,7 +314,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
   public void deleteAiNotebookInstanceUndoIsDismalFailure() throws Exception {
     ControlledAiNotebookInstanceResource resource =
-        createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-do");
+        createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-undo");
 
     // Test that trying to undo a notebook deletion is a dismal failure. We cannot undo deletion.
     jobService.setFlightDebugInfoForTest(
@@ -336,6 +338,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource.Builder resourceBuilder =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+            .name(instanceId)
             .workspaceId(workspace.getWorkspaceId())
             .assignedUser(userAccessUtils.getDefaultUserEmail())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
@@ -353,10 +356,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             null,
             userAccessUtils.defaultUserAuthRequest());
     jobService.waitForJob(createJobId);
-    return jobService.retrieveJobResult(
-        createJobId,
-        ControlledAiNotebookInstanceResource.class,
-        userAccessUtils.defaultUserAuthRequest());
+    return jobService
+        .retrieveJobResult(
+            createJobId,
+            ControlledAiNotebookInstanceResource.class,
+            userAccessUtils.defaultUserAuthRequest())
+        .getResult();
   }
 
   private static void assertNotFound(InstanceName instanceName, AIPlatformNotebooksCow notebooks) {
