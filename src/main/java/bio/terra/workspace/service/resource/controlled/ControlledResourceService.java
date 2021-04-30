@@ -12,6 +12,7 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceA
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -25,6 +26,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -183,6 +185,32 @@ public class ControlledResourceService {
         userReq, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION);
     WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
     return wsmResource.castToControlledResource();
+  }
+
+  /**
+   * Update the name and description metadata fields of a controlled resource. These are only stored
+   * inside WSM, so this does not require any calls to clouds.
+   *
+   * @param workspaceId workspace of interest
+   * @param resourceId resource to update
+   * @param name name to change - may be null, in which case resource name will not be changed.
+   * @param description description to change - may be null, in which case resource description will
+   *     not be changed.
+   */
+  public void updateControlledResourceMetadata(
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      AuthenticatedUserRequest userReq) {
+    stageService.assertMcWorkspace(workspaceId, "updateControlledResource");
+    validateControlledResourceAndAction(
+        userReq, workspaceId, resourceId, SamControlledResourceActions.EDIT_ACTION);
+    // Name may be null if the user is not updating it in this request.
+    if (name != null) {
+      ValidationUtils.validateResourceName(name);
+    }
+    resourceDao.updateResource(workspaceId, resourceId, name, description);
   }
 
   /** Synchronously delete a controlled resource. */
