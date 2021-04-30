@@ -10,6 +10,8 @@ import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketReques
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcpAiNotebookInstanceRequest;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketResult;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
@@ -235,8 +237,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             userRequest);
 
     ApiCreatedControlledGcpAiNotebookInstanceResult result =
-        fetchNotebookInstanceResult(jobId, userRequest);
-    return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
+        fetchNotebookInstanceCreateResult(jobId, userRequest);
+    return new ResponseEntity<>(result, HttpStatus.ACCEPTED);
   }
 
   @Override
@@ -244,11 +246,11 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       getCreateAiNotebookInstanceResult(UUID workspaceId, String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ApiCreatedControlledGcpAiNotebookInstanceResult result =
-        fetchNotebookInstanceResult(jobId, userRequest);
+        fetchNotebookInstanceCreateResult(jobId, userRequest);
     return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
   }
 
-  private ApiCreatedControlledGcpAiNotebookInstanceResult fetchNotebookInstanceResult(
+  private ApiCreatedControlledGcpAiNotebookInstanceResult fetchNotebookInstanceCreateResult(
       String jobId, AuthenticatedUserRequest userRequest) {
     AsyncJobResult<ControlledAiNotebookInstanceResource> jobResult =
         jobService.retrieveAsyncJobResult(
@@ -264,6 +266,47 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .aiNotebookInstance(apiResource);
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledGcpAiNotebookInstanceResult> deleteAiNotebookInstance(
+      UUID workspaceId,
+      UUID resourceId,
+      @Valid ApiDeleteControlledGcpAiNotebookInstanceRequest body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ApiJobControl jobControl = body.getJobControl();
+    logger.info(
+        "deleteAiNotebookInstance workspace {} resource {}",
+        workspaceId.toString(),
+        resourceId.toString());
+    String jobId =
+        controlledResourceService.deleteControlledResourceAsync(
+            jobControl,
+            workspaceId,
+            resourceId,
+            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
+            userRequest);
+    ApiDeleteControlledGcpAiNotebookInstanceResult result =
+        fetchNotebookInstanceDeleteResult(jobId, userRequest);
+    return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledGcpAiNotebookInstanceResult>
+      getDeleteAiNotebookInstanceResult(UUID workspaceId, String jobId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ApiDeleteControlledGcpAiNotebookInstanceResult result =
+        fetchNotebookInstanceDeleteResult(jobId, userRequest);
+    return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
+  }
+
+  private ApiDeleteControlledGcpAiNotebookInstanceResult fetchNotebookInstanceDeleteResult(
+      String jobId, AuthenticatedUserRequest userRequest) {
+    AsyncJobResult<Void> jobResult =
+        jobService.retrieveAsyncJobResult(jobId, Void.class, userRequest);
+    return new ApiDeleteControlledGcpAiNotebookInstanceResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport());
   }
 
   @Override
