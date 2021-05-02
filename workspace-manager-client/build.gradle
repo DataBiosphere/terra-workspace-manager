@@ -1,32 +1,31 @@
 plugins {
+	id "terra-workspace-manager.common"
 	id "java-library"
 	id "maven-publish"
 
 	id "com.jfrog.artifactory" version "4.18.2"
-	id "org.hidetake.swagger.generator"
+	id "org.hidetake.swagger.generator" version "2.18.2"
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8 // Rawls consumes this and is Java 8
 
-repositories {
-	mavenCentral()
-}
-
 dependencies {
 	// Swagger deps, versions controlled by dependencyManagement in root project
-	implementation group: "org.glassfish.jersey.core", name: "jersey-client"
-	implementation group: "org.glassfish.jersey.media", name: "jersey-media-json-jackson"
-	implementation group: "org.glassfish.jersey.media", name: "jersey-media-multipart"
-	implementation group: "com.fasterxml.jackson.datatype", name: "jackson-datatype-jsr310"
-	implementation group: "io.swagger.core.v3", name: "swagger-annotations"
-	swaggerCodegen group: "io.swagger.codegen.v3", name: "swagger-codegen-cli"
+	implementation group: "org.glassfish.jersey.core", name: "jersey-client", version: "2.32"
+	implementation group: "org.glassfish.jersey.media", name: "jersey-media-json-jackson", version: "2.32"
+	implementation group: "org.glassfish.jersey.media", name: "jersey-media-multipart", version: "2.32"
+	implementation group: "com.fasterxml.jackson.datatype", name: "jackson-datatype-jsr310", version: "2.11.3"
+	implementation gradle.librarySwaggerAnnotations
+	swaggerCodegen gradle.librarySwaggerCli
 }
 
 // OpenAPI/Swagger Client Generation
+def artifactGroup = "${group}.workspace"
+def swaggerOutputDir = "${buildDir}/swagger-code"
 
 swaggerSources {
 	client {
-		inputFile = file("${resourceDir}/api/service_openapi.yaml")
+		inputFile = file("${gradle.openapiSourceFile}")
 		code {
 			language = "java"
 			library = "jersey2"
@@ -98,5 +97,4 @@ artifactory {
 // Internal dependencies
 
 sourceSets.main.java.srcDir "${swaggerOutputDir}/src/main/java"
-swaggerSources.client.code.dependsOn (":unzipCloudResourceSchema")
 compileJava.dependsOn swaggerSources.client.code

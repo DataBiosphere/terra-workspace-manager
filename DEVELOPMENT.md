@@ -131,7 +131,7 @@ New versions of the WSM client library need to be published manually. You should
 To publish a new version of the client library:
 1. Make your changes locally. Verify that client tests run using a local client 
 JAR and local server pass ([see client test README](workspace-manager-clienttests/README.md#local-testing)). If your changes are part of a PR, have the PR reviewed.
-1. Bump the version number in the `allprojects.version` field of [build.gradle](build.gradle).
+1. Bump the version number in the `allprojects.version` field of [build.gradle](workspace-manager/build.gradle).
 Compatible changes should be a change to the minor or patch version. 
 Backwards-incompatible changes should change the major version. Try to avoid 
 backwards incompatible changes.

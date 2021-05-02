@@ -1,8 +1,10 @@
 plugins {
+    id 'terra-workspace-manager.common'
+
     id 'java'
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
-    id "com.diffplug.spotless" version "5.8.2"
+//    id "com.diffplug.spotless" version "5.8.2"
     // Terra Test Runner Plugin
     id 'bio.terra.test-runner-plugin' version '0.0.3-SNAPSHOT'
 }
@@ -37,7 +39,6 @@ dependencies {
         googleOauth2 = "0.20.0"
         googleContainer = "v1-rev93-1.25.0"
 
-        workspacemanagerClient = "0.22.0-SNAPSHOT"
         datarepoClient = "1.0.155-SNAPSHOT"
         testRunner = "0.0.3-SNAPSHOT"
     }
@@ -64,27 +65,15 @@ dependencies {
     compile "io.swagger.core.v3:swagger-annotations:${swaggerAnnotations}"
 
     // Workspace Manager client library
-    // Gradle project property "workspacemanagerclientjar" overrides the fetch from Maven
-    if (project.hasProperty("workspacemanagerclientjar")) {
-        implementation files(project.findProperty("workspacemanagerclientjar"))
-        compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jackson}"
-        compile "org.glassfish.jersey.core:jersey-client:${jersey}"
-        compile "org.glassfish.jersey.media:jersey-media-json-jackson:${jersey}"
-        compile "org.glassfish.jersey.media:jersey-media-multipart:${jersey}"
-        compile "org.glassfish.jersey.inject:jersey-hk2:${jersey}"
-    } else {
-        implementation "bio.terra:workspace-manager-client:${workspacemanagerClient}"
-        compile "io.swagger.core.v3:swagger-annotations:${swaggerAnnotations}"
-    }
+    implementation project(":workspace-manager-client")
 
     // Terra Test Runner Library
     implementation "bio.terra:terra-test-runner:${testRunner}"
 }
 
-group "bio.terra"
-version "1.0-SNAPSHOT"
 sourceCompatibility = JavaVersion.VERSION_11
 
+/*
 spotless {
     java {
         googleJavaFormat()
@@ -93,4 +82,4 @@ spotless {
 }
 
 compileJava.dependsOn spotlessApply
-
+*/

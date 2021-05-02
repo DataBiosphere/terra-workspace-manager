@@ -169,7 +169,7 @@ Workspace Manager publishes an API client library based on the OpenAPI Spec v3.
 ```gradle
 implementation(group: 'bio.terra', name: 'terra-workspace-manager-client', version: 'x.x.x')
 ```
-See [build.gradle](build.gradle) for current version information.
+See [build.gradle](workspace-manager/build.gradle) for current version information.
 
 Note that the publishing of this artifact is currently manual. Whenever the OpenAPI definitions change,
 we should publish a new version of this library to artifactory. Backwards compatible changes should

@@ -1,75 +1,47 @@
+buildscript {
+	ext {
+		springBootVersion = '2.4.0'
+	}
+}
+
 plugins {
+	id "terra-workspace-manager.common"
+
 	id "idea"
 	id "java"
 
-	id "com.diffplug.spotless" version "5.8.2"
+	//id "com.diffplug.spotless" version "5.12.4"
 	id "com.github.ben-manes.versions" version "0.36.0"
 	id "com.google.cloud.tools.jib" version "2.7.0"
 	id "com.palantir.git-version" version "0.12.3"
 	id "de.undercouch.download" version "4.1.1"
-	id "io.spring.dependency-management" version "1.0.10.RELEASE"
 	id "org.hidetake.swagger.generator" version "2.18.2"
-	id "org.springframework.boot" version "2.4.0"
+	id "org.springframework.boot" version "${springBootVersion}"
 	id 'ru.vyarus.quality' version '4.5.0'
 	id 'jacoco'
 }
 
 sourceCompatibility = JavaVersion.VERSION_11
-def useMavenLocal = false
-allprojects {
-	group = "bio.terra"
-	version = "0.22.0-SNAPSHOT"
-	ext {
-		artifactGroup = "${group}.workspace"
-		swaggerOutputDir = "${buildDir}/swagger-code"
-		resourceDir = "${rootDir}/src/main/resources"
-	}
 
-	// specifying versions for dependencies, not adding the dependencies themselves (yet)
-	apply plugin: "io.spring.dependency-management"
-	dependencyManagement {
-		imports {
-			mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
-		}
-		dependencies {
-			dependency group: "bio.terra.cloud-resource-lib", name: "cloud-resource-schema", version: "0.7.0"
-			dependency group: "io.swagger.core.v3", name: "swagger-annotations", version: "2.1.6"
-			dependency group: "io.swagger.codegen.v3", name: "swagger-codegen-cli", version: "3.0.23"
-		}
-	}
+ext {
+	artifactGroup = "${group}.workspace"
+	swaggerOutputDir = "${buildDir}/swagger-code"
+	resourceDir = "${projectDir}/src/main/resources"
+}
 
-	apply plugin: "idea"
-	idea {
-		module {
-			generatedSourceDirs = [file("${swaggerOutputDir}/src/main/java")]
-			downloadJavadoc = true
-		}
-	}
-
-	apply plugin: "jacoco"
-	jacoco {
-		toolVersion = '0.8.2'
+idea {
+	module {
+		generatedSourceDirs = [file("${swaggerOutputDir}/src/main/java")]
+		downloadJavadoc = true
 	}
 }
 
-repositories {
-	if (useMavenLocal) {
-		mavenLocal()
-	}
-	maven {
-		// Terra proxy for maven central
-		url "https://broadinstitute.jfrog.io/broadinstitute/maven-central/"
-	}
-	mavenCentral()
-	maven {
-		url "https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/"
-	}
-	maven {
-		url "https://broadinstitute.jfrog.io/broadinstitute/libs-release/"
-	}
+jacoco {
+	toolVersion = '0.8.2'
 }
 
 dependencies {
+	compileOnly 'com.google.googlejavaformat:google-java-format:1.10.0'
 	// Terra deps
 	implementation group: "bio.terra", name: "datarepo-client", version: "1.41.0-SNAPSHOT"
 	// hk2 is required for datarepo client, but not correctly included
@@ -96,6 +68,7 @@ dependencies {
 	runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.2.18"
 
 	// Deps whose versions are controlled by Spring
+	implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
 	implementation group: "javax.validation", name: "validation-api"
 	implementation group: "org.apache.commons", name: "commons-dbcp2"
 	implementation group: "org.apache.commons", name: "commons-lang3"
@@ -104,9 +77,9 @@ dependencies {
 	implementation group: "org.springframework.boot", name: "spring-boot-starter-web"
 
 	// Swagger deps
-	implementation group: "io.swagger.core.v3", name: "swagger-annotations"
+	implementation gradle.librarySwaggerAnnotations
+	swaggerCodegen gradle.librarySwaggerCli
 	runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.37.2"
-	swaggerCodegen group: "io.swagger.codegen.v3", name: "swagger-codegen-cli"
 
 	// Test deps
 	testImplementation group: "com.google.auth", name: "google-auth-library-oauth2-http", version: "0.22.1"
@@ -115,34 +88,21 @@ dependencies {
 	testImplementation project(":workspace-manager-client")
 
 	annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
-	annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor"
+	annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor", version: "2.4.0"
 }
 
 // To update the lock file, the command is ./gradlew  dependencies --write-locks
+/*
 dependencyLocking {
 	lockAllConfigurations() // see https://docs.gradle.org/current/userguide/dependency_locking.html
 }
-
+*/
 // for scans
 if (hasProperty("buildScan")) {
 	buildScan {
 		termsOfServiceUrl = "https://gradle.com/terms-of-service"
 		termsOfServiceAgree = "yes"
 	}
-}
-
-// CRL schema extraction
-configurations {
-	cloudResourceSchema { transitive = false }
-}
-dependencies {
-	cloudResourceSchema group: 'bio.terra.cloud-resource-lib', name: 'cloud-resource-schema'
-}
-task unzipCloudResourceSchema(type: Copy) {
-	from zipTree(configurations.cloudResourceSchema.singleFile).matching {
-		include 'cloud_resources_uid.yaml'
-	}
-	into "${resourceDir}/api/common"
 }
 
 // Download and extract the Cloud Profiler Java Agent
@@ -172,7 +132,7 @@ def openapiSourceDir = "${resourceDir}/api"
 
 swaggerSources {
 	server {
-		inputFile = file("${openapiSourceDir}/service_openapi.yaml")
+		inputFile = file("${gradle.openapiSourceFile}")
 		code {
 			language = "spring"
 			library = "spring-boot"
@@ -255,13 +215,14 @@ task integrationTest(type: Test) {
 	outputs.upToDateWhen { false }
 }
 
+/*
 spotless {
 	java {
 		googleJavaFormat()
 		targetExclude "${buildDir}/**"
 	}
 }
-
+*/
 // Custom tasks
 
 task setGitVersion(type: WriteProperties) {
@@ -299,9 +260,8 @@ sourceSets.main.java.srcDir "${swaggerOutputDir}/src/main/java"
 
 // Internal dependencies
 // Note The Open API schema depends on an external library - cloud-resource-schema, so need to unzip it first.
-swaggerSources.server.code.dependsOn tasks.unzipCloudResourceSchema
-swaggerSources.server.ui.dependsOn tasks.unzipCloudResourceSchema
-compileJava.dependsOn swaggerSources.server.code, spotlessApply, setGitVersion
+// removed spotlessApply
+compileJava.dependsOn swaggerSources.server.code, setGitVersion
 tasks.jib.dependsOn extractProfilerAgent
 tasks.jibDockerBuild.dependsOn extractProfilerAgent
 tasks.jibBuildTar.dependsOn extractProfilerAgent

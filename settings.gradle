@@ -1,4 +1,32 @@
+pluginManagement {
+    repositories {
+        resolutionStrategy {
+            eachPlugin {
+                if (requested.id.namespace == 'bio.terra') {
+                    if (requested.id.id == 'bio.terra.test-runner-plugin' || requested.id.id == 'bio.terra.test-runner-echo-plugin') {
+                        useModule("bio.terra:terra-test-runner:" + requested.version)
+                    }
+                }
+            }
+        }
+        maven {
+            url "https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/"
+        }
+        gradlePluginPortal()
+    }
+}
+
 rootProject.name = 'terra-workspace-manager'
 include 'workspace-manager-client'
+include 'workspace-manager'
+include 'workspace-manager-clienttests'
 
-enableFeaturePreview('ONE_LOCKFILE_PER_PROJECT')
+//enableFeaturePreview('ONE_LOCKFILE_PER_PROJECT')
+
+gradle.ext.openapiSourceFile = "${rootDir}/workspace-manager/src/main/resources/api/service_openapi.yaml"
+
+// Single place to define the versions of dependencies shared between components.
+// This is just data. Each sub-project can pick and choose the dependencies they want.
+// To make the structure simple, we use the one-string version of the dependency expression.
+gradle.ext.librarySwaggerAnnotations = "io.swagger.core.v3:swagger-annotations:2.1.6"
+gradle.ext.librarySwaggerCli = "io.swagger.codegen.v3:swagger-codegen-cli:3.0.23"
