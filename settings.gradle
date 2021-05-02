@@ -16,12 +16,12 @@ pluginManagement {
     }
 }
 
+
+
 rootProject.name = 'terra-workspace-manager'
 include 'workspace-manager-client'
 include 'workspace-manager'
 include 'workspace-manager-clienttests'
-
-//enableFeaturePreview('ONE_LOCKFILE_PER_PROJECT')
 
 gradle.ext.openapiSourceFile = "${rootDir}/workspace-manager/src/main/resources/api/service_openapi.yaml"
 
