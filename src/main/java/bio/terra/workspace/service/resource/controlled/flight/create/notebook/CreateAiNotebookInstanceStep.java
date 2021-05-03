@@ -68,7 +68,7 @@ public class CreateAiNotebookInstanceStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
-    InstanceName instanceName = createInstanceName(projectId);
+    InstanceName instanceName = resource.toInstanceName(projectId);
     Instance instance = createInstanceModel(flightContext, projectId);
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
@@ -181,18 +181,10 @@ public class CreateAiNotebookInstanceStep implements Step {
         "projects/" + projectId + "/regions/" + region + "/subnetworks/" + subnetworkName);
   }
 
-  private InstanceName createInstanceName(String projectId) {
-    return InstanceName.builder()
-        .projectId(projectId)
-        .location(resource.getLocation())
-        .instanceId(resource.getInstanceId())
-        .build();
-  }
-
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
-    InstanceName instanceName = createInstanceName(projectId);
+    InstanceName instanceName = resource.toInstanceName(projectId);
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {

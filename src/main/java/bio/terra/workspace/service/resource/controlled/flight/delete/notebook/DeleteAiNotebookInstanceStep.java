@@ -16,6 +16,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.notebooks.v1.model.Operation;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Optional;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,30 +42,19 @@ public class DeleteAiNotebookInstanceStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
-    InstanceName instanceName =
-        InstanceName.builder()
-            .projectId(projectId)
-            .location(resource.getLocation())
-            .instanceId(resource.getInstanceId())
-            .build();
+    InstanceName instanceName = resource.toInstanceName(projectId);
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
-      OperationCow<Operation> operation;
-      try {
-        operation =
-            notebooks
-                .operations()
-                .operationCow(notebooks.instances().delete(instanceName).execute());
-      } catch (GoogleJsonResponseException e) {
-        if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-          logger.info("Notebook instance {} already deleted", instanceName.formatName());
-          return StepResult.getStepResultSuccess();
-        }
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      Optional<Operation> rawOperation = deleteIfFound(instanceName, notebooks);
+      if (rawOperation.isEmpty()) {
+        logger.info("Notebook instance {} already deleted", instanceName.formatName());
+        return StepResult.getStepResultSuccess();
       }
-      operation =
+      OperationCow<Operation> operation =
           OperationUtils.pollUntilComplete(
-              operation, Duration.ofSeconds(20), Duration.ofMinutes(10));
+              notebooks.operations().operationCow(rawOperation.get()),
+              Duration.ofSeconds(20),
+              Duration.ofMinutes(10));
       if (operation.getOperation().getError() != null) {
         throw new RetryException(
             String.format(
@@ -75,6 +65,23 @@ public class DeleteAiNotebookInstanceStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     return StepResult.getStepResultSuccess();
+  }
+
+  /**
+   * Starts the deletion of an instance. If the instance is not found, returns empty. Otherwise
+   * returns the delete operation.
+   */
+  private Optional<Operation> deleteIfFound(
+      InstanceName instanceName, AIPlatformNotebooksCow notebooks) throws IOException {
+    try {
+      return Optional.of(notebooks.instances().delete(instanceName).execute());
+    } catch (GoogleJsonResponseException e) {
+      if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        return Optional.empty();
+      } else {
+        throw e;
+      }
+    }
   }
 
   @Override

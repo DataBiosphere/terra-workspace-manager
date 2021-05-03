@@ -56,7 +56,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   @Autowired private UserAccessUtils userAccessUtils;
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void successCreatesProjectAndContext() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
@@ -92,7 +92,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void errorRevertsChanges() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();

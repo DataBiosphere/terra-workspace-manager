@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
@@ -66,6 +67,14 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   /** The Google Cloud Platform location of the notebook instance, e.g. "us-east1-b". */
   public String getLocation() {
     return location;
+  }
+
+  public InstanceName toInstanceName(String workspaceProjectId) {
+    return InstanceName.builder()
+        .projectId(workspaceProjectId)
+        .location(getLocation())
+        .instanceId(getInstanceId())
+        .build();
   }
 
   public ApiGcpAiNotebookInstanceResource toApiResource(String workspaceProjectId) {

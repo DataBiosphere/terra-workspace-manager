@@ -16,7 +16,7 @@ import com.google.api.services.notebooks.v1.model.Instance;
 import java.io.IOException;
 
 /**
- * A step to retrieve the service account used on a AI Platform Notebook instance before deleting
+ * A step to retrieve the service account used on an AI Platform Notebook instance before deleting
  * the instance.
  *
  * <p>We don't store the service account email anywhere in Workspace Manager metadata, so we have to
