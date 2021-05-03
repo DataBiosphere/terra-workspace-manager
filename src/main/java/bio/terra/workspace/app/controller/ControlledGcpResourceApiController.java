@@ -290,7 +290,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
     ApiCreatedControlledGcpAiNotebookInstanceResult result =
         fetchNotebookInstanceCreateResult(jobId, userRequest);
-    return new ResponseEntity<>(result, HttpStatus.ACCEPTED);
+    return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
   }
 
   @Override
