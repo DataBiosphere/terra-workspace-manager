@@ -100,7 +100,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void createAiNotebookInstanceDo() throws Exception {
     Workspace workspace = reusableWorkspace();
     String instanceId = "create-ai-notebook-instance-do";
@@ -144,12 +144,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     Instance instance =
         notebooks
             .instances()
-            .get(
-                InstanceName.builder()
-                    .projectId(workspace.getGcpCloudContext().get().getGcpProjectId())
-                    .location(DEFAULT_NOTEBOOK_LOCATION)
-                    .instanceId(instanceId)
-                    .build())
+            .get(resource.toInstanceName(workspace.getGcpCloudContext().get().getGcpProjectId()))
             .execute();
 
     assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_account"));
@@ -187,18 +182,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void createAiNotebookInstanceUndo() throws Exception {
     Workspace workspace = reusableWorkspace();
-
     String instanceId = "create-ai-notebook-instance-undo";
-    String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
-    InstanceName instanceName =
-        InstanceName.builder()
-            .instanceId(instanceId)
-            .location(DEFAULT_NOTEBOOK_LOCATION)
-            .projectId(projectId)
-            .build();
 
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         ControlledResourceFixtures.defaultNotebookCreationParameters()
@@ -239,7 +226,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(
         FlightStatus.ERROR, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
 
-    assertNotFound(instanceName, crlService.getAIPlatformNotebooksCow());
+    String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
+    assertNotFound(resource.toInstanceName(projectId), crlService.getAIPlatformNotebooksCow());
 
     String serviceAccountId =
         stairwayComponent
@@ -265,17 +253,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void deleteAiNotebookInstanceDo() throws Exception {
     ControlledAiNotebookInstanceResource resource =
         createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-do");
     String projectId = reusableWorkspace().getGcpCloudContext().get().getGcpProjectId();
-    InstanceName instanceName =
-        InstanceName.builder()
-            .instanceId(resource.getInstanceId())
-            .location(resource.getLocation())
-            .projectId(projectId)
-            .build();
+    InstanceName instanceName = resource.toInstanceName(projectId);
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     Instance instance = notebooks.instances().get(instanceName).execute();
@@ -311,7 +294,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void deleteAiNotebookInstanceUndoIsDismalFailure() throws Exception {
     ControlledAiNotebookInstanceResource resource =
         createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-undo");
@@ -336,7 +319,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
-    ControlledAiNotebookInstanceResource.Builder resourceBuilder =
+    ControlledAiNotebookInstanceResource resource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .name(instanceId)
             .workspaceId(workspace.getWorkspaceId())
@@ -344,8 +327,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
             .instanceId(instanceId)
-            .location(DEFAULT_NOTEBOOK_LOCATION);
-    ControlledAiNotebookInstanceResource resource = resourceBuilder.build();
+            .location(DEFAULT_NOTEBOOK_LOCATION)
+            .build();
 
     String createJobId =
         controlledResourceService.createAiNotebookInstance(
@@ -365,23 +348,23 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   private static void assertNotFound(InstanceName instanceName, AIPlatformNotebooksCow notebooks) {
-    GoogleJsonResponseException getException =
+    GoogleJsonResponseException exception =
         assertThrows(
             GoogleJsonResponseException.class,
             () -> notebooks.instances().get(instanceName).execute());
-    assertEquals(HttpStatus.NOT_FOUND.value(), getException.getStatusCode());
+    assertEquals(HttpStatus.NOT_FOUND.value(), exception.getStatusCode());
   }
 
   private static void assertNotFound(ServiceAccountName serviceAccountName, IamCow iam) {
-    GoogleJsonResponseException serviceAccountException =
+    GoogleJsonResponseException exception =
         assertThrows(
             GoogleJsonResponseException.class,
             () -> iam.projects().serviceAccounts().get(serviceAccountName).execute());
-    assertEquals(HttpStatus.NOT_FOUND.value(), serviceAccountException.getStatusCode());
+    assertEquals(HttpStatus.NOT_FOUND.value(), exception.getStatusCode());
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void createBqDatasetDo() throws Exception {
     Workspace workspace = reusableWorkspace();
     String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
@@ -426,7 +409,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void createBqDatasetUndo() throws Exception {
     Workspace workspace = reusableWorkspace();
     String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
@@ -482,7 +465,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void deleteBqDatasetDo() throws Exception {
     Workspace workspace = reusableWorkspace();
     String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
@@ -539,7 +522,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void deleteBqDatasetUndo() throws Exception {
     Workspace workspace = reusableWorkspace();
     String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
