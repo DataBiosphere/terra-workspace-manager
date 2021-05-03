@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
+import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
@@ -31,6 +32,9 @@ import bio.terra.workspace.service.resource.controlled.flight.create.notebook.Re
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteSamResourceStep;
+import bio.terra.workspace.service.resource.controlled.flight.delete.notebook.DeleteAiNotebookInstanceStep;
+import bio.terra.workspace.service.resource.controlled.flight.delete.notebook.DeleteServiceAccountStep;
+import bio.terra.workspace.service.resource.controlled.flight.delete.notebook.RetrieveNotebookServiceAccountStep;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
@@ -61,6 +65,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
               ControlledResourceIamRole.WRITER,
               ControlledResourceIamRole.EDITOR)
           .collect(Collectors.toList());
+  /** The default GCP location to create notebooks for this test. */
+  private static final String DEFAULT_NOTEBOOK_LOCATION = "us-east1-b";
 
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private CrlService crlService;
@@ -94,25 +100,23 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
-  public void createAiNotebookInstance() throws Exception {
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  public void createAiNotebookInstanceDo() throws Exception {
     Workspace workspace = reusableWorkspace();
-
-    String instanceId = "create-ai-notebook-instance";
-    String location = "us-east1-b";
-
+    String instanceId = "create-ai-notebook-instance-do";
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
-            .location(location);
+            .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource.Builder resourceBuilder =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .workspaceId(workspace.getWorkspaceId())
+            .name(instanceId)
             .assignedUser(userAccessUtils.getDefaultUserEmail())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
             .instanceId(instanceId)
-            .location(location);
+            .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource = resourceBuilder.build();
 
     // Test idempotency of steps by retrying them once.
@@ -140,12 +144,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     Instance instance =
         notebooks
             .instances()
-            .get(
-                InstanceName.builder()
-                    .projectId(workspace.getGcpCloudContext().get().getGcpProjectId())
-                    .location(location)
-                    .instanceId(instanceId)
-                    .build())
+            .get(resource.toInstanceName(workspace.getGcpCloudContext().get().getGcpProjectId()))
             .execute();
 
     assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_account"));
@@ -183,26 +182,24 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void createAiNotebookInstanceUndo() throws Exception {
     Workspace workspace = reusableWorkspace();
-
     String instanceId = "create-ai-notebook-instance-undo";
-    String location = "us-east1-b";
-    String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
 
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
-            .location(location);
+            .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .workspaceId(workspace.getWorkspaceId())
+            .name(instanceId)
             .assignedUser(userAccessUtils.getDefaultUserEmail())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
             .instanceId(instanceId)
-            .location(location)
+            .location(DEFAULT_NOTEBOOK_LOCATION)
             .build();
 
     // Test idempotency of undo steps by retrying them once.
@@ -229,21 +226,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(
         FlightStatus.ERROR, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
 
-    AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
-    GoogleJsonResponseException getException =
-        assertThrows(
-            GoogleJsonResponseException.class,
-            () ->
-                notebooks
-                    .instances()
-                    .get(
-                        InstanceName.builder()
-                            .projectId(projectId)
-                            .location(location)
-                            .instanceId(instanceId)
-                            .build())
-                    .execute());
-    assertEquals(HttpStatus.NOT_FOUND.value(), getException.getStatusCode());
+    String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
+    assertNotFound(resource.toInstanceName(projectId), crlService.getAIPlatformNotebooksCow());
 
     String serviceAccountId =
         stairwayComponent
@@ -252,34 +236,135 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .getResultMap()
             .get()
             .get(CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID, String.class);
-    GoogleJsonResponseException serviceAccountException =
-        assertThrows(
-            GoogleJsonResponseException.class,
-            () ->
-                crlService
-                    .getIamCow()
-                    .projects()
-                    .serviceAccounts()
-                    .get(
-                        ServiceAccountName.builder()
-                            .projectId(projectId)
-                            .email(
-                                ServiceAccountName.emailFromAccountId(serviceAccountId, projectId))
-                            .build())
-                    .execute());
-    assertEquals(HttpStatus.NOT_FOUND.value(), serviceAccountException.getStatusCode());
+    assertNotFound(
+        ServiceAccountName.builder()
+            .projectId(projectId)
+            .email(ServiceAccountName.emailFromAccountId(serviceAccountId, projectId))
+            .build(),
+        crlService.getIamCow());
 
     assertThrows(
         ResourceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                workspace.getWorkspaceId(),
+                resource.getWorkspaceId(),
                 resource.getResourceId(),
                 userAccessUtils.defaultUserAuthRequest()));
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  public void deleteAiNotebookInstanceDo() throws Exception {
+    ControlledAiNotebookInstanceResource resource =
+        createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-do");
+    String projectId = reusableWorkspace().getGcpCloudContext().get().getGcpProjectId();
+    InstanceName instanceName = resource.toInstanceName(projectId);
+
+    AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
+    Instance instance = notebooks.instances().get(instanceName).execute();
+    ServiceAccountName serviceAccountName =
+        ServiceAccountName.builder()
+            .projectId(projectId)
+            .email(instance.getServiceAccount())
+            .build();
+
+    // Test idempotency of steps by retrying them once.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(
+        RetrieveNotebookServiceAccountStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        DeleteAiNotebookInstanceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(DeleteServiceAccountStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+
+    controlledResourceService.deleteControlledResourceSync(
+        resource.getWorkspaceId(),
+        resource.getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
+    assertNotFound(instanceName, notebooks);
+    assertNotFound(serviceAccountName, crlService.getIamCow());
+    assertThrows(
+        ResourceNotFoundException.class,
+        () ->
+            controlledResourceService.getControlledResource(
+                resource.getWorkspaceId(),
+                resource.getResourceId(),
+                userAccessUtils.defaultUserAuthRequest()));
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  public void deleteAiNotebookInstanceUndoIsDismalFailure() throws Exception {
+    ControlledAiNotebookInstanceResource resource =
+        createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-undo");
+
+    // Test that trying to undo a notebook deletion is a dismal failure. We cannot undo deletion.
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().lastStepFailure(true).build());
+    assertThrows(
+        InvalidResultStateException.class,
+        () ->
+            controlledResourceService.deleteControlledResourceSync(
+                resource.getWorkspaceId(),
+                resource.getResourceId(),
+                userAccessUtils.defaultUserAuthRequest()));
+  }
+
+  /** Create a controlled AI Notebook instance with default private settings. */
+  private ControlledAiNotebookInstanceResource createDefaultPrivateAiNotebookInstance(
+      String instanceId) {
+    Workspace workspace = reusableWorkspace();
+    ApiGcpAiNotebookInstanceCreationParameters creationParameters =
+        ControlledResourceFixtures.defaultNotebookCreationParameters()
+            .instanceId(instanceId)
+            .location(DEFAULT_NOTEBOOK_LOCATION);
+    ControlledAiNotebookInstanceResource resource =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+            .name(instanceId)
+            .workspaceId(workspace.getWorkspaceId())
+            .assignedUser(userAccessUtils.getDefaultUserEmail())
+            .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
+            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .instanceId(instanceId)
+            .location(DEFAULT_NOTEBOOK_LOCATION)
+            .build();
+
+    String createJobId =
+        controlledResourceService.createAiNotebookInstance(
+            resource,
+            creationParameters,
+            DEFAULT_ROLES,
+            new ApiJobControl().id(UUID.randomUUID().toString()),
+            null,
+            userAccessUtils.defaultUserAuthRequest());
+    jobService.waitForJob(createJobId);
+    return jobService
+        .retrieveJobResult(
+            createJobId,
+            ControlledAiNotebookInstanceResource.class,
+            userAccessUtils.defaultUserAuthRequest())
+        .getResult();
+  }
+
+  private static void assertNotFound(InstanceName instanceName, AIPlatformNotebooksCow notebooks) {
+    GoogleJsonResponseException exception =
+        assertThrows(
+            GoogleJsonResponseException.class,
+            () -> notebooks.instances().get(instanceName).execute());
+    assertEquals(HttpStatus.NOT_FOUND.value(), exception.getStatusCode());
+  }
+
+  private static void assertNotFound(ServiceAccountName serviceAccountName, IamCow iam) {
+    GoogleJsonResponseException exception =
+        assertThrows(
+            GoogleJsonResponseException.class,
+            () -> iam.projects().serviceAccounts().get(serviceAccountName).execute());
+    assertEquals(HttpStatus.NOT_FOUND.value(), exception.getStatusCode());
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void createGetUpdateDeleteBqDataset() throws Exception {
     Workspace workspace = reusableWorkspace();
 
@@ -346,7 +431,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void createBqDatasetDo() throws Exception {
     Workspace workspace = reusableWorkspace();
     String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
@@ -391,7 +476,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void createBqDatasetUndo() throws Exception {
     Workspace workspace = reusableWorkspace();
     String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
@@ -447,7 +532,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void deleteBqDatasetDo() throws Exception {
     Workspace workspace = reusableWorkspace();
     String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
@@ -504,7 +589,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void deleteBqDatasetUndo() throws Exception {
     Workspace workspace = reusableWorkspace();
     String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
@@ -558,7 +643,4 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 resource.getResourceId(),
                 userAccessUtils.defaultUserAuthRequest()));
   }
-
-  // TODO(PF-469): Add a test verifying that a controlled resource can't be created for an instance
-  // that already exists once we're ensuring cloud URI uniqueness for controlled resources.
 }

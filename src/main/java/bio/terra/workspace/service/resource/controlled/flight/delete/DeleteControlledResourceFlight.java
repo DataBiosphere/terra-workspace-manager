@@ -9,6 +9,9 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.exception.ControlledResourceNotImplementedException;
+import bio.terra.workspace.service.resource.controlled.flight.delete.notebook.DeleteAiNotebookInstanceStep;
+import bio.terra.workspace.service.resource.controlled.flight.delete.notebook.DeleteServiceAccountStep;
+import bio.terra.workspace.service.resource.controlled.flight.delete.notebook.RetrieveNotebookServiceAccountStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.UUID;
 
@@ -22,7 +25,7 @@ public class DeleteControlledResourceFlight extends Flight {
    * so don't wait forever. Note that RetryRules can be re-used within but not across Flight
    * instances.
    */
-  private final RetryRule syncCloudRetryRule =
+  private final RetryRule gcpRetryRule =
       new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount=  */ 2);
 
   /**
@@ -86,9 +89,28 @@ public class DeleteControlledResourceFlight extends Flight {
                 resource.castToBigQueryDatasetResource(),
                 flightBeanBag.getCrlService(),
                 flightBeanBag.getWorkspaceService()),
-            syncCloudRetryRule);
+            gcpRetryRule);
         break;
       case AI_NOTEBOOK_INSTANCE:
+        addStep(
+            new RetrieveNotebookServiceAccountStep(
+                resource.castToAiNotebookInstanceResource(),
+                flightBeanBag.getCrlService(),
+                flightBeanBag.getWorkspaceService()),
+            gcpRetryRule);
+        addStep(
+            new DeleteAiNotebookInstanceStep(
+                resource.castToAiNotebookInstanceResource(),
+                flightBeanBag.getCrlService(),
+                flightBeanBag.getWorkspaceService()),
+            gcpRetryRule);
+        addStep(
+            new DeleteServiceAccountStep(
+                resource.castToAiNotebookInstanceResource(),
+                flightBeanBag.getCrlService(),
+                flightBeanBag.getWorkspaceService()),
+            gcpRetryRule);
+        break;
       default:
         throw new ControlledResourceNotImplementedException(
             "Delete not yet implemented for resource type " + resource.getResourceType());
