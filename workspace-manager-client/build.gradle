@@ -1,5 +1,8 @@
+buildscript {
+	apply from: "../common.gradle"
+}
+
 plugins {
-	id "terra-workspace-manager.common"
 	id "java-library"
 	id "maven-publish"
 
@@ -7,6 +10,8 @@ plugins {
 	id "org.hidetake.swagger.generator" version "2.18.2"
 }
 
+group = 'bio.terra'
+version = "${ext.theVersion}"
 sourceCompatibility = JavaVersion.VERSION_1_8 // Rawls consumes this and is Java 8
 
 dependencies {

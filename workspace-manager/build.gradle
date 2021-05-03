@@ -2,18 +2,16 @@ buildscript {
 	ext {
 		springBootVersion = '2.4.0'
 	}
+	apply from: "../common.gradle"
 }
 
 plugins {
-	id "terra-workspace-manager.common"
-
 	id "idea"
 	id "java"
 
-	//id "com.diffplug.spotless" version "5.12.4"
+	id "com.diffplug.spotless" version "5.12.4"
 	id "com.github.ben-manes.versions" version "0.36.0"
 	id "com.google.cloud.tools.jib" version "2.7.0"
-	id "com.palantir.git-version" version "0.12.3"
 	id "de.undercouch.download" version "4.1.1"
 	id "org.hidetake.swagger.generator" version "2.18.2"
 	id "org.springframework.boot" version "${springBootVersion}"
@@ -21,6 +19,8 @@ plugins {
 	id 'jacoco'
 }
 
+group = 'bio.terra'
+version = "${ext.theVersion}"
 sourceCompatibility = JavaVersion.VERSION_11
 
 ext {
@@ -41,7 +41,6 @@ jacoco {
 }
 
 dependencies {
-	compileOnly 'com.google.googlejavaformat:google-java-format:1.10.0'
 	// Terra deps
 	implementation group: "bio.terra", name: "datarepo-client", version: "1.41.0-SNAPSHOT"
 	// hk2 is required for datarepo client, but not correctly included
@@ -123,13 +122,7 @@ task extractProfilerAgent(dependsOn: downloadProfilerAgent, type: Copy) {
 	into "${jibExtraDirectory}/${cloudProfilerLocation}"
 }
 
-// Defs
-
-def generatedResourceDir = "${resourceDir}/generated"
-def openapiSourceDir = "${resourceDir}/api"
-
 // OpenAPI/Swagger Server Generation
-
 swaggerSources {
 	server {
 		inputFile = file("${gradle.openapiSourceFile}")
@@ -215,25 +208,28 @@ task integrationTest(type: Test) {
 	outputs.upToDateWhen { false }
 }
 
-/*
 spotless {
 	java {
 		googleJavaFormat()
 		targetExclude "${buildDir}/**"
 	}
 }
-*/
-// Custom tasks
 
-task setGitVersion(type: WriteProperties) {
-	outputFile = file("${generatedResourceDir}/version.properties")
-	property("version.gitHash", versionDetails().gitHash)
-	property("version.gitTag", gitVersion())
-	property("version.build", version)
+// Generate/clean the version properties file
+// This was being done by a plugin: https://github.com/palantir/gradle-git-version
+// but it does not work with Gradle 7.0. It was also very complicated for a
+// what we need, so easily replaced with a bash script
+def generatedVersionFile = "${resourceDir}/generated/version.properties"
+
+task generateVersionProperties(type: Exec) {
+	commandLine "${projectDir}/writeVersionProperties.sh", "${version}", "${generatedVersionFile}"
+}
+
+task cleanVersionProperties(type: Exec) {
+	commandLine "rm", "-f", "${generatedVersionFile}"
 }
 
 // Deploy config
-
 jib {
 	from {
 		// see https://github.com/broadinstitute/dsp-appsec-blessed-images/tree/main/jre
@@ -259,12 +255,11 @@ jib {
 sourceSets.main.java.srcDir "${swaggerOutputDir}/src/main/java"
 
 // Internal dependencies
-// Note The Open API schema depends on an external library - cloud-resource-schema, so need to unzip it first.
 // removed spotlessApply
-compileJava.dependsOn swaggerSources.server.code, setGitVersion
+compileJava.dependsOn swaggerSources.server.code, generateVersionProperties
 tasks.jib.dependsOn extractProfilerAgent
 tasks.jibDockerBuild.dependsOn extractProfilerAgent
 tasks.jibBuildTar.dependsOn extractProfilerAgent
-clean.dependsOn cleanSetGitVersion
+clean.dependsOn cleanVersionProperties
 
 apply from: "$rootDir/gradle/quality.gradle"

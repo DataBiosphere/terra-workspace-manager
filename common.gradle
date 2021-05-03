@@ -1,5 +1,6 @@
-group = 'bio.terra'
-version = '0.22.0-SNAPSHOT'
+ext {
+    theVersion = '0.22.0-SNAPSHOT'
+}
 
 def useMavenLocal = false
 repositories {
@@ -21,4 +22,5 @@ repositories {
 
 dependencyLocking {
     lockAllConfigurations()
+    lockMode = LockMode.STRICT
 }
