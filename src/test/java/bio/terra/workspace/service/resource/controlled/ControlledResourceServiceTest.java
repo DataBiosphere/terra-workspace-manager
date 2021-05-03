@@ -372,62 +372,62 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     String location = "us-central1";
 
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
-            new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
+        new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-            ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
-                    .workspaceId(workspace.getWorkspaceId())
-                    .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-                    .managedBy(ManagedByType.MANAGED_BY_USER)
-                    .datasetName(datasetId)
-                    .build();
+        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
+            .workspaceId(workspace.getWorkspaceId())
+            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .datasetName(datasetId)
+            .build();
     ControlledBigQueryDatasetResource createdDataset =
-            controlledResourceService.createBqDataset(
-                    resource,
-                    creationParameters,
-                    Collections.emptyList(),
-                    userAccessUtils.defaultUserAuthRequest());
+        controlledResourceService.createBqDataset(
+            resource,
+            creationParameters,
+            Collections.emptyList(),
+            userAccessUtils.defaultUserAuthRequest());
     assertEquals(resource, createdDataset);
 
     ControlledBigQueryDatasetResource fetchedDataset =
-            controlledResourceService
-                    .getControlledResource(
-                            workspace.getWorkspaceId(),
-                            resource.getResourceId(),
-                            userAccessUtils.defaultUserAuthRequest())
-                    .castToBigQueryDatasetResource();
+        controlledResourceService
+            .getControlledResource(
+                workspace.getWorkspaceId(),
+                resource.getResourceId(),
+                userAccessUtils.defaultUserAuthRequest())
+            .castToBigQueryDatasetResource();
     assertEquals(resource, fetchedDataset);
 
     String newName = "newResourceName";
     String newDescription = "new resource description";
     controlledResourceService.updateControlledResourceMetadata(
-            workspace.getWorkspaceId(),
-            resource.getResourceId(),
-            newName,
-            newDescription,
-            userAccessUtils.defaultUserAuthRequest());
+        workspace.getWorkspaceId(),
+        resource.getResourceId(),
+        newName,
+        newDescription,
+        userAccessUtils.defaultUserAuthRequest());
 
     ControlledBigQueryDatasetResource updatedResource =
-            controlledResourceService
-                    .getControlledResource(
-                            workspace.getWorkspaceId(),
-                            resource.getResourceId(),
-                            userAccessUtils.defaultUserAuthRequest())
-                    .castToBigQueryDatasetResource();
+        controlledResourceService
+            .getControlledResource(
+                workspace.getWorkspaceId(),
+                resource.getResourceId(),
+                userAccessUtils.defaultUserAuthRequest())
+            .castToBigQueryDatasetResource();
     assertEquals(newName, updatedResource.getName());
     assertEquals(newDescription, updatedResource.getDescription());
 
     controlledResourceService.deleteControlledResourceSync(
-            resource.getWorkspaceId(),
-            resource.getResourceId(),
-            userAccessUtils.defaultUserAuthRequest());
+        resource.getWorkspaceId(),
+        resource.getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
 
     assertThrows(
-            ResourceNotFoundException.class,
-            () ->
-                    controlledResourceService.getControlledResource(
-                            workspace.getWorkspaceId(),
-                            resource.getResourceId(),
-                            userAccessUtils.defaultUserAuthRequest()));
+        ResourceNotFoundException.class,
+        () ->
+            controlledResourceService.getControlledResource(
+                workspace.getWorkspaceId(),
+                resource.getResourceId(),
+                userAccessUtils.defaultUserAuthRequest()));
   }
 
   @Test
