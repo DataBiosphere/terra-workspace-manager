@@ -787,7 +787,7 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ResourceId'
     get:
-      summary: get a controlled GCS bucket resource
+      summary: Get a controlled GCS bucket resource
       operationId: getBucket
       tags: [ControlledGcpResource]
       responses:
@@ -795,7 +795,7 @@ paths:
           $ref: '#/components/responses/GetControlledGcpGcsBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
@@ -866,6 +866,38 @@ paths:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled BigQuery dataset resource
+      operationId: getBigQueryDataset
+      tags: [ ControlledGcpResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/ControlledGcpBigQueryDatasetResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update a controlled BigQuery dataset resource
+      operationId: updateBigQueryDataset
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateControlledResourceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/ControlledGcpBigQueryDatasetResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
     delete:
       summary: Delete a controlled Bigquery dataset
       operationId: deleteBigQueryDataset
@@ -1613,6 +1645,17 @@ components:
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
 
+    UpdateControlledResourceRequestBody:
+      type: object
+      description: Common request body for updating a controlled resource
+      properties:
+        name:
+          description: Optional. New name to give to this resource. The resource name will not be updated if this is omitted.
+          type: string
+        description:
+          description: Optional. New description to give to this resource. The resource description will not be updated if this is omitted.
+          type: string
+
     CreatedControlledGcpGcsBucket:
       description: Response Payload for requesting a new controlled GCS bucket.
       type: object
@@ -2211,6 +2254,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreatedControlledGcpBigQueryDataset'
+
+    ControlledGcpBigQueryDatasetResponse:
+      description: Response containing a controlled BigQuery dataset
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GcpBigQueryDatasetResource'
 
     CreatedControlledGcpAiNotebookInstanceResponse:
       description: Response to Create controlled resource

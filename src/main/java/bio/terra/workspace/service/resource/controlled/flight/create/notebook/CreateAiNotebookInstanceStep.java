@@ -68,7 +68,7 @@ public class CreateAiNotebookInstanceStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
-    InstanceName instanceName = createInstanceName(projectId);
+    InstanceName instanceName = resource.toInstanceName(projectId);
     Instance instance = createInstanceModel(flightContext, projectId);
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
@@ -95,9 +95,8 @@ public class CreateAiNotebookInstanceStep implements Step {
       if (creationOperation.getOperation().getError() != null) {
         throw new RetryException(
             String.format(
-                "Error creating notebook instance {}. {}",
-                instanceName.formatName(),
-                creationOperation.getOperation().getError()));
+                "Error creating notebook instance %s. %s",
+                instanceName.formatName(), creationOperation.getOperation().getError()));
       }
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
@@ -182,18 +181,10 @@ public class CreateAiNotebookInstanceStep implements Step {
         "projects/" + projectId + "/regions/" + region + "/subnetworks/" + subnetworkName);
   }
 
-  private InstanceName createInstanceName(String projectId) {
-    return InstanceName.builder()
-        .projectId(projectId)
-        .location(resource.getLocation())
-        .instanceId(resource.getInstanceId())
-        .build();
-  }
-
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
-    InstanceName instanceName = createInstanceName(projectId);
+    InstanceName instanceName = resource.toInstanceName(projectId);
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
