@@ -36,7 +36,6 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -61,7 +60,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void samServiceInitializationSucceeded() throws IOException {
+  void samServiceInitializationSucceeded() throws Exception {
     // As part of initialization, WSM's service account is registered as a user in Sam. This test
     // verifies that registration status by calling Sam directly.
     String wsmAccessToken;
@@ -70,7 +69,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void addedReaderCanRead() {
+  void addedReaderCanRead() throws Exception {
     UUID workspaceId = createWorkspaceDefaultUser();
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
@@ -84,7 +83,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void addedWriterCanWrite() {
+  void addedWriterCanWrite() throws Exception {
     UUID workspaceId = createWorkspaceDefaultUser();
 
     ReferencedDataRepoSnapshotResource referenceResource =
@@ -108,7 +107,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void removedReaderCannotRead() {
+  void removedReaderCannotRead() throws Exception {
     UUID workspaceId = createWorkspaceDefaultUser();
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
@@ -143,7 +142,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void permissionsApiFailsInRawlsWorkspace() {
+  void permissionsApiFailsInRawlsWorkspace() throws Exception {
     UUID workspaceId = UUID.randomUUID();
     // RAWLS_WORKSPACEs do not own their own Sam resources, so we need to manage them separately.
     samService.createWorkspaceWithDefaults(defaultUserRequest(), workspaceId);
@@ -181,7 +180,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void listPermissionsIncludesAddedUsers() {
+  void listPermissionsIncludesAddedUsers() throws Exception {
     UUID workspaceId = createWorkspaceDefaultUser();
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
@@ -211,7 +210,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void writerCannotListPermissions() {
+  void writerCannotListPermissions() throws Exception {
     UUID workspaceId = createWorkspaceDefaultUser();
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), WsmIamRole.WRITER, userAccessUtils.getSecondUserEmail());
@@ -242,7 +241,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void listWorkspacesIncludesWsmWorkspace() {
+  void listWorkspacesIncludesWsmWorkspace() throws Exception {
     // This call cannot use william.thunderlord's account in dev Sam. Sam will return 500, as it
     // cannot handle his tens of thousands of workspaces.
     UUID workspaceId = createWorkspaceSecondaryUser();
@@ -252,7 +251,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void workspaceReaderIsSharedResourceReader() {
+  void workspaceReaderIsSharedResourceReader() throws Exception {
     // Default user is workspace owner, secondary user is workspace reader
     UUID workspaceId = createWorkspaceDefaultUser();
     samService.grantWorkspaceRole(
@@ -273,7 +272,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void workspaceReaderIsNotPrivateResourceReader() {
+  void workspaceReaderIsNotPrivateResourceReader() throws Exception {
     // Default user is workspace owner, secondary user is workspace reader
     UUID workspaceId = createWorkspaceDefaultUser();
     samService.grantWorkspaceRole(
@@ -309,7 +308,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void duplicateResourceCreateIgnored() {
+  void duplicateResourceCreateIgnored() throws Exception {
     UUID workspaceId = createWorkspaceDefaultUser();
 
     ControlledResource bucketResource = defaultBucket(workspaceId).build();
@@ -319,7 +318,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void duplicateResourceDeleteIgnored() {
+  void duplicateResourceDeleteIgnored() throws Exception {
     UUID workspaceId = createWorkspaceDefaultUser();
 
     ControlledResource bucketResource = defaultBucket(workspaceId).build();

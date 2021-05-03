@@ -49,6 +49,6 @@ public class WorkspaceDeleteFlight extends Flight {
         throw new InternalLogicException(
             "Unknown workspace stage during creation: " + workspaceStage.name());
     }
-    addStep(new DeleteWorkspaceStateStep(appContext.getWorkspaceDao()));
+    addStep(new DeleteWorkspaceStateStep(appContext.getWorkspaceDao()), retryRule);
   }
 }

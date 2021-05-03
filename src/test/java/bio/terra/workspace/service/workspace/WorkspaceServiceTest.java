@@ -14,6 +14,8 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.common.sam.exception.SamInternalServerErrorException;
+import bio.terra.stairway.FlightDebugInfo;
+import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
@@ -25,6 +27,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.DuplicateJobIdException;
 import bio.terra.workspace.service.job.exception.InvalidJobIdException;
+import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
@@ -36,14 +39,20 @@ import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceExcept
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
+import bio.terra.workspace.service.workspace.flight.DeleteProjectStep;
+import bio.terra.workspace.service.workspace.flight.DeleteWorkspaceAuthzStep;
+import bio.terra.workspace.service.workspace.flight.DeleteWorkspaceStateStep;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.model.Project;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
@@ -70,7 +79,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @MockBean private SamService mockSamService;
 
   @BeforeEach
-  void setup() {
+  void setup() throws Exception {
     doReturn(true).when(dataRepoService).snapshotExists(any(), any(), any());
     // By default, allow all spend link calls as authorized. (All other isAuthorized calls return
     // false by Mockito default.
@@ -84,6 +93,14 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Return a valid google group for cloud sync, as Google validates groups added to GCP projects.
     Mockito.when(mockSamService.syncWorkspacePolicy(any(), any(), any()))
         .thenReturn("terra-workspace-manager-test-group@googlegroups.com");
+  }
+
+  /**
+   * Reset the {@link FlightDebugInfo} on the {@link JobService} to not interfere with other tests.
+   */
+  @AfterEach
+  public void resetFlightDebugInfo() {
+    jobService.setFlightDebugInfoForTest(null);
   }
 
   @Test
@@ -104,7 +121,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void testGetForbiddenMissingWorkspace() {
+  void testGetForbiddenMissingWorkspace() throws Exception {
     doThrow(new UnauthorizedException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
@@ -114,7 +131,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void testGetForbiddenExistingWorkspace() {
+  void testGetForbiddenExistingWorkspace() throws Exception {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
@@ -181,7 +198,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void duplicateOperationSharesFailureResponse() {
+  void duplicateOperationSharesFailureResponse() throws Exception {
     String errorMsg = "fake SAM error message";
     doThrow(SamExceptionFactory.create(errorMsg, new ApiException(("test"))))
         .when(mockSamService)
@@ -270,7 +287,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void testHandlesSamError() {
+  void testHandlesSamError() throws Exception {
     String apiErrorMsg = "test";
     ErrorReportException testex = new SamInternalServerErrorException(apiErrorMsg);
     doThrow(testex).when(mockSamService).createWorkspaceWithDefaults(any(), any());
@@ -295,7 +312,53 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void deleteForbiddenMissingWorkspace() {
+  void deleteMcWorkspaceDoSteps() {
+    WorkspaceRequest request =
+        defaultRequestBuilder(UUID.randomUUID())
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+
+    Map<String, StepStatus> doFailures = new HashMap<>();
+    doFailures.put(DeleteProjectStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    doFailures.put(DeleteWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    doFailures.put(DeleteWorkspaceStateStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();
+    jobService.setFlightDebugInfoForTest(debugInfo);
+
+    workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () -> workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST));
+  }
+
+  @Test
+  void deleteWorkspaceUndoFailure() {
+    WorkspaceRequest request =
+        defaultRequestBuilder(UUID.randomUUID())
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
+
+    // Test "undo" flight with lastStepFailure. Because deletion cannot be undone, this workspace
+    // will still be deleted after "undoing" the flight.
+    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
+    jobService.setFlightDebugInfoForTest(debugInfo);
+
+    // When a flight fails with no error message (e.g. because of debugInfo), Stairway will return
+    // an InvalidResultStateException.
+    assertThrows(
+        InvalidResultStateException.class,
+        () -> workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST));
+
+    // Even though the "undo" ran for this flight, the workspace should still be deleted.
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () -> workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST));
+  }
+
+  @Test
+  void deleteForbiddenMissingWorkspace() throws Exception {
     doThrow(new UnauthorizedException("forbid!"))
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
@@ -306,7 +369,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void deleteForbiddenExistingWorkspace() {
+  void deleteForbiddenExistingWorkspace() throws Exception {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
 
@@ -408,7 +471,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void createGoogleContextRawlsStageThrows() {
+  void createGoogleContextRawlsStageThrows() throws Exception {
     // RAWLS_WORKSPACE stage workspaces use existing Sam resources instead of owning them, so the
     // mock pretends our user has access to any workspace we ask about.
     Mockito.when(
@@ -449,7 +512,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void createGoogleContextSpendLinkingUnauthorizedThrows() {
+  void createGoogleContextSpendLinkingUnauthorizedThrows() throws Exception {
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())
             .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
@@ -465,6 +528,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                 Mockito.any(),
                 Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
         .thenReturn(false);
+
     assertThrows(
         SpendUnauthorizedException.class,
         () ->
