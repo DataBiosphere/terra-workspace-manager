@@ -165,7 +165,7 @@ public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScr
 
     // TODO(PF-643): this should happen inside WSM.
     logger.info("Waiting 15s for permissions to propagate");
-    Thread.sleep(15000);
+    TimeUnit.SECONDS.sleep(15);
 
     // Second user can now read the blob
     Blob readerRetrievedFile = readerStorageClient.get(blobId);

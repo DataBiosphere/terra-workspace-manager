@@ -103,7 +103,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
     // TODO(PF-643): this should happen inside WSM.
     logger.info("Waiting 15s for permissions to propagate");
-    Thread.sleep(15000);
+    TimeUnit.SECONDS.sleep(15);
 
     // Create a private bucket, which privateResourceUser assigns to themself.
     CreatedControlledGcpGcsBucket bucket = createPrivateBucket(privateUserResourceApi);
