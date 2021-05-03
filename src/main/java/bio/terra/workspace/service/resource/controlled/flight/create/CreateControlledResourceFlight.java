@@ -13,7 +13,9 @@ import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateServiceAccountStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.GenerateServiceAccountIdStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.NotebookCloudSyncStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.RetrieveNetworkNameStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.ServiceAccountPolicyStep;
 import bio.terra.workspace.service.workspace.flight.SyncSamGroupsStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.List;
@@ -94,7 +96,20 @@ public class CreateControlledResourceFlight extends Flight {
                 resource.castToAiNotebookInstanceResource()),
             gcpRetryRule);
         addStep(
+            new ServiceAccountPolicyStep(
+                flightBeanBag.getCrlService(),
+                resource.castToAiNotebookInstanceResource(),
+                flightBeanBag.getWorkspaceService(),
+                privateResourceIamRoles),
+            gcpRetryRule);
+        addStep(
             new CreateAiNotebookInstanceStep(
+                flightBeanBag.getCrlService(),
+                resource.castToAiNotebookInstanceResource(),
+                flightBeanBag.getWorkspaceService()),
+            gcpRetryRule);
+        addStep(
+            new NotebookCloudSyncStep(
                 flightBeanBag.getCrlService(),
                 resource.castToAiNotebookInstanceResource(),
                 flightBeanBag.getWorkspaceService()),

@@ -25,9 +25,6 @@ public class CloudSyncRoleMapping {
               "roles/iam.serviceAccountUser",
               "roles/lifesciences.editor",
               "roles/serviceusage.serviceUsageConsumer",
-              // TODO(wchambers): Revise notebooks permissions when there are controlled
-              // resources for notebooks.
-              "roles/notebooks.admin",
               // TODO(marikomedlock): Revise storage permissions when there are controlled
               // resources for buckets.
               "roles/storage.admin")

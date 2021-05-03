@@ -68,6 +68,45 @@ public class CustomGcpIamRoleMapping {
           "bigquery.tables.delete",
           "bigquery.tables.update");
 
+  static final ImmutableList<String> AI_NOTEBOOK_INSTANCE_READER_PERMISSIONS =
+      ImmutableList.of(
+          "notebooks.instances.get",
+          "notebooks.instances.list",
+          "notebooks.locations.get",
+          "notebooks.locations.list");
+  // The 'iam.serviceAccounts.actAs' permission on the service account running the instance VM is
+  // used to control write access to the notebook instance.
+  static final ImmutableList<String> AI_NOTEBOOK_INSTANCE_WRITER_PERMISSIONS =
+      new ImmutableList.Builder<String>()
+          .addAll(AI_NOTEBOOK_INSTANCE_READER_PERMISSIONS)
+          .add(
+              "notebooks.instances.reset",
+              "notebooks.instances.setAccelerator",
+              "notebooks.instances.setMachineType",
+              "notebooks.instances.start",
+              "notebooks.instances.stop",
+              "notebooks.instances.use",
+              "notebooks.operations.cancel",
+              "notebooks.operations.delete",
+              "notebooks.operations.get",
+              "notebooks.operations.list")
+          .build();
+  static final ImmutableList<String> AI_NOTEBOOK_INSTANCE_EDITOR_PERMISSIONS =
+      ImmutableList.of(
+          "notebooks.instances.getIamPolicy",
+          "notebooks.instances.get",
+          "notebooks.instances.list",
+          "notebooks.instances.setAccelerator",
+          "notebooks.instances.setMachineType",
+          "notebooks.instances.start",
+          "notebooks.instances.stop",
+          "notebooks.locations.get",
+          "notebooks.locations.list",
+          "notebooks.operations.cancel",
+          "notebooks.operations.delete",
+          "notebooks.operations.get",
+          "notebooks.operations.list");
+
   // The ASSIGNER role does not grant GCP permissions, only Sam permissions. It's included in
   // this map for completeness.
   public static final Table<WsmResourceType, ControlledResourceIamRole, CustomGcpIamRole>
@@ -129,6 +168,35 @@ public class CustomGcpIamRoleMapping {
                   ControlledResourceIamRole.ASSIGNER,
                   new CustomGcpIamRole(
                       WsmResourceType.BIG_QUERY_DATASET,
+                      ControlledResourceIamRole.ASSIGNER,
+                      Collections.emptyList()))
+              // AI Notebook instance
+              .put(
+                  WsmResourceType.AI_NOTEBOOK_INSTANCE,
+                  ControlledResourceIamRole.READER,
+                  new CustomGcpIamRole(
+                      WsmResourceType.AI_NOTEBOOK_INSTANCE,
+                      ControlledResourceIamRole.READER,
+                      AI_NOTEBOOK_INSTANCE_READER_PERMISSIONS))
+              .put(
+                  WsmResourceType.AI_NOTEBOOK_INSTANCE,
+                  ControlledResourceIamRole.WRITER,
+                  new CustomGcpIamRole(
+                      WsmResourceType.AI_NOTEBOOK_INSTANCE,
+                      ControlledResourceIamRole.WRITER,
+                      AI_NOTEBOOK_INSTANCE_WRITER_PERMISSIONS))
+              .put(
+                  WsmResourceType.AI_NOTEBOOK_INSTANCE,
+                  ControlledResourceIamRole.EDITOR,
+                  new CustomGcpIamRole(
+                      WsmResourceType.AI_NOTEBOOK_INSTANCE,
+                      ControlledResourceIamRole.EDITOR,
+                      AI_NOTEBOOK_INSTANCE_EDITOR_PERMISSIONS))
+              .put(
+                  WsmResourceType.AI_NOTEBOOK_INSTANCE,
+                  ControlledResourceIamRole.ASSIGNER,
+                  new CustomGcpIamRole(
+                      WsmResourceType.AI_NOTEBOOK_INSTANCE,
                       ControlledResourceIamRole.ASSIGNER,
                       Collections.emptyList()))
               .build();

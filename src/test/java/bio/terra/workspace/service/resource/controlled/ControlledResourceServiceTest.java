@@ -28,7 +28,9 @@ import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateServiceAccountStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.NotebookCloudSyncStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.RetrieveNetworkNameStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.ServiceAccountPolicyStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteSamResourceStep;
@@ -123,8 +125,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(RetrieveNetworkNameStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(CreateServiceAccountStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(ServiceAccountPolicyStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         CreateAiNotebookInstanceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(NotebookCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
