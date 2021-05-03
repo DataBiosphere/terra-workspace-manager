@@ -365,6 +365,73 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  public void createGetUpdateDeleteBqDataset() throws Exception {
+    Workspace workspace = reusableWorkspace();
+
+    String datasetId = "my_test_dataset";
+    String location = "us-central1";
+
+    ApiGcpBigQueryDatasetCreationParameters creationParameters =
+        new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
+    ControlledBigQueryDatasetResource resource =
+        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
+            .workspaceId(workspace.getWorkspaceId())
+            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .datasetName(datasetId)
+            .build();
+    ControlledBigQueryDatasetResource createdDataset =
+        controlledResourceService.createBqDataset(
+            resource,
+            creationParameters,
+            Collections.emptyList(),
+            userAccessUtils.defaultUserAuthRequest());
+    assertEquals(resource, createdDataset);
+
+    ControlledBigQueryDatasetResource fetchedDataset =
+        controlledResourceService
+            .getControlledResource(
+                workspace.getWorkspaceId(),
+                resource.getResourceId(),
+                userAccessUtils.defaultUserAuthRequest())
+            .castToBigQueryDatasetResource();
+    assertEquals(resource, fetchedDataset);
+
+    String newName = "newResourceName";
+    String newDescription = "new resource description";
+    controlledResourceService.updateControlledResourceMetadata(
+        workspace.getWorkspaceId(),
+        resource.getResourceId(),
+        newName,
+        newDescription,
+        userAccessUtils.defaultUserAuthRequest());
+
+    ControlledBigQueryDatasetResource updatedResource =
+        controlledResourceService
+            .getControlledResource(
+                workspace.getWorkspaceId(),
+                resource.getResourceId(),
+                userAccessUtils.defaultUserAuthRequest())
+            .castToBigQueryDatasetResource();
+    assertEquals(newName, updatedResource.getName());
+    assertEquals(newDescription, updatedResource.getDescription());
+
+    controlledResourceService.deleteControlledResourceSync(
+        resource.getWorkspaceId(),
+        resource.getResourceId(),
+        userAccessUtils.defaultUserAuthRequest());
+
+    assertThrows(
+        ResourceNotFoundException.class,
+        () ->
+            controlledResourceService.getControlledResource(
+                workspace.getWorkspaceId(),
+                resource.getResourceId(),
+                userAccessUtils.defaultUserAuthRequest()));
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void createBqDatasetDo() throws Exception {
     Workspace workspace = reusableWorkspace();
     String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();

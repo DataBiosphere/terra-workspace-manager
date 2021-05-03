@@ -4,16 +4,19 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 public class DeleteWorkspaceStateStep implements Step {
 
   private final WorkspaceDao workspaceDao;
+
+  private final Logger logger = LoggerFactory.getLogger(DeleteWorkspaceStateStep.class);
 
   public DeleteWorkspaceStateStep(WorkspaceDao workspaceDao) {
     this.workspaceDao = workspaceDao;
@@ -37,7 +40,11 @@ public class DeleteWorkspaceStateStep implements Step {
     // We can't really undo a state delete: deleting the workspace cascades to multiple other
     // state tables, and this undo can't re-create all that state.
     // This should absolutely be the last step of a flight, and because we're unable to undo it
-    // we simply return a fatal status.
-    return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
+    // we surface the error from the DO step that led to this issue.
+    FlightMap inputMap = flightContext.getInputParameters();
+    UUID workspaceID =
+        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+    logger.error("Unable to undo deletion of workspace {} in WSM DB", workspaceID);
+    return flightContext.getResult();
   }
 }

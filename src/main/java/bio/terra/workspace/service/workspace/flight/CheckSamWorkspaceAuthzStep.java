@@ -48,7 +48,7 @@ public class CheckSamWorkspaceAuthzStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private boolean canReadExistingWorkspace(UUID workspaceID) {
+  private boolean canReadExistingWorkspace(UUID workspaceID) throws InterruptedException {
     return samService.isAuthorized(
         userReq.getRequiredToken(),
         SamConstants.SAM_WORKSPACE_RESOURCE,

@@ -83,7 +83,7 @@ public class ReferencedResourceService {
       AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_UPDATE_REFERENCED_RESOURCE);
-    resourceDao.updateReferenceResource(workspaceId, resourceId, name, description);
+    resourceDao.updateResource(workspaceId, resourceId, name, description);
   }
 
   /**
