@@ -33,6 +33,10 @@ on:
         description: 'Part of the version to bump: major, minor, patch'
         required: false
         default: 'patch'
+      branch:
+        description: 'Branch to run the workflow on'
+        required: false
+        default: 'main'
 env:
   SERVICE_NAME: ${{ github.event.repository.name }}
   GOOGLE_PROJECT: terra-kernel-k8s
@@ -45,22 +49,27 @@ jobs:
       id: semver
       run: |
         SEMVER_PART=""
+        CHECKOUT_BRANCH="$GITHUB_REF"
         if ${{github.event_name == 'push' }}; then
           SEMVER_PART="patch"
         elif ${{github.event_name == 'workflow_dispatch' }}; then
           SEMVER_PART=${{ github.event.inputs.bump }}
+          CHECKOUT_BRANCH=${{ github.event.inputs.branch }}
         fi
         echo ::set-output name=semver-part::$SEMVER_PART
+        echo ::set-output name=checkout-branch::$CHECKOUT_BRANCH
     - name: Checkout current code
       uses: actions/checkout@v2
       with:
+        ref: ${{ steps.controls.outputs.checkout-branch }}
         token: ${{ secrets.REPO_ACCESS_TOKEN }}
     - name: Bump the tag to a new version
       uses: databiosphere/github-actions/actions/bumper@v0.0.3
       id: tag
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
-        DEFAULT_BUMP: ${{ steps.semver.outputs.semver-part }}
+        DEFAULT_BUMP: patch
+        OVERRIDE_BUMP: ${{ steps.controls.outputs.semver-part }}
         RELEASE_BRANCHES: dev
         HOTFIX_BRANCHES: hotfix.*
         VERSION_FILE_PATH: build.gradle
