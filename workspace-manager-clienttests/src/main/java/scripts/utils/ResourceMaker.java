@@ -10,6 +10,7 @@ import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AccessScope;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.ControlledResourceCommonFields;
+import bio.terra.workspace.model.CreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpBigQueryDatasetReferenceRequestBody;
@@ -19,6 +20,7 @@ import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.DeleteControlledGcpGcsBucketRequest;
 import bio.terra.workspace.model.DeleteControlledGcpGcsBucketResult;
 import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
+import bio.terra.workspace.model.GcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.GcpGcsBucketCreationParameters;
@@ -118,7 +120,7 @@ public class ResourceMaker {
 
     List<GcpGcsBucketLifecycleRule> lifecycleRules = new ArrayList<>(List.of(lifecycleRule));
 
-    String bucketName = ClientTestUtils.getTestBucketName();
+    String bucketName = ClientTestUtils.generateTestResourceName();
     var body =
         new CreateControlledGcpGcsBucketRequestBody()
             .common(
@@ -155,5 +157,27 @@ public class ResourceMaker {
     if (result.getJobReport().getStatus() != JobReport.StatusEnum.SUCCEEDED) {
       throw new RuntimeException("Delete bucket failed: " + result.getErrorReport().getMessage());
     }
+  }
+
+  public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetUserShared(
+      ControlledGcpResourceApi resourceApi, UUID workspaceId, String name) throws Exception {
+
+    String datasetId = ClientTestUtils.generateTestResourceName();
+    var body =
+        new CreateControlledGcpBigQueryDatasetRequestBody()
+            .common(
+                new ControlledResourceCommonFields()
+                    .accessScope(AccessScope.SHARED_ACCESS)
+                    .managedBy(ManagedBy.USER)
+                    .cloningInstructions(CloningInstructionsEnum.NOTHING)
+                    .description("Description of " + name)
+                    .name(name))
+            .dataset(
+                new GcpBigQueryDatasetCreationParameters()
+                    .datasetId(datasetId)
+                    .location("US-CENTRAL1"));
+
+    logger.info("Creating dataset {} workspace {}", datasetId, workspaceId);
+    return resourceApi.createBigQueryDataset(body, workspaceId).getBigQueryDataset();
   }
 }

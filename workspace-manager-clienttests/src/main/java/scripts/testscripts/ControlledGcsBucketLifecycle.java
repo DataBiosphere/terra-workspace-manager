@@ -44,12 +44,8 @@ import scripts.utils.CloudContextMaker;
 import scripts.utils.ResourceMaker;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
-// This test does not use GcpCloudContextTestScriptBase as it also tests the interaction between
-// controlled resources and context creation.
-public class CreateGetDeleteControlledGcsBucket extends WorkspaceAllocateTestScriptBase {
-  private static final Logger logger =
-      LoggerFactory.getLogger(CreateGetDeleteControlledGcsBucket.class);
-  private static final long CREATE_BUCKET_POLL_SECONDS = 5;
+public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBase {
+  private static final Logger logger = LoggerFactory.getLogger(ControlledGcsBucketLifecycle.class);
 
   private static final GcpGcsBucketLifecycleRule LIFECYCLE_RULE_1 =
       new GcpGcsBucketLifecycleRule()

@@ -24,6 +24,8 @@ import bio.terra.workspace.model.RoleBindingList;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.BigQueryOptions;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.base.Strings;
@@ -42,7 +44,7 @@ public class ClientTestUtils {
   public static final String TEST_BUCKET_NAME = "terra_wsm_test_resource";
   public static final String TEST_BQ_DATASET_NAME = "terra_wsm_test_dataset";
   public static final String TEST_BQ_DATASET_PROJECT = "terra-kernel-k8s";
-  public static final String BUCKET_NAME_PREFIX = "terratest";
+  public static final String RESOURCE_NAME_PREFIX = "terratest";
   private static final Logger logger = LoggerFactory.getLogger(ClientTestUtils.class);
 
   // Required scopes for client tests include the usual login scopes.
@@ -121,6 +123,15 @@ public class ClientTestUtils {
         AuthenticationUtils.getDelegatedUserCredential(testUser, TEST_USER_SCOPES);
     StorageOptions options =
         StorageOptions.newBuilder().setCredentials(userCredential).setProjectId(projectId).build();
+    return options.getService();
+  }
+
+  public static BigQuery getGcpBigQueryClient(TestUserSpecification testUser, String projectId)
+      throws IOException {
+    GoogleCredentials userCredential =
+        AuthenticationUtils.getDelegatedUserCredential(testUser, TEST_USER_SCOPES);
+    var options =
+        BigQueryOptions.newBuilder().setCredentials(userCredential).setProjectId(projectId).build();
     return options.getService();
   }
 
@@ -233,9 +244,9 @@ public class ClientTestUtils {
     return jobReport.getStatus().equals(JobReport.StatusEnum.RUNNING);
   }
 
-  /** @return unique test bucket name */
-  public static String getTestBucketName() {
-    String name = BUCKET_NAME_PREFIX + UUID.randomUUID().toString();
+  /** @return unique resource name */
+  public static String generateTestResourceName() {
+    String name = RESOURCE_NAME_PREFIX + UUID.randomUUID().toString();
     return name.replace("-", "_");
   }
 }
