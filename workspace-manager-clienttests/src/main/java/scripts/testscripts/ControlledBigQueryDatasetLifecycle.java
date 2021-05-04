@@ -190,7 +190,7 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
 
   /**
    * Create and return a table with a single column in this test's dataset. Unlike createDataset,
-   * this talks directly on the BigQuery and does not go through WSM.
+   * this talks directly to BigQuery and does not go through WSM.
    */
   private Table createTable(BigQuery bigQueryClient, String projectId) {
     var tableId = TableId.of(projectId, DATASET_NAME, TABLE_NAME);
