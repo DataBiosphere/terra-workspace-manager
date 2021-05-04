@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.resource;
 
+import bio.terra.common.exception.InconsistentFieldsException;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
@@ -53,7 +56,28 @@ public class ValidationUtils {
     if (!AI_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
       logger.warn("Invalid AI Notebook instance name {}", name);
       throw new InvalidReferenceException(
-          "Invalid AI Notebook instance name specified. Name must be 1 to 62 alphanumeric characters or underscores, where the first letter is a lower case letter.");
+          "Invalid AI Notebook instance name specified. Name must be 1 to 63 alphanumeric lower case characters or underscores, where the first letter is a lower case letter.");
+    }
+  }
+
+  public static void validate(ApiGcpAiNotebookInstanceCreationParameters creationParameters) {
+    validateAiNotebookInstanceId(creationParameters.getInstanceId());
+    // OpenApi one-of fields aren't being generated correctly, so we do manual one-of fields.
+    if ((creationParameters.getVmImage() == null)
+        == (creationParameters.getContainerImage() == null)) {
+      throw new InconsistentFieldsException(
+          "Exactly one of vmImage or containerImage must be specified.");
+    }
+    validate(creationParameters.getVmImage());
+  }
+
+  private static void validate(ApiGcpAiNotebookInstanceVmImage vmImage) {
+    if (vmImage == null) {
+      return;
+    }
+    if ((vmImage.getImageName() == null) == (vmImage.getImageFamily() == null)) {
+      throw new InconsistentFieldsException(
+          "Exactly one of imageName or imageFamily must be specified for a valid vmImage.");
     }
   }
 

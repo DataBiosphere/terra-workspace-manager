@@ -5,14 +5,12 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.exception.SamApiException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 
 /**
  * A step that creates a Sam workspace resource. This only runs for MC_WORKSPACE stage workspaces,
@@ -31,7 +29,8 @@ public class CreateWorkspaceAuthzStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) throws RetryException {
+  public StepResult doStep(FlightContext flightContext)
+      throws RetryException, InterruptedException {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceID =
         UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
@@ -45,26 +44,15 @@ public class CreateWorkspaceAuthzStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext flightContext) {
+  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceID =
         UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    try {
-      samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);
-    } catch (SamApiException ex) {
-      // Do nothing if the resource to delete is not found, this may not be the first time undo is
-      // called. Other exceptions still need to be surfaced.
-      logger.debug(
-          "Sam API error while undoing CreateWorkspaceAuthzStep, code is "
-              + ex.getApiExceptionStatus());
-      if (ex.getApiExceptionStatus() != HttpStatus.NOT_FOUND.value()) {
-        throw ex;
-      }
-    }
+    samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);
     return StepResult.getStepResultSuccess();
   }
 
-  private boolean canReadExistingWorkspace(UUID workspaceID) {
+  private boolean canReadExistingWorkspace(UUID workspaceID) throws InterruptedException {
     return samService.isAuthorized(
         userReq.getRequiredToken(),
         SamConstants.SAM_WORKSPACE_RESOURCE,

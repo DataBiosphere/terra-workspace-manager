@@ -27,7 +27,8 @@ public final class StartupInitializer {
     jobService.initialize();
 
     // WSM's service account needs to be registered as a user in Sam for admin controls.
-    samService.initialize();
+
+    SamService.rethrowIfSamInterrupted(samService::initialize, "initialize");
 
     // TODO: Fill in this method with any other initialization that needs to happen
     //  between the point of having the entire application initialized and

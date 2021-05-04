@@ -787,7 +787,7 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ResourceId'
     get:
-      summary: get a controlled GCS bucket resource
+      summary: Get a controlled GCS bucket resource
       operationId: getBucket
       tags: [ControlledGcpResource]
       responses:
@@ -795,7 +795,7 @@ paths:
           $ref: '#/components/responses/GetControlledGcpGcsBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
@@ -828,7 +828,7 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/JobId'
     get:
-      summary: Retrieve information about a gcp bucket creation job.
+      summary: Retrieve information about a gcp bucket deletion job.
       operationId: getDeleteBucketResult
       tags: [ControlledGcpResource]
       responses:
@@ -838,6 +838,181 @@ paths:
           $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled BigQuery dataset
+      operationId: createBigQueryDataset
+      tags: [ControlledGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledGcpBigQueryDatasetRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledGcpBigQueryDatasetResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/{resourceId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled BigQuery dataset resource
+      operationId: getBigQueryDataset
+      tags: [ ControlledGcpResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/ControlledGcpBigQueryDatasetResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update a controlled BigQuery dataset resource
+      operationId: updateBigQueryDataset
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateControlledResourceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/ControlledGcpBigQueryDatasetResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete a controlled Bigquery dataset
+      operationId: deleteBigQueryDataset
+      tags: [ ControlledGcpResource ]
+      responses:
+        '204':
+          description: Success
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Gcp AI Platform Notebook Instance
+      operationId: createAiNotebookInstance
+      tags: [ControlledGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledGcpAiNotebookInstanceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledGcpAiNotebookInstanceResponse'
+        '202':
+          $ref: '#/components/responses/CreatedControlledGcpAiNotebookInstanceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances/create-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a GCP AI Platform Notebook create instance job.
+      operationId: getCreateAiNotebookInstanceResult
+      tags: [ControlledGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledGcpAiNotebookInstanceResponse'
+        '202':
+          $ref: '#/components/responses/CreatedControlledGcpAiNotebookInstanceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled AI Notebook instance resource
+      operationId: getAiNotebookInstance
+      tags: [ControlledGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledGcpAiNotebookInstanceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete a controlled GCP AI Notebook instance resource. This is async, because deleting the
+        notebook instance can take ~5 minutes. NOTE: this cannot be an HTTP DELETE, because
+        something between generated code and server behavior does not support delete operations with
+        bodies. We require the body for the async state, so this is a POST.
+      operationId: deleteAiNotebookInstance
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledGcpAiNotebookInstanceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledGcpAiNotebookInstanceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledGcpAiNotebookInstanceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a GCP AI Platform Notebook delete instance job.
+      operationId: getDeleteAiNotebookInstanceResult
+      tags: [ControlledGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledGcpAiNotebookInstanceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledGcpAiNotebookInstanceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -1168,9 +1343,7 @@ components:
           type: string
           enum: [RUNNING, SUCCEEDED, FAILED]
         statusCode:
-          description: >-
-            HTTP code providing completion status of the job. Present if status
-            is SUCCEEDED or FAILED.
+          description: HTTP code providing status of the job.
           type: integer
         submitted:
           description: timestamp when the job was submitted; in ISO-8601 format
@@ -1448,6 +1621,26 @@ components:
         gcsBucket:
           $ref: '#/components/schemas/GcpGcsBucketCreationParameters'
 
+    CreateControlledGcpBigQueryDatasetRequestBody:
+      description: Payload for requesting a new controlled BigQuery dataset resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        dataset:
+          $ref: '#/components/schemas/GcpBigQueryDatasetCreationParameters'
+
+    CreateControlledGcpAiNotebookInstanceRequestBody:
+      description: Payload for requesting a new controlled GCS bucket resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        aiNotebookInstance:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceCreationParameters'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
     ControlledResourceCommonFields:
       type: object
       required: [ name, cloningInstructions, accessScope, managedBy ]
@@ -1495,8 +1688,19 @@ components:
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
 
+    UpdateControlledResourceRequestBody:
+      type: object
+      description: Common request body for updating a controlled resource
+      properties:
+        name:
+          description: Optional. New name to give to this resource. The resource name will not be updated if this is omitted.
+          type: string
+        description:
+          description: Optional. New description to give to this resource. The resource description will not be updated if this is omitted.
+          type: string
+
     CreatedControlledGcpGcsBucket:
-      description: Response Payload for requesting a new controlled resource.
+      description: Response Payload for requesting a new controlled GCS bucket.
       type: object
       properties:
         resourceId:
@@ -1505,6 +1709,17 @@ components:
           format: uuid
         gcpBucket:
           $ref: '#/components/schemas/GcpGcsBucketResource'
+
+    CreatedControlledGcpBigQueryDataset:
+      description: Response Payload for requesting a new controlled BigQuery dataset.
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource. Null if not created yet.
+          type: string
+          format: uuid
+        bigQueryDataset:
+          $ref: '#/components/schemas/GcpBigQueryDatasetResource'
 
     GcpGcsBucketCreationParameters:
       description: >-
@@ -1625,6 +1840,19 @@ components:
             of the object.
           type: integer
 
+    GcpBigQueryDatasetCreationParameters:
+      description: >-
+        Dataset-specific properties to be set on creation. These are a subset of the
+        values accepted by the BigQuery API.
+      type: object
+      properties:
+        datasetId:
+          description: A valid dataset name per https://cloud.google.com/bigquery/docs/datasets#dataset-naming
+          type: string
+        location:
+          description: A valid dataset location per https://cloud.google.com/bigquery/docs/locations.
+          type: string
+
     DeleteControlledGcpGcsBucketRequest:
       type: object
       required: [ jobControl ]
@@ -1633,6 +1861,165 @@ components:
           $ref: '#/components/schemas/JobControl'
 
     DeleteControlledGcpGcsBucketResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    CreatedControlledGcpAiNotebookInstanceResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+        aiNotebookInstance:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceResource'
+
+    GcpAiNotebookInstanceCreationParameters:
+      description: >-
+        AI Platform Notebook instance specific properties to be set on creation. These are a subset of the
+        values accepted by the GCP AI Platforms API. See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances/create
+      type: object
+      properties:
+        instanceId:
+          description: >-
+            An instanceId unique to this project and location. Must be 1-63 characters, using lower
+            case letters, numbers, and dashes. The first character must be a lower case letter,
+            and the last character must not be a dash.
+          type: string
+          required: true
+        location:
+          description: The canonical GCP id for this location. For example, \'us-east1\'.
+          type: string
+          required: true
+        postStartupScript:
+          description: >-
+            Path to a Bash script that automatically runs after a notebook instance fully boots up.
+            The path must be a URL or Cloud Storage path (gs://path-to-file/file-name). If the path
+            is a cloud storage path, the created VM instance's service account's credentials is used
+            to access it.
+          type: string
+        machineType:
+          description: The Compute Engine machine type of this instance, see
+            https://cloud.google.com/compute/docs/machine-types
+          type: string
+          required: true
+        acceleratorConfig:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceAcceleratorConfig'
+        installGpuDriver:
+          description: >-
+            Whether the end user authorizes Google Cloud to install GPU driver on this instance. If
+            this field is empty or set to false, the GPU driver won't be installed. Only applicable
+            to instances with GPUs.
+          type: boolean
+        customGpuDriverPath:
+          description: >-
+            Specify a custom Cloud Storage path where the GPU driver is stored. If not specified,
+            we'll automatically choose from official GPU drivers.
+          type: string
+        bootDiskType:
+          description: >-
+            The type of the boot disk attached to this instance, defaults to standard persistent
+            disk (PD_STANDARD). See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances#DiskType
+          type: string
+        bootDiskSizeGb:
+          description: >-
+            Input only. The size of the boot disk in GB attached to this instance, up to a maximum
+            of 64000 GB (64 TB). The minimum recommended value is 100 GB. If not specified, this
+            defaults to 100.
+          type: integer
+          format: int64
+        dataDiskType:
+          description: >-
+            Input only. The type of the data disk attached to this instance, defaults to standard
+            persistent disk (PD_STANDARD). See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances#DiskType
+          type: string
+        dataDiskSizeGb:
+          description: >-
+            Input only. The size of the data disk in GB attached to this instance, up to a maximum
+            of 64000 GB (64 TB). If not specified, this defaults to 100.
+          type: integer
+          format: int64
+        metadata:
+          description: >-
+            Custom metadata to apply to this instance. Some metadata keys are reserved by Terra and
+            will throw a bad request error if specified: 'proxy-mode'.
+          type: object
+          additionalProperties:
+            type: string
+        vmImage:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceVmImage'
+        containerImage:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceContainerImage'
+
+    GcpAiNotebookInstanceAcceleratorConfig:
+      description: >-
+        The hardware accelerator used on this instance. If you use accelerators, make sure that your
+        configuration has enough vCPUs and memory to support the machineType you have selected.
+        See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances#AcceleratorConfig
+      type: object
+      properties:
+        type:
+          description: Type of this accelerator
+          type: string
+        coreCount:
+          description: Count of cores of this accelerator.
+          type: integer
+          format: int64
+
+    GcpAiNotebookInstanceVmImage:
+      description: >-
+        Either this or containerImage must be specified. Definition of a custom Compute Engine
+        virtual machine image for starting a notebook instance with the environment installed
+        directly on the VM. See
+        https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/VmImage
+      type: object
+      properties:
+        projectId:
+          description: >-
+            The name of the Google Cloud project that this VM image belongs to. Format:
+            'projects/{project_id}'
+          type: string
+          required: true
+        imageName:
+          description: >-
+            Either this or imageFamily must be specified. Use VM image name to find the image.
+          type: string
+        imageFamily:
+          description: >-
+            Either this or imageName must be specified. Use this VM image family to find the image;
+            the newest image in this family will be used.
+          type: string
+
+    GcpAiNotebookInstanceContainerImage:
+      description: >-
+        Either this or vmImage must be specified. Definition of a container image for starting a
+        notebook instance with the environment installed in a container. See
+        https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/ContainerImage
+      type: object
+      properties:
+        repository:
+          description: >-
+            Required. The path to the container image repository. For example:
+            'gcr.io/{project_id}/{imageName}'
+          type: string
+          required: true
+        tag:
+          description: >-
+            The tag of the container image. If not specified, this defaults to the latest tag.
+          type: string
+
+    DeleteControlledGcpAiNotebookInstanceRequest:
+      type: object
+      required: [ jobControl ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    DeleteControlledGcpAiNotebookInstanceResult:
       type: object
       properties:
         jobReport:
@@ -1720,6 +2107,33 @@ components:
         attributes:
           $ref: '#/components/schemas/GcpGcsBucketAttributes'
 
+    GcpAiNotebookInstanceAttributes:
+      description: >-
+        AI Notebook instance properties included in post-creation, get, and update. Others must be
+        retrieved from GCP using the specification.
+      type: object
+      properties:
+        projectId:
+          description: The GCP project id for the project containing the notebook instance.
+          type: string
+        location:
+          description: The GCP location containing the notebook instance, e.g. 'us-east1-b'
+          type: string
+        instanceId:
+          description: An instance id unique to this project and location.
+          type: string
+
+    GcpAiNotebookInstanceResource:
+      type: object
+      description: Description of a AI Notebook Instance resource.
+      required: [metadata, attributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceAttributes'
+
     ResourceAttributesUnion:
       type: object
       description: |
@@ -1727,12 +2141,14 @@ components:
         Exactly one will be populated based on the ResourceType in the
         ResourceDescription. The value of the other references is undefined.
       properties:
-        gcpBigQuery:
+        gcpBqDataset:
           $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
         gcpDataRepoSnapshot:
           $ref: '#/components/schemas/DataRepoSnapshotAttributes'
         gcpGcsBucket:
           $ref: '#/components/schemas/GcpGcsBucketAttributes'
+        gcpAiNotebookInstance:
+          $ref: '#/components/schemas/GcpAiNotebookInstanceAttributes'
 
     ResourceDescription:
       type: object
@@ -1870,7 +2286,7 @@ components:
             $ref: '#/components/schemas/RoleBindingList'
 
     CreatedControlledGcpGcsBucketResponse:
-      description: Response to Create controlled resource
+      description: Response to Create controlled Gcs bucket
       content:
         application/json:
           schema:
@@ -1889,6 +2305,41 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GcpGcsBucketResource'
+
+    CreatedControlledGcpBigQueryDatasetResponse:
+      description: Response to Create controlled BigQuery dataset
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledGcpBigQueryDataset'
+
+    ControlledGcpBigQueryDatasetResponse:
+      description: Response containing a controlled BigQuery dataset
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GcpBigQueryDatasetResource'
+
+    CreatedControlledGcpAiNotebookInstanceResponse:
+      description: Response to Create controlled resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledGcpAiNotebookInstanceResult'
+
+    DeleteControlledGcpAiNotebookInstanceResponse:
+      description: Response Payload for deleting a Gcs bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteControlledGcpAiNotebookInstanceResult'
+
+    GetControlledGcpAiNotebookInstanceResponse:
+      description: Response to get AI Notebook instance.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GcpAiNotebookInstanceResource'
 
     CreateCloudContextResultResponse:
       description: Job is complete (succeeded or failed)

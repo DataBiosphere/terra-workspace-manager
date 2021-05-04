@@ -2,12 +2,18 @@ package bio.terra.workspace.service.resource.controlled.flight.create;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.RetryRule;
+import bio.terra.stairway.RetryRuleFixedInterval;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateAiNotebookInstanceStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateServiceAccountStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.GenerateServiceAccountIdStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.RetrieveNetworkNameStep;
 import bio.terra.workspace.service.workspace.flight.SyncSamGroupsStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.List;
@@ -17,6 +23,14 @@ import java.util.List;
  * depend on the resource type. The latter must be passed in via the input parameters map with keys
  */
 public class CreateControlledResourceFlight extends Flight {
+
+  /**
+   * Retry rule for steps interacting with GCP. If GCP is down, we don't know when it will be back,
+   * so don't wait forever. Note that RetryRules can be re-used within but not across Flight
+   * instances.
+   */
+  private final RetryRule gcpRetryRule =
+      new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount=  */ 10);
 
   public CreateControlledResourceFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
@@ -53,6 +67,7 @@ public class CreateControlledResourceFlight extends Flight {
     // create the cloud resource and grant IAM roles via CRL
     switch (resource.getResourceType()) {
       case GCS_BUCKET:
+        // TODO(PF-589): apply gcpRetryRule to these steps once they are idempotent.
         addStep(
             new CreateGcsBucketStep(
                 flightBeanBag.getCrlService(),
@@ -64,7 +79,38 @@ public class CreateControlledResourceFlight extends Flight {
                 resource.castToGcsBucketResource(),
                 flightBeanBag.getWorkspaceService()));
         break;
+      case AI_NOTEBOOK_INSTANCE:
+        addStep(
+            new RetrieveNetworkNameStep(
+                flightBeanBag.getCrlService(),
+                resource.castToAiNotebookInstanceResource(),
+                flightBeanBag.getWorkspaceService()),
+            gcpRetryRule);
+        addStep(new GenerateServiceAccountIdStep());
+        addStep(
+            new CreateServiceAccountStep(
+                flightBeanBag.getCrlService(),
+                flightBeanBag.getWorkspaceService(),
+                resource.castToAiNotebookInstanceResource()),
+            gcpRetryRule);
+        addStep(
+            new CreateAiNotebookInstanceStep(
+                flightBeanBag.getCrlService(),
+                resource.castToAiNotebookInstanceResource(),
+                flightBeanBag.getWorkspaceService()),
+            gcpRetryRule);
+        // TODO(PF-626): Set permissions on service account and notebook instances.
+        break;
       case BIG_QUERY_DATASET:
+        // Unlike other resources, BigQuery datasets set IAM permissions at creation time to avoid
+        // unwanted defaults from GCP.
+        addStep(
+            new CreateBigQueryDatasetStep(
+                flightBeanBag.getCrlService(),
+                resource.castToBigQueryDatasetResource(),
+                flightBeanBag.getWorkspaceService()),
+            gcpRetryRule);
+        break;
       default:
         throw new IllegalStateException(
             String.format("Unrecognized resource type %s", resource.getResourceType()));

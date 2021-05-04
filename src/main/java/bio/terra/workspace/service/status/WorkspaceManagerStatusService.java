@@ -52,6 +52,6 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
   }
 
   private Boolean isConnectionValid(Connection connection) throws SQLException {
-    return connection.isValid(0);
+    return connection.isValid(30);
   }
 }

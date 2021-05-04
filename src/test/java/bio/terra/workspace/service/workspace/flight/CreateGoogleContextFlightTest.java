@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
@@ -56,7 +57,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   @Autowired private UserAccessUtils userAccessUtils;
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void successCreatesProjectAndContext() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
@@ -68,7 +69,8 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
             jobService.getStairway(),
             CreateGcpContextFlight.class,
             createInputParameters(workspaceId, spendUtils.defaultBillingAccountId(), userReq),
-            STAIRWAY_FLIGHT_TIMEOUT);
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
     String projectId =
@@ -92,7 +94,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void errorRevertsChanges() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
@@ -100,12 +102,14 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     assertTrue(workspace.getGcpCloudContext().isEmpty());
 
     // Submit a flight class that always errors.
+    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            ErrorCreateGoogleContextFlight.class,
+            CreateGcpContextFlight.class,
             createInputParameters(workspaceId, spendUtils.defaultBillingAccountId(), userReq),
-            STAIRWAY_FLIGHT_TIMEOUT);
+            STAIRWAY_FLIGHT_TIMEOUT,
+            debugInfo);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
 
     workspace = workspaceService.getWorkspace(workspaceId, userReq);
@@ -166,8 +170,13 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
                     Function.identity(),
                     role ->
                         "group:"
-                            + samService.syncWorkspacePolicy(
-                                workspaceId, role, userAccessUtils.defaultUserAuthRequest())));
+                            + SamService.rethrowIfSamInterrupted(
+                                () ->
+                                    samService.syncWorkspacePolicy(
+                                        workspaceId,
+                                        role,
+                                        userAccessUtils.defaultUserAuthRequest()),
+                                "syncWorkspacePolicy")));
     Policy currentPolicy =
         crl.getCloudResourceManagerCow()
             .projects()
@@ -197,17 +206,6 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
               .get(actualGcpRoleList.indexOf(gcpRole))
               .getMembers()
               .contains(groupEmail));
-    }
-  }
-
-  /**
-   * An extension of {@link CreateGcpContextFlight} that has the last step as an error, causing the
-   * flight to always attempt to be rolled back.
-   */
-  public static class ErrorCreateGoogleContextFlight extends CreateGcpContextFlight {
-    public ErrorCreateGoogleContextFlight(FlightMap inputParameters, Object applicationContext) {
-      super(inputParameters, applicationContext);
-      addStep(new StairwayTestUtils.ErrorDoStep());
     }
   }
 }

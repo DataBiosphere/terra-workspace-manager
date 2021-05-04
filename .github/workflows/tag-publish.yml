@@ -1,11 +1,16 @@
-name: PR Merge Actions
+name: Tag, Publish, and Deploy
 # The purpose of the workflow is to:
 #  1. Bump the version number and tag the release
 #  2. Build and publish the client to Artifactory
 #  3. Build docker image and publish to GCR
 #  4. Trigger deployment to the dev environment
 #
-# When run on merge to dev, it bumps the patch version
+# When run on merge to dev, it tags and bumps the patch version by default. You can
+# bump other parts of the version by putting #major, #minor, or #patch in your commit
+# message.
+#
+# When run on a hotfix branch, it tags and generates the hotfix version
+#
 # When run manually, you can specify the part of the semantic version to bump
 #
 # The workflow relies on github secrets:
@@ -15,27 +20,25 @@ name: PR Merge Actions
 # - ARTIFACTORY_USERNAME - username and password for publishing the client to artifactory
 # - ARTIFACTORY_PASSWORD
 on:
-# TODO: add this back in
-#  push:
-#    branches:
-#    - dev
-#    paths-ignore:
-#    - 'README.md'
-#    - '.github/**'
-#    - 'local-dev/**'
+  push:
+    branches:
+    - dev
+    paths-ignore:
+    - 'README.md'
+    - '.github/**'
+    - 'local-dev/**'
   workflow_dispatch:
     inputs:
       bump:
         description: 'Part of the version to bump: major, minor, patch'
         required: false
-        default: 'minor'
+        default: 'patch'
 env:
   SERVICE_NAME: ${{ github.event.repository.name }}
   GOOGLE_PROJECT: terra-kernel-k8s
   GKE_CLUSTER: terra-kernel-k8s
 jobs:
-# TODO: rename to something else
-  on-pr-merge:
+  tag-publish-job:
     runs-on: ubuntu-latest
     steps:
     - name: Set part of semantic version to bump
@@ -43,7 +46,7 @@ jobs:
       run: |
         SEMVER_PART=""
         if ${{github.event_name == 'push' }}; then
-          SEMVER_PART="minor"
+          SEMVER_PART="patch"
         elif ${{github.event_name == 'workflow_dispatch' }}; then
           SEMVER_PART=${{ github.event.inputs.bump }}
         fi
@@ -52,13 +55,14 @@ jobs:
       uses: actions/checkout@v2
       with:
         token: ${{ secrets.REPO_ACCESS_TOKEN }}
-    - name: "Bump the tag to a new version"
+    - name: Bump the tag to a new version
       uses: databiosphere/github-actions/actions/bumper@v0.0.3
       id: tag
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         DEFAULT_BUMP: ${{ steps.semver.outputs.semver-part }}
         RELEASE_BRANCHES: dev
+        HOTFIX_BRANCHES: hotfix.*
         VERSION_FILE_PATH: build.gradle
         VERSION_LINE_MATCH: "^	version = \".*\""
         VERSION_SUFFIX: SNAPSHOT
@@ -98,7 +102,6 @@ jobs:
     - name: Build image locally with jib
       run: "./gradlew jibDockerBuild --image=${{ steps.image-name.outputs.name }} -Djib.console=plain"
     - name: Run Trivy vulnerability scanner
-      # https://github.com/broadinstitute/dsp-appsec-trivy-action
       uses: broadinstitute/dsp-appsec-trivy-action@v1
       with:
         image: ${{ steps.image-name.outputs.name }}

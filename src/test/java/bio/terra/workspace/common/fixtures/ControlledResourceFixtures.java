@@ -1,5 +1,7 @@
 package bio.terra.workspace.common.fixtures;
 
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
@@ -9,6 +11,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleActionTyp
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -61,6 +64,17 @@ public class ControlledResourceFixtures {
           .defaultStorageClass(ApiGcpGcsBucketDefaultStorageClass.STANDARD)
           .lifecycle(new ApiGcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
 
+  public static ApiGcpAiNotebookInstanceCreationParameters defaultNotebookCreationParameters() {
+    return new ApiGcpAiNotebookInstanceCreationParameters()
+        .instanceId("default-instance-id")
+        .location("us-east1-b")
+        .machineType("e2-standard-2")
+        .vmImage(
+            new ApiGcpAiNotebookInstanceVmImage()
+                .projectId("deeplearning-platform-release")
+                .imageFamily("r-latest-cpu-experimental"));
+  }
+
   public static final String RESOURCE_NAME = "my_first_bucket";
 
   public static final String RESOURCE_DESCRIPTION =
@@ -98,6 +112,27 @@ public class ControlledResourceFixtures {
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
         .managedBy(ManagedByType.MANAGED_BY_USER)
         .bucketName(BUCKET_NAME);
+  }
+
+  /**
+   * Returns a {@link ControlledBigQueryDatasetResource.Builder} that is ready to be built.
+   *
+   * <p>Tests should not rely on any particular value for the fields returned by this function and
+   * instead override the values that they care about.
+   */
+  public static ControlledBigQueryDatasetResource.Builder
+      makeDefaultControlledBigQueryDatasetResource() {
+    UUID resourceId = UUID.randomUUID();
+    return new ControlledBigQueryDatasetResource.Builder()
+        .workspaceId(UUID.randomUUID())
+        .resourceId(resourceId)
+        .name("test_dataset")
+        .description("how much data could a dataset set if a dataset could set data?")
+        .cloningInstructions(CLONING_INSTRUCTIONS)
+        .assignedUser(null)
+        .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+        .managedBy(ManagedByType.MANAGED_BY_USER)
+        .datasetName("test_dataset");
   }
 
   /**

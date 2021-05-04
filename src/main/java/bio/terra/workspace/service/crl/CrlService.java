@@ -5,7 +5,9 @@ import bio.terra.cloudres.common.cleanup.CleanupConfig;
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.billing.CloudBillingClientCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
+import bio.terra.cloudres.google.compute.CloudComputeCow;
 import bio.terra.cloudres.google.iam.IamCow;
+import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
@@ -41,8 +43,10 @@ public class CrlService {
 
   private final ClientConfig clientConfig;
   private final CrlConfiguration crlConfig;
+  private final AIPlatformNotebooksCow crlNotebooksCow;
   private final CloudResourceManagerCow crlResourceManagerCow;
   private final CloudBillingClientCow crlBillingClientCow;
+  private final CloudComputeCow crlComputeCow;
   private final IamCow crlIamCow;
   private final ServiceUsageCow crlServiceUsageCow;
 
@@ -54,8 +58,10 @@ public class CrlService {
       GoogleCredentials creds = getApplicationCredentials();
       clientConfig = buildClientConfig();
       try {
+        this.crlNotebooksCow = AIPlatformNotebooksCow.create(clientConfig, creds);
         this.crlResourceManagerCow = CloudResourceManagerCow.create(clientConfig, creds);
         this.crlBillingClientCow = new CloudBillingClientCow(clientConfig, creds);
+        this.crlComputeCow = CloudComputeCow.create(clientConfig, creds);
         this.crlIamCow = IamCow.create(clientConfig, creds);
         this.crlServiceUsageCow = ServiceUsageCow.create(clientConfig, creds);
 
@@ -64,11 +70,18 @@ public class CrlService {
       }
     } else {
       clientConfig = null;
+      crlNotebooksCow = null;
       crlResourceManagerCow = null;
       crlBillingClientCow = null;
+      crlComputeCow = null;
       crlIamCow = null;
       crlServiceUsageCow = null;
     }
+  }
+  /** @return CRL {@link AIPlatformNotebooksCow} which wraps Google AI Platform Notebooks API */
+  public AIPlatformNotebooksCow getAIPlatformNotebooksCow() {
+    assertCrlInUse();
+    return crlNotebooksCow;
   }
 
   /** @return CRL {@link CloudResourceManagerCow} which wraps Google Cloud Resource Manager API */
@@ -81,6 +94,12 @@ public class CrlService {
   public CloudBillingClientCow getCloudBillingClientCow() {
     assertCrlInUse();
     return crlBillingClientCow;
+  }
+
+  /** Returns the CRL {@link CloudComputeCow} which wraps Google Compute Engine API. */
+  public CloudComputeCow getCloudComputeCow() {
+    assertCrlInUse();
+    return crlComputeCow;
   }
 
   /** Returns the CRL {@link IamCow} which wraps Google IAM API. */
@@ -100,6 +119,19 @@ public class CrlService {
     assertCrlInUse();
     try {
       return BigQueryCow.create(clientConfig, googleCredentialsFromUserReq(userReq));
+    } catch (IOException | GeneralSecurityException e) {
+      throw new CrlInternalException("Error creating BigQuery API wrapper", e);
+    }
+  }
+
+  /**
+   * @return CRL {@link BigQueryCow} which wraps Google BigQuery API using the WSM service account's
+   *     credentials.
+   */
+  public BigQueryCow createWsmSaBigQueryCow() {
+    assertCrlInUse();
+    try {
+      return BigQueryCow.create(clientConfig, getApplicationCredentials());
     } catch (IOException | GeneralSecurityException e) {
       throw new CrlInternalException("Error creating BigQuery API wrapper", e);
     }

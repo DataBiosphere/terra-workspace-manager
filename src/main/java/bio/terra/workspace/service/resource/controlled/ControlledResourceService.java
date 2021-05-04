@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -10,10 +12,11 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceA
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceGcsBucketFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -23,6 +26,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -61,8 +65,8 @@ public class ControlledResourceService {
    *
    * <p>Throws InvalidControlledResourceException if the given resource is not controlled.
    *
-   * <p>Throws SamUnauthorizedException if the user is not permitted to perform the specified action
-   * on the resource in question.
+   * <p>Throws UnauthorizedException if the user is not permitted to perform the specified action on
+   * the resource in question.
    *
    * <p>Returns the controlled resource object if it exists and the user is permitted to perform the
    * specified action.
@@ -83,16 +87,19 @@ public class ControlledResourceService {
           String.format("Resource %s is not a controlled resource.", resource.getResourceId()));
     }
     ControlledResource controlledResource = resource.castToControlledResource();
-    samService.checkAuthz(
-        userReq,
-        controlledResource.getCategory().getSamResourceName(),
-        resourceId.toString(),
-        action);
+    SamService.rethrowIfSamInterrupted(
+        () ->
+            samService.checkAuthz(
+                userReq,
+                controlledResource.getCategory().getSamResourceName(),
+                resourceId.toString(),
+                action),
+        "checkAuthz");
     return controlledResource;
   }
 
   /** Starts a create controlled bucket resource, blocking until its job is finished. */
-  public ControlledGcsBucketResource syncCreateBucket(
+  public ControlledGcsBucketResource createBucket(
       ControlledGcsBucketResource resource,
       ApiGcpGcsBucketCreationParameters creationParameters,
       List<ControlledResourceIamRole> privateResourceIamRoles,
@@ -106,6 +113,38 @@ public class ControlledResourceService {
                 userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
+  }
+
+  /** Starts a create controlled BigQuery dataset resource, blocking until its job is finished. */
+  public ControlledBigQueryDatasetResource createBqDataset(
+      ControlledBigQueryDatasetResource resource,
+      ApiGcpBigQueryDatasetCreationParameters creationParameters,
+      List<ControlledResourceIamRole> privateResourceIamRoles,
+      AuthenticatedUserRequest userRequest) {
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(
+                resource,
+                privateResourceIamRoles,
+                new ApiJobControl().id(UUID.randomUUID().toString()),
+                null,
+                userRequest)
+            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    return jobBuilder.submitAndWait(ControlledBigQueryDatasetResource.class);
+  }
+
+  /** Starts a create controlled AI Notebook instance resource job, returning the job id. */
+  public String createAiNotebookInstance(
+      ControlledAiNotebookInstanceResource resource,
+      ApiGcpAiNotebookInstanceCreationParameters creationParameters,
+      List<ControlledResourceIamRole> privateResourceIamRoles,
+      ApiJobControl jobControl,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(
+            resource, privateResourceIamRoles, jobControl, resultPath, userRequest);
+    jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
+    return jobBuilder.submit();
   }
 
   /** Create a JobBuilder for creating controlled resources with the common parameters populated. */
@@ -148,30 +187,79 @@ public class ControlledResourceService {
     return wsmResource.castToControlledResource();
   }
 
-  public String deleteControlledGcsBucket(
+  /**
+   * Update the name and description metadata fields of a controlled resource. These are only stored
+   * inside WSM, so this does not require any calls to clouds.
+   *
+   * @param workspaceId workspace of interest
+   * @param resourceId resource to update
+   * @param name name to change - may be null, in which case resource name will not be changed.
+   * @param description description to change - may be null, in which case resource description will
+   *     not be changed.
+   */
+  public void updateControlledResourceMetadata(
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      AuthenticatedUserRequest userReq) {
+    stageService.assertMcWorkspace(workspaceId, "updateControlledResource");
+    validateControlledResourceAndAction(
+        userReq, workspaceId, resourceId, SamControlledResourceActions.EDIT_ACTION);
+    // Name may be null if the user is not updating it in this request.
+    if (name != null) {
+      ValidationUtils.validateResourceName(name);
+    }
+    resourceDao.updateResource(workspaceId, resourceId, name, description);
+  }
+
+  /** Synchronously delete a controlled resource. */
+  public void deleteControlledResourceSync(
+      UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
+
+    JobBuilder deleteJob =
+        commonDeletionJobBuilder(
+            UUID.randomUUID().toString(), workspaceId, resourceId, null, userRequest);
+    // Delete flight does not produce a result, so the resultClass parameter here is never used.
+    deleteJob.submitAndWait(Void.class);
+  }
+
+  /**
+   * Asynchronously delete a controlled resource. Returns the ID of the flight running the delete
+   * job.
+   */
+  public String deleteControlledResourceAsync(
       ApiJobControl jobControl,
       UUID workspaceId,
       UUID resourceId,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
-    stageService.assertMcWorkspace(workspaceId, "deleteControlledGcsBucket");
+
+    JobBuilder deleteJob =
+        commonDeletionJobBuilder(
+            jobControl.getId(), workspaceId, resourceId, resultPath, userRequest);
+    return deleteJob.submit();
+  }
+
+  /**
+   * Creates and returns a JobBuilder object for deleting a controlled resource. Depending on the
+   * type of resource being deleted, this job may need to run asynchronously.
+   */
+  private JobBuilder commonDeletionJobBuilder(
+      String jobId,
+      UUID workspaceId,
+      UUID resourceId,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
+    stageService.assertMcWorkspace(workspaceId, "deleteControlledResource");
     validateControlledResourceAndAction(
         userRequest, workspaceId, resourceId, SamControlledResourceActions.DELETE_ACTION);
-    final String jobDescription =
-        "Delete controlled GCS bucket resource; id: " + resourceId.toString();
+    final String jobDescription = "Delete controlled resource; id: " + resourceId.toString();
 
-    final JobBuilder jobBuilder =
-        jobService
-            .newJob(
-                jobDescription,
-                jobControl.getId(),
-                DeleteControlledResourceGcsBucketFlight.class,
-                null,
-                userRequest)
-            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
-            .addParameter(ResourceKeys.RESOURCE_ID, resourceId.toString())
-            .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
-
-    return jobBuilder.submit();
+    return jobService
+        .newJob(jobDescription, jobId, DeleteControlledResourceFlight.class, null, userRequest)
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
+        .addParameter(ResourceKeys.RESOURCE_ID, resourceId.toString())
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
   }
 }

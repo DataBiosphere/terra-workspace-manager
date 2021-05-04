@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.flight.create;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS;
 
+import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -17,7 +18,6 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.api.client.util.DateTime;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
@@ -28,12 +28,13 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CreateGcsBucketStep implements Step {
-
+  private static final Logger logger = LoggerFactory.getLogger(CreateGcsBucketStep.class);
   private final CrlService crlService;
   private final ControlledGcsBucketResource resource;
   private final WorkspaceService workspaceService;
@@ -62,17 +63,22 @@ public class CreateGcsBucketStep implements Step {
             .build();
 
     StorageCow storageCow = crlService.createStorageCow(projectId);
-    storageCow.create(bucketInfo);
+
+    // Don't try to create it if it already exists. At this point the assumption is
+    // this is a redo and this step created it already.
+    BucketCow existingBucket = storageCow.get(resource.getBucketName());
+    if (existingBucket == null) {
+      storageCow.create(bucketInfo);
+    } else {
+      logger.info("Bucket {} already exists. Continuing.", resource.getBucketName());
+    }
 
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    FlightMap inputMap = flightContext.getInputParameters();
-    UUID workspaceId =
-        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    String projectId = workspaceService.getRequiredGcpProject(workspaceId);
+    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
     final StorageCow storageCow = crlService.createStorageCow(projectId);
     storageCow.delete(resource.getBucketName());
     return StepResult.getStepResultSuccess();
