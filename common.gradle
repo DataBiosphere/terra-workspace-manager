@@ -1,7 +1,5 @@
-ext {
-    theVersion = '0.22.0-SNAPSHOT'
-}
-
+// Common definitions and constraints to be applied to the projects.
+// These are applied in the buildscript block.
 def useMavenLocal = false
 repositories {
     if (useMavenLocal) {

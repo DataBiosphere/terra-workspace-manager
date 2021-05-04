@@ -1,3 +1,5 @@
+// This pluginManagement block is needed for resolving the test-runner plugin.
+// It has to live in settings even though it only applies to the integration project.
 pluginManagement {
     repositories {
         resolutionStrategy {
@@ -16,17 +18,17 @@ pluginManagement {
     }
 }
 
-
-
 rootProject.name = 'terra-workspace-manager'
-include 'workspace-manager-client'
-include 'workspace-manager'
-include 'workspace-manager-clienttests'
+include 'client'
+include 'service'
+include 'integration'
 
-gradle.ext.openapiSourceFile = "${rootDir}/workspace-manager/src/main/resources/api/service_openapi.yaml"
+// -- Global Variables --
+// For defining shared state and common dependencies
+
+gradle.ext.wsmVersion = '0.22.0-SNAPSHOT'
+gradle.ext.openapiSourceFile = "${rootDir}/service/src/main/resources/api/service_openapi.yaml"
 
 // Single place to define the versions of dependencies shared between components.
-// This is just data. Each sub-project can pick and choose the dependencies they want.
-// To make the structure simple, we use the one-string version of the dependency expression.
 gradle.ext.librarySwaggerAnnotations = "io.swagger.core.v3:swagger-annotations:2.1.6"
 gradle.ext.librarySwaggerCli = "io.swagger.codegen.v3:swagger-codegen-cli:3.0.23"

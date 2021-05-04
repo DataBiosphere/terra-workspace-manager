@@ -20,18 +20,16 @@ plugins {
 }
 
 group = 'bio.terra'
-version = "${ext.theVersion}"
+version = "${gradle.wsmVersion}"
 sourceCompatibility = JavaVersion.VERSION_11
 
-ext {
-	artifactGroup = "${group}.workspace"
-	swaggerOutputDir = "${buildDir}/swagger-code"
-	resourceDir = "${projectDir}/src/main/resources"
-}
+def artifactGroup = "${group}.workspace"
+def openapiOutputDir = "${buildDir}/openapi"
+def resourceDir = "${projectDir}/src/main/resources"
 
 idea {
 	module {
-		generatedSourceDirs = [file("${swaggerOutputDir}/src/main/java")]
+		generatedSourceDirs = [file("${openapiOutputDir}/src/main/java")]
 		downloadJavadoc = true
 	}
 }
@@ -75,7 +73,7 @@ dependencies {
 	implementation group: "org.springframework.boot", name: "spring-boot-starter-data-jdbc"
 	implementation group: "org.springframework.boot", name: "spring-boot-starter-web"
 
-	// Swagger deps
+	// OpenAPI (swagger) deps
 	implementation gradle.librarySwaggerAnnotations
 	swaggerCodegen gradle.librarySwaggerCli
 	runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.37.2"
@@ -84,18 +82,12 @@ dependencies {
 	testImplementation group: "com.google.auth", name: "google-auth-library-oauth2-http", version: "0.22.1"
 	testImplementation group: "io.vavr", name: "vavr", version: "0.10.3"
 	testImplementation group: "org.springframework.boot", name: "spring-boot-starter-test"
-	testImplementation project(":workspace-manager-client")
+	testImplementation project(":client")
 
 	annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
 	annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor", version: "2.4.0"
 }
 
-// To update the lock file, the command is ./gradlew  dependencies --write-locks
-/*
-dependencyLocking {
-	lockAllConfigurations() // see https://docs.gradle.org/current/userguide/dependency_locking.html
-}
-*/
 // for scans
 if (hasProperty("buildScan")) {
 	buildScan {
@@ -129,7 +121,7 @@ swaggerSources {
 		code {
 			language = "spring"
 			library = "spring-boot"
-			outputDir = file("${swaggerOutputDir}")
+			outputDir = file(openapiOutputDir)
 			components = ["models", "apis"]
 			rawOptions = [
 					"--api-package", "${artifactGroup}.generated.controller",
@@ -211,7 +203,7 @@ task integrationTest(type: Test) {
 spotless {
 	java {
 		googleJavaFormat()
-		targetExclude "${buildDir}/**"
+		target 'src/*/java/**/*.java'
 	}
 }
 
@@ -252,11 +244,9 @@ jib {
 	}
 }
 
-sourceSets.main.java.srcDir "${swaggerOutputDir}/src/main/java"
+sourceSets.main.java.srcDir "${openapiOutputDir}/src/main/java"
 
-// Internal dependencies
-// removed spotlessApply
-compileJava.dependsOn swaggerSources.server.code, generateVersionProperties
+compileJava.dependsOn swaggerSources.server.code, spotlessApply, generateVersionProperties
 tasks.jib.dependsOn extractProfilerAgent
 tasks.jibDockerBuild.dependsOn extractProfilerAgent
 tasks.jibBuildTar.dependsOn extractProfilerAgent

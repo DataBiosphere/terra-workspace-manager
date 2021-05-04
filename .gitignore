@@ -2,7 +2,6 @@ HELP.md
 
 ### Gradle ###
 .gradle
-../.gradle
 **/build/
 !gradle-wrapper.jar
 

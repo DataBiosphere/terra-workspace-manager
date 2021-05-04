@@ -6,8 +6,8 @@ plugins {
     id 'java'
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
-    // TODO: for some reason the spotless plugin does not work in clienttests, but it works
-    //  fine in workspace-manager. I think
+    // TODO: for some reason the spotless plugin does not work in the integration project, but it works
+    //  fine in the service project.
     // id "com.diffplug.spotless" version "5.12.4"
     // Terra Test Runner Plugin
     id 'bio.terra.test-runner-plugin' version '0.0.3-SNAPSHOT'
@@ -25,7 +25,6 @@ dependencies {
         slf4j = "1.7.25"
         hamcrest = "2.1"
         jUnit = "5.7.0"
-        swaggerAnnotations = "2.1.5"
 
         googleApi = "1.23.0"
         googleCloud = "1.108.0"
@@ -33,7 +32,7 @@ dependencies {
         googleContainer = "v1-rev93-1.25.0"
 
         datarepoClient = "1.0.155-SNAPSHOT"
-        testRunner = "0.0.3-SNAPSHOT"
+        testRunnerVersion = "0.0.3-SNAPSHOT"
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
     implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"
@@ -55,16 +54,16 @@ dependencies {
 
     // Data Repo client library
     implementation "bio.terra:datarepo-client:${datarepoClient}"
-    implementation "io.swagger.core.v3:swagger-annotations:${swaggerAnnotations}"
+    implementation gradle.librarySwaggerAnnotations
 
     // Workspace Manager client library
-    implementation project(":workspace-manager-client")
+    implementation project(":client")
 
     // Terra Test Runner Library
-    implementation "bio.terra:terra-test-runner:${testRunner}"
+    implementation "bio.terra:terra-test-runner:${testRunnerVersion}"
 }
 
-version = "${ext.theVersion}"
+version = "${gradle.wsmVersion}"
 sourceCompatibility = JavaVersion.VERSION_11
 
 /*
