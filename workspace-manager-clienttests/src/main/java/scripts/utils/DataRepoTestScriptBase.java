@@ -10,24 +10,24 @@ public abstract class DataRepoTestScriptBase extends WorkspaceAllocateTestScript
   private static final String DATA_REFERENCE_NAME_PREFIX = "REF_";
 
   private String dataRepoSnapshotId;
-  private String dataRepoInstance;
+  private String dataRepoInstanceName;
 
   /**
    * Allow inheriting classes to obtain the Data Repo snapshot ID
    *
-   * @return Data Repo Snapshot string
+   * @return Data Repo Snapshot ID string
    */
   protected String getDataRepoSnapshotId() {
     return dataRepoSnapshotId;
   }
 
   /**
-   * Allow inheriting classes to obtain the Data Repo Instance
+   * Allow inheriting classes to obtain the Data Repo Instance Name
    *
-   * @return Data Repo Instance string
+   * @return Data Repo Instance Name string
    */
-  protected String getDataRepoInstance() {
-    return dataRepoInstance;
+  protected String getDataRepoInstanceName() {
+    return dataRepoInstanceName;
   }
 
   @Override
@@ -37,19 +37,19 @@ public abstract class DataRepoTestScriptBase extends WorkspaceAllocateTestScript
     super.setParameters(parameters);
     if (parameters == null || parameters.size() < 3) {
       throw new IllegalArgumentException(
-          "Must provide Spend Profile ID, Data Repo snapshot ID, and Data Repo Instance in the parameters list");
+          "Must provide Spend Profile ID, Data Repo snapshot ID, and Data Repo Instance Name in the parameters list");
     } else {
       // "spendProfileId = parameters.get(0);" fetches Spend Profile ID and is already implemented
       // in the super class
       dataRepoSnapshotId = parameters.get(1);
-      dataRepoInstance = parameters.get(2);
+      dataRepoInstanceName = parameters.get(2);
     }
   }
 
   /**
    * Generate and return a CreateDataReferenceRequestBody. The returned object consists of a unique
    * name for the data reference, standard cloning instructions, standard reference type, and a
-   * reference using the snapshot ID and Data Repo Instance arguments defined in the test config.
+   * reference using the Data Repo Snapshot ID and Instance Name arguments defined in the test config.
    *
    * @return Request body for creating a data reference
    */
@@ -85,6 +85,6 @@ public abstract class DataRepoTestScriptBase extends WorkspaceAllocateTestScript
   private DataRepoSnapshot getTestDataRepoSnapshot() {
     return new DataRepoSnapshot()
         .snapshot(getDataRepoSnapshotId())
-        .instanceName(getDataRepoInstance());
+        .instanceName(getDataRepoInstanceName());
   }
 }

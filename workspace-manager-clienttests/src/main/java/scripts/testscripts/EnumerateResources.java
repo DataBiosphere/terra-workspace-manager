@@ -253,7 +253,7 @@ public class EnumerateResources extends DataRepoTestScriptBase {
                     workspaceId,
                     name,
                     getDataRepoSnapshotId(),
-                    getDataRepoInstance());
+                    getDataRepoInstanceName());
             resourceList.add(resource.getMetadata());
             break;
           }

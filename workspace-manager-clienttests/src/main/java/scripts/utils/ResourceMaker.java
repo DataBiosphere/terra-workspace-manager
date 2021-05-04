@@ -68,8 +68,8 @@ public class ResourceMaker {
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,
       String name,
-      String snapshotId,
-      String dataRepoInstance)
+      String dataRepoSnapshotId,
+      String dataRepoInstanceName)
       throws ApiException {
 
     var body =
@@ -81,8 +81,8 @@ public class ResourceMaker {
                     .name(name))
             .snapshot(
                 new DataRepoSnapshotAttributes()
-                    .snapshot(snapshotId)
-                    .instanceName(dataRepoInstance));
+                    .snapshot(dataRepoSnapshotId)
+                    .instanceName(dataRepoInstanceName));
 
     return resourceApi.createDataRepoSnapshotReference(body, workspaceId);
   }
