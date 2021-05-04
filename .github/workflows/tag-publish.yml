@@ -73,7 +73,7 @@ jobs:
         RELEASE_BRANCHES: dev
         HOTFIX_BRANCHES: hotfix.*
         VERSION_FILE_PATH: build.gradle
-        VERSION_LINE_MATCH: "^\s*version = \".*\""
+        VERSION_LINE_MATCH: "^\\s*version = \".*\""
         VERSION_SUFFIX: SNAPSHOT
     - name: Set up AdoptOpenJDK 11
       uses: joschi/setup-jdk@v2
