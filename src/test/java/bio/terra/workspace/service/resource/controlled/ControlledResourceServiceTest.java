@@ -43,6 +43,7 @@ import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.model.Dataset;
+import com.google.api.services.notebooks.v1.model.Binding;
 import com.google.api.services.notebooks.v1.model.Instance;
 import java.util.Collections;
 import java.util.HashMap;
@@ -145,6 +146,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         FlightStatus.SUCCESS, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
+    InstanceName instanceName = resource.toInstanceName(workspace.getGcpCloudContext().get().getGcpProjectId());
     Instance instance =
         notebooks
             .instances()

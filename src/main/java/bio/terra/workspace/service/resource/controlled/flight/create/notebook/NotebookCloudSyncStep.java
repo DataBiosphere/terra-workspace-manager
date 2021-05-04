@@ -58,13 +58,16 @@ public class NotebookCloudSyncStep implements Step {
       List<Binding> existingBindings =
           Optional.ofNullable(policy.getBindings()).orElse(ImmutableList.of());
       if (existingBindings.stream()
-          .anyMatch(binding -> newBindings.get(0).getRole().equals(binding.getRole()))) {
+          .anyMatch(
+              binding ->
+                  newBindings.get(0).getRole().equals(binding.getRole())
+                      && newBindings.get(0).getMembers().equals(binding.getMembers()))) {
         logger.info("AI Notebook instance {} bindings already set.", instanceName.formatName());
         return StepResult.getStepResultSuccess();
       }
       newBindings.addAll(existingBindings);
       policy.setBindings(newBindings);
-      notebooks.instances().setIamPolicy(instanceName, new SetIamPolicyRequest().setPolicy(policy));
+      notebooks.instances().setIamPolicy(instanceName, new SetIamPolicyRequest().setPolicy(policy)).execute();
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
