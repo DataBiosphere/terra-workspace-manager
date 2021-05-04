@@ -36,7 +36,7 @@ on:
       branch:
         description: 'Branch to run the workflow on'
         required: false
-        default: 'main'
+        default: 'dev'
 env:
   SERVICE_NAME: ${{ github.event.repository.name }}
   GOOGLE_PROJECT: terra-kernel-k8s
@@ -64,7 +64,7 @@ jobs:
         ref: ${{ steps.controls.outputs.checkout-branch }}
         token: ${{ secrets.REPO_ACCESS_TOKEN }}
     - name: Bump the tag to a new version
-      uses: databiosphere/github-actions/actions/bumper@v0.0.3
+      uses: databiosphere/github-actions/actions/bumper@-0.0.3
       id: tag
       env:
         GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
@@ -73,7 +73,7 @@ jobs:
         RELEASE_BRANCHES: dev
         HOTFIX_BRANCHES: hotfix.*
         VERSION_FILE_PATH: build.gradle
-        VERSION_LINE_MATCH: "^	version = \".*\""
+        VERSION_LINE_MATCH: "^\s*version = \".*\""
         VERSION_SUFFIX: SNAPSHOT
     - name: Set up AdoptOpenJDK 11
       uses: joschi/setup-jdk@v2
@@ -111,6 +111,7 @@ jobs:
     - name: Build image locally with jib
       run: "./gradlew jibDockerBuild --image=${{ steps.image-name.outputs.name }} -Djib.console=plain"
     - name: Run Trivy vulnerability scanner
+      # Link to the github location of the action https://github.com/broadinstitute/dsp-appsec-trivy-action
       uses: broadinstitute/dsp-appsec-trivy-action@v1
       with:
         image: ${{ steps.image-name.outputs.name }}
