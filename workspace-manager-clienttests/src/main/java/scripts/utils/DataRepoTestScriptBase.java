@@ -62,9 +62,9 @@ public abstract class DataRepoTestScriptBase extends WorkspaceAllocateTestScript
   }
 
   /**
-   * Util method that enumerates data references. // TODO: The method is currently being used only
-   * in {@link scripts.testscripts.EnumerateDataReferences} test // TODO: If not needed by other
-   * tests, we could move this method into that test as a private method
+   * Util method that enumerates data references.
+   * TODO: This method is currently being used only in {@link scripts.testscripts.EnumerateDataReferences} test.
+   *  If the method is not needed by other tests, we could move it into the test above as a private method
    *
    * @return A list of data references
    */
