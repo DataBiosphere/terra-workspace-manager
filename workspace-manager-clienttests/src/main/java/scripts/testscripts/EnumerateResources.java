@@ -29,10 +29,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
+import scripts.utils.DataRepoTestScriptBase;
 import scripts.utils.ResourceMaker;
-import scripts.utils.WorkspaceAllocateTestScriptBase;
 
-public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
+public class EnumerateResources extends DataRepoTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(EnumerateResources.class);
 
   // TODO: make these parameters in the test description?
@@ -249,7 +249,11 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
           {
             DataRepoSnapshotResource resource =
                 ResourceMaker.makeDataRepoSnapshotReference(
-                    referencedGcpResourceApi, workspaceId, name);
+                    referencedGcpResourceApi,
+                    workspaceId,
+                    name,
+                    getDataRepoSnapshotId(),
+                    getDataRepoInstance());
             resourceList.add(resource.getMetadata());
             break;
           }

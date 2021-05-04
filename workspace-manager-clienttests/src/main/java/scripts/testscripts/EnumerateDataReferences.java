@@ -20,10 +20,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scripts.utils.ClientTestUtils;
-import scripts.utils.WorkspaceAllocateTestScriptBase;
+import scripts.utils.DataRepoTestScriptBase;
 
-public class EnumerateDataReferences extends WorkspaceAllocateTestScriptBase {
+public class EnumerateDataReferences extends DataRepoTestScriptBase {
 
   private static final Logger logger = LoggerFactory.getLogger(EnumerateDataReferences.class);
 
@@ -44,7 +43,7 @@ public class EnumerateDataReferences extends WorkspaceAllocateTestScriptBase {
     // create 10 data references
     final List<CreateDataReferenceRequestBody> createBodies =
         IntStream.range(0, DATA_REFERENCE_COUNT)
-            .mapToObj(i -> ClientTestUtils.getTestCreateDataReferenceRequestBody())
+            .mapToObj(i -> getTestCreateDataReferenceRequestBody())
             .collect(Collectors.toList());
 
     logger.debug("Creating references for workspace {}", getWorkspaceId());
@@ -71,8 +70,7 @@ public class EnumerateDataReferences extends WorkspaceAllocateTestScriptBase {
 
     // fetch all
     final List<DataReferenceDescription> referenceDescriptions =
-        ClientTestUtils.getDataReferenceDescriptions(
-            getWorkspaceId(), workspaceApi, 0, DATA_REFERENCE_COUNT);
+        getDataReferenceDescriptions(getWorkspaceId(), workspaceApi, 0, DATA_REFERENCE_COUNT);
     assertThat(referenceDescriptions.size(), equalTo(DATA_REFERENCE_COUNT));
 
     final String allIdString =
@@ -92,7 +90,7 @@ public class EnumerateDataReferences extends WorkspaceAllocateTestScriptBase {
 
     // fetch first page
     final List<DataReferenceDescription> referenceDescriptionsPage0 =
-        ClientTestUtils.getDataReferenceDescriptions(getWorkspaceId(), workspaceApi, 0, PAGE_SIZE);
+        getDataReferenceDescriptions(getWorkspaceId(), workspaceApi, 0, PAGE_SIZE);
     assertThat(referenceDescriptionsPage0.size(), equalTo(PAGE_SIZE));
     final ImmutableSet<UUID> referenceIdsPage0 =
         ImmutableSet.copyOf(
@@ -103,8 +101,7 @@ public class EnumerateDataReferences extends WorkspaceAllocateTestScriptBase {
 
     // fetch second page
     final List<DataReferenceDescription> referenceDescriptionsPage1 =
-        ClientTestUtils.getDataReferenceDescriptions(
-            getWorkspaceId(), workspaceApi, PAGE_SIZE, PAGE_SIZE);
+        getDataReferenceDescriptions(getWorkspaceId(), workspaceApi, PAGE_SIZE, PAGE_SIZE);
     assertThat(referenceDescriptionsPage1.size(), equalTo(PAGE_SIZE));
     final ImmutableSet<UUID> referenceIdsPage1 =
         ImmutableSet.copyOf(
@@ -122,8 +119,7 @@ public class EnumerateDataReferences extends WorkspaceAllocateTestScriptBase {
 
     // final partial page
     final List<DataReferenceDescription> referenceDescriptionsPage2 =
-        ClientTestUtils.getDataReferenceDescriptions(
-            getWorkspaceId(), workspaceApi, 2 * PAGE_SIZE, PAGE_SIZE);
+        getDataReferenceDescriptions(getWorkspaceId(), workspaceApi, 2 * PAGE_SIZE, PAGE_SIZE);
     assertThat(referenceDescriptionsPage2.size(), equalTo(DATA_REFERENCE_COUNT - 2 * PAGE_SIZE));
     final ImmutableSet<UUID> referenceIdsPage2 =
         ImmutableSet.copyOf(
@@ -142,8 +138,7 @@ public class EnumerateDataReferences extends WorkspaceAllocateTestScriptBase {
 
     // Assure no results if offset is too high
     final List<DataReferenceDescription> referencesBeyondUpperBound =
-        ClientTestUtils.getDataReferenceDescriptions(
-            getWorkspaceId(), workspaceApi, 10 * PAGE_SIZE, PAGE_SIZE);
+        getDataReferenceDescriptions(getWorkspaceId(), workspaceApi, 10 * PAGE_SIZE, PAGE_SIZE);
     assertThat(referencesBeyondUpperBound, is(empty()));
   }
 }
