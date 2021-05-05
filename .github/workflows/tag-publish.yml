@@ -64,7 +64,7 @@ jobs:
         ref: ${{ steps.controls.outputs.checkout-branch }}
         token: ${{ secrets.REPO_ACCESS_TOKEN }}
     - name: Bump the tag to a new version
-      uses: databiosphere/github-actions/actions/bumper@-0.0.3
+      uses: databiosphere/github-actions/actions/bumper@bumper-0.0.3
       id: tag
       env:
         DEFAULT_BUMP: patch
