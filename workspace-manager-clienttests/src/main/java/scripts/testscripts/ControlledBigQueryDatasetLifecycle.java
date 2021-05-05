@@ -54,6 +54,11 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
 
   private TestUserSpecification writer;
   private TestUserSpecification reader;
+  // We require a reader, writer, and owner for this test. Arbitrarily, user 0 in the provided list
+  // will be the workspace owner (handled in base class), user 1 will be the writer, and user 2 will
+  // be the reader.
+  private static final int WRITER_USER_INDEX = 1;
+  private static final int READER_USER_INDEX = 2;
 
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
@@ -63,8 +68,8 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     assertThat(
         "There must be at least three test users defined for this test.",
         testUsers != null && testUsers.size() > 2);
-    this.writer = testUsers.get(1);
-    this.reader = testUsers.get(2);
+    this.writer = testUsers.get(WRITER_USER_INDEX);
+    this.reader = testUsers.get(READER_USER_INDEX);
   }
 
   @Override
@@ -203,16 +208,14 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     return bigQueryClient.create(tableInfo);
   }
 
-  /**
-   * Insert a single String value into the column/table/dataset specified by constant values.
-   */
+  /** Insert a single String value into the column/table/dataset specified by constant values. */
   private void insertValueIntoTable(BigQuery bigQueryClient, String value) throws Exception {
     String query =
-        String.format(
-            "INSERT %s.%s (%s) VALUES(@value)", DATASET_NAME, TABLE_NAME, COLUMN_NAME);
-    QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(query)
-        .addNamedParameter("value", QueryParameterValue.string(value))
-        .build();
+        String.format("INSERT %s.%s (%s) VALUES(@value)", DATASET_NAME, TABLE_NAME, COLUMN_NAME);
+    QueryJobConfiguration queryConfig =
+        QueryJobConfiguration.newBuilder(query)
+            .addNamedParameter("value", QueryParameterValue.string(value))
+            .build();
     runBigQueryJob(bigQueryClient, queryConfig);
   }
 
