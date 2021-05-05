@@ -14,11 +14,11 @@ name: Bump, Tag, Publish, and Deploy
 # When run manually, you can specify the part of the semantic version to bump
 #
 # The workflow relies on github secrets:
-# - REPO_ACCESS_TOKEN - the broadbot token, so we can avoid two reviewer rule on GHA operations
-# - GCR_PUBLISH_KEY   - key for publishing the docker to GCR
-# - GCR_PUBLISH_EMAIL - email for publishing the docker to GCR
-# - ARTIFACTORY_USERNAME - username for publishing the client to artifactory
 # - ARTIFACTORY_PASSWORD - password for publishing the client to artifactory
+# - ARTIFACTORY_USERNAME - username for publishing the client to artifactory
+# - GCR_PUBLISH_EMAIL - email for publishing the docker to GCR
+# - GCR_PUBLISH_KEY   - key for publishing the docker to GCR
+# - REPO_ACCESS_TOKEN - the broadbot token, so we can avoid two reviewer rule on GHA operations
 on:
   push:
     branches:
