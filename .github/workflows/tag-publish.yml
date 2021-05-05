@@ -1,4 +1,4 @@
-name: Tag, Publish, and Deploy
+name: Bump, Tag, Publish, and Deploy
 # The purpose of the workflow is to:
 #  1. Bump the version number and tag the release
 #  2. Build and publish the client to Artifactory
@@ -15,10 +15,10 @@ name: Tag, Publish, and Deploy
 #
 # The workflow relies on github secrets:
 # - REPO_ACCESS_TOKEN - the broadbot token, so we can avoid two reviewer rule on GHA operations
-# - GCR_PUBLISH_KEY   - key and email for publishing the docker to GCR
-# - GCR_PUBLISH_EMAIL
-# - ARTIFACTORY_USERNAME - username and password for publishing the client to artifactory
-# - ARTIFACTORY_PASSWORD
+# - GCR_PUBLISH_KEY   - key for publishing the docker to GCR
+# - GCR_PUBLISH_EMAIL - email for publishing the docker to GCR
+# - ARTIFACTORY_USERNAME - username for publishing the client to artifactory
+# - ARTIFACTORY_PASSWORD - password for publishing the client to artifactory
 on:
   push:
     branches:
@@ -67,15 +67,15 @@ jobs:
       uses: databiosphere/github-actions/actions/bumper@-0.0.3
       id: tag
       env:
-        GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         DEFAULT_BUMP: patch
+        GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+        HOTFIX_BRANCHES: hotfix.*
         OVERRIDE_BUMP: ${{ steps.controls.outputs.semver-part }}
         RELEASE_BRANCHES: dev
-        HOTFIX_BRANCHES: hotfix.*
         VERSION_FILE_PATH: build.gradle
-        VERSION_LINE_MATCH: "^\\s*version = \".*\""
+        VERSION_LINE_MATCH: "^\\s*version\\s*=\\s*\".*\""
         VERSION_SUFFIX: SNAPSHOT
-    - name: Set up AdoptOpenJDK 11
+    - name: Set up AdoptOpenJDK
       uses: joschi/setup-jdk@v2
       with:
         java-version: 11
