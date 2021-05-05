@@ -51,7 +51,8 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
     assertEquals("data-disk-type", instance.getDataDiskType());
     assertEquals(222L, instance.getDataDiskSizeGb());
     assertThat(instance.getMetadata(), Matchers.aMapWithSize(2));
-    assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_account"));
+    // git secrets gets a false positive if 'service_account' is double quoted.
+    assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
     assertThat(instance.getMetadata(), Matchers.hasEntry("metadata-key", "metadata-value"));
     assertEquals("foo@bar.com", instance.getServiceAccount());
     assertEquals(4L, instance.getAcceleratorConfig().getCoreCount());
@@ -69,7 +70,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
         CreateAiNotebookInstanceStep.setFields(
             new ApiGcpAiNotebookInstanceCreationParameters(), "foo@bar.com", new Instance());
     assertThat(instance.getMetadata(), Matchers.aMapWithSize(1));
-    assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_account"));
+    assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
     assertEquals("foo@bar.com", instance.getServiceAccount());
   }
 
