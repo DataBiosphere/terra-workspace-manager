@@ -152,8 +152,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .instances()
             .get(resource.toInstanceName(workspace.getGcpCloudContext().get().getGcpProjectId()))
             .execute();
-
-    assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_account"));
+    // git secrets gets a false positive if 'service_account' is double quoted.
+    assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
     // TODO(PF-626): Test that the user has permission to act as the service account.
 
     assertEquals(

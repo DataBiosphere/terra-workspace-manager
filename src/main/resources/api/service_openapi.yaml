@@ -970,6 +970,51 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete a controlled GCP AI Notebook instance resource. This is async, because deleting the
+        notebook instance can take ~5 minutes. NOTE: this cannot be an HTTP DELETE, because
+        something between generated code and server behavior does not support delete operations with
+        bodies. We require the body for the async state, so this is a POST.
+      operationId: deleteAiNotebookInstance
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledGcpAiNotebookInstanceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledGcpAiNotebookInstanceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledGcpAiNotebookInstanceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a GCP AI Platform Notebook delete instance job.
+      operationId: getDeleteAiNotebookInstanceResult
+      tags: [ControlledGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledGcpAiNotebookInstanceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledGcpAiNotebookInstanceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
 components:
   parameters:
@@ -1298,9 +1343,7 @@ components:
           type: string
           enum: [RUNNING, SUCCEEDED, FAILED]
         statusCode:
-          description: >-
-            HTTP code providing completion status of the job. Present if status
-            is SUCCEEDED or FAILED.
+          description: HTTP code providing status of the job.
           type: integer
         submitted:
           description: timestamp when the job was submitted; in ISO-8601 format
@@ -1969,6 +2012,21 @@ components:
             The tag of the container image. If not specified, this defaults to the latest tag.
           type: string
 
+    DeleteControlledGcpAiNotebookInstanceRequest:
+      type: object
+      required: [ jobControl ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    DeleteControlledGcpAiNotebookInstanceResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
     ## Cloud Resource, Attribute, and Enumeration structures ##
     ## Resources and attributes are in alphabetical order
     ## followed by enumerations in alphabetical order.
@@ -2268,6 +2326,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreatedControlledGcpAiNotebookInstanceResult'
+
+    DeleteControlledGcpAiNotebookInstanceResponse:
+      description: Response Payload for deleting a Gcs bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteControlledGcpAiNotebookInstanceResult'
 
     GetControlledGcpAiNotebookInstanceResponse:
       description: Response to get AI Notebook instance.

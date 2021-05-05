@@ -1,10 +1,4 @@
 workspace:
-  buffer:
-    enabled: true
-    pool-id: workspace_manager_v6
-    instance-url: https://buffer.tools.integ.envs.broadinstitute.org
-    client-credential-file-path: rendered/buffer-client-sa-account.json
-
   crl:
     janitor-client-credential-file-path: rendered/janitor-client-sa-account.json
     janitor-track-resource-project-id: terra-kernel-k8s
