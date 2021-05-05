@@ -274,21 +274,19 @@ public class ControlledResourceService {
 
   private void validateOnlySelfAssignment(
       ControlledResource controlledResource, AuthenticatedUserRequest userRequest) {
-    try {
-      if (!controlledResource.getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
-        // No need to handle SHARED resources
-        return;
-      }
-      final String requestUserEmail = samService.getRequestUserEmail(userRequest);
-      // If there is no assigned user, this condition is satisfied.
-      final boolean isAllowed =
-          controlledResource.getAssignedUser().map(requestUserEmail::equals).orElse(true);
-      if (!isAllowed) {
-        throw new BadRequestException(
-            "User may only assign a private controlled resource to themselves.");
-      }
-    } catch (InterruptedException e) {
-      throw new IllegalStateException("Could not validate self-assignment.", e);
+    if (!controlledResource.getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
+      // No need to handle SHARED resources
+      return;
+    }
+    final String requestUserEmail =
+        SamService.rethrowIfSamInterrupted(
+            () -> samService.getRequestUserEmail(userRequest), "validateOnlySelfAssignment");
+    // If there is no assigned user, this condition is satisfied.
+    final boolean isAllowed =
+        controlledResource.getAssignedUser().map(requestUserEmail::equals).orElse(true);
+    if (!isAllowed) {
+      throw new BadRequestException(
+          "User may only assign a private controlled resource to themselves.");
     }
   }
 }
