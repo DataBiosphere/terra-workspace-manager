@@ -287,5 +287,4 @@ public class ControlledResourceService {
           "User may only assign a private controlled resource to themselves.");
     }
   }
-
 }
