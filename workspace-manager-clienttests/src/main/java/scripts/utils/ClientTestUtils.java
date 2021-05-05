@@ -11,15 +11,8 @@ import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
-import bio.terra.workspace.client.ApiException;
-import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.CreateDataReferenceRequestBody;
-import bio.terra.workspace.model.DataReferenceDescription;
-import bio.terra.workspace.model.DataReferenceList;
-import bio.terra.workspace.model.DataRepoSnapshot;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobReport;
-import bio.terra.workspace.model.ReferenceTypeEnum;
 import bio.terra.workspace.model.RoleBindingList;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.auth.oauth2.AccessToken;
@@ -36,9 +29,6 @@ import org.slf4j.LoggerFactory;
 
 public class ClientTestUtils {
 
-  public static final String DATA_REFERENCE_NAME_PREFIX = "REF_";
-  public static final String TEST_SNAPSHOT = "97b5559a-2f8f-4df3-89ae-5a249173ee0c";
-  public static final String TERRA_DATA_REPO_INSTANCE = "terra";
   public static final String TEST_BUCKET_NAME = "terra_wsm_test_resource";
   public static final String TEST_BQ_DATASET_NAME = "terra_wsm_test_dataset";
   public static final String TEST_BQ_DATASET_PROJECT = "terra-kernel-k8s";
@@ -181,38 +171,6 @@ public class ClientTestUtils {
     int httpCode = workspaceApi.getApiClient().getStatusCode();
     logger.debug("{} HTTP code: {}", label, httpCode);
     assertThat(HttpStatusCodes.isSuccess(httpCode), equalTo(true));
-  }
-
-  /**
-   * Return a globally unique data reference name starting with the constant prefix. This will
-   * include a UUID reformatted to meet the rules for data reference names (just replacing hyphens
-   * with underscores). This method is useful when creating references on the same workspace from
-   * multiple threads.
-   *
-   * @return unique data reference name
-   */
-  public static String getUniqueDataReferenceName() {
-    String name = DATA_REFERENCE_NAME_PREFIX + UUID.randomUUID().toString();
-    return name.replace("-", "_");
-  }
-
-  public static DataRepoSnapshot getTestDataRepoSnapshot() {
-    return new DataRepoSnapshot().snapshot(TEST_SNAPSHOT).instanceName(TERRA_DATA_REPO_INSTANCE);
-  }
-
-  public static CreateDataReferenceRequestBody getTestCreateDataReferenceRequestBody() {
-    return new CreateDataReferenceRequestBody()
-        .name(getUniqueDataReferenceName())
-        .cloningInstructions(CloningInstructionsEnum.REFERENCE)
-        .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-        .reference(getTestDataRepoSnapshot());
-  }
-
-  public static List<DataReferenceDescription> getDataReferenceDescriptions(
-      UUID workspaceId, WorkspaceApi workspaceApi, int offset, int limit) throws ApiException {
-    final DataReferenceList dataReferenceListFirstPage =
-        workspaceApi.enumerateReferences(workspaceId, offset, limit);
-    return dataReferenceListFirstPage.getResources();
   }
 
   /**

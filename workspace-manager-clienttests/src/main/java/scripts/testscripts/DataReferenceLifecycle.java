@@ -11,17 +11,16 @@ import bio.terra.workspace.model.CreateDataReferenceRequestBody;
 import bio.terra.workspace.model.DataReferenceDescription;
 import bio.terra.workspace.model.ReferenceTypeEnum;
 import org.apache.http.HttpStatus;
-import scripts.utils.ClientTestUtils;
-import scripts.utils.WorkspaceAllocateTestScriptBase;
+import scripts.utils.DataRepoTestScriptBase;
 
-public class DataReferenceLifecycle extends WorkspaceAllocateTestScriptBase {
+public class DataReferenceLifecycle extends DataRepoTestScriptBase {
 
   @Override
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws ApiException {
     // Create a data reference
-    final CreateDataReferenceRequestBody body =
-        ClientTestUtils.getTestCreateDataReferenceRequestBody();
+    final CreateDataReferenceRequestBody body = getTestCreateDataReferenceRequestBody();
+
     final String referenceName = body.getName();
 
     final DataReferenceDescription newReference =
@@ -63,10 +62,8 @@ public class DataReferenceLifecycle extends WorkspaceAllocateTestScriptBase {
     assertThat(
         dataReferenceDescription.getReferenceType(), equalTo(ReferenceTypeEnum.DATA_REPO_SNAPSHOT));
     assertThat(
-        dataReferenceDescription.getReference().getSnapshot(),
-        equalTo(ClientTestUtils.TEST_SNAPSHOT));
+        dataReferenceDescription.getReference().getSnapshot(), equalTo(getDataRepoSnapshotId()));
     assertThat(
-        dataReferenceDescription.getReference().getInstanceName(),
-        equalTo(ClientTestUtils.TERRA_DATA_REPO_INSTANCE));
+        dataReferenceDescription.getReference().getInstanceName(), equalTo(getDataRepoInstanceName()));
   }
 }
