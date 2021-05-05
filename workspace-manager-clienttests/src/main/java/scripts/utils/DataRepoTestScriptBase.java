@@ -32,8 +32,7 @@ public abstract class DataRepoTestScriptBase extends WorkspaceAllocateTestScript
 
   @Override
   public void setParameters(List<String> parameters) throws Exception {
-    // TODO: Refactor this function to use parameterMap when the ticket below is done
-    // TODO: https://broadworkbench.atlassian.net/browse/QA-1460
+    // TODO: Refactor this function when TestRunner starts supporting parameterMap
     super.setParameters(parameters);
     if (parameters == null || parameters.size() < 3) {
       throw new IllegalArgumentException(
@@ -62,9 +61,7 @@ public abstract class DataRepoTestScriptBase extends WorkspaceAllocateTestScript
   }
 
   /**
-   * Util method that enumerates data references.
-   * TODO: This method is currently being used only in {@link scripts.testscripts.EnumerateDataReferences} test.
-   *  If the method is not needed by other tests, we could move it into the test above as a private method
+   * Enumerate data references
    *
    * @return A list of data references
    */
