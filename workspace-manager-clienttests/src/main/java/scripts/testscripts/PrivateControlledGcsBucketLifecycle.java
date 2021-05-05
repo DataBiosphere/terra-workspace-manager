@@ -83,26 +83,10 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
     String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
 
-    ControlledGcpResourceApi resourceApi =
+    ControlledGcpResourceApi workspaceOwnerResourceApi =
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
-
-    // Create a private bucket
-    CreatedControlledGcpGcsBucket bucket = createPrivateBucket(resourceApi);
-    UUID resourceId = bucket.getResourceId();
-
-    // Retrieve the bucket resource from WSM
-    logger.info("Retrieving bucket resource id {}", resourceId.toString());
-    GcpGcsBucketResource gotBucket = resourceApi.getBucket(getWorkspaceId(), resourceId);
-    assertEquals(
-        gotBucket.getAttributes().getBucketName(),
-        bucket.getGcpBucket().getAttributes().getBucketName());
-    assertEquals(gotBucket.getAttributes().getBucketName(), bucketName);
-
-    Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, projectId);
-    Storage privateUserStorageClient =
-        ClientTestUtils.getGcpStorageClient(privateResourceUser, projectId);
-    Storage workspaceReaderStorageClient =
-        ClientTestUtils.getGcpStorageClient(workspaceReader, projectId);
+    ControlledGcpResourceApi privateUserResourceApi =
+        ClientTestUtils.getControlledGcpResourceClient(privateResourceUser, server);
 
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(workspaceReader.userEmail),
@@ -113,13 +97,31 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(privateResourceUser.userEmail),
         getWorkspaceId(),
-        IamRole.READER);
+        IamRole.WRITER);
     logger.info(
-        "Added {} as a reader to workspace {}", privateResourceUser.userEmail, getWorkspaceId());
+        "Added {} as a writer to workspace {}", privateResourceUser.userEmail, getWorkspaceId());
 
     // TODO(PF-643): this should happen inside WSM.
     logger.info("Waiting 15s for permissions to propagate");
-    Thread.sleep(15000);
+    TimeUnit.SECONDS.sleep(15);
+
+    // Create a private bucket, which privateResourceUser assigns to themself.
+    CreatedControlledGcpGcsBucket bucket = createPrivateBucket(privateUserResourceApi);
+    UUID resourceId = bucket.getResourceId();
+
+    // Retrieve the bucket resource from WSM
+    logger.info("Retrieving bucket resource id {}", resourceId.toString());
+    GcpGcsBucketResource gotBucket = privateUserResourceApi.getBucket(getWorkspaceId(), resourceId);
+    assertEquals(
+        gotBucket.getAttributes().getBucketName(),
+        bucket.getGcpBucket().getAttributes().getBucketName());
+    assertEquals(gotBucket.getAttributes().getBucketName(), bucketName);
+
+    Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, projectId);
+    Storage privateUserStorageClient =
+        ClientTestUtils.getGcpStorageClient(privateResourceUser, projectId);
+    Storage workspaceReaderStorageClient =
+        ClientTestUtils.getGcpStorageClient(workspaceReader, projectId);
 
     BlobId blobId = BlobId.of(bucketName, GCS_BLOB_NAME);
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
@@ -177,19 +179,8 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     privateUserStorageClient.delete(blobId);
     logger.info("Private resource user successfully deleted blob {}", blobId.getName());
 
-    // Private resource user cannot delete bucket, as they are not an editor
-    ControlledGcpResourceApi privateResourceUserWsmClient =
-        ClientTestUtils.getControlledGcpResourceClient(privateResourceUser, server);
-    ApiException userCannotDeleteBucket =
-        assertThrows(
-            ApiException.class,
-            () -> deleteBucket(privateResourceUserWsmClient, resourceId),
-            "Non-editor private resource user was able to delete bucket");
-    assertEquals(userCannotDeleteBucket.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
-    logger.info("Private resource user cannot to delete bucket");
-
     // Owner can delete the bucket through WSM
-    var ownerDeleteResult = deleteBucket(resourceApi, resourceId);
+    var ownerDeleteResult = deleteBucket(workspaceOwnerResourceApi, resourceId);
     logger.info(
         "For owner, delete bucket status is {}",
         ownerDeleteResult.getJobReport().getStatus().toString());
@@ -199,7 +190,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     ApiException bucketIsMissing =
         assertThrows(
             ApiException.class,
-            () -> resourceApi.getBucket(getWorkspaceId(), resourceId),
+            () -> workspaceOwnerResourceApi.getBucket(getWorkspaceId(), resourceId),
             "Incorrectly found a deleted bucket!");
     assertEquals(bucketIsMissing.getCode(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
 

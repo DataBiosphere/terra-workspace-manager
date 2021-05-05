@@ -1,7 +1,9 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.utils.ControllerUtils;
+import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
@@ -10,13 +12,17 @@ import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketReques
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcpAiNotebookInstanceRequest;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketResult;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
+import bio.terra.workspace.generated.model.ApiUpdateControlledResourceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -112,7 +118,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     logger.info(
         "deleteBucket workspace {} resource {}", workspaceId.toString(), resourceId.toString());
     final String jobId =
-        controlledResourceService.deleteControlledGcsBucket(
+        controlledResourceService.deleteControlledResourceAsync(
             jobControl,
             workspaceId,
             resourceId,
@@ -145,8 +151,56 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResource controlledResource =
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    ApiGcpGcsBucketResource response = controlledResource.castToGcsBucketResource().toApiResource();
-    return new ResponseEntity<>(response, HttpStatus.OK);
+    try {
+      ApiGcpGcsBucketResource response =
+          controlledResource.castToGcsBucketResource().toApiResource();
+      return new ResponseEntity<>(response, HttpStatus.OK);
+    } catch (InvalidMetadataException ex) {
+      throw new BadRequestException(
+          String.format(
+              "Resource %s in workspace %s is not a controlled GCS bucket.",
+              resourceId, workspaceId));
+    }
+  }
+
+  @Override
+  public ResponseEntity<ApiGcpBigQueryDatasetResource> getBigQueryDataset(
+      UUID workspaceId, UUID resourceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    String projectId = workspaceService.getRequiredGcpProject(workspaceId);
+    ControlledResource controlledResource =
+        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+    try {
+      ApiGcpBigQueryDatasetResource response =
+          controlledResource.castToBigQueryDatasetResource().toApiResource(projectId);
+      return new ResponseEntity<>(response, HttpStatus.OK);
+    } catch (InvalidMetadataException ex) {
+      throw new BadRequestException(
+          String.format(
+              "Resource %s in workspace %s is not a controlled BigQuery dataset.",
+              resourceId, workspaceId));
+    }
+  }
+
+  @Override
+  public ResponseEntity<ApiGcpBigQueryDatasetResource> updateBigQueryDataset(
+      UUID workspaceId, UUID resourceId, ApiUpdateControlledResourceRequestBody body) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    String projectId = workspaceService.getRequiredGcpProject(workspaceId);
+    controlledResourceService.updateControlledResourceMetadata(
+        workspaceId, resourceId, body.getName(), body.getDescription(), userRequest);
+    ControlledResource controlledResource =
+        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+    try {
+      ApiGcpBigQueryDatasetResource response =
+          controlledResource.castToBigQueryDatasetResource().toApiResource(projectId);
+      return new ResponseEntity<>(response, HttpStatus.OK);
+    } catch (InvalidMetadataException ex) {
+      throw new BadRequestException(
+          String.format(
+              "Resource %s in workspace %s is not a controlled BigQuery dataset.",
+              resourceId, workspaceId));
+    }
   }
 
   @Override
@@ -187,6 +241,17 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   }
 
   @Override
+  public ResponseEntity<Void> deleteBigQueryDataset(UUID workspaceId, UUID resourceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    logger.info(
+        "Deleting controlled BQ dataset resource {} in workspace {}",
+        resourceId.toString(),
+        workspaceId.toString());
+    controlledResourceService.deleteControlledResourceSync(workspaceId, resourceId, userRequest);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
   public ResponseEntity<ApiCreatedControlledGcpAiNotebookInstanceResult> createAiNotebookInstance(
       UUID workspaceId, @Valid ApiCreateControlledGcpAiNotebookInstanceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -224,7 +289,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             userRequest);
 
     ApiCreatedControlledGcpAiNotebookInstanceResult result =
-        fetchNotebookInstanceResult(jobId, userRequest);
+        fetchNotebookInstanceCreateResult(jobId, userRequest);
     return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
   }
 
@@ -233,11 +298,11 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       getCreateAiNotebookInstanceResult(UUID workspaceId, String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ApiCreatedControlledGcpAiNotebookInstanceResult result =
-        fetchNotebookInstanceResult(jobId, userRequest);
+        fetchNotebookInstanceCreateResult(jobId, userRequest);
     return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
   }
 
-  private ApiCreatedControlledGcpAiNotebookInstanceResult fetchNotebookInstanceResult(
+  private ApiCreatedControlledGcpAiNotebookInstanceResult fetchNotebookInstanceCreateResult(
       String jobId, AuthenticatedUserRequest userRequest) {
     AsyncJobResult<ControlledAiNotebookInstanceResource> jobResult =
         jobService.retrieveAsyncJobResult(
@@ -256,16 +321,64 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   }
 
   @Override
+  public ResponseEntity<ApiDeleteControlledGcpAiNotebookInstanceResult> deleteAiNotebookInstance(
+      UUID workspaceId,
+      UUID resourceId,
+      @Valid ApiDeleteControlledGcpAiNotebookInstanceRequest body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ApiJobControl jobControl = body.getJobControl();
+    logger.info(
+        "deleteAiNotebookInstance workspace {} resource {}",
+        workspaceId.toString(),
+        resourceId.toString());
+    String jobId =
+        controlledResourceService.deleteControlledResourceAsync(
+            jobControl,
+            workspaceId,
+            resourceId,
+            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
+            userRequest);
+    ApiDeleteControlledGcpAiNotebookInstanceResult result =
+        fetchNotebookInstanceDeleteResult(jobId, userRequest);
+    return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledGcpAiNotebookInstanceResult>
+      getDeleteAiNotebookInstanceResult(UUID workspaceId, String jobId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ApiDeleteControlledGcpAiNotebookInstanceResult result =
+        fetchNotebookInstanceDeleteResult(jobId, userRequest);
+    return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
+  }
+
+  private ApiDeleteControlledGcpAiNotebookInstanceResult fetchNotebookInstanceDeleteResult(
+      String jobId, AuthenticatedUserRequest userRequest) {
+    AsyncJobResult<Void> jobResult =
+        jobService.retrieveAsyncJobResult(jobId, Void.class, userRequest);
+    return new ApiDeleteControlledGcpAiNotebookInstanceResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport());
+  }
+
+  @Override
   public ResponseEntity<ApiGcpAiNotebookInstanceResource> getAiNotebookInstance(
       UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResource controlledResource =
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    ApiGcpAiNotebookInstanceResource response =
-        controlledResource
-            .castToAiNotebookInstanceResource()
-            .toApiResource(workspaceService.getRequiredGcpProject(workspaceId));
-    return new ResponseEntity<>(response, HttpStatus.OK);
+    try {
+      ApiGcpAiNotebookInstanceResource response =
+          controlledResource
+              .castToAiNotebookInstanceResource()
+              .toApiResource(workspaceService.getRequiredGcpProject(workspaceId));
+      return new ResponseEntity<>(response, HttpStatus.OK);
+    } catch (InvalidMetadataException ex) {
+      throw new BadRequestException(
+          String.format(
+              "Resource %s in workspace %s is not a controlled AI Notebook Instance.",
+              resourceId, workspaceId));
+    }
   }
 
   /**

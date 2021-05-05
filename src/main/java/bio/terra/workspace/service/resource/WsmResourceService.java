@@ -51,7 +51,10 @@ public class WsmResourceService {
     List<String> controlledResourceIds = new ArrayList<>();
     for (ControlledResourceCategory category : ControlledResourceCategory.values()) {
       controlledResourceIds.addAll(
-          samService.listControlledResourceIds(userRequest, category.getSamResourceName()));
+          SamService.rethrowIfSamInterrupted(
+              () ->
+                  samService.listControlledResourceIds(userRequest, category.getSamResourceName()),
+              "listControlledResourceIds"));
     }
 
     return resourceDao.enumerateResources(
