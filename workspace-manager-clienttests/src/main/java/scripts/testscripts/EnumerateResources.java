@@ -170,15 +170,29 @@ public class EnumerateResources extends DataRepoTestScriptBase {
   @Override
   protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
-    // Delete the controlled buckets
+    // Delete the controlled resources
     for (ResourceMetadata metadata : resourceList) {
-      if (metadata.getStewardshipType() == StewardshipType.CONTROLLED
-          && metadata.getResourceType() == ResourceType.GCS_BUCKET) {
-        ResourceMaker.deleteControlledGcsBucket(
-            metadata.getResourceId(), getWorkspaceId(), controlledGcpResourceApi);
+      if (metadata.getStewardshipType() == StewardshipType.CONTROLLED) {
+        switch (metadata.getResourceType()) {
+          case GCS_BUCKET:
+            ResourceMaker.deleteControlledGcsBucket(
+                metadata.getResourceId(), getWorkspaceId(), controlledGcpResourceApi);
+            break;
+          case BIG_QUERY_DATASET:
+            controlledGcpResourceApi.deleteBigQueryDataset(
+                getWorkspaceId(), metadata.getResourceId());
+            break;
+          case AI_NOTEBOOK:
+          case DATA_REPO_SNAPSHOT:
+          default:
+            throw new IllegalStateException(
+                String.format(
+                    "No cleanup method specified for resource type %s in test EnumerateResources.",
+                    metadata.getResourceType()));
+        }
       }
     }
-    // Cleanup the workspace after we cleanup the the buckets!
+    // Cleanup the workspace after we cleanup the the resources!
     super.doCleanup(testUsers, workspaceApi);
   }
 
@@ -230,13 +244,13 @@ public class EnumerateResources extends DataRepoTestScriptBase {
 
     List<ResourceMetadata> resourceList = new ArrayList<>();
 
-    // We have four kinds of resources right now, so we switch on the modulus
+    // We have five kinds of resources right now, so we switch on the modulus
     // of the counter to choose which kind to make. We make a random name so that
     // different runs will have different alphabetical order.
     for (int i = 0; i < RESOURCE_COUNT; i++) {
       String name = RandomStringUtils.random(6, true, false) + i;
 
-      switch (i % 4) {
+      switch (i % 5) {
         case 0:
           {
             GcpBigQueryDatasetResource resource =
@@ -270,6 +284,15 @@ public class EnumerateResources extends DataRepoTestScriptBase {
           {
             GcpGcsBucketResource resource =
                 ResourceMaker.makeControlledGcsBucketUserShared(
+                    controlledGcpResourceApi, workspaceId, name);
+            resourceList.add(resource.getMetadata());
+            break;
+          }
+
+        case 4:
+          {
+            GcpBigQueryDatasetResource resource =
+                ResourceMaker.makeControlledBigQueryDatasetUserShared(
                     controlledGcpResourceApi, workspaceId, name);
             resourceList.add(resource.getMetadata());
             break;
