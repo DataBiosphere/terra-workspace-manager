@@ -11,6 +11,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -100,6 +102,28 @@ public class SamService {
         GoogleCredentials.getApplicationDefault().createScoped(SAM_OAUTH_SCOPES);
     creds.refreshIfExpired();
     return creds.getAccessToken().getTokenValue();
+  }
+
+  /**
+   * Obtain the user email address from an AuthenticatedUserRequest either by the easy way (directly
+   * calling getEmail()), or the harder way, calling Sam. The hard way throws a checked exception,
+   * which we want to convert to an unchecked exception here.
+   *
+   * @param userRequest - request object for this user
+   * @return - email address of user
+   */
+  public String getRequestUserEmailOrThrow(AuthenticatedUserRequest userRequest) {
+    return Optional.ofNullable(userRequest.getEmail())
+        .orElseGet(
+            () -> {
+              try {
+                return getEmailFromToken(userRequest.getRequiredToken());
+              } catch (InterruptedException e) {
+                // Treat as a 500 for now.
+                throw new IllegalStateException(
+                    "Could not obtain current user from request. Interrupted.", e);
+              }
+            });
   }
 
   /**
@@ -542,8 +566,9 @@ public class SamService {
     // role-based inheritance in Sam instead. This should expand to include policies for
     // applications in the future.
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
+      // The assigned user is always the current user for private resources.
       addPrivateResourcePolicies(
-          resourceRequest, privateIamRoles, resource.getAssignedUser().get());
+          resourceRequest, privateIamRoles, getRequestUserEmailOrThrow(userReq));
     }
 
     try {
@@ -747,23 +772,5 @@ public class SamService {
   /** Returns the Sam action for modifying a given IAM role. */
   private String samActionToModifyRole(WsmIamRole role) {
     return String.format("share_policy::%s", role.toSamRole());
-  }
-
-  /**
-   * Return all the roles for this user on a given workspace
-   *
-   * @param workspaceId - workspace UUID
-   * @param userRequest
-   * @param userEmail
-   * @return
-   */
-  public List<WsmIamRole> getWorkspaceRolesForUser(
-      UUID workspaceId, AuthenticatedUserRequest userRequest, String userEmail) {
-    final List<RoleBinding> roleBindings = listRoleBindings(workspaceId, userRequest);
-    // find roles on this workspace for assignee user
-    return roleBindings.stream()
-        .filter(rb -> rb.users().contains(userEmail))
-        .map(RoleBinding::role)
-        .collect(Collectors.toList());
   }
 }

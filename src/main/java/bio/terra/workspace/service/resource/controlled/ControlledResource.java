@@ -57,7 +57,8 @@ public abstract class ControlledResource extends WsmResource {
 
   /**
    * If specified, the assigned user must be equal to the user making the request.
-   * @return
+   *
+   * @return user email address for assignee, if any
    */
   @Deprecated
   public Optional<String> getAssignedUser() {

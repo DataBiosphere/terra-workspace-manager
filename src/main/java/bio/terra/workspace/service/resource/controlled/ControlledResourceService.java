@@ -9,9 +9,7 @@ import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
-import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
@@ -27,7 +25,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -159,7 +156,7 @@ public class ControlledResourceService {
       String resultPath,
       AuthenticatedUserRequest userRequest) {
     // Pre-flight assertions
-    validateFlightPrerequisites(resource, userRequest);
+    validateCreateFlightPrerequisites(resource, userRequest);
 
     final String jobDescription =
         String.format(
@@ -180,9 +177,8 @@ public class ControlledResourceService {
     return jobBuilder;
   }
 
-  private void validateFlightPrerequisites(
-      ControlledResource resource,
-      AuthenticatedUserRequest userRequest) {
+  private void validateCreateFlightPrerequisites(
+      ControlledResource resource, AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
     workspaceService.validateWorkspaceAndAction(
         userRequest,
@@ -282,16 +278,14 @@ public class ControlledResourceService {
       // No need to handle SHARED resources
       return;
     }
-      final String requestUserEmail = samService.getEmailFromToken(userRequest.getRequiredToken());
-      // If there is no assigned user, this condition is satisfied.
-      final boolean isAllowed =
-          controlledResource
-              .getAssignedUser()
-              .map(requestUserEmail::equals)
-              .orElse(true);
-      if (!isAllowed) {
-        throw new BadRequestException(
-            "Workspace Writer User may only assign a private controlled resource to themselves.");
-      }
+    final String requestUserEmail = samService.getRequestUserEmailOrThrow(userRequest);
+    // If there is no assigned user, this condition is satisfied.
+    final boolean isAllowed =
+        controlledResource.getAssignedUser().map(requestUserEmail::equals).orElse(true);
+    if (!isAllowed) {
+      throw new BadRequestException(
+          "User may only assign a private controlled resource to themselves.");
     }
+  }
+
 }
