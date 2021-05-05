@@ -799,6 +799,25 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update a controlled GCS Bucket resource
+      operationId: updateGcsBucket
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateControlledGcpGcsBucketRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/UpdateControlledGcpGcsBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
     post:
       summary: |
         Delete a controlled GCS bucket resource. This is async, because deleting the bucket and contents can
@@ -1648,6 +1667,16 @@ components:
     UpdateControlledResourceRequestBody:
       type: object
       description: Common request body for updating a controlled resource
+      properties:
+        name:
+          description: Optional. New name to give to this resource. The resource name will not be updated if this is omitted.
+          type: string
+        description:
+          description: Optional. New description to give to this resource. The resource description will not be updated if this is omitted.
+          type: string
+    UpdateControlledGcpGcsBucketRequestBody:
+      type: object
+      description: Update a GCS bucket's metadata and lifecycle rules.
       properties:
         name:
           description: Optional. New name to give to this resource. The resource name will not be updated if this is omitted.
