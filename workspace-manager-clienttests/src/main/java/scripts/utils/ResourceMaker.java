@@ -65,7 +65,12 @@ public class ResourceMaker {
   }
 
   public static DataRepoSnapshotResource makeDataRepoSnapshotReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name) throws ApiException {
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      String dataRepoSnapshotId,
+      String dataRepoInstanceName)
+      throws ApiException {
 
     var body =
         new CreateDataRepoSnapshotReferenceRequestBody()
@@ -76,8 +81,8 @@ public class ResourceMaker {
                     .name(name))
             .snapshot(
                 new DataRepoSnapshotAttributes()
-                    .snapshot(ClientTestUtils.TEST_SNAPSHOT)
-                    .instanceName(ClientTestUtils.TERRA_DATA_REPO_INSTANCE));
+                    .snapshot(dataRepoSnapshotId)
+                    .instanceName(dataRepoInstanceName));
 
     return resourceApi.createDataRepoSnapshotReference(body, workspaceId);
   }
