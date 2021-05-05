@@ -419,7 +419,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteWorkspaceWithGoogleContext() throws Exception {
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())
@@ -448,7 +448,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createGetDeleteGoogleContext() {
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())

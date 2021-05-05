@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.common.sam.exception.SamBadRequestException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
@@ -49,7 +48,7 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
   @Autowired private UserAccessUtils userAccessUtils;
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteContextDo() throws Exception {
     UUID workspaceId = createWorkspace();
     FlightMap createParameters = new FlightMap();
@@ -104,7 +103,7 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
   }
 
   @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = bufferServiceDisabledEnvsRegEx)
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteContextUndo() throws Exception {
     UUID workspaceId = createWorkspace();
     FlightMap createParameters = new FlightMap();

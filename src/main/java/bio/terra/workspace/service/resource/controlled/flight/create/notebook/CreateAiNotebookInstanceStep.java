@@ -49,6 +49,9 @@ import org.springframework.http.HttpStatus;
 public class CreateAiNotebookInstanceStep implements Step {
   /** The Notebook instance metadata key used to control proxy mode. */
   private static final String PROXY_MODE_METADATA_KEY = "proxy-mode";
+  /** The Notebook instance metadata value used to set the service account proxy mode. */
+  // git secrets gets a false positive if 'service_account' is double quoted.
+  private static final String PROXY_MODE_SA_VALUE = "service_" + "account";
 
   private final Logger logger = LoggerFactory.getLogger(CreateAiNotebookInstanceStep.class);
   private final CrlService crlService;
@@ -68,7 +71,7 @@ public class CreateAiNotebookInstanceStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
-    InstanceName instanceName = createInstanceName(projectId);
+    InstanceName instanceName = resource.toInstanceName(projectId);
     Instance instance = createInstanceModel(flightContext, projectId);
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
@@ -95,9 +98,8 @@ public class CreateAiNotebookInstanceStep implements Step {
       if (creationOperation.getOperation().getError() != null) {
         throw new RetryException(
             String.format(
-                "Error creating notebook instance {}. {}",
-                instanceName.formatName(),
-                creationOperation.getOperation().getError()));
+                "Error creating notebook instance %s. %s",
+                instanceName.formatName(), creationOperation.getOperation().getError()));
       }
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
@@ -140,7 +142,7 @@ public class CreateAiNotebookInstanceStep implements Step {
     // Create the AI Notebook instance in the service account proxy mode to control proxy access by
     // means of IAM permissions on the service account.
     // https://cloud.google.com/ai-platform/notebooks/docs/troubleshooting#opening_a_notebook_results_in_a_403_forbidden_error
-    if (metadata.put(PROXY_MODE_METADATA_KEY, "service_account") != null) {
+    if (metadata.put(PROXY_MODE_METADATA_KEY, PROXY_MODE_SA_VALUE) != null) {
       throw new BadRequestException("proxy-mode metadata is reserved for Terra.");
     }
     instance.setMetadata(metadata);
@@ -182,18 +184,10 @@ public class CreateAiNotebookInstanceStep implements Step {
         "projects/" + projectId + "/regions/" + region + "/subnetworks/" + subnetworkName);
   }
 
-  private InstanceName createInstanceName(String projectId) {
-    return InstanceName.builder()
-        .projectId(projectId)
-        .location(resource.getLocation())
-        .instanceId(resource.getInstanceId())
-        .build();
-  }
-
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
-    InstanceName instanceName = createInstanceName(projectId);
+    InstanceName instanceName = resource.toInstanceName(projectId);
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
