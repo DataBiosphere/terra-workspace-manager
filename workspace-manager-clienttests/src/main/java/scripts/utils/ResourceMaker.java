@@ -120,7 +120,7 @@ public class ResourceMaker {
 
     List<GcpGcsBucketLifecycleRule> lifecycleRules = new ArrayList<>(List.of(lifecycleRule));
 
-    String bucketName = ClientTestUtils.generateTestResourceName();
+    String bucketName = ClientTestUtils.generateCloudResourceName();
     var body =
         new CreateControlledGcpGcsBucketRequestBody()
             .common(
@@ -162,7 +162,7 @@ public class ResourceMaker {
   public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetUserShared(
       ControlledGcpResourceApi resourceApi, UUID workspaceId, String name) throws Exception {
 
-    String datasetId = ClientTestUtils.generateTestResourceName();
+    String datasetId = ClientTestUtils.generateCloudResourceName();
     var body =
         new CreateControlledGcpBigQueryDatasetRequestBody()
             .common(
