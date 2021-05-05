@@ -111,18 +111,14 @@ public class SamService {
    * @param userRequest - request object for this user
    * @return - email address of user
    */
-  public String getRequestUserEmailOrThrow(AuthenticatedUserRequest userRequest) {
-    return Optional.ofNullable(userRequest.getEmail())
-        .orElseGet(
-            () -> {
-              try {
-                return getEmailFromToken(userRequest.getRequiredToken());
-              } catch (InterruptedException e) {
-                // Treat as a 500 for now.
-                throw new IllegalStateException(
-                    "Could not obtain current user from request. Interrupted.", e);
-              }
-            });
+  public String getRequestUserEmail(AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
+    Optional<String> emailMaybe = Optional.ofNullable(userRequest.getEmail());
+    if (emailMaybe.isPresent()) {
+      return emailMaybe.get();
+    } else {
+      return getEmailFromToken(userRequest.getRequiredToken());
+    }
   }
 
   /**
@@ -566,8 +562,7 @@ public class SamService {
     // applications in the future.
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
       // The assigned user is always the current user for private resources.
-      addPrivateResourcePolicies(
-          resourceRequest, privateIamRoles, getRequestUserEmailOrThrow(userReq));
+      addPrivateResourcePolicies(resourceRequest, privateIamRoles, getRequestUserEmail(userReq));
     }
 
     try {
