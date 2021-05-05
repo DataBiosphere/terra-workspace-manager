@@ -57,10 +57,10 @@ public class ControlledResourceFixtures {
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
   public static final String BUCKET_NAME = "my-bucket";
   public static final String BUCKET_LOCATION = "US-CENTRAL1";
+  public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
+      new ApiGcpGcsBucketCreationParameters().name(BUCKET_NAME).location(BUCKET_LOCATION);
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS =
-      new ApiGcpGcsBucketCreationParameters()
-          .name(BUCKET_NAME)
-          .location(BUCKET_LOCATION)
+      GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL
           .defaultStorageClass(ApiGcpGcsBucketDefaultStorageClass.STANDARD)
           .lifecycle(new ApiGcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
 

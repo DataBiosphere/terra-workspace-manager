@@ -55,12 +55,18 @@ public class CreateGcsBucketStep implements Step {
     ApiGcpGcsBucketCreationParameters creationParameters =
         inputMap.get(CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
-    BucketInfo bucketInfo =
+    BucketInfo.Builder bucketInfoBuilder =
         BucketInfo.newBuilder(resource.getBucketName())
-            .setLocation(creationParameters.getLocation())
-            .setStorageClass(ApiConversions.toGcsApi(creationParameters.getDefaultStorageClass()))
-            .setLifecycleRules(ApiConversions.toGcsApi(creationParameters.getLifecycle()))
-            .build();
+            .setLocation(creationParameters.getLocation());
+
+    // Remaining creation parameters are optional
+    Optional.ofNullable(creationParameters.getDefaultStorageClass())
+        .map(ApiConversions::toGcsApi)
+        .ifPresent(bucketInfoBuilder::setStorageClass);
+
+    Optional.ofNullable(creationParameters.getLifecycle())
+        .map(ApiConversions::toGcsApi)
+        .ifPresent(bucketInfoBuilder::setLifecycleRules);
 
     StorageCow storageCow = crlService.createStorageCow(projectId);
 
@@ -68,7 +74,7 @@ public class CreateGcsBucketStep implements Step {
     // this is a redo and this step created it already.
     BucketCow existingBucket = storageCow.get(resource.getBucketName());
     if (existingBucket == null) {
-      storageCow.create(bucketInfo);
+      storageCow.create(bucketInfoBuilder.build());
     } else {
       logger.info("Bucket {} already exists. Continuing.", resource.getBucketName());
     }
