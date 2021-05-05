@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -100,6 +101,24 @@ public class SamService {
         GoogleCredentials.getApplicationDefault().createScoped(SAM_OAUTH_SCOPES);
     creds.refreshIfExpired();
     return creds.getAccessToken().getTokenValue();
+  }
+
+  /**
+   * Obtain the user email address from an AuthenticatedUserRequest either by the easy way (directly
+   * calling getEmail()), or the harder way, calling Sam. The hard way throws a checked exception,
+   * which we want to convert to an unchecked exception here.
+   *
+   * @param userRequest - request object for this user
+   * @return - email address of user
+   */
+  public String getRequestUserEmail(AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
+    Optional<String> emailMaybe = Optional.ofNullable(userRequest.getEmail());
+    if (emailMaybe.isPresent()) {
+      return emailMaybe.get();
+    } else {
+      return getEmailFromToken(userRequest.getRequiredToken());
+    }
   }
 
   /**
@@ -542,8 +561,8 @@ public class SamService {
     // role-based inheritance in Sam instead. This should expand to include policies for
     // applications in the future.
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
-      addPrivateResourcePolicies(
-          resourceRequest, privateIamRoles, resource.getAssignedUser().get());
+      // The assigned user is always the current user for private resources.
+      addPrivateResourcePolicies(resourceRequest, privateIamRoles, getRequestUserEmail(userReq));
     }
 
     try {
@@ -735,7 +754,7 @@ public class SamService {
   }
 
   /** Fetch the email associated with an authToken from Sam. */
-  private String getEmailFromToken(String authToken) throws InterruptedException {
+  public String getEmailFromToken(String authToken) throws InterruptedException {
     UsersApi usersApi = samUsersApi(authToken);
     try {
       return SamRetry.retry(() -> usersApi.getUserStatusInfo().getUserEmail());
