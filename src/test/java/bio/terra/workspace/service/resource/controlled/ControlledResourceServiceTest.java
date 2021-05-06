@@ -106,38 +106,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  public void testIamPermissions() throws Exception {
-    InstanceName instanceName =
-        InstanceName.fromNameFormat(
-            "projects/terra-wsm-dev-9fdc4b02/locations/us-central1-a/instances/wchamber-20210325-132917");
-    // Test that the user has permissions from WRITER roles.
-    List<String> expectedWriterPermissions =
-        ImmutableList.of(
-            "notebooks.instances.get",
-            "notebooks.instances.stop",
-            "notebooks.instances.reset",
-            "notebooks.instances.setAccelerator",
-            "notebooks.instances.setMachineType",
-            "notebooks.instances.start",
-            "notebooks.instances.stop",
-            "notebooks.instances.use");
-
-    AIPlatformNotebooksCow.Instances.TestIamPermissions request =
-        crlService
-            .getAIPlatformNotebooksCow()
-            .instances()
-            .testIamPermissions(
-                instanceName,
-                new com.google.api.services.notebooks.v1.model.TestIamPermissionsRequest()
-                    .setPermissions(expectedWriterPermissions));
-    var response = request.execute();
-    assertThat(
-        response.getPermissions(),
-        Matchers.containsInAnyOrder(expectedWriterPermissions.toArray()));
-  }
-
-  @Test
-  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void createAiNotebookInstanceDo() throws Exception {
     Workspace workspace = reusableWorkspace();
     String instanceId = "create-ai-notebook-instance-do";
@@ -190,8 +158,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // Waiting 15s for permissions to propagate
     TimeUnit.SECONDS.sleep(15);
 
-    AIPlatformNotebooksCow userNotebooks =
-        crlService.createAIPlatformNotebooksCow(userAccessUtils.defaultUserAuthRequest());
     InstanceName instanceName =
         resource.toInstanceName(workspace.getGcpCloudContext().get().getGcpProjectId());
     Instance instance =
@@ -213,7 +179,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             "notebooks.instances.start",
             "notebooks.instances.stop",
             "notebooks.instances.use");
-    var response =
+    assertThat(
         crlService
             .createAIPlatformNotebooksCow(userAccessUtils.defaultUserAuthRequest())
             .instances()
@@ -221,9 +187,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 instanceName,
                 new com.google.api.services.notebooks.v1.model.TestIamPermissionsRequest()
                     .setPermissions(expectedWriterPermissions))
-            .execute();
-    assertThat(
-        response.getPermissions(),
+            .execute()
+            .getPermissions(),
         Matchers.containsInAnyOrder(expectedWriterPermissions.toArray()));
 
     // Test that the user has access to the notebook with a service account through proxy mode.
@@ -234,11 +199,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .projectId(instanceName.projectId())
             .email(instance.getServiceAccount())
             .build();
-    IamCow userIam = crlService.createIamCow(userAccessUtils.defaultUserAuthRequest());
     // The user needs to have the actAs permission on the service account.
     String actAsPermission = "iam.serviceAccounts.actAs";
     assertThat(
-        userIam
+        crlService
+            .createIamCow(userAccessUtils.defaultUserAuthRequest())
             .projects()
             .serviceAccounts()
             .testIamPermissions(

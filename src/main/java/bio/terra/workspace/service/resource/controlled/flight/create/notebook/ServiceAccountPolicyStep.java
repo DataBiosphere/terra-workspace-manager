@@ -31,7 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A step to set the required GCP policies on the service account used to run the notebook.
+ * A step to set the required GCP policies on the service account used for WRITERS to access the
+ * notebook instance via the AI Platform proxy.
  *
  * <p>Because the notebook is being run in service account proxy mode, to create a private notebook
  * instance we have to grant the accessing user exclusive access 'iam.serviceAccount.actAs'
