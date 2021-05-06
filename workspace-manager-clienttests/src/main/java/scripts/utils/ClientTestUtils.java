@@ -11,19 +11,14 @@ import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
-import bio.terra.workspace.client.ApiException;
-import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.CreateDataReferenceRequestBody;
-import bio.terra.workspace.model.DataReferenceDescription;
-import bio.terra.workspace.model.DataReferenceList;
-import bio.terra.workspace.model.DataRepoSnapshot;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobReport;
-import bio.terra.workspace.model.ReferenceTypeEnum;
 import bio.terra.workspace.model.RoleBindingList;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.BigQueryOptions;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.base.Strings;
@@ -36,13 +31,10 @@ import org.slf4j.LoggerFactory;
 
 public class ClientTestUtils {
 
-  public static final String DATA_REFERENCE_NAME_PREFIX = "REF_";
-  public static final String TEST_SNAPSHOT = "97b5559a-2f8f-4df3-89ae-5a249173ee0c";
-  public static final String TERRA_DATA_REPO_INSTANCE = "terra";
   public static final String TEST_BUCKET_NAME = "terra_wsm_test_resource";
   public static final String TEST_BQ_DATASET_NAME = "terra_wsm_test_dataset";
   public static final String TEST_BQ_DATASET_PROJECT = "terra-kernel-k8s";
-  public static final String BUCKET_NAME_PREFIX = "terratest";
+  public static final String RESOURCE_NAME_PREFIX = "terratest";
   private static final Logger logger = LoggerFactory.getLogger(ClientTestUtils.class);
 
   // Required scopes for client tests include the usual login scopes.
@@ -124,6 +116,15 @@ public class ClientTestUtils {
     return options.getService();
   }
 
+  public static BigQuery getGcpBigQueryClient(TestUserSpecification testUser, String projectId)
+      throws IOException {
+    GoogleCredentials userCredential =
+        AuthenticationUtils.getDelegatedUserCredential(testUser, TEST_USER_SCOPES);
+    var options =
+        BigQueryOptions.newBuilder().setCredentials(userCredential).setProjectId(projectId).build();
+    return options.getService();
+  }
+
   public static WorkspaceApi getWorkspaceClient(
       TestUserSpecification testUser, ServerSpecification server) throws IOException {
     final ApiClient apiClient = getClientForTestUser(testUser, server);
@@ -184,38 +185,6 @@ public class ClientTestUtils {
   }
 
   /**
-   * Return a globally unique data reference name starting with the constant prefix. This will
-   * include a UUID reformatted to meet the rules for data reference names (just replacing hyphens
-   * with underscores). This method is useful when creating references on the same workspace from
-   * multiple threads.
-   *
-   * @return unique data reference name
-   */
-  public static String getUniqueDataReferenceName() {
-    String name = DATA_REFERENCE_NAME_PREFIX + UUID.randomUUID().toString();
-    return name.replace("-", "_");
-  }
-
-  public static DataRepoSnapshot getTestDataRepoSnapshot() {
-    return new DataRepoSnapshot().snapshot(TEST_SNAPSHOT).instanceName(TERRA_DATA_REPO_INSTANCE);
-  }
-
-  public static CreateDataReferenceRequestBody getTestCreateDataReferenceRequestBody() {
-    return new CreateDataReferenceRequestBody()
-        .name(getUniqueDataReferenceName())
-        .cloningInstructions(CloningInstructionsEnum.REFERENCE)
-        .referenceType(ReferenceTypeEnum.DATA_REPO_SNAPSHOT)
-        .reference(getTestDataRepoSnapshot());
-  }
-
-  public static List<DataReferenceDescription> getDataReferenceDescriptions(
-      UUID workspaceId, WorkspaceApi workspaceApi, int offset, int limit) throws ApiException {
-    final DataReferenceList dataReferenceListFirstPage =
-        workspaceApi.enumerateReferences(workspaceId, offset, limit);
-    return dataReferenceListFirstPage.getResources();
-  }
-
-  /**
    * Checks if a user email is in a role binding list
    *
    * @param roleBindings - list of role bindings, as retrieved via getRoles()
@@ -233,9 +202,9 @@ public class ClientTestUtils {
     return jobReport.getStatus().equals(JobReport.StatusEnum.RUNNING);
   }
 
-  /** @return unique test bucket name */
-  public static String getTestBucketName() {
-    String name = BUCKET_NAME_PREFIX + UUID.randomUUID().toString();
+  /** @return a generated unique resource name consisting of letters, numbers, and underscores. */
+  public static String generateCloudResourceName() {
+    String name = RESOURCE_NAME_PREFIX + UUID.randomUUID().toString();
     return name.replace("-", "_");
   }
 }

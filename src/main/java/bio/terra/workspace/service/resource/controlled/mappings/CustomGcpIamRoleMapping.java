@@ -45,7 +45,8 @@ public class CustomGcpIamRoleMapping {
           "bigquery.routines.list",
           "bigquery.tables.export",
           "bigquery.tables.getData",
-          "bigquery.tables.list");
+          "bigquery.tables.list",
+          "bigquery.tables.get");
 
   static final ImmutableList<String> BIG_QUERY_DATASET_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
