@@ -55,14 +55,17 @@ public class ControlledResourceFixtures {
   // list must not be immutable if deserialization is to work
   static final List<ApiGcpGcsBucketLifecycleRule> LIFECYCLE_RULES =
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
-  public static final String BUCKET_NAME = "my-bucket";
+  public static final String BUCKET_NAME_PREFIX = "my-bucket";
   public static final String BUCKET_LOCATION = "US-CENTRAL1";
-  public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS =
-      new ApiGcpGcsBucketCreationParameters()
-          .name(BUCKET_NAME)
-          .location(BUCKET_LOCATION)
-          .defaultStorageClass(ApiGcpGcsBucketDefaultStorageClass.STANDARD)
-          .lifecycle(new ApiGcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
+
+  /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
+  public static ApiGcpGcsBucketCreationParameters getGoogleBucketCreationParameters() {
+    return new ApiGcpGcsBucketCreationParameters()
+        .name(uniqueName(BUCKET_NAME_PREFIX))
+        .location(BUCKET_LOCATION)
+        .defaultStorageClass(ApiGcpGcsBucketDefaultStorageClass.STANDARD)
+        .lifecycle(new ApiGcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
+  }
 
   public static ApiGcpAiNotebookInstanceCreationParameters defaultNotebookCreationParameters() {
     return new ApiGcpAiNotebookInstanceCreationParameters()
@@ -80,17 +83,19 @@ public class ControlledResourceFixtures {
   public static final String RESOURCE_DESCRIPTION =
       "A bucket that had beer in it, briefly. \uD83C\uDF7B";
   public static final CloningInstructions CLONING_INSTRUCTIONS = CloningInstructions.COPY_REFERENCE;
-  public static final ControlledGcsBucketResource BUCKET_RESOURCE =
-      new ControlledGcsBucketResource(
-          WORKSPACE_ID,
-          RESOURCE_ID,
-          RESOURCE_NAME,
-          RESOURCE_DESCRIPTION,
-          CLONING_INSTRUCTIONS,
-          OWNER_EMAIL,
-          AccessScopeType.ACCESS_SCOPE_PRIVATE,
-          ManagedByType.MANAGED_BY_USER,
-          BUCKET_NAME);
+
+  public static ControlledGcsBucketResource getBucketResource() {
+    return new ControlledGcsBucketResource(
+        WORKSPACE_ID,
+        RESOURCE_ID,
+        RESOURCE_NAME,
+        RESOURCE_DESCRIPTION,
+        CLONING_INSTRUCTIONS,
+        OWNER_EMAIL,
+        AccessScopeType.ACCESS_SCOPE_PRIVATE,
+        ManagedByType.MANAGED_BY_USER,
+        uniqueName(BUCKET_NAME_PREFIX));
+      }
 
   private ControlledResourceFixtures() {}
 
@@ -111,7 +116,7 @@ public class ControlledResourceFixtures {
         .assignedUser(null)
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
         .managedBy(ManagedByType.MANAGED_BY_USER)
-        .bucketName(BUCKET_NAME);
+        .bucketName(uniqueName(BUCKET_NAME_PREFIX));
   }
 
   /**
@@ -133,6 +138,10 @@ public class ControlledResourceFixtures {
         .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
         .managedBy(ManagedByType.MANAGED_BY_USER)
         .datasetName("test_dataset");
+  }
+
+  private static String uniqueName(String prefix) {
+    return prefix + "-" + UUID.randomUUID().toString();
   }
 
   /**
