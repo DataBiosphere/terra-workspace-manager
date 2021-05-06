@@ -1,12 +1,12 @@
 {
-  "name": "CreateGetDeleteControlledGcsBucket",
-  "description": "CRUD controlled GCS bucket tests.",
+  "name": "ControlledBigQueryDatasetLifecycle",
+  "description": "CRUD controlled BQ dataset tests.",
   "serverSpecificationFile": "workspace-dev.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
     {
-      "name": "CreateGetDeleteControlledGcsBucket",
+      "name": "ControlledBigQueryDatasetLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 2,
       "expectedTimeForEach": 5,
@@ -14,5 +14,5 @@
       "parameters": ["wm-default-spend-profile"]
     }
   ],
-  "testUserFiles": ["bella.json", "elijah.json"]
+  "testUserFiles": ["bella.json", "elijah.json", "liam.json"]
 }
