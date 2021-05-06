@@ -3,6 +3,8 @@ package bio.terra.workspace.service.resource.controlled.flight;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
@@ -110,7 +112,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
     final BucketInfo info = bucketInfoCaptor.getValue();
     assertThat(info.getName(), equalTo(ControlledResourceFixtures.BUCKET_NAME));
     assertThat(info.getLocation(), equalTo(ControlledResourceFixtures.BUCKET_LOCATION));
-    assertThat(info.getStorageClass(), equalTo(StorageClass.STANDARD));
+    assertThat(info.getStorageClass(), is(nullValue()));
     assertThat(info.getLifecycleRules(), empty());
   }
 }

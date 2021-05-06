@@ -282,6 +282,7 @@ public class ControlledResourceService {
         SamService.rethrowIfSamInterrupted(
             () -> samService.getRequestUserEmail(userRequest), "validateOnlySelfAssignment");
     // If there is no assigned user, this condition is satisfied.
+    //noinspection deprecation
     final boolean isAllowed =
         controlledResource.getAssignedUser().map(requestUserEmail::equals).orElse(true);
     if (!isAllowed) {

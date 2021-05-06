@@ -60,7 +60,9 @@ public class ControlledResourceFixtures {
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
       new ApiGcpGcsBucketCreationParameters().name(BUCKET_NAME).location(BUCKET_LOCATION);
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS =
-      GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL
+      new ApiGcpGcsBucketCreationParameters()
+          .name(BUCKET_NAME)
+          .location(BUCKET_LOCATION)
           .defaultStorageClass(ApiGcpGcsBucketDefaultStorageClass.STANDARD)
           .lifecycle(new ApiGcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
 

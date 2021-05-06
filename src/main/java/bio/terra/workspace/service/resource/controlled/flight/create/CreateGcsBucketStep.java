@@ -26,6 +26,7 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
 import com.google.cloud.storage.StorageClass;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -64,9 +65,10 @@ public class CreateGcsBucketStep implements Step {
         .map(ApiConversions::toGcsApi)
         .ifPresent(bucketInfoBuilder::setStorageClass);
 
-    Optional.ofNullable(creationParameters.getLifecycle())
-        .map(ApiConversions::toGcsApi)
-        .ifPresent(bucketInfoBuilder::setLifecycleRules);
+    bucketInfoBuilder.setLifecycleRules(
+        Optional.ofNullable(creationParameters.getLifecycle())
+            .map(ApiConversions::toGcsApi)
+            .orElse(Collections.emptyList()));
 
     StorageCow storageCow = crlService.createStorageCow(projectId);
 
