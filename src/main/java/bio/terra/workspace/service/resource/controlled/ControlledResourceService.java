@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
@@ -154,11 +155,9 @@ public class ControlledResourceService {
       ApiJobControl jobControl,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
-    stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
-    workspaceService.validateWorkspaceAndAction(
-        userRequest,
-        resource.getWorkspaceId(),
-        resource.getCategory().getSamCreateResourceAction());
+    // Pre-flight assertions
+    validateCreateFlightPrerequisites(resource, userRequest);
+
     final String jobDescription =
         String.format(
             "Create controlled resource %s; id %s; name %s",
@@ -176,6 +175,16 @@ public class ControlledResourceService {
                 ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, privateResourceIamRoles)
             .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
     return jobBuilder;
+  }
+
+  private void validateCreateFlightPrerequisites(
+      ControlledResource resource, AuthenticatedUserRequest userRequest) {
+    stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
+    workspaceService.validateWorkspaceAndAction(
+        userRequest,
+        resource.getWorkspaceId(),
+        resource.getCategory().getSamCreateResourceAction());
+    validateOnlySelfAssignment(resource, userRequest);
   }
 
   public ControlledResource getControlledResource(
@@ -261,5 +270,23 @@ public class ControlledResourceService {
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
         .addParameter(ResourceKeys.RESOURCE_ID, resourceId.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
+  }
+
+  private void validateOnlySelfAssignment(
+      ControlledResource controlledResource, AuthenticatedUserRequest userRequest) {
+    if (!controlledResource.getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
+      // No need to handle SHARED resources
+      return;
+    }
+    final String requestUserEmail =
+        SamService.rethrowIfSamInterrupted(
+            () -> samService.getRequestUserEmail(userRequest), "validateOnlySelfAssignment");
+    // If there is no assigned user, this condition is satisfied.
+    final boolean isAllowed =
+        controlledResource.getAssignedUser().map(requestUserEmail::equals).orElse(true);
+    if (!isAllowed) {
+      throw new BadRequestException(
+          "User may only assign a private controlled resource to themselves.");
+    }
   }
 }
