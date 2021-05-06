@@ -72,8 +72,8 @@ jobs:
         HOTFIX_BRANCHES: hotfix.*
         OVERRIDE_BUMP: ${{ steps.controls.outputs.semver-part }}
         RELEASE_BRANCHES: dev
-        VERSION_FILE_PATH: build.gradle
-        VERSION_LINE_MATCH: "^\\s*version\\s*=\\s*\".*\""
+        VERSION_FILE_PATH: settings.gradle
+        VERSION_LINE_MATCH: "^gradle.ext.wsmVersion\\s*=\\s*\".*\""
         VERSION_SUFFIX: SNAPSHOT
     - name: Set up AdoptOpenJDK
       uses: joschi/setup-jdk@v2

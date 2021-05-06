@@ -68,7 +68,7 @@ jobs:
     - name: Initialize Postgres DB
       env:
         PGPASSWORD: postgres
-      run: psql -h 127.0.0.1 -U postgres -f ./local-dev/local-postgres-init.sql
+      run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
 
     - name: Set up AdoptOpenJDK 11
       uses: joschi/setup-jdk@v2
