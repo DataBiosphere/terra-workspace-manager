@@ -3,8 +3,10 @@ package bio.terra.workspace.service.resource.controlled.flight;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
@@ -18,11 +20,11 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateGcsBucketStep;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.cloud.storage.BucketInfo;
+import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.StorageClass;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,16 +32,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
-// TODO: I cannot get the storageCow.create to work. It keeps NPE in the step.
-//  So turning this test off for now.
 public class CreateGcsBucketStepTest extends BaseUnitTest {
 
   @Mock private FlightContext mockFlightContext;
   @Mock private CrlService mockCrlService;
   @Mock private StorageCow mockStorageCow;
-  @Mock private AuthenticatedUserRequest mockUserRequest;
   @Mock private WorkspaceService mockWorkspaceService;
   @Mock private BucketCow mockBucketCow;
+
   @Captor private ArgumentCaptor<BucketInfo> bucketInfoCaptor;
 
   private static final String FAKE_PROJECT_ID = "fakeprojectid";
@@ -71,26 +71,18 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
     assertThat(info.getName(), equalTo(ControlledResourceFixtures.BUCKET_NAME));
     assertThat(info.getLocation(), equalTo(ControlledResourceFixtures.BUCKET_LOCATION));
     assertThat(info.getStorageClass(), equalTo(StorageClass.STANDARD));
+    assertThat(info.getLifecycleRules(), hasSize(equalTo(2)));
 
-    // todo: these aer asserting the wrong type
-    //    assertThat(info.getLifecycleRules(),
-    // containsInAnyOrder(LifecycleAction.newDeleteAction()));
-    //                ,
-    //                LifecycleCondition.newBuilder()
-    //                    .setAge(64)
-    //                    .setIsLive(true)
-    //                    .setMatchesStorageClass(List.of(StorageClass.ARCHIVE))
-    //                    .setNumberOfNewerVersions(2)
-    //                    .build()) // ,
-    //            new LifecycleRule(
-    //                LifecycleAction.newSetStorageClassAction(StorageClass.NEARLINE),
-    //                LifecycleCondition.newBuilder()
-    //                    .setCreatedBefore(
-    //                        new
-    // com.google.api.client.util.DateTime("2017-02-18T00:00:00Z"))
-    //                    .setMatchesStorageClass(List.of(StorageClass.STANDARD))
-    //                    .build())
-    //            ));
+    // LifecycleRule dosn't have good equality comparison support, so use string rep.
+    final LifecycleRule deleteRule = info.getLifecycleRules().get(0);
+    assertEquals(
+        "LifecycleRule{lifecycleAction=DeleteLifecycleAction{actionType=Delete}, lifecycleCondition=LifecycleCondition{age=64, createBefore=null, numberofNewerVersions=2, isLive=true, matchesStorageClass=[ARCHIVE]}}",
+        deleteRule.toString());
+
+    final LifecycleRule storageClassRule = info.getLifecycleRules().get(1);
+    assertEquals(
+        "LifecycleRule{lifecycleAction=SetStorageClassLifecycleAction{actionType=SetStorageClass, storageClass=NEARLINE}, lifecycleCondition=LifecycleCondition{age=null, createBefore=2007-01-02T19:00:00.000-05:00, numberofNewerVersions=null, isLive=null, matchesStorageClass=[STANDARD]}}",
+        storageClassRule.toString());
   }
 
   @Test
