@@ -51,9 +51,12 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
 
   @Test
   public void testCreatesBucket() throws RetryException, InterruptedException {
+    final ApiGcpGcsBucketCreationParameters creationParameters =
+        getGoogleBucketCreationParameters();
+
     CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
-            mockCrlService, ControlledResourceFixtures.getBucketResource(), mockWorkspaceService);
+            mockCrlService, ControlledResourceFixtures.getBucketResource(creationParameters.getName()), mockWorkspaceService);
 
     when(mockCrlService.createStorageCow(FAKE_PROJECT_ID, mockUserRequest))
         .thenReturn(mockStorageCow);
@@ -61,8 +64,6 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
     when(mockStorageCow.create(bucketInfoCaptor.capture())).thenReturn(mockBucketCow);
 
     final FlightMap inputFlightMap = new FlightMap();
-    final ApiGcpGcsBucketCreationParameters creationParameters =
-        getGoogleBucketCreationParameters();
     inputFlightMap.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     inputFlightMap.makeImmutable();

@@ -84,7 +84,7 @@ public class ControlledResourceFixtures {
       "A bucket that had beer in it, briefly. \uD83C\uDF7B";
   public static final CloningInstructions CLONING_INSTRUCTIONS = CloningInstructions.COPY_REFERENCE;
 
-  public static ControlledGcsBucketResource getBucketResource() {
+  public static ControlledGcsBucketResource getBucketResource(String bucketName) {
     return new ControlledGcsBucketResource(
         WORKSPACE_ID,
         RESOURCE_ID,
@@ -94,7 +94,7 @@ public class ControlledResourceFixtures {
         OWNER_EMAIL,
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_USER,
-        uniqueName(BUCKET_NAME_PREFIX));
+        bucketName);
       }
 
   private ControlledResourceFixtures() {}
