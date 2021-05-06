@@ -106,6 +106,38 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  public void testIamPermissions() throws Exception {
+    InstanceName instanceName =
+        InstanceName.fromNameFormat(
+            "projects/terra-wsm-dev-9fdc4b02/locations/us-central1-a/instances/wchamber-20210325-132917");
+    // Test that the user has permissions from WRITER roles.
+    List<String> expectedWriterPermissions =
+        ImmutableList.of(
+            "notebooks.instances.get",
+            "notebooks.instances.stop",
+            "notebooks.instances.reset",
+            "notebooks.instances.setAccelerator",
+            "notebooks.instances.setMachineType",
+            "notebooks.instances.start",
+            "notebooks.instances.stop",
+            "notebooks.instances.use");
+
+    AIPlatformNotebooksCow.Instances.TestIamPermissions request =
+        crlService
+            .getAIPlatformNotebooksCow()
+            .instances()
+            .testIamPermissions(
+                instanceName,
+                new com.google.api.services.notebooks.v1.model.TestIamPermissionsRequest()
+                    .setPermissions(expectedWriterPermissions));
+    var response = request.execute();
+    assertThat(
+        response.getPermissions(),
+        Matchers.containsInAnyOrder(expectedWriterPermissions.toArray()));
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void createAiNotebookInstanceDo() throws Exception {
     Workspace workspace = reusableWorkspace();
     String instanceId = "create-ai-notebook-instance-do";
@@ -169,43 +201,30 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .get(resource.toInstanceName(workspace.getGcpCloudContext().get().getGcpProjectId()))
             .execute();
 
-    // Test that the user has permissions from WRITER roles.
+    // Test that the user has permissions from WRITER roles on the notebooks instance. Only notebook
+    // instance level permissions can be checked on the notebook instance test IAM permissions
+    // endpoint, so no "notebooks.instances.list" permission as that's project level.
     List<String> expectedWriterPermissions =
         ImmutableList.of(
             "notebooks.instances.get",
-            "notebooks.instances.list",
             "notebooks.instances.reset",
             "notebooks.instances.setAccelerator",
             "notebooks.instances.setMachineType",
             "notebooks.instances.start",
             "notebooks.instances.stop",
             "notebooks.instances.use");
-
-    try {
-      crlService
-          .getAIPlatformNotebooksCow()
-          .instances()
-          .testIamPermissions(
-              instanceName,
-              new com.google.api.services.notebooks.v1.model.TestIamPermissionsRequest()
-                  .setPermissions(expectedWriterPermissions))
-          .execute();
-    } catch (Exception e) {
-      // DO NOT SUBMIT
-      System.out.println(e);
-    }
-    //
-    //    assertThat(
-    //        crlService
-    //            .getAIPlatformNotebooksCow()
-    //            .instances()
-    //            .testIamPermissions(
-    //                instanceName,
-    //                new com.google.api.services.notebooks.v1.model.TestIamPermissionsRequest()
-    //                    .setPermissions(expectedWriterPermissions))
-    //            .execute()
-    //            .getPermissions(),
-    //        Matchers.containsInAnyOrder(expectedWriterPermissions.toArray()));
+    var response =
+        crlService
+            .createAIPlatformNotebooksCow(userAccessUtils.defaultUserAuthRequest())
+            .instances()
+            .testIamPermissions(
+                instanceName,
+                new com.google.api.services.notebooks.v1.model.TestIamPermissionsRequest()
+                    .setPermissions(expectedWriterPermissions))
+            .execute();
+    assertThat(
+        response.getPermissions(),
+        Matchers.containsInAnyOrder(expectedWriterPermissions.toArray()));
 
     // Test that the user has access to the notebook with a service account through proxy mode.
     // git secrets gets a false positive if 'service_account' is double quoted.

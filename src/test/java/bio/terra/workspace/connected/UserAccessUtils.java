@@ -15,9 +15,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Profile("connected-test")
 public class UserAccessUtils {
-  /** The OAuth scopes important for logging in a user. */
+  /** The OAuth scopes important for logging in a user and acting on their behalf in GCP. */
   private static final ImmutableList<String> LOGIN_SCOPES =
-      ImmutableList.of("openid", "email", "profile");
+      ImmutableList.of(
+          "openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
 
   /**
    * The path to the service account to use. This service account should be delegated to impersonate

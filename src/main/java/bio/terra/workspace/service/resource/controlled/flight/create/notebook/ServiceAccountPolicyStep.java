@@ -68,7 +68,8 @@ public class ServiceAccountPolicyStep implements Step {
           resource.getResourceId());
       return StepResult.getStepResultSuccess();
     }
-    Binding binding = maybeBinding.get();
+    List<Binding> newBindings = new ArrayList<>();
+    newBindings.add(maybeBinding.get());
 
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
     IamCow iam = crlService.getIamCow();
@@ -81,18 +82,8 @@ public class ServiceAccountPolicyStep implements Step {
         ServiceAccountName.builder().projectId(projectId).email(serviceAccountEmail).build();
     try {
       Policy policy = iam.projects().serviceAccounts().getIamPolicy(serviceAccountName).execute();
-      List<Binding> existingBindings =
-          Optional.ofNullable(policy.getBindings()).orElse(ImmutableList.of());
-      if (existingBindings.stream()
-          .anyMatch(
-              existingBinding ->
-                  existingBinding.getMembers().equals(binding.getMembers())
-                      && existingBinding.getRole().equals(binding.getRole()))) {
-        logger.info("Service account {} IAM binding already exists.", serviceAccountEmail);
-        return StepResult.getStepResultSuccess();
-      }
-      List<Binding> newBindings = new ArrayList<>(existingBindings);
-      newBindings.add(binding);
+      // Duplicating bindings is harmless (e.g. on retry). GCP de-duplicates.
+      Optional.ofNullable(policy.getBindings()).ifPresent(newBindings::addAll);
       policy.setBindings(newBindings);
       iam.projects()
           .serviceAccounts()

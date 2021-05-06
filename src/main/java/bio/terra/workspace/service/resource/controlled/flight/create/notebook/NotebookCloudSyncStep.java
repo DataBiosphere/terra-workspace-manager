@@ -20,7 +20,6 @@ import com.google.api.services.notebooks.v1.model.Binding;
 import com.google.api.services.notebooks.v1.model.Policy;
 import com.google.api.services.notebooks.v1.model.SetIamPolicyRequest;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -55,18 +54,8 @@ public class NotebookCloudSyncStep implements Step {
     InstanceName instanceName = resource.toInstanceName(projectId);
     try {
       Policy policy = notebooks.instances().getIamPolicy(instanceName).execute();
-      List<Binding> existingBindings =
-          Optional.ofNullable(policy.getBindings()).orElse(ImmutableList.of());
-      // DO NOT SUBMIT do we need this idempotent checking on this or the SA?
-      if (existingBindings.stream()
-          .anyMatch(
-              binding ->
-                  newBindings.get(0).getRole().equals(binding.getRole())
-                      && newBindings.get(0).getMembers().equals(binding.getMembers()))) {
-        logger.info("AI Notebook instance {} bindings already set.", instanceName.formatName());
-        return StepResult.getStepResultSuccess();
-      }
-      newBindings.addAll(existingBindings);
+      // Duplicating bindings is harmless (e.g. on retry). GCP de-duplicates.
+      Optional.ofNullable(policy.getBindings()).ifPresent(newBindings::addAll);
       policy.setBindings(newBindings);
       notebooks
           .instances()
