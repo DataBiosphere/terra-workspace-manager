@@ -65,8 +65,8 @@ jobs:
         echo ::add-mask::$VAULT_TOKEN
     - name: Set permissions and render test configurations
       run: |
-        chmod +x render_config.sh
-        ./render_config.sh dev ${{ steps.vault-token-step.outputs.vault-token }}
+        chmod +x ./service/render_config.sh
+        ./service/render_config.sh dev ${{ steps.vault-token-step.outputs.vault-token }}
         chmod +r rendered
 
     # Spin up a local server.
@@ -80,24 +80,25 @@ jobs:
       # The ./render-k8s-config.sh step renders k8s credentials for running resiliency tests against k8s.
       # The k8s credentials aren't needed when running tests against a local server.
       # It is standard practice to include this step in all workflows that use the Test Runner Framework.
+      # TODO: Make this step an action rather than repeat it over and over
       run: |
         cd workspace-manager-clienttests
         echo "Test Runner config"
-        ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
-        ./render-k8s-config.sh wsmtest ${{ steps.vault-token-step.outputs.vault-token }}
+        ./integration/render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
+        ./integration/render-k8s-config.sh wsmtest ${{ steps.vault-token-step.outputs.vault-token }}
         echo "Running test suite"
         export TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-local.json"
         ./gradlew runTest --args="suites/FullIntegration.json /tmp/TestRunnerResults"
     - name: Upload test results to Google Bucket
       if: ${{ always() }}
       run: |
-        cd workspace-manager-clienttests
+        cd integration
         echo "Upload test results to Google Bucket"
-        ./gradlew uploadResults --args="CompressDirectoryToTerraKernelK8S.json /tmp/TestRunnerResults"
+        ../gradlew uploadResults --args="CompressDirectoryToTerraKernelK8S.json /tmp/TestRunnerResults"
 
     - name: Upload test results to BigQuery Test Runner Dataset
       if: ${{ always() }}
       run: |
-        cd workspace-manager-clienttests
+        cd integration
         echo "Upload test results to BigQuery Test Runner Dataset"
-        ./gradlew uploadResults --args="SummariesToTerraKernelK8SBigQuery.json /tmp/TestRunnerResults"
+        ../gradlew uploadResults --args="SummariesToTerraKernelK8SBigQuery.json /tmp/TestRunnerResults"

@@ -1,7 +1,7 @@
 # This workflow will build a Java project with Gradle
 # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
 
-name: Run Tests
+name: Run Service Tests
 
 on:
   push:
@@ -16,7 +16,6 @@ on:
 
 jobs:
   test:
-
     runs-on: ubuntu-latest
 
     # A note on our use of a matrix here:
@@ -106,14 +105,15 @@ jobs:
     - name: Set permissions and render test configurations
       if: matrix.gradleTask != 'unitTest'
       run: |
-        chmod +x render_config.sh
+        cd service
+        chmod +x ./render_config.sh
         ./render_config.sh ${{ steps.set-env-step.outputs.config-env }} ${{ steps.vault-token-step.outputs.vault-token }}
         chmod +r rendered
 
       # Only integration tests need a running server
     - name: Run local server (in background)
       if: steps.set-env-step.outputs.local-server == 'true'
-      run: ./gradlew bootRun &
+      run: ./gradlew :service:bootRun &
 
     - name: Wait for local server to start
       if: steps.set-env-step.outputs.local-server == 'true'
@@ -124,7 +124,7 @@ jobs:
     - name: Run tests
       env:
         TEST_ENV: ${{ steps.set-env-step.outputs.test-env }}
-      run: ./gradlew ${{ matrix.gradleTask }} --scan
+      run: ./gradlew :service:${{ matrix.gradleTask }} --scan
 
     - name: Codacy Coverage Reporter
       if: matrix.gradleTask == 'unitTest'
@@ -134,14 +134,14 @@ jobs:
         CODACY_API_BASE_URL: https://app.codacy.com/gh/DataBiosphere/terra-workspace-manager
       with:
         project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-        coverage-reports: build/reports/jacoco/test/jacoco.xml
+        coverage-reports: service/build/reports/jacoco/test/jacoco.xml
 
     - name: Upload Test Reports
       if: ${{ always() }}
       uses: actions/upload-artifact@v1
       with:
         name: Test Reports
-        path: build/reports/tests
+        path: service/build/reports/tests
 
     - name: "Notify QA Slack"
       if: steps.set-env-step.outputs.test-env == 'alpha' || steps.set-env-step.outputs.test-env == 'staging'
