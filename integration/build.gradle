@@ -1,0 +1,78 @@
+buildscript {
+    apply from: "../common.gradle"
+}
+
+plugins {
+    id 'java'
+    // Apply the application plugin to add support for building a CLI application in Java.
+    id 'application'
+    // TODO: for some reason the spotless plugin does not work in the integration project, but it works
+    //  fine in the service project.
+    // id "com.diffplug.spotless" version "5.12.4"
+    // Terra Test Runner Plugin
+    id 'bio.terra.test-runner-plugin' version '0.0.3-SNAPSHOT'
+}
+
+dependencies {
+    ext {
+        apacheMath = '3.6.1'
+        findbugsAnnotations = "3.0.1"
+        guava = "29.0-jre"
+        jackson = "2.10.2"
+        jersey = "2.30.1"
+        kubernetesClient = "10.0.0"
+        logback = "1.2.3"
+        slf4j = "1.7.25"
+        hamcrest = "2.1"
+        jUnit = "5.7.0"
+
+        googleApi = "1.23.0"
+        googleCloud = "1.108.0"
+        googleOauth2 = "0.20.0"
+        googleContainer = "v1-rev93-1.25.0"
+
+        datarepoClient = "1.0.155-SNAPSHOT"
+        testRunnerVersion = "0.0.3-SNAPSHOT"
+    }
+    implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
+    implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"
+    compileOnly "com.google.code.findbugs:annotations:${findbugsAnnotations}"
+    implementation group: 'com.google.guava', name: 'guava', version: "${guava}"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson}"
+    implementation "org.glassfish.jersey.inject:jersey-hk2:${jersey}"
+    implementation "io.kubernetes:client-java:${kubernetesClient}"
+    implementation "ch.qos.logback:logback-classic:${logback}"
+    implementation "org.slf4j:slf4j-api:${slf4j}"
+    implementation "org.hamcrest:hamcrest:${hamcrest}"
+
+    // Google dependencies
+    implementation "com.google.api-client:google-api-client:${googleApi}"
+    implementation "com.google.auth:google-auth-library-oauth2-http:${googleOauth2}"
+    implementation "com.google.cloud:google-cloud-bigquery:${googleCloud}"
+    implementation "com.google.cloud:google-cloud-storage:${googleCloud}"
+    implementation "com.google.apis:google-api-services-container:${googleContainer}"
+
+    // Data Repo client library
+    implementation "bio.terra:datarepo-client:${datarepoClient}"
+    implementation gradle.librarySwaggerAnnotations
+
+    // Workspace Manager client library
+    implementation project(":client")
+
+    // Terra Test Runner Library
+    implementation "bio.terra:terra-test-runner:${testRunnerVersion}"
+}
+
+version = "${gradle.wsmVersion}"
+sourceCompatibility = JavaVersion.VERSION_11
+
+/*
+spotless {
+    java {
+        googleJavaFormat()
+        targetExclude "${buildDir}/**"
+    }
+}
+
+compileJava.dependsOn spotlessApply
+*/
