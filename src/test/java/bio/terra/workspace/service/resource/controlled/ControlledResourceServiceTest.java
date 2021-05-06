@@ -43,13 +43,15 @@ import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.model.Dataset;
-import com.google.api.services.notebooks.v1.model.Binding;
+import com.google.api.services.iam.v1.model.TestIamPermissionsRequest;
 import com.google.api.services.notebooks.v1.model.Instance;
+import com.google.common.collect.ImmutableList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.hamcrest.Matchers;
@@ -145,23 +147,87 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(
         FlightStatus.SUCCESS, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
 
-    AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
-    InstanceName instanceName = resource.toInstanceName(workspace.getGcpCloudContext().get().getGcpProjectId());
-    Instance instance =
-        notebooks
-            .instances()
-            .get(resource.toInstanceName(workspace.getGcpCloudContext().get().getGcpProjectId()))
-            .execute();
-    // git secrets gets a false positive if 'service_account' is double quoted.
-    assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
-    // TODO(PF-626): Test that the user has permission to act as the service account.
-
     assertEquals(
         resource,
         controlledResourceService.getControlledResource(
             workspace.getWorkspaceId(),
             resource.getResourceId(),
             userAccessUtils.defaultUserAuthRequest()));
+
+    // TODO(PF-643): this should happen inside WSM.
+    // Waiting 15s for permissions to propagate
+    TimeUnit.SECONDS.sleep(15);
+
+    AIPlatformNotebooksCow userNotebooks =
+        crlService.createAIPlatformNotebooksCow(userAccessUtils.defaultUserAuthRequest());
+    InstanceName instanceName =
+        resource.toInstanceName(workspace.getGcpCloudContext().get().getGcpProjectId());
+    Instance instance =
+        crlService
+            .getAIPlatformNotebooksCow()
+            .instances()
+            .get(resource.toInstanceName(workspace.getGcpCloudContext().get().getGcpProjectId()))
+            .execute();
+
+    // Test that the user has permissions from WRITER roles.
+    List<String> expectedWriterPermissions =
+        ImmutableList.of(
+            "notebooks.instances.get",
+            "notebooks.instances.list",
+            "notebooks.instances.reset",
+            "notebooks.instances.setAccelerator",
+            "notebooks.instances.setMachineType",
+            "notebooks.instances.start",
+            "notebooks.instances.stop",
+            "notebooks.instances.use");
+
+    try {
+      crlService
+          .getAIPlatformNotebooksCow()
+          .instances()
+          .testIamPermissions(
+              instanceName,
+              new com.google.api.services.notebooks.v1.model.TestIamPermissionsRequest()
+                  .setPermissions(expectedWriterPermissions))
+          .execute();
+    } catch (Exception e) {
+      // DO NOT SUBMIT
+      System.out.println(e);
+    }
+    //
+    //    assertThat(
+    //        crlService
+    //            .getAIPlatformNotebooksCow()
+    //            .instances()
+    //            .testIamPermissions(
+    //                instanceName,
+    //                new com.google.api.services.notebooks.v1.model.TestIamPermissionsRequest()
+    //                    .setPermissions(expectedWriterPermissions))
+    //            .execute()
+    //            .getPermissions(),
+    //        Matchers.containsInAnyOrder(expectedWriterPermissions.toArray()));
+
+    // Test that the user has access to the notebook with a service account through proxy mode.
+    // git secrets gets a false positive if 'service_account' is double quoted.
+    assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
+    ServiceAccountName serviceAccountName =
+        ServiceAccountName.builder()
+            .projectId(instanceName.projectId())
+            .email(instance.getServiceAccount())
+            .build();
+    IamCow userIam = crlService.createIamCow(userAccessUtils.defaultUserAuthRequest());
+    // The user needs to have the actAs permission on the service account.
+    String actAsPermission = "iam.serviceAccounts.actAs";
+    assertThat(
+        userIam
+            .projects()
+            .serviceAccounts()
+            .testIamPermissions(
+                serviceAccountName,
+                new TestIamPermissionsRequest().setPermissions(List.of(actAsPermission)))
+            .execute()
+            .getPermissions(),
+        Matchers.contains(actAsPermission));
 
     // Creating a controlled resource with a duplicate underlying notebook instance is not allowed.
     ControlledAiNotebookInstanceResource duplicateResource =

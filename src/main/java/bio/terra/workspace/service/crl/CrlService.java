@@ -84,6 +84,16 @@ public class CrlService {
     return crlNotebooksCow;
   }
 
+  /** @return CRL {@link AIPlatformNotebooksCow} using the user credentials. */
+  public AIPlatformNotebooksCow createAIPlatformNotebooksCow(AuthenticatedUserRequest userReq) {
+    assertCrlInUse();
+    try {
+      return AIPlatformNotebooksCow.create(clientConfig, googleCredentialsFromUserReq(userReq));
+    } catch (IOException | GeneralSecurityException e) {
+      throw new CrlInternalException("Error creating AIPlatformNotebooksCow", e);
+    }
+  }
+
   /** @return CRL {@link CloudResourceManagerCow} which wraps Google Cloud Resource Manager API */
   public CloudResourceManagerCow getCloudResourceManagerCow() {
     assertCrlInUse();
@@ -106,6 +116,16 @@ public class CrlService {
   public IamCow getIamCow() {
     assertCrlInUse();
     return crlIamCow;
+  }
+
+  /** @return CRL {@link IamCow} using the user credentials. */
+  public IamCow createIamCow(AuthenticatedUserRequest userReq) {
+    assertCrlInUse();
+    try {
+      return IamCow.create(clientConfig, googleCredentialsFromUserReq(userReq));
+    } catch (IOException | GeneralSecurityException e) {
+      throw new CrlInternalException("Error creating IamCow", e);
+    }
   }
 
   /** Returns the CRL {@link ServiceUsageCow} which wraps Google Cloud ServiceUsage API. */

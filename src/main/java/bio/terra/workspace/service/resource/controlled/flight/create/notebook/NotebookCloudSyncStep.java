@@ -57,6 +57,7 @@ public class NotebookCloudSyncStep implements Step {
       Policy policy = notebooks.instances().getIamPolicy(instanceName).execute();
       List<Binding> existingBindings =
           Optional.ofNullable(policy.getBindings()).orElse(ImmutableList.of());
+      // DO NOT SUBMIT do we need this idempotent checking on this or the SA?
       if (existingBindings.stream()
           .anyMatch(
               binding ->
@@ -67,7 +68,10 @@ public class NotebookCloudSyncStep implements Step {
       }
       newBindings.addAll(existingBindings);
       policy.setBindings(newBindings);
-      notebooks.instances().setIamPolicy(instanceName, new SetIamPolicyRequest().setPolicy(policy)).execute();
+      notebooks
+          .instances()
+          .setIamPolicy(instanceName, new SetIamPolicyRequest().setPolicy(policy))
+          .execute();
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
