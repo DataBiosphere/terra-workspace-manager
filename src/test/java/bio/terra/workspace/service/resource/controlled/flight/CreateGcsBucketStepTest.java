@@ -73,7 +73,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
     assertThat(info.getStorageClass(), equalTo(StorageClass.STANDARD));
     assertThat(info.getLifecycleRules(), hasSize(equalTo(2)));
 
-    // LifecycleRule dosn't have good equality comparison support, so use string rep.
+    // LifecycleRule don't have good support for creating comparable instances, so use string rep.
     final LifecycleRule deleteRule = info.getLifecycleRules().get(0);
     assertEquals(
         "LifecycleRule{lifecycleAction=DeleteLifecycleAction{actionType=Delete}, lifecycleCondition=LifecycleCondition{age=64, createBefore=null, numberofNewerVersions=2, isLive=true, matchesStorageClass=[ARCHIVE]}}",
