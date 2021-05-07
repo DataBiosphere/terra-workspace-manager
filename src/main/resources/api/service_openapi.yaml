@@ -2334,7 +2334,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GcpGcsBucketResource'
-
+    UpdateControlledGcpGcsBucketResponse:
+      description: Reponse to GCP GCS Bucket update.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GcpGcsBucketResource' # TODO:  add other attributes
     CreatedControlledGcpBigQueryDatasetResponse:
       description: Response to Create controlled BigQuery dataset
       content:
