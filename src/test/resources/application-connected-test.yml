@@ -4,7 +4,7 @@ workspace:
 
   connected-test:
     user-delegated-service-account-path: rendered/user-delegated-service-account.json
-    default-user-email: william.thunderlord@test.firecloud.org
+    default-user-email: elijah.thunderlord@test.firecloud.org
     second-user-email: liam.dragonmaw@test.firecloud.org
 
   crl:
