@@ -166,8 +166,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   }
 
   @Override
-  public ResponseEntity<ApiGcpGcsBucketResource> updateGcsBucket(UUID workspaceId, UUID resourceId,
-      @Valid ApiUpdateControlledGcpGcsBucketRequestBody body) {
+  public ResponseEntity<ApiGcpGcsBucketResource> updateGcsBucket(
+      UUID workspaceId, UUID resourceId, @Valid ApiUpdateControlledGcpGcsBucketRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // update metadata in ControlledResourceService
     controlledResourceService.updateControlledResourceMetadata(
@@ -177,8 +177,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
     // Retrieve and cast response to UpdateControlledGcpGcsBucketResponse
 
-    return controlledResourceToResponseEntity(workspaceId, resourceId, userRequest,
-        r -> r.castToGcsBucketResource().toApiResource());
+    return controlledResourceToResponseEntity(
+        workspaceId, resourceId, userRequest, r -> r.castToGcsBucketResource().toApiResource());
   }
 
   @Override
@@ -209,10 +209,12 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
   /**
    * Utility function for retrieving and down-casting a controlled resource object
+   *
    * @param workspaceId - ID of resource's workspace
    * @param resourceId - UUID for this controlled resource
    * @param userRequest - request object
-   * @param converter - Function/lambda to convert from generic ControlledResource to appropriate Api resource type
+   * @param converter - Function/lambda to convert from generic ControlledResource to appropriate
+   *     Api resource type
    * @param <T> - Class to be converted to and type for the ResponseEntity
    * @return - response entity associated with this response object
    */
