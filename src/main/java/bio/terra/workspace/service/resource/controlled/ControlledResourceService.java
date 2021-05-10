@@ -141,6 +141,15 @@ public class ControlledResourceService {
       ApiJobControl jobControl,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
+    if (!resource.getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
+      throw new BadRequestException(
+          "Access scope must be private. Shared AI Notebook instances are not yet implemented.");
+    }
+    if (privateResourceIamRoles.stream()
+        .noneMatch(role -> role.equals(ControlledResourceIamRole.WRITER))) {
+      throw new BadRequestException(
+          "A private, controlled AI Notebook instance must have the writer role or else it is not useful.");
+    }
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
             resource, privateResourceIamRoles, jobControl, resultPath, userRequest);

@@ -10,6 +10,7 @@ import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightStatus;
@@ -306,6 +307,63 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 resource.getWorkspaceId(),
                 resource.getResourceId(),
                 user.getAuthenticatedRequest()));
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  public void createAiNotebookInstanceUnsupportedOptionsThrowBadRequest() throws Exception {
+    UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
+    Workspace workspace = reusableWorkspace(user);
+    String instanceId = "create-ai-notebook-instance-shared";
+
+    ApiGcpAiNotebookInstanceCreationParameters creationParameters =
+        ControlledResourceFixtures.defaultNotebookCreationParameters()
+            .instanceId(instanceId)
+            .location(DEFAULT_NOTEBOOK_LOCATION);
+    ControlledAiNotebookInstanceResource.Builder resourceBuilder =
+        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+            .workspaceId(workspace.getWorkspaceId())
+            .name(instanceId)
+            .assignedUser(user.getEmail())
+            .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
+            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .instanceId(instanceId)
+            .location(DEFAULT_NOTEBOOK_LOCATION);
+
+    // Shared notebooks not yet implemented.
+    BadRequestException sharedException =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                controlledResourceService.createAiNotebookInstance(
+                    resourceBuilder.accessScope(AccessScopeType.ACCESS_SCOPE_SHARED).build(),
+                    creationParameters,
+                    DEFAULT_ROLES,
+                    new ApiJobControl().id(UUID.randomUUID().toString()),
+                    "fakeResultPath",
+                    user.getAuthenticatedRequest()));
+    assertEquals(
+        "Access scope must be private. Shared AI Notebook instances are not yet implemented.",
+        sharedException.getMessage());
+
+    // Private IAM roles must include writer role.
+    List<ControlledResourceIamRole> noWriterRoles =
+        // Need to be careful about what subclass of List gets put in a FlightMap.
+        Stream.of(ControlledResourceIamRole.READER).collect(Collectors.toList());
+    BadRequestException noWriterException =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                controlledResourceService.createAiNotebookInstance(
+                    resourceBuilder.build(),
+                    creationParameters,
+                    noWriterRoles,
+                    new ApiJobControl().id(UUID.randomUUID().toString()),
+                    "fakeResultPath",
+                    user.getAuthenticatedRequest()));
+    assertEquals(
+        "A private, controlled AI Notebook instance must have the writer role or else it is not useful.",
+        sharedException.getMessage());
   }
 
   @Test

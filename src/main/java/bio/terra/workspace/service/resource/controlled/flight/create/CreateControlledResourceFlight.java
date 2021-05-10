@@ -9,6 +9,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateServiceAccountStep;
@@ -82,38 +83,11 @@ public class CreateControlledResourceFlight extends Flight {
                 flightBeanBag.getWorkspaceService()));
         break;
       case AI_NOTEBOOK_INSTANCE:
-        addStep(
-            new RetrieveNetworkNameStep(
-                flightBeanBag.getCrlService(),
-                resource.castToAiNotebookInstanceResource(),
-                flightBeanBag.getWorkspaceService()),
-            gcpRetryRule);
-        addStep(new GenerateServiceAccountIdStep());
-        addStep(
-            new CreateServiceAccountStep(
-                flightBeanBag.getCrlService(),
-                flightBeanBag.getWorkspaceService(),
-                resource.castToAiNotebookInstanceResource()),
-            gcpRetryRule);
-        addStep(
-            new ServiceAccountPolicyStep(
-                flightBeanBag.getCrlService(),
-                resource.castToAiNotebookInstanceResource(),
-                flightBeanBag.getWorkspaceService(),
-                privateResourceIamRoles),
-            gcpRetryRule);
-        addStep(
-            new CreateAiNotebookInstanceStep(
-                flightBeanBag.getCrlService(),
-                resource.castToAiNotebookInstanceResource(),
-                flightBeanBag.getWorkspaceService()),
-            gcpRetryRule);
-        addStep(
-            new NotebookCloudSyncStep(
-                flightBeanBag.getCrlService(),
-                resource.castToAiNotebookInstanceResource(),
-                flightBeanBag.getWorkspaceService()),
-            gcpRetryRule);
+        addNotebookSteps(
+            userRequest,
+            flightBeanBag,
+            resource.castToAiNotebookInstanceResource(),
+            privateResourceIamRoles);
         break;
       case BIG_QUERY_DATASET:
         // Unlike other resources, BigQuery datasets set IAM permissions at creation time to avoid
@@ -131,5 +105,38 @@ public class CreateControlledResourceFlight extends Flight {
     }
     // Populate the return response
     addStep(new SetCreateResponseStep(resource));
+  }
+
+  private void addNotebookSteps(
+      AuthenticatedUserRequest userRequest,
+      FlightBeanBag flightBeanBag,
+      ControlledAiNotebookInstanceResource resource,
+      List<ControlledResourceIamRole> privateResourceIamRoles) {
+    addStep(
+        new RetrieveNetworkNameStep(
+            flightBeanBag.getCrlService(), resource, flightBeanBag.getWorkspaceService()),
+        gcpRetryRule);
+    addStep(new GenerateServiceAccountIdStep());
+    addStep(
+        new CreateServiceAccountStep(
+            flightBeanBag.getCrlService(), flightBeanBag.getWorkspaceService(), resource),
+        gcpRetryRule);
+    addStep(
+        new ServiceAccountPolicyStep(
+            userRequest,
+            flightBeanBag.getCrlService(),
+            resource,
+            flightBeanBag.getSamService(),
+            flightBeanBag.getWorkspaceService(),
+            privateResourceIamRoles),
+        gcpRetryRule);
+    addStep(
+        new CreateAiNotebookInstanceStep(
+            flightBeanBag.getCrlService(), resource, flightBeanBag.getWorkspaceService()),
+        gcpRetryRule);
+    addStep(
+        new NotebookCloudSyncStep(
+            flightBeanBag.getCrlService(), resource, flightBeanBag.getWorkspaceService()),
+        gcpRetryRule);
   }
 }
