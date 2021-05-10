@@ -15,6 +15,7 @@ plugins {
 	id "de.undercouch.download" version "4.1.1"
 	id "org.hidetake.swagger.generator" version "2.18.2"
 	id "org.springframework.boot" version "${springBootVersion}"
+	id "io.spring.dependency-management" version "1.0.10.RELEASE"
 	id 'ru.vyarus.quality' version '4.5.0'
 	id 'jacoco'
 }
@@ -65,7 +66,6 @@ dependencies {
 	runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.2.18"
 
 	// Deps whose versions are controlled by Spring
-	implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
 	implementation group: "javax.validation", name: "validation-api"
 	implementation group: "org.apache.commons", name: "commons-dbcp2"
 	implementation group: "org.apache.commons", name: "commons-lang3"
