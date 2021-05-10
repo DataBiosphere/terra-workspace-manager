@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getGoogleBucketCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
@@ -60,7 +61,9 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
 
     CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
-            mockCrlService, ControlledResourceFixtures.getBucketResource(creationParameters.getName()), mockWorkspaceService);
+            mockCrlService,
+            ControlledResourceFixtures.getBucketResource(creationParameters.getName()),
+            mockWorkspaceService);
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(
@@ -91,9 +94,12 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
 
   @Test
   public void testCreatesBucketWithoutAllParameters() throws RetryException, InterruptedException {
+    final String bucketName = uniqueName("pedro");
     final CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
-            mockCrlService, ControlledResourceFixtures.BUCKET_RESOURCE, mockWorkspaceService);
+            mockCrlService,
+            ControlledResourceFixtures.getBucketResource(bucketName),
+            mockWorkspaceService);
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(
@@ -106,7 +112,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
 
     final BucketInfo info = bucketInfoCaptor.getValue();
-    assertThat(info.getName(), equalTo(ControlledResourceFixtures.BUCKET_NAME));
+    assertThat(info.getName(), equalTo(bucketName));
     assertThat(info.getLocation(), equalTo(ControlledResourceFixtures.BUCKET_LOCATION));
     assertThat(info.getStorageClass(), is(nullValue()));
     assertThat(info.getLifecycleRules(), empty());
