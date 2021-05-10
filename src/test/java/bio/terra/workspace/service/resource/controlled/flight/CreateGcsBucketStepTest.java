@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.flight;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getGoogleBucketCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueName;
+import static bio.terra.workspace.service.resource.controlled.flight.create.CreateGcsBucketStep.ApiConversions.toDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
@@ -28,7 +29,12 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
+import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
+import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
 import com.google.cloud.storage.StorageClass;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.Collections;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -80,16 +86,33 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
     assertThat(info.getStorageClass(), equalTo(StorageClass.STANDARD));
     assertThat(info.getLifecycleRules(), hasSize(equalTo(2)));
 
-    // LifecycleRule don't have good support for creating comparable instances, so use string rep.
-    final LifecycleRule deleteRule = info.getLifecycleRules().get(0);
-    assertEquals(
-        "LifecycleRule{lifecycleAction=DeleteLifecycleAction{actionType=Delete}, lifecycleCondition=LifecycleCondition{age=64, createBefore=null, numberofNewerVersions=2, isLive=true, matchesStorageClass=[ARCHIVE]}}",
-        deleteRule.toString());
+    final LifecycleRule expectedDeleteRule =
+        new LifecycleRule(
+            LifecycleAction.newDeleteAction(),
+            LifecycleCondition.newBuilder()
+                .setAge(64)
+                .setCreatedBefore(null)
+                .setNumberOfNewerVersions(2)
+                .setIsLive(true)
+                .setMatchesStorageClass(Collections.singletonList(StorageClass.ARCHIVE))
+                .build());
 
+    final LifecycleRule deleteRule = info.getLifecycleRules().get(0);
+    assertEquals(expectedDeleteRule, deleteRule);
+
+    final LifecycleRule expectedStorageClassRule =
+        new LifecycleRule(
+            LifecycleAction.newSetStorageClassAction(StorageClass.NEARLINE),
+            LifecycleCondition.newBuilder()
+                .setAge(null)
+                .setCreatedBefore(
+                    toDateTime(OffsetDateTime.of(2007, 1, 3, 0, 0, 0, 0, ZoneOffset.UTC)))
+                .setNumberOfNewerVersions(null)
+                .setIsLive(null)
+                .setMatchesStorageClass(Collections.singletonList(StorageClass.STANDARD))
+                .build());
     final LifecycleRule storageClassRule = info.getLifecycleRules().get(1);
-    assertEquals(
-        "LifecycleRule{lifecycleAction=SetStorageClassLifecycleAction{actionType=SetStorageClass, storageClass=NEARLINE}, lifecycleCondition=LifecycleCondition{age=null, createBefore=2007-01-02T19:00:00.000-05:00, numberofNewerVersions=null, isLive=null, matchesStorageClass=[STANDARD]}}",
-        storageClassRule.toString());
+    assertEquals(expectedStorageClassRule, storageClassRule);
   }
 
   @Test

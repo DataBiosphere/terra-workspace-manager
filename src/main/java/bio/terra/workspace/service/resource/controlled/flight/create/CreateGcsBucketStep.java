@@ -24,6 +24,7 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
 import com.google.cloud.storage.StorageClass;
+import com.google.common.annotations.VisibleForTesting;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Collections;
@@ -92,7 +93,7 @@ public class CreateGcsBucketStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private static class ApiConversions {
+  public static class ApiConversions {
 
     private ApiConversions() {}
 
@@ -154,8 +155,9 @@ public class CreateGcsBucketStep implements Step {
       return resultBuilder.build();
     }
 
+    @VisibleForTesting
     @Nullable
-    private static DateTime toDateTime(@Nullable OffsetDateTime offsetDateTime) {
+    public static DateTime toDateTime(@Nullable OffsetDateTime offsetDateTime) {
       return Optional.ofNullable(offsetDateTime)
           .map(OffsetDateTime::toInstant)
           .map(Instant::toEpochMilli)
