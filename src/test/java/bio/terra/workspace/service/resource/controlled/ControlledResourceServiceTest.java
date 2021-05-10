@@ -121,7 +121,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .workspaceId(workspace.getWorkspaceId())
             .name(instanceId)
-            .assignedUser(user.getEmail())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
             .instanceId(instanceId)
@@ -252,7 +251,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .workspaceId(workspace.getWorkspaceId())
             .name(instanceId)
-            .assignedUser(user.getEmail())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
             .instanceId(instanceId)
@@ -324,19 +322,20 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .workspaceId(workspace.getWorkspaceId())
             .name(instanceId)
-            .assignedUser(user.getEmail())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
 
     // Shared notebooks not yet implemented.
+    ControlledAiNotebookInstanceResource sharedResource =
+        resourceBuilder.accessScope(AccessScopeType.ACCESS_SCOPE_SHARED).build();
     BadRequestException sharedException =
         assertThrows(
             BadRequestException.class,
             () ->
                 controlledResourceService.createAiNotebookInstance(
-                    resourceBuilder.accessScope(AccessScopeType.ACCESS_SCOPE_SHARED).build(),
+                    sharedResource,
                     creationParameters,
                     DEFAULT_ROLES,
                     new ApiJobControl().id(UUID.randomUUID().toString()),
@@ -350,12 +349,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     List<ControlledResourceIamRole> noWriterRoles =
         // Need to be careful about what subclass of List gets put in a FlightMap.
         Stream.of(ControlledResourceIamRole.READER).collect(Collectors.toList());
+    ControlledAiNotebookInstanceResource okResource =
+        resourceBuilder.accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE).build();
     BadRequestException noWriterException =
         assertThrows(
             BadRequestException.class,
             () ->
                 controlledResourceService.createAiNotebookInstance(
-                    resourceBuilder.build(),
+                    okResource,
                     creationParameters,
                     noWriterRoles,
                     new ApiJobControl().id(UUID.randomUUID().toString()),
@@ -363,7 +364,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                     user.getAuthenticatedRequest()));
     assertEquals(
         "A private, controlled AI Notebook instance must have the writer role or else it is not useful.",
-        sharedException.getMessage());
+        noWriterException.getMessage());
   }
 
   @Test
@@ -437,7 +438,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .name(instanceId)
             .workspaceId(workspace.getWorkspaceId())
-            .assignedUser(user.getEmail())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
             .instanceId(instanceId)
