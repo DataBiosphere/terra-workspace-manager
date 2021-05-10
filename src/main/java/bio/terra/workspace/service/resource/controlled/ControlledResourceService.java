@@ -76,10 +76,9 @@ public class ControlledResourceService {
    * @param workspaceId if of the workspace this resource exists in
    * @param resourceId id of the resource in question
    * @param action the action to authorize against the resource
-   * @return the resource, if it exists and the user is permitted to perform the specified action.
    */
   @Traced
-  public ControlledResource validateControlledResourceAndAction(
+  public void validateControlledResourceAndAction(
       AuthenticatedUserRequest userReq, UUID workspaceId, UUID resourceId, String action) {
     WsmResource resource = resourceDao.getResource(workspaceId, resourceId);
     // TODO(PF-640): also check that the user has
@@ -96,7 +95,6 @@ public class ControlledResourceService {
                 resourceId.toString(),
                 action),
         "checkAuthz");
-    return controlledResource;
   }
 
   /** Starts a create controlled bucket resource, blocking until its job is finished. */
@@ -115,6 +113,13 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
   }
+
+  //  public ControlledGcsBucketResource updateGcsBucket(
+  //      ControlledGcsBucketResource resource,
+  //      ApiGcpGcsBucketCreationParameters updateParameters,
+  //      AuthenticatedUserRequest userRequest) {
+  //
+  //  }
 
   /** Starts a create controlled BigQuery dataset resource, blocking until its job is finished. */
   public ControlledBigQueryDatasetResource createBqDataset(

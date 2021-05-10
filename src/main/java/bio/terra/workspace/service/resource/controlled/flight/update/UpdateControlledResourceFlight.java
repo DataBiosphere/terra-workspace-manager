@@ -9,8 +9,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResource;
 
 public class UpdateControlledResourceFlight extends Flight {
 
-  public UpdateControlledResourceFlight(FlightMap inputParameters,
-      Object beanBag) {
+  public UpdateControlledResourceFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
 
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
@@ -19,10 +18,16 @@ public class UpdateControlledResourceFlight extends Flight {
     final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
+    // update metadata step
+
     switch (resource.getResourceType()) {
       case GCS_BUCKET:
-        addStep(new UpdateGcsBucketStep(resource.castToGcsBucketResource(), flightBeanBag.getCrlService(), flightBeanBag.getWorkspaceService()));
-      break;
+        addStep(
+            new UpdateGcsBucketStep(
+                resource.castToGcsBucketResource(),
+                flightBeanBag.getCrlService(),
+                flightBeanBag.getWorkspaceService()));
+        break;
 
       case AI_NOTEBOOK_INSTANCE:
       case BIG_QUERY_DATASET:
