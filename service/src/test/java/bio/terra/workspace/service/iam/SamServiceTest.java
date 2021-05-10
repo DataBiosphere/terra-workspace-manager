@@ -242,11 +242,9 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void listWorkspacesIncludesWsmWorkspace() throws Exception {
-    // This call cannot use william.thunderlord's account in dev Sam. Sam will return 500, as it
-    // cannot handle his tens of thousands of workspaces.
-    UUID workspaceId = createWorkspaceSecondaryUser();
+    UUID workspaceId = createWorkspaceDefaultUser();
     List<UUID> samWorkspaceIdList =
-        samService.listWorkspaceIds(userAccessUtils.secondUserAuthRequest());
+        samService.listWorkspaceIds(userAccessUtils.defaultUserAuthRequest());
     assertTrue(samWorkspaceIdList.contains(workspaceId));
   }
 
@@ -351,10 +349,6 @@ class SamServiceTest extends BaseConnectedTest {
   /** Create a workspace using the default test user for connected tests, return its ID. */
   private UUID createWorkspaceDefaultUser() {
     return createWorkspaceForUser(defaultUserRequest());
-  }
-
-  private UUID createWorkspaceSecondaryUser() {
-    return createWorkspaceForUser(secondaryUserRequest());
   }
 
   private UUID createWorkspaceForUser(AuthenticatedUserRequest userReq) {

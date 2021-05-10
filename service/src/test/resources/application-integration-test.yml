@@ -16,6 +16,8 @@ workspace:
       alpha: d56f4db5-b6c6-4a7e-8be2-ff6aa21c4fa6
       staging: 3e858a77-ea11-4f55-96f4-e6e45b71b7bf
     user-emails:
+      # TODO(PF-746): william.thunderlord has GCP permissions issue and should be avoided, but
+      # he is authorized to do Data Repo operations.
       local: william.thunderlord@test.firecloud.org
       dev: william.thunderlord@test.firecloud.org
       alpha: hermione.owner@test.firecloud.org

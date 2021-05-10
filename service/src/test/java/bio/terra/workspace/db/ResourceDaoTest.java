@@ -1,6 +1,5 @@
 package bio.terra.workspace.db;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BUCKET_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -84,11 +83,12 @@ public class ResourceDaoTest extends BaseUnitTest {
 
   @Test
   public void duplicateControlledBucketNameRejected() {
+    final String clashingBucketName = "not-a-pail";
     final UUID workspaceId1 = createGcpWorkspace();
     final ControlledGcsBucketResource initialResource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
             .workspaceId(workspaceId1)
-            .bucketName(BUCKET_NAME)
+            .bucketName(clashingBucketName)
             .build();
 
     resourceDao.createControlledResource(initialResource);
@@ -98,7 +98,7 @@ public class ResourceDaoTest extends BaseUnitTest {
         ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
             .workspaceId(workspaceId2)
             .name("another-bucket-resource")
-            .bucketName(BUCKET_NAME)
+            .bucketName(clashingBucketName)
             .build();
 
     assertThrows(
