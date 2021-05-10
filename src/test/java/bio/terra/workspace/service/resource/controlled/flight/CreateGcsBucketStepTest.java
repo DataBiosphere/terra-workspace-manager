@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getGoogleBucketCreationParameters;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
@@ -19,6 +20,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateGcsBucketStep;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -53,14 +55,16 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
 
   @Test
   public void testCreatesBucket() throws RetryException, InterruptedException {
+    final ApiGcpGcsBucketCreationParameters creationParameters =
+        getGoogleBucketCreationParameters();
+
     CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
-            mockCrlService, ControlledResourceFixtures.BUCKET_RESOURCE, mockWorkspaceService);
+            mockCrlService, ControlledResourceFixtures.getBucketResource(creationParameters.getName()), mockWorkspaceService);
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS,
-        ControlledResourceFixtures.GOOGLE_BUCKET_CREATION_PARAMETERS);
+        WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     inputFlightMap.makeImmutable();
     doReturn(inputFlightMap).when(mockFlightContext).getInputParameters();
 
@@ -68,7 +72,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
 
     final BucketInfo info = bucketInfoCaptor.getValue();
-    assertThat(info.getName(), equalTo(ControlledResourceFixtures.BUCKET_NAME));
+    assertThat(info.getName(), equalTo(creationParameters.getName()));
     assertThat(info.getLocation(), equalTo(ControlledResourceFixtures.BUCKET_LOCATION));
     assertThat(info.getStorageClass(), equalTo(StorageClass.STANDARD));
     assertThat(info.getLifecycleRules(), hasSize(equalTo(2)));
