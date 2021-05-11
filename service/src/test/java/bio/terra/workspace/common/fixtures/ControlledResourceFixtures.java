@@ -58,6 +58,11 @@ public class ControlledResourceFixtures {
   public static final String BUCKET_NAME_PREFIX = "my-bucket";
   public static final String BUCKET_LOCATION = "US-CENTRAL1";
 
+  public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
+      new ApiGcpGcsBucketCreationParameters()
+          .name(uniqueName(BUCKET_NAME_PREFIX))
+          .location(BUCKET_LOCATION);
+
   /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
   public static ApiGcpGcsBucketCreationParameters getGoogleBucketCreationParameters() {
     return new ApiGcpGcsBucketCreationParameters()
@@ -140,7 +145,7 @@ public class ControlledResourceFixtures {
         .datasetName("test_dataset");
   }
 
-  private static String uniqueName(String prefix) {
+  public static String uniqueName(String prefix) {
     return prefix + "-" + UUID.randomUUID().toString();
   }
 

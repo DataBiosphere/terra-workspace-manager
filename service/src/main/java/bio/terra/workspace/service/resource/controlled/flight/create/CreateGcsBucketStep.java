@@ -24,8 +24,10 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
 import com.google.cloud.storage.StorageClass;
+import com.google.common.annotations.VisibleForTesting;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -55,12 +57,19 @@ public class CreateGcsBucketStep implements Step {
     ApiGcpGcsBucketCreationParameters creationParameters =
         inputMap.get(CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
     String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
-    BucketInfo bucketInfo =
+    BucketInfo.Builder bucketInfoBuilder =
         BucketInfo.newBuilder(resource.getBucketName())
-            .setLocation(creationParameters.getLocation())
-            .setStorageClass(ApiConversions.toGcsApi(creationParameters.getDefaultStorageClass()))
-            .setLifecycleRules(ApiConversions.toGcsApi(creationParameters.getLifecycle()))
-            .build();
+            .setLocation(creationParameters.getLocation());
+
+    // Remaining creation parameters are optional
+    Optional.ofNullable(creationParameters.getDefaultStorageClass())
+        .map(ApiConversions::toGcsApi)
+        .ifPresent(bucketInfoBuilder::setStorageClass);
+
+    bucketInfoBuilder.setLifecycleRules(
+        Optional.ofNullable(creationParameters.getLifecycle())
+            .map(ApiConversions::toGcsApi)
+            .orElse(Collections.emptyList()));
 
     StorageCow storageCow = crlService.createStorageCow(projectId);
 
@@ -68,7 +77,7 @@ public class CreateGcsBucketStep implements Step {
     // this is a redo and this step created it already.
     BucketCow existingBucket = storageCow.get(resource.getBucketName());
     if (existingBucket == null) {
-      storageCow.create(bucketInfo);
+      storageCow.create(bucketInfoBuilder.build());
     } else {
       logger.info("Bucket {} already exists. Continuing.", resource.getBucketName());
     }
@@ -84,7 +93,7 @@ public class CreateGcsBucketStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private static class ApiConversions {
+  public static class ApiConversions {
 
     private ApiConversions() {}
 
@@ -146,8 +155,9 @@ public class CreateGcsBucketStep implements Step {
       return resultBuilder.build();
     }
 
+    @VisibleForTesting
     @Nullable
-    private static DateTime toDateTime(@Nullable OffsetDateTime offsetDateTime) {
+    public static DateTime toDateTime(@Nullable OffsetDateTime offsetDateTime) {
       return Optional.ofNullable(offsetDateTime)
           .map(OffsetDateTime::toInstant)
           .map(Instant::toEpochMilli)

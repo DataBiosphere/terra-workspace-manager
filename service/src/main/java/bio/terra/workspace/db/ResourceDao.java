@@ -454,6 +454,7 @@ public class ResourceDao {
             .addValue("attributes", resource.attributesToJson());
     if (resource.getStewardshipType().equals(CONTROLLED)) {
       ControlledResource controlledResource = resource.castToControlledResource();
+      //noinspection deprecation
       params
           .addValue("access_scope", controlledResource.getAccessScope().toSql())
           .addValue("managed_by", controlledResource.getManagedBy().toSql())
