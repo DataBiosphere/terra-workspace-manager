@@ -1,0 +1,105 @@
+buildscript {
+	apply from: "../common.gradle"
+}
+
+plugins {
+	id "java-library"
+	id "maven-publish"
+
+	id "com.jfrog.artifactory" version "4.18.2"
+	id "org.hidetake.swagger.generator" version "2.18.2"
+}
+
+group = 'bio.terra'
+version = "${gradle.wsmVersion}"
+sourceCompatibility = JavaVersion.VERSION_11
+
+dependencies {
+	// Swagger deps, versions controlled by dependencyManagement in root project
+	implementation group: "org.glassfish.jersey.core", name: "jersey-client", version: "2.32"
+	implementation group: "org.glassfish.jersey.media", name: "jersey-media-json-jackson", version: "2.32"
+	implementation group: "org.glassfish.jersey.media", name: "jersey-media-multipart", version: "2.32"
+	implementation group: "com.fasterxml.jackson.datatype", name: "jackson-datatype-jsr310", version: "2.11.3"
+	implementation gradle.librarySwaggerAnnotations
+	swaggerCodegen gradle.librarySwaggerCli
+}
+
+// OpenAPI/Swagger Client Generation
+def artifactGroup = "${group}.workspace"
+def openapiOutputDir = "${buildDir}/openapi"
+
+swaggerSources {
+	client {
+		inputFile = file(gradle.openapiSourceFile)
+		code {
+			language = "java"
+			library = "jersey2"
+			templateDir = file("${projectDir}/src/main/resources/swaggercodegen")
+			outputDir = file(openapiOutputDir)
+			rawOptions = [
+					"--model-package", "${artifactGroup}.model",
+					"--api-package", "${artifactGroup}.api",
+					"--invoker-package", "${artifactGroup}.client",
+					"--group-id", "${artifactGroup}",
+					"--artifact-version", "${version}",
+					"--ignore-file-override", "${projectDir}/.swagger-codegen-ignore",
+					"-D", "apiTests=false," +
+							"apiDocs=false," +
+							"modelTests=false," +
+							"modelDocs=false," +
+							"dateLibrary=java8"
+			]
+		}
+	}
+}
+
+// Publishing
+
+// TODO: there may be a better way to supply these values than envvars.
+// This and the test below makes sure the build will fail reasonably if you try
+// to publish without the environment variables defined.
+def artifactory_username = System.getenv("ARTIFACTORY_USERNAME")
+def artifactory_password = System.getenv("ARTIFACTORY_PASSWORD")
+
+gradle.taskGraph.whenReady { taskGraph ->
+	if (taskGraph.hasTask(artifactoryPublish) &&
+			(artifactory_username == null || artifactory_password == null)) {
+		throw new GradleException("Set env vars ARTIFACTORY_USERNAME and ARTIFACTORY_PASSWORD to publish")
+	}
+}
+
+publishing {
+	publications {
+		workspaceManagerClientLibrary(MavenPublication) {
+			from components.java
+			versionMapping {
+				usage("java-runtime") {
+					fromResolutionResult()
+				}
+			}
+		}
+	}
+}
+
+artifactory {
+	publish {
+		contextUrl = "https://broadinstitute.jfrog.io/broadinstitute/"
+		repository {
+			repoKey = "libs-snapshot-local" // The Artifactory repository key to publish to
+			username = "${artifactory_username}" // The publisher user name
+			password = "${artifactory_password}" // The publisher password
+		}
+		defaults {
+			// This is how we tell the Artifactory Plugin which artifacts should be published to Artifactory.
+			// Reference to Gradle publications defined in the build script.
+			publications("workspaceManagerClientLibrary")
+			publishArtifacts = true
+			publishPom = true
+		}
+	}
+}
+
+// Internal dependencies
+
+sourceSets.main.java.srcDir "${openapiOutputDir}/src/main/java"
+compileJava.dependsOn swaggerSources.client.code
