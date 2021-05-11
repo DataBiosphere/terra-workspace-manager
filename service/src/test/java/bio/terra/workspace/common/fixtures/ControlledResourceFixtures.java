@@ -158,7 +158,7 @@ public class ControlledResourceFixtures {
         .description("my notebook description")
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
         .assignedUser(null)
-        .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+        .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
         .managedBy(ManagedByType.MANAGED_BY_USER)
         .instanceId("my-instance-id")
         .location("us-east1-b");
