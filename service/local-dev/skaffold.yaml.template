@@ -5,7 +5,8 @@ build:
   artifacts:
   - image: gcr.io/terra-kernel-k8s/terra-workspace-manager
     context: ../
-    jib: {}
+    jib:
+      project: service
 deploy:
   helm:
     releases:
