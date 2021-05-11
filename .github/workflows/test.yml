@@ -6,6 +6,10 @@ name: Run Service Tests
 on:
   push:
     branches: [ dev ]
+    paths-ignore:
+      - 'README.md'
+      - '.github/**'
+      - 'service/local-dev/**'
   pull_request:
     branches: [ '**' ]
   workflow_dispatch:
