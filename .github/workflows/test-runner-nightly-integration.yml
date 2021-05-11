@@ -82,9 +82,8 @@ jobs:
         run: |
           url="https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID"
           echo "URL:$url"
-          echo "value -> ${{ steps.integration-test.outputs.result-status.value }}"
-          echo "object -> ${{ steps.integration-test.outputs.result-status }}"
-
+          echo "outcome -> ${{ steps.integration-test.outcome }}"
+          echo "conclusion -> ${{ steps.integration-test.conclusion }}"
 
       #- name: Notify WSM Slack
       #  if: ${{ always() }}

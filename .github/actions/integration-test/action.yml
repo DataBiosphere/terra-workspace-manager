@@ -13,10 +13,6 @@ inputs:
   vault-token:
     description: 'Vault token for rendering'
     required: true
-outputs:
-  result-status:
-    description: "result shell status of the test run"
-    value: ${{ steps.test-run.result-status }}
 runs:
   using: "composite"
   steps:
@@ -42,7 +38,6 @@ runs:
         ../gradlew :integration:runTest --args="${{ inputs.test }} $resultsDir"
         testResult=$?
         echo "Test result is $testResult"
-        echo "::set-output name=result-status::$(echo $testResult)"
         # Upload test results to Google Bucket
         echo "Upload test results to Google Bucket"
         ../gradlew :integration:uploadResults --args="CompressDirectoryToTerraKernelK8S.json $resultsDir"
