@@ -4,7 +4,6 @@ author: 'dd'
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v2
 
     - name: Set up AdoptOpenJDK 11
       uses: joschi/setup-jdk@v2
