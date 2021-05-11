@@ -76,7 +76,7 @@ jobs:
       - name: Test results
         if: ${{ always() }}
         run: |
-          echo "Integration test result: ${{ steps.integration-test }}"
-          echo "Perf test result: ${{ steps.perf-test }}"
-          echo "Resilience test result: ${{ steps.resiliency-test }}"
-          exit $((${{ steps.integration-test }} + ${{ steps.perf-test }} + ${{ steps.resiliency-test }}))
+          echo "Integration test result: ${{ steps.integration-test.outputs.result-status }}"
+          echo "Perf test result: ${{ steps.perf-test.outputs.result-status }}"
+          echo "Resilience test result: ${{ steps.resiliency-test.outputs.result-status }}"
+          exit $((${{ steps.integration-test.outputs.result-status }} + ${{ steps.perf-test.outputs.result-status }} + ${{ steps.resiliency-test.outputs.result-status }}))
