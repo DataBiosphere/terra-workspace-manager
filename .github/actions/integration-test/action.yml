@@ -48,5 +48,5 @@ runs:
         # Upload test results to BigQuery Test Runner Dataset
         echo "Upload test results to BigQuery Test Runner Dataset"
         ../gradlew :integration:uploadResults --args="SummariesToTerraKernelK8SBigQuery.json $resultsDir"
-        $testResult
+        exit $testResult
       shell: bash

@@ -74,6 +74,7 @@ jobs:
           test: suites/BasicResiliency.json
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
       - name: Test results
+        if: ${{ always() }}
         run: |
           echo "Integration test result: ${{ steps.integration-test }}"
           echo "Perf test result: ${{ steps.perf-test }}"
