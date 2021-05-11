@@ -81,21 +81,21 @@ jobs:
         id: status-message
         run: |
           url="https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID"
-          echo "URL:$url"
-          echo "outcome -> ${{ steps.integration-test.outcome }}"
-          echo "conclusion -> ${{ steps.integration-test.conclusion }}"
+          text="Results: integration: ${{ steps.integration-test.outcome }} perf: ${{ steps.perf-test.outcome }} resiliency: ${{ steps.resiliency-test.outcome }}
+          echo ::set-output name=status-url::$url
+          echo ::set-output name=status-text::$text
 
-      #- name: Notify WSM Slack
-      #  if: ${{ always() }}
-      #  # If we get tired of seeing successes, we can filter to only ping on failures
-      #  uses: broadinstitute/action-slack@v3.8.0
-      #  # see https://github.com/broadinstitute/action-slack
-      #  env:
-      #    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      #  with:
-      #    status: ${{ job.status }}
-      #    channel: "#terra-workspace-manager"
-      #    username: "WSM nightly tests"
-      #    author_name: https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID
-      #    icon_emoji: ':vertical_traffic_light:'
-      #    text: ${{ format("Results: integration={0} perf={1} resiliency={2}", ${{ steps.integration-test.outputs.result-status }}, ${{ steps.perf-test.outputs.result-status }}, ${{ steps.resiliency-test.outputs.result-status }}) }}
+      - name: Notify WSM Slack
+        if: ${{ always() }}
+        # If we get tired of seeing successes, we can filter to only ping on failures
+        uses: broadinstitute/action-slack@v3.8.0
+        # see https://github.com/broadinstitute/action-slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          status: ${{ job.status }}
+          channel: "#terra-workspace-manager"
+          username: "WSM nightly tests"
+          author_name: ${{ steps.status-message.outputs.status-url }}
+          icon_emoji: ':vertical_traffic_light:'
+          text: ${{ steps.status-message.outputs.status-text }}
