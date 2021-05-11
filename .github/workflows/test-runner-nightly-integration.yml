@@ -16,8 +16,22 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Setup
-        uses: ./.github/actions/setup-gradle
+      - name: Set up AdoptOpenJDK 11
+        uses: joschi/setup-jdk@v2
+        with:
+          java-version: 11
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
+          restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
       - name: Get Vault token
         id: vault-token-step
@@ -52,18 +66,20 @@ jobs:
           test: suites/BasicResiliency.json
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
-      - name: "Notify WSM Slack"
+      - name: Notify WSM Slack
         if: ${{ always() }}
         # If we get tired of seeing successes, we can filter to only ping on failures
         uses: broadinstitute/action-slack@v3.8.0
         # see https://github.com/broadinstitute/action-slack
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          INT_RESULT: ${{ steps.integration-test.outputs.result-status }}
+          PERF_RESULT: ${{ steps.perf-test.outputs.result-status }}
+          RES_RESULT: ${{ steps.resiliency-test.outputs.result-status }}
         with:
           status: ${{ job.status }}
           channel: "#terra-workspace-manager"
           username: "WSM nightly tests"
+          author_name: "https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID"
           icon_emoji: ':vertical_traffic_light:'
-          text: "Results: integration: ${{ steps.integration-test.outputs.result-status }} perf: ${{ steps.perf-test.outputs.result-status }} resilience: ${{ steps.resiliency-test.outputs.result-status }}"
-
-
+          text: "Results: integration: $INT_RESULT perf: $PERF_RESULT resilience: $RES_RESULT"

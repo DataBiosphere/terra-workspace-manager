@@ -12,6 +12,10 @@ on:
       - 'service/local-dev/**'
   pull_request:
     branches: [ '**' ]
+    paths-ignore:
+      - 'README.md'
+      - '.github/**'
+      - 'service/local-dev/**'
   workflow_dispatch:
     inputs:
       testEnv:
