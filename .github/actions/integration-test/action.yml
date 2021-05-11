@@ -37,7 +37,6 @@ runs:
       shell: bash
 
     - name: Upload test results to Google Bucket
-      if: ${{ always() }}
       run: |
         cd integration
         echo "Upload test results to Google Bucket"
@@ -45,7 +44,6 @@ runs:
       shell: bash
 
     - name: Upload test results to BigQuery Test Runner Dataset
-      if: ${{ always() }}
       run: |
         cd integration
         echo "Upload test results to BigQuery Test Runner Dataset"
