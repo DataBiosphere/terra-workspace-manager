@@ -15,9 +15,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Profile("connected-test")
 public class UserAccessUtils {
-  /** The OAuth scopes important for logging in a user. */
-  private static final ImmutableList<String> LOGIN_SCOPES =
-      ImmutableList.of("openid", "email", "profile");
+  /** The OAuth scopes important for logging in a user and acting on their behalf in GCP. */
+  private static final ImmutableList<String> GCP_SCOPES =
+      ImmutableList.of(
+          "openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
 
   /**
    * The path to the service account to use. This service account should be delegated to impersonate
@@ -37,18 +38,28 @@ public class UserAccessUtils {
   @Value("${workspace.connected-test.second-user-email}")
   private String secondUserEmail;
 
-  /** Generates an OAuth access token for the userEmail. Relies on domain delegation. */
-  public AccessToken generateAccessToken(String userEmail) {
+  /** Creates Google credentials for the user. Relies on domain delegation. */
+  public GoogleCredentials generateCredentials(String userEmail) {
     try {
       GoogleCredentials credentials =
           GoogleCredentials.fromStream(new FileInputStream(userDelegatedServiceAccountPath))
-              .createScoped(LOGIN_SCOPES)
+              .createScoped(GCP_SCOPES)
               .createDelegated(userEmail);
       credentials.refreshIfExpired();
-      return credentials.getAccessToken();
+      return credentials;
     } catch (IOException e) {
-      throw new RuntimeException("Error creating user access token for user " + userEmail, e);
+      throw new RuntimeException("Error creating GoogleCredentials for user " + userEmail, e);
     }
+  }
+
+  /** Generates an OAuth access token for the userEmail. Relies on domain delegation. */
+  public AccessToken generateAccessToken(String userEmail) {
+    return generateCredentials(userEmail).getAccessToken();
+  }
+
+  /** Creates a {@link TestUser} for the default test user. */
+  public TestUser defaultUser() {
+    return new TestUser(defaultUserEmail);
   }
 
   /** Generates an OAuth access token for the default test user. */
@@ -83,5 +94,36 @@ public class UserAccessUtils {
     return new AuthenticatedUserRequest()
         .email(getSecondUserEmail())
         .token(Optional.of(secondUserAccessToken().getTokenValue()));
+  }
+
+  /**
+   * Represents a test user with convenience method to impersonate them in different forms.
+   *
+   * <p>This will only work for test user emails that can have delegated credentials.
+   */
+  public class TestUser {
+    private final String email;
+
+    public TestUser(String email) {
+      this.email = email;
+    }
+
+    public String getEmail() {
+      return email;
+    }
+
+    public GoogleCredentials getGoogleCredentials() {
+      return generateCredentials(email);
+    }
+
+    public AccessToken getAccessToken() {
+      return generateAccessToken(email);
+    }
+
+    public AuthenticatedUserRequest getAuthenticatedRequest() {
+      return new AuthenticatedUserRequest()
+          .email(email)
+          .token(Optional.of(getAccessToken().getTokenValue()));
+    }
   }
 }
