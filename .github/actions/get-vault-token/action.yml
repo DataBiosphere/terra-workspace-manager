@@ -26,6 +26,6 @@ runs:
           vault:1.1.0 \
           vault write -field token \
             auth/approle/login role_id=${{ inputs.vault-role }} \
-            secret_id=${{ inputs-vault-secret }})
+            secret_id=${{ inputs.vault-secret }})
         echo ::set-output name=vault-token::$VAULT_TOKEN
         echo ::add-mask::$VAULT_TOKEN

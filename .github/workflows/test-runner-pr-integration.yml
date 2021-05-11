@@ -6,9 +6,16 @@ name: PR Client Library Integration Tests
 on:
   push:
     branches: [ dev ]
+    paths-ignore:
+      - 'README.md'
+      - '.github/**'
+      - 'service/local-dev/**'
   pull_request:
     branches: [ '**' ]
-
+    paths-ignore:
+      - 'README.md'
+      - '.github/**'
+      - 'service/local-dev/**'
 jobs:
   integration-test:
 
