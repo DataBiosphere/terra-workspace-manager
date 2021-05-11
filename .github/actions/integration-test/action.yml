@@ -22,6 +22,7 @@ runs:
         chmod +x render_config.sh
         ./render_config.sh dev ${{ inputs.vault-token }}
         chmod +r rendered
+      shell: bash
 
     - name: Run the test
       run: |
