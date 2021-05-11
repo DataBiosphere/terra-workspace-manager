@@ -1,6 +1,10 @@
 name: 'get-vault-token'
 description: 'Retrieve vault token: devops disrecommends this; we still need it for rendering'
 author: 'dd'
+outputs:
+  vault-token:
+    description: "Vault token"
+    value: ${{ steps.vault-token-step.vault-token }}
 runs:
   using: "composite"
   steps:
