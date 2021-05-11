@@ -49,7 +49,7 @@ jobs:
       # Please refer to https://github.com/DataBiosphere/terra-test-runner#override-the-server-from-the-command-line for more information.
       - name: Run the integration test suite
         id: integration-test
-        if ${{ always }}
+        if: ${{ always }}
         uses: ./.github/actions/integration-test
         with:
           test-server: workspace-wsmtest.json
@@ -59,7 +59,7 @@ jobs:
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
       - name: Run the perf test suite
         id: perf-test
-        if ${{ always }}
+        if: ${{ always }}
         uses: ./.github/actions/integration-test
         with:
           test-server: workspace-wsmtest.json
@@ -67,7 +67,7 @@ jobs:
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
       - name: Run the resiliency test suite
         id: resiliency-test
-        if ${{ always }}
+        if: ${{ always }}
         uses: ./.github/actions/integration-test
         with:
           test-server: workspace-wsmtest.json
