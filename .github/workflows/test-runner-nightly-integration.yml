@@ -35,10 +35,17 @@ jobs:
 
       - name: Get Vault token
         id: vault-token-step
-        uses: ./.github/actions/get-vault-token
-        with:
-          vault-role: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
-          vault-secret: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+        env:
+          VAULT_ADDR: https://clotho.broadinstitute.org:8200
+        run: |
+          VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
+            -e "VAULT_ADDR=${VAULT_ADDR}" \
+            vault:1.1.0 \
+            vault write -field token \
+              auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+              secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+          echo ::set-output name=vault-token::$VAULT_TOKEN
+          echo ::add-mask::$VAULT_TOKEN
 
       - name: Run the integration test suite
         id: integration-test
@@ -49,7 +56,7 @@ jobs:
 # TODO: run the whole test
 #          test: suites/FullIntegration.json
           test: configs/integration/BasicUnauthenticated.json
-          vault-token: ${{ steps.vault-token-step.outputs.vault-token.value }}
+          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
       - name: Run the perf test suite
         id: perf-test
@@ -58,7 +65,7 @@ jobs:
         with:
           test-server: workspace-wsmtest.json
           test: suites/BasicPerf.json
-          vault-token: ${{ steps.vault-token-step.outputs.vault-token.value }}
+          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
       - name: Run the resiliency test suite
         id: resiliency-test
@@ -67,9 +74,10 @@ jobs:
         with:
           test-server: workspace-wsmtest.json
           test: suites/BasicResiliency.json
-          vault-token: ${{ steps.vault-token-step.outputs.vault-token.value }}
+          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
       - name: Compose status message
+        if: ${{ always() }}
         id: status-message
         env:
           INT_RESULT: ${{ steps.integration-test.outputs.result-status.value }}
