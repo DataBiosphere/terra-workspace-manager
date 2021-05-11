@@ -1,6 +1,13 @@
 name: 'get-vault-token'
 description: 'Retrieve vault token: devops disrecommends this; we still need it for rendering'
 author: 'dd'
+inputs:
+  vault-role:
+    description: "vault role"
+    required: true
+  vault-secret:
+    description: "vault secret"
+    required: true
 outputs:
   vault-token:
     description: "Vault token"
@@ -18,7 +25,7 @@ runs:
           -e "VAULT_ADDR=${VAULT_ADDR}" \
           vault:1.1.0 \
           vault write -field token \
-            auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
-            secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+            auth/approle/login role_id=${{ inputs.vault-role }} \
+            secret_id=${{ inputs-vault-secret }})
         echo ::set-output name=vault-token::$VAULT_TOKEN
         echo ::add-mask::$VAULT_TOKEN

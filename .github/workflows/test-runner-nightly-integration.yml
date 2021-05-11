@@ -36,6 +36,9 @@ jobs:
       - name: Get Vault token
         id: vault-token-step
         uses: ./.github/actions/get-vault-token
+        with:
+          vault-role: ${{ secrets.secrets.VAULT_APPROLE_ROLE_ID }}
+          vault-secret: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
 
       - name: Run the integration test suite
         id: integration-test
