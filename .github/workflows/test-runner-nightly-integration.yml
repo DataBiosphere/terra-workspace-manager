@@ -37,7 +37,7 @@ jobs:
         id: vault-token-step
         uses: ./.github/actions/get-vault-token
         with:
-          vault-role: ${{ secrets.secrets.VAULT_APPROLE_ROLE_ID }}
+          vault-role: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
           vault-secret: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
 
       - name: Run the integration test suite
@@ -69,20 +69,26 @@ jobs:
           test: suites/BasicResiliency.json
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
-      - name: Notify WSM Slack
-        if: ${{ always() }}
-        # If we get tired of seeing successes, we can filter to only ping on failures
-        uses: broadinstitute/action-slack@v3.8.0
-        # see https://github.com/broadinstitute/action-slack
+      - name: Compose status message
+        id: status-message
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           INT_RESULT: ${{ steps.integration-test.outputs.result-status }}
-          PERF_RESULT: ${{ steps.perf-test.outputs.result-status }}
-          RES_RESULT: ${{ steps.resiliency-test.outputs.result-status }}
-        with:
-          status: ${{ job.status }}
-          channel: "#terra-workspace-manager"
-          username: "WSM nightly tests"
-          author_name: "https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID"
-          icon_emoji: ':vertical_traffic_light:'
-          text: "Results: integration: $INT_RESULT perf: $PERF_RESULT resilience: $RES_RESULT"
+        run: |
+          url="https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID"
+          echo "URL:$url"
+          echo "result:$INT_RESULT"
+
+      #- name: Notify WSM Slack
+      #  if: ${{ always() }}
+      #  # If we get tired of seeing successes, we can filter to only ping on failures
+      #  uses: broadinstitute/action-slack@v3.8.0
+      #  # see https://github.com/broadinstitute/action-slack
+      #  env:
+      #    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #  with:
+      #    status: ${{ job.status }}
+      #    channel: "#terra-workspace-manager"
+      #    username: "WSM nightly tests"
+      #    author_name: https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID
+      #    icon_emoji: ':vertical_traffic_light:'
+      #    text: ${{ format("Results: integration={0} perf={1} resiliency={2}", ${{ steps.integration-test.outputs.result-status }}, ${{ steps.perf-test.outputs.result-status }}, ${{ steps.resiliency-test.outputs.result-status }}) }}
