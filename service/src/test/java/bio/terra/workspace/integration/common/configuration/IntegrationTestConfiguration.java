@@ -1,19 +1,17 @@
 package bio.terra.workspace.integration.common.configuration;
 
-import java.util.HashMap;
-import java.util.Map;
-import org.springframework.beans.factory.annotation.Value;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "workspace.integration-test")
 public class IntegrationTestConfiguration {
-
-  @Value("${TEST_ENV:local}")
-  private String testEnv;
 
   private Map<String, String> wsmUrls;
   private Map<String, String> wsmEndpoints;
@@ -27,6 +25,19 @@ public class IntegrationTestConfiguration {
    */
   private String userDelegatedServiceAccountPath;
 
+  // The defaulting behavior in the @Value was not consistently working. There is some
+  // condition under which it was returning "null" instead of null.
+  // This replacement code directly retrieves the envvar and
+  // checks for both conditions. Not going to chase this, since
+  // this form of integration testing is going away.
+  private String computeTestEnv() {
+    String testEnv = System.getenv("TEST_ENV");
+    if (StringUtils.isEmpty(testEnv) || StringUtils.equals(testEnv, "null")) {
+      return "local";
+    }
+    return testEnv;
+  }
+
   public void setWsmEndpoints(Map<String, String> wsmEndpoints) {
     this.wsmEndpoints = wsmEndpoints;
   }
@@ -36,11 +47,11 @@ public class IntegrationTestConfiguration {
   }
 
   public String getWsmWorkspacesBaseUrl() {
-    return this.wsmUrls.get(testEnv) + this.wsmEndpoints.get("workspaces");
+    return this.wsmUrls.get(computeTestEnv()) + this.wsmEndpoints.get("workspaces");
   }
 
   public String getUserEmail() {
-    return userEmails.get(testEnv);
+    return userEmails.get(computeTestEnv());
   }
 
   public void setUserEmails(Map<String, String> userEmails) {
@@ -56,7 +67,7 @@ public class IntegrationTestConfiguration {
   }
 
   public String getDataRepoInstanceNameFromEnv() {
-    return this.dataRepoInstanceNames.get(testEnv);
+    return this.dataRepoInstanceNames.get(computeTestEnv());
   }
 
   public void setDataRepoInstanceNames(HashMap<String, String> instanceNames) {
@@ -64,7 +75,7 @@ public class IntegrationTestConfiguration {
   }
 
   public String getDataRepoSnapshotIdFromEnv() {
-    return this.dataRepoSnapshotId.get(testEnv);
+    return this.dataRepoSnapshotId.get(computeTestEnv());
   }
 
   public void setDataRepoSnapshotId(HashMap<String, String> snapshotIds) {
