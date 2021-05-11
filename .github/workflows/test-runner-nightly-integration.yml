@@ -44,11 +44,6 @@ jobs:
               secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
           echo ::set-output name=vault-token::$VAULT_TOKEN
           echo ::add-mask::$VAULT_TOKEN
-      - name: Set permissions and render test configurations
-        run: |
-          chmod +x render_config.sh
-          ./render_config.sh dev ${{ steps.vault-token-step.outputs.vault-token }}
-          chmod +r rendered
       # We can also set the env var in the GH action script to specify which server we are testing against.
       # This will be particularly helpful once we switch over to testing against any test env -- then it's just a change to the env var.
       # Please refer to https://github.com/DataBiosphere/terra-test-runner#override-the-server-from-the-command-line for more information.
