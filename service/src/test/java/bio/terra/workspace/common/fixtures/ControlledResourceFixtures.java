@@ -95,7 +95,7 @@ public class ControlledResourceFixtures {
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_USER,
         bucketName);
-      }
+  }
 
   private ControlledResourceFixtures() {}
 

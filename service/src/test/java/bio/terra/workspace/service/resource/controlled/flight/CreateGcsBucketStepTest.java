@@ -56,7 +56,9 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
 
     CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
-            mockCrlService, ControlledResourceFixtures.getBucketResource(creationParameters.getName()), mockWorkspaceService);
+            mockCrlService,
+            ControlledResourceFixtures.getBucketResource(creationParameters.getName()),
+            mockWorkspaceService);
 
     when(mockCrlService.createStorageCow(FAKE_PROJECT_ID, mockUserRequest))
         .thenReturn(mockStorageCow);

@@ -83,13 +83,13 @@ jobs:
       # It is standard practice to include this step in all workflows that use the Test Runner Framework.
       # TODO: Make this step an action rather than repeat it over and over
       run: |
-        cd workspace-manager-clienttests
+        cd integration
         echo "Test Runner config"
-        ./integration/render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
-        ./integration/render-k8s-config.sh wsmtest ${{ steps.vault-token-step.outputs.vault-token }}
+        ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
+        ./render-k8s-config.sh wsmtest ${{ steps.vault-token-step.outputs.vault-token }}
         echo "Running test suite"
         export TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-local.json"
-        ./gradlew runTest --args="suites/FullIntegration.json /tmp/TestRunnerResults"
+        ../gradlew runTest --args="suites/FullIntegration.json /tmp/TestRunnerResults"
     - name: Upload test results to Google Bucket
       if: ${{ always() }}
       run: |
