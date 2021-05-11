@@ -47,21 +47,35 @@ jobs:
       # We can also set the env var in the GH action script to specify which server we are testing against.
       # This will be particularly helpful once we switch over to testing against any test env -- then it's just a change to the env var.
       # Please refer to https://github.com/DataBiosphere/terra-test-runner#override-the-server-from-the-command-line for more information.
-      - name: Run the Full Integration test suite
+      - name: Run the integration test suite
+        id: integration-test
+        if ${{ always }}
         uses: ./.github/actions/integration-test
         with:
           test-server: workspace-wsmtest.json
-          test: suites/FullIntegration.json
+# TODO: run the whole test
+#          test: suites/FullIntegration.json
+          test: configs/integration/BasicUnauthenticated.json
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
       - name: Run the perf test suite
+        id: perf-test
+        if ${{ always }}
         uses: ./.github/actions/integration-test
         with:
           test-server: workspace-wsmtest.json
           test: suites/BasicPerf.json
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
       - name: Run the resiliency test suite
+        id: resiliency-test
+        if ${{ always }}
         uses: ./.github/actions/integration-test
         with:
           test-server: workspace-wsmtest.json
           test: suites/BasicResiliency.json
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+      - name: Test results
+        run: |
+          echo "Integration test result: ${{ steps.integration-test }}"
+          echo "Perf test result: ${{ steps.perf-test }}"
+          echo "Resilience test result: ${{ steps.resiliency-test }}"
+          exit $((${{ steps.integration-test }} + ${{ steps.perf-test }} + ${{ steps.resiliency-test }}))

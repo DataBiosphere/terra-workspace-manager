@@ -13,6 +13,10 @@ inputs:
   vault-token:
     description: 'Vault token for rendering'
     required: true
+outputs:
+  result-status:
+    description: "result shell status of the test run"
+    value: ${{ steps.test-run.result-status }}
 runs:
   using: "composite"
   steps:
@@ -24,7 +28,9 @@ runs:
         chmod +r rendered
       shell: bash
 
+    # We run the test as one script, collecting the test result
     - name: Run the test
+      id: test-run
       run: |
         cd integration
         echo "Test Runner config"
@@ -34,18 +40,13 @@ runs:
         resultsDir=/tmp/results$RANDOM
         echo "Running test suite ${{ inputs.test }} on ${{ inputs.test-server }}"
         ../gradlew :integration:runTest --args="${{ inputs.test }} $resultsDir"
-      shell: bash
-
-    - name: Upload test results to Google Bucket
-      run: |
-        cd integration
+        testResult=$?
+        echo "::set-output name=result-status::$(echo $testResult)"
+        # Upload test results to Google Bucket
         echo "Upload test results to Google Bucket"
         ../gradlew :integration:uploadResults --args="CompressDirectoryToTerraKernelK8S.json $resultsDir"
-      shell: bash
-
-    - name: Upload test results to BigQuery Test Runner Dataset
-      run: |
-        cd integration
+        # Upload test results to BigQuery Test Runner Dataset
         echo "Upload test results to BigQuery Test Runner Dataset"
         ../gradlew :integration:uploadResults --args="SummariesToTerraKernelK8SBigQuery.json $resultsDir"
+        $testResult
       shell: bash

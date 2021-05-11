@@ -1,0 +1,24 @@
+name: 'checkout-setup'
+description: 'Checkout, setup JDK, cache gradle packages'
+author: 'dd'
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up AdoptOpenJDK 11
+      uses: joschi/setup-jdk@v2
+      with:
+        java-version: 11
+
+    - name: Cache Gradle packages
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
+        restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
