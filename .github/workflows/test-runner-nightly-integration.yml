@@ -1,12 +1,12 @@
 # This workflow will build a Java project with Gradle
 # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
 
-name: Test Runner Nightly Integration Tests
+name: Test Runner Nightly Tests
 
 on:
   workflow_dispatch: {}
-  schedule:
-    - cron: '0 7 * * *' # run at 7 AM UTC, 2 AM ET.
+#  schedule:
+#    - cron: '0 7 * * *' # run at 7 AM UTC, 2 AM ET.
 
 jobs:
   test-runner-integration:
@@ -28,6 +28,7 @@ jobs:
             ~/.gradle/wrapper
           key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
           restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Get Vault token
@@ -52,25 +53,20 @@ jobs:
       # This will be particularly helpful once we switch over to testing against any test env -- then it's just a change to the env var.
       # Please refer to https://github.com/DataBiosphere/terra-test-runner#override-the-server-from-the-command-line for more information.
       - name: Run the Full Integration test suite
-        run: |
-          cd workspace-manager-clienttests
-          echo "Test Runner config"
-          ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
-          ./render-k8s-config.sh wsmtest ${{ steps.vault-token-step.outputs.vault-token }}
-          export TEST_RUNNER_SERVER_SPECIFICATION_FILE=workspace-wsmtest.json
-          echo "Running test suite"
-          ./gradlew runTest --args="suites/FullIntegration.json /tmp/TestRunnerResults"
-
-      - name: Upload test results to Google Bucket
-        if: ${{ always() }}
-        run: |
-          cd workspace-manager-clienttests
-          echo "Upload test results to Google Bucket"
-          ./gradlew uploadResults --args="CompressDirectoryToTerraKernelK8S.json /tmp/TestRunnerResults"
-
-      - name: Upload test results to BigQuery Test Runner Dataset
-        if: ${{ always() }}
-        run: |
-          cd workspace-manager-clienttests
-          echo "Upload test results to BigQuery Test Runner Dataset"
-          ./gradlew uploadResults --args="SummariesToTerraKernelK8SBigQuery.json /tmp/TestRunnerResults"
+        uses: ./.github/actions/integration-test
+        with:
+          test-server: workspace-wsmtest.json
+          test: suites/FullIntegration.json
+          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+      - name: Run the perf test suite
+        uses: ./.github/actions/integration-test
+        with:
+          test-server: workspace-wsmtest.json
+          test: suites/BasicPerf.json
+          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+      - name: Run the resiliency test suite
+        uses: ./.github/actions/integration-test
+        with:
+          test-server: workspace-wsmtest.json
+          test: suites/BasicResiliency.json
+          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
