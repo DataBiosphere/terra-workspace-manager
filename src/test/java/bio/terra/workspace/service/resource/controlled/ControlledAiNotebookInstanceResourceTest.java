@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.BaseUnitTest;
@@ -26,6 +27,16 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
     assertThrows(
         MissingRequiredFieldException.class,
         () -> ControlledResourceFixtures.makeDefaultAiNotebookInstance().location(null).build());
+  }
+
+  @Test
+  public void validateSharedAccessThrows() {
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+                .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+                .build());
   }
 
   @Test
