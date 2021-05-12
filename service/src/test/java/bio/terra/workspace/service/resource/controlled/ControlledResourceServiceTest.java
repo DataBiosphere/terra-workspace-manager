@@ -3,6 +3,8 @@ package bio.terra.workspace.service.resource.controlled;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
@@ -435,10 +437,15 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             null,
             user.getAuthenticatedRequest());
     jobService.waitForJob(createJobId);
-    return jobService
-        .retrieveJobResult(
-            createJobId, ControlledAiNotebookInstanceResource.class, user.getAuthenticatedRequest())
-        .getResult();
+    JobService.JobResultOrException<ControlledAiNotebookInstanceResource> creationResult =
+        jobService.retrieveJobResult(
+            createJobId,
+            ControlledAiNotebookInstanceResource.class,
+            user.getAuthenticatedRequest());
+    assertNull(creationResult.getException(), "Error creating controlled AI notebook instance");
+    assertNotNull(
+        creationResult.getResult(), "Unexpected null created controlled AI notebook instance");
+    return creationResult.getResult();
   }
 
   private static void assertNotFound(InstanceName instanceName, AIPlatformNotebooksCow notebooks) {
