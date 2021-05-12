@@ -1,0 +1,103 @@
+# All env variables that are used in one place
+# This is for deployment-specific values, which may be managed by other teams
+env:
+  db:
+    host: jdbc:postgresql://${DATABASE_HOSTNAME:127.0.0.1}:5432
+    init: ${INIT_DB:false}
+    stairway:
+      name: ${STAIRWAY_DATABASE_NAME:stairwaylib}
+      pass: ${STAIRWAY_DATABASE_USER_PASSWORD:stairwaypwd}
+      user: ${STAIRWAY_DATABASE_USER:stairwayuser}
+    ws:
+      name: ${DATABASE_NAME:wm}
+      pass: ${DATABASE_USER_PASSWORD:wmpwd}
+      user: ${DATABASE_USER:wmuser}
+  tracing:
+    exportEnabled: ${CLOUD_TRACE_ENABLED:false}
+    samplingRate: ${SAMPLING_PROBABILITY:0}
+  urls: # While we've traditionally thought of these as env specific and ok to hardcode, with kubernetes they may change
+    sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org/}
+    terra-datarepo: ${TERRA_DATAREPO_URL:https://jade.datarepo-dev.broadinstitute.org}
+
+# Below here is non-deployment-specific
+
+logging.pattern.level: '%X{requestId} %5p'
+
+server:
+  compression:
+    enabled: true
+    mime-types: text/css,application/javascript
+  port: 8080
+
+spring:
+  application.name: workspace
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          max-age: 0
+          must-revalidate: true
+        use-last-modified: false
+      static-locations: classpath:/api/
+
+workspace:
+  datarepo.instances:
+    terra: ${env.urls.terra-datarepo}
+  ingress:
+    # Default value that's overridden by Helm.
+    domain-name: http://localhost:8080
+
+  job:
+    max-threads: 4
+    polling-interval-seconds: 1
+    resource-id: mc-terra-workspace-manager
+    timeout-seconds: 1800
+
+  sam.base-path: ${env.urls.sam}
+
+  stairway-database:
+    password: ${env.db.stairway.pass}
+    uri: ${env.db.host}/${env.db.stairway.name}
+    username: ${env.db.stairway.user}
+
+  status-check:
+    staleness-threshold-ms: 600000
+
+  workspace-database:
+    initialize-on-start: ${env.db.init}
+    password: ${env.db.ws.pass}
+    upgrade-on-start: true
+    uri: ${env.db.host}/${env.db.ws.name}
+    username: ${env.db.ws.user}
+
+  # Local servers will point to Tools RBS by default.
+  # These values may be overridden by Helm.
+  buffer:
+    enabled: true
+    client-credential-file-path: rendered/buffer-client-sa-account.json
+    instanceUrl: https://buffer.tools.integ.envs.broadinstitute.org
+    poolId: workspace_manager_v6
+
+  spend:
+    spend-profiles:
+    - # A default spend profile available in dev Sam.
+      id: wm-default-spend-profile
+      # The billing account workspace-dev has access to.
+      billing-account-id: 01A82E-CA8A14-367457
+    - # A special spend profile with no billing account associated with it.
+      id: no-billing-account
+
+terra.common:
+  kubernetes:
+    in-kubernetes: false
+  stairway:
+    cluster-name-suffix: workspace-stairway
+    force-clean-start: false # ${env.db.init}
+    max-parallel-flights: 50
+    migrate-upgrade: true
+    quiet-down-timeout: 30s
+    terminate-timeout: 30s
+    tracing-enabled: true
+  tracing:
+    stackdriverExportEnabled: ${env.tracing.exportEnabled}
+    samplingRate: ${env.tracing.samplingRate}

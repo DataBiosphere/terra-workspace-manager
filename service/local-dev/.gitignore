@@ -1,0 +1,12 @@
+# For whatever reason, the local setup generates directly into the source directory.
+# Therefore, we need this gitignore to preserve the pieces we want. The consequence
+# is that everytime you add a new file that you want in here, you have to update this
+# file.
+# Ignore everything in this directory...
+*
+# Except...
+!.gitignore
+!local-postgres-init.sql
+!README.md
+!*.sh
+!*.template

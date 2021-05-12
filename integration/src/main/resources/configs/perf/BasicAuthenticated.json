@@ -1,0 +1,18 @@
+{
+  "name": "BasicAuthenticated",
+  "description": "Get workspace repeatedly, concurrently. Authentication required.",
+  "serverSpecificationFile": "workspace-dev.json",
+  "kubernetes": {},
+  "application": {},
+  "testScripts": [
+    {
+      "name": "GetWorkspace",
+      "numberOfUserJourneyThreadsToRun": 10,
+      "userJourneyThreadPoolSize": 2,
+      "expectedTimeForEach": 5,
+      "expectedTimeForEachUnit": "SECONDS",
+      "parameters": ["wm-default-spend-profile"]
+    }
+  ],
+  "testUserFiles": ["william.json"]
+}

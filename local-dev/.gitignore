@@ -1,8 +1,0 @@
-# Ignore everything in this directory
-*
-# Except...
-!.gitignore
-!local-postgres-init.sql
-!README.md
-!setup_local_env.sh
-!*.template

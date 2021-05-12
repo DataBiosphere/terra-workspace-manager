@@ -130,7 +130,7 @@ New versions of the WSM client library need to be published manually. You should
 
 To publish a new version of the client library:
 1. Make your changes locally. Verify that client tests run using a local client 
-JAR and local server pass ([see client test README](workspace-manager-clienttests/README.md#local-testing)). If your changes are part of a PR, have the PR reviewed.
+JAR and local server pass ([see client test README](integration/README.md#local-testing)). If your changes are part of a PR, have the PR reviewed.
 1. Bump the version number in the `allprojects.version` field of [build.gradle](build.gradle).
 Compatible changes should be a change to the minor or patch version. 
 Backwards-incompatible changes should change the major version. Try to avoid 
@@ -138,7 +138,7 @@ backwards incompatible changes.
 1. Publish the new client library to Artifactory ([instructions here](workspace-manager-client/README.md)). This requires
 Vault access.
 1. Update the client tests to use the newly-published version by modifying the 
-`dependencies.ext.workspaceManagerClient` field of the [Test Runner buildfile](workspace-manager-clienttests/build.gradle).
+`dependencies.ext.workspaceManagerClient` field of the [Test Runner buildfile](integration/build.gradle).
 1. After the previous step, automated client tests on your PR should pass. Once 
 they do, and you have approvals, merge your changes.
 
