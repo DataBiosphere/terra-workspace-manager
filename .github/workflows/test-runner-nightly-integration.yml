@@ -81,7 +81,7 @@ jobs:
         id: status-message
         run: |
           url="https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID"
-          text="Results: integration: ${{ steps.integration-test.outcome }} perf: ${{ steps.perf-test.outcome }} resiliency: ${{ steps.resiliency-test.outcome }}
+          text="Results: integration: ${{ steps.integration-test.outcome }} perf: ${{ steps.perf-test.outcome }} resiliency: ${{ steps.resiliency-test.outcome }}"
           echo ::set-output name=status-url::$url
           echo ::set-output name=status-text::$text
 
