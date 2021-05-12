@@ -80,9 +80,11 @@ jobs:
         if: ${{ always() }}
         id: status-message
         run: |
-          url="https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID"
-          text="Results: integration: ${{ steps.integration-test.outcome }} perf: ${{ steps.perf-test.outcome }} resiliency: ${{ steps.resiliency-test.outcome }}"
-          echo ::set-output name=status-url::$url
+          L2="▻ Integration: *${{ steps.integration-test.outcome }}*\n"
+          L3="▻ Perf       : *${{ steps.perf-test.outcome }}*\n"
+          L4="▻ Resiliency : *${{ steps.resiliency-test.outcome }}*\n"
+          L5="<https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID|action run>"
+          text="$L2$L3$L4$L5"
           echo ::set-output name=status-text::$text
 
       - name: Notify WSM Slack
@@ -95,7 +97,6 @@ jobs:
         with:
           status: ${{ job.status }}
           channel: "#terra-workspace-manager"
-          username: "WSM nightly tests"
-          author_name: ${{ steps.status-message.outputs.status-url }}
+          username: "WSM nightly test results"
           icon_emoji: ':vertical_traffic_light:'
           text: ${{ steps.status-message.outputs.status-text }}
