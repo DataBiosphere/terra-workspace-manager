@@ -4,14 +4,26 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRule;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleAction;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleActionType;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import com.google.api.client.util.DateTime;
+//import com.google.api.services.storage.model.Bucket.Lifecycle;
+//import com.google.api.services.storage.model.Bucket.Lifecycle.Rule;
+import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
+import com.google.cloud.storage.BucketInfo.LifecycleRule.DeleteLifecycleAction;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
+import com.google.cloud.storage.BucketInfo.LifecycleRule.SetStorageClassLifecycleAction;
 import com.google.cloud.storage.StorageClass;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -21,30 +33,59 @@ public class GcsApiConversions {
 
   private GcsApiConversions() {}
 
-  public static StorageClass toGcsApi(ApiGcpGcsBucketDefaultStorageClass storageClass) {
-    switch (storageClass) {
-      case STANDARD:
-        return StorageClass.STANDARD;
-      case NEARLINE:
-        return StorageClass.NEARLINE;
-      case COLDLINE:
-        return StorageClass.COLDLINE;
-      case ARCHIVE:
-        return StorageClass.ARCHIVE;
-      default:
-        throw new IllegalStateException("Unrecognized storage class " + storageClass);
-    }
+  private static final BiMap<ApiGcpGcsBucketDefaultStorageClass, StorageClass> STORAGE_CLASS_MAP =
+      HashBiMap.create();
+
+  static {
+    STORAGE_CLASS_MAP.put(ApiGcpGcsBucketDefaultStorageClass.STANDARD, StorageClass.STANDARD);
+    STORAGE_CLASS_MAP.put(ApiGcpGcsBucketDefaultStorageClass.NEARLINE, StorageClass.NEARLINE);
+    STORAGE_CLASS_MAP.put(ApiGcpGcsBucketDefaultStorageClass.COLDLINE, StorageClass.COLDLINE);
+    STORAGE_CLASS_MAP.put(ApiGcpGcsBucketDefaultStorageClass.ARCHIVE, StorageClass.ARCHIVE);
   }
 
-  public static List<LifecycleRule> toGcsApi(ApiGcpGcsBucketLifecycle lifecycle) {
+  /**
+   * Convert to update parameters, which are a subset of creation parameters
+   * @param bucketInfo - GCS API-proivded BucketInfo instance
+   * @return - populated parameters object
+   */
+  public static ApiGcpGcsBucketUpdateParameters toUpdateParameters(BucketInfo bucketInfo) {
+    return new ApiGcpGcsBucketUpdateParameters()
+        .lifecycle(new ApiGcpGcsBucketLifecycle()
+          .rules(toWsmApiRulesList(bucketInfo)))
+          .defaultStorageClass(toWsmApi(bucketInfo.getStorageClass()));
+  }
+
+  public static StorageClass toGcsApi(ApiGcpGcsBucketDefaultStorageClass storageClass) {
+    return Optional.ofNullable(STORAGE_CLASS_MAP.get(storageClass))
+        .orElseThrow(() -> new IllegalStateException("Unrecognized storage class " + storageClass));
+  }
+
+  public static ApiGcpGcsBucketDefaultStorageClass toWsmApi(StorageClass storageClass) {
+    return Optional.ofNullable(STORAGE_CLASS_MAP.inverse().get(storageClass))
+        .orElseThrow(() -> new IllegalStateException("Unrecognized storage class " + storageClass));
+  }
+
+  public static List<LifecycleRule> toGcsApiRulesList(ApiGcpGcsBucketLifecycle lifecycle) {
     return lifecycle.getRules().stream()
         .map(GcsApiConversions::toGcsApi)
+        .collect(Collectors.toList());
+  }
+
+  public static List<ApiGcpGcsBucketLifecycleRule> toWsmApiRulesList(BucketInfo bucketInfo) {
+    return bucketInfo.getLifecycleRules().stream()
+        .map(GcsApiConversions::toWsmApi)
         .collect(Collectors.toList());
   }
 
   public static LifecycleRule toGcsApi(ApiGcpGcsBucketLifecycleRule lifecycleRule) {
     return new LifecycleRule(
         toGcsApi(lifecycleRule.getAction()), toGcsApi(lifecycleRule.getCondition()));
+  }
+
+  public static ApiGcpGcsBucketLifecycleRule toWsmApi(LifecycleRule lifeCycleRule) {
+    return new ApiGcpGcsBucketLifecycleRule()
+        .action(toWsmApi(lifeCycleRule.getAction()))
+        .condition(toWsmApi(lifeCycleRule.getCondition()));
   }
 
   public static LifecycleAction toGcsApi(ApiGcpGcsBucketLifecycleRuleAction lifecycleRuleAction) {
@@ -57,6 +98,56 @@ public class GcsApiConversions {
       default:
         throw new IllegalStateException(
             "Unrecognized lifecycle action type " + lifecycleRuleAction.getType());
+    }
+  }
+
+  public static ApiGcpGcsBucketLifecycleRuleAction toWsmApi(LifecycleAction action) {
+    final ApiGcpGcsBucketLifecycleRuleActionType actionType = toWsmApi(action.getActionType());
+    ApiGcpGcsBucketDefaultStorageClass storageClass =
+        getStorageClass(action).map(GcsApiConversions::toWsmApi).orElse(null);
+    return new ApiGcpGcsBucketLifecycleRuleAction().storageClass(storageClass).type(actionType);
+  }
+
+  public static ApiGcpGcsBucketLifecycleRuleActionType toWsmApi(String lifecycleActionType) {
+    switch (lifecycleActionType) {
+      case DeleteLifecycleAction.TYPE:
+        return ApiGcpGcsBucketLifecycleRuleActionType.DELETE;
+      case SetStorageClassLifecycleAction.TYPE:
+        return ApiGcpGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS;
+      default:
+        throw new IllegalArgumentException(
+            String.format(
+                "GCS BucketLifecycle action type %s not recognized.", lifecycleActionType));
+    }
+  }
+
+  /**
+   * A subset of lifecycle actions have a storage class associated with them. Currently only the
+   * SetStorageClassLifecycleAction. This helper method extracts the storage class if it's present.
+   *
+   * @param lifecycleAction - A bucket lifecycle action, which may or may not refer to a storage
+   *     class.
+   * @return - storage class for the action, if it exists.
+   */
+  public static Optional<StorageClass> getStorageClass(LifecycleAction lifecycleAction) {
+    final String actionType = lifecycleAction.getActionType();
+    switch (actionType) {
+      case DeleteLifecycleAction.TYPE:
+        return Optional.empty(); // Delete action has no storage class
+      case SetStorageClassLifecycleAction.TYPE:
+        if (lifecycleAction instanceof SetStorageClassLifecycleAction) {
+          SetStorageClassLifecycleAction storageClassLifecycleAction =
+              (SetStorageClassLifecycleAction) lifecycleAction;
+          return Optional.of(storageClassLifecycleAction.getStorageClass());
+        } else {
+          throw new IllegalArgumentException(
+              String.format(
+                  "Could not cast GCS Bucket LifecycleAction of type %s to SetStorageClassLifecycleAction.",
+                  actionType));
+        }
+      default:
+        throw new IllegalArgumentException(
+            String.format("GCS BucketLifecycle action type %s not recognized.", actionType));
     }
   }
 
@@ -78,12 +169,39 @@ public class GcsApiConversions {
     return resultBuilder.build();
   }
 
+  public static ApiGcpGcsBucketLifecycleRuleCondition toWsmApi(LifecycleCondition condition) {
+    return new ApiGcpGcsBucketLifecycleRuleCondition()
+        .age(condition.getAge())
+        .createdBefore(toOffsetDateTime(condition.getCreatedBefore()))
+        .numNewerVersions(condition.getNumberOfNewerVersions())
+        .live(condition.getIsLive())
+        .matchesStorageClass(
+            condition.getMatchesStorageClass().stream()
+                .map(GcsApiConversions::toWsmApi)
+                .collect(Collectors.toList()));
+  }
+
+  @VisibleForTesting
   @Nullable
-  private static DateTime toDateTime(@Nullable OffsetDateTime offsetDateTime) {
-    return Optional.ofNullable(offsetDateTime)
-        .map(OffsetDateTime::toInstant)
-        .map(Instant::toEpochMilli)
-        .map(DateTime::new)
-        .orElse(null);
+  static DateTime toDateTime(@Nullable OffsetDateTime offsetDateTime) {
+    if (offsetDateTime == null) {
+      return null;
+    }
+    return new DateTime(
+        offsetDateTime.toInstant().toEpochMilli(),
+        Math.toIntExact(
+            Duration.ofSeconds(offsetDateTime.getOffset().getTotalSeconds()).toMinutes()));
+  }
+
+  @VisibleForTesting
+  @Nullable
+  static OffsetDateTime toOffsetDateTime(@Nullable DateTime dateTime) {
+    if (dateTime == null) {
+      return null;
+    }
+    return OffsetDateTime.ofInstant(
+        Instant.ofEpochMilli(dateTime.getValue()),
+        ZoneOffset.ofTotalSeconds(
+            Math.toIntExact(Duration.ofMinutes(dateTime.getTimeZoneShift()).toSeconds())));
   }
 }

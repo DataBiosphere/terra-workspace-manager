@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.flight.update;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_PARAMETERS;
 
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
@@ -9,12 +11,13 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.GcsApiConversions;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.cloud.storage.BucketInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,17 +40,26 @@ public class UpdateGcsBucketStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+    return updateBucket(flightContext, UPDATE_PARAMETERS);
+  }
+
+  // Restore the previous values of the update parameters
+  @Override
+  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    return updateBucket(flightContext, PREVIOUS_UPDATE_PARAMETERS);
+  }
+
+  private StepResult updateBucket(FlightContext flightContext, String updateParametersKey) {
     final FlightMap inputMap = flightContext.getInputParameters();
-    final ApiGcpGcsBucketCreationParameters creationParameters =
-        inputMap.get(CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
+    final ApiGcpGcsBucketUpdateParameters updateParameters =
+        inputMap.get(updateParametersKey, ApiGcpGcsBucketUpdateParameters.class);
     final String projectId =
         workspaceService.getRequiredGcpProject(bucketResource.getWorkspaceId());
     final BucketInfo bucketInfo =
         BucketInfo.newBuilder(bucketResource.getBucketName())
-            .setLocation(creationParameters.getLocation())
             .setStorageClass(
-                GcsApiConversions.toGcsApi(creationParameters.getDefaultStorageClass()))
-            .setLifecycleRules(GcsApiConversions.toGcsApi(creationParameters.getLifecycle()))
+                GcsApiConversions.toGcsApi(updateParameters.getDefaultStorageClass()))
+            .setLifecycleRules(GcsApiConversions.toGcsApiRulesList(updateParameters.getLifecycle()))
             .build();
 
     final StorageCow storageCow = crlService.createStorageCow(projectId);
@@ -57,18 +69,13 @@ public class UpdateGcsBucketStep implements Step {
       throw new ResourceNotFoundException(
           String.format("Cannot find GCS bucket %s to update", bucketInfo.getName()));
     }
-//    final BucketCow updatedBucketCow =
-        existingBucketCow.toBuilder()
-            .setLifecycleRules(bucketInfo.getLifecycleRules())
-            .setStorageClass(bucketInfo.getStorageClass())
-            .build()
-            .update();
 
-    return StepResult.getStepResultSuccess();
-  }
+    existingBucketCow.toBuilder()
+        .setLifecycleRules(bucketInfo.getLifecycleRules())
+        .setStorageClass(bucketInfo.getStorageClass())
+        .build()
+        .update();
 
-  @Override
-  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     return StepResult.getStepResultSuccess();
   }
 }

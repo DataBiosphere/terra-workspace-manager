@@ -45,7 +45,7 @@ public class CreateGcsBucketStep implements Step {
             .setLocation(creationParameters.getLocation())
             .setStorageClass(
                 GcsApiConversions.toGcsApi(creationParameters.getDefaultStorageClass()))
-            .setLifecycleRules(GcsApiConversions.toGcsApi(creationParameters.getLifecycle()))
+            .setLifecycleRules(GcsApiConversions.toGcsApiRulesList(creationParameters.getLifecycle()))
             .build();
 
     StorageCow storageCow = crlService.createStorageCow(projectId);
