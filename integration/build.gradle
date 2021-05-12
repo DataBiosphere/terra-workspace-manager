@@ -30,6 +30,8 @@ dependencies {
         googleCloud = "1.108.0"
         googleOauth2 = "0.20.0"
         googleContainer = "v1-rev93-1.25.0"
+        googleIam = "v1-rev20201112-1.30.10"
+        googleNotebook = "v1-rev20201110-1.30.10"
 
         datarepoClient = "1.0.155-SNAPSHOT"
         testRunnerVersion = "0.0.3-SNAPSHOT"
@@ -51,6 +53,8 @@ dependencies {
     implementation "com.google.cloud:google-cloud-bigquery:${googleCloud}"
     implementation "com.google.cloud:google-cloud-storage:${googleCloud}"
     implementation "com.google.apis:google-api-services-container:${googleContainer}"
+    implementation "com.google.apis:google-api-services-iam:${googleIam}"
+    implementation "com.google.apis:google-api-services-notebooks:${googleNotebook}"
 
     // Data Repo client library
     implementation "bio.terra:datarepo-client:${datarepoClient}"
