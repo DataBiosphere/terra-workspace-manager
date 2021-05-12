@@ -17,7 +17,7 @@ on:
       - '.github/**'
       - 'service/local-dev/**'
 jobs:
-  integration-test:
+  pr-integration-job:
 
     runs-on: ubuntu-latest
 
@@ -82,10 +82,10 @@ jobs:
       run: timeout 300 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
 
     - name: Run the integration test suite
-        id: integration-test
-        if: ${{ always() }}
-        uses: ./.github/actions/integration-test
-        with:
-          test-server: workspace-local.json
-          test: suites/FullIntegration.json
-          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+      id: integration-test
+      if: ${{ always() }}
+      uses: ./.github/actions/integration-test
+      with:
+        test-server: workspace-local.json
+        test: suites/FullIntegration.json
+        vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
