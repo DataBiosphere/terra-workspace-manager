@@ -80,12 +80,13 @@ jobs:
         if: ${{ always() }}
         id: status-message
         run: |
-          L2="▻ Integration: *${{ steps.integration-test.outcome }}*\n"
-          L3="▻ Perf       : *${{ steps.perf-test.outcome }}*\n"
-          L4="▻ Resiliency : *${{ steps.resiliency-test.outcome }}*\n"
-          L5="<https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID|action run>"
-          text="$L2$L3$L4$L5"
+          L2="Integration: ${{ steps.integration-test.outcome }} "
+          L3="Perf: ${{ steps.perf-test.outcome }} "
+          L4="Resiliency : ${{ steps.resiliency-test.outcome }}"
+          text="Link to <https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID|test run>"
+          bold="$L2$L3$L4"
           echo ::set-output name=status-text::$text
+          echo ::set-output name=status-bold::$bold
 
       - name: Notify WSM Slack
         if: ${{ always() }}
@@ -95,14 +96,9 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
+          status: ${{ job.status }}
           channel: "#terra-workspace-manager"
-          status: custom
-          custom_payload: |
-            {
-              username: "WSM nightly test results"
-              icon_emoji: ':vertical_traffic_light:'
-              attachments: [{
-                color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
-                text: `${{ steps.status-message.outputs.status-text }}`
-              }]
-            }
+          username: "WSM nightly test"
+          author_name: ${{ steps.status-message.outputs.status-bold }}
+          icon_emoji: ':vertical_traffic_light:'
+          text: ${{ steps.status-message.outputs.status-text }}
