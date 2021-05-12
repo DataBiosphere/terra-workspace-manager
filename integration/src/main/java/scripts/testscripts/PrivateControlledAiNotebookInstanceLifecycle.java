@@ -97,6 +97,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         () -> resourceUserApi.getCreateAiNotebookInstanceResult(getWorkspaceId(), creationJobId),
         CreatedControlledGcpAiNotebookInstanceResult::getJobReport,
         Duration.ofSeconds(10));
+    assertNull(creationResult.getErrorReport());
     assertEquals(JobReport.StatusEnum.SUCCEEDED, creationResult.getJobReport().getStatus());
     logger.info(
         "Creation succeeded for instanceId {}",

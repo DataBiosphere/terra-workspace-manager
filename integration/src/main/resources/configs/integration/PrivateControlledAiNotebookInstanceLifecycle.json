@@ -1,6 +1,6 @@
 {
   "name": "PrivateControlledAiNotebookInstanceLifecycle",
-  "description": "CRUD user-private GCS bucket tests.",
+  "description": "CRUD user-private GCS AI Platform Notebook instance tests.",
   "serverSpecificationFile": "workspace-dev.json",
   "kubernetes": {},
   "application": {},
