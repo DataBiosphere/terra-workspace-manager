@@ -51,8 +51,7 @@ public class ClientTestUtils {
   private static final List<String> TEST_USER_SCOPES =
       List.of("openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
 
-  private ClientTestUtils() {
-  }
+  private ClientTestUtils() {}
 
   /**
    * Build the Workspace Manager Service API client object for the given server specification. It is
@@ -88,7 +87,7 @@ public class ClientTestUtils {
    * specifications. The test user's token is always refreshed
    *
    * @param testUser the test user whose credentials are supplied to the API client object
-   * @param server   the server we are testing against
+   * @param server the server we are testing against
    * @return the API client object for this user
    */
   public static ApiClient getClientForTestUser(
@@ -210,8 +209,8 @@ public class ClientTestUtils {
    * Checks if a user email is in a role binding list
    *
    * @param roleBindings - list of role bindings, as retrieved via getRoles()
-   * @param userEmail    - user to check for
-   * @param role         - role to check
+   * @param userEmail - user to check for
+   * @param role - role to check
    * @return True if the role binding list contains a binding for a given user and Iam Role.
    */
   public static boolean containsBinding(
@@ -242,7 +241,6 @@ public class ClientTestUtils {
    * @param jobReportExtractor a function for getting the {@link JobReport} from the result
    * @param pollInterval       how long to sleep between polls.
    */
-
   public static <T> T pollWhileRunning(
       T initialValue,
       WorkspaceOperation<T> operation,
@@ -256,9 +254,7 @@ public class ClientTestUtils {
     return result;
   }
 
-  /**
-   * @return a generated unique resource name consisting of letters, numbers, and underscores.
-   */
+  /** @return a generated unique resource name consisting of letters, numbers, and underscores. */
   public static String generateCloudResourceName() {
     String name = RESOURCE_NAME_PREFIX + UUID.randomUUID().toString();
     return name.replace("-", "_");
