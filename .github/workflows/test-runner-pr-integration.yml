@@ -2,7 +2,7 @@
 # server changes but runs a published version of the client, so it will not pick
 # up local client changes.
 
-name: PR Client Library Integration Tests
+name: PR Integration Tests
 on:
   push:
     branches: [ dev ]
@@ -36,16 +36,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    # This step is needed when running test using a local server.
+
+      # This step is needed when running test using a local server.
     - name: Initialize Postgres DB
       env:
         PGPASSWORD: postgres
       run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
+
     - name: Set up AdoptOpenJDK 11
       uses: joschi/setup-jdk@v2
       with:
         java-version: 11
-    # This step caches Gradle packages for reuse in the same VM instance.
+
     - name: Cache Gradle packages
       uses: actions/cache@v2
       with:
@@ -54,6 +56,7 @@ jobs:
           ~/.gradle/wrapper
         key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
         restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
@@ -70,12 +73,6 @@ jobs:
             secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
         echo ::set-output name=vault-token::$VAULT_TOKEN
         echo ::add-mask::$VAULT_TOKEN
-    - name: Set permissions and render test configurations
-      run: |
-        cd service
-        chmod +x ./render_config.sh
-        ./render_config.sh dev ${{ steps.vault-token-step.outputs.vault-token }}
-        chmod +r rendered
 
     # Spin up a local server.
     - name: Run local server (in background)
@@ -84,29 +81,11 @@ jobs:
       # With a timeout of 300 seconds, try to connect to localhost:8080 every 1 second.
       run: timeout 300 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
 
-    - name: Run the Full Integration test suite
-      # The ./render-k8s-config.sh step renders k8s credentials for running resiliency tests against k8s.
-      # The k8s credentials aren't needed when running tests against a local server.
-      # It is standard practice to include this step in all workflows that use the Test Runner Framework.
-      # TODO: Make this step an action rather than repeat it over and over
-      run: |
-        cd integration
-        echo "Test Runner config"
-        ./render-config.sh ${{ steps.vault-token-step.outputs.vault-token }}
-        ./render-k8s-config.sh wsmtest ${{ steps.vault-token-step.outputs.vault-token }}
-        echo "Running test suite"
-        export TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-local.json"
-        ../gradlew runTest --args="suites/FullIntegration.json /tmp/TestRunnerResults"
-    - name: Upload test results to Google Bucket
-      if: ${{ always() }}
-      run: |
-        cd integration
-        echo "Upload test results to Google Bucket"
-        ../gradlew uploadResults --args="CompressDirectoryToTerraKernelK8S.json /tmp/TestRunnerResults"
-
-    - name: Upload test results to BigQuery Test Runner Dataset
-      if: ${{ always() }}
-      run: |
-        cd integration
-        echo "Upload test results to BigQuery Test Runner Dataset"
-        ../gradlew uploadResults --args="SummariesToTerraKernelK8SBigQuery.json /tmp/TestRunnerResults"
+    - name: Run the integration test suite
+        id: integration-test
+        if: ${{ always() }}
+        uses: ./.github/actions/integration-test
+        with:
+          test-server: workspace-local.json
+          test: suites/FullIntegration.json
+          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}

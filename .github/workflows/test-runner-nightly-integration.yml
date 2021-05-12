@@ -1,7 +1,7 @@
 # This workflow will build a Java project with Gradle
 # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
 
-name: Test Runner Nightly Tests
+name: Nightly Tests
 
 on:
   workflow_dispatch: {}
@@ -95,8 +95,14 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
-          status: ${{ job.status }}
           channel: "#terra-workspace-manager"
-          username: "WSM nightly test results"
-          icon_emoji: ':vertical_traffic_light:'
-          text: ${{ steps.status-message.outputs.status-text }}
+          status: custom
+          custom_payload: |
+            {
+              username: "WSM nightly test results"
+              icon_emoji: ':vertical_traffic_light:'
+              attachments: [{
+                color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
+                text: `${{ steps.status-message.outputs.status-text }}`
+              }]
+            }
