@@ -3,7 +3,7 @@ This repository holds the Workspace Manager service, the MC-Terra component
 responsible for managing resources and the applications/resources they use.
 
 To push versions of this repository to different environments (including 
-per-developer integration environments), update the [terra-helmfile deployment definitions](https://github.com/broadinstitute/terra-helmfile/pull/13).
+per-developer integration environments), update the [terra-helmfile deployment definitions](https://github.com/broadinstitute/terra-helmfile).
 
 ## OpenAPI V3 - formerly swagger
 A swagger-ui page is available at /swagger-ui.html on any running instance. For existing instances, those are:

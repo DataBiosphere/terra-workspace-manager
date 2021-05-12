@@ -1,10 +1,6 @@
 // Common definitions and constraints to be applied to the projects.
 // These are applied in the buildscript block.
-def useMavenLocal = false
 repositories {
-    if (useMavenLocal) {
-        mavenLocal()
-    }
     maven {
         // Terra proxy for maven central
         url "https://broadinstitute.jfrog.io/broadinstitute/maven-central/"
@@ -17,6 +13,7 @@ repositories {
         url "https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/"
     }
 }
+
 
 dependencyLocking {
     lockAllConfigurations()
