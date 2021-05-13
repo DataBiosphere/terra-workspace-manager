@@ -2,6 +2,7 @@ package scripts.utils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.in;
 
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
@@ -11,10 +12,16 @@ import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
+import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.RoleBindingList;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.iam.v1.Iam;
+import com.google.api.services.notebooks.v1.AIPlatformNotebooks;
+import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.bigquery.BigQuery;
@@ -23,8 +30,11 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.base.Strings;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,16 +47,9 @@ public class ClientTestUtils {
   public static final String RESOURCE_NAME_PREFIX = "terratest";
   private static final Logger logger = LoggerFactory.getLogger(ClientTestUtils.class);
 
-  // Required scopes for client tests include the usual login scopes.
-  // We need additional scopes for validating access to cloud resources,
-  // including:
-  // - cloud platform
-  // - bigquery
-  // - gcs
+  // Required scopes for client tests include the usual login scopes and GCP scope.
   private static final List<String> TEST_USER_SCOPES =
       List.of("openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
-  // "https://www.googleapis.com/auth/bigquery")
-  // "https://www.googleapis.com/auth/devstorage.full_control");
 
   private ClientTestUtils() {}
 
@@ -105,6 +108,24 @@ public class ClientTestUtils {
     }
 
     return buildClient(accessToken, server);
+  }
+
+  public static AIPlatformNotebooks getAIPlatformNotebooksClient(TestUserSpecification testUser)
+      throws GeneralSecurityException, IOException {
+    return new AIPlatformNotebooks(
+        GoogleNetHttpTransport.newTrustedTransport(),
+        JacksonFactory.getDefaultInstance(),
+        new HttpCredentialsAdapter(
+            AuthenticationUtils.getDelegatedUserCredential(testUser, TEST_USER_SCOPES)));
+  }
+
+  public static Iam getGcpIamClient(TestUserSpecification testUser)
+      throws GeneralSecurityException, IOException {
+    return new Iam(
+        GoogleNetHttpTransport.newTrustedTransport(),
+        JacksonFactory.getDefaultInstance(),
+        new HttpCredentialsAdapter(
+            AuthenticationUtils.getDelegatedUserCredential(testUser, TEST_USER_SCOPES)));
   }
 
   public static Storage getGcpStorageClient(TestUserSpecification testUser, String projectId)
@@ -200,6 +221,37 @@ public class ClientTestUtils {
 
   public static boolean jobIsRunning(JobReport jobReport) {
     return jobReport.getStatus().equals(JobReport.StatusEnum.RUNNING);
+  }
+
+  /**
+   * An interface for an arbitrary workspace operation that throws an {@link ApiException}.
+   */
+  @FunctionalInterface
+  public interface WorkspaceOperation<T> {
+
+    T apply() throws ApiException;
+  }
+
+  /**
+   * Polls a workspace API operation as long as the job is running.
+   *
+   * @param <T>                the result type of the async operation.
+   * @param initialValue       the first result to use to poll
+   * @param operation          a function for the workspace async operation to execute
+   * @param jobReportExtractor a function for getting the {@link JobReport} from the result
+   * @param pollInterval       how long to sleep between polls.
+   */
+  public static <T> T pollWhileRunning(
+      T initialValue,
+      WorkspaceOperation<T> operation,
+      Function<T, JobReport> jobReportExtractor,
+      Duration pollInterval) throws InterruptedException, ApiException {
+    T result = initialValue;
+    while (jobIsRunning(jobReportExtractor.apply(result))) {
+      Thread.sleep(pollInterval.toMillis());
+      result = operation.apply();
+    }
+    return result;
   }
 
   /** @return a generated unique resource name consisting of letters, numbers, and underscores. */
