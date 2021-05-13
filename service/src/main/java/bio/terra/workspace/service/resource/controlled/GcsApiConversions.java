@@ -179,10 +179,9 @@ public class GcsApiConversions {
     resultBuilder.setIsLive(condition.isLive());
 
     resultBuilder.setMatchesStorageClass(
-        condition.getMatchesStorageClass().stream()
-            .map(GcsApiConversions::toGcsApi)
-            .collect(Collectors.toList()));
-
+        Optional.ofNullable(condition.getMatchesStorageClass())
+            .map(sc -> sc.stream().map(GcsApiConversions::toGcsApi).collect(Collectors.toList()))
+            .orElse(null)); // need to keep null for update semantics
     return resultBuilder.build();
   }
 
@@ -193,9 +192,9 @@ public class GcsApiConversions {
         .numNewerVersions(condition.getNumberOfNewerVersions())
         .live(condition.getIsLive())
         .matchesStorageClass(
-            condition.getMatchesStorageClass().stream()
-                .map(GcsApiConversions::toWsmApi)
-                .collect(Collectors.toList()));
+            Optional.ofNullable(condition.getMatchesStorageClass())
+                .map(c -> c.stream().map(GcsApiConversions::toWsmApi).collect(Collectors.toList()))
+                .orElse(null));
   }
 
   @VisibleForTesting
