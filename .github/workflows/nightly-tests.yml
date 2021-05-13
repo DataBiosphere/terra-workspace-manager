@@ -80,7 +80,7 @@ jobs:
         run: |
           L2="Integration: ${{ steps.integration-test.outcome }} "
           L3="Perf: ${{ steps.perf-test.outcome }} "
-          L4="Resiliency : ${{ steps.resiliency-test.outcome }}"
+          L4="Resiliency: ${{ steps.resiliency-test.outcome }}"
           text="Link to <https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID|test run>"
           bold="$L2$L3$L4"
           echo ::set-output name=status-text::$text
