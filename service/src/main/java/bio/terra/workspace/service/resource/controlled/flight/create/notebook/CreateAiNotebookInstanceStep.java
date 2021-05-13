@@ -89,6 +89,10 @@ public class CreateAiNotebookInstanceStep implements Step {
           logger.debug("Notebook instance {} already created.", instanceName.formatName());
           return StepResult.getStepResultSuccess();
         }
+        if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()) {
+          // Don't retry bad requests, which won't change. Instead fail faster.
+          return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+        }
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
 
