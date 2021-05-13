@@ -64,7 +64,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     // 'testUser'.
     assertThat(
         "There must be at least three test users defined for this test.",
-        testUsers != null && testUsers.size() > 1);
+        testUsers != null && testUsers.size() > 2);
     this.resourceUser = testUsers.get(1);
     this.otherWorkspaceUser = testUsers.get(2);
     assertNotEquals(resourceUser.userEmail, otherWorkspaceUser.userEmail);
