@@ -1,0 +1,102 @@
+# This workflow will build a Java project with Gradle
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
+
+name: Nightly Tests
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 7 * * *' # run at 7 AM UTC, 2 AM ET.
+
+jobs:
+  nightly-tests:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up AdoptOpenJDK 11
+        uses: joschi/setup-jdk@v2
+        with:
+          java-version: 11
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
+          restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Get Vault token
+        id: vault-token-step
+        env:
+          VAULT_ADDR: https://clotho.broadinstitute.org:8200
+        run: |
+          VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
+            -e "VAULT_ADDR=${VAULT_ADDR}" \
+            vault:1.1.0 \
+            vault write -field token \
+              auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+              secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+          echo ::set-output name=vault-token::$VAULT_TOKEN
+          echo ::add-mask::$VAULT_TOKEN
+
+      - name: Run the integration test suite
+        id: integration-test
+        if: ${{ always() }}
+        uses: ./.github/actions/integration-test
+        with:
+          test-server: workspace-wsmtest.json
+          test: suites/FullIntegration.json
+          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+
+      - name: Run the perf test suite
+        id: perf-test
+        if: ${{ always() }}
+        uses: ./.github/actions/integration-test
+        with:
+          test-server: workspace-wsmtest.json
+          test: suites/BasicPerf.json
+          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+
+      - name: Run the resiliency test suite
+        id: resiliency-test
+        if: ${{ always() }}
+        uses: ./.github/actions/integration-test
+        with:
+          test-server: workspace-wsmtest.json
+          test: suites/BasicResiliency.json
+          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+
+      - name: Compose status message
+        if: ${{ always() }}
+        id: status-message
+        run: |
+          L2="Integration: ${{ steps.integration-test.outcome }} "
+          L3="Perf: ${{ steps.perf-test.outcome }} "
+          L4="Resiliency: ${{ steps.resiliency-test.outcome }}"
+          text="Link to <https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID|test run>"
+          bold="$L2$L3$L4"
+          echo ::set-output name=status-text::$text
+          echo ::set-output name=status-bold::$bold
+
+      - name: Notify WSM Slack
+        if: ${{ always() }}
+        # If we get tired of seeing successes, we can filter to only ping on failures
+        uses: broadinstitute/action-slack@v3.8.0
+        # see https://github.com/broadinstitute/action-slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          status: ${{ job.status }}
+          channel: "#terra-workspace-manager"
+          username: "WSM nightly test"
+          author_name: ${{ steps.status-message.outputs.status-bold }}
+          icon_emoji: ':vertical_traffic_light:'
+          text: ${{ steps.status-message.outputs.status-text }}
