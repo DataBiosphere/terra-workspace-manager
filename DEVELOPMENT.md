@@ -1,6 +1,47 @@
-# Getting Started with Workspace Manager
+# Developing Workspace Manager in the Broad Institute Environment
 
-Note: this document is being written during a time when code is rapidly evolving. It's possible that this will be out of date regularly but we should maintain it as best we can until development stabilizes.
+This document describes the nuts and bolts of developing on WSM in the Broad
+environment. Processes here rely on access to the Broad Vault server to get secrets and to
+the Broad Artifactory server to read and write libraries. There are dependencies on Broad
+Dev Ops github repositories and practices. Some of those are locked down, because the
+Broad deployment of Terra needs to maintain a FedRamp approval level in order to host US
+Government data.
+
+## OpenAPI V3 - formerly swagger
+A swagger-ui page is available at /swagger-ui.html on any running instance. For existing
+instances running in the Broad deployment, those are:
+
+- dev: https://workspace.dsde-dev.broadinstitute.org/swagger-ui.html
+- alpha: https://workspace.dsde-alpha.broadinstitute.org/swagger-ui.html
+- staging: https://workspace.dsde-staging.broadinstitute.org/swagger-ui.html
+- perf: https://workspace.dsde-perf.broadinstitute.org/swagger-ui.html
+- prod: https://workspace.dsde-prod.broadinstitute.org/swagger-ui.html 
+
+If you can't load any of the swagger pages, check that you are on **non-split** VPN before troubleshooting further.
+
+## GitHub Interactions
+
+We currently have these workflows:
+
+Workflow      | Triggers         | Work
+--------------|------------------|-------
+_test_ | on PR and merge to dev | runs the unit, connected and soon-to-be-removed integration tests
+_pr-integration_ | on PR and merge to dev | runs the TestRunner-based integration test suite from the GHA host VM
+_nightly-tests_ | nightly at 2am | runs the TestRunner-based integration, perf, and resiliency test suites on the wsmtest personal environment
+_tag-publish_ | on merge to dev | tags, version bumps, publishes client to artifactory, pushes image to GCR
+
+## Deployment
+
+To push versions of this repository to different environments (including per-developer
+integration environments), update the
+[terra-helmfile deployment definitions](https://github.com/broadinstitute/terra-helmfile). 
+
+### On commit to dev
+1. New commit is merged to dev
+2. [The tag-publish workflow](https://github.com/DataBiosphere/terra-workspace-manager/blob/dev/.github/workflows/tag-publish.yml) is triggered. It builds the image, tags the image & commit, and pushes the image to GCR. It then sends a [dispatch](https://help.github.com/en/actions/reference/events-that-trigger-workflows#external-events-repository_dispatch) with the new version for the service to the [terra-helmfile repo](https://github.com/broadinstitute/terra-helmfile).
+3. This updates the default [version mapping for the app in question](https://github.com/broadinstitute/terra-helmfile/blob/master/versions.yaml).
+4. [Our deployment of ArgoCD](https://ap-argocd.dsp-devops.broadinstitute.org/applications) monitors the above repo, and any environments in which the app is set to auto-sync will immediately pick up the new version of the image. If the app is not set to auto-sync in an environment, it can be manually synced via the ArgoCD UI or API.
+
 
 ## Setup
 
@@ -27,11 +68,14 @@ Note: this document is being written during a time when code is rapidly evolving
     ```
 - Recommended: read the [README](README.md) to understand the general structure of the service
 
-**NOTE**: You may encounter issues with the application when running an unexpected version of Java. So make sure you are running `AdoptOpenJDK Java 11 (Hotspot)` as specified above.     
+**NOTE**: You may encounter issues with the application when running an unexpected version of Java. So make sure you are running `AdoptOpenJDK Java 11 (Hotspot)` as specified above.
 
 
 ### Database Configuration
-Workspace Manager relies on two databases: one for the app itself, and one for Stairway. We will also need a DB for the unit tests.
+Workspace Manager Service relies on a Postgresql database server containing two databases:
+one for the service itself, and one for
+[Stairway](https://github.com/DataBiosphere/stairway). There are two options for running
+the Postgres server
 
 #### Option A: Docker Postgres
 ##### Running the Postgres Container
@@ -65,8 +109,14 @@ At some point, we will connect this to a CloudSQL instance but for local dev pur
 ### IntelliJ Setup
 
 1. Open the repo normally (File -> Open)
-2. In project structure (the folder icon with a little tetromino over it in the upper right corner), make sure the project SDK is set to Java 11. If not, IntelliJ should detect it on your system in the dropdown, otherwise click "Add JDK..." and navigate to the folder from the last step.
-3. See some optional tips below in the ["Tips"](#tips) section.
+2. In project structure (the folder icon with a little tetromino over it in the upper
+   right corner), make sure the project SDK is set to Java 11. If not, IntelliJ should
+   detect it on your system in the dropdown, otherwise click "Add JDK..." and navigate to
+   the folder from the last step.
+3. Set up [google-java-format](https://github.com/google/google-java-format). We use the
+   spotless checker to force code to a standard format. Installing the IntelliJ plug-in
+   and library makes it easier to get it in the right format from the start.
+4. See some optional tips below in the ["Tips"](#tips) section.
 
 ## Running
 
@@ -75,27 +125,27 @@ At some point, we will connect this to a CloudSQL instance but for local dev pur
 To run unit tests:
 
 ```sh
-./gradlew unitTest
+cd service
+../gradlew unitTest
 ```
   
 To run connected tests:
 
-```shell script
+```sh
+cd service
 ./render_config.sh # First time only
-./gradlew connectedTest
+../gradlew connectedTest
 ```
-To run integration tests: (see **NOTE** below)
+To run the old JUnit integration tests: (see **NOTE** below)
 
 ```sh
+cd service
 ./render_config.sh # First time only
-./gradlew integrationTest
+../gradlew integrationTest
 ```
  
-To run all tests:
+Learn to run the Test Runner integration tests by reading [Integration README](integration/README.md)
 
-```sh
-./gradlew test
-```
 
 **NOTE** (Some of this will likely change as we grow integration tests). Integration test assumes that:
 1. You have generated an access token from GitHub and saved the token in your home directory with the filename `.vault-token`
@@ -103,57 +153,57 @@ To run all tests:
 3. Test user has been registered in an existing WSM environment. Currently, the test user is registered in `dev` environment where WSM is currently deployed. You don't need to take any action in this step, unless the dev environment changes for some reason and the user no longer exists there. 
 
 
-### Running Workspace Manager
+### Running Workspace Manager Locally
 
-To run locally, you'll first need to render configs (if you haven't already): 
+To run locally, you'll first need to render configs (if you haven't already)
+and then launch the application:
 
 ```sh
+cd service
 ./render_config.sh # First time only
+../gradlew bootRun
 ```
 
-To run the application:
-
-```sh
-./gradlew bootRun
-```
-
-Then navigate to the Swagger:  
-http://localhost:8080/swagger-ui.html
+Then navigate to the Swagger: http://localhost:8080/swagger-ui.html
 
 
-## Publishing
+## Publishing and Versioning
 
-New versions of the WSM client library need to be published manually. You should
- publish a new version of the client library alongside any changes to WSM's 
- visible interface (generally, any changes to [our API specification](src/main/resources/api/service_openapi.yaml)).
- Until you follow these steps, API changes may cause failures in automated client tests that run against your PR.
+New versions of the WSM client library are automatically published with each merge to the
+dev branch. Since we publish very frequently, and Broad Dev Ops needs specific versions to
+track through the release process, we use a variation of semantic versioning.
 
-To publish a new version of the client library:
-1. Make your changes locally. Verify that client tests run using a local client 
-JAR and local server pass ([see client test README](integration/README.md#local-testing)). If your changes are part of a PR, have the PR reviewed.
-1. Bump the version number in the `allprojects.version` field of [build.gradle](build.gradle).
-Compatible changes should be a change to the minor or patch version. 
-Backwards-incompatible changes should change the major version. Try to avoid 
-backwards incompatible changes.
-1. Publish the new client library to Artifactory ([instructions here](workspace-manager-client/README.md)). This requires
-Vault access.
-1. Update the client tests to use the newly-published version by modifying the 
-`dependencies.ext.workspaceManagerClient` field of the [Test Runner buildfile](integration/build.gradle).
-1. After the previous step, automated client tests on your PR should pass. Once 
-they do, and you have approvals, merge your changes.
+By default, the patch version is incremented after each merge to dev. You can cause other
+parts of the version to be changed as follows.
+- To bump the minor version, put the string `#minor` in your commit message. The minor
+version will be incremented and the patch version will be set to 0: `major.minor.0`
+- To bump the major version, put the string `#major` in your commit message. The minor and
+patch versions will be set to 0: `major.0.0`.
 
-### Other
+In addition, you can manually trigger the `tag-publish` github action and specify the part
+of the version to change.
 
-You may also want to periodically rebuild and refresh any auto-generated code:
+### Compatible Changes of Significance
 
-```sh
-./gradlew clean build -x test
-```
+We should bump the minor version number when releasing significant features that are
+backward compatible.
 
-TODO: It would be nice to have a kickstart script that new devs can run that configures much of this, but for now it will be documented here to help us know what should be scripted/simplified.
+### Incompatible Changes
+
+Incompatible changes require incrementing the major version number. In our current state
+of development, we are allowing for some incompatible API changes in the feature-locked
+parts of the API without releasing a version `1.0.0`.
 
 ### Tips
-- Check out [gdub](https://github.com/gdubw/gdub), it'll save you typing `./gradlew` over and over, and also takes care of knowing when you're not in the root directory so you don't have to figure out the appropriate number of `../`s.
-- In IntelliJ, instead of running the local server with `bootRun`, use the `Main` Spring Boot configuration that IntelliJ auto-generates. To edit it, click on it (in the upper right of the window), and click `Edit Configurations`.
+- Check out [gdub](https://github.com/gdubw/gdub), it'll save you typing `./gradlew` over
+  and over, and also takes care of knowing when you're not in the root directory so you
+  don't have to figure out the appropriate number of `../`s. 
+- In IntelliJ, instead of running the local server with `bootRun`, use the `Main` Spring
+  Boot configuration that IntelliJ auto-generates. To edit it, click on it (in the upper
+  right of the window), and click `Edit Configurations`. 
     - For readable logs, put `human-readable-logging` in the `Active Profiles` field. 
-    - You can get live-ish reloading of for the local Swagger UI by adding the following override parameter: `spring.resources.static-locations:file:src/main/resources/api`. It's not true live reloading, you still have to refresh the browser, but at least you don't have to restart the server.
+    - You can get live-ish reloading of for the local Swagger UI by adding the following
+      override parameter:
+      `spring.resources.static-locations:file:src/main/resources/api`. It's not true live
+      reloading, you still have to refresh the browser, but at least you don't have to
+      restart the server. 

@@ -1,5 +1,25 @@
 # Hotfix Process
 
+## Preparing The Release Candidate
+
+1) Clone the repository
+2) Checkout the version-tagged branch of the repository you need to fix. The tags are the same
+as the software version numbers. You will typically want the version running in production.
+```shell script
+git checkout <tag>
+```
+3) Create a hotfix branch from that version. Make the name start with "hotfix", so that
+the automatic version process will make a hotfix version.
+```shell script
+git checkout -b hotfix-PF-1234
+``` 
+4) Make your fix and test it in the usual way. When it is ready, push it to the repo.
+5) Manually run the `tag-publish` workflow to build and publish your hotfix. You can accept
+the default for `bump` input. Since you are in a hotfix branch it will be ignored. Supply your
+branch name for the `branch` input.
+
+## Delivering The Hotfix
+
 1) `gcloud auth login` as an account that has push access to gcr.io/terra-kernel-k8s, likely your @broadinstitute.org account
 
 2) Run `gcloud auth configure-docker`
