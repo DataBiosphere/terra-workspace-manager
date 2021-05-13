@@ -89,8 +89,6 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         ClientTestUtils.getControlledGcpResourceClient(resourceUser, server);
     CreatedControlledGcpAiNotebookInstanceResult creationResult =
         createPrivateNotebook(resourceUser, resourceUserApi);
-    logger.info("Instance creation started for instanceId {}",
-        creationResult.getAiNotebookInstance().getAttributes().getInstanceId());
     String creationJobId = creationResult.getJobReport().getId();
     creationResult = ClientTestUtils.pollWhileRunning(
         creationResult,
