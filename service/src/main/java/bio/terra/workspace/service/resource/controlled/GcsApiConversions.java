@@ -8,8 +8,6 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleActionTyp
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import com.google.api.client.util.DateTime;
-//import com.google.api.services.storage.model.Bucket.Lifecycle;
-//import com.google.api.services.storage.model.Bucket.Lifecycle.Rule;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.DeleteLifecycleAction;
@@ -45,27 +43,46 @@ public class GcsApiConversions {
 
   /**
    * Convert to update parameters, which are a subset of creation parameters
+   *
    * @param bucketInfo - GCS API-proivded BucketInfo instance
    * @return - populated parameters object
    */
   public static ApiGcpGcsBucketUpdateParameters toUpdateParameters(BucketInfo bucketInfo) {
     return new ApiGcpGcsBucketUpdateParameters()
-        .lifecycle(new ApiGcpGcsBucketLifecycle()
-          .rules(toWsmApiRulesList(bucketInfo)))
-          .defaultStorageClass(toWsmApi(bucketInfo.getStorageClass()));
+        .lifecycle(new ApiGcpGcsBucketLifecycle().rules(toWsmApiRulesList(bucketInfo)))
+        .defaultStorageClass(toWsmApi(bucketInfo.getStorageClass()));
   }
 
-  public static StorageClass toGcsApi(ApiGcpGcsBucketDefaultStorageClass storageClass) {
+  // If input is null, return null, as we need the null value preserved in case it's not there.
+  // This prevents a null check at the call site at the expense of an extra clause here.
+  // Returns either null, if no input, the correct StorageClass, if found, or throws
+  // IllegalStateException if the storage class given isn't in the map.
+  @Nullable
+  public static StorageClass toGcsApi(@Nullable ApiGcpGcsBucketDefaultStorageClass storageClass) {
+    if (storageClass == null) {
+      return null;
+    }
     return Optional.ofNullable(STORAGE_CLASS_MAP.get(storageClass))
         .orElseThrow(() -> new IllegalStateException("Unrecognized storage class " + storageClass));
   }
 
-  public static ApiGcpGcsBucketDefaultStorageClass toWsmApi(StorageClass storageClass) {
+  @Nullable
+  public static ApiGcpGcsBucketDefaultStorageClass toWsmApi(@Nullable StorageClass storageClass) {
+    if (storageClass == null) {
+      return null;
+    }
     return Optional.ofNullable(STORAGE_CLASS_MAP.inverse().get(storageClass))
         .orElseThrow(() -> new IllegalStateException("Unrecognized storage class " + storageClass));
   }
 
-  public static List<LifecycleRule> toGcsApiRulesList(ApiGcpGcsBucketLifecycle lifecycle) {
+  // Deliberately return a null collection, because we're working with an API convention
+  // where null means "no change", but an empty list would mean "wipe out this list".
+  @Nullable
+  public static List<LifecycleRule> toGcsApiRulesList(
+      @Nullable ApiGcpGcsBucketLifecycle lifecycle) {
+    if (lifecycle == null) {
+      return null;
+    }
     return lifecycle.getRules().stream()
         .map(GcsApiConversions::toGcsApi)
         .collect(Collectors.toList());

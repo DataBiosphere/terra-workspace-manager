@@ -46,7 +46,8 @@ public class RetrieveGcsBucketCloudAttributesStep implements Step {
 
     // get the attributes
     final BucketInfo existingBucketInfo = existingBucketCow.getBucketInfo();
-    final ApiGcpGcsBucketUpdateParameters existingUpdateParameters = GcsApiConversions.toUpdateParameters(existingBucketInfo);
+    final ApiGcpGcsBucketUpdateParameters existingUpdateParameters =
+        GcsApiConversions.toUpdateParameters(existingBucketInfo);
     workingMap.put(ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, existingUpdateParameters);
 
     return StepResult.getStepResultSuccess();

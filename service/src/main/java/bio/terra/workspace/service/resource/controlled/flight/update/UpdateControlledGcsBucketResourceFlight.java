@@ -34,9 +34,9 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
     // retrieve existing attributes in case of undo later
     addStep(
         new RetrieveGcsBucketCloudAttributesStep(
-        resource.castToGcsBucketResource(),
-        flightBeanBag.getCrlService(),
-        flightBeanBag.getWorkspaceService()));
+            resource.castToGcsBucketResource(),
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getWorkspaceService()));
 
     // Update the bucket's cloud attributes
     addStep(

@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.flight.update;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_PARAMETERS;
 
@@ -17,7 +16,6 @@ import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResour
 import bio.terra.workspace.service.resource.controlled.GcsApiConversions;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.cloud.storage.BucketInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,8 +55,7 @@ public class UpdateGcsBucketStep implements Step {
         workspaceService.getRequiredGcpProject(bucketResource.getWorkspaceId());
     final BucketInfo bucketInfo =
         BucketInfo.newBuilder(bucketResource.getBucketName())
-            .setStorageClass(
-                GcsApiConversions.toGcsApi(updateParameters.getDefaultStorageClass()))
+            .setStorageClass(GcsApiConversions.toGcsApi(updateParameters.getDefaultStorageClass()))
             .setLifecycleRules(GcsApiConversions.toGcsApiRulesList(updateParameters.getLifecycle()))
             .build();
 
