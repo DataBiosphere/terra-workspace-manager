@@ -12,6 +12,7 @@
     "integration/ControlledGcsBucketLifecycle.json",
     "integration/ControlledBigQueryDatasetLifecycle.json",
     "integration/PrivateControlledGcsBucketLifecycle.json",
+    "integration/PrivateControlledAiNotebookInstanceLifecycle.json",
     "integration/EnumerateResources.json"
   ]
 }
