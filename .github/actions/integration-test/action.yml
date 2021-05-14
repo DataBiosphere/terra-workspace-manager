@@ -16,14 +16,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Set permissions and render test configurations
-      run: |
-        cd service
-        chmod +x render_config.sh
-        ./render_config.sh dev ${{ inputs.vault-token }}
-        chmod +r rendered
-      shell: bash
-
     # We run the test as one script, collecting the test result
     - name: Run the test
       id: test-run

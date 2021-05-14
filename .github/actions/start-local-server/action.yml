@@ -1,0 +1,33 @@
+name: 'start-local-server'
+description: 'Launch a bootrun server'
+author: 'dd'
+outputs:
+  bootrunpid:
+    description: 'pid of the bootRun process'
+    value: ${{ steps.launch.outputs.bootrunpid }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Launch the background process
+      id: launch
+      run: |
+        ./gradlew :service:bootRun --args='--spring.profiles.include=human-readable-logging' | tee bootrun.log &
+        bootrunpid=$!
+        disown $bootrunpid
+        echo "Launched WSM service pid $bootrunpid"
+        echo "::set-output name=bootrunpid::$bootrunpid"
+      shell: bash
+
+    - name: Wait for boot run to be ready
+      id: wait-for-ready
+      run: |
+        timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
+        resultStatus=$(echo > /dev/tcp/localhost/8080; echo $?)
+        if [[ $resultStatus != 0 ]]
+        then
+          echo "Server did not start successfully. Dumping log file"
+          cat bootrun.log
+          exit $resultStatus
+        fi
+      shell: bash

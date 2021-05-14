@@ -120,15 +120,14 @@ jobs:
         ./render_config.sh ${{ steps.set-env-step.outputs.config-env }} ${{ steps.vault-token-step.outputs.vault-token }}
         chmod +r rendered
 
-      # Only integration tests need a running server
-    - name: Run local server (in background)
-      if: steps.set-env-step.outputs.local-server == 'true'
-      run: ./gradlew :service:bootRun &
+    - name: Render config
+      uses: ./.github/actions/render-config
+      with:
+        vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
-    - name: Wait for local server to start
+    - name: Launch local server, if needed
       if: steps.set-env-step.outputs.local-server == 'true'
-      # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
-      run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
+      uses: ./.github/actions/start-local-server
 
       # Run tests
     - name: Run tests
@@ -147,7 +146,7 @@ jobs:
         coverage-reports: service/build/reports/jacoco/test/jacoco.xml
 
     - name: Upload Test Reports
-      if: ${{ always() }}
+      if: always()
       uses: actions/upload-artifact@v1
       with:
         name: Test Reports
