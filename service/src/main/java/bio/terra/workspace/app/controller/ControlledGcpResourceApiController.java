@@ -175,6 +175,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   @Override
   public ResponseEntity<ApiGcpGcsBucketResource> updateGcsBucket(
       UUID workspaceId, UUID resourceId, @Valid ApiUpdateControlledGcpGcsBucketRequestBody body) {
+    logger.info("Updating bucket resourceId {} workspaceId {}", resourceId, workspaceId);
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ApiJobControl jobControl = body.getJobControl();
     final ControlledResource resource =

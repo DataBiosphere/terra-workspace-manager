@@ -22,9 +22,11 @@ import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleAction;
 import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleActionType;
 import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GcpGcsBucketUpdateParameters;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ManagedBy;
+import bio.terra.workspace.model.UpdateControlledGcpGcsBucketRequestBody;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
@@ -33,6 +35,7 @@ import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -45,6 +48,7 @@ import scripts.utils.ResourceMaker;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBase {
+
   private static final Logger logger = LoggerFactory.getLogger(ControlledGcsBucketLifecycle.class);
 
   private static final GcpGcsBucketLifecycleRule LIFECYCLE_RULE_1 =
@@ -81,10 +85,26 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
   private static final String RESOURCE_PREFIX = "wsmtestresource-";
   private static final String GCS_BLOB_NAME = "wsmtestblob-name";
   private static final String GCS_BLOB_CONTENT = "This is the content of a text file.";
+  public static final String UPDATED_RESOURCE_NAME = "new_resource_name";
+  public static final String UPDATED_DESCRIPTION = "A bucket with a hole in it. We should probably just delete it.";
 
   private TestUserSpecification reader;
   private String bucketName;
   private String resourceName;
+  public static final GcpGcsBucketUpdateParameters UPDATE_PARAMETERS = new GcpGcsBucketUpdateParameters()
+      .defaultStorageClass(GcpGcsBucketDefaultStorageClass.STANDARD)
+      .lifecycle(new GcpGcsBucketLifecycle()
+          .addRulesItem(new GcpGcsBucketLifecycleRule()
+              .action(new GcpGcsBucketLifecycleRuleAction()
+                  .type(GcpGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS)
+                  .storageClass(GcpGcsBucketDefaultStorageClass.ARCHIVE))
+              .condition(new GcpGcsBucketLifecycleRuleCondition()
+                  .age(30)
+                  .createdBefore(OffsetDateTime
+                      .parse("1981-04-20T21:15:30-05:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+                  .live(true)
+                  .numNewerVersions(3)
+                  .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.ARCHIVE))));
 
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
@@ -110,7 +130,8 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     // Create a user-shared controlled GCS bucket - should fail due to no cloud context
     ApiException createBucketFails =
         assertThrows(ApiException.class, () -> createBucketAttempt(resourceApi));
-    assertEquals(createBucketFails.getCode(), HttpStatusCodes.STATUS_CODE_BAD_REQUEST);
+    // FIXME
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, createBucketFails.getCode());
     logger.info("Failed to create bucket, as expected");
 
     // Create the cloud context
@@ -194,6 +215,12 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     ownerStorageClient.delete(blobId);
     logger.info("Owner successfully deleted blob {}", blobId.getName());
 
+    // Update the bucket
+    final GcpGcsBucketResource resource = updateBucketAttempt(resourceApi, bucket.getResourceId());
+    assertEquals(UPDATED_RESOURCE_NAME, resource.getMetadata().getName());
+    assertEquals(UPDATED_DESCRIPTION, resource.getMetadata().getDescription());
+    // additional details must be verified with gsutil or in the cloud console, as we don't return them
+
     // Reader cannot delete the bucket directly
     StorageException readerCannotDeleteBucket =
         assertThrows(
@@ -260,6 +287,16 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
 
     logger.info("Attempting to create bucket {} workspace {}", bucketName, getWorkspaceId());
     return resourceApi.createBucket(body, getWorkspaceId());
+  }
+
+  private GcpGcsBucketResource updateBucketAttempt(ControlledGcpResourceApi resourceApi, UUID resourceId)
+    throws ApiException {
+    var body = new UpdateControlledGcpGcsBucketRequestBody()
+        .name(UPDATED_RESOURCE_NAME)
+        .description(UPDATED_DESCRIPTION)
+        .updateParameters(UPDATE_PARAMETERS);
+    logger.info("Attempting to update bucket {} resource ID {} workspace {}", bucketName, resourceId, getWorkspaceId());
+    return resourceApi.updateGcsBucket(body, getWorkspaceId(), resourceId);
   }
 
   @Override
