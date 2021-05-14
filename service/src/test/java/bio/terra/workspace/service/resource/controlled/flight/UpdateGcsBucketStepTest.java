@@ -22,7 +22,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateGcsBucketStep;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -43,16 +42,16 @@ import org.mockito.Mock;
 public class UpdateGcsBucketStepTest extends BaseUnitTest {
   private static final String PROJECT_ID = "my-gcp-project";
 
-  private ControlledGcsBucketResource bucketResource;
   private UpdateGcsBucketStep updateGcsBucketStep;
-  @Mock private FlightContext mockFlightContext;
-  @Mock private CrlService mockCrlService;
-  @Mock private StorageCow mockStorageCow;
-  @Mock private AuthenticatedUserRequest mockUserRequest;
-  @Mock private WorkspaceService mockWorkspaceService;
+
   @Mock private BucketCow mockBucketCow;
   @Mock private BucketCow mockBuiltBucketCow;
   @Mock private BucketCow.Builder mockBucketCowBuilder;
+  @Mock private CrlService mockCrlService;
+  @Mock private FlightContext mockFlightContext;
+  @Mock private StorageCow mockStorageCow;
+  @Mock private WorkspaceService mockWorkspaceService;
+
   @Captor private ArgumentCaptor<List<LifecycleRule>> lifecycleRulesCaptor;
   @Captor private ArgumentCaptor<StorageClass> storageClassCaptor;
 
@@ -78,7 +77,8 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
 
     doReturn(mockBuiltBucketCow).when(mockBucketCowBuilder).build();
 
-    bucketResource = makeDefaultControlledGcsBucketResource().build();
+    final ControlledGcsBucketResource bucketResource =
+        makeDefaultControlledGcsBucketResource().build();
     doReturn(PROJECT_ID)
         .when(mockWorkspaceService)
         .getRequiredGcpProject(bucketResource.getWorkspaceId());
@@ -121,5 +121,31 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
     assertTrue(rule2condition.getIsLive());
     assertThat(rule2condition.getMatchesStorageClass(), hasSize(1));
     assertEquals(StorageClass.ARCHIVE, rule2condition.getMatchesStorageClass().get(0));
+  }
+
+  @Test
+  public void testUndoStep() throws InterruptedException, RetryException {
+    final StepResult result = updateGcsBucketStep.undoStep(mockFlightContext);
+    verify(mockBuiltBucketCow).update();
+    assertEquals(StepResult.getStepResultSuccess(), result);
+
+    final StorageClass storageClass = storageClassCaptor.getValue();
+    assertEquals(StorageClass.NEARLINE, storageClass);
+
+    final List<LifecycleRule> rules = lifecycleRulesCaptor.getValue();
+    assertThat(rules, hasSize(1));
+
+    final LifecycleAction action = rules.get(0).getAction();
+    assertEquals(SetStorageClassLifecycleAction.TYPE, action.getActionType());
+    assertEquals(
+        StorageClass.COLDLINE, ((SetStorageClassLifecycleAction) action).getStorageClass());
+
+    final LifecycleCondition condition = rules.get(0).getCondition();
+    assertEquals(45, condition.getAge());
+    assertEquals(toGoogleDateTime(OFFSET_DATE_TIME_2), condition.getCreatedBefore());
+    assertEquals(1, condition.getNumberOfNewerVersions());
+    assertTrue(condition.getIsLive());
+    assertThat(condition.getMatchesStorageClass(), hasSize(1));
+    assertEquals(StorageClass.STANDARD, condition.getMatchesStorageClass().get(0));
   }
 }
