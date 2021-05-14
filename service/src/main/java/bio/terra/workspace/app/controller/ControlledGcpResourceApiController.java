@@ -188,8 +188,6 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         controlledResourceService.updateGcsBucket(
             bucketResource, body.getUpdateParameters(), userRequest, jobControl);
 
-    // create an UpdateControlledResourceFlight object
-
     // Retrieve and cast response to UpdateControlledGcpGcsBucketResponse
 
     return controlledResourceToResponseEntity(
