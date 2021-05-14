@@ -15,7 +15,6 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.SetStorageClassLifecycleAction;
 import com.google.cloud.storage.StorageClass;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import java.time.Duration;
@@ -51,6 +50,22 @@ public class GcsApiConversions {
     return new ApiGcpGcsBucketUpdateParameters()
         .lifecycle(new ApiGcpGcsBucketLifecycle().rules(toWsmApiRulesList(bucketInfo)))
         .defaultStorageClass(toWsmApi(bucketInfo.getStorageClass()));
+  }
+
+  /**
+   * build an incomplete BucketInfo object corresponding to the fields to be updated TODO: add
+   * conversion to/from creation parameters as well
+   *
+   * @param bucketName - existing name for the bucket
+   * @param updateParameters - update structure. Null field means no change.
+   * @return
+   */
+  public static BucketInfo toBucketInfo(
+      String bucketName, ApiGcpGcsBucketUpdateParameters updateParameters) {
+    return BucketInfo.newBuilder(bucketName)
+        .setStorageClass(toGcsApi(updateParameters.getDefaultStorageClass()))
+        .setLifecycleRules(toGcsApiRulesList(updateParameters.getLifecycle()))
+        .build();
   }
 
   // If input is null, return null, as we need the null value preserved in case it's not there.
@@ -174,7 +189,7 @@ public class GcsApiConversions {
     /* TODO(PF-506): some conditions aren't in the version of the Google Storage API in the
      *    latest version of the CRL. */
     resultBuilder.setAge(condition.getAge());
-    resultBuilder.setCreatedBefore(toDateTime(condition.getCreatedBefore()));
+    resultBuilder.setCreatedBefore(toGoogleDateTime(condition.getCreatedBefore()));
     resultBuilder.setNumberOfNewerVersions(condition.getNumNewerVersions());
     resultBuilder.setIsLive(condition.isLive());
 
@@ -197,9 +212,8 @@ public class GcsApiConversions {
                 .orElse(null));
   }
 
-  @VisibleForTesting
   @Nullable
-  static DateTime toDateTime(@Nullable OffsetDateTime offsetDateTime) {
+  public static DateTime toGoogleDateTime(@Nullable OffsetDateTime offsetDateTime) {
     if (offsetDateTime == null) {
       return null;
     }
@@ -209,9 +223,8 @@ public class GcsApiConversions {
             Duration.ofSeconds(offsetDateTime.getOffset().getTotalSeconds()).toMinutes()));
   }
 
-  @VisibleForTesting
   @Nullable
-  static OffsetDateTime toOffsetDateTime(@Nullable DateTime dateTime) {
+  public static OffsetDateTime toOffsetDateTime(@Nullable DateTime dateTime) {
     if (dateTime == null) {
       return null;
     }

@@ -22,6 +22,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateGcsBucketStep;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import com.google.api.client.util.DateTime;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
@@ -93,8 +94,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
             new LifecycleRule(
                 LifecycleAction.newSetStorageClassAction(StorageClass.NEARLINE),
                 LifecycleCondition.newBuilder()
-                    .setCreatedBefore(
-                        new com.google.api.client.util.DateTime("2017-02-18T00:00:00Z"))
+                    .setCreatedBefore(new DateTime("2017-02-18T00:00:00Z"))
                     .setMatchesStorageClass(List.of(StorageClass.STANDARD))
                     .build())));
   }

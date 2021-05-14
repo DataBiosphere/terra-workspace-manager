@@ -1,8 +1,21 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_EMPTY;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DATE_TIME_1;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DATE_TIME_2;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.GCS_BUCKET_INFO_1;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.GCS_DELETE_ACTION;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.GCS_LIFECYCLE_CONDITION_1;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.GCS_LIFECYCLE_RULE_1;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.GCS_SET_STORAGE_CLASS_ACTION;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.OFFSET_DATE_TIME_1;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.OFFSET_DATE_TIME_2;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.WSM_LIFECYCLE_RULE_CONDITION_1;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueBucketName;
 import static bio.terra.workspace.service.resource.controlled.GcsApiConversions.getStorageClass;
-import static bio.terra.workspace.service.resource.controlled.GcsApiConversions.toDateTime;
+import static bio.terra.workspace.service.resource.controlled.GcsApiConversions.toBucketInfo;
 import static bio.terra.workspace.service.resource.controlled.GcsApiConversions.toGcsApi;
+import static bio.terra.workspace.service.resource.controlled.GcsApiConversions.toGoogleDateTime;
 import static bio.terra.workspace.service.resource.controlled.GcsApiConversions.toOffsetDateTime;
 import static bio.terra.workspace.service.resource.controlled.GcsApiConversions.toUpdateParameters;
 import static bio.terra.workspace.service.resource.controlled.GcsApiConversions.toWsmApi;
@@ -14,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRule;
@@ -29,60 +43,13 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.SetStorageClassLifecycleAction;
 import com.google.cloud.storage.StorageClass;
-import com.google.common.collect.ImmutableList;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 public class GcsApiConversionsTest extends BaseUnitTest {
-  private static final OffsetDateTime OFFSET_DATE_TIME_1 =
-      OffsetDateTime.parse("2017-12-03T10:15:30+01:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-  private static final OffsetDateTime OFFSET_DATE_TIME_2 =
-      OffsetDateTime.parse("2017-12-03T10:15:30-05:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-  private static final DateTime DATE_TIME_1 = DateTime.parseRfc3339("1985-04-12T23:20:50.52Z");
-  private static final DateTime DATE_TIME_2 = DateTime.parseRfc3339("1996-12-19T16:39:57-08:00");
-
-  private static final ApiGcpGcsBucketLifecycleRuleCondition WSM_LIFECYCLE_RULE_CONDITION_1 =
-      new ApiGcpGcsBucketLifecycleRuleCondition()
-          .age(31)
-          .createdBefore(OFFSET_DATE_TIME_2)
-          .numNewerVersions(3)
-          .live(true)
-          .matchesStorageClass(
-              ImmutableList.of(
-                  ApiGcpGcsBucketDefaultStorageClass.ARCHIVE,
-                  ApiGcpGcsBucketDefaultStorageClass.STANDARD));
-  // leave a couple of things unspecified
-  private static final LifecycleCondition GCS_LIFECYCLE_CONDITION_1 =
-      LifecycleCondition.newBuilder()
-          .setAge(42)
-          .setIsLive(false)
-          .setNumberOfNewerVersions(2)
-          .build();
-  private static final LifecycleCondition GCS_LIFECYCLE_CONDITION_2 =
-      LifecycleCondition.newBuilder()
-          .setAge(30)
-          .setIsLive(true)
-          .setCreatedBefore(DATE_TIME_2)
-          .setMatchesStorageClass(ImmutableList.of(StorageClass.ARCHIVE, StorageClass.COLDLINE))
-          .build();
-  private static final LifecycleAction GCS_DELETE_ACTION = LifecycleAction.newDeleteAction();
-  private static final LifecycleAction GCS_SET_STORAGE_CLASS_ACTION =
-      LifecycleAction.newSetStorageClassAction(StorageClass.STANDARD);
-
-  private static final LifecycleRule GCS_LIFECYCLE_RULE_1 =
-      new LifecycleRule(GCS_DELETE_ACTION, GCS_LIFECYCLE_CONDITION_1);
-  private static final LifecycleRule GCS_LIFECYCLE_RULE_2 =
-      new LifecycleRule(GCS_SET_STORAGE_CLASS_ACTION, GCS_LIFECYCLE_CONDITION_2);
-
-  private static final BucketInfo GCS_BUCKET_INFO_1 =
-      BucketInfo.newBuilder("my-bucket")
-          .setStorageClass(StorageClass.STANDARD)
-          .setLifecycleRules(ImmutableList.of(GCS_LIFECYCLE_RULE_1, GCS_LIFECYCLE_RULE_2))
-          .build();
 
   @Test
   public void testToUpdateParameters() {
@@ -100,6 +67,29 @@ public class GcsApiConversionsTest extends BaseUnitTest {
     assertEquals(
         ApiGcpGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS, rule2.getAction().getType());
     assertEquals(ApiGcpGcsBucketDefaultStorageClass.STANDARD, rule2.getAction().getStorageClass());
+  }
+
+  @Test
+  public void testToBucketInfo() {
+    final String bucketName = uniqueBucketName();
+    final BucketInfo bucketInfo1 =
+        toBucketInfo(bucketName, ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_1);
+    assertEquals(bucketName, bucketInfo1.getName());
+    assertEquals(StorageClass.STANDARD, bucketInfo1.getStorageClass());
+    assertThat(bucketInfo1.getLifecycleRules(), hasSize(2));
+    final LifecycleRule gcsRule1 = bucketInfo1.getLifecycleRules().get(0);
+    assertEquals(DeleteLifecycleAction.TYPE, gcsRule1.getAction().getActionType());
+    assertEquals(31, gcsRule1.getCondition().getAge());
+    assertEquals(toGoogleDateTime(OFFSET_DATE_TIME_2), gcsRule1.getCondition().getCreatedBefore());
+    assertTrue(gcsRule1.getCondition().getIsLive());
+    assertThat(gcsRule1.getCondition().getMatchesStorageClass(), hasSize(2));
+  }
+
+  @Test
+  public void testToBucketInfoNullFields() {
+    final BucketInfo bucketInfo2 = toBucketInfo("bucket-name", BUCKET_UPDATE_PARAMETERS_EMPTY);
+    assertNull(bucketInfo2.getStorageClass());
+    assertNull(bucketInfo2.getLifecycleRules());
   }
 
   @Test
@@ -175,7 +165,7 @@ public class GcsApiConversionsTest extends BaseUnitTest {
     LifecycleCondition lifecycleCondition1 = toGcsApi(WSM_LIFECYCLE_RULE_CONDITION_1);
     assertEquals(WSM_LIFECYCLE_RULE_CONDITION_1.getAge(), lifecycleCondition1.getAge());
     assertEquals(
-        toDateTime(WSM_LIFECYCLE_RULE_CONDITION_1.getCreatedBefore()),
+        toGoogleDateTime(WSM_LIFECYCLE_RULE_CONDITION_1.getCreatedBefore()),
         lifecycleCondition1.getCreatedBefore());
     assertEquals(WSM_LIFECYCLE_RULE_CONDITION_1, toWsmApi(lifecycleCondition1));
 
@@ -188,13 +178,13 @@ public class GcsApiConversionsTest extends BaseUnitTest {
 
   @Test
   public void testToDateTime() {
-    assertNull(toDateTime(null));
+    assertNull(toGoogleDateTime(null));
 
-    final DateTime dateTime1 = toDateTime(OFFSET_DATE_TIME_1);
+    final DateTime dateTime1 = toGoogleDateTime(OFFSET_DATE_TIME_1);
     assertEquals(60, dateTime1.getTimeZoneShift());
     assertEquals(OFFSET_DATE_TIME_1.toInstant().toEpochMilli(), dateTime1.getValue());
 
-    final DateTime dateTime2 = toDateTime(OFFSET_DATE_TIME_2);
+    final DateTime dateTime2 = toGoogleDateTime(OFFSET_DATE_TIME_2);
     assertEquals(Duration.ofHours(-5).toMinutes(), dateTime2.getTimeZoneShift());
     assertEquals(OFFSET_DATE_TIME_2.toInstant().toEpochMilli(), dateTime2.getValue());
   }
@@ -214,10 +204,10 @@ public class GcsApiConversionsTest extends BaseUnitTest {
 
   @Test
   public void testRoundTrip() {
-    final OffsetDateTime offsetDateTime1 = toOffsetDateTime(toDateTime(OFFSET_DATE_TIME_1));
+    final OffsetDateTime offsetDateTime1 = toOffsetDateTime(toGoogleDateTime(OFFSET_DATE_TIME_1));
     assertEquals(OFFSET_DATE_TIME_1, offsetDateTime1);
 
-    final DateTime dateTime2 = toDateTime(toOffsetDateTime(DATE_TIME_2));
+    final DateTime dateTime2 = toGoogleDateTime(toOffsetDateTime(DATE_TIME_2));
     assertEquals(DATE_TIME_2, dateTime2);
   }
 }
