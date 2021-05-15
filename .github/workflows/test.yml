@@ -112,15 +112,8 @@ jobs:
         echo ::set-output name=vault-token::$VAULT_TOKEN
         echo ::add-mask::$VAULT_TOKEN
 
-    - name: Set permissions and render test configurations
-      if: matrix.gradleTask != 'unitTest'
-      run: |
-        cd service
-        chmod +x ./render_config.sh
-        ./render_config.sh ${{ steps.set-env-step.outputs.config-env }} ${{ steps.vault-token-step.outputs.vault-token }}
-        chmod +r rendered
-
     - name: Render config
+      if: matrix.gradleTask != 'unitTest'
       uses: ./.github/actions/render-config
       with:
         vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
@@ -133,7 +126,7 @@ jobs:
     - name: Run tests
       env:
         TEST_ENV: ${{ steps.set-env-step.outputs.test-env }}
-      run: ./gradlew :service:${{ matrix.gradleTask }} --scan
+      run: ./gradlew :service:${{ matrix.gradleTask }} --scan --stacktrace
 
     - name: Codacy Coverage Reporter
       if: matrix.gradleTask == 'unitTest'
