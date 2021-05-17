@@ -79,8 +79,8 @@ public class ControlledResourceService {
       ApiJobControl jobControl) {
     final String jobDescription =
         String.format(
-            "Update controlled resource %s; id %s; name %s",
-            resource.getResourceType(), resource.getResourceId(), resource.getName());
+            "Update controlled GCS Bucket resource %s; id %s; name %s",
+            resource.getBucketName(), resource.getResourceId(), resource.getName());
     final JobBuilder jobBuilder =
         jobService
             .newJob(

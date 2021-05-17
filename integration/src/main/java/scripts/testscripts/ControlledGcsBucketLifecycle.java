@@ -216,6 +216,9 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     logger.info("Owner successfully deleted blob {}", blobId.getName());
 
     // Update the bucket
+    logger.info("About to update the bucket {} resourceID {} workspace ID {}",
+        bucketName, bucket.getResourceId(), getWorkspaceId());
+
     final GcpGcsBucketResource resource = updateBucketAttempt(resourceApi, bucket.getResourceId());
     assertEquals(UPDATED_RESOURCE_NAME, resource.getMetadata().getName());
     assertEquals(UPDATED_DESCRIPTION, resource.getMetadata().getDescription());
