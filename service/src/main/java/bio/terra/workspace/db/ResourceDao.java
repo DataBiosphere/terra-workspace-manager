@@ -452,17 +452,6 @@ public class ResourceDao {
             .addValue("resource_type", resource.getResourceType().toSql())
             .addValue("cloning_instructions", resource.getCloningInstructions().toSql())
             .addValue("attributes", resource.attributesToJson());
-    logger.info(
-        "Creating resource workspace_id: {}, cloud_platform: {}, resource_id: {}, name: {}, description: {}, stewardship_type: {}, resource_type: {}, cloning_instructions: {}, attributes: {}",
-        resource.getWorkspaceId().toString(),
-        resource.getResourceType().getCloudPlatform().toString(),
-        resource.getResourceId().toString(),
-        resource.getName(),
-        resource.getDescription(),
-        resource.getStewardshipType().toSql(),
-        resource.getResourceType().toSql(),
-        resource.getCloningInstructions().toSql(),
-        resource.attributesToJson());
     if (resource.getStewardshipType().equals(CONTROLLED)) {
       ControlledResource controlledResource = resource.castToControlledResource();
       //noinspection deprecation
@@ -472,12 +461,6 @@ public class ResourceDao {
           // TODO: add associatedApp to ControlledResource
           .addValue("associated_app", null)
           .addValue("assigned_user", controlledResource.getAssignedUser().orElse(null));
-      logger.info(
-          "Resource also has controlled-resource specific parameters access_scope: {}, managed_by: {}, associated_app: {}, assigned_user: {}",
-          controlledResource.getAccessScope().toSql(),
-          controlledResource.getManagedBy().toSql(),
-          null,
-          controlledResource.getAssignedUser().orElse(null));
     } else {
       params
           .addValue("access_scope", null)
@@ -497,6 +480,33 @@ public class ResourceDao {
           String.format(
               "A resource already exists in the workspace that has the same name (%s) or the same id (%s)",
               resource.getName(), resource.getResourceId().toString()));
+    } catch (Exception e) {
+      // TODO: This logging is intended to help diagnose Postgres crashes occurring on resource
+      // creation.
+      //  Once this issue is resolved, this should be removed.
+      logger.info(
+          "Failed to create resource workspace_id: {}, cloud_platform: {}, resource_id: {}, name: {}, description: {}, stewardship_type: {}, resource_type: {}, cloning_instructions: {}, attributes: {}",
+          resource.getWorkspaceId().toString(),
+          resource.getResourceType().getCloudPlatform().toString(),
+          resource.getResourceId().toString(),
+          resource.getName(),
+          resource.getDescription(),
+          resource.getStewardshipType().toSql(),
+          resource.getResourceType().toSql(),
+          resource.getCloningInstructions().toSql(),
+          resource.attributesToJson());
+      if (resource.getStewardshipType().equals(CONTROLLED)) {
+        ControlledResource controlledResource = resource.castToControlledResource();
+        logger.info(
+            "Resource also has controlled-resource specific parameters access_scope: {}, managed_by: {}, associated_app: {}, assigned_user: {}",
+            controlledResource.getAccessScope().toSql(),
+            controlledResource.getManagedBy().toSql(),
+            null,
+            controlledResource.getAssignedUser().orElse(null));
+      }
+      // After logging, rethrow the exception
+      logger.info("Resource creation failure is:", e);
+      throw e;
     }
   }
 
