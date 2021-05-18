@@ -153,6 +153,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
       String fullRoleName =
           "projects/" + project.getProjectId() + "/roles/" + customRole.getRoleName();
       Role gcpRole = crl.getIamCow().projects().roles().get(fullRoleName).execute();
+      assertEquals(customRole.getRoleName(), gcpRole.getTitle());
 
       // Role.getIncludedPermissions returns null instead of an empty list, so we handle that here.
       List<String> gcpPermissions =
