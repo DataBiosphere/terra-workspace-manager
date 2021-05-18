@@ -80,7 +80,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     assertTrue(workspace.getGcpCloudContext().isPresent());
 
     String contextProjectId = workspace.getGcpCloudContext().get().getGcpProjectId();
-    assertEquals(contextProjectId, projectId);
+    assertEquals(projectId, contextProjectId);
 
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());
