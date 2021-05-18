@@ -20,7 +20,9 @@ import static bio.terra.workspace.service.resource.controlled.GcsApiConversions.
 import static bio.terra.workspace.service.resource.controlled.GcsApiConversions.toUpdateParameters;
 import static bio.terra.workspace.service.resource.controlled.GcsApiConversions.toWsmApi;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -89,7 +91,7 @@ public class GcsApiConversionsTest extends BaseUnitTest {
   public void testToBucketInfoNullFields() {
     final BucketInfo bucketInfo2 = toBucketInfo("bucket-name", BUCKET_UPDATE_PARAMETERS_EMPTY);
     assertNull(bucketInfo2.getStorageClass());
-    assertNull(bucketInfo2.getLifecycleRules());
+    assertThat(bucketInfo2.getLifecycleRules(), is(empty()));
   }
 
   @Test

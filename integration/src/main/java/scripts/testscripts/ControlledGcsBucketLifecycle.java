@@ -182,8 +182,8 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceId());
 
     // TODO(PF-643): this should happen inside WSM.
-    logger.info("Waiting 15s for permissions to propagate");
-    TimeUnit.SECONDS.sleep(15);
+    logger.info("Waiting 60s for permissions to propagate");
+    TimeUnit.SECONDS.sleep(60);
 
     // Second user can now read the blob
     Blob readerRetrievedFile = readerStorageClient.get(blobId);
