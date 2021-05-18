@@ -126,7 +126,7 @@ jobs:
     - name: Run tests
       env:
         TEST_ENV: ${{ steps.set-env-step.outputs.test-env }}
-      run: ./gradlew :service:${{ matrix.gradleTask }} --scan --stacktrace
+      run: ./gradlew :service:${{ matrix.gradleTask }} --scan
 
     - name: Codacy Coverage Reporter
       if: matrix.gradleTask == 'unitTest'

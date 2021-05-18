@@ -24,10 +24,11 @@ runs:
       run: |
         timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
         resultStatus=$(echo > /dev/tcp/localhost/8080; echo $?)
-        if [[ $resultStatus != 0 ]]
+        if [[ $resultStatus == 0 ]]
         then
+          echo "Server started successfully"
+        else
           echo "Server did not start successfully. Dumping log file"
           cat bootrun.log
-          exit $resultStatus
         fi
       shell: bash
