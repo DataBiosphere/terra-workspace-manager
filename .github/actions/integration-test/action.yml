@@ -1,0 +1,46 @@
+name: 'integration-test'
+description: 'Runs an integration test and uploads the results'
+author: 'dd'
+inputs:
+  test-server:
+    description: 'Test runner server specification file'
+    required: true
+    default: 'workspace-wsmtest.json'
+  test:
+    description: 'Test suite or config to run'
+    required: true
+    default: 'suites/FullIntegration.json'
+  vault-token:
+    description: 'Vault token for rendering'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Set permissions and render test configurations
+      run: |
+        cd service
+        chmod +x render_config.sh
+        ./render_config.sh dev ${{ inputs.vault-token }}
+        chmod +r rendered
+      shell: bash
+
+    # We run the test as one script, collecting the test result
+    - name: Run the test
+      id: test-run
+      run: |
+        cd integration
+        echo "Test Runner config"
+        ./render-config.sh ${{ inputs.vault-token }}
+        ./render-k8s-config.sh wsmtest ${{ inputs.vault-token }}
+        export TEST_RUNNER_SERVER_SPECIFICATION_FILE=${{ inputs.test-server }}
+        resultsDir=/tmp/results$RANDOM
+        echo "Running test suite ${{ inputs.test }} on ${{ inputs.test-server }}"
+        ../gradlew :integration:runTest --args="${{ inputs.test }} $resultsDir"
+        testResult=$?
+        echo "Test result is $testResult"
+        echo "Upload test results to Google Bucket"
+        ../gradlew :integration:uploadResults --args="CompressDirectoryToTerraKernelK8S.json $resultsDir"
+        echo "Upload test results to BigQuery Test Runner Dataset"
+        ../gradlew :integration:uploadResults --args="SummariesToTerraKernelK8SBigQuery.json $resultsDir"
+        exit $testResult
+      shell: bash

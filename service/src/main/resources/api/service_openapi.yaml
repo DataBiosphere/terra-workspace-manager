@@ -1758,6 +1758,7 @@ components:
         Bucket-specific properties to be set on creation. These are a subset of the
         values accepted by the Gcp Storage API.
       type: object
+      required: [name, location]
       properties:
         name:
           description: A valid bucket name per https://cloud.google.com/storage/docs/naming-buckets.

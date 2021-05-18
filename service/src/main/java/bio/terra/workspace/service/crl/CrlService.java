@@ -23,6 +23,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -252,6 +253,12 @@ public class CrlService {
               .build());
     }
     return builder.build();
+  }
+
+  @VisibleForTesting
+  public ClientConfig getClientConfig() {
+    assertCrlInUse();
+    return clientConfig;
   }
 
   private void assertCrlInUse() {

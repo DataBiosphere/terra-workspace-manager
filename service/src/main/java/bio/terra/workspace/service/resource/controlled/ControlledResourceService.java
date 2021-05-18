@@ -118,6 +118,11 @@ public class ControlledResourceService {
       ApiJobControl jobControl,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
+    if (privateResourceIamRoles.stream()
+        .noneMatch(role -> role.equals(ControlledResourceIamRole.WRITER))) {
+      throw new BadRequestException(
+          "A private, controlled AI Notebook instance must have the writer role or else it is not useful.");
+    }
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
             resource, privateResourceIamRoles, jobControl, resultPath, userRequest);
@@ -233,6 +238,7 @@ public class ControlledResourceService {
         SamService.rethrowIfSamInterrupted(
             () -> samService.getRequestUserEmail(userRequest), "validateOnlySelfAssignment");
     // If there is no assigned user, this condition is satisfied.
+    //noinspection deprecation
     final boolean isAllowed =
         controlledResource.getAssignedUser().map(requestUserEmail::equals).orElse(true);
     if (!isAllowed) {

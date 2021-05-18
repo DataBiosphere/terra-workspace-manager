@@ -1,27 +1,17 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
-bio.terra.cloud-resource-lib:cloud-resource-schema:0.8.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
-bio.terra.cloud-resource-lib:common:0.7.0=compileClasspath,testCompileClasspath
-bio.terra.cloud-resource-lib:common:0.8.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
-bio.terra.cloud-resource-lib:google-api-services-common:0.7.0=compileClasspath,testCompileClasspath
-bio.terra.cloud-resource-lib:google-api-services-common:0.8.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
-bio.terra.cloud-resource-lib:google-bigquery:0.8.0=compileClasspath,testCompileClasspath
-bio.terra.cloud-resource-lib:google-bigquery:0.9.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
-bio.terra.cloud-resource-lib:google-billing:0.7.0=compileClasspath,testCompileClasspath
-bio.terra.cloud-resource-lib:google-billing:0.8.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
-bio.terra.cloud-resource-lib:google-cloudresourcemanager:0.7.0=compileClasspath,testCompileClasspath
-bio.terra.cloud-resource-lib:google-cloudresourcemanager:0.8.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
-bio.terra.cloud-resource-lib:google-compute:0.8.0=compileClasspath,testCompileClasspath
-bio.terra.cloud-resource-lib:google-compute:0.9.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
-bio.terra.cloud-resource-lib:google-iam:0.7.0=compileClasspath,testCompileClasspath
-bio.terra.cloud-resource-lib:google-iam:0.8.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
-bio.terra.cloud-resource-lib:google-notebooks:0.5.0=compileClasspath,testCompileClasspath
-bio.terra.cloud-resource-lib:google-notebooks:0.6.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
-bio.terra.cloud-resource-lib:google-serviceusage:0.7.0=compileClasspath,testCompileClasspath
-bio.terra.cloud-resource-lib:google-serviceusage:0.8.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
-bio.terra.cloud-resource-lib:google-storage:0.10.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
-bio.terra.cloud-resource-lib:google-storage:0.8.0=compileClasspath,testCompileClasspath
+bio.terra.cloud-resource-lib:cloud-resource-schema:0.7.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:common:0.7.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:google-api-services-common:0.7.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:google-bigquery:0.8.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:google-billing:0.7.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:google-cloudresourcemanager:0.7.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:google-compute:0.8.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:google-iam:0.7.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:google-notebooks:0.5.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:google-serviceusage:0.7.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra.cloud-resource-lib:google-storage:0.8.0=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:datarepo-client:1.41.0-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:stairway:0.0.49-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 bio.terra:terra-common-lib:0.0.44-SNAPSHOT=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath

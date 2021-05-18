@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.cloudres.google.notebooks.InstanceName;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
@@ -107,6 +108,11 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     if (getResourceType() != WsmResourceType.AI_NOTEBOOK_INSTANCE) {
       throw new InconsistentFieldsException("Expected AI_NOTEBOOK_INSTANCE");
     }
+    if (!getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
+      throw new BadRequestException(
+          "Access scope must be private. Shared AI Notebook instances are not yet implemented.");
+    }
+
     checkFieldNonNull(getInstanceId(), "instanceId");
     checkFieldNonNull(getLocation(), "location");
     ValidationUtils.validateAiNotebookInstanceId(getInstanceId());
