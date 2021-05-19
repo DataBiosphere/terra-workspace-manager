@@ -2,7 +2,7 @@
 
 ## Preparing The Release Candidate
 
-1) Clone the repository
+1) Clone the repository, if necessary
 2) Checkout the version-tagged branch of the repository you need to fix. The tags are the same
 as the software version numbers. You will typically want the version running in production.
 ```shell script

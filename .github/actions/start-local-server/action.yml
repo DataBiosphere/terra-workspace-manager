@@ -3,7 +3,7 @@ description: 'Launch a bootrun server'
 author: 'dd'
 outputs:
   bootrunpid:
-    description: 'pid of the bootRun process'
+    description: 'pid of the gradle bootRun process'
     value: ${{ steps.launch.outputs.bootrunpid }}
 
 runs:

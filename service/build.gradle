@@ -50,7 +50,7 @@ dependencies {
     
     // Terra deps
     implementation group: "bio.terra", name: "datarepo-client", version: "1.41.0-SNAPSHOT"
-    // hk2 is required for datarepo client, but not correctly included
+    // hk2 is required to use datarepo client, but not correctly exposed by the client
     implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2", version: "2.32"
 
     implementation group: "bio.terra", name: "stairway", version: "0.0.51-SNAPSHOT"

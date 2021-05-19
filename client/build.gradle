@@ -72,6 +72,11 @@ gradle.taskGraph.whenReady { taskGraph ->
     }
 }
 
+java {
+    // Builds sources into the published package as part of the 'assemble' task.
+    withSourcesJar()
+}
+
 publishing {
     publications {
         workspaceManagerClientLibrary(MavenPublication) {
