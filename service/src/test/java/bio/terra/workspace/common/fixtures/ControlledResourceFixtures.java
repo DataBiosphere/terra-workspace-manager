@@ -2,6 +2,7 @@ package bio.terra.workspace.common.fixtures;
 
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
@@ -81,6 +82,12 @@ public class ControlledResourceFixtures {
             new ApiGcpAiNotebookInstanceVmImage()
                 .projectId("deeplearning-platform-release")
                 .imageFamily("r-latest-cpu-experimental"));
+  }
+
+  public static ApiGcpBigQueryDatasetCreationParameters defaultBigQueryDatasetCreationParameters() {
+    return new ApiGcpBigQueryDatasetCreationParameters()
+        .location(BUCKET_LOCATION)
+        .datasetId("test_dataset");
   }
 
   public static final String RESOURCE_NAME = "my_first_bucket";

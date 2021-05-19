@@ -9,6 +9,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.UUID;
 
 public class WorkspaceDeleteFlight extends Flight {
   private static final int INITIAL_INTERVALS_SECONDS = 1;
@@ -25,8 +26,9 @@ public class WorkspaceDeleteFlight extends Flight {
     WorkspaceStage workspaceStage =
         WorkspaceStage.valueOf(
             inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, String.class));
+    UUID workspaceId =
+        UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     // TODO: we still need the following steps once their features are supported:
-    // 1. delete controlled resources using the Cloud Resource Manager library
     // 2. Notify all registered applications of deletion, once applications are supported
     // 3. Delete policy objects in Policy Manager, once it exists.
 
@@ -35,12 +37,19 @@ public class WorkspaceDeleteFlight extends Flight {
             INITIAL_INTERVALS_SECONDS, MAX_INTERVAL_SECONDS, MAX_OPERATION_TIME_SECONDS);
 
     addStep(
+        new ListControlledResourceIdsStep(appContext.getResourceDao(), workspaceId, null),
+        retryRule);
+    addStep(new DeleteControlledSamResourcesStep(appContext.getSamService(), userReq), retryRule);
+    // TODO: when non-GCP cloud contexts are supported, we'll need to delete those here.
+    addStep(
         new DeleteProjectStep(appContext.getCrlService(), appContext.getWorkspaceDao()), retryRule);
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
     // resource or not, as indicated by the workspace stage enum.
     switch (workspaceStage) {
       case MC_WORKSPACE:
-        addStep(new DeleteWorkspaceAuthzStep(appContext.getSamService(), userReq), retryRule);
+        addStep(
+            new DeleteWorkspaceAuthzStep(appContext.getSamService(), userReq, workspaceId),
+            retryRule);
         break;
       case RAWLS_WORKSPACE:
         // Do nothing, since WSM does not own the Sam resource.
@@ -49,6 +58,6 @@ public class WorkspaceDeleteFlight extends Flight {
         throw new InternalLogicException(
             "Unknown workspace stage during creation: " + workspaceStage.name());
     }
-    addStep(new DeleteWorkspaceStateStep(appContext.getWorkspaceDao()), retryRule);
+    addStep(new DeleteWorkspaceStateStep(appContext.getWorkspaceDao(), workspaceId), retryRule);
   }
 }
