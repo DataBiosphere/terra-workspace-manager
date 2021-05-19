@@ -1,6 +1,5 @@
 // This is present, because spotless is only able to find its repository.
 // It does not inspire confidence that spotless works that way.
 buildscript {
-    repositories {
-        mavenCentral() }
+    repositories { mavenCentral() }
 }
