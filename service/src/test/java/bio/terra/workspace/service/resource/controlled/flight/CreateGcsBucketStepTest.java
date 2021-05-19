@@ -2,7 +2,7 @@ package bio.terra.workspace.service.resource.controlled.flight;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getGoogleBucketCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueName;
-import static bio.terra.workspace.service.resource.controlled.flight.create.CreateGcsBucketStep.ApiConversions.toDateTime;
+import static bio.terra.workspace.service.resource.controlled.GcsApiConversions.toGoogleDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
@@ -106,7 +106,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
             LifecycleCondition.newBuilder()
                 .setAge(null)
                 .setCreatedBefore(
-                    toDateTime(OffsetDateTime.of(2007, 1, 3, 0, 0, 0, 0, ZoneOffset.UTC)))
+                    toGoogleDateTime(OffsetDateTime.of(2007, 1, 3, 0, 0, 0, 0, ZoneOffset.UTC)))
                 .setNumberOfNewerVersions(null)
                 .setIsLive(null)
                 .setMatchesStorageClass(Collections.singletonList(StorageClass.STANDARD))
