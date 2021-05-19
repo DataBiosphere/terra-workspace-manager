@@ -15,6 +15,8 @@ import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResour
 import bio.terra.workspace.service.resource.controlled.GcsApiConversions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.cloud.storage.BucketInfo;
+import java.util.Collections;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
