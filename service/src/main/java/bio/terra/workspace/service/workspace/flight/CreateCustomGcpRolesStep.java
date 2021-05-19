@@ -33,7 +33,10 @@ public class CreateCustomGcpRolesStep implements Step {
     String projectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
     for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES.values()) {
       try {
-        Role gcpRole = new Role().setIncludedPermissions(customRole.getIncludedPermissions());
+        Role gcpRole =
+            new Role()
+                .setIncludedPermissions(customRole.getIncludedPermissions())
+                .setTitle(customRole.getRoleName());
         CreateRoleRequest request =
             new CreateRoleRequest().setRole(gcpRole).setRoleId(customRole.getRoleName());
         logger.info(

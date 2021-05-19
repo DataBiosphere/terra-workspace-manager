@@ -130,7 +130,6 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     // Create a user-shared controlled GCS bucket - should fail due to no cloud context
     ApiException createBucketFails =
         assertThrows(ApiException.class, () -> createBucketAttempt(resourceApi));
-    // FIXME
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, createBucketFails.getCode());
     logger.info("Failed to create bucket, as expected");
 
@@ -146,9 +145,8 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     logger.info("Retrieving bucket resource id {}", resourceId.toString());
     GcpGcsBucketResource gotBucket = resourceApi.getBucket(getWorkspaceId(), resourceId);
     assertEquals(
-        gotBucket.getAttributes().getBucketName(),
-        bucket.getGcpBucket().getAttributes().getBucketName());
-    assertEquals(gotBucket.getAttributes().getBucketName(), bucketName);
+        bucket.getGcpBucket().getAttributes().getBucketName(), gotBucket.getAttributes().getBucketName());
+    assertEquals(bucketName, gotBucket.getAttributes().getBucketName());
 
     Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, projectId);
 
@@ -160,7 +158,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
 
     // Owner can read the object they created
     Blob retrievedFile = ownerStorageClient.get(blobId);
-    assertEquals(retrievedFile.getBlobId(), createdFile.getBlobId());
+    assertEquals(createdFile.getBlobId(), retrievedFile.getBlobId());
     logger.info("Read existing blob {} from bucket as owner", retrievedFile.getBlobId());
 
     // Second user has not yet been added to the workspace, so calls will be rejected.
@@ -172,7 +170,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
             StorageException.class,
             () -> readerStorageClient.get(blobId),
             "User accessed a controlled workspace bucket without being a workspace member");
-    assertEquals(userCannotRead.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, userCannotRead.getCode());
     logger.info(
         "User {} outside of workspace could not access bucket as expected", reader.userEmail);
 
@@ -187,7 +185,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
 
     // Second user can now read the blob
     Blob readerRetrievedFile = readerStorageClient.get(blobId);
-    assertEquals(readerRetrievedFile.getBlobId(), createdFile.getBlobId());
+    assertEquals(createdFile.getBlobId(), readerRetrievedFile.getBlobId());
     logger.info("Read existing blob {} from bucket as reader", retrievedFile.getBlobId());
 
     // Reader cannot write an object
@@ -199,7 +197,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
             StorageException.class,
             () -> readerStorageClient.create(readerBlobInfo, GCS_BLOB_CONTENT.getBytes()),
             "Workspace reader was able to write a file to a bucket!");
-    assertEquals(readerCannotWrite.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, readerCannotWrite.getCode());
     logger.info("Failed to write new blob {} as reader as expected", readerBlobId.getName());
 
     // Reader cannot delete the blob the owner created.
@@ -208,7 +206,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
             StorageException.class,
             () -> readerStorageClient.delete(blobId),
             "Workspace reader was able to delete bucket contents!");
-    assertEquals(readerCannotDeleteBlob.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, readerCannotDeleteBlob.getCode());
     logger.info("Reader failed to delete blob {} as expected", blobId);
 
     // Owner can delete the blob they created earlier.
@@ -230,7 +228,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
             StorageException.class,
             () -> readerStorageClient.get(bucketName).delete(),
             "Workspace reader was able to delete a bucket directly!");
-    assertEquals(readerCannotDeleteBucket.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, readerCannotDeleteBucket.getCode());
     logger.info("Failed to delete bucket {} directly as reader as expected", bucketName);
 
     // TODO(PF-633): Owners and writers can actually delete buckets due to workspace-level roles
@@ -243,7 +241,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     //         StorageException.class,
     //         () -> ownerStorageClient.get(bucketName).delete(),
     //         "Workspace owner was able to delete a bucket directly!");
-    // assertEquals(ownerCannotDeleteBucket.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    // assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, ownerCannotDeleteBucket.getCode());
     // logger.info("Failed to delete bucket {} directly as owner as expected", bucketName);
 
     // Owner can delete the bucket through WSM
@@ -255,7 +253,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
             ApiException.class,
             () -> resourceApi.getBucket(getWorkspaceId(), resourceId),
             "Incorrectly found a deleted bucket!");
-    assertEquals(bucketNotFound.getCode(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, bucketNotFound.getCode());
 
     // also verify it was deleted from GCP
     Bucket maybeBucket = ownerStorageClient.get(bucketName);

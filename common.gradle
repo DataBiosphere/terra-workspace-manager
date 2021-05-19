@@ -18,7 +18,8 @@ repositories {
     }
 }
 
-//dependencyLocking {
-//    lockAllConfigurations()
-//    lockMode = LockMode.STRICT
-//}
+
+dependencyLocking {
+    lockAllConfigurations()
+    lockMode = LockMode.STRICT
+}
