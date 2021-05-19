@@ -96,7 +96,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
     Workspace workspace = workspaceDao.getWorkspace(workspaceId);
 
-    assertEquals(workspace, createdWorkspace);
+    assertEquals(createdWorkspace, workspace);
 
     assertTrue(workspaceDao.deleteWorkspace(workspaceId));
   }
@@ -176,7 +176,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     void createAndGetMcWorkspace() {
       Workspace workspace = workspaceDao.getWorkspace(mcWorkspaceId);
 
-      assertEquals(workspace, mcWorkspace);
+      assertEquals(mcWorkspace, workspace);
       assertTrue(workspaceDao.deleteWorkspace(mcWorkspaceId));
     }
 

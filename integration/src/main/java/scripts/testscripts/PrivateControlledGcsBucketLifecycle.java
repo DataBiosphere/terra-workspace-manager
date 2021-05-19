@@ -112,10 +112,8 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     // Retrieve the bucket resource from WSM
     logger.info("Retrieving bucket resource id {}", resourceId.toString());
     GcpGcsBucketResource gotBucket = privateUserResourceApi.getBucket(getWorkspaceId(), resourceId);
-    assertEquals(
-        gotBucket.getAttributes().getBucketName(),
-        bucket.getGcpBucket().getAttributes().getBucketName());
-    assertEquals(gotBucket.getAttributes().getBucketName(), bucketName);
+    assertEquals(bucket.getGcpBucket().getAttributes().getBucketName(), gotBucket.getAttributes().getBucketName());
+    assertEquals(bucketName, gotBucket.getAttributes().getBucketName());
 
     Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, projectId);
     Storage privateUserStorageClient =
@@ -133,7 +131,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     //         StorageException.class,
     //         () -> ownerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes()),
     //         "Workspace owner was able to write to private bucket");
-    // assertEquals(ownerCannotWritePrivateBucket.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    // assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, ownerCannotWritePrivateBucket.getCode());
     // logger.info("Workspace owner cannot write to private resource as expected");
 
     // Workspace reader cannot write object to bucket
@@ -142,7 +140,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
             StorageException.class,
             () -> workspaceReaderStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes()),
             "Workspace reader was able to write to private bucket");
-    assertEquals(readerCannotWriteBucket.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, readerCannotWriteBucket.getCode());
     logger.info("Workspace reader cannot write to private resource as expected");
 
     // Private resource user can write object to bucket
@@ -151,7 +149,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
     // Private user can read their bucket
     Blob retrievedBlob = privateUserStorageClient.get(blobId);
-    assertEquals(retrievedBlob, createdBlob);
+    assertEquals(createdBlob, retrievedBlob);
     logger.info("Private resource user can read {} from bucket", retrievedBlob.getName());
 
     // TODO(PF-633): workspace owners can read from private buckets via "roles/storage.admin" and
@@ -162,7 +160,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     //         StorageException.class,
     //         () -> ownerStorageClient.get(blobId),
     //         "Workspace owner was able to read private bucket");
-    // assertEquals(ownerCannotReadPrivateBucket.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    // assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, ownerCannotReadPrivateBucket.getCode());
     // logger.info("Workspace owner cannot read from private bucket as expected");
 
     // TODO(PF-633): workspace readers can read from private buckets via "roles/viewer".
@@ -172,7 +170,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     //         StorageException.class,
     //         () -> workspaceReaderStorageClient.get(blobId),
     //         "Workspace reader was able to read private bucket");
-    // assertEquals(readerCannotReadPrivateBucket.getCode(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+    // assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, readerCannotReadPrivateBucket.getCode());
     // logger.info("Workspace reader cannot read from private bucket as expected");
 
     // Private resource user can delete the blob they created earlier.
@@ -184,7 +182,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     logger.info(
         "For owner, delete bucket status is {}",
         ownerDeleteResult.getJobReport().getStatus().toString());
-    assertEquals(ownerDeleteResult.getJobReport().getStatus(), JobReport.StatusEnum.SUCCEEDED);
+    assertEquals(JobReport.StatusEnum.SUCCEEDED, ownerDeleteResult.getJobReport().getStatus());
 
     // verify the bucket was deleted from WSM metadata
     ApiException bucketIsMissing =
@@ -192,7 +190,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
             ApiException.class,
             () -> workspaceOwnerResourceApi.getBucket(getWorkspaceId(), resourceId),
             "Incorrectly found a deleted bucket!");
-    assertEquals(bucketIsMissing.getCode(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, bucketIsMissing.getCode());
 
     // also verify it was deleted from GCP
     Bucket maybeBucket = ownerStorageClient.get(bucketName);
