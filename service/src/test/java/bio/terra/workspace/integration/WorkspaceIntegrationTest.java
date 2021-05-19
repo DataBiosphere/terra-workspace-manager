@@ -2,6 +2,7 @@ package bio.terra.workspace.integration;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -193,7 +194,7 @@ class WorkspaceIntegrationTest extends BaseIntegrationTest {
     assertEquals(HttpStatus.OK, listResponse.getStatusCode());
     assertTrue(listResponse.isResponseObject());
     DataReferenceList referenceList = listResponse.getResponseObject();
-    assertEquals(referenceList.getResources().size(), 2);
+    assertThat(referenceList.getResources(), hasSize(2));
 
     DataReferenceDescription[] expectedResults = {
       firstPostResponse.getResponseObject(), secondPostResponse.getResponseObject()

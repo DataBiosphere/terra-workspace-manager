@@ -17,45 +17,45 @@ public class CustomGcpIamRoleTest extends BaseUnitTest {
   @Test
   public void validateCustomIamRoleNames() {
     assertEquals(
+        "GCS_BUCKET_READER",
         CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES
             .get(WsmResourceType.GCS_BUCKET, ControlledResourceIamRole.READER)
-            .getRoleName(),
-        "GCS_BUCKET_READER");
+            .getRoleName());
     assertEquals(
+        "GCS_BUCKET_WRITER",
         CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES
             .get(WsmResourceType.GCS_BUCKET, ControlledResourceIamRole.WRITER)
-            .getRoleName(),
-        "GCS_BUCKET_WRITER");
+            .getRoleName());
     assertEquals(
+        "GCS_BUCKET_EDITOR",
         CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES
             .get(WsmResourceType.GCS_BUCKET, ControlledResourceIamRole.EDITOR)
-            .getRoleName(),
-        "GCS_BUCKET_EDITOR");
+            .getRoleName());
     assertEquals(
+        "GCS_BUCKET_ASSIGNER",
         CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES
             .get(WsmResourceType.GCS_BUCKET, ControlledResourceIamRole.ASSIGNER)
-            .getRoleName(),
-        "GCS_BUCKET_ASSIGNER");
+            .getRoleName());
 
     assertEquals(
+        "BIG_QUERY_DATASET_READER",
         CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES
             .get(WsmResourceType.BIG_QUERY_DATASET, ControlledResourceIamRole.READER)
-            .getRoleName(),
-        "BIG_QUERY_DATASET_READER");
+            .getRoleName());
     assertEquals(
+        "BIG_QUERY_DATASET_WRITER",
         CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES
             .get(WsmResourceType.BIG_QUERY_DATASET, ControlledResourceIamRole.WRITER)
-            .getRoleName(),
-        "BIG_QUERY_DATASET_WRITER");
+            .getRoleName());
     assertEquals(
+        "BIG_QUERY_DATASET_EDITOR",
         CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES
             .get(WsmResourceType.BIG_QUERY_DATASET, ControlledResourceIamRole.EDITOR)
-            .getRoleName(),
-        "BIG_QUERY_DATASET_EDITOR");
+            .getRoleName());
     assertEquals(
+        "BIG_QUERY_DATASET_ASSIGNER",
         CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES
             .get(WsmResourceType.BIG_QUERY_DATASET, ControlledResourceIamRole.ASSIGNER)
-            .getRoleName(),
-        "BIG_QUERY_DATASET_ASSIGNER");
+            .getRoleName());
   }
 }

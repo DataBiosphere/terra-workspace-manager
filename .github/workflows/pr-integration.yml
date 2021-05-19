@@ -73,15 +73,16 @@ jobs:
         echo ::set-output name=vault-token::$VAULT_TOKEN
         echo ::add-mask::$VAULT_TOKEN
 
-    - name: Run local WSM server (in background)
-      run: ./gradlew bootRun &
-    - name: Wait for local server to start
-      # With a timeout of 300 seconds, try to connect to localhost:8080 every 1 second.
-      run: timeout 300 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
+    - name: Render config
+      uses: ./.github/actions/render-config
+      with:
+        vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+
+    - name: Launch local server
+      uses: ./.github/actions/start-local-server
 
     - name: Run the integration test suite
       id: integration-test
-      if: ${{ always() }}
       uses: ./.github/actions/integration-test
       with:
         test-server: workspace-local.json
