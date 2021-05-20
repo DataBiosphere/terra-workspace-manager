@@ -31,12 +31,14 @@ public class DeleteGcpContextFlight extends Flight {
             INITIAL_INTERVALS_SECONDS, MAX_INTERVAL_SECONDS, MAX_OPERATION_TIME_SECONDS);
 
     addStep(
-        new ListControlledResourceIdsStep(
-            appContext.getResourceDao(), workspaceId, CLOUD_PLATFORM));
-    addStep(new DeleteControlledSamResourcesStep(appContext.getSamService(), userRequest));
+        new ListControlledResourceIdsStep(appContext.getResourceDao(), workspaceId, CLOUD_PLATFORM),
+        retryRule);
+    addStep(
+        new DeleteControlledSamResourcesStep(appContext.getSamService(), userRequest), retryRule);
     addStep(
         new DeleteControlledDbResourcesStep(
-            appContext.getResourceDao(), workspaceId, CLOUD_PLATFORM));
+            appContext.getResourceDao(), workspaceId, CLOUD_PLATFORM),
+        retryRule);
     addStep(
         new DeleteProjectStep(appContext.getCrlService(), appContext.getWorkspaceDao()), retryRule);
     addStep(new DeleteGcpContextStep(appContext.getWorkspaceDao(), workspaceId), retryRule);

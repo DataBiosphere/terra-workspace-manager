@@ -8,9 +8,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.UUID;
 
-/**
- * A step to delete the controlled resources on a single cloud from a workspace.
- */
+/** A step to delete the controlled resources on a single cloud from a workspace. */
 public class DeleteControlledDbResourcesStep implements Step {
 
   private final ResourceDao resourceDao;
