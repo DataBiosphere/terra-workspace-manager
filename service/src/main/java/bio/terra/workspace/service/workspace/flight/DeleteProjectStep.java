@@ -5,6 +5,8 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
+import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -33,7 +35,8 @@ public class DeleteProjectStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) {
+  public StepResult doStep(FlightContext flightContext)
+      throws InterruptedException, RetryException {
     Optional<GcpCloudContext> cloudContext = getContext(flightContext);
     if (cloudContext.isPresent()) {
       CloudResourceManagerCow resourceManager = crl.getCloudResourceManagerCow();

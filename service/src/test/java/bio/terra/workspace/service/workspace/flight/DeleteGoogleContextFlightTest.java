@@ -22,7 +22,7 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import com.google.api.services.cloudresourcemanager.model.Project;
+import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -74,7 +74,7 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
     assertNotNull(projectId);
 
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
-    assertEquals("ACTIVE", project.getLifecycleState());
+    assertEquals("ACTIVE", project.getState());
 
     // Delete the google context.
     FlightMap deleteParameters = new FlightMap();
@@ -105,7 +105,7 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
     assertTrue(workspace.getGcpCloudContext().isEmpty());
 
     project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
-    assertEquals("DELETE_REQUESTED", project.getLifecycleState());
+    assertEquals("DELETE_REQUESTED", project.getState());
   }
 
   @Test
