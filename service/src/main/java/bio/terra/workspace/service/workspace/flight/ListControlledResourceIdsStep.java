@@ -42,6 +42,7 @@ public class ListControlledResourceIdsStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    // This step only writes to the flight's working map, so there's no need to undo.
     return StepResult.getStepResultSuccess();
   }
 }

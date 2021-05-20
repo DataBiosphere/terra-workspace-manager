@@ -38,7 +38,7 @@ public class DeleteControlledSamResourcesStep implements Step {
 
     try {
       // Deleting each resource takes a call to Sam. As there may be many many resources and they
-      // are all independent, running these calls in parallel is valuable.
+      // are all independent, running these calls in parallel can save time.
       controlledResourceList.parallelStream()
           .forEach(
               controlledResource -> {
@@ -46,10 +46,8 @@ public class DeleteControlledSamResourcesStep implements Step {
                   samService.deleteControlledResource(controlledResource, userRequest);
                 } catch (InterruptedException e) {
                   // This function must handle the checked InterruptedException, even though the
-                  // Step as a
-                  // whole is fine surfacing it. Here, we wrap the InterruptedException in an
-                  // unchecked
-                  // exception, smuggle it out, then catch and throw it later.
+                  // Step as a whole is fine surfacing it. Here, we wrap the InterruptedException in
+                  // an unchecked exception, smuggle it out, then catch and throw it later.
                   throw new UncheckedInterruptedException(e);
                 }
               });
@@ -64,14 +62,14 @@ public class DeleteControlledSamResourcesStep implements Step {
    * stream above which cannot handle checked exceptions, even though that's really what we want.
    */
   private static class UncheckedInterruptedException extends RuntimeException {
-    private InterruptedException cause;
+    private final InterruptedException interruptedException;
 
-    public UncheckedInterruptedException(InterruptedException cause) {
-      this.cause = cause;
+    public UncheckedInterruptedException(InterruptedException interruptedException) {
+      this.interruptedException = interruptedException;
     }
 
     public InterruptedException getException() {
-      return cause;
+      return interruptedException;
     }
   }
 

@@ -29,6 +29,7 @@ public class WorkspaceDeleteFlight extends Flight {
     UUID workspaceId =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     // TODO: we still need the following steps once their features are supported:
+    // 1. Delete the cloud contexts from non-GCP cloud platforms
     // 2. Notify all registered applications of deletion, once applications are supported
     // 3. Delete policy objects in Policy Manager, once it exists.
 
@@ -40,7 +41,6 @@ public class WorkspaceDeleteFlight extends Flight {
         new ListControlledResourceIdsStep(appContext.getResourceDao(), workspaceId, null),
         retryRule);
     addStep(new DeleteControlledSamResourcesStep(appContext.getSamService(), userReq), retryRule);
-    // TODO: when non-GCP cloud contexts are supported, we'll need to delete those here.
     addStep(
         new DeleteProjectStep(appContext.getCrlService(), appContext.getWorkspaceDao()), retryRule);
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
