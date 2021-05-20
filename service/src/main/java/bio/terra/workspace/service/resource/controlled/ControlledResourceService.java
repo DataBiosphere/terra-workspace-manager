@@ -25,6 +25,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -76,6 +77,8 @@ public class ControlledResourceService {
       ControlledGcsBucketResource resource,
       ApiGcpGcsBucketUpdateParameters updateParameters,
       AuthenticatedUserRequest userRequest,
+      @Nullable String resourceName,
+      @Nullable String resourceDescription,
       ApiJobControl jobControl) {
     final String jobDescription =
         String.format(
@@ -89,7 +92,9 @@ public class ControlledResourceService {
                 UpdateControlledGcsBucketResourceFlight.class,
                 resource,
                 userRequest)
-            .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters);
+            .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
+            .addParameter(ControlledResourceKeys.RESOURCE_NAME, resourceName)
+            .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
     return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
   }
 

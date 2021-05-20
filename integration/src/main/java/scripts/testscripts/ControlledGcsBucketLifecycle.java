@@ -25,6 +25,7 @@ import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsBucketUpdateParameters;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
+import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.UpdateControlledGcpGcsBucketRequestBody;
 import com.google.api.client.http.HttpStatusCodes;
@@ -123,7 +124,6 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
   @Override
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
-
     ControlledGcpResourceApi resourceApi =
         ClientTestUtils.getControlledGcpResourceClient(testUser, server);
 
@@ -180,8 +180,8 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceId());
 
     // TODO(PF-643): this should happen inside WSM.
-    logger.info("Waiting 60s for permissions to propagate");
-    TimeUnit.SECONDS.sleep(60);
+    logger.info("Waiting 30s for permissions to propagate");
+    TimeUnit.SECONDS.sleep(30);
 
     // Second user can now read the blob
     Blob readerRetrievedFile = readerStorageClient.get(blobId);
@@ -217,11 +217,14 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     logger.info("About to update the bucket {} resourceID {} workspace ID {}",
         bucketName, bucket.getResourceId(), getWorkspaceId());
 
-    final GcpGcsBucketResource resource = updateBucketAttempt(resourceApi, bucket.getResourceId());
+    final GcpGcsBucketResource resource = updateBucketAttempt(resourceApi, resourceId);
+    logger.info("Updated resource name to {} and description to {}",
+        resource.getMetadata().getName(), resource.getMetadata().getDescription());
     assertEquals(UPDATED_RESOURCE_NAME, resource.getMetadata().getName());
     assertEquals(UPDATED_DESCRIPTION, resource.getMetadata().getDescription());
-    // additional details must be verified with gsutil or in the cloud console, as we don't return them
 
+    // additional details must be verified with gsutil or in the cloud console, as we don't return them
+    logger.info("About to try to delete the bucket with a reader.");
     // Reader cannot delete the bucket directly
     StorageException readerCannotDeleteBucket =
         assertThrows(
@@ -263,6 +266,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
 
     // Delete the cloud context. This is not required. Just some exercise for deleteCloudContext
     CloudContextMaker.deleteGcpCloudContext(getWorkspaceId(), workspaceApi);
+    logger.info("Cloud context deleted. User Journey complete.");
   }
 
   private CreatedControlledGcpGcsBucket createBucketAttempt(ControlledGcpResourceApi resourceApi)
@@ -292,10 +296,13 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
 
   private GcpGcsBucketResource updateBucketAttempt(ControlledGcpResourceApi resourceApi, UUID resourceId)
     throws ApiException {
+    final var jobControl = new JobControl()
+        .id(UUID.randomUUID().toString());
     var body = new UpdateControlledGcpGcsBucketRequestBody()
         .name(UPDATED_RESOURCE_NAME)
         .description(UPDATED_DESCRIPTION)
-        .updateParameters(UPDATE_PARAMETERS);
+        .updateParameters(UPDATE_PARAMETERS)
+        .jobControl(jobControl);
     logger.info("Attempting to update bucket {} resource ID {} workspace {}", bucketName, resourceId, getWorkspaceId());
     return resourceApi.updateGcsBucket(body, getWorkspaceId(), resourceId);
   }

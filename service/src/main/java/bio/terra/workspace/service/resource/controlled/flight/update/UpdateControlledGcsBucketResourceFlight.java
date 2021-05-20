@@ -21,7 +21,7 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
     // get copy of existing metadata
     addStep(
         new RetrieveControlledResourceMetadataStep(
-            flightBeanBag.getResourceDao(), resource.getResourceId(), resource.getWorkspaceId()));
+            flightBeanBag.getResourceDao(), resource.getWorkspaceId(), resource.getResourceId()));
 
     // update the metadata (name & description of resource)
     addStep(
