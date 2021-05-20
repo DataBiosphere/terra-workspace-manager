@@ -1,4 +1,4 @@
-# workspace-manager-clienttests
+# `integration` Project
 This Gradle project contains Test Runner tests written with the Workspace Manager Service client library.
 
 The Test Runner library [GitHub repository](https://github.com/DataBiosphere/terra-test-runner) has documentation for
@@ -7,7 +7,7 @@ how to write and execute tests.
 #### Run a test
 The workspace manager tests require the appropriate service account keys to be available in the `rendered/` folder.
 
-Run the following command from the `workspace-manager-clienttests` directory to retrieve the required keys.
+Run the following command from the `integration` directory to retrieve the required keys.
 Note: `render-config.sh` assumes a valid `.vault-token` in your `$HOME` directory. Please refer to the following document on how to generate a `vault-token`
  
  https://github.com/broadinstitute/dsde-toolbox#authenticating-to-vault 
