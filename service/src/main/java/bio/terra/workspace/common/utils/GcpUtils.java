@@ -1,10 +1,14 @@
-package bio.terra.workspace.service.workspace.flight;
+package bio.terra.workspace.common.utils;
 
+import bio.terra.cloudres.google.api.services.common.OperationCow;
+import bio.terra.cloudres.google.api.services.common.OperationUtils;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.stairway.Step;
+import bio.terra.stairway.exception.RetryException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.services.cloudresourcemanager.model.Project;
+import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
 
@@ -14,18 +18,23 @@ public class GcpUtils {
 
   /** Try to delete the Project associated with {@code projectId}. */
   public static void deleteProject(String projectId, CloudResourceManagerCow resourceManager)
-      throws IOException {
+      throws IOException, InterruptedException, RetryException {
     Optional<Project> project = retrieveProject(projectId, resourceManager);
     if (project.isEmpty()) {
       // The project does not exist.
       return;
     }
-    if (project.get().getLifecycleState().equals("DELETE_REQUESTED")
-        || project.get().getLifecycleState().equals("DELETE_IN_PROGRESS")) {
+    if (project.get().getState().equals("DELETE_REQUESTED")
+        || project.get().getState().equals("DELETE_IN_PROGRESS")) {
       // The project is already being deleted.
       return;
     }
-    resourceManager.projects().delete(projectId).execute();
+    pollUntilSuccess(
+        resourceManager
+            .operations()
+            .operationCow(resourceManager.projects().delete(projectId).execute()),
+        Duration.ofSeconds(5),
+        Duration.ofMinutes(5));
   }
 
   /**
@@ -44,6 +53,23 @@ public class GcpUtils {
         return Optional.empty();
       }
       throw e;
+    }
+  }
+
+  /**
+   * Poll until the Google Service API operation has completed. Throws any error or timeouts as a
+   * {@link RetryException}.
+   */
+  public static void pollUntilSuccess(
+      OperationCow<?> operation, Duration pollingInterval, Duration timeout)
+      throws RetryException, IOException, InterruptedException {
+    operation = OperationUtils.pollUntilComplete(operation, pollingInterval, timeout);
+    if (operation.getOperationAdapter().getError() != null) {
+      throw new RetryException(
+          String.format(
+              "Error polling operation. name [%s] message [%s]",
+              operation.getOperationAdapter().getName(),
+              operation.getOperationAdapter().getError().getMessage()));
     }
   }
 }

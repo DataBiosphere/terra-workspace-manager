@@ -7,7 +7,6 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_SUBNETWORK_NAME;
 
 import bio.terra.cloudres.google.api.services.common.OperationCow;
-import bio.terra.cloudres.google.api.services.common.OperationUtils;
 import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
@@ -18,6 +17,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAcceleratorConfig;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
@@ -95,15 +95,7 @@ public class CreateAiNotebookInstanceStep implements Step {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
 
-      creationOperation =
-          OperationUtils.pollUntilComplete(
-              creationOperation, Duration.ofSeconds(20), Duration.ofMinutes(12));
-      if (creationOperation.getOperation().getError() != null) {
-        throw new RetryException(
-            String.format(
-                "Error creating notebook instance %s. %s",
-                instanceName.formatName(), creationOperation.getOperation().getError()));
-      }
+      GcpUtils.pollUntilSuccess(creationOperation, Duration.ofSeconds(20), Duration.ofMinutes(12));
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
@@ -208,17 +200,8 @@ public class CreateAiNotebookInstanceStep implements Step {
         }
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
-      deletionOperation =
-          OperationUtils.pollUntilComplete(
-              deletionOperation, Duration.ofSeconds(20), Duration.ofMinutes(12));
-      if (deletionOperation.getOperation().getError() != null) {
-        logger.debug(
-            "Error deleting notebook instance {}. {}",
-            instanceName.formatName(),
-            deletionOperation.getOperation().getError());
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
-      }
-    } catch (IOException e) {
+      GcpUtils.pollUntilSuccess(deletionOperation, Duration.ofSeconds(20), Duration.ofMinutes(12));
+    } catch (IOException | RetryException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     return StepResult.getStepResultSuccess();
