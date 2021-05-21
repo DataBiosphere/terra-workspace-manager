@@ -64,21 +64,21 @@ jobs:
         id: integration-test
         if: ${{ always() }}
         uses: ./.github/actions/integration-test
+        run: |
+          if: steps.set-env-step.outputs.test-env == 'dev'
+            TEST_SERVER=workspace-dev.json
+            TEST=suites/dev/FullIntegration.json
+          elif steps.set-env-step.outputs.test-env == 'alpha'
+            TEST_SERVER=workspace-alpha.json
+            TEST=suites/alpha/FullIntegration.json
+          elif steps.set-env-step.outputs.test-env == 'staging'
+            TEST_SERVER=workspace-staging.json
+            TEST=suites/staging/FullIntegration.json
+          else
+            echo ::error ::${{ steps.set-env-step.outputs.test-env }} environment not supported for this workflow
+            exit 1
+          fi
         with:
-          run: |
-            if: steps.set-env-step.outputs.test-env == 'dev'
-              TEST_SERVER=workspace-dev.json
-              TEST=suites/dev/FullIntegration.json
-            elif steps.set-env-step.outputs.test-env == 'alpha'
-              TEST_SERVER=workspace-alpha.json
-              TEST=suites/alpha/FullIntegration.json
-            elif steps.set-env-step.outputs.test-env == 'staging'
-              TEST_SERVER=workspace-staging.json
-              TEST=suites/staging/FullIntegration.json
-            else
-              echo ::error ::${{ steps.set-env-step.outputs.test-env }} environment not supported for this workflow
-              exit 1
-            fi
           test-server: $TEST_SERVER
           test: $TEST
           test-env: ${{ steps.set-env-step.outputs.test-env }}
