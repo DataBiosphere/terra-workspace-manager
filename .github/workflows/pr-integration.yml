@@ -85,5 +85,5 @@ jobs:
       uses: ./.github/actions/integration-test
       with:
         test-server: workspace-local.json
-        test: suites/FullIntegration.json
+        test: suites/wsmtest/FullIntegration.json
         vault-token: ${{ steps.vault-token-step.outputs.vault-token }}

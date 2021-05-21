@@ -53,7 +53,7 @@ jobs:
         uses: ./.github/actions/integration-test
         with:
           test-server: workspace-wsmtest.json
-          test: suites/FullIntegration.json
+          test: suites/wsmtest/FullIntegration.json
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
       - name: Run the perf test suite
@@ -62,7 +62,7 @@ jobs:
         uses: ./.github/actions/integration-test
         with:
           test-server: workspace-wsmtest.json
-          test: suites/BasicPerf.json
+          test: suites/wsmtest/BasicPerf.json
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
       - name: Run the resiliency test suite
@@ -71,7 +71,7 @@ jobs:
         uses: ./.github/actions/integration-test
         with:
           test-server: workspace-wsmtest.json
-          test: suites/BasicResiliency.json
+          test: suites/wsmtest/BasicResiliency.json
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
       - name: Compose status message
