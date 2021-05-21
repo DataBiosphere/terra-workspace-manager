@@ -164,6 +164,10 @@ public class ResourceMaker {
     }
   }
 
+  /**
+   * Create and return a BigQuery dataset controlled resource with constant values. This uses the
+   * given datasetID as both the WSM resource name and the actual BigQuery dataset ID.
+   */
   public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetUserShared(
       ControlledGcpResourceApi resourceApi, UUID workspaceId, String datasetId) throws Exception {
 

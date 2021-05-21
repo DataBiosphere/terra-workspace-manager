@@ -7,9 +7,13 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** A step to delete the controlled resources on a single cloud from a workspace. */
 public class DeleteControlledDbResourcesStep implements Step {
+
+  private final Logger logger = LoggerFactory.getLogger(DeleteControlledDbResourcesStep.class);
 
   private final ResourceDao resourceDao;
   private final UUID workspaceId;
@@ -31,6 +35,10 @@ public class DeleteControlledDbResourcesStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    logger.error(
+        "Unable to undo deletion of controlled resources in workspace {}, cloud {}",
+        workspaceId,
+        cloudPlatform);
     return flightContext.getResult();
   }
 }

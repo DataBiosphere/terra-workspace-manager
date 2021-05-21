@@ -11,6 +11,8 @@ import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
 
+// TODO(PF-555): There is a race condition if this flight runs at the same time as new controlled
+//  resource creation, which may leak resources in Sam. Workspace locking would solve this issue.
 public class WorkspaceDeleteFlight extends Flight {
   private static final int INITIAL_INTERVALS_SECONDS = 1;
   private static final int MAX_INTERVAL_SECONDS = 8;
@@ -37,10 +39,17 @@ public class WorkspaceDeleteFlight extends Flight {
         new RetryRuleExponentialBackoff(
             INITIAL_INTERVALS_SECONDS, MAX_INTERVAL_SECONDS, MAX_OPERATION_TIME_SECONDS);
 
+    // We delete controlled resources from the Sam, but do not need to explicitly delete the
+    // actual cloud objects or entries in WSM DB. GCP handles the cleanup when we delete the
+    // containing project, and we cascade workspace deletion to resources in the DB.
     addStep(
-        new ListControlledResourceIdsStep(appContext.getResourceDao(), workspaceId, null),
+        new DeleteControlledSamResourcesStep(
+            appContext.getSamService(),
+            appContext.getResourceDao(),
+            workspaceId,
+            /* cloudPlatform= */ null,
+            userReq),
         retryRule);
-    addStep(new DeleteControlledSamResourcesStep(appContext.getSamService(), userReq), retryRule);
     addStep(
         new DeleteProjectStep(appContext.getCrlService(), appContext.getWorkspaceDao()), retryRule);
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
@@ -56,7 +65,7 @@ public class WorkspaceDeleteFlight extends Flight {
         break;
       default:
         throw new InternalLogicException(
-            "Unknown workspace stage during creation: " + workspaceStage.name());
+            "Unknown workspace stage during deletion: " + workspaceStage.name());
     }
     addStep(new DeleteWorkspaceStateStep(appContext.getWorkspaceDao(), workspaceId), retryRule);
   }

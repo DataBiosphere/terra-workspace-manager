@@ -58,8 +58,8 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
   }
 
   /**
-   * If this test succeeds, it will clean up the workspace as part of the user journey, so that
-   * should not be considered an error here.
+   * If this test succeeds, it will clean up the workspace as part of the user journey, meaning a
+   * "not found" exception should not be considered an error here.
    */
   @Override
   public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws Exception{

@@ -83,8 +83,6 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
     // Force each step to be retried once to ensure proper behavior.
     Map<String, StepStatus> doFailures = new HashMap<>();
     doFailures.put(
-        ListControlledResourceIdsStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    doFailures.put(
         DeleteControlledSamResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(
         DeleteControlledDbResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
