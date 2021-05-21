@@ -42,14 +42,10 @@ public class RetryRules {
     return new RetryRuleFixedInterval(10, 2);
   }
 
-  private static final int BUFFER_INITIAL_INTERVAL_SECONDS = 1;
-  private static final int BUFFER_MAX_INTERVAL_SECONDS = 5 * 60;
-  private static final int BUFFER_MAX_OPERATION_TIME_SECONDS = 15 * 60;
-
   public static RetryRule buffer() {
     return new RetryRuleExponentialBackoff(
-        BUFFER_INITIAL_INTERVAL_SECONDS,
-        BUFFER_MAX_INTERVAL_SECONDS,
-        BUFFER_MAX_OPERATION_TIME_SECONDS);
+        1,
+        5 * 60,
+        15 * 60);
   }
 }
