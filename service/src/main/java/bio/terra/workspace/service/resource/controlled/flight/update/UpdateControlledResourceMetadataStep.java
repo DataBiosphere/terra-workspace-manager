@@ -23,8 +23,8 @@ public class UpdateControlledResourceMetadataStep implements Step {
   public UpdateControlledResourceMetadataStep(
       ControlledResourceMetadataManager controlledResourceMetadataManager,
       ResourceDao resourceDao,
-      UUID resourceId,
-      UUID workspaceId) {
+      UUID workspaceId,
+      UUID resourceId) {
     this.resourceDao = resourceDao;
     this.resourceId = resourceId;
     this.workspaceId = workspaceId;

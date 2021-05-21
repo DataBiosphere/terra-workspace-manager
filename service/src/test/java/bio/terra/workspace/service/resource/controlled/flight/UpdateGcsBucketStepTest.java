@@ -66,6 +66,7 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
     doReturn(workingMap).when(mockFlightContext).getWorkingMap();
 
     doReturn(mockStorageCow).when(mockCrlService).createStorageCow(PROJECT_ID);
+    // bucket name is different each time
     doReturn(mockBucketCow).when(mockStorageCow).get(any(String.class));
     doReturn(mockBucketCowBuilder).when(mockBucketCow).toBuilder();
     doReturn(mockBucketCowBuilder)

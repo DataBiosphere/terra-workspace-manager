@@ -184,7 +184,7 @@ public class GcsApiConversions {
   }
 
   public static LifecycleCondition toGcsApi(ApiGcpGcsBucketLifecycleRuleCondition condition) {
-    final LifecycleCondition.Builder resultBuilder = LifecycleCondition.newBuilder();
+    final var resultBuilder = LifecycleCondition.newBuilder();
 
     /* TODO(PF-506): some conditions aren't in the version of the Google Storage API in the
      *    latest version of the CRL. */

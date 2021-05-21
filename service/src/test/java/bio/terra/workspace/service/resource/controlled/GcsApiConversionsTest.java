@@ -173,7 +173,7 @@ public class GcsApiConversionsTest extends BaseUnitTest {
 
     ApiGcpGcsBucketLifecycleRuleCondition wsmCondition = toWsmApi(GCS_LIFECYCLE_CONDITION_1);
     assertEquals(42, wsmCondition.getAge());
-    assertNull(wsmCondition.getMatchesStorageClass()); // TODO: double check this
+    assertNull(wsmCondition.getMatchesStorageClass());
     assertFalse(wsmCondition.isLive());
     assertEquals(2, wsmCondition.getNumNewerVersions());
   }

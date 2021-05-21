@@ -1,13 +1,12 @@
 package bio.terra.workspace.service.resource.controlled.flight.update;
 
-import static bio.terra.workspace.service.resource.controlled.GcsApiConversions.toWsmApi;
-
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
@@ -16,9 +15,12 @@ import bio.terra.workspace.service.resource.controlled.GcsApiConversions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.cloud.storage.BucketInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RetrieveGcsBucketCloudAttributesStep implements Step {
-
+  private static final Logger logger =
+      LoggerFactory.getLogger(RetrieveGcsBucketCloudAttributesStep.class);
   private final ControlledGcsBucketResource bucketResource;
   private final CrlService crlService;
   private final WorkspaceService workspaceService;
@@ -43,6 +45,11 @@ public class RetrieveGcsBucketCloudAttributesStep implements Step {
 
     // get the existing bucket cow
     final BucketCow existingBucketCow = storageCow.get(bucketResource.getBucketName());
+    if (existingBucketCow == null) {
+      logger.error(
+          "Can't construct COW for pre-existing bucket {}", bucketResource.getBucketName());
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, null);
+    }
 
     // get the attributes
     final BucketInfo existingBucketInfo = existingBucketCow.getBucketInfo();
@@ -56,12 +63,6 @@ public class RetrieveGcsBucketCloudAttributesStep implements Step {
   // Nothing to undo here
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    return null;
-  }
-
-  private ApiGcpGcsBucketUpdateParameters fromBucketInfo(BucketInfo bucketInfo) {
-    final var result = new ApiGcpGcsBucketUpdateParameters();
-    result.setDefaultStorageClass(toWsmApi(bucketInfo.getStorageClass()));
-    return result;
+    return StepResult.getStepResultSuccess();
   }
 }

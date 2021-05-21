@@ -196,7 +196,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
     // Retrieve and cast response to UpdateControlledGcpGcsBucketResponse
 
-    return controlledResourceToResponseEntity(
+    return getControlledResourceAsResponseEntity(
         workspaceId, resourceId, userRequest, r -> r.castToGcsBucketResource().toApiResource());
   }
 
@@ -205,7 +205,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String projectId = workspaceService.getRequiredGcpProject(workspaceId);
-    return controlledResourceToResponseEntity(
+    return getControlledResourceAsResponseEntity(
         workspaceId,
         resourceId,
         userRequest,
@@ -219,7 +219,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     String projectId = workspaceService.getRequiredGcpProject(workspaceId);
     controlledResourceMetadataManager.updateControlledResourceMetadata(
         workspaceId, resourceId, body.getName(), body.getDescription(), userRequest);
-    return controlledResourceToResponseEntity(
+    return getControlledResourceAsResponseEntity(
         workspaceId,
         resourceId,
         userRequest,
@@ -237,7 +237,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
    * @param <T> - Class to be converted to and type for the ResponseEntity
    * @return - response entity associated with this response object
    */
-  private <T> ResponseEntity<T> controlledResourceToResponseEntity(
+  private <T> ResponseEntity<T> getControlledResourceAsResponseEntity(
       UUID workspaceId,
       UUID resourceId,
       AuthenticatedUserRequest userRequest,

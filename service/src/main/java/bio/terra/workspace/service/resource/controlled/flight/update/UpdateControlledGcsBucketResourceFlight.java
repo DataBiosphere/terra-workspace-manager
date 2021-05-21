@@ -28,8 +28,8 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
         new UpdateControlledResourceMetadataStep(
             flightBeanBag.getControlledResourceMetadataManager(),
             flightBeanBag.getResourceDao(),
-            resource.getResourceId(),
-            resource.getWorkspaceId()));
+            resource.getWorkspaceId(),
+            resource.getResourceId()));
 
     // retrieve existing attributes in case of undo later
     addStep(
