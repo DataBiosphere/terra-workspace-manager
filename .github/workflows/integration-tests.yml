@@ -4,11 +4,6 @@
 name: Integration Tests
 
 on:
-  push:
-    branches: [ un-as-723 ]
-    paths-ignore:
-      - 'README.md'
-      - 'service/local-dev/**'
   workflow_dispatch:
     inputs:
       testEnv:
@@ -26,7 +21,7 @@ jobs:
       - name: Set env
         id: set-env-step
         run: |
-          if ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}; then
+          if ${{ github.event_name == 'workflow_dispatch' }}; then
             ENV=${{ github.event.inputs.testEnv }}
           else
             echo ::error ::${{ github.event_name }} not supported for this workflow
@@ -69,23 +64,9 @@ jobs:
         id: integration-test
         if: ${{ always() }}
         uses: ./.github/actions/integration-test
-        run: |
-          if: steps.set-env-step.outputs.test-env == 'dev'
-            TEST_SERVER=workspace-dev.json
-            TEST=suites/dev/FullIntegration.json
-          elif steps.set-env-step.outputs.test-env == 'alpha'
-            TEST_SERVER=workspace-alpha.json
-            TEST=suites/alpha/FullIntegration.json
-          elif steps.set-env-step.outputs.test-env == 'staging'
-            TEST_SERVER=workspace-staging.json
-            TEST=suites/staging/FullIntegration.json
-          else
-            echo ::error ::${{ steps.set-env-step.outputs.test-env }} environment not supported for this workflow
-            exit 1
-          fi
         with:
-          test-server: $TEST_SERVER
-          test: $TEST
+          test-server: workspace-dev.json
+          test: suites/dev/FullIntegration.json
           test-env: ${{ steps.set-env-step.outputs.test-env }}
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
