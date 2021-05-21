@@ -5,6 +5,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.RetryRuleFixedInterval;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -27,13 +28,7 @@ import java.util.List;
  */
 public class CreateControlledResourceFlight extends Flight {
 
-  /**
-   * Retry rule for steps interacting with GCP. If GCP is down, we don't know when it will be back,
-   * so don't wait forever. Note that RetryRules can be re-used within but not across Flight
-   * instances.
-   */
-  private final RetryRule gcpRetryRule =
-      new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount=  */ 10);
+  private final RetryRule gcpRetryRule = RetryRules.cloud();
 
   public CreateControlledResourceFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);

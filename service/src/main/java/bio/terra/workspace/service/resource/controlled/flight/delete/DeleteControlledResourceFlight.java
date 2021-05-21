@@ -5,6 +5,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.RetryRuleFixedInterval;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -20,27 +21,6 @@ import java.util.UUID;
  * live in individual steps.
  */
 public class DeleteControlledResourceFlight extends Flight {
-  /**
-   * Retry rule for steps interacting with GCP. If GCP is down, we don't know when it will be back,
-   * so don't wait forever. Note that RetryRules can be re-used within but not across Flight
-   * instances.
-   */
-  private final RetryRule gcpRetryRule =
-      new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount=  */ 2);
-
-  /**
-   * Retry rule for handling unexpected timeouts with Sam. Note that some errors from Sam (like
-   * NOT_FOUND responses to resources which were already deleted) are not handled by retries.
-   */
-  private final RetryRule samRetryRule =
-      new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount=  */ 2);
-
-  /**
-   * Retry rule for immediately retrying a failed step twice. This is useful for retrying operations
-   * where waiting is not necessary, e.g. retrying conflicted SQL transactions.
-   */
-  private final RetryRule immediateRetryRule =
-      new RetryRuleFixedInterval(/*intervalSeconds= */ 0, /* maxCount= */ 2);
 
   public DeleteControlledResourceFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
@@ -64,6 +44,7 @@ public class DeleteControlledResourceFlight extends Flight {
     // 2. Delete the cloud resource. This has unique logic for each resource type. Depending on the
     // specifics of the resource type, this step may require the flight to run asynchronously.
     // 3. Delete the metadata
+    final RetryRule samRetryRule = RetryRules.sam();
     addStep(
         new DeleteSamResourceStep(
             flightBeanBag.getResourceDao(),
@@ -73,6 +54,7 @@ public class DeleteControlledResourceFlight extends Flight {
             userRequest),
         samRetryRule);
 
+    RetryRule gcpRetryRule = RetryRules.cloud();
     switch (resource.getResourceType()) {
       case GCS_BUCKET:
         addStep(
@@ -116,6 +98,7 @@ public class DeleteControlledResourceFlight extends Flight {
             "Delete not yet implemented for resource type " + resource.getResourceType());
     }
 
+    final RetryRule immediateRetryRule = RetryRules.databaseConflict();
     addStep(
         new DeleteMetadataStep(flightBeanBag.getResourceDao(), workspaceId, resourceId),
         immediateRetryRule);
