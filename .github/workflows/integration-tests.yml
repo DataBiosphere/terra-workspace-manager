@@ -4,6 +4,11 @@
 name: Integration Tests
 
 on:
+  push:
+    branches: [ un-as-723 ]
+    paths-ignore:
+      - 'README.md'
+      - 'service/local-dev/**'
   workflow_dispatch:
     inputs:
       testEnv:
