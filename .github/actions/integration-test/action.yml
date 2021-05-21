@@ -39,7 +39,7 @@ runs:
         cd integration
         echo "Test Runner config"
         ./render-config.sh ${{ inputs.test-env }} ${{ inputs.vault-token }}
-        ./render-k8s-config.sh ${{ test-namespace }} ${{ inputs.vault-token }}
+        ./render-k8s-config.sh ${{ inputs.test-namespace }} ${{ inputs.vault-token }}
         export TEST_RUNNER_SERVER_SPECIFICATION_FILE=${{ inputs.test-server }}
         resultsDir=/tmp/results$RANDOM
         echo "Running test suite ${{ inputs.test }} on ${{ inputs.test-server }}"
