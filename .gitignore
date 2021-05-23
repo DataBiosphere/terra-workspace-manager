@@ -36,3 +36,6 @@ out/
 
 ### Mac directory metadata
 .DS_Store
+
+### write-config script output
+config/
