@@ -1,9 +1,11 @@
 package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -29,11 +31,18 @@ import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.UpdateControlledGcpGcsBucketRequestBody;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.api.client.util.DateTime;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.BucketInfo.LifecycleRule;
+import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
+import com.google.cloud.storage.BucketInfo.LifecycleRule.SetStorageClassLifecycleAction;
 import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.Storage.BucketField;
+import com.google.cloud.storage.Storage.BucketGetOption;
+import com.google.cloud.storage.StorageClass;
 import com.google.cloud.storage.StorageException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -87,13 +96,13 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
   private static final String GCS_BLOB_NAME = "wsmtestblob-name";
   private static final String GCS_BLOB_CONTENT = "This is the content of a text file.";
   public static final String UPDATED_RESOURCE_NAME = "new_resource_name";
-  public static final String UPDATED_DESCRIPTION = "A bucket with a hole in it. We should probably just delete it.";
+  public static final String UPDATED_DESCRIPTION = "A bucket with a hole in it.";
 
   private TestUserSpecification reader;
   private String bucketName;
   private String resourceName;
-  public static final GcpGcsBucketUpdateParameters UPDATE_PARAMETERS = new GcpGcsBucketUpdateParameters()
-      .defaultStorageClass(GcpGcsBucketDefaultStorageClass.STANDARD)
+  private static final GcpGcsBucketUpdateParameters UPDATE_PARAMETERS = new GcpGcsBucketUpdateParameters()
+      .defaultStorageClass(GcpGcsBucketDefaultStorageClass.NEARLINE)
       .lifecycle(new GcpGcsBucketLifecycle()
           .addRulesItem(new GcpGcsBucketLifecycleRule()
               .action(new GcpGcsBucketLifecycleRuleAction()
@@ -222,6 +231,26 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
         resource.getMetadata().getName(), resource.getMetadata().getDescription());
     assertEquals(UPDATED_RESOURCE_NAME, resource.getMetadata().getName());
     assertEquals(UPDATED_DESCRIPTION, resource.getMetadata().getDescription());
+    final Bucket retrievedUpdatedBucket = ownerStorageClient.get(bucketName, BucketGetOption.fields(BucketField.LIFECYCLE, BucketField.STORAGE_CLASS));
+    logger.info("Retrieved bucket {}", retrievedUpdatedBucket.toString());
+    assertEquals(StorageClass.NEARLINE, retrievedUpdatedBucket.getStorageClass());
+    final List<? extends LifecycleRule> lifecycleRules = retrievedUpdatedBucket.getLifecycleRules();
+    lifecycleRules
+        .forEach(r -> logger.info("Lifecycle rule ActionType {}", r.toString()));
+    assertThat(lifecycleRules, hasSize(1));
+
+    final LifecycleRule rule = lifecycleRules.get(0);
+    assertEquals(SetStorageClassLifecycleAction.TYPE, rule.getAction().getActionType());
+    final SetStorageClassLifecycleAction setStorageClassLifecycleAction = (SetStorageClassLifecycleAction) rule.getAction();
+    assertEquals(StorageClass.ARCHIVE, setStorageClassLifecycleAction.getStorageClass());
+    final LifecycleCondition condition = rule.getCondition();
+    assertEquals(30, condition.getAge());
+    assertEquals(DateTime.parseRfc3339("1981-04-21"), condition.getCreatedBefore());
+    assertTrue(condition.getIsLive());
+    assertEquals(3, condition.getNumberOfNewerVersions());
+    final List<StorageClass> matchesStorageClass = condition.getMatchesStorageClass();
+    assertThat(matchesStorageClass, hasSize(1));
+    assertEquals(StorageClass.ARCHIVE, matchesStorageClass.get(0));
 
     // additional details must be verified with gsutil or in the cloud console, as we don't return them
     logger.info("About to try to delete the bucket with a reader.");
