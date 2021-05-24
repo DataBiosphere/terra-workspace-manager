@@ -31,6 +31,7 @@ runs:
       run: |
         echo "What is up? Here is pwd"
         pwd
+      shell: bash
     - name: Set permissions and render test configurations
       run: ./scripts/write_config.sh ${{ inputs.target }} ${{ inputs.vault-token }}
       shell: bash
