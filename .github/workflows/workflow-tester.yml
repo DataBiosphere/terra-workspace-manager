@@ -49,5 +49,5 @@ jobs:
         db-password: ${{ steps.config.outputs.db-password }}
         db-username: ${{ steps.config.outputs.db-username }}
         cloudsql-sa-file: ./config/sqlproxy-sa.json
-        script-file: .scripts/test.sql
+        script-file: ./scripts/test.sql
 
