@@ -1729,8 +1729,6 @@ components:
           type: string
         updateParameters:
           $ref: '#/components/schemas/GcpGcsBucketUpdateParameters'
-        jobControl:
-          $ref: '#/components/schemas/JobControl'
     CreatedControlledGcpGcsBucket:
       description: Response Payload for requesting a new controlled GCS bucket.
       type: object

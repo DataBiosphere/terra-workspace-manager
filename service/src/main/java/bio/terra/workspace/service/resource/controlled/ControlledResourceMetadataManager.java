@@ -82,7 +82,6 @@ public class ControlledResourceMetadataManager {
   public void validateControlledResourceAndAction(
       AuthenticatedUserRequest userReq, UUID workspaceId, UUID resourceId, String action) {
     WsmResource resource = resourceDao.getResource(workspaceId, resourceId);
-    // TODO(PF-640): also check that the user has
     if (resource.getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InvalidControlledResourceException(
           String.format("Resource %s is not a controlled resource.", resource.getResourceId()));

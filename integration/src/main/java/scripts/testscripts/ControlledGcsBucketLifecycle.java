@@ -223,9 +223,6 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     logger.info("Owner successfully deleted blob {}", blobId.getName());
 
     // Update the bucket
-    logger.info("About to update the bucket {} resourceID {} workspace ID {}",
-        bucketName, bucket.getResourceId(), getWorkspaceId());
-
     final GcpGcsBucketResource resource = updateBucketAttempt(resourceApi, resourceId);
     logger.info("Updated resource name to {} and description to {}",
         resource.getMetadata().getName(), resource.getMetadata().getDescription());
@@ -236,7 +233,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     assertEquals(StorageClass.NEARLINE, retrievedUpdatedBucket.getStorageClass());
     final List<? extends LifecycleRule> lifecycleRules = retrievedUpdatedBucket.getLifecycleRules();
     lifecycleRules
-        .forEach(r -> logger.info("Lifecycle rule ActionType {}", r.toString()));
+        .forEach(r -> logger.info("Lifecycle rule: {}", r.toString()));
     assertThat(lifecycleRules, hasSize(1));
 
     final LifecycleRule rule = lifecycleRules.get(0);
@@ -326,13 +323,10 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
 
   private GcpGcsBucketResource updateBucketAttempt(ControlledGcpResourceApi resourceApi, UUID resourceId)
     throws ApiException {
-    final var jobControl = new JobControl()
-        .id(UUID.randomUUID().toString());
     var body = new UpdateControlledGcpGcsBucketRequestBody()
         .name(UPDATED_RESOURCE_NAME)
         .description(UPDATED_DESCRIPTION)
-        .updateParameters(UPDATE_PARAMETERS)
-        .jobControl(jobControl);
+        .updateParameters(UPDATE_PARAMETERS);
     logger.info("Attempting to update bucket {} resource ID {} workspace {}", bucketName, resourceId, getWorkspaceId());
     return resourceApi.updateGcsBucket(body, getWorkspaceId(), resourceId);
   }

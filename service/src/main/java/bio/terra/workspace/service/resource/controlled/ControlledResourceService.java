@@ -78,8 +78,7 @@ public class ControlledResourceService {
       ApiGcpGcsBucketUpdateParameters updateParameters,
       AuthenticatedUserRequest userRequest,
       @Nullable String resourceName,
-      @Nullable String resourceDescription,
-      ApiJobControl jobControl) {
+      @Nullable String resourceDescription) {
     final String jobDescription =
         String.format(
             "Update controlled GCS Bucket resource %s; id %s; name %s",
@@ -88,7 +87,7 @@ public class ControlledResourceService {
         jobService
             .newJob(
                 jobDescription,
-                jobControl.getId(),
+                UUID.randomUUID().toString(), // no need to track ID
                 UpdateControlledGcsBucketResourceFlight.class,
                 resource,
                 userRequest)

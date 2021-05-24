@@ -76,7 +76,7 @@ public class UpdateGcsBucketStep implements Step {
 
     // Lifecycle rules need to be cleared before being set. We should only do this if
     // we have changes.
-    final BucketCow.Builder bucketCowBuilder; //  = existingBucketCow.toBuilder();
+    final BucketCow.Builder bucketCowBuilder;
     if (doReplaceLifecycleRules) {
       final var deleteBuilder = existingBucketCow.toBuilder();
       deleteBuilder.deleteLifecycleRules();

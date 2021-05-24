@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRule;
@@ -68,10 +69,12 @@ public class GcsApiConversions {
         .build();
   }
 
-  // If input is null, return null, as we need the null value preserved in case it's not there.
-  // This prevents a null check at the call site at the expense of an extra clause here.
-  // Returns either null, if no input, the correct StorageClass, if found, or throws
-  // IllegalStateException if the storage class given isn't in the map.
+  /**
+   * If input is null, return null, as we need the null value preserved in case it's not there. This
+   * prevents a null check at the call site at the expense of an extra clause here. Returns either
+   * null, if no input, the correct StorageClass, if found, or throws IllegalStateException if the
+   * storage class given isn't in the map.
+   */
   @Nullable
   public static StorageClass toGcsApi(@Nullable ApiGcpGcsBucketDefaultStorageClass storageClass) {
     if (storageClass == null) {
@@ -90,8 +93,10 @@ public class GcsApiConversions {
         .orElseThrow(() -> new IllegalStateException("Unrecognized storage class " + storageClass));
   }
 
-  // Deliberately return a null collection, because we're working with an API convention
-  // where null means "no change", but an empty list would mean "wipe out this list".
+  /**
+   * Deliberately return a null collection, because we're working with an API convention where null
+   * means "no change", but an empty list would mean "wipe out this list".
+   */
   @Nullable
   public static List<LifecycleRule> toGcsApiRulesList(
       @Nullable ApiGcpGcsBucketLifecycle lifecycle) {
@@ -128,7 +133,7 @@ public class GcsApiConversions {
         return LifecycleAction.newSetStorageClassAction(
             toGcsApi(lifecycleRuleAction.getStorageClass()));
       default:
-        throw new IllegalStateException(
+        throw new BadRequestException(
             "Unrecognized lifecycle action type " + lifecycleRuleAction.getType());
     }
   }

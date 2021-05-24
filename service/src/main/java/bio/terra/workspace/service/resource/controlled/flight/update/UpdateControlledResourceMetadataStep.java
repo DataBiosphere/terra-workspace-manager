@@ -8,7 +8,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.UUID;
@@ -35,8 +34,6 @@ public class UpdateControlledResourceMetadataStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     final FlightMap inputParameters = flightContext.getInputParameters();
-    final ControlledResource resource =
-        inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
     final String resourceName =
         inputParameters.get(ControlledResourceKeys.RESOURCE_NAME, String.class);
     final String resourceDescription =

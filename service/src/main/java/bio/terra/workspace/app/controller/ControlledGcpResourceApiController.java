@@ -1,7 +1,6 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.BadRequestException;
-import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
@@ -40,6 +39,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Collections;
@@ -75,8 +75,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       WorkspaceService workspaceService,
       JobService jobService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
-      @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-          HttpServletRequest request) {
+      HttpServletRequest request) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.controlledResourceService = controlledResourceService;
     this.workspaceService = workspaceService;
@@ -177,25 +176,21 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, UUID resourceId, @Valid ApiUpdateControlledGcpGcsBucketRequestBody body) {
     logger.info("Updating bucket resourceId {} workspaceId {}", resourceId, workspaceId);
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final ApiJobControl jobControl = body.getJobControl();
     final ControlledResource resource =
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
     if (resource.getResourceType() != WsmResourceType.GCS_BUCKET) {
-      // TODO: is there a better exception type here?
-      throw new NotFoundException(String.format("Resource %s is not a GCS Bucket", resourceId));
+      throw new InvalidControlledResourceException(
+          String.format("Resource %s is not a GCS Bucket", resourceId));
     }
     final ControlledGcsBucketResource bucketResource = resource.castToGcsBucketResource();
-    final ControlledGcsBucketResource updatedResource =
-        controlledResourceService.updateGcsBucket(
-            bucketResource,
-            body.getUpdateParameters(),
-            userRequest,
-            body.getName(),
-            body.getDescription(),
-            jobControl);
+    controlledResourceService.updateGcsBucket(
+        bucketResource,
+        body.getUpdateParameters(),
+        userRequest,
+        body.getName(),
+        body.getDescription());
 
     // Retrieve and cast response to UpdateControlledGcpGcsBucketResponse
-
     return getControlledResourceAsResponseEntity(
         workspaceId, resourceId, userRequest, r -> r.castToGcsBucketResource().toApiResource());
   }
