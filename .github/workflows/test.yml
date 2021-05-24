@@ -4,20 +4,6 @@
 name: Run Service Tests
 
 on:
-  push:
-    branches: [ dev ]
-    paths-ignore:
-      - 'README.md'
-      - '.github/**'
-      - 'service/local-dev/**'
-  pull_request:
-    branches: [ '**' ]
-    # There is an issue with GitHub required checks and paths-ignore. We don't really need to
-    # run the tests if there are only irrelevant changes (see paths-ignore above). However,
-    # we require tests to pass by making a "required check" rule on the branch. If the action
-    # is not triggered, the required check never passes and you are stuck. Therefore, we have
-    # to run tests even when we only change a markdown file. So don't do what I did and put a
-    # paths-ignore right here!
   workflow_dispatch:
     inputs:
       testEnv:
@@ -37,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gradleTask: [unitTest, connectedTest, integrationTest]
+        gradleTask: [unitTest, connectedTest]
 
     services:
       postgres:
@@ -58,21 +44,15 @@ jobs:
     - name: Set env and whether or not to use a local server
       id: set-env-step
       run: |
-        if ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}; then
-          ENV=local
-          CONFIG_ENV=dev
-          LOCAL_SERVER=${{ matrix.gradleTask == 'integrationTest' }}
-        elif ${{ github.event_name == 'workflow_dispatch' }}; then
+        if ${{ github.event_name == 'workflow_dispatch' }}; then
           ENV=${{ github.event.inputs.testEnv }}
           CONFIG_ENV=${{ github.event.inputs.testEnv }}
-          LOCAL_SERVER=false
         else
           echo ::error ::${{ github.event_name }} not supported for this workflow
           exit 1
         fi
         echo ::set-output name=test-env::$ENV
         echo ::set-output name=config-env::$CONFIG_ENV
-        echo ::set-output name=local-server::$LOCAL_SERVER
 
     - name: Initialize Postgres DB
       env:
@@ -119,16 +99,6 @@ jobs:
         chmod +x ./render_config.sh
         ./render_config.sh ${{ steps.set-env-step.outputs.config-env }} ${{ steps.vault-token-step.outputs.vault-token }}
         chmod +r rendered
-
-      # Only integration tests need a running server
-    - name: Run local server (in background)
-      if: steps.set-env-step.outputs.local-server == 'true'
-      run: ./gradlew :service:bootRun &
-
-    - name: Wait for local server to start
-      if: steps.set-env-step.outputs.local-server == 'true'
-      # With a timeout of 60 seconds, try to connect to localhost:8080 every 1 second.
-      run: timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
 
       # Run tests
     - name: Run tests

@@ -188,18 +188,6 @@ task connectedTest(type: Test) {
 	outputs.upToDateWhen { false }
 }
 
-
-task integrationTest(type: Test) {
-	environment.put('TEST_ENV', System.getenv("TEST_ENV"))
-	useJUnitPlatform {
-		includeTags "integration"
-	}
-	testLogging {
-		events = ["passed", "failed", "skipped", "started"]
-	}
-	outputs.upToDateWhen { false }
-}
-
 spotless {
 	java {
 		googleJavaFormat()
