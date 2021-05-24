@@ -27,26 +27,17 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Show what is up
-      run: |
-        echo "What is up? Here is pwd"
-        pwd
-        echo "What is up? Here is ls"
-        ls -al
-        echo "Where is write-config script? find it"
-        find . -name "write*"
+    - name: Set permissions and render test configurations
+      run: ./scripts/write-config.sh ${{ inputs.target }} ${{ inputs.vault-token }}
       shell: bash
-#    - name: Set permissions and render test configurations
-#      run: ./scripts/write_config.sh ${{ inputs.target }} ${{ inputs.vault-token }}
-#      shell: bash
-#    - name: Files to outputs
-#      id: files-to-outputs
-#      run: |
-#        echo "::set-output name=db-connection-name::$(<./config/db-connection-name.txt)"
-#        echo "::set-output name=db-name::$(<./config/db-name.txt)"
-#        echo "::set-output name=db-password::$(<./config/db-password.txt)"
-#        echo "::set-output name=db-username::$(<./config/db-username.txt)"
-#        echo "::set-output name=stairway-db-name::$(<./config/stairway-db-name.txt)"
-#        echo "::set-output name=stairway-db-password::$(<./config/stairway-db-password.txt)"
-#        echo "::set-output name=stairway-db-username::$(<./config/stairway-db-username.txt)"
-#      shell: bash
+    - name: Files to outputs
+      id: files-to-outputs
+      run: |
+        echo "::set-output name=db-connection-name::$(<./config/db-connection-name.txt)"
+        echo "::set-output name=db-name::$(<./config/db-name.txt)"
+        echo "::set-output name=db-password::$(<./config/db-password.txt)"
+        echo "::set-output name=db-username::$(<./config/db-username.txt)"
+        echo "::set-output name=stairway-db-name::$(<./config/stairway-db-name.txt)"
+        echo "::set-output name=stairway-db-password::$(<./config/stairway-db-password.txt)"
+        echo "::set-output name=stairway-db-username::$(<./config/stairway-db-username.txt)"
+      shell: bash
