@@ -76,13 +76,17 @@ public class UpdateGcsBucketStep implements Step {
 
     // Lifecycle rules need to be cleared before being set. We should only do this if
     // we have changes.
-    var bucketCowBuilder = existingBucketCow.toBuilder();
+    final BucketCow.Builder bucketCowBuilder; //  = existingBucketCow.toBuilder();
     if (doReplaceLifecycleRules) {
-      bucketCowBuilder.deleteLifecycleRules();
-      var clearedRulesBucket = bucketCowBuilder.build().update();
+      final var deleteBuilder = existingBucketCow.toBuilder();
+      deleteBuilder.deleteLifecycleRules();
+      var clearedRulesBucket = deleteBuilder.build().update();
       // do separate update to set the lifecycle rules
       bucketCowBuilder = clearedRulesBucket.toBuilder();
       bucketCowBuilder.setLifecycleRules(gcsLifecycleRules);
+    } else {
+      // do not delete the lifecycle rules, as they are not changing
+      bucketCowBuilder = existingBucketCow.toBuilder();
     }
 
     final StorageClass gcsStorageClass = toGcsApi(updateParameters.getDefaultStorageClass());

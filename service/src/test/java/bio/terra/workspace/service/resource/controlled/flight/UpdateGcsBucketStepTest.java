@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import bio.terra.cloudres.google.storage.BucketCow;
@@ -44,7 +45,7 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
 
   private UpdateGcsBucketStep updateGcsBucketStep;
 
-  @Mock private BucketCow mockBucketCow;
+  @Mock private BucketCow mockExistingBucketCow;
   @Mock private BucketCow mockBuiltBucketCow;
   @Mock private BucketCow.Builder mockBucketCowBuilder;
   @Mock private CrlService mockCrlService;
@@ -67,8 +68,8 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
 
     doReturn(mockStorageCow).when(mockCrlService).createStorageCow(PROJECT_ID);
     // bucket name is different each time
-    doReturn(mockBucketCow).when(mockStorageCow).get(any(String.class));
-    doReturn(mockBucketCowBuilder).when(mockBucketCow).toBuilder();
+    doReturn(mockExistingBucketCow).when(mockStorageCow).get(any(String.class));
+    doReturn(mockBucketCowBuilder).when(mockExistingBucketCow).toBuilder();
     doReturn(mockBucketCowBuilder)
         .when(mockBucketCowBuilder)
         .setLifecycleRules(lifecycleRulesCaptor.capture());
@@ -77,7 +78,8 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
         .setStorageClass(storageClassCaptor.capture());
 
     doReturn(mockBuiltBucketCow).when(mockBucketCowBuilder).build();
-
+    doReturn(mockBuiltBucketCow).when(mockBuiltBucketCow).update();
+    doReturn(mockBucketCowBuilder).when(mockBuiltBucketCow).toBuilder();
     final ControlledGcsBucketResource bucketResource =
         makeDefaultControlledGcsBucketResource().build();
     doReturn(PROJECT_ID)
@@ -91,7 +93,7 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
   @Test
   public void testDoStep() throws InterruptedException, RetryException {
     final StepResult result = updateGcsBucketStep.doStep(mockFlightContext);
-    verify(mockBuiltBucketCow).update();
+    verify(mockBuiltBucketCow, times(2)).update();
 
     assertEquals(StepResult.getStepResultSuccess(), result);
     final StorageClass storageClass = storageClassCaptor.getValue();
@@ -127,7 +129,7 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
   @Test
   public void testUndoStep() throws InterruptedException, RetryException {
     final StepResult result = updateGcsBucketStep.undoStep(mockFlightContext);
-    verify(mockBuiltBucketCow).update();
+    verify(mockBuiltBucketCow, times(2)).update();
     assertEquals(StepResult.getStepResultSuccess(), result);
 
     final StorageClass storageClass = storageClassCaptor.getValue();
