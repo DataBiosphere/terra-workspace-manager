@@ -98,7 +98,7 @@ public class ResourceDao {
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("resource_id", resourceId.toString());
-    int rowsAffected = jdbcTemplate.update(sql, params);
+    int rowsAffected = DbRetryUtils.updateWithRetries(jdbcTemplate, sql, params);
     boolean deleted = rowsAffected > 0;
 
     logger.info(
@@ -134,7 +134,8 @@ public class ResourceDao {
             .addValue("stewardship_type", REFERENCED.toSql())
             .addValue("offset", offset)
             .addValue("limit", limit);
-    List<DbResource> dbResourceList = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
+    List<DbResource> dbResourceList =
+        DbRetryUtils.queryWithRetries(jdbcTemplate, sql, params, DB_RESOURCE_ROW_MAPPER);
 
     return dbResourceList.stream()
         .map(this::constructResource)
@@ -225,7 +226,7 @@ public class ResourceDao {
     }
     sb.append(" ORDER BY name OFFSET :offset LIMIT :limit");
     List<DbResource> dbResourceList =
-        jdbcTemplate.query(sb.toString(), params, DB_RESOURCE_ROW_MAPPER);
+        DbRetryUtils.queryWithRetries(jdbcTemplate, sb.toString(), params, DB_RESOURCE_ROW_MAPPER);
 
     return dbResourceList.stream().map(this::constructResource).collect(toList());
   }
@@ -234,7 +235,7 @@ public class ResourceDao {
    * Retrieve a resource by ID
    *
    * @param workspaceId identifier of workspace for the lookup
-   * @param resourceId identifer of the resource for the lookup
+   * @param resourceId identifier of the resource for the lookup
    * @return WsmResource object
    */
   @Transactional(
@@ -317,7 +318,8 @@ public class ResourceDao {
             .addValue("workspace_id", controlledResource.getWorkspaceId().toString())
             .addValue(
                 "cloud_platform", controlledResource.getResourceType().getCloudPlatform().toSql());
-    Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
+    Integer count =
+        DbRetryUtils.queryForObjectWithRetries(jdbcTemplate, sql, params, Integer.class);
     if (count == null || count == 0) {
       throw new CloudContextRequiredException(
           "No cloud context found in which to create a controlled resource");
@@ -357,7 +359,8 @@ public class ResourceDao {
             .addValue("bucket_name", bucketResource.getBucketName())
             .addValue("resource_type", WsmResourceType.GCS_BUCKET.toSql());
     Integer matchingBucketCount =
-        jdbcTemplate.queryForObject(bucketSql, bucketParams, Integer.class);
+        DbRetryUtils.queryForObjectWithRetries(
+            jdbcTemplate, bucketSql, bucketParams, Integer.class);
     if (matchingBucketCount != null && matchingBucketCount > 0) {
       throw new DuplicateResourceException(
           String.format(
@@ -382,7 +385,8 @@ public class ResourceDao {
             .addValue("workspace_id", notebookResource.getWorkspaceId().toString())
             .addValue("instance_id", notebookResource.getInstanceId())
             .addValue("location", notebookResource.getLocation());
-    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    Integer matchingCount =
+        DbRetryUtils.queryForObjectWithRetries(jdbcTemplate, sql, sqlParams, Integer.class);
     if (matchingCount != null && matchingCount > 0) {
       throw new DuplicateResourceException(
           String.format(
@@ -405,7 +409,8 @@ public class ResourceDao {
             .addValue("resource_type", WsmResourceType.BIG_QUERY_DATASET.toSql())
             .addValue("workspace_id", datasetResource.getWorkspaceId().toString())
             .addValue("dataset_name", datasetResource.getDatasetName());
-    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    Integer matchingCount =
+        DbRetryUtils.queryForObjectWithRetries(jdbcTemplate, sql, sqlParams, Integer.class);
     if (matchingCount != null && matchingCount > 0) {
       throw new DuplicateResourceException(
           String.format(
@@ -428,7 +433,8 @@ public class ResourceDao {
     final String countSql = "SELECT COUNT(*) FROM resource WHERE resource_id = :resource_id";
     MapSqlParameterSource countParams =
         new MapSqlParameterSource().addValue("resource_id", resource.getResourceId().toString());
-    Integer count = jdbcTemplate.queryForObject(countSql, countParams, Integer.class);
+    Integer count =
+        DbRetryUtils.queryForObjectWithRetries(jdbcTemplate, countSql, countParams, Integer.class);
     if (count != null && count == 1) {
       return;
     }
@@ -470,7 +476,7 @@ public class ResourceDao {
     }
 
     try {
-      jdbcTemplate.update(sql, params);
+      DbRetryUtils.updateWithRetries(jdbcTemplate, sql, params);
       logger.info(
           "Inserted record for resource {} for workspace {}",
           resource.getResourceId(),
@@ -577,7 +583,8 @@ public class ResourceDao {
 
   private DbResource getDbResource(String sql, MapSqlParameterSource params) {
     try {
-      return jdbcTemplate.queryForObject(sql, params, DB_RESOURCE_ROW_MAPPER);
+      return DbRetryUtils.queryForObjectWithRetries(
+          jdbcTemplate, sql, params, DB_RESOURCE_ROW_MAPPER);
     } catch (EmptyResultDataAccessException e) {
       throw new ResourceNotFoundException("Resource not found.");
     }
@@ -612,7 +619,7 @@ public class ResourceDao {
         .addValue("workspace_id", workspaceId.toString())
         .addValue("resource_id", resourceId.toString());
 
-    int rowsAffected = jdbcTemplate.update(sb.toString(), params);
+    int rowsAffected = DbRetryUtils.updateWithRetries(jdbcTemplate, sb.toString(), params);
     boolean updated = rowsAffected > 0;
 
     logger.info(

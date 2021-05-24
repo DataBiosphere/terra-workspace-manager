@@ -82,7 +82,7 @@ public class WorkspaceDao {
             .addValue("properties", DbSerDes.propertiesToJson(workspace.getProperties()))
             .addValue("workspace_stage", workspace.getWorkspaceStage().toString());
     try {
-      jdbcTemplate.update(sql, params);
+      DbRetryUtils.updateWithRetries(jdbcTemplate, sql, params);
       logger.info("Inserted record for workspace {}", workspaceId);
     } catch (DuplicateKeyException e) {
       throw new DuplicateWorkspaceException(
@@ -106,7 +106,7 @@ public class WorkspaceDao {
 
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceId.toString());
-    int rowsAffected = jdbcTemplate.update(sql, params);
+    int rowsAffected = DbRetryUtils.updateWithRetries(jdbcTemplate, sql, params);
     boolean deleted = rowsAffected > 0;
 
     if (deleted) {
@@ -139,7 +139,7 @@ public class WorkspaceDao {
     try {
       Workspace result =
           DataAccessUtils.requiredSingleResult(
-              jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER));
+              DbRetryUtils.queryWithRetries(jdbcTemplate, sql, params, WORKSPACE_ROW_MAPPER));
       logger.info("Retrieved workspace record {}", result);
       return result;
     } catch (EmptyResultDataAccessException e) {
@@ -188,7 +188,7 @@ public class WorkspaceDao {
                 "workspace_ids", idList.stream().map(UUID::toString).collect(Collectors.toList()))
             .addValue("offset", offset)
             .addValue("limit", limit);
-    return jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER);
+    return DbRetryUtils.queryWithRetries(jdbcTemplate, sql, params, WORKSPACE_ROW_MAPPER);
   }
 
   /**
@@ -212,7 +212,8 @@ public class WorkspaceDao {
     try {
       return Optional.ofNullable(
           DataAccessUtils.singleResult(
-              jdbcTemplate.query(
+              DbRetryUtils.queryWithRetries(
+                  jdbcTemplate,
                   sql,
                   params,
                   (rs, rowNum) -> deserializeGcpCloudContext(rs.getString("context")))));
@@ -238,7 +239,7 @@ public class WorkspaceDao {
             .addValue("cloud_platform", CloudPlatform.GCP.toString())
             .addValue("context", serializeGcpCloudContext(cloudContext));
     try {
-      jdbcTemplate.update(sql, params);
+      DbRetryUtils.updateWithRetries(jdbcTemplate, sql, params);
       logger.info("Inserted record for GCP cloud context for workspace {}", workspaceId);
     } catch (DuplicateKeyException e) {
       throw new DuplicateCloudContextException(
@@ -284,7 +285,7 @@ public class WorkspaceDao {
             .addValue("workspace_id", workspaceId.toString())
             .addValue("cloud_platform", CloudPlatform.GCP.toString());
 
-    int rowsAffected = jdbcTemplate.update(sql, params);
+    int rowsAffected = DbRetryUtils.updateWithRetries(jdbcTemplate, sql, params);
     boolean deleted = rowsAffected > 0;
 
     if (deleted) {
@@ -320,7 +321,7 @@ public class WorkspaceDao {
 
     params.addValue("workspace_id", workspaceId.toString());
 
-    int rowsAffected = jdbcTemplate.update(sb.toString(), params);
+    int rowsAffected = DbRetryUtils.updateWithRetries(jdbcTemplate, sb.toString(), params);
     boolean updated = rowsAffected > 0;
 
     logger.info(
