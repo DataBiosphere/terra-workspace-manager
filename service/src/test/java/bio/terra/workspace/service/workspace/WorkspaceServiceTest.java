@@ -46,7 +46,7 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import com.google.api.services.cloudresourcemanager.model.Project;
+import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -444,7 +444,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     // Check that project is now being deleted.
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
-    assertEquals("DELETE_REQUESTED", project.getLifecycleState());
+    assertEquals("DELETE_REQUESTED", project.getState());
   }
 
   @Test
