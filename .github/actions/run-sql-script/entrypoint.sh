@@ -32,6 +32,3 @@ PGPASSWORD="${DB_PASSWORD}" psql "host=127.0.0.1 port=$port sslmode=disable dbna
 sleep 2
 kill -9 $proxypid
 
-
-
-
