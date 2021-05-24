@@ -44,9 +44,9 @@ jobs:
     - name: run script on db
       uses: ./.github/actions/run-sql-script
       with:
-        db-connection-name: ${{ steps.config.outputs.db-username }}
-        db-name:     ${{ steps.config.outputs.db-username }}
-        db-password: ${{ steps.config.outputs.db-username }}
+        db-connection-name: ${{ steps.config.outputs.db-connection-name }}
+        db-name:     ${{ steps.config.outputs.db-name }}
+        db-password: ${{ steps.config.outputs.db-password }}
         db-username: ${{ steps.config.outputs.db-username }}
         cloudsql-sa-file: ./config/sqlproxy-sa.json
         script-file: .scripts/test.sql
