@@ -24,14 +24,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Set permissions and render test configurations
-      run: |
-        cd service
-        chmod +x render_config.sh
-        ./render_config.sh ${{ inputs.test-env }} ${{ inputs.vault-token }}
-        chmod +r rendered
-      shell: bash
-
     # We run the test as one script, collecting the test result
     - name: Run the test
       id: test-run
@@ -43,7 +35,7 @@ runs:
         export TEST_RUNNER_SERVER_SPECIFICATION_FILE=${{ inputs.test-server }}
         resultsDir=/tmp/results$RANDOM
         echo "Running test suite ${{ inputs.test }} on ${{ inputs.test-server }}"
-        ../gradlew :integration:runTest --args="${{ inputs.test }} $resultsDir"
+        ../gradlew :integration:runTest --args="${{ inputs.test }} $resultsDir" --scan
         testResult=$?
         echo "Test result is $testResult"
         echo "Upload test results to Google Bucket"

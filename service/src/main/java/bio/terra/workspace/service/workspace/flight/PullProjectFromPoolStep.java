@@ -10,6 +10,8 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
+import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAPIException;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAuthorizationException;
@@ -58,12 +60,12 @@ public class PullProjectFromPoolStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext flightContext) {
+  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     String projectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
     if (projectId != null) {
       try {
         GcpUtils.deleteProject(projectId, resourceManager);
-      } catch (IOException e) {
+      } catch (IOException | RetryException e) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
     }

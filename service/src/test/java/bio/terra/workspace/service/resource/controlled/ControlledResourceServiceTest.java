@@ -235,7 +235,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             duplicateResourceJobId,
             ControlledAiNotebookInstanceResource.class,
             user.getAuthenticatedRequest());
-    assertEquals(duplicateJobResult.getException().getClass(), DuplicateResourceException.class);
+    assertEquals(DuplicateResourceException.class, duplicateJobResult.getException().getClass());
   }
 
   @Test
@@ -560,7 +560,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     Dataset cloudDataset =
         bqCow.datasets().get(projectId, createdDataset.getDatasetName()).execute();
-    assertEquals(cloudDataset.getLocation(), location);
+    assertEquals(location, cloudDataset.getLocation());
 
     assertEquals(
         resource,

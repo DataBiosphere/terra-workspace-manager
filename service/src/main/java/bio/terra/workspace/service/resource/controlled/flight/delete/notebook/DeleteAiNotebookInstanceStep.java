@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.flight.delete.notebook;
 
-import bio.terra.cloudres.google.api.services.common.OperationCow;
-import bio.terra.cloudres.google.api.services.common.OperationUtils;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.stairway.FlightContext;
@@ -9,6 +7,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -50,17 +49,10 @@ public class DeleteAiNotebookInstanceStep implements Step {
         logger.info("Notebook instance {} already deleted", instanceName.formatName());
         return StepResult.getStepResultSuccess();
       }
-      OperationCow<Operation> operation =
-          OperationUtils.pollUntilComplete(
-              notebooks.operations().operationCow(rawOperation.get()),
-              Duration.ofSeconds(20),
-              Duration.ofMinutes(10));
-      if (operation.getOperation().getError() != null) {
-        throw new RetryException(
-            String.format(
-                "Error deleting notebook instance %s. %s",
-                instanceName.formatName(), operation.getOperation().getError()));
-      }
+      GcpUtils.pollUntilSuccess(
+          notebooks.operations().operationCow(rawOperation.get()),
+          Duration.ofSeconds(20),
+          Duration.ofMinutes(10));
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
