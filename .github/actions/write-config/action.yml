@@ -10,14 +10,20 @@ inputs:
     default: 'local'
     required: true
 outputs:
-  db-connection-name:   ${{ steps.files-to-outputs.outputs.db-connection-name }}
-  db-name:              ${{ steps.files-to-outputs.outputs.db-name }}
-  db-password:          ${{ steps.files-to-outputs.outputs.db-password }}
-  db-username:          ${{ steps.files-to-outputs.outputs.db-username }}
-  stairway-db-name:     ${{ steps.files-to-outputs.outputs.stairway-db-name }}
-  stairway-db-password: ${{ steps.files-to-outputs.outputs.stairway-db-password }}
-  stairway-db-username: ${{ steps.files-to-outputs.outputs.stairway-db-username }}
-  
+  db-connection-name:
+    value: ${{ steps.files-to-outputs.outputs.db-connection-name }}
+  db-name:
+    value: ${{ steps.files-to-outputs.outputs.db-name }}
+  db-password:
+    value: ${{ steps.files-to-outputs.outputs.db-password }}
+  db-username:
+    value: ${{ steps.files-to-outputs.outputs.db-username }}
+  stairway-db-name:
+    value: ${{ steps.files-to-outputs.outputs.stairway-db-name }}
+  stairway-db-password:
+    value: ${{ steps.files-to-outputs.outputs.stairway-db-password }}
+  stairway-db-username:
+    value: ${{ steps.files-to-outputs.outputs.stairway-db-username }}
 runs:
   using: "composite"
   steps:
