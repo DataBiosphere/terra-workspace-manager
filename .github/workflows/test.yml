@@ -4,6 +4,20 @@
 name: Run Service Tests
 
 on:
+  push:
+    branches: [ dev ]
+    paths-ignore:
+      - 'README.md'
+      - '.github/**'
+      - 'service/local-dev/**'
+  pull_request:
+    branches: [ '**' ]
+    # There is an issue with GitHub required checks and paths-ignore. We don't really need to
+    # run the tests if there are only irrelevant changes (see paths-ignore above). However,
+    # we require tests to pass by making a "required check" rule on the branch. If the action
+    # is not triggered, the required check never passes and you are stuck. Therefore, we have
+    # to run tests even when we only change a markdown file. So don't do what I did and put a
+    # paths-ignore right here!
   workflow_dispatch:
     inputs:
       testEnv:
@@ -44,7 +58,10 @@ jobs:
     - name: Set env and whether or not to use a local server
       id: set-env-step
       run: |
-        if ${{ github.event_name == 'workflow_dispatch' }}; then
+        if ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}; then
+          ENV=local
+          CONFIG_ENV=dev
+        elif ${{ github.event_name == 'workflow_dispatch' }}; then
           ENV=${{ github.event.inputs.testEnv }}
           CONFIG_ENV=${{ github.event.inputs.testEnv }}
         else
