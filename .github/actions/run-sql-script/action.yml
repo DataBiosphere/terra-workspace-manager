@@ -22,7 +22,7 @@ inputs:
     required: true
 runs:
   using: 'docker'
-  image: 'Dockerfie'
+  image: 'Dockerfile'
   args:
     - ${{ inputs.db-username }}
     - ${{ inputs.db-password }}
