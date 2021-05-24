@@ -63,8 +63,6 @@ public class ControlledResourceMetadataManager {
    * <p>Throws ResourceNotFound from getResource if the workspace does not exist in the specified
    * workspace, regardless of the user's permission.
    *
-   * <p>Throws
-   *
    * <p>Throws InvalidControlledResourceException if the given resource is not controlled.
    *
    * <p>Throws UnauthorizedException if the user is not permitted to perform the specified action on

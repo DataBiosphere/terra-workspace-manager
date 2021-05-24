@@ -65,8 +65,9 @@ public class UpdateGcsBucketStep implements Step {
 
     final BucketCow existingBucketCow = storageCow.get(bucketResource.getBucketName());
     if (existingBucketCow == null) {
-      throw new ResourceNotFoundException(
-          String.format("Cannot find GCS bucket %s to update", bucketResource.getBucketName()));
+      logger.info("No bucket found to update with name {}. Treating as success.",
+          bucketResource.getBucketName());
+      return StepResult.getStepResultSuccess();
     }
     final List<LifecycleRule> gcsLifecycleRules =
         toGcsApiRulesList(updateParameters.getLifecycle());
