@@ -1,6 +1,6 @@
 workspace:
   crl:
-    janitor-client-credential-file-path: rendered/janitor-client-sa-account.json
+    janitor-client-credential-file-path: ../config/janitor-client-sa-account.json
     janitor-track-resource-project-id: terra-kernel-k8s
     janitor-track-resource-topic-id: crljanitor-tools-pubsub-topic
 

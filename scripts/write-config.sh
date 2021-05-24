@@ -16,34 +16,36 @@
 #
 # For personal environments, we assume that the target name is the same as the personal namespace name.
 # The output directory includes the following files:
-#   ------------------------------------+-------------------------------------------------------------------------
-#   app-service-account.json            | SA that the WSM application runs as
-#   ------------------------------------+-------------------------------------------------------------------------
-#   buffer-client-sa-account.json       | Creds to access Buffer service
-#   ------------------------------------+-------------------------------------------------------------------------
-#   db-name.txt                         | Database name
-#   ------------------------------------+-------------------------------------------------------------------------
-#   db-password.txt                     | Database password
-#   ------------------------------------+-------------------------------------------------------------------------
-#   db-username.txt                     | Database username
-#   ------------------------------------+-------------------------------------------------------------------------
-#   janitor-client-sa-account.json      | Creds to access Janitor service
-#   ------------------------------------+-------------------------------------------------------------------------
-#   sqlproxy-service-account.json       | SA of the CloudSQL proxy
-#   ------------------------------------+-------------------------------------------------------------------------
-#   stairway-db-name.txt                | Stairway database name
-#   ------------------------------------+-------------------------------------------------------------------------
-#   stairway-db-password.txt            | Stairway database password
-#   ------------------------------------+-------------------------------------------------------------------------
-#   stairway-db-username.txt            | Stairway database username
-#   ------------------------------------+-------------------------------------------------------------------------
-#   target.txt                          | the target that generated this set of config files. Allows the script 
-#                                       | to skip regenerating the environment on a rerun.
-#   ------------------------------------+-------------------------------------------------------------------------
-#   testrunner-service-account.json     | SA for running TestRunner
-#   ------------------------------------+-------------------------------------------------------------------------
-#   user-delegated-service-account.json | Firecloud SA used to masquerade as test users
-#   ------------------------------------+-------------------------------------------------------------------------
+#   --------------------------+-------------------------------------------------------------------------
+#   buffer-client-sa.json     | Creds to access Buffer service
+#   --------------------------+-------------------------------------------------------------------------
+#   db-connection-name.txt    | Connection string for CloudSQL proxy
+#   --------------------------+-------------------------------------------------------------------------
+#   db-name.txt               | Database name
+#   --------------------------+-------------------------------------------------------------------------
+#   db-password.txt           | Database password
+#   --------------------------+-------------------------------------------------------------------------
+#   db-username.txt           | Database username
+#   --------------------------+-------------------------------------------------------------------------
+#   janitor-client-sa.json    | Creds to access Janitor service
+#   --------------------------+-------------------------------------------------------------------------
+#   sqlproxy-sa.json          | SA of the CloudSQL proxy
+#   --------------------------+-------------------------------------------------------------------------
+#   stairway-db-name.txt      | Stairway database name
+#   --------------------------+-------------------------------------------------------------------------
+#   stairway-db-password.txt  | Stairway database password
+#   --------------------------+-------------------------------------------------------------------------
+#   stairway-db-username.txt  | Stairway database username
+#   --------------------------+-------------------------------------------------------------------------
+#   target.txt                | the target that generated this set of config files. Allows the script 
+#                             | to skip regenerating the environment on a rerun.
+#   --------------------------+-------------------------------------------------------------------------
+#   testrunner-sa.json        | SA for running TestRunner
+#   --------------------------+-------------------------------------------------------------------------
+#   user-delegated-sa.json    | Firecloud SA used to masquerade as test users
+#   --------------------------+-------------------------------------------------------------------------
+#   wsm-sa.json               | SA that the WSM application runs as
+#   --------------------------+-------------------------------------------------------------------------
 
 function usage {
   cat <<EOF
@@ -162,13 +164,13 @@ function vaultgetdb {
     rm ${fil}
 }
 
-vaultget "secret/dsde/firecloud/${fcenv}/common/firecloud-account.json" "user-delegated-service-account.json"
-vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/app-sa" "app-service-account.json"
+vaultget "secret/dsde/firecloud/${fcenv}/common/firecloud-account.json" "user-delegated-sa.json"
+vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/app-sa" "wsm-sa.json"
 
 # The magic tokens for access to Buffer Service, Janitor, and TestRunner are in fixed places
-vaultgetb64 "secret/dsde/terra/kernel/integration/tools/crl_janitor/client-sa" "janitor-client-sa-account.json"
-vaultgetb64 "secret/dsde/terra/kernel/integration/tools/buffer/client-sa" "buffer-client-sa-account.json"
-vaultgetb64 "secret/dsde/terra/kernel/integration/common/testrunner/testrunner-sa" "testrunner-service-account.json"
+vaultgetb64 "secret/dsde/terra/kernel/integration/tools/crl_janitor/client-sa" "janitor-client-sa.json"
+vaultgetb64 "secret/dsde/terra/kernel/integration/tools/buffer/client-sa" "buffer-client-sa.json"
+vaultgetb64 "secret/dsde/terra/kernel/integration/common/testrunner/testrunner-sa" "testrunner-sa.json"
 
 # Test runner K8s configuration
 # The setup for this is inconsistent. The usage is unknown. So we will skip it for now.
@@ -183,7 +185,7 @@ vaultgetb64 "secret/dsde/terra/kernel/integration/common/testrunner/testrunner-s
 # 2. Build the full db connection name
 #    note: some instances do not have the full name, project, region. We default to the integration k8s values
 # 3. Get the database information (user, pw, name) for db and stairway db
-vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/sqlproxy-sa" "sqlproxy-service-account.json"
+vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/sqlproxy-sa" "sqlproxy-sa.json"
 vaultget "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/postgres/instance" "dbtmp.json"
 fil=${outputdir}/dbtmp.json
 instancename=$(cat ${fil} | jq -r '.name')
