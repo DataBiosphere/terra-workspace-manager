@@ -27,6 +27,10 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Show what is up
+      run: |
+        echo "What is up? Here is pwd"
+        pwd
     - name: Set permissions and render test configurations
       run: ./scripts/write_config.sh ${{ inputs.target }} ${{ inputs.vault-token }}
       shell: bash
