@@ -1,0 +1,44 @@
+# Workflow for testing actions
+
+name: Workflow Tester
+on:
+  workflow_dispatch: {}
+
+jobs:
+  workflow-test-job:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Get Vault token
+      id: vault-token-step
+      env:
+        VAULT_ADDR: https://clotho.broadinstitute.org:8200
+      run: |
+        VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
+          -e "VAULT_ADDR=${VAULT_ADDR}" \
+          vault:1.1.0 \
+          vault write -field token \
+            auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+            secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+        echo ::set-output name=vault-token::$VAULT_TOKEN
+        echo ::add-mask::$VAULT_TOKEN
+
+    - name: Write config
+      id: config
+      uses: ./.github/actions/write-config
+      with:
+        vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+        target: dd
+
+    - name: run script on db
+      uses: ./.github/actions/run-sql-script
+      with:
+        db-connection-name: ${{ steps.config.outputs.db-username }}
+        db-name:     ${{ steps.config.outputs.db-username }}
+        db-password: ${{ steps.config.outputs.db-username }}
+        db-username: ${{ steps.config.outputs.db-username }}
+        cloudsql-sa-file: ./config/sqlproxy-sa.json
+        script-file: .scripts/test.sql

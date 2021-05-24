@@ -2,17 +2,17 @@ name: 'run-sql-script'
 description: 'Run a script against a CloudSQL instance'
 author: 'dd'
 inputs:
-  db-username:
-    description: 'username to login to the postgres database'
-    required: true
-  db-password:
-    description: 'password to login to the postgres database'
+  db-connection-name:
+    description: 'full CloudSQL connection name: <project>:<region>:<cloudsql-instance>'
     required: true
   db-name:
     description: 'name of the database to connect to'
     required: true
-  db-instance:
-    description: 'full CloudSQL connection name: <project>:<region>:<cloudsql-instance>'
+  db-password:
+    description: 'password to login to the postgres database'
+    required: true
+  db-username:
+    description: 'username to login to the postgres database'
     required: true
   cloudsql-sa-file:
     description: 'path to the CloudSQL SA Json file somewhere in the GITHUB_WORKSPACE directory tree'
@@ -27,6 +27,6 @@ runs:
     - ${{ inputs.db-username }}
     - ${{ inputs.db-password }}
     - ${{ inputs.db-name }}
-    - ${{ inputs.db-instance }}
+    - ${{ inputs.db-connection-name }}
     - ${{ inputs.cloudsql-sa-file }}
     - ${{ inputs.script-file }}
