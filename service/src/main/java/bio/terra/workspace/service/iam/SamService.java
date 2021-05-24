@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
@@ -185,8 +186,11 @@ public class SamService {
       return;
     }
     UsersApi usersApi = samUsersApi(wsmAccessToken);
-    if (!wsmServiceAccountRegistered(usersApi)) {
+    // If registering the service account fails, all we can do is to keep trying.
+    while (!wsmServiceAccountRegistered(usersApi)) {
+      // retries internally
       registerWsmServiceAccount(usersApi);
+      TimeUnit.SECONDS.sleep(5);
     }
   }
 
@@ -195,7 +199,7 @@ public class SamService {
     try {
       // getUserStatusInfo throws a 404 if the calling user is not registered, which will happen
       // the first time WSM is run in each environment.
-      SamRetry.retry(() -> usersApi.getUserStatusInfo());
+      SamRetry.retry(usersApi::getUserStatusInfo);
       logger.info("WSM service account already registered in Sam");
       return true;
     } catch (ApiException apiException) {
@@ -212,7 +216,7 @@ public class SamService {
 
   private void registerWsmServiceAccount(UsersApi usersApi) throws InterruptedException {
     try {
-      SamRetry.retry(() -> usersApi.createUserV2());
+      SamRetry.retry(usersApi::createUserV2);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create(
           "Error registering WSM service account with Sam", apiException);
