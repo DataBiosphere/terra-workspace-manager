@@ -4,17 +4,13 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.RetryRuleExponentialBackoff;
 import bio.terra.stairway.RetryRuleFixedInterval;
 
+/**
+ * A selection of retry rule instantiators for use with Stairway flight steps. Each static method
+ * creates a new object each time to prevent leakage across flights.
+ */
 public class RetryRules {
 
   private RetryRules() {}
-
-  /**
-   * Retry rule for immediately retrying a failed step twice. This is useful for retrying operations
-   * where waiting is not necessary, e.g. retrying conflicted SQL transactions.
-   */
-  public static RetryRule databaseConflict() {
-    return new RetryRuleFixedInterval(0, 2);
-  }
 
   /**
    * Retry rule for steps interacting with GCP. If GCP is down, we don't know when it will be back,
@@ -25,27 +21,24 @@ public class RetryRules {
     return new RetryRuleFixedInterval(10, 10);
   }
 
+  /** Use for cloud operations that may take a couple of minutes to respond. */
   public static RetryRule cloudLongRunning() {
-    return new RetryRuleExponentialBackoff(
-        1, 8, 5 * 60);
+    return new RetryRuleExponentialBackoff(1, 8, 5 * 60);
   }
 
+  /**
+   * Use for a short exponential backoff retry, for operations that should be completable within a
+   * few seconds.
+   */
   public static RetryRule shortExponential() {
     return new RetryRuleExponentialBackoff(1, 8, 16);
   }
 
   /**
-   * Retry rule for handling unexpected timeouts with Sam. Note that some errors from Sam (like
-   * NOT_FOUND responses to resources which were already deleted) are not handled by retries.
+   * Buffer Retry rule settings. For Buffer Service, allow for long wait times. If the pool is
+   * empty, Buffer Service may need time to actually create a new project.
    */
-  public static RetryRule sam() {
-    return new RetryRuleFixedInterval(10, 2);
-  }
-
   public static RetryRule buffer() {
-    return new RetryRuleExponentialBackoff(
-        1,
-        5 * 60,
-        15 * 60);
+    return new RetryRuleExponentialBackoff(1, 5 * 60, 15 * 60);
   }
 }

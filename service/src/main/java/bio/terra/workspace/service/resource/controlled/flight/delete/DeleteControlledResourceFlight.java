@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.flight.delete;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
-import bio.terra.stairway.RetryRuleFixedInterval;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -44,17 +43,15 @@ public class DeleteControlledResourceFlight extends Flight {
     // 2. Delete the cloud resource. This has unique logic for each resource type. Depending on the
     // specifics of the resource type, this step may require the flight to run asynchronously.
     // 3. Delete the metadata
-    final RetryRule samRetryRule = RetryRules.sam();
     addStep(
         new DeleteSamResourceStep(
             flightBeanBag.getResourceDao(),
             flightBeanBag.getSamService(),
             workspaceId,
             resourceId,
-            userRequest),
-        samRetryRule);
+            userRequest));
 
-    RetryRule gcpRetryRule = RetryRules.cloud();
+    final RetryRule gcpRetryRule = RetryRules.cloud();
     switch (resource.getResourceType()) {
       case GCS_BUCKET:
         addStep(
@@ -98,9 +95,6 @@ public class DeleteControlledResourceFlight extends Flight {
             "Delete not yet implemented for resource type " + resource.getResourceType());
     }
 
-    final RetryRule immediateRetryRule = RetryRules.databaseConflict();
-    addStep(
-        new DeleteMetadataStep(flightBeanBag.getResourceDao(), workspaceId, resourceId),
-        immediateRetryRule);
+    addStep(new DeleteMetadataStep(flightBeanBag.getResourceDao(), workspaceId, resourceId));
   }
 }
