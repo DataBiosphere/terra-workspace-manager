@@ -245,6 +245,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     assertEquals(StorageClass.ARCHIVE, setStorageClassLifecycleAction.getStorageClass());
     final LifecycleCondition condition = rule.getCondition();
     assertEquals(30, condition.getAge());
+    // The datetime gets simplified to midnight UTC somewhere along the line
     assertEquals(DateTime.parseRfc3339("1981-04-21"), condition.getCreatedBefore());
     assertTrue(condition.getIsLive());
     assertEquals(3, condition.getNumberOfNewerVersions());
