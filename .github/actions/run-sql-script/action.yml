@@ -37,7 +37,7 @@ runs:
         -p 127.0.0.1:${port}:${port} \
         gcr.io/cloudsql-docker/gce-proxy:latest \
         /cloud_sql_proxy \
-        -instances=${{ inputs.db-connection-name }} \
+        -instances=${{ inputs.db-connection-name }}=tcp:0.0.0.0:${port} \
         -credential_file=/config/${credfile})
       sleep 10
       docker ps -a
