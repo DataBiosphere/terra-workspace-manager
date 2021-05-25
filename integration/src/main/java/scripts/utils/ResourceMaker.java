@@ -164,10 +164,13 @@ public class ResourceMaker {
     }
   }
 
+  /**
+   * Create and return a BigQuery dataset controlled resource with constant values. This uses the
+   * given datasetID as both the WSM resource name and the actual BigQuery dataset ID.
+   */
   public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetUserShared(
-      ControlledGcpResourceApi resourceApi, UUID workspaceId, String name) throws Exception {
+      ControlledGcpResourceApi resourceApi, UUID workspaceId, String datasetId) throws Exception {
 
-    String datasetId = ClientTestUtils.generateCloudResourceName();
     var body =
         new CreateControlledGcpBigQueryDatasetRequestBody()
             .common(
@@ -175,8 +178,8 @@ public class ResourceMaker {
                     .accessScope(AccessScope.SHARED_ACCESS)
                     .managedBy(ManagedBy.USER)
                     .cloningInstructions(CloningInstructionsEnum.NOTHING)
-                    .description("Description of " + name)
-                    .name(name))
+                    .description("Description of " + datasetId)
+                    .name(datasetId))
             .dataset(
                 new GcpBigQueryDatasetCreationParameters()
                     .datasetId(datasetId)
