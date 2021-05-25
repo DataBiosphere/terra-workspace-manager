@@ -28,7 +28,7 @@ runs:
     run: |
       safile="${{ inputs.cloudsql-sa-file }}"
       creddir=$(cd "${safile%/*}" && pwd)
-      credfile="${safile}##*/}"
+      credfile="${safile##*/}"
       # We can parameterize this if need be, but this should work
       port=5434
       echo "Launching the CloudSQL proxy"
