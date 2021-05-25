@@ -41,16 +41,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
+import scripts.utils.ResourceMaker;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(ControlledGcsBucketLifecycle.class);
 
-  private static final String DATASET_LOCATION = "US-CENTRAL1";
   private static final String DATASET_NAME = "wsmtest_dataset";
   private static final String TABLE_NAME = "wsmtest_table";
   private static final String COLUMN_NAME = "myColumn";
-  private static final String RESOURCE_NAME = "wsmtestresource";
 
   private TestUserSpecification writer;
   private TestUserSpecification reader;
@@ -98,14 +97,15 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     logger.info("Created project {}", projectId);
 
     // Create a shared BigQuery dataset
-    CreatedControlledGcpBigQueryDataset createdDataset = createDataset(ownerResourceApi);
-    UUID resourceId = createdDataset.getResourceId();
+    GcpBigQueryDatasetResource createdDataset = ResourceMaker
+        .makeControlledBigQueryDatasetUserShared(ownerResourceApi, getWorkspaceId(), DATASET_NAME);
+    UUID resourceId = createdDataset.getMetadata().getResourceId();
 
     // Retrieve the dataset resource
     logger.info("Retrieving dataset resource id {}", resourceId.toString());
     GcpBigQueryDatasetResource fetchedResource =
         ownerResourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
-    assertEquals(createdDataset.getBigQueryDataset(), fetchedResource);
+    assertEquals(createdDataset, fetchedResource);
 
     BigQuery ownerBqClient = ClientTestUtils.getGcpBigQueryClient(testUser, projectId);
     BigQuery writerBqClient = ClientTestUtils.getGcpBigQueryClient(writer, projectId);
@@ -170,27 +170,6 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
 
     // Workspace owner can delete the dataset through WSM
     ownerResourceApi.deleteBigQueryDataset(getWorkspaceId(), resourceId);
-  }
-
-  /** Create and return a controlled BigQuery dataset resource. */
-  private CreatedControlledGcpBigQueryDataset createDataset(ControlledGcpResourceApi resourceApi)
-      throws Exception {
-    var creationParameters =
-        new GcpBigQueryDatasetCreationParameters()
-            .datasetId(DATASET_NAME)
-            .location(DATASET_LOCATION);
-    var commonParameters =
-        new ControlledResourceCommonFields()
-            .name(RESOURCE_NAME)
-            .cloningInstructions(CloningInstructionsEnum.NOTHING)
-            .accessScope(AccessScope.SHARED_ACCESS)
-            .managedBy(ManagedBy.USER);
-    var requestBody =
-        new CreateControlledGcpBigQueryDatasetRequestBody()
-            .dataset(creationParameters)
-            .common(commonParameters);
-    logger.info("Creating dataset {} in workspace {}", DATASET_NAME, getWorkspaceId());
-    return resourceApi.createBigQueryDataset(requestBody, getWorkspaceId());
   }
 
   /**

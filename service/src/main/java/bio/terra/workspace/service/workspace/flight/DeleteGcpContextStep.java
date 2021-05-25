@@ -12,18 +12,15 @@ import org.slf4j.LoggerFactory;
 public class DeleteGcpContextStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(DeleteGcpContextStep.class);
   private final WorkspaceDao workspaceDao;
+  private final UUID workspaceId;
 
-  protected DeleteGcpContextStep(WorkspaceDao workspaceDao) {
+  protected DeleteGcpContextStep(WorkspaceDao workspaceDao, UUID workspaceId) {
     this.workspaceDao = workspaceDao;
+    this.workspaceId = workspaceId;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) {
-    UUID workspaceId =
-        UUID.fromString(
-            flightContext
-                .getInputParameters()
-                .get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     workspaceDao.deleteGcpCloudContext(workspaceId);
     return StepResult.getStepResultSuccess();
   }
@@ -32,11 +29,6 @@ public class DeleteGcpContextStep implements Step {
   public StepResult undoStep(FlightContext flightContext) {
     // Right now, we don't attempt to undo DAO deletion. This is expected to happen infrequently and
     // not before steps that are likely to fail.
-    UUID workspaceId =
-        UUID.fromString(
-            flightContext
-                .getInputParameters()
-                .get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     logger.error("Unable to undo DAO deletion of google context [{}]", workspaceId);
     return flightContext.getResult();
   }

@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.workspace.flight;
 
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
@@ -15,20 +14,20 @@ public class DeleteWorkspaceAuthzStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(DeleteWorkspaceAuthzStep.class);
   private final SamService samService;
   private final AuthenticatedUserRequest userReq;
+  private final UUID workspaceId;
 
-  public DeleteWorkspaceAuthzStep(SamService samService, AuthenticatedUserRequest userReq) {
+  public DeleteWorkspaceAuthzStep(
+      SamService samService, AuthenticatedUserRequest userReq, UUID workspaceId) {
     this.samService = samService;
     this.userReq = userReq;
+    this.workspaceId = workspaceId;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws RetryException, InterruptedException {
-    FlightMap inputMap = flightContext.getInputParameters();
-    UUID workspaceID =
-        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);
-    return StepResult.getStepResultSuccess().getStepResultSuccess();
+    samService.deleteWorkspace(userReq.getRequiredToken(), workspaceId);
+    return StepResult.getStepResultSuccess();
   }
 
   @Override
@@ -36,10 +35,7 @@ public class DeleteWorkspaceAuthzStep implements Step {
     // Sam does not allow Workspace ID re-use, so a delete really can't be undone. We retry on Sam
     // API errors in the do-step to try avoiding the undo step, but if we get this far there's
     // nothing to do but tell Stairway we're stuck and surface the error from the DO step.
-    FlightMap inputMap = flightContext.getInputParameters();
-    UUID workspaceID =
-        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    logger.error("Unable to undo deletion of workspace {} in WSM DB", workspaceID);
+    logger.error("Unable to undo deletion of workspace {} in WSM DB", workspaceId);
     return flightContext.getResult();
   }
 }

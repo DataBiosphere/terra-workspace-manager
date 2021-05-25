@@ -82,7 +82,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
 
     final BucketInfo info = bucketInfoCaptor.getValue();
     assertThat(info.getName(), equalTo(creationParameters.getName()));
-    assertThat(info.getLocation(), equalTo(ControlledResourceFixtures.BUCKET_LOCATION));
+    assertThat(info.getLocation(), equalTo(ControlledResourceFixtures.RESOURCE_LOCATION));
     assertThat(info.getStorageClass(), equalTo(StorageClass.STANDARD));
     assertThat(info.getLifecycleRules(), hasSize(equalTo(2)));
 
@@ -136,7 +136,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
 
     final BucketInfo info = bucketInfoCaptor.getValue();
     assertThat(info.getName(), equalTo(bucketName));
-    assertThat(info.getLocation(), equalTo(ControlledResourceFixtures.BUCKET_LOCATION));
+    assertThat(info.getLocation(), equalTo(ControlledResourceFixtures.RESOURCE_LOCATION));
     assertThat(info.getStorageClass(), is(nullValue()));
     assertThat(info.getLifecycleRules(), empty());
   }
