@@ -41,9 +41,9 @@ runs:
         -credential_file=/config/${credfile})
       sleep 5
       echo "Running the script via psql"
-      PGPASSWORD="${{ inputs.db }}" \
+      PGPASSWORD="${{ inputs.db-password }}" \
         psql "host=127.0.0.1 port=$port sslmode=disable dbname=${{ inputs.db-name }} user=${{ inputs.db-username }}" \
-        -f ${{ script-file }}
+        -f ${{ inputs.script-file }}
       sleep 2
       echo "Stopping the CloudSQL proxy"
       docker kill $dod
