@@ -15,7 +15,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.StorageClass;
@@ -65,7 +64,8 @@ public class UpdateGcsBucketStep implements Step {
 
     final BucketCow existingBucketCow = storageCow.get(bucketResource.getBucketName());
     if (existingBucketCow == null) {
-      logger.info("No bucket found to update with name {}. Treating as success.",
+      logger.info(
+          "No bucket found to update with name {}. Treating as success.",
           bucketResource.getBucketName());
       return StepResult.getStepResultSuccess();
     }
