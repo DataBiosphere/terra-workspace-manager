@@ -78,7 +78,7 @@ public class ControlledResourceFixtures {
   public static ApiGcpGcsBucketCreationParameters getGoogleBucketCreationParameters() {
     return new ApiGcpGcsBucketCreationParameters()
         .name(uniqueBucketName())
-        .location(BUCKET_LOCATION)
+        .location(RESOURCE_LOCATION)
         .defaultStorageClass(ApiGcpGcsBucketDefaultStorageClass.STANDARD)
         .lifecycle(new ApiGcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
   }
