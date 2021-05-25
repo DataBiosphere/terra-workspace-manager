@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -229,6 +230,59 @@ public class ResourceDao {
         DbRetryUtils.queryWithRetries(jdbcTemplate, sb.toString(), params, DB_RESOURCE_ROW_MAPPER);
 
     return dbResourceList.stream().map(this::constructResource).collect(toList());
+  }
+
+  /**
+   * Returns a list of all controlled resources in a workspace, optionally filtering by cloud
+   * platform.
+   *
+   * @param workspaceId ID of the workspace to return resources from.
+   * @param cloudPlatform Optional. If present, this will only return resources from the specified
+   *     cloud platform. If null, this will return resources from all cloud platforms.
+   */
+  @Transactional(
+      propagation = Propagation.REQUIRED,
+      isolation = Isolation.SERIALIZABLE,
+      readOnly = true)
+  public List<ControlledResource> listControlledResources(
+      UUID workspaceId, @Nullable CloudPlatform cloudPlatform) {
+    String sql = RESOURCE_SELECT_SQL + " AND stewardship_type = :controlled_resource ";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("controlled_resource", CONTROLLED.toSql());
+
+    if (cloudPlatform != null) {
+      sql += " AND cloud_platform = :cloud_platform";
+      params.addValue("cloud_platform", cloudPlatform.toSql());
+    }
+
+    List<DbResource> dbResources = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
+    return dbResources.stream()
+        .map(this::constructResource)
+        .map(WsmResource::castToControlledResource)
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * Deletes all controlled resources on a specified cloud platform in a workspace.
+   *
+   * @param workspaceId ID of the workspace to return resources from.
+   * @param cloudPlatform The cloud platform to delete resources from. Unlike
+   *     listControlledResources, this is not optional.
+   * @return True if at least one resource was deleted, false if no resources were deleted.
+   */
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
+  public boolean deleteAllControlledResources(UUID workspaceId, CloudPlatform cloudPlatform) {
+    String sql =
+        "DELETE FROM resource WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform AND stewardship_type = :controlled_resource";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("cloud_platform", cloudPlatform.toSql())
+            .addValue("controlled_resource", CONTROLLED.toSql());
+    int rowsDeleted = jdbcTemplate.update(sql, params);
+    return rowsDeleted > 0;
   }
 
   /**

@@ -15,22 +15,22 @@ import org.springframework.http.HttpStatus;
 public class DeleteWorkspaceStateStep implements Step {
 
   private final WorkspaceDao workspaceDao;
+  private final UUID workspaceId;
 
   private final Logger logger = LoggerFactory.getLogger(DeleteWorkspaceStateStep.class);
 
-  public DeleteWorkspaceStateStep(WorkspaceDao workspaceDao) {
+  public DeleteWorkspaceStateStep(WorkspaceDao workspaceDao, UUID workspaceId) {
     this.workspaceDao = workspaceDao;
+    this.workspaceId = workspaceId;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
-    UUID workspaceID =
-        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     // WorkspaceDao.deleteWorkspace returns true if a delete succeeds or false if the workspace is
     // not found, but the user-facing delete operation should return a 204 even if the workspace is
     // not found.
-    workspaceDao.deleteWorkspace(workspaceID);
+    workspaceDao.deleteWorkspace(workspaceId);
     FlightUtils.setResponse(flightContext, null, HttpStatus.NO_CONTENT);
     return StepResult.getStepResultSuccess();
   }
@@ -42,9 +42,7 @@ public class DeleteWorkspaceStateStep implements Step {
     // This should absolutely be the last step of a flight, and because we're unable to undo it
     // we surface the error from the DO step that led to this issue.
     FlightMap inputMap = flightContext.getInputParameters();
-    UUID workspaceID =
-        UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    logger.error("Unable to undo deletion of workspace {} in WSM DB", workspaceID);
+    logger.error("Unable to undo deletion of workspace {} in WSM DB", workspaceId);
     return flightContext.getResult();
   }
 }
