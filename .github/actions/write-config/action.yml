@@ -30,9 +30,6 @@ runs:
     - name: Write configuration
       run: ./scripts/write-config.sh ${{ inputs.target }} ${{ inputs.vault-token }}
       shell: bash
-    - name: Check what we wrote
-      run: ls -al ./config
-      shell: bash
     - name: Files to outputs
       id: files-to-outputs
       run: |

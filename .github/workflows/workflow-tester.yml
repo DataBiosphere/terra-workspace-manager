@@ -50,4 +50,3 @@ jobs:
         db-username: ${{ steps.config.outputs.db-username }}
         cloudsql-sa-file: ./config/sqlproxy-sa.json
         script-file: ./scripts/test.sql
-
