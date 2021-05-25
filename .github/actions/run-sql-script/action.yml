@@ -42,7 +42,7 @@ runs:
       sleep 5
       echo "Running the script via psql"
       PGPASSWORD="${{ inputs.db }}" \
-        psql "host=127.0.0.1 port=$port sslmode=disable dbname=${{ inputs.db-name }} user=${{ db-username }}" \
+        psql "host=127.0.0.1 port=$port sslmode=disable dbname=${{ inputs.db-name }} user=${{ inputs.db-username }}" \
         -f ${{ script-file }}
       sleep 2
       echo "Stopping the CloudSQL proxy"
