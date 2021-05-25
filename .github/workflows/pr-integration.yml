@@ -78,6 +78,7 @@ jobs:
     - name: Render config
       uses: ./.github/actions/render-config
       with:
+        test-env: dev
         vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
     - name: Launch local server

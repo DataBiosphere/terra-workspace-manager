@@ -55,7 +55,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set env and whether or not to use a local server
+    - name: Set env
       id: set-env-step
       run: |
         if ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}; then
@@ -113,6 +113,7 @@ jobs:
       if: matrix.gradleTask != 'unitTest'
       uses: ./.github/actions/render-config
       with:
+        test-env: ${{ steps.set-env-step.outputs.config-env }}
         vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
       # Run tests

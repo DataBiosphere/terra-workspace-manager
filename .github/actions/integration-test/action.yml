@@ -11,9 +11,9 @@ inputs:
     required: true
     default: 'suites/wsmtest/FullIntegration.json'
   test-env:
-    description: 'Test environment to run against'
+    description: 'Test environment to render config for'
     required: true
-    default: 'wsmtest'
+    default: 'dev'
   test-namespace:
     description: 'k8s namespace to render SA secrets for'
     required: false
