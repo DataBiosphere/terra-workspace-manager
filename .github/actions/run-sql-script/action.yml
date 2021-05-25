@@ -40,6 +40,8 @@ runs:
         -instances=${{ inputs.db-connection-name }} \
         -credential_file=/config/${credfile})
       sleep 10
+      docker ps -a
+      docker logs $dod
       echo "Running the script via psql"
       PGPASSWORD="${{ inputs.db-password }}" \
         psql "host=127.0.0.1 port=$port sslmode=disable dbname=${{ inputs.db-name }} user=${{ inputs.db-username }}" \
