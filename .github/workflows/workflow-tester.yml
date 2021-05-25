@@ -49,5 +49,15 @@ jobs:
         db-password: ${{ steps.config.outputs.db-password }}
         db-username: ${{ steps.config.outputs.db-username }}
         cloudsql-sa-file: ./config/sqlproxy-sa.json
-        script-file: ./scripts/test.sql
-        
+        script-file: ./scripts/clean.sql
+
+    - name: run script on stairway db
+      uses: ./.github/actions/run-sql-script
+      with:
+        db-connection-name: ${{ steps.config.outputs.db-connection-name }}
+        db-name:     ${{ steps.config.outputs.stairway-db-name }}
+        db-password: ${{ steps.config.outputs.stairway-db-password }}
+        db-username: ${{ steps.config.outputs.stairway-db-username }}
+        cloudsql-sa-file: ./config/sqlproxy-sa.json
+        script-file: ./scripts/clean.sql
+
