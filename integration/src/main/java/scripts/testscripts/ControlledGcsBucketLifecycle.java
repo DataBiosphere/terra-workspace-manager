@@ -96,6 +96,8 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
   private static final String GCS_BLOB_NAME = "wsmtestblob-name";
   private static final String GCS_BLOB_CONTENT = "This is the content of a text file.";
   public static final String UPDATED_RESOURCE_NAME = "new_resource_name";
+  public static final String UPDATED_RESOURCE_NAME_2 = "another_resource_name";
+
   public static final String UPDATED_DESCRIPTION = "A bucket with a hole in it.";
 
   private TestUserSpecification reader;
@@ -248,7 +250,15 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     assertEquals(StorageClass.COLDLINE, retrievedUpdatedBucket2.getStorageClass());
     assertEquals(UPDATED_RESOURCE_NAME, resource2.getMetadata().getName()); // no change
     assertEquals(UPDATED_DESCRIPTION, resource2.getMetadata().getDescription()); // no change
-    verifyLifecycleRules(retrievedUpdatedBucket2.getLifecycleRules());
+    verifyLifecycleRules(retrievedUpdatedBucket2.getLifecycleRules()); // no change
+
+    // test without UpdateParameters
+    final GcpGcsBucketResource resource3 = updateBucketAttempt(resourceApi, resourceId, UPDATED_RESOURCE_NAME_2, null, null);
+    final Bucket retrievedUpdatedBucket3 = ownerStorageClient.get(bucketName, BucketGetOption.fields(BucketField.LIFECYCLE, BucketField.STORAGE_CLASS));
+    assertEquals(UPDATED_RESOURCE_NAME_2, resource3.getMetadata().getName());
+    assertEquals(UPDATED_DESCRIPTION, resource3.getMetadata().getDescription()); // no change
+    assertEquals(StorageClass.COLDLINE, retrievedUpdatedBucket3.getStorageClass()); // no change
+    verifyLifecycleRules(retrievedUpdatedBucket3.getLifecycleRules()); // no change
 
     // additional details must be verified with gsutil or in the cloud console, as we don't return them
     logger.info("About to try to delete the bucket with a reader.");

@@ -7,7 +7,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
-import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.UUID;
 
@@ -32,12 +31,6 @@ public class RetrieveControlledResourceMetadataStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     WsmResource resource = resourceDao.getResource(workspaceId, resourceId);
-    if (resource.getStewardshipType() != StewardshipType.CONTROLLED) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Resource %s in workspace %s is not a controlled resource.",
-              resourceId.toString(), workspaceId.toString()));
-    }
     ControlledResource controlledResource = resource.castToControlledResource();
 
     flightContext

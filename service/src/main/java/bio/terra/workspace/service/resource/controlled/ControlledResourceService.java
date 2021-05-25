@@ -75,7 +75,7 @@ public class ControlledResourceService {
 
   public ControlledGcsBucketResource updateGcsBucket(
       ControlledGcsBucketResource resource,
-      ApiGcpGcsBucketUpdateParameters updateParameters,
+      @Nullable ApiGcpGcsBucketUpdateParameters updateParameters,
       AuthenticatedUserRequest userRequest,
       @Nullable String resourceName,
       @Nullable String resourceDescription) {

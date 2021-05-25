@@ -19,6 +19,7 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.StorageClass;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +58,12 @@ public class UpdateGcsBucketStep implements Step {
     return updateBucket(previousUpdateParameters);
   }
 
-  private StepResult updateBucket(ApiGcpGcsBucketUpdateParameters updateParameters) {
+  private StepResult updateBucket(@Nullable ApiGcpGcsBucketUpdateParameters updateParameters) {
+    if (updateParameters == null) {
+      // nothing to change
+      logger.info("No update parameters supplied, so no changes to make.");
+      return StepResult.getStepResultSuccess();
+    }
     final String projectId =
         workspaceService.getRequiredGcpProject(bucketResource.getWorkspaceId());
     final StorageCow storageCow = crlService.createStorageCow(projectId);

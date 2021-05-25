@@ -6,8 +6,6 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResource;
-import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
-import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.stage.StageService;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.UUID;
@@ -80,10 +78,6 @@ public class ControlledResourceMetadataManager {
   public void validateControlledResourceAndAction(
       AuthenticatedUserRequest userReq, UUID workspaceId, UUID resourceId, String action) {
     WsmResource resource = resourceDao.getResource(workspaceId, resourceId);
-    if (resource.getStewardshipType() != StewardshipType.CONTROLLED) {
-      throw new InvalidControlledResourceException(
-          String.format("Resource %s is not a controlled resource.", resource.getResourceId()));
-    }
     ControlledResource controlledResource = resource.castToControlledResource();
     SamService.rethrowIfSamInterrupted(
         () ->
