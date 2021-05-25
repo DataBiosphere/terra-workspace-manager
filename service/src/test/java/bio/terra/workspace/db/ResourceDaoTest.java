@@ -1,7 +1,11 @@
 package bio.terra.workspace.db;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
@@ -10,9 +14,11 @@ import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDataset
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,6 +85,37 @@ public class ResourceDaoTest extends BaseUnitTest {
         resource, resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId()));
 
     resourceDao.deleteResource(resource.getWorkspaceId(), resource.getResourceId());
+  }
+
+  @Test
+  public void listAndDeleteControlledResourceInContext() {
+    UUID workspaceId = createGcpWorkspace();
+    ControlledGcsBucketResource bucket =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
+            .workspaceId(workspaceId)
+            .build();
+    ControlledBigQueryDatasetResource dataset =
+        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
+            .workspaceId(workspaceId)
+            .build();
+    resourceDao.createControlledResource(bucket);
+    resourceDao.createControlledResource(dataset);
+
+    List<ControlledResource> gcpList =
+        resourceDao.listControlledResources(workspaceId, CloudPlatform.GCP);
+    List<ControlledResource> azureList =
+        resourceDao.listControlledResources(workspaceId, CloudPlatform.AZURE);
+    List<ControlledResource> allCloudList = resourceDao.listControlledResources(workspaceId, null);
+
+    assertTrue(azureList.isEmpty());
+    assertThat(gcpList, containsInAnyOrder(bucket, dataset));
+    assertThat(allCloudList, containsInAnyOrder(bucket, dataset));
+
+    assertTrue(resourceDao.deleteAllControlledResources(workspaceId, CloudPlatform.GCP));
+    assertFalse(resourceDao.deleteAllControlledResources(workspaceId, CloudPlatform.AZURE));
+    List<ControlledResource> listAfterDeletion =
+        resourceDao.listControlledResources(workspaceId, CloudPlatform.GCP);
+    assertTrue(listAfterDeletion.isEmpty());
   }
 
   @Test

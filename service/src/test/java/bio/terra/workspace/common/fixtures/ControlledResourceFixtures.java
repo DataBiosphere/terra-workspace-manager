@@ -2,6 +2,7 @@ package bio.terra.workspace.common.fixtures;
 
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
@@ -56,18 +57,18 @@ public class ControlledResourceFixtures {
   static final List<ApiGcpGcsBucketLifecycleRule> LIFECYCLE_RULES =
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
   public static final String BUCKET_NAME_PREFIX = "my-bucket";
-  public static final String BUCKET_LOCATION = "US-CENTRAL1";
+  public static final String RESOURCE_LOCATION = "US-CENTRAL1";
 
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
       new ApiGcpGcsBucketCreationParameters()
           .name(uniqueName(BUCKET_NAME_PREFIX))
-          .location(BUCKET_LOCATION);
+          .location(RESOURCE_LOCATION);
 
   /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
   public static ApiGcpGcsBucketCreationParameters getGoogleBucketCreationParameters() {
     return new ApiGcpGcsBucketCreationParameters()
         .name(uniqueName(BUCKET_NAME_PREFIX))
-        .location(BUCKET_LOCATION)
+        .location(RESOURCE_LOCATION)
         .defaultStorageClass(ApiGcpGcsBucketDefaultStorageClass.STANDARD)
         .lifecycle(new ApiGcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
   }
@@ -81,6 +82,12 @@ public class ControlledResourceFixtures {
             new ApiGcpAiNotebookInstanceVmImage()
                 .projectId("deeplearning-platform-release")
                 .imageFamily("r-latest-cpu-experimental"));
+  }
+
+  public static ApiGcpBigQueryDatasetCreationParameters defaultBigQueryDatasetCreationParameters() {
+    return new ApiGcpBigQueryDatasetCreationParameters()
+        .location(RESOURCE_LOCATION)
+        .datasetId("test_dataset");
   }
 
   public static final String RESOURCE_NAME = "my_first_bucket";
