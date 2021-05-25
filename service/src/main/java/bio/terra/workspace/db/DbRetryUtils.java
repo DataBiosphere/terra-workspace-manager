@@ -21,7 +21,7 @@ public class DbRetryUtils {
 
   public static int MAX_RETRIES = 10;
 
-  public static int updateWithRetries(
+  public static int update(
       NamedParameterJdbcTemplate jdbcTemplate, String sql, MapSqlParameterSource params) {
     try {
       return DatabaseRetryUtils.executeAndRetry(
@@ -33,7 +33,7 @@ public class DbRetryUtils {
     }
   }
 
-  public static <T> List<T> queryWithRetries(
+  public static <T> List<T> query(
       NamedParameterJdbcTemplate jdbcTemplate,
       String sql,
       MapSqlParameterSource params,
@@ -48,7 +48,7 @@ public class DbRetryUtils {
     }
   }
 
-  public static <T> T queryForObjectWithRetries(
+  public static <T> T queryForObject(
       NamedParameterJdbcTemplate jdbcTemplate,
       String sql,
       MapSqlParameterSource params,
@@ -63,7 +63,7 @@ public class DbRetryUtils {
     }
   }
 
-  public static <T> T queryForObjectWithRetries(
+  public static <T> T queryForObject(
       NamedParameterJdbcTemplate jdbcTemplate,
       String sql,
       MapSqlParameterSource params,

@@ -34,7 +34,7 @@ public class DbRetryUtilsTest extends BaseUnitTest {
     when(jdbcTemplate.update(any(), (SqlParameterSource) any()))
         .thenThrow(RETRY_EXCEPTION)
         .thenReturn(42);
-    assertEquals(42, DbRetryUtils.updateWithRetries(jdbcTemplate, FAKE_QUERY, FAKE_PARAMS));
+    assertEquals(42, DbRetryUtils.update(jdbcTemplate, FAKE_QUERY, FAKE_PARAMS));
   }
 
   @Test
@@ -44,7 +44,7 @@ public class DbRetryUtilsTest extends BaseUnitTest {
         .thenReturn(Collections.singletonList(42));
     assertEquals(
         Collections.singletonList(42),
-        DbRetryUtils.queryWithRetries(jdbcTemplate, FAKE_QUERY, FAKE_PARAMS, FAKE_ROW_MAPPER));
+        DbRetryUtils.query(jdbcTemplate, FAKE_QUERY, FAKE_PARAMS, FAKE_ROW_MAPPER));
   }
 
   @Test
@@ -53,9 +53,7 @@ public class DbRetryUtilsTest extends BaseUnitTest {
         .thenThrow(RETRY_EXCEPTION)
         .thenReturn(42);
     assertEquals(
-        42,
-        DbRetryUtils.queryForObjectWithRetries(
-            jdbcTemplate, FAKE_QUERY, FAKE_PARAMS, Integer.class));
+        42, DbRetryUtils.queryForObject(jdbcTemplate, FAKE_QUERY, FAKE_PARAMS, Integer.class));
   }
 
   @Test
@@ -64,9 +62,7 @@ public class DbRetryUtilsTest extends BaseUnitTest {
         .thenThrow(RETRY_EXCEPTION)
         .thenReturn(42);
     assertEquals(
-        42,
-        DbRetryUtils.queryForObjectWithRetries(
-            jdbcTemplate, FAKE_QUERY, FAKE_PARAMS, FAKE_ROW_MAPPER));
+        42, DbRetryUtils.queryForObject(jdbcTemplate, FAKE_QUERY, FAKE_PARAMS, FAKE_ROW_MAPPER));
   }
 
   @Test
@@ -79,7 +75,7 @@ public class DbRetryUtilsTest extends BaseUnitTest {
     DataAccessException ex =
         assertThrows(
             DataAccessException.class,
-            () -> DbRetryUtils.updateWithRetries(jdbcTemplate, FAKE_QUERY, FAKE_PARAMS));
+            () -> DbRetryUtils.update(jdbcTemplate, FAKE_QUERY, FAKE_PARAMS));
     assertEquals(RETRY_EXCEPTION, ex);
   }
 }

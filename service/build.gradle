@@ -169,7 +169,7 @@ jacocoTestReport {
         xml.enabled = true
         xml.destination = file("$buildDir/reports/jacoco/test/jacoco.xml")
     }
-//    dependsOn test
+    dependsOn test
 }
 
  // default test to unit tests so the build target succeeds
