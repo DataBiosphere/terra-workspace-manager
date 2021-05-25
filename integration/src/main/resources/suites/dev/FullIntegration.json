@@ -13,7 +13,9 @@
     "integration/dev/ControlledBigQueryDatasetLifecycle.json",
     "integration/dev/PrivateControlledGcsBucketLifecycle.json",
     "integration/dev/PrivateControlledAiNotebookInstanceLifecycle.json",
-    "integration/dev/EnumerateResources.json"
+    "integration/dev/EnumerateResources.json",
+    "integration/dev/DeleteGcpContextWithControlledResource.json",
+    "integration/dev/DeleteWorkspaceWithControlledResource.json"
   ]
 }
 
