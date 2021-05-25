@@ -39,7 +39,7 @@ runs:
         /cloud_sql_proxy \
         -instances=${{ inputs.db-connection-name }} \
         -credential_file=/config/${credfile})
-      sleep 5
+      sleep 10
       echo "Running the script via psql"
       PGPASSWORD="${{ inputs.db-password }}" \
         psql "host=127.0.0.1 port=$port sslmode=disable dbname=${{ inputs.db-name }} user=${{ inputs.db-username }}" \
