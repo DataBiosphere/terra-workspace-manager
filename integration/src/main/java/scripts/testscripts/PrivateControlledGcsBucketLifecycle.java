@@ -124,15 +124,14 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     BlobId blobId = BlobId.of(bucketName, GCS_BLOB_NAME);
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
 
-    // TODO(PF-633): workspace owners can write to private buckets via "roles/storage.admin".
-    // // Owner cannot write object to bucket
-    // StorageException ownerCannotWritePrivateBucket =
-    //     assertThrows(
-    //         StorageException.class,
-    //         () -> ownerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes()),
-    //         "Workspace owner was able to write to private bucket");
-    // assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, ownerCannotWritePrivateBucket.getCode());
-    // logger.info("Workspace owner cannot write to private resource as expected");
+    // Owner cannot write object to bucket
+    StorageException ownerCannotWritePrivateBucket =
+        assertThrows(
+            StorageException.class,
+            () -> ownerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes()),
+            "Workspace owner was able to write to private bucket");
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, ownerCannotWritePrivateBucket.getCode());
+    logger.info("Workspace owner cannot write to private resource as expected");
 
     // Workspace reader cannot write object to bucket
     StorageException readerCannotWriteBucket =
@@ -152,26 +151,23 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     assertEquals(createdBlob, retrievedBlob);
     logger.info("Private resource user can read {} from bucket", retrievedBlob.getName());
 
-    // TODO(PF-633): workspace owners can read from private buckets via "roles/storage.admin" and
-    //  "roles/viewer"
-    // // Owner cannot read the bucket contents
-    // StorageException ownerCannotReadPrivateBucket =
-    //     assertThrows(
-    //         StorageException.class,
-    //         () -> ownerStorageClient.get(blobId),
-    //         "Workspace owner was able to read private bucket");
-    // assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, ownerCannotReadPrivateBucket.getCode());
-    // logger.info("Workspace owner cannot read from private bucket as expected");
+    // Owner cannot read the bucket contents
+    StorageException ownerCannotReadPrivateBucket =
+        assertThrows(
+            StorageException.class,
+            () -> ownerStorageClient.get(blobId),
+            "Workspace owner was able to read private bucket");
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, ownerCannotReadPrivateBucket.getCode());
+    logger.info("Workspace owner cannot read from private bucket as expected");
 
-    // TODO(PF-633): workspace readers can read from private buckets via "roles/viewer".
-    // // Workspace reader also cannot read private bucket contents
-    // StorageException readerCannotReadPrivateBucket =
-    //     assertThrows(
-    //         StorageException.class,
-    //         () -> workspaceReaderStorageClient.get(blobId),
-    //         "Workspace reader was able to read private bucket");
-    // assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, readerCannotReadPrivateBucket.getCode());
-    // logger.info("Workspace reader cannot read from private bucket as expected");
+    // Workspace reader also cannot read private bucket contents
+    StorageException readerCannotReadPrivateBucket =
+        assertThrows(
+            StorageException.class,
+            () -> workspaceReaderStorageClient.get(blobId),
+            "Workspace reader was able to read private bucket");
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, readerCannotReadPrivateBucket.getCode());
+    logger.info("Workspace reader cannot read from private bucket as expected");
 
     // Private resource user can delete the blob they created earlier.
     privateUserStorageClient.delete(blobId);
