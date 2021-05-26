@@ -5,9 +5,7 @@
   "kubernetes": {
     "numberOfInitialPods" : 2
   },
-  "application": {
-    "apiComponentLabel":  "workspacemanager"
-  },
+  "application": {},
   "disruptiveScript": {
     "name": "DeleteInitialPods",
     "parameters": []
