@@ -2,6 +2,9 @@ name: 'render-config'
 description: 'Collect the service account keys used for testing'
 author: 'dd'
 inputs:
+  test-env:
+    description: 'Test environment to render config for'
+    required: true
   vault-token:
     description: 'Vault token for rendering'
     required: true
@@ -12,6 +15,6 @@ runs:
       run: |
         cd service
         chmod +x render_config.sh
-        ./render_config.sh dev ${{ inputs.vault-token }}
+        ./render_config.sh ${{ inputs.test-env }} ${{ inputs.vault-token }}
         chmod +r rendered
       shell: bash

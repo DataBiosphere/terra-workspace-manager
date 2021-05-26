@@ -6,6 +6,7 @@ import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class FlightBeanBag {
   private final BufferService bufferService;
+  private final ControlledResourceMetadataManager controlledResourceMetadataManager;
   private final CrlService crlService;
   private final DataRepoService dataRepoService;
   private final ResourceDao resourceDao;
@@ -32,6 +34,7 @@ public class FlightBeanBag {
   @Autowired
   public FlightBeanBag(
       BufferService bufferService,
+      ControlledResourceMetadataManager controlledResourceMetadataManager,
       CrlService crlService,
       DataRepoService dataRepoService,
       ResourceDao resourceDao,
@@ -39,6 +42,7 @@ public class FlightBeanBag {
       WorkspaceDao workspaceDao,
       WorkspaceService workspaceService) {
     this.bufferService = bufferService;
+    this.controlledResourceMetadataManager = controlledResourceMetadataManager;
     this.crlService = crlService;
     this.dataRepoService = dataRepoService;
     this.resourceDao = resourceDao;
@@ -53,6 +57,10 @@ public class FlightBeanBag {
 
   public BufferService getBufferService() {
     return bufferService;
+  }
+
+  public ControlledResourceMetadataManager getControlledResourceMetadataManager() {
+    return controlledResourceMetadataManager;
   }
 
   public CrlService getCrlService() {
