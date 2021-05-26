@@ -59,8 +59,8 @@ Usage: $0 [<target>] [<vaulttoken>] [<outputdir>]"
     help or ? - print this help
     clean - removes all files from the output directory
     * - anything else is assumed to be a personal environment using the terra-kernel-k8s
-  If <target> is not specified, then use the envvar WSM_WRITE_CONFIG_TARGET
-  If WSM_WRITE_CONFIG_TARGET is not specified, then use local
+  If <target> is not specified, then use the envvar WSM_WRITE_CONFIG
+  If WSM_WRITE_CONFIG is not specified, then use local
 
   <vaulttoken> defaults to the token found in ~/.vault-token.
 
@@ -93,7 +93,7 @@ case $target in
 
     local)
         k8senv=integration
-        namespace=dev
+        namespace=wsmtest
         fcenv=dev
         ;;
 

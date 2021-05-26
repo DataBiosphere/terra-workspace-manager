@@ -133,25 +133,9 @@ store it in files in the gradle `${rootDir}` in the directory `config/`.
 One advantage of having the config written in gradle `${rootDir}` is that it is visible to
 github actions that run our CI/CD process.
 
-The current usage information for `write-config.sh` is:
-```
-Usage: [<target>] [<vaulttoken>] [<outputdir>]"
-
-  <target> can be:
-    local - for testing against a local (bootRun) WSM
-    dev - uses secrets from the dev environment
-    alpha - alpha test environment
-    staging - release staging environment
-    help or ? - print this help
-    clean - removes all files from the output directory
-    * - anything else is assumed to be a personal environment using the terra-kernel-k8s
-  If <target> is not specified, then use the envvar WSM_WRITE_CONFIG_TARGET
-  If WSM_WRITE_CONFIG_TARGET is not specified, then use local
-
-  <vaulttoken> defaults to the token found in ~/.vault-token.
-
-  <outputdir> defaults to "config/", so when run in the gradle rootdir, it will be
-  in the expected place for automation.
+View current usage information for `write-config.sh` by entering
+```sh
+./scripts/write-config.sh help
 ```
 
 **NOTE** As of this writing, write-config is not used for the Test Runner configuration.
