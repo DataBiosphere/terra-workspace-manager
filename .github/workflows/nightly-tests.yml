@@ -84,6 +84,7 @@ jobs:
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
       - name: truncate tables in the wsm db
+        if: always()
         uses: ./.github/actions/run-sql-script
         with:
           db-connection-name: ${{ steps.config.outputs.db-connection-name }}
@@ -94,6 +95,7 @@ jobs:
           script-file: ./scripts/clean_wsm.sql
 
       - name: truncate tables in the wsm stairway db
+        if: always()
         uses: ./.github/actions/run-sql-script
         with:
           db-connection-name: ${{ steps.config.outputs.db-connection-name }}
@@ -113,6 +115,7 @@ jobs:
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
       - name: truncate tables in the wsm db
+        if: always()
         uses: ./.github/actions/run-sql-script
         with:
           db-connection-name: ${{ steps.config.outputs.db-connection-name }}
@@ -123,6 +126,7 @@ jobs:
           script-file: ./scripts/clean_wsm.sql
 
       - name: truncate tables in the wsm stairway db
+        if: always()
         uses: ./.github/actions/run-sql-script
         with:
           db-connection-name: ${{ steps.config.outputs.db-connection-name }}

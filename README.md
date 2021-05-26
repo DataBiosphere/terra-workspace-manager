@@ -295,7 +295,7 @@ The connected tests are also written using JUnit.
 The implementations are mixed in with the unit tests in
 `src/test/java/bio/terra/workspace/`. Connected tests derive from `common/BaseConnectedTest.java`.
 Connected tests depend on the availability of a running Postgresql server. They also rely
-on a "rendered" configuration containing service accounts and keys that allows the tests
+on a populated "config" directory containing service accounts and keys that allows the tests
 to use dependent services such as Sam, Buffer, and TDR. The rendering process relies on
 secrets maintained in Vault in the Broad Institute environment.
 
