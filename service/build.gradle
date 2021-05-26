@@ -47,7 +47,7 @@ dependencies {
     implementation platform('com.google.cloud:libraries-bom:20.2.0')
     implementation group: "com.google.auto.value", name: "auto-value-annotations"
     implementation group: "com.google.guava", name:"guava"
-    
+
     // Terra deps
     implementation group: "bio.terra", name: "datarepo-client", version: "1.41.0-SNAPSHOT"
     // hk2 is required to use datarepo client, but not correctly exposed by the client
@@ -194,18 +194,6 @@ task connectedTest(type: Test) {
     environment.put('TEST_ENV', System.getenv("TEST_ENV"))
     useJUnitPlatform {
         includeTags "connected"
-    }
-    testLogging {
-        events = ["passed", "failed", "skipped", "started"]
-    }
-    outputs.upToDateWhen { false }
-}
-
-
-task integrationTest(type: Test) {
-    environment.put('TEST_ENV', System.getenv("TEST_ENV"))
-    useJUnitPlatform {
-        includeTags "integration"
     }
     testLogging {
         events = ["passed", "failed", "skipped", "started"]

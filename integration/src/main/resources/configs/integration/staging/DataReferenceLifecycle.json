@@ -1,7 +1,7 @@
 {
   "name": "DataReferenceLifecycle",
   "description": "CRUD data reference tests.",
-  "serverSpecificationFile": "workspace-dev.json",
+  "serverSpecificationFile": "workspace-staging.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
@@ -11,7 +11,7 @@
       "userJourneyThreadPoolSize": 2,
       "expectedTimeForEach": 5,
       "expectedTimeForEachUnit": "SECONDS",
-      "parameters": ["wm-default-spend-profile", "97b5559a-2f8f-4df3-89ae-5a249173ee0c", "terra"]
+      "parameters": ["wm-default-spend-profile", "3e858a77-ea11-4f55-96f4-e6e45b71b7bf", "terra"]
     }
   ],
   "testUserFiles": ["hermione.json"]

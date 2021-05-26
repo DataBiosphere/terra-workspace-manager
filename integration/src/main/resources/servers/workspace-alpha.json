@@ -1,0 +1,15 @@
+{
+  "name": "workspace-alpha",
+  "description": "Workspace Alpha env.",
+
+  "samUri": "https://sam.dsde-alpha.broadinstitute.org",
+  "datarepoUri": "https://data.alpha.envs-terra.bio",
+  "workspaceManagerUri": "https://workspace.dsde-alpha.broadinstitute.org",
+
+  "cluster": {},
+  "deploymentScript": {},
+  "testRunnerServiceAccountFile": "testrunner-sa.json",
+
+  "skipDeployment": true,
+  "skipKubernetes": true
+}
