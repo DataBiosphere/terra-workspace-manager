@@ -143,7 +143,7 @@ public class ControlledResourceFixtures {
     return new ControlledBigQueryDatasetResource.Builder()
         .workspaceId(UUID.randomUUID())
         .resourceId(resourceId)
-        .name("test_dataset")
+        .name(uniqueName("test_dataset").replace("-", "_"))
         .description("how much data could a dataset set if a dataset could set data?")
         .cloningInstructions(CLONING_INSTRUCTIONS)
         .assignedUser(null)

@@ -3,8 +3,8 @@ package bio.terra.workspace.service.workspace.flight;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
-import bio.terra.stairway.RetryRuleExponentialBackoff;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -14,9 +14,6 @@ import java.util.UUID;
 // TODO(PF-555): There is a race condition if this flight runs at the same time as new controlled
 //  resource creation, which may leak resources in Sam. Workspace locking would solve this issue.
 public class DeleteGcpContextFlight extends Flight {
-  private static final int INITIAL_INTERVALS_SECONDS = 1;
-  private static final int MAX_INTERVAL_SECONDS = 8;
-  private static final int MAX_OPERATION_TIME_SECONDS = 5 * 60;
   private static final CloudPlatform CLOUD_PLATFORM = CloudPlatform.GCP;
 
   public DeleteGcpContextFlight(FlightMap inputParameters, Object applicationContext) {
@@ -28,9 +25,7 @@ public class DeleteGcpContextFlight extends Flight {
     AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    RetryRule retryRule =
-        new RetryRuleExponentialBackoff(
-            INITIAL_INTERVALS_SECONDS, MAX_INTERVAL_SECONDS, MAX_OPERATION_TIME_SECONDS);
+    RetryRule retryRule = RetryRules.cloudLongRunning();
 
     // We delete controlled resources from Sam and WSM databases, but do not need to delete the
     // actual cloud objects, as GCP handles the cleanup when we delete the containing project.

@@ -534,7 +534,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     Workspace workspace = reusableWorkspace(user);
     String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
 
-    String datasetId = "my_test_dataset";
+    String datasetId = uniqueDatasetId();
     String location = "us-central1";
 
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
@@ -568,6 +568,11 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()));
   }
 
+  /** Create a dataset name with a random 4-digit (rarely 5) suffix */
+  private String uniqueDatasetId() {
+    return "my_test_dataset_" + (int) (Math.floor(Math.random() * 10000));
+  }
+
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void createBqDatasetUndo() throws Exception {
@@ -575,7 +580,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     Workspace workspace = reusableWorkspace(user);
     String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
 
-    String datasetId = "my_undo_test_dataset";
+    String datasetId = uniqueDatasetId();
     String location = "us-central1";
 
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
@@ -632,7 +637,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     Workspace workspace = reusableWorkspace(user);
     String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
 
-    String datasetId = "my_test_dataset";
+    String datasetId = uniqueDatasetId();
     String location = "us-central1";
 
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
@@ -685,7 +690,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     Workspace workspace = reusableWorkspace(user);
     String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
 
-    String datasetId = "my_test_dataset";
+    String datasetId = uniqueDatasetId();
     String location = "us-central1";
 
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
