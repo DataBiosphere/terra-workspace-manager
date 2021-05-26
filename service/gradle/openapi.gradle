@@ -1,0 +1,22 @@
+// OpenAPI/Swagger Server Generation
+swaggerSources {
+    server {
+        inputFile = file("${gradle.openapiSourceFile}")
+        code {
+            language = "spring"
+            library = "spring-boot"
+            outputDir = file(openapiOutputDir)
+            components = ["models", "apis"]
+            rawOptions = [
+                    "--api-package", "${artifactGroup}.generated.controller",
+                    "--model-package", "${artifactGroup}.generated.model",
+                    "--model-name-prefix", "Api",
+                    "-D", "interfaceOnly=true," +
+                            "useTags=true," +
+                            "dateLibrary=java8"
+            ]
+        }
+    }
+}
+
+sourceSets.main.java.srcDir "${project.openapiOutputDir}/src/main/java"

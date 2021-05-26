@@ -1,0 +1,8 @@
+spotless {
+    java {
+        googleJavaFormat()
+        target 'src/*/java/**/*.java'
+    }
+}
+
+apply from: "$rootDir/gradle/quality.gradle"
