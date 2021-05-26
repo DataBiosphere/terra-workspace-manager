@@ -32,7 +32,7 @@ runs:
       # We can parameterize this if need be, but this should work
       port=5434
       echo "Launching the CloudSQL proxy"
-      dod=$(docker run -rm -d \
+      dod=$(docker run --rm -d \
         -v ${creddir}:/config \
         -p 127.0.0.1:${port}:${port} \
         gcr.io/cloudsql-docker/gce-proxy:latest \
