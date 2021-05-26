@@ -4,7 +4,7 @@ buildscript {
     ext {
         springBootVersion = '2.4.0'
     }
-    apply from: "$rootDir/common.gradle"
+    apply(from: "$rootDir/common.gradle")
 }
 
 plugins {
@@ -22,9 +22,9 @@ plugins {
     id 'ru.vyarus.quality' version '4.5.0'
 }
 
-group = 'bio.terra'
-version = gradle.wsmVersion
-sourceCompatibility = JavaVersion.VERSION_11
+project.group = 'bio.terra'
+project.version = gradle.wsmVersion
+project.sourceCompatibility = JavaVersion.VERSION_11
 
 project.ext {
     artifactGroup = "${group}.workspace"
@@ -33,11 +33,19 @@ project.ext {
 }
 
 def includeDir = "$projectDir/gradle"
+// include order matters, so don't alphabetize (yet)
 apply(from: "$includeDir/buildScan.gradle")
-apply from: "$includeDir/profiler.gradle"
-apply from: "$includeDir/testing.gradle"
-apply from: "$includeDir/deploy.gradle"
-apply from: "$includeDir/lint.gradle"
-apply from: "$includeDir/openapi.gradle"
-apply from: "$includeDir/versionProperties.gradle"
-apply from: "$includeDir/dependencies.gradle"
+apply(from: "$includeDir/profiler.gradle")
+apply(from: "$includeDir/testing.gradle")
+apply(from: "$includeDir/deploy.gradle")
+apply(from: "$includeDir/lint.gradle")
+apply(from: "$includeDir/openapi.gradle")
+apply(from: "$includeDir/versionProperties.gradle")
+apply(from: "$includeDir/dependencies.gradle")
+
+// Manual Task Dependencies
+tasks.compileJava.dependsOn(swaggerSources.server.code, spotlessApply, generateVersionProperties)
+tasks.jib.dependsOn extractProfilerAgent
+tasks.jibDockerBuild.dependsOn extractProfilerAgent
+tasks.jibBuildTar.dependsOn extractProfilerAgent
+tasks.clean.dependsOn cleanVersionProperties
