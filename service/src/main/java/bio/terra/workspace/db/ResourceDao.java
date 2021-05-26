@@ -333,7 +333,7 @@ public class ResourceDao {
   public boolean updateResource(
       UUID workspaceId, UUID resourceId, String name, String description) {
     if (name == null && description == null) {
-      throw new InvalidDaoRequestException("Must specify name or description to update.");
+      return false;
     }
 
     var params = new MapSqlParameterSource();

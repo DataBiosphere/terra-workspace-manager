@@ -77,6 +77,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   private static final String DEFAULT_NOTEBOOK_LOCATION = "us-east1-b";
 
   @Autowired private ControlledResourceService controlledResourceService;
+  @Autowired private ControlledResourceMetadataManager controlledResourceMetadataManager;
   @Autowired private CrlService crlService;
   @Autowired private JobService jobService;
   @Autowired private SpendConnectedTestUtils spendUtils;
@@ -498,7 +499,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     String newName = "newResourceName";
     String newDescription = "new resource description";
-    controlledResourceService.updateControlledResourceMetadata(
+    controlledResourceMetadataManager.updateControlledResourceMetadata(
         workspace.getWorkspaceId(),
         resource.getResourceId(),
         newName,

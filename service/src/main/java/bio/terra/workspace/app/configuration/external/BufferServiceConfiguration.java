@@ -53,6 +53,10 @@ public class BufferServiceConfiguration {
     this.clientCredentialFilePath = clientCredentialFilePath;
   }
 
+  public String getClientCredentialFilePath() {
+    return clientCredentialFilePath;
+  }
+
   public String getAccessToken() throws IOException {
     try (FileInputStream fileInputStream = new FileInputStream(clientCredentialFilePath)) {
       GoogleCredentials credentials =
