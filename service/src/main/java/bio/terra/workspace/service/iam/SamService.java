@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
@@ -61,12 +60,14 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class SamService {
+
+  public static final int MAX_INITIALIZE_RETRIES = 5;
   private final SamConfiguration samConfig;
   private final ObjectMapper objectMapper;
   private final StageService stageService;
 
   private final Set<String> SAM_OAUTH_SCOPES = ImmutableSet.of("openid", "email", "profile");
-  private boolean initialized;
+  private boolean wsmServiceAccountInitialized;
 
   @Autowired
   public SamService(
@@ -74,7 +75,7 @@ public class SamService {
     this.samConfig = samConfig;
     this.objectMapper = objectMapper;
     this.stageService = stageService;
-    this.initialized = false;
+    this.wsmServiceAccountInitialized = false;
   }
 
   private final Logger logger = LoggerFactory.getLogger(SamService.class);
@@ -175,11 +176,11 @@ public class SamService {
   }
 
   /**
-   * Register WSM's service account as a user in Sam if it isn't already. This is called on every
-   * WSM startup, but should only need to register with Sam once per environment.
+   * Register WSM's service account as a user in Sam if it isn't already. This should only need to
+   * register with Sam once per environment, so it is implemented lazily.
    */
-  private void initialize() throws InterruptedException {
-    if (!initialized) {
+  private void initializeWsmServiceAccount() throws InterruptedException {
+    if (!wsmServiceAccountInitialized) {
       String wsmAccessToken = null;
       try {
         wsmAccessToken = getWsmServiceAccountToken();
@@ -192,12 +193,11 @@ public class SamService {
       }
       UsersApi usersApi = samUsersApi(wsmAccessToken);
       // If registering the service account fails, all we can do is to keep trying.
-      while (!wsmServiceAccountRegistered(usersApi)) {
+      if (!wsmServiceAccountRegistered(usersApi)) {
         // retries internally
         registerWsmServiceAccount(usersApi);
-        TimeUnit.SECONDS.sleep(5);
       }
-      initialized = true;
+      wsmServiceAccountInitialized = true;
     }
   }
 
@@ -558,7 +558,8 @@ public class SamService {
       List<ControlledResourceIamRole> privateIamRoles,
       AuthenticatedUserRequest userReq)
       throws InterruptedException {
-    initialize();
+    // Set up the master OWNER user in Sam for all controlled resources, if it's not already.
+    initializeWsmServiceAccount();
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     FullyQualifiedResourceId workspaceParentFqId =
         new FullyQualifiedResourceId()
