@@ -1,9 +1,6 @@
 import java.time.ZonedDateTime
 
 buildscript {
-    ext {
-        springBootVersion = '2.4.0'
-    }
     apply(from: "$rootDir/common.gradle")
 }
 
@@ -30,6 +27,7 @@ project.ext {
     artifactGroup = "${group}.workspace"
     openapiOutputDir = "${buildDir}/openapi"
     resourceDir = "${projectDir}/src/main/resources"
+    springBootVersion = '2.4.0'
 }
 
 def includeDir = "$projectDir/gradle"
