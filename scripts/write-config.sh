@@ -87,7 +87,7 @@ case $target in
         ;;
 
     clean)
-        rm $(pwd)/${outputdir}/* # &> /dev/null
+        rm "$(pwd)/${outputdir}/*" &> /dev/null
         exit 0
         ;;
 
@@ -124,7 +124,7 @@ case $target in
 esac
 
 # Create the output directory if it doesn't already exist
-mkdir -p ${outputdir}
+mkdir -p "${outputdir}"
 
 # If there a config and it matches, don't regenerate
 if [ -e target.txt ]; then
@@ -139,29 +139,29 @@ fi
 function vaultgetb64 {
     vaultpath=$1
     filename=$2
-    docker run --rm -e VAULT_TOKEN=${vaulttoken} broadinstitute/dsde-toolbox:consul-0.20.0 \
-        vault read -format=json ${vaultpath} | jq -r .data.key | base64 -d > ${outputdir}/${filename}
+    docker run --rm -e VAULT_TOKEN="${vaulttoken}" broadinstitute/dsde-toolbox:consul-0.20.0 \
+        vault read -format=json "${vaultpath}" | jq -r .data.key | base64 -d > "${outputdir}/${filename}"
 }
 
 # Read a vault path into an output file
 function vaultget {
     vaultpath=$1
     filename=$2
-    docker run --rm -e VAULT_TOKEN=${vaulttoken} broadinstitute/dsde-toolbox:consul-0.20.0 \
-        vault read -format=json ${vaultpath} | jq -r .data > ${outputdir}/${filename}
+    docker run --rm -e VAULT_TOKEN="${vaulttoken}" broadinstitute/dsde-toolbox:consul-0.20.0 \
+        vault read -format=json "${vaultpath}" | jq -r .data > "${outputdir}/${filename}"
 }
 
 # Read database data from a vault path into a set of files
 function vaultgetdb {
     vaultpath=$1
     fileprefix=$2
-    fil=${outputdir}/dbtmp.json
-    docker run --rm -e VAULT_TOKEN=${vaulttoken} broadinstitute/dsde-toolbox:consul-0.20.0 \
-        vault read -format=json ${vaultpath} | jq -r .data > ${fil}
-    cat ${fil} | jq -r '.db' > ${outputdir}/${fileprefix}-name.txt
-    cat ${fil} | jq -r '.password' > ${outputdir}/${fileprefix}-password.txt
-    cat ${fil} | jq -r '.username' > ${outputdir}/${fileprefix}-username.txt
-    rm ${fil}
+    fil="${outputdir}/dbtmp.json"
+    docker run --rm -e VAULT_TOKEN="${vaulttoken}" broadinstitute/dsde-toolbox:consul-0.20.0 \
+        vault read -format=json "${vaultpath}" | jq -r .data > "${fil}"
+    cat "${fil}" | jq -r '.db' > "${outputdir}/${fileprefix}-name.txt"
+    cat "${fil}" | jq -r '.password' > "${outputdir}/${fileprefix}-password.txt"
+    cat "${fil}" | jq -r '.username' > "${outputdir}/${fileprefix}-username.txt"
+    rm "${fil}"
 }
 
 vaultget "secret/dsde/firecloud/${fcenv}/common/firecloud-account.json" "user-delegated-sa.json"
@@ -173,7 +173,7 @@ vaultgetb64 "secret/dsde/terra/kernel/integration/tools/buffer/client-sa" "buffe
 vaultgetb64 "secret/dsde/terra/kernel/integration/common/testrunner/testrunner-sa" "testrunner-sa.json"
 
 # Test runner K8s configuration
-# The setup for this is inconsistent. The usage is unknown. So we will skip it for now.
+# TODO (PF-744): The setup for this is inconsistent. The usage is unknown. So we will skip it for now.
 #vaultgetb64 "secret/dsde/terra/kernel/integration/${namespace}/testrunner-k8s-sa" "trtmp.json"
 #fil=${outputdir}/trtmp.json
 #cat ${fil} | jq -r ".data[\"ca.crt\"]" > ${outputdir}/testrunner-k8s-sa-client-key-data.crt
@@ -187,7 +187,7 @@ vaultgetb64 "secret/dsde/terra/kernel/integration/common/testrunner/testrunner-s
 # 3. Get the database information (user, pw, name) for db and stairway db
 vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/sqlproxy-sa" "sqlproxy-sa.json"
 vaultget "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/postgres/instance" "dbtmp.json"
-fil=${outputdir}/dbtmp.json
+fil="${outputdir}/dbtmp.json"
 instancename=$(cat ${fil} | jq -r '.name')
 instanceproject=$(cat ${fil} | jq -r '.project')
 instanceregion=$(cat ${fil} | jq -r '.region')
@@ -197,10 +197,10 @@ fi
 if [ "$instanceregion" == "null" ];
   then instanceregion=us-central1
 fi
-echo "${instanceproject}:${instanceregion}:${instancename}" > ${outputdir}/db-connection-name.txt
+echo "${instanceproject}:${instanceregion}:${instancename}" > "${outputdir}/db-connection-name.txt"
 rm ${fil}
 vaultgetdb "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/postgres/db-creds" "db"
 vaultgetdb "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/postgres/stairway-db-creds" "stairway-db"
 
 # We made it to the end, so record the target and avoid redos
-echo $target > ${outputdir}/target.txt
+echo "$target" > "${outputdir}/target.txt"
