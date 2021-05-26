@@ -180,7 +180,6 @@ public class SamService {
    */
   private void initialize() throws InterruptedException {
     if (!initialized) {
-      boolean finished = false;
       String wsmAccessToken = null;
       try {
         wsmAccessToken = getWsmServiceAccountToken();
@@ -189,16 +188,14 @@ public class SamService {
         // will throw. This can be ignored now and later when the credentials are used again.
         logger.warn(
             "Failed to register WSM service account in Sam. This is expected for tests.", e);
-        finished = true;
+        return;
       }
-      if (!finished) {
-        UsersApi usersApi = samUsersApi(wsmAccessToken);
-        // If registering the service account fails, all we can do is to keep trying.
-        while (!wsmServiceAccountRegistered(usersApi)) {
-          // retries internally
-          registerWsmServiceAccount(usersApi);
-          TimeUnit.SECONDS.sleep(5);
-        }
+      UsersApi usersApi = samUsersApi(wsmAccessToken);
+      // If registering the service account fails, all we can do is to keep trying.
+      while (!wsmServiceAccountRegistered(usersApi)) {
+        // retries internally
+        registerWsmServiceAccount(usersApi);
+        TimeUnit.SECONDS.sleep(5);
       }
       initialized = true;
     }
