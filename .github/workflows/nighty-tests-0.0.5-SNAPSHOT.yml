@@ -48,24 +48,6 @@ jobs:
           echo ::set-output name=vault-token::$VAULT_TOKEN
           echo ::add-mask::$VAULT_TOKEN
 
-      - name: Run the integration test suite
-        id: integration-test
-        if: always()
-        uses: ./.github/actions/integration-test
-        with:
-          test-server: workspace-wsmtest.json
-          test: suites/FullIntegration.json
-          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
-
-      - name: Run the perf test suite
-        id: perf-test
-        if: always()
-        uses: ./.github/actions/integration-test
-        with:
-          test-server: workspace-wsmtest.json
-          test: suites/BasicPerf.json
-          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
-
       - name: Run the resiliency test suite
         id: resiliency-test
         if: always()
