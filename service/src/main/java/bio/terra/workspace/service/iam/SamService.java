@@ -60,11 +60,14 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class SamService {
+
+  public static final int MAX_INITIALIZE_RETRIES = 5;
   private final SamConfiguration samConfig;
   private final ObjectMapper objectMapper;
   private final StageService stageService;
 
   private final Set<String> SAM_OAUTH_SCOPES = ImmutableSet.of("openid", "email", "profile");
+  private boolean wsmServiceAccountInitialized;
 
   @Autowired
   public SamService(
@@ -72,6 +75,7 @@ public class SamService {
     this.samConfig = samConfig;
     this.objectMapper = objectMapper;
     this.stageService = stageService;
+    this.wsmServiceAccountInitialized = false;
   }
 
   private final Logger logger = LoggerFactory.getLogger(SamService.class);
@@ -170,23 +174,30 @@ public class SamService {
       throw SamExceptionFactory.create("Interrupted during Sam operation " + operation, e);
     }
   }
+
   /**
-   * Register WSM's service account as a user in Sam if it isn't already. This is called on every
-   * WSM startup, but should only need to register with Sam once per environment.
+   * Register WSM's service account as a user in Sam if it isn't already. This should only need to
+   * register with Sam once per environment, so it is implemented lazily.
    */
-  public void initialize() throws InterruptedException {
-    String wsmAccessToken;
-    try {
-      wsmAccessToken = getWsmServiceAccountToken();
-    } catch (IOException e) {
-      // In cases where WSM is not running as a service account (e.g. unit tests), the above call
-      // will throw. This can be ignored now and later when the credentials are used again.
-      logger.warn("Failed to register WSM service account in Sam. This is expected for tests.", e);
-      return;
-    }
-    UsersApi usersApi = samUsersApi(wsmAccessToken);
-    if (!wsmServiceAccountRegistered(usersApi)) {
-      registerWsmServiceAccount(usersApi);
+  private void initializeWsmServiceAccount() throws InterruptedException {
+    if (!wsmServiceAccountInitialized) {
+      String wsmAccessToken = null;
+      try {
+        wsmAccessToken = getWsmServiceAccountToken();
+      } catch (IOException e) {
+        // In cases where WSM is not running as a service account (e.g. unit tests), the above call
+        // will throw. This can be ignored now and later when the credentials are used again.
+        logger.warn(
+            "Failed to register WSM service account in Sam. This is expected for tests.", e);
+        return;
+      }
+      UsersApi usersApi = samUsersApi(wsmAccessToken);
+      // If registering the service account fails, all we can do is to keep trying.
+      if (!wsmServiceAccountRegistered(usersApi)) {
+        // retries internally
+        registerWsmServiceAccount(usersApi);
+      }
+      wsmServiceAccountInitialized = true;
     }
   }
 
@@ -195,7 +206,7 @@ public class SamService {
     try {
       // getUserStatusInfo throws a 404 if the calling user is not registered, which will happen
       // the first time WSM is run in each environment.
-      SamRetry.retry(() -> usersApi.getUserStatusInfo());
+      SamRetry.retry(usersApi::getUserStatusInfo);
       logger.info("WSM service account already registered in Sam");
       return true;
     } catch (ApiException apiException) {
@@ -212,7 +223,7 @@ public class SamService {
 
   private void registerWsmServiceAccount(UsersApi usersApi) throws InterruptedException {
     try {
-      SamRetry.retry(() -> usersApi.createUserV2());
+      SamRetry.retry(usersApi::createUserV2);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create(
           "Error registering WSM service account with Sam", apiException);
@@ -547,6 +558,8 @@ public class SamService {
       List<ControlledResourceIamRole> privateIamRoles,
       AuthenticatedUserRequest userReq)
       throws InterruptedException {
+    // Set up the master OWNER user in Sam for all controlled resources, if it's not already.
+    initializeWsmServiceAccount();
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     FullyQualifiedResourceId workspaceParentFqId =
         new FullyQualifiedResourceId()
