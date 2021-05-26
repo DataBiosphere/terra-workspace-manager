@@ -47,6 +47,33 @@ jobs:
           echo ::set-output name=vault-token::$VAULT_TOKEN
           echo ::add-mask::$VAULT_TOKEN
 
+    - name: Write config
+      id: config
+      uses: ./.github/actions/write-config
+      with:
+        vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+        target: wsmtest
+
+    - name: delete all tables in the wsm db
+      uses: ./.github/actions/run-sql-script
+      with:
+        db-connection-name: ${{ steps.config.outputs.db-connection-name }}
+        db-name:     ${{ steps.config.outputs.db-name }}
+        db-password: ${{ steps.config.outputs.db-password }}
+        db-username: ${{ steps.config.outputs.db-username }}
+        cloudsql-sa-file: ./config/sqlproxy-sa.json
+        script-file: ./scripts/clean_wsm.sql
+
+    - name: delete all tables in the wsm stairway db
+      uses: ./.github/actions/run-sql-script
+      with:
+        db-connection-name: ${{ steps.config.outputs.db-connection-name }}
+        db-name:     ${{ steps.config.outputs.stairway-db-name }}
+        db-password: ${{ steps.config.outputs.stairway-db-password }}
+        db-username: ${{ steps.config.outputs.stairway-db-username }}
+        cloudsql-sa-file: ./config/sqlproxy-sa.json
+        script-file: ./scripts/clean_stairway.sql
+
       - name: Run the integration test suite
         id: integration-test
         if: always()

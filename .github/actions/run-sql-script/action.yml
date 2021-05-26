@@ -32,16 +32,14 @@ runs:
       # We can parameterize this if need be, but this should work
       port=5434
       echo "Launching the CloudSQL proxy"
-      dod=$(docker run -d \
+      dod=$(docker run -rm -d \
         -v ${creddir}:/config \
         -p 127.0.0.1:${port}:${port} \
         gcr.io/cloudsql-docker/gce-proxy:latest \
         /cloud_sql_proxy \
         -instances=${{ inputs.db-connection-name }}=tcp:0.0.0.0:${port} \
         -credential_file=/config/${credfile})
-      sleep 10
-      docker ps -a
-      docker logs $dod
+      sleep 5
       echo "Running the script via psql"
       PGPASSWORD="${{ inputs.db-password }}" \
         psql "host=127.0.0.1 port=$port sslmode=disable dbname=${{ inputs.db-name }} user=${{ inputs.db-username }}" \
