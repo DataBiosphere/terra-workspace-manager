@@ -66,6 +66,7 @@ public class SamService {
   private final StageService stageService;
 
   private final Set<String> SAM_OAUTH_SCOPES = ImmutableSet.of("openid", "email", "profile");
+  private boolean initialized;
 
   @Autowired
   public SamService(
@@ -73,6 +74,7 @@ public class SamService {
     this.samConfig = samConfig;
     this.objectMapper = objectMapper;
     this.stageService = stageService;
+    this.initialized = false;
   }
 
   private final Logger logger = LoggerFactory.getLogger(SamService.class);
@@ -171,26 +173,34 @@ public class SamService {
       throw SamExceptionFactory.create("Interrupted during Sam operation " + operation, e);
     }
   }
+
   /**
    * Register WSM's service account as a user in Sam if it isn't already. This is called on every
    * WSM startup, but should only need to register with Sam once per environment.
    */
-  public void initialize() throws InterruptedException {
-    String wsmAccessToken;
-    try {
-      wsmAccessToken = getWsmServiceAccountToken();
-    } catch (IOException e) {
-      // In cases where WSM is not running as a service account (e.g. unit tests), the above call
-      // will throw. This can be ignored now and later when the credentials are used again.
-      logger.warn("Failed to register WSM service account in Sam. This is expected for tests.", e);
-      return;
-    }
-    UsersApi usersApi = samUsersApi(wsmAccessToken);
-    // If registering the service account fails, all we can do is to keep trying.
-    while (!wsmServiceAccountRegistered(usersApi)) {
-      // retries internally
-      registerWsmServiceAccount(usersApi);
-      TimeUnit.SECONDS.sleep(5);
+  private void initialize() throws InterruptedException {
+    if (!initialized) {
+      boolean finished = false;
+      String wsmAccessToken = null;
+      try {
+        wsmAccessToken = getWsmServiceAccountToken();
+      } catch (IOException e) {
+        // In cases where WSM is not running as a service account (e.g. unit tests), the above call
+        // will throw. This can be ignored now and later when the credentials are used again.
+        logger.warn(
+            "Failed to register WSM service account in Sam. This is expected for tests.", e);
+        finished = true;
+      }
+      if (!finished) {
+        UsersApi usersApi = samUsersApi(wsmAccessToken);
+        // If registering the service account fails, all we can do is to keep trying.
+        while (!wsmServiceAccountRegistered(usersApi)) {
+          // retries internally
+          registerWsmServiceAccount(usersApi);
+          TimeUnit.SECONDS.sleep(5);
+        }
+      }
+      initialized = true;
     }
   }
 
@@ -550,6 +560,7 @@ public class SamService {
       List<ControlledResourceIamRole> privateIamRoles,
       AuthenticatedUserRequest userReq)
       throws InterruptedException {
+    initialize();
     ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
     FullyQualifiedResourceId workspaceParentFqId =
         new FullyQualifiedResourceId()
