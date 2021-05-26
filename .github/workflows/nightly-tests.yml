@@ -54,25 +54,9 @@ jobs:
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
           target: wsmtest
 
-      - name: truncate tables in the wsm db
-        uses: ./.github/actions/run-sql-script
-        with:
-          db-connection-name: ${{ steps.config.outputs.db-connection-name }}
-          db-name:     ${{ steps.config.outputs.db-name }}
-          db-password: ${{ steps.config.outputs.db-password }}
-          db-username: ${{ steps.config.outputs.db-username }}
-          cloudsql-sa-file: ./config/sqlproxy-sa.json
-          script-file: ./scripts/clean_wsm.sql
-
-      - name: truncate tables in the wsm stairway db
-        uses: ./.github/actions/run-sql-script
-        with:
-          db-connection-name: ${{ steps.config.outputs.db-connection-name }}
-          db-name:     ${{ steps.config.outputs.stairway-db-name }}
-          db-password: ${{ steps.config.outputs.stairway-db-password }}
-          db-username: ${{ steps.config.outputs.stairway-db-username }}
-          cloudsql-sa-file: ./config/sqlproxy-sa.json
-          script-file: ./scripts/clean_stairway.sql
+      - name: clean databases before integration suite
+        if: always()
+        uses: ./.github/actions/clean-databases
 
       - name: Run the integration test suite
         id: integration-test
@@ -83,27 +67,9 @@ jobs:
           test: suites/FullIntegration.json
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
-      - name: truncate tables in the wsm db
+      - name: clean databases before perf suite
         if: always()
-        uses: ./.github/actions/run-sql-script
-        with:
-          db-connection-name: ${{ steps.config.outputs.db-connection-name }}
-          db-name:     ${{ steps.config.outputs.db-name }}
-          db-password: ${{ steps.config.outputs.db-password }}
-          db-username: ${{ steps.config.outputs.db-username }}
-          cloudsql-sa-file: ./config/sqlproxy-sa.json
-          script-file: ./scripts/clean_wsm.sql
-
-      - name: truncate tables in the wsm stairway db
-        if: always()
-        uses: ./.github/actions/run-sql-script
-        with:
-          db-connection-name: ${{ steps.config.outputs.db-connection-name }}
-          db-name:     ${{ steps.config.outputs.stairway-db-name }}
-          db-password: ${{ steps.config.outputs.stairway-db-password }}
-          db-username: ${{ steps.config.outputs.stairway-db-username }}
-          cloudsql-sa-file: ./config/sqlproxy-sa.json
-          script-file: ./scripts/clean_stairway.sql
+        uses: ./.github/actions/clean-databases
 
       - name: Run the perf test suite
         id: perf-test
@@ -114,27 +80,9 @@ jobs:
           test: suites/BasicPerf.json
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
-      - name: truncate tables in the wsm db
+      - name: clean databases before resiliency suite
         if: always()
-        uses: ./.github/actions/run-sql-script
-        with:
-          db-connection-name: ${{ steps.config.outputs.db-connection-name }}
-          db-name:     ${{ steps.config.outputs.db-name }}
-          db-password: ${{ steps.config.outputs.db-password }}
-          db-username: ${{ steps.config.outputs.db-username }}
-          cloudsql-sa-file: ./config/sqlproxy-sa.json
-          script-file: ./scripts/clean_wsm.sql
-
-      - name: truncate tables in the wsm stairway db
-        if: always()
-        uses: ./.github/actions/run-sql-script
-        with:
-          db-connection-name: ${{ steps.config.outputs.db-connection-name }}
-          db-name:     ${{ steps.config.outputs.stairway-db-name }}
-          db-password: ${{ steps.config.outputs.stairway-db-password }}
-          db-username: ${{ steps.config.outputs.stairway-db-username }}
-          cloudsql-sa-file: ./config/sqlproxy-sa.json
-          script-file: ./scripts/clean_stairway.sql
+        uses: ./.github/actions/clean-databases
 
       - name: Run the resiliency test suite
         id: resiliency-test
@@ -153,7 +101,7 @@ jobs:
           L3="Perf: ${{ steps.perf-test.outcome }} "
           L4="Res: ${{ steps.resiliency-test.outcome }}"
           text="Link to <https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID|test run>"
-          bold="$L2$L3$L4"
+          bold="$L2 | $L3 | $L4"
           echo ::set-output name=status-text::$text
           echo ::set-output name=status-bold::$bold
 

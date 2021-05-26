@@ -79,8 +79,8 @@ jobs:
           echo ::set-output name=vault-token::$VAULT_TOKEN
           echo ::add-mask::$VAULT_TOKEN
 
-      - name: Render config
-        uses: ./.github/actions/render-config
+      - name: Write configuration
+        uses: ./.github/actions/write-config
         with:
           test-env: ${{ steps.set-env-step.outputs.test-env }}
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
