@@ -1,0 +1,12 @@
+name: 'clean-databases'
+description: 'Clean the wsm and stairway databases'
+author: 'dd'
+runs:
+  using: 'composite'
+  steps:
+  - name: clean wsm database
+    shell: bash
+    run: ./scripts/run-sql-script.sh wsm ./scripts/clean_wsm.sql
+  - name: clean stairway database
+    shell: bash
+    run: ./scripts/run-sql-script.sh stairway ./scripts/clean_stairway.sql
