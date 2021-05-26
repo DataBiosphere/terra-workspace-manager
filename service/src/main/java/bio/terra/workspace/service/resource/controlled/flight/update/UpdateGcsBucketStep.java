@@ -1,0 +1,116 @@
+package bio.terra.workspace.service.resource.controlled.flight.update;
+
+import static bio.terra.workspace.service.resource.controlled.GcsApiConversions.toGcsApi;
+import static bio.terra.workspace.service.resource.controlled.GcsApiConversions.toGcsApiRulesList;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_PARAMETERS;
+
+import bio.terra.cloudres.google.storage.BucketCow;
+import bio.terra.cloudres.google.storage.StorageCow;
+import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.Step;
+import bio.terra.stairway.StepResult;
+import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
+import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
+import bio.terra.workspace.service.workspace.WorkspaceService;
+import com.google.cloud.storage.BucketInfo.LifecycleRule;
+import com.google.cloud.storage.StorageClass;
+import java.util.List;
+import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class UpdateGcsBucketStep implements Step {
+  private final Logger logger = LoggerFactory.getLogger(UpdateGcsBucketStep.class);
+  private final ControlledGcsBucketResource bucketResource;
+  private final CrlService crlService;
+  private final WorkspaceService workspaceService;
+
+  public UpdateGcsBucketStep(
+      ControlledGcsBucketResource bucketResource,
+      CrlService crlService,
+      WorkspaceService workspaceService) {
+    this.bucketResource = bucketResource;
+    this.crlService = crlService;
+    this.workspaceService = workspaceService;
+  }
+
+  @Override
+  public StepResult doStep(FlightContext flightContext)
+      throws InterruptedException, RetryException {
+    final FlightMap inputMap = flightContext.getInputParameters();
+    final ApiGcpGcsBucketUpdateParameters updateParameters =
+        inputMap.get(UPDATE_PARAMETERS, ApiGcpGcsBucketUpdateParameters.class);
+
+    return updateBucket(updateParameters);
+  }
+
+  // Restore the previous values of the update parameters
+  @Override
+  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    final FlightMap workingMap = flightContext.getWorkingMap();
+    final ApiGcpGcsBucketUpdateParameters previousUpdateParameters =
+        workingMap.get(PREVIOUS_UPDATE_PARAMETERS, ApiGcpGcsBucketUpdateParameters.class);
+
+    return updateBucket(previousUpdateParameters);
+  }
+
+  private StepResult updateBucket(@Nullable ApiGcpGcsBucketUpdateParameters updateParameters) {
+    if (updateParameters == null) {
+      // nothing to change
+      logger.info("No update parameters supplied, so no changes to make.");
+      return StepResult.getStepResultSuccess();
+    }
+    final String projectId =
+        workspaceService.getRequiredGcpProject(bucketResource.getWorkspaceId());
+    final StorageCow storageCow = crlService.createStorageCow(projectId);
+
+    final BucketCow existingBucketCow = storageCow.get(bucketResource.getBucketName());
+    if (existingBucketCow == null) {
+      logger.info(
+          "No bucket found to update with name {}. Treating as success.",
+          bucketResource.getBucketName());
+      return StepResult.getStepResultSuccess();
+    }
+    final List<LifecycleRule> gcsLifecycleRules =
+        toGcsApiRulesList(updateParameters.getLifecycle());
+    // An empty array will clear all rules. A null array will take no effect. A populated array will
+    // clear then set rules
+    final boolean doReplaceLifecycleRules = gcsLifecycleRules != null;
+
+    // Lifecycle rules need to be cleared before being set. We should only do this if
+    // we have changes.
+    final BucketCow.Builder bucketCowBuilder;
+    if (doReplaceLifecycleRules) {
+      final var deleteBuilder = existingBucketCow.toBuilder();
+      deleteBuilder.deleteLifecycleRules();
+      var clearedRulesBucket = deleteBuilder.build().update();
+      // do separate update to set the lifecycle rules
+      bucketCowBuilder = clearedRulesBucket.toBuilder();
+      bucketCowBuilder.setLifecycleRules(gcsLifecycleRules);
+    } else {
+      // do not delete the lifecycle rules, as they are not changing
+      bucketCowBuilder = existingBucketCow.toBuilder();
+    }
+
+    final StorageClass gcsStorageClass = toGcsApi(updateParameters.getDefaultStorageClass());
+    final boolean replaceStorageClass = gcsStorageClass != null;
+
+    if (replaceStorageClass) {
+      bucketCowBuilder.setStorageClass(gcsStorageClass);
+    }
+
+    if (doReplaceLifecycleRules || replaceStorageClass) {
+      bucketCowBuilder.build().update();
+    } else {
+      logger.info(
+          "Cloud attributes for Bucket {} were not changed as all inputs were null.",
+          bucketResource.getBucketName());
+    }
+
+    return StepResult.getStepResultSuccess();
+  }
+}

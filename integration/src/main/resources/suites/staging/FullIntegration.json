@@ -1,0 +1,14 @@
+{
+  "name": "FullIntegration",
+  "description": "Integration tests (not including context/control-related tests) - to be run on staging",
+  "serverSpecificationFile": "workspace-staging.json",
+  "testConfigurationFiles": [
+    "integration/BasicAuthenticated.json",
+    "integration/BasicUnauthenticated.json",
+    "integration/GetRoles.json",
+    "integration/WorkspaceLifecycle.json",
+    "integration/staging/DataReferenceLifecycle.json",
+    "integration/staging/EnumerateDataReferences.json"
+  ]
+}
+

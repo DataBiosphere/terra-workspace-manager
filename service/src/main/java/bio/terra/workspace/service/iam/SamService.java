@@ -328,15 +328,16 @@ public class SamService {
       throws InterruptedException {
     boolean isAuthorized =
         isAuthorized(userReq.getRequiredToken(), resourceType, resourceId, action);
+    final String userEmail = getEmailFromToken(userReq.getRequiredToken());
     if (!isAuthorized)
       throw new UnauthorizedException(
           String.format(
               "User %s is not authorized to %s resource %s of type %s",
-              userReq.getEmail(), action, resourceId, resourceType));
+              userEmail, action, resourceId, resourceType));
     else
       logger.info(
           "User {} is authorized to {} resource {} of type {}",
-          userReq.getEmail(),
+          userEmail,
           action,
           resourceId,
           resourceType);

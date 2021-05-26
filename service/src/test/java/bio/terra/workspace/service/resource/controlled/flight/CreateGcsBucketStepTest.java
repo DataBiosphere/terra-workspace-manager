@@ -2,7 +2,7 @@ package bio.terra.workspace.service.resource.controlled.flight;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getGoogleBucketCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueName;
-import static bio.terra.workspace.service.resource.controlled.flight.create.CreateGcsBucketStep.ApiConversions.toDateTime;
+import static bio.terra.workspace.service.resource.controlled.GcsApiConversions.toGoogleDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
@@ -82,7 +82,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
 
     final BucketInfo info = bucketInfoCaptor.getValue();
     assertThat(info.getName(), equalTo(creationParameters.getName()));
-    assertThat(info.getLocation(), equalTo(ControlledResourceFixtures.BUCKET_LOCATION));
+    assertThat(info.getLocation(), equalTo(ControlledResourceFixtures.RESOURCE_LOCATION));
     assertThat(info.getStorageClass(), equalTo(StorageClass.STANDARD));
     assertThat(info.getLifecycleRules(), hasSize(equalTo(2)));
 
@@ -106,7 +106,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
             LifecycleCondition.newBuilder()
                 .setAge(null)
                 .setCreatedBefore(
-                    toDateTime(OffsetDateTime.of(2007, 1, 3, 0, 0, 0, 0, ZoneOffset.UTC)))
+                    toGoogleDateTime(OffsetDateTime.of(2007, 1, 3, 0, 0, 0, 0, ZoneOffset.UTC)))
                 .setNumberOfNewerVersions(null)
                 .setIsLive(null)
                 .setMatchesStorageClass(Collections.singletonList(StorageClass.STANDARD))
@@ -136,7 +136,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
 
     final BucketInfo info = bucketInfoCaptor.getValue();
     assertThat(info.getName(), equalTo(bucketName));
-    assertThat(info.getLocation(), equalTo(ControlledResourceFixtures.BUCKET_LOCATION));
+    assertThat(info.getLocation(), equalTo(ControlledResourceFixtures.RESOURCE_LOCATION));
     assertThat(info.getStorageClass(), is(nullValue()));
     assertThat(info.getLifecycleRules(), empty());
   }

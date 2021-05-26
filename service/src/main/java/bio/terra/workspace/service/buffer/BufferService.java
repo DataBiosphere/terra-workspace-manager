@@ -96,7 +96,10 @@ public class BufferService {
       return info;
     } catch (IOException e) {
       throw new BufferServiceAuthorizationException(
-          "Error reading or parsing credentials file", e.getCause());
+          String.format(
+              "Error reading or parsing credentials file at %s",
+              bufferServiceConfiguration.getClientCredentialFilePath()),
+          e.getCause());
     } catch (ApiException e) {
       if (e.getCode() == HttpStatus.UNAUTHORIZED.value()) {
         throw new BufferServiceAuthorizationException(

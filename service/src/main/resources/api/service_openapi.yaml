@@ -799,6 +799,25 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update a controlled GCS Bucket resource.
+      operationId: updateGcsBucket
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateControlledGcpGcsBucketRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/UpdateControlledGcpGcsBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
     post:
       summary: |
         Delete a controlled GCS bucket resource. This is async, because deleting the bucket and contents can
@@ -1698,7 +1717,18 @@ components:
         description:
           description: Optional. New description to give to this resource. The resource description will not be updated if this is omitted.
           type: string
-
+    UpdateControlledGcpGcsBucketRequestBody:
+      type: object
+      description: Update a GCS bucket's metadata and lifecycle rules.
+      properties:
+        name:
+          description: Optional. New name to give to this resource. The resource name will not be updated if this is omitted.
+          type: string
+        description:
+          description: Optional. New description to give to this resource. The resource description will not be updated if this is omitted.
+          type: string
+        updateParameters:
+          $ref: '#/components/schemas/GcpGcsBucketUpdateParameters'
     CreatedControlledGcpGcsBucket:
       description: Response Payload for requesting a new controlled GCS bucket.
       type: object
@@ -1734,6 +1764,15 @@ components:
         location:
           description: A valid bucket location per https://cloud.google.com/storage/docs/locations.
           type: string
+        defaultStorageClass:
+          $ref: '#/components/schemas/GcpGcsBucketDefaultStorageClass'
+        lifecycle:
+          $ref: '#/components/schemas/GcpGcsBucketLifecycle'
+
+    GcpGcsBucketUpdateParameters:
+      description: >-
+        Parameters that may be changed by a user. Location and Bucket name are fixed upon create.
+      properties:
         defaultStorageClass:
           $ref: '#/components/schemas/GcpGcsBucketDefaultStorageClass'
         lifecycle:
@@ -2306,7 +2345,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GcpGcsBucketResource'
-
+    UpdateControlledGcpGcsBucketResponse:
+      description: Reponse to GCP GCS Bucket update.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GcpGcsBucketResource' # TODO:  add other attributes
     CreatedControlledGcpBigQueryDatasetResponse:
       description: Response to Create controlled BigQuery dataset
       content:

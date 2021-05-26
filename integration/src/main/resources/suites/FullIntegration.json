@@ -5,15 +5,17 @@
   "testConfigurationFiles": [
     "integration/BasicAuthenticated.json",
     "integration/BasicUnauthenticated.json",
-    "integration/DataReferenceLifecycle.json",
-    "integration/EnumerateDataReferences.json",
     "integration/GetRoles.json",
     "integration/WorkspaceLifecycle.json",
+    "integration/DataReferenceLifecycle.json",
+    "integration/EnumerateDataReferences.json",
     "integration/ControlledGcsBucketLifecycle.json",
     "integration/ControlledBigQueryDatasetLifecycle.json",
     "integration/PrivateControlledGcsBucketLifecycle.json",
     "integration/PrivateControlledAiNotebookInstanceLifecycle.json",
-    "integration/EnumerateResources.json"
+    "integration/EnumerateResources.json",
+    "integration/DeleteGcpContextWithControlledResource.json",
+    "integration/DeleteWorkspaceWithControlledResource.json"
   ]
 }
 

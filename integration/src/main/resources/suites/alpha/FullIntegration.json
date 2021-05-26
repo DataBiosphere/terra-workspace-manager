@@ -1,0 +1,14 @@
+{
+  "name": "FullIntegration",
+  "description": "Integration tests (not including context/control-related tests) - to be run on alpha",
+  "serverSpecificationFile": "workspace-alpha.json",
+  "testConfigurationFiles": [
+    "integration/BasicAuthenticated.json",
+    "integration/BasicUnauthenticated.json",
+    "integration/GetRoles.json",
+    "integration/WorkspaceLifecycle.json",
+    "integration/alpha/DataReferenceLifecycle.json",
+    "integration/alpha/EnumerateDataReferences.json"
+  ]
+}
+
