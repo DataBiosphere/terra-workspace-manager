@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
@@ -81,7 +82,13 @@ public class ControlledResourceService {
   @Traced
   public ControlledResource validateControlledResourceAndAction(
       AuthenticatedUserRequest userReq, UUID workspaceId, UUID resourceId, String action) {
-    WsmResource resource = resourceDao.getResource(workspaceId, resourceId);
+    WsmResource resource;
+    try {
+      resource = resourceDao.getResource(workspaceId, resourceId);
+    } catch (InterruptedException e) {
+      throw new InternalServerErrorException(
+          "Interrupted during validateControlledResourceAndAction");
+    }
     // TODO(PF-640): also check that the user has
     if (resource.getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InvalidControlledResourceException(
@@ -197,8 +204,11 @@ public class ControlledResourceService {
     stageService.assertMcWorkspace(workspaceId, "getControlledResource");
     validateControlledResourceAndAction(
         userReq, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION);
-    WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
-    return wsmResource.castToControlledResource();
+    try {
+      return resourceDao.getResource(workspaceId, resourceId).castToControlledResource();
+    } catch (InterruptedException e) {
+      throw new InternalServerErrorException("Interrupted during getControlledResource");
+    }
   }
 
   /**
@@ -224,7 +234,11 @@ public class ControlledResourceService {
     if (name != null) {
       ValidationUtils.validateResourceName(name);
     }
-    resourceDao.updateResource(workspaceId, resourceId, name, description);
+    try {
+      resourceDao.updateResource(workspaceId, resourceId, name, description);
+    } catch (InterruptedException e) {
+      throw new InternalServerErrorException("Interrupted during updateControlledResourceMetadata");
+    }
   }
 
   /** Synchronously delete a controlled resource. */

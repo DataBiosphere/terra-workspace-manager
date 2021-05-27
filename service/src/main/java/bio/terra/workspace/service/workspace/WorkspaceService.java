@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -113,7 +114,12 @@ public class WorkspaceService {
   @Traced
   public Workspace validateWorkspaceAndAction(
       AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
-    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
+    Workspace workspace;
+    try {
+      workspace = workspaceDao.getWorkspace(workspaceId);
+    } catch (InterruptedException e) {
+      throw new InternalServerErrorException("Interrupted during validateWorkspaceAndAction");
+    }
     SamService.rethrowIfSamInterrupted(
         () ->
             samService.checkAuthz(
@@ -134,7 +140,11 @@ public class WorkspaceService {
     List<UUID> samWorkspaceIds =
         SamService.rethrowIfSamInterrupted(
             () -> samService.listWorkspaceIds(userReq), "listWorkspaceIds");
-    return workspaceDao.getWorkspacesMatchingList(samWorkspaceIds, offset, limit);
+    try {
+      return workspaceDao.getWorkspacesMatchingList(samWorkspaceIds, offset, limit);
+    } catch (InterruptedException e) {
+      throw new InternalServerErrorException("Interrupted during listWorkspaces");
+    }
   }
 
   /** Retrieves an existing workspace by ID */
@@ -157,8 +167,12 @@ public class WorkspaceService {
       @Nullable String name,
       @Nullable String description) {
     validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
-    workspaceDao.updateWorkspace(workspaceId, name, description);
-    return workspaceDao.getWorkspace(workspaceId);
+    try {
+      workspaceDao.updateWorkspace(workspaceId, name, description);
+      return workspaceDao.getWorkspace(workspaceId);
+    } catch (InterruptedException e) {
+      throw new InternalServerErrorException("Interrupted during updateWorkspace");
+    }
   }
 
   /** Delete an existing workspace by ID. */
@@ -257,7 +271,12 @@ public class WorkspaceService {
    * @return GCP project id
    */
   public String getRequiredGcpProject(UUID workspaceId) {
-    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
+    Workspace workspace;
+    try {
+      workspace = workspaceDao.getWorkspace(workspaceId);
+    } catch (InterruptedException e) {
+      throw new InternalServerErrorException("Interrupted during getRequiredGcpProject");
+    }
     GcpCloudContext gcpCloudContext =
         workspace
             .getGcpCloudContext()
@@ -272,7 +291,13 @@ public class WorkspaceService {
    * given workspace does not have a GCP cloud context.
    */
   public Optional<String> getGcpProject(UUID workspaceId) {
-    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
-    return workspace.getGcpCloudContext().map(GcpCloudContext::getGcpProjectId);
+    try {
+      return workspaceDao
+          .getWorkspace(workspaceId)
+          .getGcpCloudContext()
+          .map(GcpCloudContext::getGcpProjectId);
+    } catch (InterruptedException e) {
+      throw new InternalServerErrorException("Interrupted during getGcpProject");
+    }
   }
 }

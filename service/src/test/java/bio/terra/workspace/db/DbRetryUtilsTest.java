@@ -30,44 +30,48 @@ public class DbRetryUtilsTest extends BaseUnitTest {
   @Mock NamedParameterJdbcTemplate jdbcTemplate;
 
   @Test
-  void updateSucceedsWithRetry() {
+  void updateSucceedsWithRetry() throws InterruptedException {
     when(jdbcTemplate.update(any(), (SqlParameterSource) any()))
         .thenThrow(RETRY_EXCEPTION)
         .thenReturn(42);
-    assertEquals(42, DbRetryUtils.update(jdbcTemplate, FAKE_QUERY, FAKE_PARAMS));
+    assertEquals(42, DbRetryUtils.retry(() -> jdbcTemplate.update(FAKE_QUERY, FAKE_PARAMS)));
   }
 
   @Test
-  void querySucceedsWithRetry() {
+  void querySucceedsWithRetry() throws InterruptedException {
     when(jdbcTemplate.query(any(), (SqlParameterSource) any(), (RowMapper) any()))
         .thenThrow(RETRY_EXCEPTION)
         .thenReturn(Collections.singletonList(42));
     assertEquals(
         Collections.singletonList(42),
-        DbRetryUtils.query(jdbcTemplate, FAKE_QUERY, FAKE_PARAMS, FAKE_ROW_MAPPER));
+        DbRetryUtils.retry(() -> jdbcTemplate.query(FAKE_QUERY, FAKE_PARAMS, FAKE_ROW_MAPPER)));
   }
 
   @Test
-  void queryForObjectByClassSucceedsWithRetry() {
+  void queryForObjectByClassSucceedsWithRetry() throws InterruptedException {
     when(jdbcTemplate.queryForObject(any(), (SqlParameterSource) any(), (Class) any()))
         .thenThrow(RETRY_EXCEPTION)
         .thenReturn(42);
     assertEquals(
-        42, DbRetryUtils.queryForObject(jdbcTemplate, FAKE_QUERY, FAKE_PARAMS, Integer.class));
+        42,
+        DbRetryUtils.retry(
+            () -> jdbcTemplate.queryForObject(FAKE_QUERY, FAKE_PARAMS, Integer.class)));
   }
 
   @Test
-  void queryForObjectByRowMapperSucceedsWithRetry() {
+  void queryForObjectByRowMapperSucceedsWithRetry() throws InterruptedException {
     when(jdbcTemplate.queryForObject(any(), (SqlParameterSource) any(), (RowMapper) any()))
         .thenThrow(RETRY_EXCEPTION)
         .thenReturn(42);
     assertEquals(
-        42, DbRetryUtils.queryForObject(jdbcTemplate, FAKE_QUERY, FAKE_PARAMS, FAKE_ROW_MAPPER));
+        42,
+        DbRetryUtils.retry(
+            () -> jdbcTemplate.queryForObject(FAKE_QUERY, FAKE_PARAMS, FAKE_ROW_MAPPER)));
   }
 
   @Test
   void errorOnRetriesExceeded() {
-    var exceptionArray = new CannotSerializeTransactionException[DbRetryUtils.MAX_RETRIES + 1];
+    var exceptionArray = new CannotSerializeTransactionException[DbRetryUtils.MAX_ATTEMPTS + 1];
     Arrays.fill(exceptionArray, RETRY_EXCEPTION);
     when(jdbcTemplate.update(any(), (SqlParameterSource) any()))
         .thenThrow(exceptionArray)
@@ -75,7 +79,7 @@ public class DbRetryUtilsTest extends BaseUnitTest {
     DataAccessException ex =
         assertThrows(
             DataAccessException.class,
-            () -> DbRetryUtils.update(jdbcTemplate, FAKE_QUERY, FAKE_PARAMS));
+            () -> DbRetryUtils.retry(() -> jdbcTemplate.update(FAKE_QUERY, FAKE_PARAMS)));
     assertEquals(RETRY_EXCEPTION, ex);
   }
 }

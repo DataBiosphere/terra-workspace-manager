@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.stage;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -42,7 +43,11 @@ public class StageService {
    * @param actionMessage message to include in the error
    */
   public void assertMcWorkspace(UUID workspaceId, String actionMessage) {
-    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
-    assertMcWorkspace(workspace, actionMessage);
+    try {
+      Workspace workspace = workspaceDao.getWorkspace(workspaceId);
+      assertMcWorkspace(workspace, actionMessage);
+    } catch (InterruptedException e) {
+      throw new InternalServerErrorException("Interrupted during assertMcWorkspace");
+    }
   }
 }

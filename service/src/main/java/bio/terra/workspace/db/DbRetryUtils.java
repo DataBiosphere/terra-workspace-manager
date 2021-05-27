@@ -1,80 +1,30 @@
 package bio.terra.workspace.db;
 
 import bio.terra.common.db.DatabaseRetryUtils;
+import bio.terra.common.db.DatabaseRetryUtils.DatabaseOperation;
+import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
-import java.util.List;
-import org.springframework.dao.RecoverableDataAccessException;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 /**
- * This class contains wrappers around JDBC methods which run them with retries. Only DB exceptions
- * considered retryable ({@link RecoverableDataAccessException} and {@link
- * org.springframework.dao.TransientDataAccessException}) are retried. See Spring documentation of
- * these exceptions for more information:
- * https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/dao/DataAccessException.html
- *
- * <p>Retries are with no delay, up to a certain maximum number of retries.
+ * Wrapper functions around common-libs database retry functions with pre-defined values for number
+ * of attempts and backoff duration. These values were picked arbitrarily and may need tweaking in
+ * the future.
  */
 public class DbRetryUtils {
 
-  public static int MAX_RETRIES = 10;
+  private static final Duration RETRY_BACKOFF = Duration.ofMillis(250);
+  @VisibleForTesting public static final int MAX_ATTEMPTS = 10;
 
-  public static int update(
-      NamedParameterJdbcTemplate jdbcTemplate, String sql, MapSqlParameterSource params) {
-    try {
-      return DatabaseRetryUtils.executeAndRetry(
-          () -> jdbcTemplate.update(sql, params), Duration.ZERO, MAX_RETRIES);
-    } catch (InterruptedException e) {
-      throw new IllegalStateException(
-          "Got an InterruptedException without any threads sleeping in updateWithRetries. This should never happen.",
-          e);
-    }
+  public static <T> T retry(DatabaseOperation<T> operation) throws InterruptedException {
+    return DatabaseRetryUtils.executeAndRetry(operation, RETRY_BACKOFF, MAX_ATTEMPTS);
   }
 
-  public static <T> List<T> query(
-      NamedParameterJdbcTemplate jdbcTemplate,
-      String sql,
-      MapSqlParameterSource params,
-      RowMapper<T> rowMapper) {
-    try {
-      return DatabaseRetryUtils.executeAndRetry(
-          () -> jdbcTemplate.query(sql, params, rowMapper), Duration.ZERO, MAX_RETRIES);
-    } catch (InterruptedException e) {
-      throw new IllegalStateException(
-          "Got an InterruptedException without any threads sleeping in queryWithRetries. This should never happen.",
-          e);
-    }
-  }
-
-  public static <T> T queryForObject(
-      NamedParameterJdbcTemplate jdbcTemplate,
-      String sql,
-      MapSqlParameterSource params,
-      Class<T> clazz) {
-    try {
-      return DatabaseRetryUtils.executeAndRetry(
-          () -> jdbcTemplate.queryForObject(sql, params, clazz), Duration.ZERO, MAX_RETRIES);
-    } catch (InterruptedException e) {
-      throw new IllegalStateException(
-          "Got an InterruptedException without any threads sleeping in queryForObjectWithRetries. This should never happen.",
-          e);
-    }
-  }
-
-  public static <T> T queryForObject(
-      NamedParameterJdbcTemplate jdbcTemplate,
-      String sql,
-      MapSqlParameterSource params,
-      RowMapper<T> rowMapper) {
-    try {
-      return DatabaseRetryUtils.executeAndRetry(
-          () -> jdbcTemplate.queryForObject(sql, params, rowMapper), Duration.ZERO, MAX_RETRIES);
-    } catch (InterruptedException e) {
-      throw new IllegalStateException(
-          "Got an InterruptedException without any threads sleeping in queryForObjectWithRetries. This should never happen.",
-          e);
-    }
+  public static void retry(Runnable operation) throws InterruptedException {
+    DatabaseOperation<Void> dbOperation =
+        () -> {
+          operation.run();
+          return null;
+        };
+    DatabaseRetryUtils.executeAndRetry(dbOperation, RETRY_BACKOFF, MAX_ATTEMPTS);
   }
 }

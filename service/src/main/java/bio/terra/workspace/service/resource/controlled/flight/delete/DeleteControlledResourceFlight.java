@@ -42,7 +42,8 @@ public class DeleteControlledResourceFlight extends Flight {
   private final RetryRule immediateRetryRule =
       new RetryRuleFixedInterval(/*intervalSeconds= */ 0, /* maxCount= */ 2);
 
-  public DeleteControlledResourceFlight(FlightMap inputParameters, Object beanBag) {
+  public DeleteControlledResourceFlight(FlightMap inputParameters, Object beanBag)
+      throws InterruptedException {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 

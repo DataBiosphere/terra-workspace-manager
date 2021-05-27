@@ -45,6 +45,14 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Data access object for interacting with resources in the database.
+ *
+ * <p>Publicly accessible methods are intentionally not annotated with {@code @Transactional}. These
+ * methods handle retrying calls to private methods, which are @Transactional. The function that we
+ * retry must start a new transaction: Postgres aborts transactions which encounter errors, and does
+ * not allow us to retry SQL commands within an aborted transaction.
+ */
 @Component
 public class ResourceDao {
   private static final Logger logger = LoggerFactory.getLogger(ResourceDao.class);
@@ -92,14 +100,19 @@ public class ResourceDao {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  public boolean deleteResource(UUID workspaceId, UUID resourceId) {
+  public boolean deleteResource(UUID workspaceId, UUID resourceId) throws InterruptedException {
+    return DbRetryUtils.retry(() -> deleteResourceInner(workspaceId, resourceId));
+  }
+
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
+  private boolean deleteResourceInner(UUID workspaceId, UUID resourceId) {
     final String sql =
         "DELETE FROM resource WHERE workspace_id = :workspace_id AND resource_id = :resource_id";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("resource_id", resourceId.toString());
-    int rowsAffected = DbRetryUtils.update(jdbcTemplate, sql, params);
+    int rowsAffected = jdbcTemplate.update(sql, params);
     boolean deleted = rowsAffected > 0;
 
     logger.info(
@@ -121,11 +134,17 @@ public class ResourceDao {
    * @param limit paging support
    * @return list of reference resources
    */
+  public List<ReferencedResource> enumerateReferences(UUID workspaceId, int offset, int limit)
+      throws InterruptedException {
+    return DbRetryUtils.retry(() -> enumerateReferencesInner(workspaceId, offset, limit));
+  }
+
   @Transactional(
       propagation = Propagation.REQUIRED,
       isolation = Isolation.SERIALIZABLE,
       readOnly = true)
-  public List<ReferencedResource> enumerateReferences(UUID workspaceId, int offset, int limit) {
+  public List<ReferencedResource> enumerateReferencesInner(
+      UUID workspaceId, int offset, int limit) {
     String sql =
         RESOURCE_SELECT_SQL
             + " AND stewardship_type = :stewardship_type ORDER BY name OFFSET :offset LIMIT :limit";
@@ -135,8 +154,7 @@ public class ResourceDao {
             .addValue("stewardship_type", REFERENCED.toSql())
             .addValue("offset", offset)
             .addValue("limit", limit);
-    List<DbResource> dbResourceList =
-        DbRetryUtils.query(jdbcTemplate, sql, params, DB_RESOURCE_ROW_MAPPER);
+    List<DbResource> dbResourceList = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
 
     return dbResourceList.stream()
         .map(this::constructResource)
@@ -167,11 +185,25 @@ public class ResourceDao {
    * @param limit maximum number of rows to return
    * @return list of resources
    */
+  public List<WsmResource> enumerateResources(
+      UUID workspaceId,
+      @Nullable List<String> controlledResourceIds,
+      @Nullable WsmResourceType resourceType,
+      @Nullable StewardshipType stewardshipType,
+      int offset,
+      int limit)
+      throws InterruptedException {
+    return DbRetryUtils.retry(
+        () ->
+            enumerateResourcesInner(
+                workspaceId, controlledResourceIds, resourceType, stewardshipType, offset, limit));
+  }
+
   @Transactional(
       propagation = Propagation.REQUIRED,
       isolation = Isolation.SERIALIZABLE,
       readOnly = true)
-  public List<WsmResource> enumerateResources(
+  private List<WsmResource> enumerateResourcesInner(
       UUID workspaceId,
       @Nullable List<String> controlledResourceIds,
       @Nullable WsmResourceType resourceType,
@@ -227,7 +259,7 @@ public class ResourceDao {
     }
     sb.append(" ORDER BY name OFFSET :offset LIMIT :limit");
     List<DbResource> dbResourceList =
-        DbRetryUtils.query(jdbcTemplate, sb.toString(), params, DB_RESOURCE_ROW_MAPPER);
+        jdbcTemplate.query(sb.toString(), params, DB_RESOURCE_ROW_MAPPER);
 
     return dbResourceList.stream().map(this::constructResource).collect(toList());
   }
@@ -240,11 +272,16 @@ public class ResourceDao {
    * @param cloudPlatform Optional. If present, this will only return resources from the specified
    *     cloud platform. If null, this will return resources from all cloud platforms.
    */
+  public List<ControlledResource> listControlledResources(
+      UUID workspaceId, @Nullable CloudPlatform cloudPlatform) throws InterruptedException {
+    return DbRetryUtils.retry(() -> listControlledResourcesInner(workspaceId, cloudPlatform));
+  }
+
   @Transactional(
       propagation = Propagation.REQUIRED,
       isolation = Isolation.SERIALIZABLE,
       readOnly = true)
-  public List<ControlledResource> listControlledResources(
+  private List<ControlledResource> listControlledResourcesInner(
       UUID workspaceId, @Nullable CloudPlatform cloudPlatform) {
     String sql = RESOURCE_SELECT_SQL + " AND stewardship_type = :controlled_resource ";
     MapSqlParameterSource params =
@@ -272,8 +309,13 @@ public class ResourceDao {
    *     listControlledResources, this is not optional.
    * @return True if at least one resource was deleted, false if no resources were deleted.
    */
+  public boolean deleteAllControlledResources(UUID workspaceId, CloudPlatform cloudPlatform)
+      throws InterruptedException {
+    return DbRetryUtils.retry(() -> deleteAllControlledResourcesInner(workspaceId, cloudPlatform));
+  }
+
   @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public boolean deleteAllControlledResources(UUID workspaceId, CloudPlatform cloudPlatform) {
+  private boolean deleteAllControlledResourcesInner(UUID workspaceId, CloudPlatform cloudPlatform) {
     String sql =
         "DELETE FROM resource WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform AND stewardship_type = :controlled_resource";
     MapSqlParameterSource params =
@@ -292,12 +334,8 @@ public class ResourceDao {
    * @param resourceId identifier of the resource for the lookup
    * @return WsmResource object
    */
-  @Transactional(
-      propagation = Propagation.REQUIRED,
-      isolation = Isolation.SERIALIZABLE,
-      readOnly = true)
-  public WsmResource getResource(UUID workspaceId, UUID resourceId) {
-    return getResourceWithId(workspaceId, resourceId);
+  public WsmResource getResource(UUID workspaceId, UUID resourceId) throws InterruptedException {
+    return DbRetryUtils.retry(() -> getResourceWithId(workspaceId, resourceId));
   }
 
   /**
@@ -307,12 +345,8 @@ public class ResourceDao {
    * @param name name of the resource
    * @return WsmResource object
    */
-  @Transactional(
-      propagation = Propagation.REQUIRED,
-      isolation = Isolation.SERIALIZABLE,
-      readOnly = true)
-  public WsmResource getResourceByName(UUID workspaceId, String name) {
-    return getResourceWithName(workspaceId, name);
+  public WsmResource getResourceByName(UUID workspaceId, String name) throws InterruptedException {
+    return DbRetryUtils.retry(() -> getResourceWithName(workspaceId, name));
   }
 
   // -- Reference Methods -- //
@@ -324,15 +358,13 @@ public class ResourceDao {
    * @param resource a filled in reference resource
    * @throws DuplicateResourceException on a duplicate resource_id or (workspace_id, name)
    */
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public void createReferenceResource(ReferencedResource resource)
-      throws DuplicateResourceException {
-    storeResource(resource);
+      throws DuplicateResourceException, InterruptedException {
+    DbRetryUtils.retry(() -> storeResource(resource));
   }
 
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  public boolean updateResource(
-      UUID workspaceId, UUID resourceId, String name, String description) {
+  public boolean updateResource(UUID workspaceId, UUID resourceId, String name, String description)
+      throws InterruptedException {
     if (name == null && description == null) {
       throw new InvalidDaoRequestException("Must specify name or description to update.");
     }
@@ -347,7 +379,7 @@ public class ResourceDao {
       params.addValue("description", description);
     }
 
-    return updateResource(workspaceId, resourceId, params);
+    return DbRetryUtils.retry(() -> updateResource(workspaceId, resourceId, params));
   }
 
   // -- Private Methods -- //
@@ -358,8 +390,13 @@ public class ResourceDao {
    * @param controlledResource controlled resource to create
    * @throws DuplicateResourceException on a duplicate resource_id or (workspace_id, name)
    */
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   public void createControlledResource(ControlledResource controlledResource)
+      throws DuplicateResourceException, InterruptedException {
+    DbRetryUtils.retry(() -> createControlledResourceInner(controlledResource));
+  }
+
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
+  private void createControlledResourceInner(ControlledResource controlledResource)
       throws DuplicateResourceException {
 
     // Make sure there is a valid cloud context before we create the controlled resource
@@ -372,7 +409,7 @@ public class ResourceDao {
             .addValue("workspace_id", controlledResource.getWorkspaceId().toString())
             .addValue(
                 "cloud_platform", controlledResource.getResourceType().getCloudPlatform().toSql());
-    Integer count = DbRetryUtils.queryForObject(jdbcTemplate, sql, params, Integer.class);
+    Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
     if (count == null || count == 0) {
       throw new CloudContextRequiredException(
           "No cloud context found in which to create a controlled resource");
@@ -412,7 +449,7 @@ public class ResourceDao {
             .addValue("bucket_name", bucketResource.getBucketName())
             .addValue("resource_type", WsmResourceType.GCS_BUCKET.toSql());
     Integer matchingBucketCount =
-        DbRetryUtils.queryForObject(jdbcTemplate, bucketSql, bucketParams, Integer.class);
+        jdbcTemplate.queryForObject(bucketSql, bucketParams, Integer.class);
     if (matchingBucketCount != null && matchingBucketCount > 0) {
       throw new DuplicateResourceException(
           String.format(
@@ -437,8 +474,7 @@ public class ResourceDao {
             .addValue("workspace_id", notebookResource.getWorkspaceId().toString())
             .addValue("instance_id", notebookResource.getInstanceId())
             .addValue("location", notebookResource.getLocation());
-    Integer matchingCount =
-        DbRetryUtils.queryForObject(jdbcTemplate, sql, sqlParams, Integer.class);
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
     if (matchingCount != null && matchingCount > 0) {
       throw new DuplicateResourceException(
           String.format(
@@ -461,8 +497,7 @@ public class ResourceDao {
             .addValue("resource_type", WsmResourceType.BIG_QUERY_DATASET.toSql())
             .addValue("workspace_id", datasetResource.getWorkspaceId().toString())
             .addValue("dataset_name", datasetResource.getDatasetName());
-    Integer matchingCount =
-        DbRetryUtils.queryForObject(jdbcTemplate, sql, sqlParams, Integer.class);
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
     if (matchingCount != null && matchingCount > 0) {
       throw new DuplicateResourceException(
           String.format(
@@ -470,6 +505,7 @@ public class ResourceDao {
     }
   }
 
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   private void storeResource(WsmResource resource) {
 
     // TODO: add resource locking to fix this
@@ -485,7 +521,7 @@ public class ResourceDao {
     final String countSql = "SELECT COUNT(*) FROM resource WHERE resource_id = :resource_id";
     MapSqlParameterSource countParams =
         new MapSqlParameterSource().addValue("resource_id", resource.getResourceId().toString());
-    Integer count = DbRetryUtils.queryForObject(jdbcTemplate, countSql, countParams, Integer.class);
+    Integer count = jdbcTemplate.queryForObject(countSql, countParams, Integer.class);
     if (count != null && count == 1) {
       return;
     }
@@ -527,7 +563,7 @@ public class ResourceDao {
     }
 
     try {
-      DbRetryUtils.update(jdbcTemplate, sql, params);
+      jdbcTemplate.update(sql, params);
       logger.info(
           "Inserted record for resource {} for workspace {}",
           resource.getResourceId(),
@@ -632,9 +668,13 @@ public class ResourceDao {
     }
   }
 
+  @Transactional(
+      propagation = Propagation.REQUIRED,
+      isolation = Isolation.SERIALIZABLE,
+      readOnly = true)
   private DbResource getDbResource(String sql, MapSqlParameterSource params) {
     try {
-      return DbRetryUtils.queryForObject(jdbcTemplate, sql, params, DB_RESOURCE_ROW_MAPPER);
+      return jdbcTemplate.queryForObject(sql, params, DB_RESOURCE_ROW_MAPPER);
     } catch (EmptyResultDataAccessException e) {
       throw new ResourceNotFoundException("Resource not found.");
     }
@@ -649,6 +689,7 @@ public class ResourceDao {
    * @param workspaceId workspace identifier - not strictly necessarily, but an extra validation
    * @param resourceId resource identifier
    */
+  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   private boolean updateResource(UUID workspaceId, UUID resourceId, MapSqlParameterSource params) {
     StringBuilder sb = new StringBuilder("UPDATE resource SET ");
 
@@ -669,7 +710,7 @@ public class ResourceDao {
         .addValue("workspace_id", workspaceId.toString())
         .addValue("resource_id", resourceId.toString());
 
-    int rowsAffected = DbRetryUtils.update(jdbcTemplate, sb.toString(), params);
+    int rowsAffected = jdbcTemplate.update(sb.toString(), params);
     boolean updated = rowsAffected > 0;
 
     logger.info(

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -57,7 +58,11 @@ public class WsmResourceService {
               "listControlledResourceIds"));
     }
 
-    return resourceDao.enumerateResources(
-        workspaceId, controlledResourceIds, resourceType, stewardshipType, offset, limit);
+    try {
+      return resourceDao.enumerateResources(
+          workspaceId, controlledResourceIds, resourceType, stewardshipType, offset, limit);
+    } catch (InterruptedException e) {
+      throw new InternalServerErrorException("Interrupted during enumerateResources");
+    }
   }
 }
