@@ -13,7 +13,8 @@
     "zone": "us-central1-a",
     "project": "terra-kernel-k8s",
     "namespace": "terra-wsmtest",
-    "containerName": "workspacemanager-deployment"
+    "containerName": "workspacemanager-deployment",
+    "apiComponentLabel":  "workspacemanager"
   },
   "deploymentScript": {},
   "testRunnerServiceAccountFile": "testrunner-sa.json",

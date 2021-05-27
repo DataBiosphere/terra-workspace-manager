@@ -4,6 +4,9 @@ import bio.terra.testrunner.common.utils.KubernetesClientUtils;
 import bio.terra.testrunner.runner.DisruptiveScript;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import io.kubernetes.client.openapi.models.V1Deployment;
+
+import java.time.LocalDateTime;
+import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -12,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 public class DeleteInitialPods extends DisruptiveScript {
   private static final Logger logger = LoggerFactory.getLogger(DeleteInitialPods.class);
+  private static final long TIME_TO_WAIT = 3;
 
   public DeleteInitialPods() {
     super();
@@ -59,8 +63,14 @@ public class DeleteInitialPods extends DisruptiveScript {
       if (workspacemanagerDeployment != null) {
         KubernetesClientUtils.printApiPods(workspacemanagerDeployment);
         KubernetesClientUtils.deletePod(podName);
+        Calendar startWaiting = Calendar.getInstance();
+        logger.debug("start waiting for pod to recover at time {}", LocalDateTime.ofInstant(startWaiting.toInstant(), startWaiting.getTimeZone().toZoneId()));
+        TimeUnit.SECONDS.sleep(TIME_TO_WAIT);
         KubernetesClientUtils.waitForReplicaSetSizeChange(
             workspacemanagerDeployment, podsToDelete.size());
+        Calendar endWaiting = Calendar.getInstance();
+        logger.debug("end waiting for pod to recover at time {}", LocalDateTime.ofInstant(endWaiting.toInstant(), endWaiting.getTimeZone().toZoneId()));
+        logger.debug("pod recovers in {} ms", endWaiting.getTimeInMillis()-startWaiting.getTimeInMillis());
       }
     }
 

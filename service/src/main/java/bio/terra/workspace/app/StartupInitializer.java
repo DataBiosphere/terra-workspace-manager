@@ -26,10 +26,6 @@ public final class StartupInitializer {
     // The JobService initialization also handles Stairway initialization.
     jobService.initialize();
 
-    // WSM's service account needs to be registered as a user in Sam for admin controls.
-
-    SamService.rethrowIfSamInterrupted(samService::initialize, "initialize");
-
     // TODO: Fill in this method with any other initialization that needs to happen
     //  between the point of having the entire application initialized and
     //  the point of opening the port to start accepting REST requests.
