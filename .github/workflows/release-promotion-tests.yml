@@ -82,7 +82,7 @@ jobs:
       - name: Write configuration
         uses: ./.github/actions/write-config
         with:
-          test-env: ${{ steps.set-env-step.outputs.test-env }}
+          target: ${{ steps.set-env-step.outputs.test-env }}
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
       - name: Run the integration test suite

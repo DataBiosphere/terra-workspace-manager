@@ -34,12 +34,3 @@ jobs:
         echo ::set-output name=vault-token::$VAULT_TOKEN
         echo ::add-mask::$VAULT_TOKEN
 
-    - name: Write config
-      id: config
-      uses: ./.github/actions/write-config
-      with:
-        vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
-        target: dd
-
-    - name: clean databases
-      uses: ./.github/actions/clean-databases

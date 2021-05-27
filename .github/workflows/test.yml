@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       testEnv:
-        description: 'Environment in which tests should be run. Currently works on dev, alpha and staging'
+        description: 'Environment in which tests should be run. Known to work for local, alpha and staging.'
         required: true
 
 jobs:
@@ -60,16 +60,13 @@ jobs:
       run: |
         if ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}; then
           ENV=local
-          CONFIG_ENV=dev
         elif ${{ github.event_name == 'workflow_dispatch' }}; then
           ENV=${{ github.event.inputs.testEnv }}
-          CONFIG_ENV=${{ github.event.inputs.testEnv }}
         else
           echo ::error ::${{ github.event_name }} not supported for this workflow
           exit 1
         fi
         echo ::set-output name=test-env::$ENV
-        echo ::set-output name=config-env::$CONFIG_ENV
 
     - name: Initialize Postgres DB
       env:
@@ -114,7 +111,7 @@ jobs:
       id: config
       uses: ./.github/actions/write-config
       with:
-        test-env: ${{ steps.set-env-step.outputs.config-env }}
+        target: ${{ steps.set-env-step.outputs.test-env }}
         vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
         target: local
 
