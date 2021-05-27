@@ -79,7 +79,7 @@ outputdir=${3:-config}
 # The vault paths are irregular, so we map the target into three variables:
 # k8senv    - the kubernetes environment: alpha, staging, or integration
 # namespace - the namespace in the k8s env: alpha, staging, dev, or the target for personal environments
-# fcenv     - the firecloud delegated service account environment: dev, alpha, stagin
+# fcenv     - the firecloud delegated service account environment: dev, alpha, staging
 
 case $target in
     help | ?)
@@ -204,3 +204,4 @@ vaultgetdb "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/postgres/s
 
 # We made it to the end, so record the target and avoid redos
 echo "$target" > "${outputdir}/target.txt"
+
