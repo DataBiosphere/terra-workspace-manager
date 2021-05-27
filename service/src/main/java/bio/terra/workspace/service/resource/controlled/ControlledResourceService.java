@@ -6,6 +6,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -14,18 +15,15 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceA
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResource;
-import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
-import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -41,6 +39,7 @@ public class ControlledResourceService {
   private final ResourceDao resourceDao;
   private final StageService stageService;
   private final SamService samService;
+  private final ControlledResourceMetadataManager controlledResourceMetadataManager;
 
   @Autowired
   public ControlledResourceService(
@@ -48,62 +47,14 @@ public class ControlledResourceService {
       WorkspaceService workspaceService,
       ResourceDao resourceDao,
       StageService stageService,
-      SamService samService) {
+      SamService samService,
+      ControlledResourceMetadataManager controlledResourceMetadataManager) {
     this.jobService = jobService;
     this.workspaceService = workspaceService;
     this.resourceDao = resourceDao;
     this.stageService = stageService;
     this.samService = samService;
-  }
-
-  /**
-   * Convenience function that checks existence of a controlled resource within a workspace,
-   * followed by an authorization check against that resource.
-   *
-   * <p>Throws ResourceNotFound from getResource if the workspace does not exist in the specified
-   * workspace, regardless of the user's permission.
-   *
-   * <p>Throws
-   *
-   * <p>Throws InvalidControlledResourceException if the given resource is not controlled.
-   *
-   * <p>Throws UnauthorizedException if the user is not permitted to perform the specified action on
-   * the resource in question.
-   *
-   * <p>Returns the controlled resource object if it exists and the user is permitted to perform the
-   * specified action.
-   *
-   * @param userReq the user's authenticated request
-   * @param workspaceId if of the workspace this resource exists in
-   * @param resourceId id of the resource in question
-   * @param action the action to authorize against the resource
-   * @return the resource, if it exists and the user is permitted to perform the specified action.
-   */
-  @Traced
-  public ControlledResource validateControlledResourceAndAction(
-      AuthenticatedUserRequest userReq, UUID workspaceId, UUID resourceId, String action) {
-    WsmResource resource;
-    try {
-      resource = resourceDao.getResource(workspaceId, resourceId);
-    } catch (InterruptedException e) {
-      throw new InternalServerErrorException(
-          "Interrupted during validateControlledResourceAndAction");
-    }
-    // TODO(PF-640): also check that the user has
-    if (resource.getStewardshipType() != StewardshipType.CONTROLLED) {
-      throw new InvalidControlledResourceException(
-          String.format("Resource %s is not a controlled resource.", resource.getResourceId()));
-    }
-    ControlledResource controlledResource = resource.castToControlledResource();
-    SamService.rethrowIfSamInterrupted(
-        () ->
-            samService.checkAuthz(
-                userReq,
-                controlledResource.getCategory().getSamResourceName(),
-                resourceId.toString(),
-                action),
-        "checkAuthz");
-    return controlledResource;
+    this.controlledResourceMetadataManager = controlledResourceMetadataManager;
   }
 
   /** Starts a create controlled bucket resource, blocking until its job is finished. */
@@ -120,6 +71,30 @@ public class ControlledResourceService {
                 null,
                 userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
+  }
+
+  public ControlledGcsBucketResource updateGcsBucket(
+      ControlledGcsBucketResource resource,
+      @Nullable ApiGcpGcsBucketUpdateParameters updateParameters,
+      AuthenticatedUserRequest userRequest,
+      @Nullable String resourceName,
+      @Nullable String resourceDescription) {
+    final String jobDescription =
+        String.format(
+            "Update controlled GCS Bucket resource %s; id %s; name %s",
+            resource.getBucketName(), resource.getResourceId(), resource.getName());
+    final JobBuilder jobBuilder =
+        jobService
+            .newJob(
+                jobDescription,
+                UUID.randomUUID().toString(), // no need to track ID
+                UpdateControlledGcsBucketResourceFlight.class,
+                resource,
+                userRequest)
+            .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
+            .addParameter(ControlledResourceKeys.RESOURCE_NAME, resourceName)
+            .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
     return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
   }
 
@@ -202,7 +177,7 @@ public class ControlledResourceService {
   public ControlledResource getControlledResource(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
     stageService.assertMcWorkspace(workspaceId, "getControlledResource");
-    validateControlledResourceAndAction(
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
         userReq, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION);
     try {
       return resourceDao.getResource(workspaceId, resourceId).castToControlledResource();
@@ -211,6 +186,7 @@ public class ControlledResourceService {
     }
   }
 
+<<<<<<< HEAD
   /**
    * Update the name and description metadata fields of a controlled resource. These are only stored
    * inside WSM, so this does not require any calls to clouds.
@@ -241,6 +217,8 @@ public class ControlledResourceService {
     }
   }
 
+=======
+>>>>>>> dev
   /** Synchronously delete a controlled resource. */
   public void deleteControlledResourceSync(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
@@ -280,7 +258,7 @@ public class ControlledResourceService {
       String resultPath,
       AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(workspaceId, "deleteControlledResource");
-    validateControlledResourceAndAction(
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest, workspaceId, resourceId, SamControlledResourceActions.DELETE_ACTION);
     final String jobDescription = "Delete controlled resource; id: " + resourceId.toString();
 

@@ -97,9 +97,9 @@ public class WorkspaceDao {
       throw new DuplicateWorkspaceException(
           String.format(
               "Workspace with id %s already exists - display name %s stage %s",
+              workspaceId,
               workspace.getDisplayName().toString(),
-              workspace.getWorkspaceStage().toString(),
-              workspaceId),
+              workspace.getWorkspaceStage().toString()),
           e);
     }
     return workspace.getWorkspaceId();
