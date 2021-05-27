@@ -143,7 +143,7 @@ public class ResourceDao {
       propagation = Propagation.REQUIRED,
       isolation = Isolation.SERIALIZABLE,
       readOnly = true)
-  public List<ReferencedResource> enumerateReferencesInner(
+  private List<ReferencedResource> enumerateReferencesInner(
       UUID workspaceId, int offset, int limit) {
     String sql =
         RESOURCE_SELECT_SQL
