@@ -43,7 +43,7 @@ esac
 
 port=5434
 echo "Connecting to $db in target $target"
-dod=$( ${scriptdir}/launch-sql-proxy.sh "$port" )
+dod=$( "${scriptdir}/launch-sql-proxy.sh" "$port" )
 echo "Launched docker container: ${dod}"
 
 # Setup cleanup of the docker container

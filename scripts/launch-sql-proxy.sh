@@ -20,11 +20,11 @@ configdir="$( cd "${scriptdir}/../config" &> /dev/null && pwd )"
 instance=$(<"${configdir}/db-connection-name.txt")
 dod=$(docker run --rm -d \
              -v "${configdir}":/config \
-             -p 127.0.0.1:${port}:${port} \
+             -p 127.0.0.1:"${port}":"${port}" \
              gcr.io/cloudsql-docker/gce-proxy:latest \
              /cloud_sql_proxy \
-             -instances=${instance}=tcp:0.0.0.0:${port} \
+             -instances="${instance}"=tcp:0.0.0.0:"${port}" \
              -credential_file=/config/sqlproxy-sa.json)
 sleep 3
-echo $dod
+echo "$dod"
 

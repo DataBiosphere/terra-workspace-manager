@@ -188,9 +188,9 @@ vaultgetb64 "secret/dsde/terra/kernel/integration/common/testrunner/testrunner-s
 vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/sqlproxy-sa" "sqlproxy-sa.json"
 vaultget "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/postgres/instance" "dbtmp.json"
 fil="${outputdir}/dbtmp.json"
-instancename=$(cat ${fil} | jq -r '.name')
-instanceproject=$(cat ${fil} | jq -r '.project')
-instanceregion=$(cat ${fil} | jq -r '.region')
+instancename=$(cat "${fil}" | jq -r '.name')
+instanceproject=$(cat "${fil}" | jq -r '.project')
+instanceregion=$(cat "${fil}" | jq -r '.region')
 if [ "$instanceproject" == "null" ];
   then instanceproject=terra-kernel-k8s
 fi
@@ -198,7 +198,7 @@ if [ "$instanceregion" == "null" ];
   then instanceregion=us-central1
 fi
 echo "${instanceproject}:${instanceregion}:${instancename}" > "${outputdir}/db-connection-name.txt"
-rm ${fil}
+rm "${fil}"
 vaultgetdb "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/postgres/db-creds" "db"
 vaultgetdb "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/postgres/stairway-db-creds" "stairway-db"
 
