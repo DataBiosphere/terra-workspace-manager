@@ -127,8 +127,8 @@ esac
 mkdir -p "${outputdir}"
 
 # If there a config and it matches, don't regenerate
-if [ -e target.txt ]; then
-    oldtarget=$(<target.txt)
+if [ -e "${outputdir}/target.txt" ]; then
+    oldtarget=$(<"${outputdir}/target.txt")
     if [ "$oldtarget" = "$target" ]; then
         echo "Config for $target already written"
         exit 0
@@ -158,9 +158,9 @@ function vaultgetdb {
     fil="${outputdir}/dbtmp.json"
     docker run --rm -e VAULT_TOKEN="${vaulttoken}" broadinstitute/dsde-toolbox:consul-0.20.0 \
         vault read -format=json "${vaultpath}" | jq -r .data > "${fil}"
-    cat "${fil}" | jq -r '.db' > "${outputdir}/${fileprefix}-name.txt"
-    cat "${fil}" | jq -r '.password' > "${outputdir}/${fileprefix}-password.txt"
-    cat "${fil}" | jq -r '.username' > "${outputdir}/${fileprefix}-username.txt"
+    jq -r '.db' "${fil}" > "${outputdir}/${fileprefix}-name.txt"
+    jq -r '.password' "${fil}" > "${outputdir}/${fileprefix}-password.txt"
+    jq -r '.username' "${fil}" > "${outputdir}/${fileprefix}-username.txt"
     rm "${fil}"
 }
 
@@ -188,9 +188,9 @@ vaultgetb64 "secret/dsde/terra/kernel/integration/common/testrunner/testrunner-s
 vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/sqlproxy-sa" "sqlproxy-sa.json"
 vaultget "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/postgres/instance" "dbtmp.json"
 fil="${outputdir}/dbtmp.json"
-instancename=$(cat "${fil}" | jq -r '.name')
-instanceproject=$(cat "${fil}" | jq -r '.project')
-instanceregion=$(cat "${fil}" | jq -r '.region')
+instancename=$(jq -r '.name' "${fil}")
+instanceproject=$(jq -r '.project' "${fil}")
+instanceregion=$(jq -r '.region' "${fil}")
 if [ "$instanceproject" == "null" ];
   then instanceproject=terra-kernel-k8s
 fi
