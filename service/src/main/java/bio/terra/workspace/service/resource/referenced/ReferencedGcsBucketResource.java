@@ -2,13 +2,17 @@ package bio.terra.workspace.service.resource.referenced;
 
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
+import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
@@ -88,6 +92,17 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
       throw new MissingRequiredFieldException("Missing required field for ReferenceGcsBucket.");
     }
     ValidationUtils.validateBucketName(getBucketName());
+  }
+
+  @Override
+  public void validateReference(FlightBeanBag context, AuthenticatedUserRequest userReq) {
+    CrlService crlService = context.getCrlService();
+    if (!crlService.gcsBucketExists(bucketName, userReq)) {
+      throw new InvalidReferenceException(
+          String.format(
+              "Could not access GCS bucket %s. Ensure the name is correct and that you have access.",
+              bucketName));
+    }
   }
 
   public static Builder builder() {

@@ -228,6 +228,9 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
           resultReferenceResource.castToDataRepoSnapshotResource();
       assertThat(resource, equalTo(resultResource));
 
+      referenceResourceService.validateReference(
+          workspaceId, referenceResource.getResourceId(), USER_REQUEST);
+
       ReferencedResource byid =
           referenceResourceService.getReferenceResource(
               workspaceId, resource.getResourceId(), USER_REQUEST);
@@ -350,6 +353,9 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
             resultReferenceResource.castToGcsBucketResource();
         assertThat(resource, equalTo(resultResource));
 
+        referenceResourceService.validateReference(
+            workspaceId, referenceResource.getResourceId(), USER_REQUEST);
+
         ReferencedResource byid =
             referenceResourceService.getReferenceResource(
                 workspaceId, resource.getResourceId(), USER_REQUEST);
@@ -445,6 +451,9 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
         ReferencedBigQueryDatasetResource resultResource =
             resultReferenceResource.castToBigQueryDatasetResource();
         assertThat(resource, equalTo(resultResource));
+
+        referenceResourceService.validateReference(
+            workspaceId, referenceResource.getResourceId(), USER_REQUEST);
 
         ReferencedResource byid =
             referenceResourceService.getReferenceResource(

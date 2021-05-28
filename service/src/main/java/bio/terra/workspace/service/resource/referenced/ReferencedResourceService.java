@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.referenced;
 
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -22,13 +23,18 @@ public class ReferencedResourceService {
   private final JobService jobService;
   private final ResourceDao resourceDao;
   private final WorkspaceService workspaceService;
+  private final FlightBeanBag beanBag;
 
   @Autowired
   public ReferencedResourceService(
-      JobService jobService, ResourceDao resourceDao, WorkspaceService workspaceService) {
+      JobService jobService,
+      ResourceDao resourceDao,
+      WorkspaceService workspaceService,
+      FlightBeanBag beanBag) {
     this.jobService = jobService;
     this.resourceDao = resourceDao;
     this.workspaceService = workspaceService;
+    this.beanBag = beanBag;
   }
 
   @Traced
@@ -122,5 +128,14 @@ public class ReferencedResourceService {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return resourceDao.enumerateReferences(workspaceId, offset, limit);
+  }
+
+  public void validateReference(
+      UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
+    workspaceService.validateWorkspaceAndAction(
+        userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    ReferencedResource referencedResource =
+        resourceDao.getResource(workspaceId, resourceId).castToReferenceResource();
+    referencedResource.validateReference(beanBag, userReq);
   }
 }

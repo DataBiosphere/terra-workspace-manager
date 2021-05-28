@@ -1,7 +1,9 @@
 package bio.terra.workspace.service.resource.referenced;
 
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -45,6 +47,16 @@ public abstract class ReferencedResource extends WsmResource {
     validateSubclass(WsmResourceType.GCS_BUCKET);
     return (ReferencedGcsBucketResource) this;
   }
+
+  /**
+   * Validate that the resource being referenced exists. This call should talk to an external
+   * service (a cloud platform, Terra Data Repo, etc) specific to the referenced resource type. This
+   * call will impersonate a user via the provided credentials.
+   *
+   * @param context A FlightBeanBag holding Service objects for talking to various external services
+   * @param userReq Credentials of the user to impersonate for validation
+   */
+  public abstract void validateReference(FlightBeanBag context, AuthenticatedUserRequest userReq);
 
   private void validateSubclass(WsmResourceType expectedType) {
     if (getResourceType() != expectedType) {

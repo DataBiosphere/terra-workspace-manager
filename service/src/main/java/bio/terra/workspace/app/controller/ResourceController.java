@@ -21,6 +21,7 @@ import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataset
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import com.google.common.annotations.VisibleForTesting;
@@ -45,6 +46,7 @@ public class ResourceController implements ResourceApi {
 
   private final WsmResourceService resourceService;
   private final WorkspaceService workspaceService;
+  private final ReferencedResourceService referencedResourceService;
 
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
@@ -54,10 +56,12 @@ public class ResourceController implements ResourceApi {
   public ResourceController(
       WsmResourceService resourceService,
       WorkspaceService workspaceService,
+      ReferencedResourceService referencedResourceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request) {
     this.resourceService = resourceService;
     this.workspaceService = workspaceService;
+    this.referencedResourceService = referencedResourceService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
   }
@@ -93,6 +97,13 @@ public class ResourceController implements ResourceApi {
 
     var apiResourceList = new ApiResourceList().resources(apiResourceDescriptionList);
     return new ResponseEntity<>(apiResourceList, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> validateReference(UUID workspaceId, UUID resourceId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    referencedResourceService.validateReference(workspaceId, resourceId, userRequest);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   // Convert a WsmResource into the API format for enumeration

@@ -1,14 +1,18 @@
 package bio.terra.workspace.service.resource.referenced;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
+import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
@@ -104,6 +108,17 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
           "Missing required field for ReferenceBigQueryDatasetAttributes.");
     }
     ValidationUtils.validateBqDatasetName(getDatasetName());
+  }
+
+  @Override
+  public void validateReference(FlightBeanBag context, AuthenticatedUserRequest userReq) {
+    CrlService crlService = context.getCrlService();
+    if (!crlService.bigQueryDatasetExists(projectId, datasetName, userReq)) {
+      throw new InvalidReferenceException(
+          String.format(
+              "Could not access BigQuery dataset %s in project %s. Ensure the name and GCP project are correct and that you have access.",
+              datasetName, projectId));
+    }
   }
 
   public static class Builder {

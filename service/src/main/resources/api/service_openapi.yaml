@@ -285,7 +285,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-
+  ## END OF DEPRECATED PATHS ##
 
   /api/workspaces/v1/{workspaceId}/resources:
     parameters:
@@ -312,7 +312,26 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-  ## END OF DEPRECATED PATHS ##
+
+  /api/workspaces/v1/{workspaceId}/resources/referenced/{resourceId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Validate the existence of a referenced resource
+      operationId: validateReference
+      tags: [Resource]
+      responses:
+        '204':
+          description: Valid resource
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots:
     parameters:

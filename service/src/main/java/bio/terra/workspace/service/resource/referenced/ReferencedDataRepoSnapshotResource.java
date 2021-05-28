@@ -1,13 +1,17 @@
 package bio.terra.workspace.service.resource.referenced;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
+import bio.terra.workspace.service.datarepo.DataRepoService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
@@ -100,6 +104,17 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
     if (Strings.isNullOrEmpty(getInstanceName()) || Strings.isNullOrEmpty(getSnapshotId())) {
       throw new MissingRequiredFieldException(
           "Missing required field for ReferenceDataRepoSnapshotAttributes.");
+    }
+  }
+
+  @Override
+  public void validateReference(FlightBeanBag context, AuthenticatedUserRequest userReq) {
+    DataRepoService dataRepoService = context.getDataRepoService();
+    if (!dataRepoService.snapshotExists(instanceName, snapshotId, userReq)) {
+      throw new InvalidReferenceException(
+          String.format(
+              "Snapshot %s could not be found in Data Repo instance %s. Verify that your reference was correctly defined and the instance is correct",
+              snapshotId, instanceName));
     }
   }
 
