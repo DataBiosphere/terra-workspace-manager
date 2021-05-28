@@ -9,6 +9,7 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
+import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 
 public class ValidateReferenceStep implements Step {
 
@@ -27,7 +28,12 @@ public class ValidateReferenceStep implements Step {
     AuthenticatedUserRequest userReq =
         inputMap.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    referencedResource.validateReference(beanBag, userReq);
+    if (!referencedResource.validateReference(beanBag, userReq)) {
+      throw new InvalidReferenceException(
+          String.format(
+              "Referenced resource %s was not found or you do not have access. Verify that your reference was correctly defined and that you have access.",
+              referencedResource.getResourceId()));
+    }
     return StepResult.getStepResultSuccess();
   }
 

@@ -11,7 +11,6 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
@@ -108,14 +107,9 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
   }
 
   @Override
-  public void validateReference(FlightBeanBag context, AuthenticatedUserRequest userReq) {
+  public boolean validateReference(FlightBeanBag context, AuthenticatedUserRequest userReq) {
     DataRepoService dataRepoService = context.getDataRepoService();
-    if (!dataRepoService.snapshotExists(instanceName, snapshotId, userReq)) {
-      throw new InvalidReferenceException(
-          String.format(
-              "Snapshot %s could not be found in Data Repo instance %s. Verify that your reference was correctly defined and the instance is correct",
-              snapshotId, instanceName));
-    }
+    return dataRepoService.snapshotExists(instanceName, snapshotId, userReq);
   }
 
   public static class Builder {

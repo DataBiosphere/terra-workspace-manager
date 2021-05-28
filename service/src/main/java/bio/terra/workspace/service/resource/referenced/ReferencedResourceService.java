@@ -130,12 +130,12 @@ public class ReferencedResourceService {
     return resourceDao.enumerateReferences(workspaceId, offset, limit);
   }
 
-  public void validateReference(
+  public boolean validateReference(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     ReferencedResource referencedResource =
         resourceDao.getResource(workspaceId, resourceId).castToReferenceResource();
-    referencedResource.validateReference(beanBag, userReq);
+    return referencedResource.validateReference(beanBag, userReq);
   }
 }

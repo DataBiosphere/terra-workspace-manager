@@ -322,8 +322,8 @@ paths:
       operationId: validateReference
       tags: [Resource]
       responses:
-        '204':
-          description: Valid resource
+        '200':
+          $ref: '#/components/responses/ValidateReferenceResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -2432,6 +2432,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ResourceList'
+
+    ValidateReferenceResponse:
+      description: Whether the specified reference is accessible or not
+      content:
+        application/json:
+          schema:
+            type: boolean
 
     # Error Responses
     BadRequest:

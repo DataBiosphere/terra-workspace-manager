@@ -12,7 +12,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
@@ -111,14 +110,9 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
   }
 
   @Override
-  public void validateReference(FlightBeanBag context, AuthenticatedUserRequest userReq) {
+  public boolean validateReference(FlightBeanBag context, AuthenticatedUserRequest userReq) {
     CrlService crlService = context.getCrlService();
-    if (!crlService.bigQueryDatasetExists(projectId, datasetName, userReq)) {
-      throw new InvalidReferenceException(
-          String.format(
-              "Could not access BigQuery dataset %s in project %s. Ensure the name and GCP project are correct and that you have access.",
-              datasetName, projectId));
-    }
+    return crlService.bigQueryDatasetExists(projectId, datasetName, userReq);
   }
 
   public static class Builder {

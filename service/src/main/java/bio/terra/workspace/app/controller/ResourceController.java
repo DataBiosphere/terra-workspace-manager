@@ -100,10 +100,11 @@ public class ResourceController implements ResourceApi {
   }
 
   @Override
-  public ResponseEntity<Void> validateReference(UUID workspaceId, UUID resourceId) {
+  public ResponseEntity<Boolean> validateReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    referencedResourceService.validateReference(workspaceId, resourceId, userRequest);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    boolean isValid =
+        referencedResourceService.validateReference(workspaceId, resourceId, userRequest);
+    return new ResponseEntity<>(isValid, HttpStatus.OK);
   }
 
   // Convert a WsmResource into the API format for enumeration

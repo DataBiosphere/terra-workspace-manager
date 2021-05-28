@@ -12,7 +12,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
@@ -95,14 +94,9 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
   }
 
   @Override
-  public void validateReference(FlightBeanBag context, AuthenticatedUserRequest userReq) {
+  public boolean validateReference(FlightBeanBag context, AuthenticatedUserRequest userReq) {
     CrlService crlService = context.getCrlService();
-    if (!crlService.gcsBucketExists(bucketName, userReq)) {
-      throw new InvalidReferenceException(
-          String.format(
-              "Could not access GCS bucket %s. Ensure the name is correct and that you have access.",
-              bucketName));
-    }
+    return crlService.gcsBucketExists(bucketName, userReq);
   }
 
   public static Builder builder() {
