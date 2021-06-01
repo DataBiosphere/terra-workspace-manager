@@ -151,8 +151,8 @@ swaggerSources {
 // Testing config
 
 // The path to the default Google service account for the Workspace Manager to run as.
-// Created by render_config.sh
-def googleCredentialsFile = "${projectDir}/rendered/service-account.json"
+// Created by scripts/write_config.sh
+def googleCredentialsFile = "${rootDir}/config/wsm-sa.json"
 bootRun {
     environment = [
             'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"

@@ -120,6 +120,27 @@ At some point, we will connect this to a CloudSQL instance but for local dev pur
 
 ## Running
 
+### Writing Configuration
+
+Running WSM and the Test Runner integration tests requires many service accounts and database
+coordinates. That information is stored in Broad's Vault server. We do not want the main
+code to directly depend on Vault. For example, Verily's Terra deployment will not use
+Vault. So the code depends on files that hold the information.
+
+The `scripts/write-config.sh` script is used to collect all of the needed data from vault and
+store it in files in the gradle `${rootDir}` in the directory `config/`.
+
+One advantage of having the config written in gradle `${rootDir}` is that it is visible to
+github actions that run our CI/CD process.
+
+View current usage information for `write-config.sh` by entering
+```sh
+./scripts/write-config.sh help
+```
+
+**NOTE** As of this writing, write-config is not used for the Test Runner configuration.
+That will be done as part of PF-744.
+
 ### Running Tests
 
 To run unit tests:
@@ -132,35 +153,21 @@ cd service
 To run connected tests:
 
 ```sh
+./scripts/write-config.sh # First time only
 cd service
-./render_config.sh # First time only
 ../gradlew connectedTest
 ```
-To run the old JUnit integration tests: (see **NOTE** below)
-
-```sh
-cd service
-./render_config.sh # First time only
-../gradlew integrationTest
-```
- 
-Learn to run the Test Runner integration tests by reading [Integration README](integration/README.md)
-
-
-**NOTE** (Some of this will likely change as we grow integration tests). Integration test assumes that:
-1. You have generated an access token from GitHub and saved the token in your home directory with the filename `.vault-token`
-2. Default environment for rendering configs is `dev`. You can pass arguments to the script to target different environments.
-3. Test user has been registered in an existing WSM environment. Currently, the test user is registered in `dev` environment where WSM is currently deployed. You don't need to take any action in this step, unless the dev environment changes for some reason and the user no longer exists there. 
-
+To run integration tests, we use Test Runner. Learn to run the Test Runner
+integration tests by reading [Integration README](integration/README.md)
 
 ### Running Workspace Manager Locally
 
-To run locally, you'll first need to render configs (if you haven't already)
+To run locally, you'll first need to write configs (if you haven't already)
 and then launch the application:
 
 ```sh
+./scripts/write-config.sh # First time only
 cd service
-./render_config.sh # First time only
 ../gradlew bootRun
 ```
 
