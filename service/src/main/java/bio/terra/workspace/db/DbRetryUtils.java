@@ -2,6 +2,9 @@ package bio.terra.workspace.db;
 
 import bio.terra.common.db.DatabaseRetryUtils;
 import bio.terra.common.db.DatabaseRetryUtils.DatabaseOperation;
+import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.workspace.service.iam.SamService.InterruptedSupplier;
+import bio.terra.workspace.service.iam.SamService.VoidInterruptedSupplier;
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
 
@@ -26,5 +29,21 @@ public class DbRetryUtils {
           return null;
         };
     DatabaseRetryUtils.executeAndRetry(dbOperation, RETRY_BACKOFF, MAX_ATTEMPTS);
+  }
+
+  public static <T> T throwIfInterrupted(InterruptedSupplier<T> operation) {
+    try {
+      return operation.apply();
+    } catch (InterruptedException e) {
+      throw new InternalServerErrorException("Interrupted during database operation");
+    }
+  }
+
+  public static void throwIfInterrupted(VoidInterruptedSupplier operation) {
+    try {
+      operation.apply();
+    } catch (InterruptedException e) {
+      throw new InternalServerErrorException("Interrupted during database operation");
+    }
   }
 }

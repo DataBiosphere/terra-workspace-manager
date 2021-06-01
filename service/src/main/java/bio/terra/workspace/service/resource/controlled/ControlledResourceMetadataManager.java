@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.workspace.db.DbRetryUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -52,11 +52,8 @@ public class ControlledResourceMetadataManager {
     if (name != null) {
       ValidationUtils.validateResourceName(name);
     }
-    try {
-      resourceDao.updateResource(workspaceId, resourceId, name, description);
-    } catch (InterruptedException e) {
-      throw new InternalServerErrorException("Interrupted during updateControlledResourceMetadata");
-    }
+    DbRetryUtils.throwIfInterrupted(
+        () -> resourceDao.updateResource(workspaceId, resourceId, name, description));
   }
 
   /**
@@ -82,13 +79,8 @@ public class ControlledResourceMetadataManager {
   @Traced
   public void validateControlledResourceAndAction(
       AuthenticatedUserRequest userReq, UUID workspaceId, UUID resourceId, String action) {
-    WsmResource resource;
-    try {
-      resource = resourceDao.getResource(workspaceId, resourceId);
-    } catch (InterruptedException e) {
-      throw new InternalServerErrorException(
-          "Interrupted during validateControlledResourceAndAction");
-    }
+    WsmResource resource =
+        DbRetryUtils.throwIfInterrupted(() -> resourceDao.getResource(workspaceId, resourceId));
     ControlledResource controlledResource = resource.castToControlledResource();
     SamService.rethrowIfSamInterrupted(
         () ->

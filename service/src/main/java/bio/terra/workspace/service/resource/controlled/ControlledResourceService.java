@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.common.exception.BadRequestException;
-import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.workspace.db.DbRetryUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
@@ -178,11 +178,8 @@ public class ControlledResourceService {
     stageService.assertMcWorkspace(workspaceId, "getControlledResource");
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userReq, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION);
-    try {
-      return resourceDao.getResource(workspaceId, resourceId).castToControlledResource();
-    } catch (InterruptedException e) {
-      throw new InternalServerErrorException("Interrupted during getControlledResource");
-    }
+    return DbRetryUtils.throwIfInterrupted(
+        () -> resourceDao.getResource(workspaceId, resourceId).castToControlledResource());
   }
 
   /** Synchronously delete a controlled resource. */

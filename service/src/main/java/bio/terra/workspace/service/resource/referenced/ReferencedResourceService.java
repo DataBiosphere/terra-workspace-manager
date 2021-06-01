@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.referenced;
 
-import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.workspace.db.DbRetryUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -83,11 +83,8 @@ public class ReferencedResourceService {
       AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_UPDATE_REFERENCED_RESOURCE);
-    try {
-      resourceDao.updateResource(workspaceId, resourceId, name, description);
-    } catch (InterruptedException e) {
-      throw new InternalServerErrorException("Interrupted during updateReferenceResource");
-    }
+    DbRetryUtils.throwIfInterrupted(
+        () -> resourceDao.updateResource(workspaceId, resourceId, name, description));
   }
 
   /**
@@ -102,43 +99,30 @@ public class ReferencedResourceService {
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_DELETE_REFERENCED_RESOURCE);
-    try {
-      resourceDao.deleteResource(workspaceId, resourceId);
-    } catch (InterruptedException e) {
-      throw new InternalServerErrorException("Interrupted during deleteReferenceResource");
-    }
+    DbRetryUtils.throwIfInterrupted(() -> resourceDao.deleteResource(workspaceId, resourceId));
   }
 
   public ReferencedResource getReferenceResource(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
-    try {
-      return resourceDao.getResource(workspaceId, resourceId).castToReferenceResource();
-    } catch (InterruptedException e) {
-      throw new InternalServerErrorException("Interrupted during getReferenceResource");
-    }
+    return DbRetryUtils.throwIfInterrupted(
+        () -> resourceDao.getResource(workspaceId, resourceId).castToReferenceResource());
   }
 
   public ReferencedResource getReferenceResourceByName(
       UUID workspaceId, String name, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
-    try {
-      return resourceDao.getResourceByName(workspaceId, name).castToReferenceResource();
-    } catch (InterruptedException e) {
-      throw new InternalServerErrorException("Interrupted during getReferenceResourceByName");
-    }
+    return DbRetryUtils.throwIfInterrupted(
+        () -> resourceDao.getResourceByName(workspaceId, name).castToReferenceResource());
   }
 
   public List<ReferencedResource> enumerateReferences(
       UUID workspaceId, int offset, int limit, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
-    try {
-      return resourceDao.enumerateReferences(workspaceId, offset, limit);
-    } catch (InterruptedException e) {
-      throw new InternalServerErrorException("Interrupted during enumerateReferences");
-    }
+    return DbRetryUtils.throwIfInterrupted(
+        () -> resourceDao.enumerateReferences(workspaceId, offset, limit));
   }
 }
