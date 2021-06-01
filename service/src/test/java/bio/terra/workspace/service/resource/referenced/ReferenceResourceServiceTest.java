@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.referenced;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
@@ -228,8 +229,9 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
           resultReferenceResource.castToDataRepoSnapshotResource();
       assertThat(resource, equalTo(resultResource));
 
-      referenceResourceService.validateReference(
-          workspaceId, referenceResource.getResourceId(), USER_REQUEST);
+      assertTrue(
+          referenceResourceService.validateReference(
+              workspaceId, referenceResource.getResourceId(), USER_REQUEST));
 
       ReferencedResource byid =
           referenceResourceService.getReferenceResource(
@@ -353,8 +355,9 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
             resultReferenceResource.castToGcsBucketResource();
         assertThat(resource, equalTo(resultResource));
 
-        referenceResourceService.validateReference(
-            workspaceId, referenceResource.getResourceId(), USER_REQUEST);
+        assertTrue(
+            referenceResourceService.validateReference(
+                workspaceId, referenceResource.getResourceId(), USER_REQUEST));
 
         ReferencedResource byid =
             referenceResourceService.getReferenceResource(
@@ -452,8 +455,9 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
             resultReferenceResource.castToBigQueryDatasetResource();
         assertThat(resource, equalTo(resultResource));
 
-        referenceResourceService.validateReference(
-            workspaceId, referenceResource.getResourceId(), USER_REQUEST);
+        assertTrue(
+            referenceResourceService.validateReference(
+                workspaceId, referenceResource.getResourceId(), USER_REQUEST));
 
         ReferencedResource byid =
             referenceResourceService.getReferenceResource(
