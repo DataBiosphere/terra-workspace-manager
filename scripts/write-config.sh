@@ -98,7 +98,7 @@ case $target in
         ;;
 
     dev)
-        k8senv=integration
+        k8senv=dev
         namespace=dev
         fcenv=dev
         ;;
