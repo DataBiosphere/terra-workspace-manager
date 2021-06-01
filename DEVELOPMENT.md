@@ -138,9 +138,6 @@ View current usage information for `write-config.sh` by entering
 ./scripts/write-config.sh help
 ```
 
-**NOTE** As of this writing, write-config is not used for the Test Runner configuration.
-That will be done as part of PF-744.
-
 ### Running Tests
 
 To run unit tests:

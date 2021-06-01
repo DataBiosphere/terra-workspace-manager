@@ -79,7 +79,6 @@ jobs:
       id: config
       uses: ./.github/actions/write-config
       with:
-        test-env: dev
         vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
         target: local
 
