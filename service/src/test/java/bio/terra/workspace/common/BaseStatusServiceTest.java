@@ -3,8 +3,8 @@ package bio.terra.workspace.common;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.workspace.common.utils.BaseStatusService;
-import bio.terra.workspace.common.utils.StatusSubsystem;
+import bio.terra.workspace.service.status.BaseStatusService;
+import bio.terra.workspace.service.status.StatusSubsystem;
 import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
 import java.util.ArrayList;
 import java.util.List;
