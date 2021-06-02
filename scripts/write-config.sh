@@ -222,8 +222,8 @@ fi
 if [ $result -ne 0 ]; then
     echo "No test runner credentials for target ${target}."
 else
-    jq -r ".data[\"ca.crt\"]" "${tmpfile}" > ${outputdir}/testrunner-k8s-sa-key.txt
-    jq -r .data.token "${tmpfile}" | base64 --decode > ${outputdir}/testrunner-k8s-sa-token.txt
+    jq -r ".data[\"ca.crt\"]" "${tmpfile}" > "${outputdir}/testrunner-k8s-sa-key.txt"
+    jq -r .data.token "${tmpfile}" | base64 --decode > "${outputdir}/testrunner-k8s-sa-token.txt"
 fi
 
 # CloudSQL setup for connecting to the backend database
