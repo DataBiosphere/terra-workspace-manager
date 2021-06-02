@@ -187,7 +187,7 @@ function vaultgetdb {
 }
 
 vaultget "secret/dsde/firecloud/${fcenv}/common/firecloud-account.json" "${outputdir}/user-delegated-sa.json"
-vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/app-sa" "wsm-sa.json"
+vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/app-sa" "${outputdir}/wsm-sa.json"
 
 # Janitor SA is only available in integration
 if [ "${k8senv}" = "integration" ]; then
