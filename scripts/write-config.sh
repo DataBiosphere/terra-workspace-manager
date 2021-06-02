@@ -47,7 +47,6 @@
 #   testrunner-k8s-sa-key.txt  | test. Not all environments have this SA configured. If the k8env is 
 #                              | integration and there is no configured SA, then the wsmtest one will be
 #                              | retrieved. It won't work for all test runner tests.
-#                              | Note that the key is left base64-encoded for some reason.
 #   ---------------------------+-------------------------------------------------------------------------
 #   user-delegated-sa.json     | Firecloud SA used to masquerade as test users
 #   ---------------------------+-------------------------------------------------------------------------
@@ -208,10 +207,10 @@ vaultgetb64 "secret/dsde/terra/kernel/integration/common/testrunner/testrunner-s
 
 # Test Runner Kubernetes SA
 #
-# This is an "interesting" structure. At secret/.../testrunner-k8s-sa we have the usual base64 encoded object
+# The testrunner K8s secret has a complex structure. At secret/.../testrunner-k8s-sa we have the usual base64 encoded object
 # under data.key. When that is pulled out and decoded we get a structure with:
 # { "data":  { "ca.crt": <base64-cert>, "token": <base64-token> } }
-# For unknown reasons, we pull out the cert, but DO NOT decode it. We pull out the token and we DO decode it.
+# The cert is left base64 encoded, because that is how it is used in the K8s API. The token is decoded.
 tmpfile=$(mktemp)
 vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/testrunner-k8s-sa" "${tmpfile}"
 result=$?
