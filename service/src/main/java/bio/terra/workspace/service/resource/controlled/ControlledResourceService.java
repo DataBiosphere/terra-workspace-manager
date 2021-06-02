@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.workspace.db.DbRetryUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
@@ -14,7 +15,6 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceA
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledGcsBucketResourceFlight;
@@ -178,8 +178,8 @@ public class ControlledResourceService {
     stageService.assertMcWorkspace(workspaceId, "getControlledResource");
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userReq, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION);
-    WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
-    return wsmResource.castToControlledResource();
+    return DbRetryUtils.throwIfInterrupted(
+        () -> resourceDao.getResource(workspaceId, resourceId).castToControlledResource());
   }
 
   /** Synchronously delete a controlled resource. */

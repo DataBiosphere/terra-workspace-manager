@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import bio.terra.workspace.db.DbRetryUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -51,7 +52,8 @@ public class ControlledResourceMetadataManager {
     if (name != null) {
       ValidationUtils.validateResourceName(name);
     }
-    resourceDao.updateResource(workspaceId, resourceId, name, description);
+    DbRetryUtils.throwIfInterrupted(
+        () -> resourceDao.updateResource(workspaceId, resourceId, name, description));
   }
 
   /**
@@ -77,7 +79,8 @@ public class ControlledResourceMetadataManager {
   @Traced
   public void validateControlledResourceAndAction(
       AuthenticatedUserRequest userReq, UUID workspaceId, UUID resourceId, String action) {
-    WsmResource resource = resourceDao.getResource(workspaceId, resourceId);
+    WsmResource resource =
+        DbRetryUtils.throwIfInterrupted(() -> resourceDao.getResource(workspaceId, resourceId));
     ControlledResource controlledResource = resource.castToControlledResource();
     SamService.rethrowIfSamInterrupted(
         () ->

@@ -72,7 +72,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
   }
 
   @AfterEach
-  void teardown() {
+  void teardown() throws InterruptedException {
     if (referenceResource != null) {
       try {
         referenceResourceService.deleteReferenceResource(

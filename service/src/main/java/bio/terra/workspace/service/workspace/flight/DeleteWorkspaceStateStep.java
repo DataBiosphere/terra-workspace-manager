@@ -25,7 +25,8 @@ public class DeleteWorkspaceStateStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) throws RetryException {
+  public StepResult doStep(FlightContext flightContext)
+      throws RetryException, InterruptedException {
     FlightMap inputMap = flightContext.getInputParameters();
     // WorkspaceDao.deleteWorkspace returns true if a delete succeeds or false if the workspace is
     // not found, but the user-facing delete operation should return a 204 even if the workspace is

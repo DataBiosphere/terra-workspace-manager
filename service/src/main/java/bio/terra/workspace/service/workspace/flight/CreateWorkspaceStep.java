@@ -27,7 +27,8 @@ public class CreateWorkspaceStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) throws RetryException {
+  public StepResult doStep(FlightContext flightContext)
+      throws RetryException, InterruptedException {
     FlightMap inputMap = flightContext.getInputParameters();
 
     UUID workspaceId =
@@ -61,7 +62,7 @@ public class CreateWorkspaceStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext flightContext) {
+  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceId =
         UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));

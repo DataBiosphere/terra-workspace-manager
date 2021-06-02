@@ -23,7 +23,7 @@ public class StoreGcpContextStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) {
+  public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     String projectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
 
     // Create the cloud context; throws if the context already exists. We let
@@ -33,7 +33,7 @@ public class StoreGcpContextStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext flightContext) {
+  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     String projectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
 
     // Delete the cloud context, but only if it is the one with our project id
