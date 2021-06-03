@@ -5,16 +5,9 @@ The Test Runner library [GitHub repository](https://github.com/DataBiosphere/ter
 how to write and execute tests.
 
 #### Run a test
-The workspace manager tests require the appropriate service account keys to be available in the `rendered/` folder.
-
-Run the following command from the `integration` directory to retrieve the required keys.
-Note: `render-config.sh` assumes a valid `.vault-token` in your `$HOME` directory. Please refer to the following document on how to generate a `vault-token`
- 
- https://github.com/broadinstitute/dsde-toolbox#authenticating-to-vault 
-
-```
-./render-config.sh
-```
+The workspace manager tests require the appropriate service account keys to be available
+in the build root `config/` folder. See [DEVELOPMENT](DEVELOPMENT.md) for details on using `scripts/write-config.sh`
+to write the configuration.
 
 The test runner task `runTest` can be used to launch tests in two different modes
 * Run individual test
@@ -81,14 +74,13 @@ The third argument is just some text to describe the application itself.
 $ ./setup-k8s-testrunner.sh gke_terra-kernel-k8s_us-central1-a_terra-integration zloery workspacemanager
 ```
 
-Once the script above ran successfully, the namespace is ready for resiliency testing through the Test Runner Framework.
+Once the script above ran successfully, the namespace is ready for resiliency testing
+through the Test Runner Framework. You must re-run the `scripts/write-config.sh` script to rewrite
+your configuration in order to set up your newly created credentials.
 
-The Kubernetes credentials stored in Vault needs to be rendered by means of the `./render-k8s-config.sh zloery` script in the local repository before kicking off the resiliency tests.
-```shell script
-$ ./render-k8s-config.sh zloery
-```
-
-For more details, please refer to [Personal Test Environments Guideline Document] (https://github.com/DataBiosphere/terra/blob/main/docs/dev-guides/personal-environments.md) or [Test Runner Library Repo(https://github.com/DataBiosphere/terra-test-runner).
+For more details, please refer to
+[Personal Test Environments Guideline Document](https://github.com/DataBiosphere/terra/blob/main/docs/dev-guides/personal-environments.md)
+or [Test Runner Library Repo](https://github.com/DataBiosphere/terra-test-runner).
 
 #### Upload test results to Google Bucket
 To upload Test Runner results to a Google Bucket.
@@ -109,7 +101,8 @@ export TEST_RUNNER_SERVER_SPECIFICATION_FILE="workspace-dev.json"
 
 #### SA keys from Vault
 Each service account JSON file in the resources/serviceaccounts directory of this project specifies a default file
-path for the client secret file. This default path should match where the render-config.sh script puts the secret.
+path for the client secret file. This default path should be a relative path to the
+`config/` directory in the gradle build root.
 
 #### Test runner SA keys
 The test runner SA key is necessary for uploading test results to Google Buckets and BigQuery. 

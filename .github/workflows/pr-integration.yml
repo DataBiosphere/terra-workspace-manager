@@ -91,4 +91,3 @@ jobs:
       with:
         test-server: workspace-local.json
         test: suites/FullIntegration.json
-        vault-token: ${{ steps.vault-token-step.outputs.vault-token }}

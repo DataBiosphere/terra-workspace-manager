@@ -65,7 +65,6 @@ jobs:
         with:
           test-server: workspace-wsmtest.json
           test: suites/FullIntegration.json
-          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
       - name: clean databases before perf suite
         if: always()
@@ -78,7 +77,6 @@ jobs:
         with:
           test-server: workspace-wsmtest.json
           test: suites/BasicPerf.json
-          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
       - name: clean databases before resiliency suite
         if: always()
@@ -91,7 +89,6 @@ jobs:
         with:
           test-server: workspace-wsmtest.json
           test: suites/BasicResiliency.json
-          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
       - name: Compose status message
         if: always()
