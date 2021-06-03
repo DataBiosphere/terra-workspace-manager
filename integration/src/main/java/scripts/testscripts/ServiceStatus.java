@@ -4,7 +4,6 @@ import bio.terra.testrunner.runner.TestScript;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.UnauthenticatedApi;
 import bio.terra.workspace.client.ApiClient;
-import bio.terra.workspace.model.SystemStatus;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -32,9 +31,8 @@ public class ServiceStatus extends TestScript {
     logger.info("Checking service status endpoint now.");
     ApiClient apiClient = ClientTestUtils.getClientWithoutAccessToken(server);
     UnauthenticatedApi unauthenticatedApi = new UnauthenticatedApi(apiClient);
-    SystemStatus systemStatus = unauthenticatedApi.serviceStatus();
-
+    unauthenticatedApi.serviceStatus();
     int httpCode = unauthenticatedApi.getApiClient().getStatusCode();
-    logger.info("Service status with code {}: {}", httpCode, systemStatus);
+    logger.info("Service status return code: {}", httpCode);
   }
 }
