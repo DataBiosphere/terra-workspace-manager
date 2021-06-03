@@ -10,8 +10,8 @@ env:
       user: ${STAIRWAY_DATABASE_USER:stairwayuser}
     ws:
       name: ${DATABASE_NAME:wsm_db}
-      pass: ${DATABASE_USER_PASSWORD:wmpwd}
-      user: ${DATABASE_USER:wmuser}
+      pass: ${DATABASE_USER_PASSWORD:dbpwd}
+      user: ${DATABASE_USER:dbuser}
   tracing:
     exportEnabled: ${CLOUD_TRACE_ENABLED:false}
     samplingRate: ${SAMPLING_PROBABILITY:0}
