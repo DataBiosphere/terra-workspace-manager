@@ -5,6 +5,9 @@ import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
+import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
+import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
+import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
@@ -30,7 +33,6 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.resource.ValidationUtils;
-import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
@@ -39,7 +41,6 @@ import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
-import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Collections;
@@ -178,10 +179,6 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResource resource =
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
-    if (resource.getResourceType() != WsmResourceType.GCS_BUCKET) {
-      throw new InvalidControlledResourceException(
-          String.format("Resource %s is not a GCS Bucket", resourceId));
-    }
     final ControlledGcsBucketResource bucketResource = resource.castToGcsBucketResource();
     controlledResourceService.updateGcsBucket(
         bucketResource,
@@ -193,6 +190,37 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     // Retrieve and cast response to UpdateControlledGcpGcsBucketResponse
     return getControlledResourceAsResponseEntity(
         workspaceId, resourceId, userRequest, r -> r.castToGcsBucketResource().toApiResource());
+  }
+
+  @Override
+  public ResponseEntity<ApiCloneControlledGcpGcsBucketResult> cloneGcsBucket(UUID workspaceId,
+      UUID resourceId, @Valid ApiCloneControlledGcpGcsBucketRequest body) {
+    logger.info("Cloning GCS bucket resourceId {} workspaceId {}", resourceId, workspaceId);
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final ControlledResource sourceResource =
+        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+    final ControlledGcsBucketResource sourceBucket = sourceResource.castToGcsBucketResource();
+    final String jobId = controlledResourceService.cloneGcsBucket(
+        sourceBucket,
+        body.getDestinationWorkspaceId(),
+        body.getCloningInstructions(),
+        body.getLocation(),
+        body.getName(),
+        body.getDescription(),
+        body.getBucketName(),
+        userRequest);
+    final ApiCloneControlledGcpGcsBucketResult result = fetchCloneGcsBucketResult(jobId, userRequest);
+    return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
+  }
+
+  private ApiCloneControlledGcpGcsBucketResult fetchCloneGcsBucketResult(String jobId, AuthenticatedUserRequest userRequest) {
+    final AsyncJobResult<ApiClonedControlledGcpGcsBucket> jobResult =
+        jobService.retrieveAsyncJobResult(jobId, ApiClonedControlledGcpGcsBucket.class, userRequest);
+    // TODO: generate an intermediate class if necessary, beneath the API layer
+    return new ApiCloneControlledGcpGcsBucketResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .bucket(jobResult.getResult());
   }
 
   @Override

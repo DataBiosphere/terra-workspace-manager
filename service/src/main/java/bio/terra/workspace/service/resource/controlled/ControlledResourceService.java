@@ -3,6 +3,8 @@ package bio.terra.workspace.service.resource.controlled;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.db.DbRetryUtils;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
@@ -95,6 +97,18 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.RESOURCE_NAME, resourceName)
             .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
     return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
+  }
+
+  public String cloneGcsBucket(
+      ControlledGcsBucketResource sourceBucketResource,
+      UUID destinationWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String location,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable String bucketName,
+      AuthenticatedUserRequest userRequest) {
+    return null;
   }
 
   /** Starts a create controlled BigQuery dataset resource, blocking until its job is finished. */
