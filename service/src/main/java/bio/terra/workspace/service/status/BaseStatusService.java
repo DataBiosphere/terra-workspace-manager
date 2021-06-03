@@ -38,8 +38,7 @@ public class BaseStatusService {
   /** scheduler */
   private final ScheduledExecutorService scheduler;
 
-  public BaseStatusService(
-      StatusCheckConfiguration configuration) {
+  public BaseStatusService(StatusCheckConfiguration configuration) {
     this.configuration = configuration;
     this.statusCheckMap = new ConcurrentHashMap<>();
 
@@ -89,7 +88,9 @@ public class BaseStatusService {
     if (configuration.isEnabled()) {
       // If staleness time (last update + stale threshold) is before the current time, then
       // we are officially not OK.
-      if (lastStatusUpdate.plusSeconds(configuration.getStalenessThresholdSeconds()).isBefore(Instant.now())) {
+      if (lastStatusUpdate
+          .plusSeconds(configuration.getStalenessThresholdSeconds())
+          .isBefore(Instant.now())) {
         logger.warn("Status has not been updated since {}", lastStatusUpdate);
         statusOk.set(false);
       }
@@ -97,5 +98,4 @@ public class BaseStatusService {
     }
     return true;
   }
-
 }
