@@ -113,7 +113,6 @@ jobs:
       with:
         target: ${{ steps.set-env-step.outputs.test-env }}
         vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
-        target: local
 
       # Run tests
     - name: Run tests
