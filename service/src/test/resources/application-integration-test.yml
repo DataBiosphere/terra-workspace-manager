@@ -22,7 +22,7 @@ workspace:
       dev: william.thunderlord@test.firecloud.org
       alpha: hermione.owner@test.firecloud.org
       staging: hermione.owner@test.firecloud.org
-    user-delegated-service-account-path: rendered/user-delegated-service-account.json
+    user-delegated-service-account-path: ../config/user-delegated-sa.json
     wsm-endpoints:
       workspaces: api/workspaces/v1
     wsm-urls:

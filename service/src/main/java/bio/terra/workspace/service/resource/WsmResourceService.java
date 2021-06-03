@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource;
 
+import bio.terra.workspace.db.DbRetryUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -56,8 +57,9 @@ public class WsmResourceService {
                   samService.listControlledResourceIds(userRequest, category.getSamResourceName()),
               "listControlledResourceIds"));
     }
-
-    return resourceDao.enumerateResources(
-        workspaceId, controlledResourceIds, resourceType, stewardshipType, offset, limit);
+    return DbRetryUtils.throwIfInterrupted(
+        () ->
+            resourceDao.enumerateResources(
+                workspaceId, controlledResourceIds, resourceType, stewardshipType, offset, limit));
   }
 }

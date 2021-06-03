@@ -22,7 +22,8 @@ import java.util.UUID;
  */
 public class DeleteControlledResourceFlight extends Flight {
 
-  public DeleteControlledResourceFlight(FlightMap inputParameters, Object beanBag) {
+  public DeleteControlledResourceFlight(FlightMap inputParameters, Object beanBag)
+      throws InterruptedException {
     super(inputParameters, beanBag);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 

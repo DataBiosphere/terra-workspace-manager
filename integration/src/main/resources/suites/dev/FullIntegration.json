@@ -1,0 +1,13 @@
+{
+  "name": "FullIntegration",
+  "description": "Integration tests (not including context/control-related tests) - to be run on dev",
+  "serverSpecificationFile": "workspace-dev.json",
+  "testConfigurationFiles": [
+    "integration/BasicAuthenticated.json",
+    "integration/BasicUnauthenticated.json",
+    "integration/GetRoles.json",
+    "integration/WorkspaceLifecycle.json",
+    "integration/DataReferenceLifecycle.json",
+    "integration/EnumerateDataReferences.json"
+  ]
+}

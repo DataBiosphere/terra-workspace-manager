@@ -54,7 +54,7 @@ dependencies {
     implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2", version: "2.32"
 
     implementation group: "bio.terra", name: "stairway", version: "0.0.52-SNAPSHOT"
-    implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.46-SNAPSHOT"
+    implementation group: "bio.terra", name: "terra-common-lib", version: "0.0.47-SNAPSHOT"
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery', version: '0.11.0'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-billing', version: '0.10.0'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager', version: '1.3.0'
@@ -151,8 +151,8 @@ swaggerSources {
 // Testing config
 
 // The path to the default Google service account for the Workspace Manager to run as.
-// Created by render_config.sh
-def googleCredentialsFile = "${projectDir}/rendered/service-account.json"
+// Created by scripts/write_config.sh
+def googleCredentialsFile = "${rootDir}/config/wsm-sa.json"
 bootRun {
     environment = [
             'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"

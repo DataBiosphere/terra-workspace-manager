@@ -1,0 +1,43 @@
+name: 'write-config'
+description: 'Collect the vault information used for testing'
+author: 'dd'
+inputs:
+  vault-token:
+    description: 'Vault token'
+    required: true
+  target:
+    description: 'Target environment: local, dev, alpha, staging, wsmtest or another personal namespace'
+    default: 'local'
+    required: true
+outputs:
+  db-connection-name:
+    value: ${{ steps.files-to-outputs.outputs.db-connection-name }}
+  db-name:
+    value: ${{ steps.files-to-outputs.outputs.db-name }}
+  db-password:
+    value: ${{ steps.files-to-outputs.outputs.db-password }}
+  db-username:
+    value: ${{ steps.files-to-outputs.outputs.db-username }}
+  stairway-db-name:
+    value: ${{ steps.files-to-outputs.outputs.stairway-db-name }}
+  stairway-db-password:
+    value: ${{ steps.files-to-outputs.outputs.stairway-db-password }}
+  stairway-db-username:
+    value: ${{ steps.files-to-outputs.outputs.stairway-db-username }}
+runs:
+  using: "composite"
+  steps:
+    - name: Write configuration
+      run: ./scripts/write-config.sh ${{ inputs.target }} ${{ inputs.vault-token }}
+      shell: bash
+    - name: Files to outputs
+      id: files-to-outputs
+      run: |
+        echo "::set-output name=db-connection-name::$(<./config/db-connection-name.txt)"
+        echo "::set-output name=db-name::$(<./config/db-name.txt)"
+        echo "::set-output name=db-password::$(<./config/db-password.txt)"
+        echo "::set-output name=db-username::$(<./config/db-username.txt)"
+        echo "::set-output name=stairway-db-name::$(<./config/stairway-db-name.txt)"
+        echo "::set-output name=stairway-db-password::$(<./config/stairway-db-password.txt)"
+        echo "::set-output name=stairway-db-username::$(<./config/stairway-db-username.txt)"
+      shell: bash

@@ -1,5 +1,5 @@
 {
   "name": "firecloud-dev@broad-dsde-dev.iam.gserviceaccount.com",
-  "jsonKeyFilename": "user-delegated-service-account.json",
-  "jsonKeyDirectoryPath": "./rendered"
+  "jsonKeyFilename": "user-delegated-sa.json",
+  "jsonKeyDirectoryPath": "../config"
 }

@@ -23,7 +23,8 @@ public class CreateReferenceMetadataStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) throws RetryException {
+  public StepResult doStep(FlightContext flightContext)
+      throws RetryException, InterruptedException {
     ReferencedResource referenceResource = getReferenceResource(flightContext);
     resourceDao.createReferenceResource(referenceResource);
     FlightUtils.setResponse(flightContext, referenceResource.getResourceId(), HttpStatus.OK);
@@ -31,7 +32,7 @@ public class CreateReferenceMetadataStep implements Step {
   }
 
   @Override
-  public StepResult undoStep(FlightContext flightContext) {
+  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     ReferencedResource referenceResource = getReferenceResource(flightContext);
 
     // Ignore return value, as we don't care whether a reference was deleted or just not found.

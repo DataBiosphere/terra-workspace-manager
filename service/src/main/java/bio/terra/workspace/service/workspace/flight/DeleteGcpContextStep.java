@@ -20,7 +20,7 @@ public class DeleteGcpContextStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext) {
+  public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     workspaceDao.deleteGcpCloudContext(workspaceId);
     return StepResult.getStepResultSuccess();
   }
