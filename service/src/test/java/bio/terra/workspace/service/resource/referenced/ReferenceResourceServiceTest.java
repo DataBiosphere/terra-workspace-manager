@@ -10,7 +10,6 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
@@ -73,7 +72,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
   }
 
   @AfterEach
-  void teardown() {
+  void teardown() throws InterruptedException {
     if (referenceResource != null) {
       try {
         referenceResourceService.deleteReferenceResource(
@@ -126,13 +125,6 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
             workspaceId, referenceResource.getResourceId(), USER_REQUEST);
     assertThat(referenceResource.getName(), equalTo(updatedName2));
     assertThat(referenceResource.getDescription(), equalTo(updatedDescription2));
-
-    // Change nothing and see the error
-    assertThrows(
-        InvalidDaoRequestException.class,
-        () ->
-            referenceResourceService.updateReferenceResource(
-                workspaceId, referenceResource.getResourceId(), null, null, USER_REQUEST));
   }
 
   /**

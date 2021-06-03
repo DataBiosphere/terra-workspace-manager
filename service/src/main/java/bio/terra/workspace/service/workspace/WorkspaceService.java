@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
+import bio.terra.workspace.db.DbRetryUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -113,7 +114,8 @@ public class WorkspaceService {
   @Traced
   public Workspace validateWorkspaceAndAction(
       AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
-    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
+    Workspace workspace =
+        DbRetryUtils.throwIfInterrupted(() -> workspaceDao.getWorkspace(workspaceId));
     SamService.rethrowIfSamInterrupted(
         () ->
             samService.checkAuthz(
@@ -134,7 +136,8 @@ public class WorkspaceService {
     List<UUID> samWorkspaceIds =
         SamService.rethrowIfSamInterrupted(
             () -> samService.listWorkspaceIds(userReq), "listWorkspaceIds");
-    return workspaceDao.getWorkspacesMatchingList(samWorkspaceIds, offset, limit);
+    return DbRetryUtils.throwIfInterrupted(
+        () -> workspaceDao.getWorkspacesMatchingList(samWorkspaceIds, offset, limit));
   }
 
   /** Retrieves an existing workspace by ID */
@@ -157,8 +160,9 @@ public class WorkspaceService {
       @Nullable String name,
       @Nullable String description) {
     validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
-    workspaceDao.updateWorkspace(workspaceId, name, description);
-    return workspaceDao.getWorkspace(workspaceId);
+    DbRetryUtils.throwIfInterrupted(
+        () -> workspaceDao.updateWorkspace(workspaceId, name, description));
+    return DbRetryUtils.throwIfInterrupted(() -> workspaceDao.getWorkspace(workspaceId));
   }
 
   /** Delete an existing workspace by ID. */
@@ -257,7 +261,8 @@ public class WorkspaceService {
    * @return GCP project id
    */
   public String getRequiredGcpProject(UUID workspaceId) {
-    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
+    Workspace workspace =
+        DbRetryUtils.throwIfInterrupted(() -> workspaceDao.getWorkspace(workspaceId));
     GcpCloudContext gcpCloudContext =
         workspace
             .getGcpCloudContext()
@@ -272,7 +277,11 @@ public class WorkspaceService {
    * given workspace does not have a GCP cloud context.
    */
   public Optional<String> getGcpProject(UUID workspaceId) {
-    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
-    return workspace.getGcpCloudContext().map(GcpCloudContext::getGcpProjectId);
+    return DbRetryUtils.throwIfInterrupted(
+        () ->
+            workspaceDao
+                .getWorkspace(workspaceId)
+                .getGcpCloudContext()
+                .map(GcpCloudContext::getGcpProjectId));
   }
 }

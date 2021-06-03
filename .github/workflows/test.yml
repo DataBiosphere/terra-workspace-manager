@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       testEnv:
-        description: 'Environment in which tests should be run. Currently works on dev, alpha and staging'
+        description: 'Environment in which tests should be run. Known to work for local, alpha and staging.'
         required: true
 
 jobs:
@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gradleTask: [unitTest, connectedTest, integrationTest]
+        gradleTask: [unitTest, connectedTest]
 
     services:
       postgres:
@@ -55,24 +55,18 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set env and whether or not to use a local server
+    - name: Set env
       id: set-env-step
       run: |
         if ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}; then
           ENV=local
-          CONFIG_ENV=dev
-          LOCAL_SERVER=${{ matrix.gradleTask == 'integrationTest' }}
         elif ${{ github.event_name == 'workflow_dispatch' }}; then
           ENV=${{ github.event.inputs.testEnv }}
-          CONFIG_ENV=${{ github.event.inputs.testEnv }}
-          LOCAL_SERVER=false
         else
           echo ::error ::${{ github.event_name }} not supported for this workflow
           exit 1
         fi
         echo ::set-output name=test-env::$ENV
-        echo ::set-output name=config-env::$CONFIG_ENV
-        echo ::set-output name=local-server::$LOCAL_SERVER
 
     - name: Initialize Postgres DB
       env:
@@ -112,15 +106,13 @@ jobs:
         echo ::set-output name=vault-token::$VAULT_TOKEN
         echo ::add-mask::$VAULT_TOKEN
 
-    - name: Render config
+    - name: Write config
       if: matrix.gradleTask != 'unitTest'
-      uses: ./.github/actions/render-config
+      id: config
+      uses: ./.github/actions/write-config
       with:
+        target: ${{ steps.set-env-step.outputs.test-env }}
         vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
-
-    - name: Launch local server, if needed
-      if: steps.set-env-step.outputs.local-server == 'true'
-      uses: ./.github/actions/start-local-server
 
       # Run tests
     - name: Run tests

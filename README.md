@@ -127,14 +127,14 @@ to a common set of techniques.
 We only use YAML configuration. We never use XML or .properties files.
 
 In general, we use type-safe configuration parameters as shown here: 
-[Type-safe Configuration Properties](https://docs.spring.io/spring-boot/docs/current/reference/html/spring-boot-features.html#boot-features-external-config-typesafe-configuration-properties).
+[Type-safe Configuration Properties](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config.typesafe-configuration-properties).
 That allows proper typing of parameters read from property files or environment variables. Parameters are
 then accessed with normal accessor methods. You should never need to use an `@Value` annotation.
 
 Be aware that environment variables will override values in our YAML configuration.
 This should not be used for configuration as it makes the source of values harder to track,
 but it may be useful for debugging unexpected configurations. See Spring Boot's 
-[Externalized Configuration documentation](https://docs.spring.io/spring-boot/docs/2.4.0/reference/html/spring-boot-features.html#boot-features-external-config)
+[Externalized Configuration documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#boot-features-external-config)
 for the exact priority order of configurations.
 
 #### Initialization
@@ -295,8 +295,8 @@ The connected tests are also written using JUnit.
 The implementations are mixed in with the unit tests in
 `src/test/java/bio/terra/workspace/`. Connected tests derive from `common/BaseConnectedTest.java`.
 Connected tests depend on the availability of a running Postgresql server. They also rely
-on a "rendered" configuration containing service accounts and keys that allows the tests
-to use dependent services such as Sam, Buffer, and TDR. The rendering process relies on
+on a populated "config" directory containing service accounts and keys that allows the tests
+to use dependent services such as Sam, Buffer, and TDR. The config collecting process relies on
 secrets maintained in Vault in the Broad Institute environment.
 
 #### Integration Tests

@@ -7,8 +7,10 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.model.CloudPlatform;
 import bio.terra.workspace.model.CreateCloudContextRequest;
 import bio.terra.workspace.model.CreateCloudContextResult;
+import bio.terra.workspace.model.ErrorReport;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
+import bio.terra.workspace.model.JobReport.StatusEnum;
 import java.time.Duration;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -39,6 +41,17 @@ public class CloudContextMaker {
     }
     logger.info(
         "Create GCP context status is {}", contextResult.getJobReport().getStatus().toString());
+    if (contextResult.getJobReport().getStatus() == StatusEnum.FAILED) {
+      if (contextResult.getErrorReport() == null) {
+        logger.info("Create failed, but no error report found!");
+      } else {
+        ErrorReport report = contextResult.getErrorReport();
+        logger.info("Error report ({}) {}", report.getStatusCode(), report.getMessage());
+        for (String cause : report.getCauses()) {
+          logger.info("  cause: {}", cause);
+        }
+      }
+    }
     assertThat(contextResult.getJobReport().getStatus(), equalTo(JobReport.StatusEnum.SUCCEEDED));
     return contextResult.getGcpContext().getProjectId();
   }

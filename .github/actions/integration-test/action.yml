@@ -10,9 +10,6 @@ inputs:
     description: 'Test suite or config to run'
     required: true
     default: 'suites/FullIntegration.json'
-  vault-token:
-    description: 'Vault token for rendering'
-    required: true
 runs:
   using: "composite"
   steps:
@@ -22,8 +19,6 @@ runs:
       run: |
         cd integration
         echo "Test Runner config"
-        ./render-config.sh ${{ inputs.vault-token }}
-        ./render-k8s-config.sh wsmtest ${{ inputs.vault-token }}
         export TEST_RUNNER_SERVER_SPECIFICATION_FILE=${{ inputs.test-server }}
         resultsDir=/tmp/results$RANDOM
         echo "Running test suite ${{ inputs.test }} on ${{ inputs.test-server }}"

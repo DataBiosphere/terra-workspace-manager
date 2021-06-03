@@ -1,0 +1,49 @@
+name: 'run-sql-script'
+description: 'Run a script against a CloudSQL instance'
+author: 'dd'
+inputs:
+  db-connection-name:
+    description: 'full CloudSQL connection name: <project>:<region>:<cloudsql-instance>'
+    required: true
+  db-name:
+    description: 'name of the database to connect to'
+    required: true
+  db-password:
+    description: 'password to login to the postgres database'
+    required: true
+  db-username:
+    description: 'username to login to the postgres database'
+    required: true
+  cloudsql-sa-file:
+    description: 'path to the CloudSQL SA json file somewhere'
+    required: true
+  script-file:
+    description: 'path to the SQL script file'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+  - name: run script on db
+    shell: bash
+    run: |
+      safile="${{ inputs.cloudsql-sa-file }}"
+      creddir=$(cd "${safile%/*}" && pwd)
+      credfile="${safile##*/}"
+      # We can parameterize this if need be, but this should work
+      port=5434
+      echo "Launching the CloudSQL proxy"
+      dod=$(docker run --rm -d \
+        -v ${creddir}:/config \
+        -p 127.0.0.1:${port}:${port} \
+        gcr.io/cloudsql-docker/gce-proxy:latest \
+        /cloud_sql_proxy \
+        -instances=${{ inputs.db-connection-name }}=tcp:0.0.0.0:${port} \
+        -credential_file=/config/${credfile})
+      sleep 5
+      echo "Running the script via psql"
+      PGPASSWORD="${{ inputs.db-password }}" \
+        psql "host=127.0.0.1 port=$port sslmode=disable dbname=${{ inputs.db-name }} user=${{ inputs.db-username }}" \
+        -f ${{ inputs.script-file }}
+      sleep 2
+      echo "Stopping the CloudSQL proxy"
+      docker kill $dod

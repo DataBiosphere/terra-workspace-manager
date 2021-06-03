@@ -12,10 +12,12 @@ on:
       - 'service/local-dev/**'
   pull_request:
     branches: [ '**' ]
-    paths-ignore:
-      - 'README.md'
-      - '.github/**'
-      - 'service/local-dev/**'
+    # There is an issue with GitHub required checks and paths-ignore. We don't really need to
+    # run the tests if there are only irrelevant changes (see paths-ignore above). However,
+    # we require tests to pass by making a "required check" rule on the branch. If the action
+    # is not triggered, the required check never passes and you are stuck. Therefore, we have
+    # to run tests even when we only change a markdown file. So don't do what I did and put a
+    # paths-ignore right here!
 jobs:
   pr-integration-job:
 
@@ -73,10 +75,12 @@ jobs:
         echo ::set-output name=vault-token::$VAULT_TOKEN
         echo ::add-mask::$VAULT_TOKEN
 
-    - name: Render config
-      uses: ./.github/actions/render-config
+    - name: Write config
+      id: config
+      uses: ./.github/actions/write-config
       with:
         vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+        target: local
 
     - name: Launch local server
       uses: ./.github/actions/start-local-server
@@ -87,4 +91,3 @@ jobs:
       with:
         test-server: workspace-local.json
         test: suites/FullIntegration.json
-        vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
