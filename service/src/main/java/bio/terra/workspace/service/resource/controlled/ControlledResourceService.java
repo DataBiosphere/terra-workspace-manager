@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.db.DbRetryUtils;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;

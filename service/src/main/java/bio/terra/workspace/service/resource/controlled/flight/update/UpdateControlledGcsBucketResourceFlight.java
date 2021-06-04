@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.flight.update;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 
@@ -15,8 +14,6 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
     final ControlledResource resource =
         inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
-    final AuthenticatedUserRequest userRequest =
-        inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     // get copy of existing metadata
     addStep(

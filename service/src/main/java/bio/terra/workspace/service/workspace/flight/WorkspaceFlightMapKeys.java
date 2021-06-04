@@ -15,6 +15,7 @@ public final class WorkspaceFlightMapKeys {
 
   /** Use inner class for new set of keys so it's easy to spot duplicates */
   public static class ControlledResourceKeys {
+
     private ControlledResourceKeys() {}
 
     public static final String CREATION_PARAMETERS = "creationParameters";
@@ -39,6 +40,9 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
     public static final String DELETE_NOTEBOOK_SERVICE_ACCOUNT_EMAIL =
         "deleteNotebookServiceAccountEmail";
+
+    // Cloning Keys
+    public static final String CLONED_RESOURCE_DEFINITION = "clonedResourceDefinition";
   }
 
   /** Common resource keys */
