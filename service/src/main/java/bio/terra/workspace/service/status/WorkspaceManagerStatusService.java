@@ -2,6 +2,8 @@ package bio.terra.workspace.service.status;
 
 import bio.terra.workspace.app.configuration.external.StatusCheckConfiguration;
 import bio.terra.workspace.service.iam.SamService;
+import java.sql.Connection;
+import java.sql.SQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,14 +31,15 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
 
   private Boolean isConnectionValid() {
     try {
-      return jdbcTemplate
-          .getJdbcTemplate()
-          .getDataSource()
-          .getConnection()
-          .isValid(databaseCheckTimeout);
+      logger.debug("Checking database connection valid");
+      return jdbcTemplate.getJdbcTemplate().execute(this::testConnection);
     } catch (Exception e) {
       logger.warn("Database status check failed", e);
     }
     return false;
+  }
+
+  private Boolean testConnection(Connection connection) throws SQLException {
+    return connection.isValid(databaseCheckTimeout);
   }
 }
