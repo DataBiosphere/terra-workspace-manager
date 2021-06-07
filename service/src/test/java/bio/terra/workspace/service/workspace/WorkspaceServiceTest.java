@@ -159,23 +159,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   void duplicateWorkspaceIdRequestsRejected() {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
-    // Note that the two calls use different jobIds for the same Workspace ID, making them
-    // logically distinct requests to create the same workspace.
     WorkspaceRequest duplicateWorkspace = defaultRequestBuilder(request.workspaceId()).build();
     assertThrows(
         DuplicateWorkspaceException.class,
         () -> workspaceService.createWorkspace(duplicateWorkspace, USER_REQUEST));
-  }
-
-  @Test
-  void duplicateJobIdRequestRejected() {
-    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
-    workspaceService.createWorkspace(request, USER_REQUEST);
-    // Because these calls share the same jobId they're treated as duplicate requests, rather
-    // than separate attempts to create the same workspace.
-    assertThrows(
-        DuplicateJobIdException.class,
-        () -> workspaceService.createWorkspace(request, USER_REQUEST));
   }
 
   @Test
