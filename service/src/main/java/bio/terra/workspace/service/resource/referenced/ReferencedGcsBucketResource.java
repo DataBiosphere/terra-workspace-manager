@@ -94,9 +94,9 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
   }
 
   @Override
-  public boolean validateReference(FlightBeanBag context, AuthenticatedUserRequest userReq) {
+  public boolean checkAccess(FlightBeanBag context, AuthenticatedUserRequest userReq) {
     CrlService crlService = context.getCrlService();
-    return crlService.gcsBucketExists(bucketName, userReq);
+    return crlService.canReadGcsBucket(bucketName, userReq);
   }
 
   public static Builder builder() {

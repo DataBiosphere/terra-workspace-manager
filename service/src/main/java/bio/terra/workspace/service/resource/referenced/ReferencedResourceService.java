@@ -113,7 +113,7 @@ public class ReferencedResourceService {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return DbRetryUtils.throwIfInterrupted(
-        () -> resourceDao.getResource(workspaceId, resourceId).castToReferenceResource());
+        () -> resourceDao.getResource(workspaceId, resourceId).castToReferencedResource());
   }
 
   public ReferencedResource getReferenceResourceByName(
@@ -121,7 +121,7 @@ public class ReferencedResourceService {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return DbRetryUtils.throwIfInterrupted(
-        () -> resourceDao.getResourceByName(workspaceId, name).castToReferenceResource());
+        () -> resourceDao.getResourceByName(workspaceId, name).castToReferencedResource());
   }
 
   public List<ReferencedResource> enumerateReferences(
@@ -132,13 +132,12 @@ public class ReferencedResourceService {
         () -> resourceDao.enumerateReferences(workspaceId, offset, limit));
   }
 
-  public boolean validateReference(
-      UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
+  public boolean checkAccess(UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     ReferencedResource referencedResource =
         DbRetryUtils.throwIfInterrupted(
-            () -> resourceDao.getResource(workspaceId, resourceId).castToReferenceResource());
-    return referencedResource.validateReference(beanBag, userReq);
+            () -> resourceDao.getResource(workspaceId, resourceId).castToReferencedResource());
+    return referencedResource.checkAccess(beanBag, userReq);
   }
 }

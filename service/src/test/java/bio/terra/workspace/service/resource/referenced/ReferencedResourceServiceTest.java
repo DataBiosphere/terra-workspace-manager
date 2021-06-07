@@ -41,8 +41,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Tag("unit")
-class ReferenceResourceServiceTest extends BaseUnitTest {
-  private static final Logger logger = LoggerFactory.getLogger(ReferenceResourceServiceTest.class);
+class ReferencedResourceServiceTest extends BaseUnitTest {
+  private static final Logger logger = LoggerFactory.getLogger(ReferencedResourceServiceTest.class);
   private static final String DATA_REPO_INSTANCE_NAME = "terra";
   private static final String FAKE_PROJECT_ID = "fakeprojecctid";
 
@@ -230,7 +230,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
       assertThat(resource, equalTo(resultResource));
 
       assertTrue(
-          referenceResourceService.validateReference(
+          referenceResourceService.checkAccess(
               workspaceId, referenceResource.getResourceId(), USER_REQUEST));
 
       ReferencedResource byid =
@@ -325,7 +325,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
       @BeforeEach
       void setup() throws Exception {
         // Make the Verify step always succeed
-        doReturn(true).when(mockCrlService).gcsBucketExists(any(), any());
+        doReturn(true).when(mockCrlService).canReadGcsBucket(any(), any());
       }
 
       private ReferencedGcsBucketResource makeGcsBucketResource() {
@@ -356,7 +356,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
         assertThat(resource, equalTo(resultResource));
 
         assertTrue(
-            referenceResourceService.validateReference(
+            referenceResourceService.checkAccess(
                 workspaceId, referenceResource.getResourceId(), USER_REQUEST));
 
         ReferencedResource byid =
@@ -423,7 +423,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
       @BeforeEach
       void setup() throws Exception {
         // Make the Verify step always succeed
-        doReturn(true).when(mockCrlService).bigQueryDatasetExists(any(), any(), any());
+        doReturn(true).when(mockCrlService).canReadBigQueryDataset(any(), any(), any());
       }
 
       private ReferencedBigQueryDatasetResource makeBigQueryResource() {
@@ -456,7 +456,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
         assertThat(resource, equalTo(resultResource));
 
         assertTrue(
-            referenceResourceService.validateReference(
+            referenceResourceService.checkAccess(
                 workspaceId, referenceResource.getResourceId(), USER_REQUEST));
 
         ReferencedResource byid =

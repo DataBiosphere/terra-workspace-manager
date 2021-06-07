@@ -107,7 +107,7 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
   }
 
   @Override
-  public boolean validateReference(FlightBeanBag context, AuthenticatedUserRequest userReq) {
+  public boolean checkAccess(FlightBeanBag context, AuthenticatedUserRequest userReq) {
     DataRepoService dataRepoService = context.getDataRepoService();
     return dataRepoService.snapshotExists(instanceName, snapshotId, userReq);
   }

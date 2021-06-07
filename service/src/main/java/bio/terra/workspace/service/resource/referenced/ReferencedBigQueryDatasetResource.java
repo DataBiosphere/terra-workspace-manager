@@ -110,9 +110,9 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
   }
 
   @Override
-  public boolean validateReference(FlightBeanBag context, AuthenticatedUserRequest userReq) {
+  public boolean checkAccess(FlightBeanBag context, AuthenticatedUserRequest userReq) {
     CrlService crlService = context.getCrlService();
-    return crlService.bigQueryDatasetExists(projectId, datasetName, userReq);
+    return crlService.canReadBigQueryDataset(projectId, datasetName, userReq);
   }
 
   public static class Builder {

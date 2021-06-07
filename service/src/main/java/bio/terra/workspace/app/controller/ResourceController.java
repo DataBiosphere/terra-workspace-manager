@@ -100,10 +100,9 @@ public class ResourceController implements ResourceApi {
   }
 
   @Override
-  public ResponseEntity<Boolean> validateReference(UUID workspaceId, UUID resourceId) {
+  public ResponseEntity<Boolean> checkReferenceAccess(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    boolean isValid =
-        referencedResourceService.validateReference(workspaceId, resourceId, userRequest);
+    boolean isValid = referencedResourceService.checkAccess(workspaceId, resourceId, userRequest);
     return new ResponseEntity<>(isValid, HttpStatus.OK);
   }
 
@@ -116,7 +115,7 @@ public class ResourceController implements ResourceApi {
     var union = new ApiResourceAttributesUnion();
     switch (wsmResource.getStewardshipType()) {
       case REFERENCED:
-        ReferencedResource referencedResource = wsmResource.castToReferenceResource();
+        ReferencedResource referencedResource = wsmResource.castToReferencedResource();
         switch (wsmResource.getResourceType()) {
           case BIG_QUERY_DATASET:
             {

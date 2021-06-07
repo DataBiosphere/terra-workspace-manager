@@ -28,7 +28,7 @@ public class ValidateReferenceStep implements Step {
     AuthenticatedUserRequest userReq =
         inputMap.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    if (!referencedResource.validateReference(beanBag, userReq)) {
+    if (!referencedResource.checkAccess(beanBag, userReq)) {
       throw new InvalidReferenceException(
           String.format(
               "Referenced resource %s was not found or you do not have access. Verify that your reference was correctly defined and that you have access.",

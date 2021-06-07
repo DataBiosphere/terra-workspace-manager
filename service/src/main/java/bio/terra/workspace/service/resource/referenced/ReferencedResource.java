@@ -49,15 +49,14 @@ public abstract class ReferencedResource extends WsmResource {
   }
 
   /**
-   * Validate that the resource being referenced exists. This call should talk to an external
-   * service (a cloud platform, Terra Data Repo, etc) specific to the referenced resource type. This
-   * call will impersonate a user via the provided credentials.
+   * Check for a user's access to the resource being referenced. This call should talk to an
+   * external service (a cloud platform, Terra Data Repo, etc) specific to the referenced resource
+   * type. This call will impersonate a user via the provided credentials.
    *
    * @param context A FlightBeanBag holding Service objects for talking to various external services
    * @param userReq Credentials of the user to impersonate for validation
    */
-  public abstract boolean validateReference(
-      FlightBeanBag context, AuthenticatedUserRequest userReq);
+  public abstract boolean checkAccess(FlightBeanBag context, AuthenticatedUserRequest userReq);
 
   private void validateSubclass(WsmResourceType expectedType) {
     if (getResourceType() != expectedType) {

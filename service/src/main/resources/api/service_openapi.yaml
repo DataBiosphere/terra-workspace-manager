@@ -313,17 +313,17 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{workspaceId}/resources/referenced/{resourceId}:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/{resourceId}/access:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/ResourceId'
     get:
-      summary: Validate the existence of a referenced resource
-      operationId: validateReference
+      summary: Check a user's access to a referenced resource
+      operationId: checkReferenceAccess
       tags: [Resource]
       responses:
         '200':
-          $ref: '#/components/responses/ValidateReferenceResponse'
+          $ref: '#/components/responses/CheckReferenceAccessResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -2433,7 +2433,7 @@ components:
           schema:
             $ref: '#/components/schemas/ResourceList'
 
-    ValidateReferenceResponse:
+    CheckReferenceAccessResponse:
       description: Whether the specified reference is accessible or not
       content:
         application/json:

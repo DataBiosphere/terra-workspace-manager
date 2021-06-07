@@ -9,7 +9,6 @@ import bio.terra.cloudres.google.compute.CloudComputeCow;
 import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
-import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.workspace.app.configuration.external.CrlConfiguration;
 import bio.terra.workspace.service.crl.exception.CrlInternalException;
@@ -24,10 +23,12 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
@@ -147,10 +148,10 @@ public class CrlService {
    * @param userRequest auth info
    * @return true if the dataset exists
    */
-  public boolean bigQueryDatasetExists(
+  public boolean canReadBigQueryDataset(
       String projectId, String datasetName, AuthenticatedUserRequest userRequest) {
     try {
-      createBigQueryCow(userRequest).datasets().get(projectId, datasetName).execute();
+      createBigQueryCow(userRequest).tables().list(projectId, datasetName).execute();
       return true;
     } catch (GoogleJsonResponseException ex) {
       if (ex.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
@@ -207,10 +208,15 @@ public class CrlService {
    * @param userRequest auth info
    * @return true if the bucket exists
    */
-  public boolean gcsBucketExists(String bucketName, AuthenticatedUserRequest userRequest) {
+  public boolean canReadGcsBucket(String bucketName, AuthenticatedUserRequest userRequest) {
+    // Note that some roles grant "get" permissions but not "list", and vice-versa. Either can be
+    // used to read a bucket's contents, so here we only check that the user has at least one.
+    final List<String> readPermissions =
+        ImmutableList.of("storage.objects.get", "storage.objects.list");
     try {
-      BucketCow bucket = createStorageCow(null, userRequest).get(bucketName);
-      return (bucket != null);
+      StorageCow storage = createStorageCow(null, userRequest);
+      List<Boolean> hasPermissionsList = storage.testIamPermissions(bucketName, readPermissions);
+      return hasPermissionsList.contains(true);
     } catch (StorageException e) {
       throw new InvalidReferenceException(
           String.format("Error while trying to access GCS bucket %s", bucketName), e);
