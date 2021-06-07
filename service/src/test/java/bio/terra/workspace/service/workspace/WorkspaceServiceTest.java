@@ -26,7 +26,6 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.DuplicateJobIdException;
-import bio.terra.workspace.service.job.exception.InvalidJobIdException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -177,24 +176,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertThrows(
         DuplicateJobIdException.class,
         () -> workspaceService.createWorkspace(request, USER_REQUEST));
-  }
-
-  @Test
-  void emptyJobIdRequestRejected() {
-    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).jobId("").build();
-
-    assertEquals("", request.jobId());
-    // create-workspace request specifies the empty string for jobId
-    assertThrows(
-        InvalidJobIdException.class, () -> workspaceService.createWorkspace(request, USER_REQUEST));
-  }
-
-  @Test
-  void whitespaceJobIdRequestRejected() {
-    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).jobId("  \t  ").build();
-    // create-workspace request specifies a whitespace-only string for jobId
-    assertThrows(
-        InvalidJobIdException.class, () -> workspaceService.createWorkspace(request, USER_REQUEST));
   }
 
   @Test
@@ -562,7 +543,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   private WorkspaceRequest.Builder defaultRequestBuilder(UUID workspaceId) {
     return WorkspaceRequest.builder()
         .workspaceId(workspaceId)
-        .jobId(UUID.randomUUID().toString())
         .spendProfileId(Optional.empty())
         .workspaceStage(WorkspaceStage.MC_WORKSPACE);
   }
