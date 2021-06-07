@@ -8,8 +8,10 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CopyGcsBucketDefinitionStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveGcsBucketCloudAttributesStep;
+import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveGcsBucketCloudAttributesStep.RetrievalMode;
 
 public class CloneControlledResourceFlight extends Flight {
 
@@ -35,7 +37,18 @@ public class CloneControlledResourceFlight extends Flight {
             sourceResource.getResourceId()));
     switch (sourceResource.getResourceType()) {
       case GCS_BUCKET:
-        addBucketSteps(flightBeanBag, sourceResource.castToGcsBucketResource());
+        final ControlledGcsBucketResource sourceBucket = sourceResource.castToGcsBucketResource();
+        addStep(
+            new RetrieveGcsBucketCloudAttributesStep(
+                sourceBucket,
+                flightBeanBag.getCrlService(),
+                flightBeanBag.getWorkspaceService(),
+                RetrievalMode.CREATION_PARAMETERS));
+        addStep(
+            new CopyGcsBucketDefinitionStep(
+                userRequest, sourceBucket, flightBeanBag.getControlledResourceService()));
+        //    addStep(new CopyGcsBucketDataStep());
+
         break;
       case AI_NOTEBOOK_INSTANCE:
       case DATA_REPO_SNAPSHOT:
@@ -45,16 +58,5 @@ public class CloneControlledResourceFlight extends Flight {
             String.format(
                 "Clone resource not implemented for type %s", sourceResource.getResourceType()));
     }
-  }
-
-  private void addBucketSteps(
-      FlightBeanBag flightBeanBag, ControlledGcsBucketResource sourceResource) {
-    addStep(
-        new RetrieveGcsBucketCloudAttributesStep(
-            sourceResource, flightBeanBag.getCrlService(), flightBeanBag.getWorkspaceService()));
-    //    addStep(new CopyGcsBucketDefinitionStep());
-    //    addStep(new CopyGcsBucketDataStep());
-    //    addStep(new SetCloneResponseStep());
-
   }
 }

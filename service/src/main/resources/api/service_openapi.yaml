@@ -1934,21 +1934,25 @@ components:
             A valid bucket location per https://cloud.google.com/storage/docs/locations.
             If null, will use source bucket's location.
           type: string
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
     ClonedControlledGcpGcsBucket:
       description: >-
         Response object for clone of a GCS Bucket. Destination workspace and
         resource IDs are available in the bucket's metadata object. TODO: generalize so there's a
         single response type for all resource clones?
-      sourceWorkspaceId:
-        description: ID of the workspace of the source resource for this clone
-        type: string
-        format: uuid
-      sourceResourceId:
-        description: ID of the source resource
-        type: string
-        format: uuid
-      bucket:
-        $ref: "#/components/schemas/CreatedControlledGcpGcsBucket"
+      type: object
+      properties:
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        bucket:
+          $ref: "#/components/schemas/CreatedControlledGcpGcsBucket"
     CloneControlledGcpGcsBucketResult:
       description: >-
         API result class for cloning a GCS bucket.

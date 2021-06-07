@@ -21,7 +21,6 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATION_PARAMETERS = "creationParameters";
     public static final String PRIVATE_RESOURCE_IAM_ROLES = "iamRoles";
     public static final String IAM_RESOURCE_GROUP_EMAIL_MAP = "iamResourceGroupEmailMap";
-    public static final String CONTROLLED_RESOURCE_LIST = "controlledResourceList";
 
     public static final String UPDATE_PARAMETERS = "updateParameters";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
@@ -43,6 +42,10 @@ public final class WorkspaceFlightMapKeys {
 
     // Cloning Keys
     public static final String CLONED_RESOURCE_DEFINITION = "clonedResourceDefinition";
+    public static final String DESTINATION_WORKSPACE_ID = "destinationWorkspaceId";
+    public static final String DESTINATION_BUCKET_NAME = "destinationBucketName";
+    public static final String LOCATION = "location";
+    public static final String CLONING_INSTRUCTIONS = "cloningInstructions";
   }
 
   /** Common resource keys */

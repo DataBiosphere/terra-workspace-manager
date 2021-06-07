@@ -9,6 +9,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -17,33 +18,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import javax.annotation.Nullable;
 
 public class CopyGcsBucketDefinitionStep implements Step {
 
   private final AuthenticatedUserRequest userRequest;
   private final ControlledGcsBucketResource sourceBucket;
   private final ControlledResourceService controlledResourceService;
-  private final UUID destinationWorkspaceId;
-  @Nullable private final String suppliedResourceName;
-  @Nullable private final String suppliedDescription;
-  @Nullable private final String suppliedBucketName;
 
   public CopyGcsBucketDefinitionStep(
       AuthenticatedUserRequest userRequest,
       ControlledGcsBucketResource sourceBucket,
-      ControlledResourceService controlledResourceService,
-      UUID destinationWorkspaceId,
-      @Nullable String suppliedResourceName,
-      @Nullable String suppliedDescription,
-      @Nullable String suppliedBucketName) {
+      ControlledResourceService controlledResourceService) {
     this.userRequest = userRequest;
     this.sourceBucket = sourceBucket;
     this.controlledResourceService = controlledResourceService;
-    this.destinationWorkspaceId = destinationWorkspaceId;
-    this.suppliedResourceName = suppliedResourceName;
-    this.suppliedDescription = suppliedDescription;
-    this.suppliedBucketName = suppliedBucketName;
   }
 
   @Override
@@ -52,17 +40,22 @@ public class CopyGcsBucketDefinitionStep implements Step {
     final FlightMap inputParameters = flightContext.getInputParameters();
     final FlightMap workingMap = flightContext.getWorkingMap();
     final String resourceName =
-        Optional.ofNullable(this.suppliedResourceName)
+        Optional.ofNullable(inputParameters.get(ControlledResourceKeys.RESOURCE_NAME, String.class))
             .orElseGet(
                 () -> workingMap.get(ControlledResourceKeys.PREVIOUS_RESOURCE_NAME, String.class));
     final String description =
-        Optional.ofNullable(suppliedDescription)
+        Optional.ofNullable(
+                inputParameters.get(ControlledResourceKeys.RESOURCE_DESCRIPTION, String.class))
             .orElseGet(
                 () ->
                     workingMap.get(
                         ControlledResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION, String.class));
     final String bucketName =
-        Optional.ofNullable(suppliedBucketName).orElseGet(this::randomBucketName);
+        Optional.ofNullable(
+                inputParameters.get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class))
+            .orElseGet(this::randomBucketName);
+    final UUID destinationWorkspaceId =
+        inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     // get creation parameters together from working map and input map
     // build a create flight
     ControlledGcsBucketResource destinationBucket =
@@ -76,14 +69,14 @@ public class CopyGcsBucketDefinitionStep implements Step {
             sourceBucket.getAccessScope(),
             sourceBucket.getManagedBy(),
             bucketName);
-    final ApiGcpGcsBucketCreationParameters creationParameters =
+    final ApiGcpGcsBucketCreationParameters sourceCreationParameters =
         workingMap.get(
             ControlledResourceKeys.CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
     final List<ControlledResourceIamRole> iamRoles = getIamRoles(sourceBucket.getAccessScope());
     final ControlledGcsBucketResource clonedBucket =
         controlledResourceService.createBucket(
-            destinationBucket, creationParameters, iamRoles, userRequest);
-    workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedBucket);
+            destinationBucket, sourceCreationParameters, iamRoles, userRequest);
+    workingMap.put(JobMapKeys.RESPONSE.getKeyName(), clonedBucket);
     return StepResult.getStepResultSuccess();
   }
 

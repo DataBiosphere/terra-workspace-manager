@@ -202,6 +202,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             sourceBucket,
             body.getDestinationWorkspaceId(),
             body.getCloningInstructions(),
+            body.getJobControl(),
             body.getLocation(),
             body.getName(),
             body.getDescription(),

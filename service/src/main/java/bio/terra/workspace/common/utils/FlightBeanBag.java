@@ -67,6 +67,10 @@ public class FlightBeanBag {
     return controlledResourceMetadataManager;
   }
 
+  public ControlledResourceService getControlledResourceService() {
+    return controlledResourceService;
+  }
+
   public CrlService getCrlService() {
     return crlService;
   }

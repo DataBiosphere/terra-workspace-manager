@@ -1,18 +1,18 @@
 {
-  "name": "ControlledGcsBucketLifecycle",
-  "description": "CRUD controlled GCS bucket tests.",
+  "name": "CloneGcsBucket",
+  "description": "Clone test",
   "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
     {
-      "name": "ControlledGcsBucketLifecycle",
+      "name": "CloneGcsBucket",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 2,
-      "expectedTimeForEach": 5,
+      "expectedTimeForEach": 15,
       "expectedTimeForEachUnit": "MINUTES",
       "parameters": ["wm-default-spend-profile"]
     }
   ],
-  "testUserFiles": ["bella.json", "elijah.json"]
+  "testUserFiles": ["bella.json"]
 }

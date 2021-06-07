@@ -16,6 +16,7 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceA
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.flight.clone.CloneControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledGcsBucketResourceFlight;
@@ -101,13 +102,35 @@ public class ControlledResourceService {
   public String cloneGcsBucket(
       ControlledGcsBucketResource sourceBucketResource,
       UUID destinationWorkspaceId,
-      ApiCloningInstructionsEnum cloningInstructions,
+      ApiCloningInstructionsEnum cloningInstructions, // FIXME
+      ApiJobControl jobControl,
       @Nullable String location,
       @Nullable String name,
       @Nullable String description,
       @Nullable String bucketName,
       AuthenticatedUserRequest userRequest) {
-    return null;
+    final String jobDescription =
+        String.format(
+            "Clone controlled resource %s; id %s; name %s",
+            ((ControlledResource) sourceBucketResource).getResourceType(),
+            sourceBucketResource.getResourceId(),
+            sourceBucketResource.getName());
+
+    final JobBuilder jobBuilder =
+        jobService
+            .newJob(
+                jobDescription,
+                jobControl.getId(),
+                CloneControlledResourceFlight.class,
+                sourceBucketResource,
+                userRequest)
+            .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
+            .addParameter(ControlledResourceKeys.RESOURCE_NAME, name)
+            .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, description)
+            .addParameter(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName)
+            .addParameter(ControlledResourceKeys.LOCATION, location)
+            .addParameter(ControlledResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions);
+    return jobBuilder.submit();
   }
 
   /** Starts a create controlled BigQuery dataset resource, blocking until its job is finished. */
@@ -162,18 +185,15 @@ public class ControlledResourceService {
             "Create controlled resource %s; id %s; name %s",
             resource.getResourceType(), resource.getResourceId(), resource.getName());
 
-    final JobBuilder jobBuilder =
-        jobService
-            .newJob(
-                jobDescription,
-                jobControl.getId(),
-                CreateControlledResourceFlight.class,
-                resource,
-                userRequest)
-            .addParameter(
-                ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, privateResourceIamRoles)
-            .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
-    return jobBuilder;
+    return jobService
+        .newJob(
+            jobDescription,
+            jobControl.getId(),
+            CreateControlledResourceFlight.class,
+            resource,
+            userRequest)
+        .addParameter(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, privateResourceIamRoles)
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
   }
 
   private void validateCreateFlightPrerequisites(

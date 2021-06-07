@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static scripts.utils.GcsBucketTestFixtures.*;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -19,10 +20,6 @@ import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.GcpGcsBucketCreationParameters;
 import bio.terra.workspace.model.GcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.model.GcpGcsBucketLifecycle;
-import bio.terra.workspace.model.GcpGcsBucketLifecycleRule;
-import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleAction;
-import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleActionType;
-import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsBucketUpdateParameters;
 import bio.terra.workspace.model.GrantRoleRequestBody;
@@ -43,9 +40,6 @@ import com.google.cloud.storage.Storage.BucketField;
 import com.google.cloud.storage.Storage.BucketGetOption;
 import com.google.cloud.storage.StorageClass;
 import com.google.cloud.storage.StorageException;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -54,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
+import scripts.utils.GcsBucketTestFixtures;
 import scripts.utils.ResourceMaker;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
@@ -61,64 +56,9 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
 
   private static final Logger logger = LoggerFactory.getLogger(ControlledGcsBucketLifecycle.class);
 
-  private static final GcpGcsBucketLifecycleRule LIFECYCLE_RULE_1 =
-      new GcpGcsBucketLifecycleRule()
-          .action(
-              new GcpGcsBucketLifecycleRuleAction()
-                  .type(
-                      GcpGcsBucketLifecycleRuleActionType
-                          .DELETE)) // no storage class required for delete actions
-          .condition(
-              new GcpGcsBucketLifecycleRuleCondition()
-                  .age(64)
-                  .live(true)
-                  .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.ARCHIVE)
-                  .numNewerVersions(2));
-
-  private static final GcpGcsBucketLifecycleRule LIFECYCLE_RULE_2 =
-      new GcpGcsBucketLifecycleRule()
-          .action(
-              new GcpGcsBucketLifecycleRuleAction()
-                  .storageClass(GcpGcsBucketDefaultStorageClass.NEARLINE)
-                  .type(GcpGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS))
-          .condition(
-              new GcpGcsBucketLifecycleRuleCondition()
-                  .createdBefore(OffsetDateTime.parse("2007-01-03T00:00:00.00Z"))
-                  .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.STANDARD));
-
-  // list must not be immutable if deserialization is to work
-  static final List<GcpGcsBucketLifecycleRule> LIFECYCLE_RULES =
-      new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
-
-  private static final String BUCKET_LOCATION = "US-CENTRAL1";
-  private static final String BUCKET_PREFIX = "wsmtestbucket-";
-  private static final String RESOURCE_PREFIX = "wsmtestresource-";
-  private static final String GCS_BLOB_NAME = "wsmtestblob-name";
-  private static final String GCS_BLOB_CONTENT = "This is the content of a text file.";
-  public static final String UPDATED_RESOURCE_NAME = "new_resource_name";
-  public static final String UPDATED_RESOURCE_NAME_2 = "another_resource_name";
-
-  public static final String UPDATED_DESCRIPTION = "A bucket with a hole in it.";
-
   private TestUserSpecification reader;
   private String bucketName;
   private String resourceName;
-  private static final GcpGcsBucketUpdateParameters UPDATE_PARAMETERS_1 = new GcpGcsBucketUpdateParameters()
-      .defaultStorageClass(GcpGcsBucketDefaultStorageClass.NEARLINE)
-      .lifecycle(new GcpGcsBucketLifecycle()
-          .addRulesItem(new GcpGcsBucketLifecycleRule()
-              .action(new GcpGcsBucketLifecycleRuleAction()
-                  .type(GcpGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS)
-                  .storageClass(GcpGcsBucketDefaultStorageClass.ARCHIVE))
-              .condition(new GcpGcsBucketLifecycleRuleCondition()
-                  .age(30)
-                  .createdBefore(OffsetDateTime
-                      .parse("1981-04-20T21:15:30-05:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME))
-                  .live(true)
-                  .numNewerVersions(3)
-                  .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.ARCHIVE))));
-  private static final GcpGcsBucketUpdateParameters UPDATE_PARAMETERS_2 = new GcpGcsBucketUpdateParameters()
-      .defaultStorageClass(GcpGcsBucketDefaultStorageClass.COLDLINE);
 
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
