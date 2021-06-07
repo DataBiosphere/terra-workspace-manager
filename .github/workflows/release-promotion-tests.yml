@@ -34,7 +34,7 @@ jobs:
         run: |
           if ${{ steps.set-env-step.outputs.test-env == 'dev' }}; then
             TEST_SERVER=workspace-dev.json
-            TEST=suites/FullIntegration.json
+            TEST=suites/dev/FullIntegration.json
           elif ${{ steps.set-env-step.outputs.test-env == 'alpha' }}; then
             TEST_SERVER=workspace-alpha.json
             TEST=suites/alpha/FullIntegration.json
