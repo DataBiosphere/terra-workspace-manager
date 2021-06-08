@@ -57,5 +57,4 @@ public class WorkspaceManagerStatusServiceTest extends BaseUnitTest {
     statusService.checkStatus();
     assertFalse(statusService.getCurrentStatus());
   }
-
 }
