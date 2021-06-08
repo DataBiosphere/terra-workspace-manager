@@ -90,10 +90,11 @@ To stop the container:
 Note that the contents of the database is not saved between container runs.
 
 ##### Connecting to the Postgres Container
-Use `psql` to connect to databases within the started database container, e.g. for database `wm` users `wmuser` with password `wmpwd`:
+Use `psql` to connect to databases within the started database container. For database `wsm_db` use user `dbuser` with password `dbpwd` like this:
 ```sh
-PGPASSWORD=wmpwd psql postgresql://127.0.0.1:5432/wm -U wmuser
+PGPASSWORD=dbpwd psql postgresql://127.0.0.1:5432/wsm_db -U dbuser
 ```
+For the Stairway database `wsm_stairway` use user `stairwayuser` with password `stairwaypwd`.
 
 #### Option B: Local Postgres 
 ##### Database Configuration
@@ -198,7 +199,60 @@ Incompatible changes require incrementing the major version number. In our curre
 of development, we are allowing for some incompatible API changes in the feature-locked
 parts of the API without releasing a version `1.0.0`.
 
-### Tips
+## Logging During Test Runs
+
+### Seeing Log Output
+The default logging set in the `build.gradle` file does not show the log messages written
+to the console. The default setup is:
+```
+    testLogging {
+        events = ["passed", "failed", "skipped", "started"]
+    }
+```
+You can add events to the logging so that you see the log details:
+```
+        events = ["passed", "failed", "skipped", "started", "standard_error", "standard_out"]
+```
+
+### Human Readable Logging
+The default log format is a JSON format that presents well in Log Explorer, but is not so
+easy to read. You get human readable logging by setting the `human-readable-logging`
+Spring profile.
+
+You can do this in any of the many ways to provide properties to Spring. A simple way is
+by setting the environment variable as:
+```sh
+export spring_profiles_include=human-readable-logging
+```
+
+### Controlling Log Level
+By default logging at INFO level and above are displayed. You can change the logging level
+by setting yet another Spring property. For example, you can set all things terra to log
+at debug level by adding this to a property YAML file:
+```
+logging.level.bio.terra: debug
+```
+You can be more precise by putting more of the path in. You can use YAML syntax to include
+multiple entries, something like (but I did not test this):
+```shell script
+logging:
+  level:
+    bio:
+      terra:
+        workspace:
+          service:
+            resource:
+              controlled:
+                ControlledGcsBucketResource: debug
+                ControlledBigQueryDatasetResource: warn
+```
+And you can use an environment variable instead of editing a property file.
+
+If you are also using human readable logging, then you can create the file 
+`application-human-readable-logging.yml` and put the logging property in there.
+Spring auto-magically searches for properties files for the active profiles.
+
+## Tips
 - Check out [gdub](https://github.com/gdubw/gdub), it'll save you typing `./gradlew` over
   and over, and also takes care of knowing when you're not in the root directory so you
   don't have to figure out the appropriate number of `../`s. 

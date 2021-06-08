@@ -2,7 +2,6 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.app.configuration.external.VersionConfiguration;
 import bio.terra.workspace.generated.controller.UnauthenticatedApi;
-import bio.terra.workspace.generated.model.ApiSystemStatus;
 import bio.terra.workspace.generated.model.ApiSystemVersion;
 import bio.terra.workspace.service.status.WorkspaceManagerStatusService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,10 +31,11 @@ public class UnauthenticatedApiController implements UnauthenticatedApi {
   }
 
   @Override
-  public ResponseEntity<ApiSystemStatus> serviceStatus() {
-    ApiSystemStatus currentStatus = statusService.getCurrentStatus();
+  public ResponseEntity<Void> serviceStatus() {
     return new ResponseEntity<>(
-        currentStatus, currentStatus.isOk() ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
+        statusService.getCurrentStatus()
+            ? HttpStatus.NO_CONTENT
+            : HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   @Override
