@@ -19,6 +19,7 @@ import bio.terra.workspace.model.CloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.model.CloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.model.ClonedControlledGcpGcsBucket;
 import bio.terra.workspace.model.CloningInstructionsEnum;
+import bio.terra.workspace.model.CloudPlatform;
 import bio.terra.workspace.model.ControlledResourceCommonFields;
 import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
@@ -32,6 +33,9 @@ import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.JobReport.StatusEnum;
 import bio.terra.workspace.model.ManagedBy;
+import bio.terra.workspace.model.ResourceMetadata;
+import bio.terra.workspace.model.ResourceType;
+import bio.terra.workspace.model.StewardshipType;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -84,11 +88,12 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     logger.info("Created destination project {} in workspace {}", projectId, destinationWorkspaceId);
     final String destinationBucketName = "clone-" + nameSuffix;
     // clone the bucket
+    final String clonedBucketDescription = "A cloned bucket";
     final CloneControlledGcpGcsBucketRequest cloneRequest = new CloneControlledGcpGcsBucketRequest()
         .bucketName(destinationBucketName)
         .destinationWorkspaceId(destinationWorkspaceId)
         .name(sourceResourceName)
-        .description("A cloned bucket")
+        .description(clonedBucketDescription)
         .location(null) // use same as src
         .cloningInstructions(CloningInstructionsEnum.DEFINITION)
         .jobControl(new JobControl().id(UUID.randomUUID().toString()));
@@ -122,10 +127,40 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     assertEquals(getWorkspaceId(), clonedBucket.getSourceWorkspaceId());
     assertEquals(sourceBucket.getResourceId(), clonedBucket.getSourceResourceId());
     final CreatedControlledGcpGcsBucket createdBucket = clonedBucket.getBucket();
-    logger.info("Created bucket: {}", createdBucket);
-    final GcpGcsBucketResource createdBucketResource = createdBucket.getGcpBucket();
-    logger.info("Created bucket resource: {}", createdBucketResource);
-    assertEquals(destinationBucketName, createdBucketResource.getAttributes().getBucketName());
+//    logger.info("Created bucket: {}", createdBucket);
+    final GcpGcsBucketResource clonedResource = createdBucket.getGcpBucket();
+    logger.info("Created bucket resource: {}", clonedResource);
+    assertEquals(destinationBucketName, clonedResource.getAttributes().getBucketName());
+    ResourceMetadata clonedResourceMetadata = clonedResource.getMetadata();
+    assertEquals(destinationWorkspaceId, clonedResourceMetadata.getWorkspaceId());
+    assertEquals(sourceResourceName, clonedResourceMetadata.getName());
+    assertEquals(clonedBucketDescription, clonedResourceMetadata.getDescription());
+    final ResourceMetadata sourceMetadata = sourceBucket.getGcpBucket().getMetadata();
+    assertEquals(
+        sourceMetadata.getCloningInstructions(),
+        clonedResourceMetadata.getCloningInstructions());
+    assertEquals(
+        sourceMetadata.getCloudPlatform(),
+        clonedResourceMetadata.getCloudPlatform());
+    assertEquals(
+        ResourceType.GCS_BUCKET,
+        clonedResourceMetadata.getResourceType());
+    assertEquals(
+        StewardshipType.CONTROLLED,
+        clonedResourceMetadata.getStewardshipType());
+    assertEquals(
+        sourceMetadata.getControlledResourceMetadata().getAccessScope(),
+        clonedResourceMetadata.getControlledResourceMetadata().getAccessScope());
+    assertEquals(
+        sourceMetadata.getControlledResourceMetadata().getManagedBy(),
+        clonedResourceMetadata.getControlledResourceMetadata().getManagedBy());
+    assertEquals(
+        sourceMetadata.getControlledResourceMetadata().getPrivateResourceUser(),
+        clonedResourceMetadata.getControlledResourceMetadata().getPrivateResourceUser());
+    assertEquals(
+        CloudPlatform.GCP,
+        clonedResourceMetadata.getCloudPlatform());
+    // TODO: use Google client to fetch bucketInfo to check on creation parameters
   }
 
   private CreatedControlledGcpGcsBucket createBucket(ControlledGcpResourceApi resourceApi, String bucketName, String resourceName)
