@@ -40,7 +40,7 @@ paths:
       operationId: serviceStatus
       tags: [Unauthenticated]
       responses:
-        '204':
+        '200':
           description: Service can process requests
         '500':
           description: |
