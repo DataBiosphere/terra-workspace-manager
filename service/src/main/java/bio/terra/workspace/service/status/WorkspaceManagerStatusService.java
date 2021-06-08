@@ -25,21 +25,21 @@ public class WorkspaceManagerStatusService extends BaseStatusService {
     // Heuristic for database timeout - half of the polling interval
     this.databaseCheckTimeout = configuration.getPollingIntervalSeconds() / 2;
     this.jdbcTemplate = jdbcTemplate;
-    super.registerStatusCheck("CloudSQL", this::isConnectionValid);
+    super.registerStatusCheck("CloudSQL", this::databaseStatus);
     super.registerStatusCheck("Sam", samService::status);
   }
 
-  private Boolean isConnectionValid() {
+  private Boolean databaseStatus() {
     try {
       logger.debug("Checking database connection valid");
-      return jdbcTemplate.getJdbcTemplate().execute(this::testConnection);
+      return jdbcTemplate.getJdbcTemplate().execute(this::isConnectionValid);
     } catch (Exception e) {
       logger.warn("Database status check failed", e);
+      return false;
     }
-    return false;
   }
 
-  private Boolean testConnection(Connection connection) throws SQLException {
+  private Boolean isConnectionValid(Connection connection) throws SQLException {
     return connection.isValid(databaseCheckTimeout);
   }
 }

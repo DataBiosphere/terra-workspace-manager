@@ -29,14 +29,14 @@ public class BaseStatusService {
   private static final int PARALLELISM_THRESHOLD = 1;
   /** cached status */
   private final AtomicBoolean statusOk;
-  /** last time cache was updated */
-  private final Instant lastStatusUpdate;
   /** configuration parameters */
   private final StatusCheckConfiguration configuration;
   /** set of status methods to check */
   private final ConcurrentHashMap<String, Supplier<Boolean>> statusCheckMap;
   /** scheduler */
   private final ScheduledExecutorService scheduler;
+  /** last time cache was updated */
+  private Instant lastStatusUpdate;
 
   public BaseStatusService(StatusCheckConfiguration configuration) {
     this.configuration = configuration;
@@ -75,12 +75,14 @@ public class BaseStatusService {
               logger.warn("Status check exception for " + name, e);
               isOk = false;
             }
-            // If summary is true and we will put it to false, then set it.
-            if (summaryOk.get() && !isOk) {
+            // If not OK, set to summary to false. We only ever go from true -> false
+            // so there are no concurrency issues here.
+            if (!isOk) {
               summaryOk.set(false);
             }
           });
       statusOk.set(summaryOk.get());
+      lastStatusUpdate = Instant.now();
     }
   }
 

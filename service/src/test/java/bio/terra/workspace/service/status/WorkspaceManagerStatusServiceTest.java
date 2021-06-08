@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-class WorkspaceManagerStatusServiceTest extends BaseUnitTest {
+public class WorkspaceManagerStatusServiceTest extends BaseUnitTest {
 
   @MockBean private SamService mockSamService;
 
@@ -24,19 +24,24 @@ class WorkspaceManagerStatusServiceTest extends BaseUnitTest {
   private static final Boolean NOT_OK = false;
 
   private boolean enabledSetting;
+  private int stalenessSetting;
 
   @BeforeEach
-  private void setup() {
+  void setup() {
     // Enable status checking. This won't start the scheduled thread, since that is done
     // post construction, but it allows us to manually test the code.
     enabledSetting = configuration.isEnabled();
     configuration.setEnabled(true);
+
+    // Remember and restore staleness
+    stalenessSetting = configuration.getStalenessThresholdSeconds();
   }
 
   @AfterEach
-  private void teardown() {
-    // Restore the config setting
+  void teardown() {
+    // Restore the config settings
     configuration.setEnabled(enabledSetting);
+    configuration.setStalenessThresholdSeconds(stalenessSetting);
   }
 
   @Test
@@ -47,9 +52,10 @@ class WorkspaceManagerStatusServiceTest extends BaseUnitTest {
   }
 
   @Test
-  void testCriticalFailureNotOk() {
+  void testFailureNotOk() {
     doReturn(NOT_OK).when(mockSamService).status();
     statusService.checkStatus();
     assertFalse(statusService.getCurrentStatus());
   }
+
 }

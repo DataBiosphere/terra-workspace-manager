@@ -90,10 +90,11 @@ To stop the container:
 Note that the contents of the database is not saved between container runs.
 
 ##### Connecting to the Postgres Container
-Use `psql` to connect to databases within the started database container, e.g. for database `wm` users `wmuser` with password `wmpwd`:
+Use `psql` to connect to databases within the started database container. For database `wsm_db` use user `dbuser` with password `dbpwd` like this:
 ```sh
-PGPASSWORD=wmpwd psql postgresql://127.0.0.1:5432/wm -U wmuser
+PGPASSWORD=dbpwd psql postgresql://127.0.0.1:5432/wsm_db -U dbuser
 ```
+For the Stairway database `wsm_stairway` use user `stairwayuser` with password `stairwaypwd`.
 
 #### Option B: Local Postgres 
 ##### Database Configuration
@@ -234,8 +235,25 @@ at debug level by adding this to a property YAML file:
 ```
 logging.level.bio.terra: debug
 ```
-You can be more precise by putting more of the path in. And you can use an environment
-variable instead of editing a property file.
+You can be more precise by putting more of the path in. You can use YAML syntax to include
+multiple entries, something like (but I did not test this):
+```shell script
+logging:
+  level:
+    bio:
+      terra:
+        workspace:
+          service:
+            resource:
+              controlled:
+                ControlledGcsBucketResource: debug
+                ControlledBigQueryDatasetResource: warn
+```
+And you can use an environment variable instead of editing a property file.
+
+If you are also using human readable logging, then you can create the file 
+`application-human-readable-logging.yml` and put the logging property in there.
+Spring auto-magically searches for properties files for the active profiles.
 
 ## Tips
 - Check out [gdub](https://github.com/gdubw/gdub), it'll save you typing `./gradlew` over

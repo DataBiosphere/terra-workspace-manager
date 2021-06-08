@@ -20,7 +20,8 @@ public class StatusCheckConfiguration {
   /**
    * Allowed staleness of cached status check information before the service is marked as not ready.
    * In seconds. For example, if polling interval is 30 seconds, staleness might be set to 65
-   * seconds to allow for one interval to be missed before declaring not ready.
+   * seconds to allow for one interval to be missed before declaring not ready. This value should
+   * always be larger than the polling interval.
    */
   private int stalenessThresholdSeconds;
 

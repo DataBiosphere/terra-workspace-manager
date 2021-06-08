@@ -41,9 +41,11 @@ paths:
       tags: [Unauthenticated]
       responses:
         '204':
-          description: Service is functional
+          description: Service can process requests
         '500':
-          description: Service is broken
+          description: |
+            Service cannot process requests. That might be because dependent services are
+            unavailable, or because there is a problem with the service itself.
   /version:
     get:
       security: []

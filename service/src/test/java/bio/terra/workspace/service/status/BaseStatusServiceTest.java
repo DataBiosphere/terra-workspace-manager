@@ -39,6 +39,8 @@ public class BaseStatusServiceTest extends BaseUnitTest {
     statusService.checkStatus();
     TimeUnit.SECONDS.sleep(STALENESS + 2);
     assertFalse(statusService.getCurrentStatus());
+    statusService.checkStatus();
+    assertTrue(statusService.getCurrentStatus());
   }
 
   private Boolean okStatusCheck() {
