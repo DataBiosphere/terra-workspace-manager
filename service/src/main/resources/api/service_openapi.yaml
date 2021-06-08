@@ -877,7 +877,7 @@ paths:
         '200':
           $ref: '#/components/responses/ClonedControlledGcpGcsBucketResponse'
         '202':
-          $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
+          $ref: '#/components/responses/ClonedControlledGcpGcsBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
