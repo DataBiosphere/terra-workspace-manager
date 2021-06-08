@@ -28,9 +28,13 @@ import bio.terra.workspace.model.GcpGcsBucketCreationParameters;
 import bio.terra.workspace.model.GcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.model.GcpGcsBucketLifecycle;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.JobControl;
+import bio.terra.workspace.model.JobReport;
+import bio.terra.workspace.model.JobReport.StatusEnum;
 import bio.terra.workspace.model.ManagedBy;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
@@ -86,18 +90,41 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
         .name(sourceResourceName)
         .description("A cloned bucket")
         .location(null) // use same as src
-        .cloningInstructions(CloningInstructionsEnum.DEFINITION);
+        .cloningInstructions(CloningInstructionsEnum.DEFINITION)
+        .jobControl(new JobControl().id(UUID.randomUUID().toString()));
 
-    final CloneControlledGcpGcsBucketResult cloneResult = resourceApi.cloneGcsBucket(
+    logger.info("Cloning bucket name {} resource ID {} workspace {} into bucket name {} workspace {}",
+        sourceBucket.getGcpBucket().getMetadata().getName(),
+        sourceBucket.getResourceId(),
+        sourceBucket.getGcpBucket().getMetadata().getWorkspaceId(),
+        destinationBucketName,
+        destinationWorkspaceId);
+    CloneControlledGcpGcsBucketResult cloneResult = resourceApi.cloneGcsBucket(
         cloneRequest,
         sourceBucket.getGcpBucket().getMetadata().getWorkspaceId(),
         sourceBucket.getResourceId());
+    logger.info("Clone result: {}", cloneResult);
+    StatusEnum status = cloneResult.getJobReport().getStatus();
+    while (status.equals(StatusEnum.RUNNING)) {
+      TimeUnit.SECONDS.sleep(5);
+      // get new status
+      cloneResult = resourceApi.getCloneGcsBucketResult(
+          cloneRequest.getDestinationWorkspaceId(),
+          cloneRequest.getJobControl().getId());
+      status = cloneResult.getJobReport().getStatus();
+      logger.info("Clone status is {}", status);
+    }
+    assertEquals(StatusEnum.SUCCEEDED, status);
+    logger.info("Successfully cloned bucket with result {}", cloneResult);
+
     final ClonedControlledGcpGcsBucket clonedBucket = cloneResult.getBucket();
+    logger.info("Cloned bucket: {}", clonedBucket);
     assertEquals(getWorkspaceId(), clonedBucket.getSourceWorkspaceId());
     assertEquals(sourceBucket.getResourceId(), clonedBucket.getSourceResourceId());
     final CreatedControlledGcpGcsBucket createdBucket = clonedBucket.getBucket();
+    logger.info("Created bucket: {}", createdBucket);
     final GcpGcsBucketResource createdBucketResource = createdBucket.getGcpBucket();
-
+    logger.info("Created bucket resource: {}", createdBucketResource);
     assertEquals(destinationBucketName, createdBucketResource.getAttributes().getBucketName());
   }
 

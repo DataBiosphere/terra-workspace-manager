@@ -6,6 +6,8 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
+import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -76,7 +78,16 @@ public class CopyGcsBucketDefinitionStep implements Step {
     final ControlledGcsBucketResource clonedBucket =
         controlledResourceService.createBucket(
             destinationBucket, sourceCreationParameters, iamRoles, userRequest);
-    workingMap.put(JobMapKeys.RESPONSE.getKeyName(), clonedBucket);
+    final ApiCreatedControlledGcpGcsBucket apiCreatedBucket =
+        new ApiCreatedControlledGcpGcsBucket()
+            .gcpBucket(clonedBucket.toApiResource())
+            .resourceId(destinationBucket.getResourceId());
+    final ApiClonedControlledGcpGcsBucket apiBucketResult =
+        new ApiClonedControlledGcpGcsBucket()
+            .bucket(apiCreatedBucket)
+            .sourceWorkspaceId(sourceBucket.getWorkspaceId())
+            .sourceResourceId(sourceBucket.getResourceId());
+    workingMap.put(JobMapKeys.RESPONSE.getKeyName(), apiBucketResult);
     return StepResult.getStepResultSuccess();
   }
 

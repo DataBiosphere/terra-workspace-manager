@@ -226,6 +226,14 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   }
 
   @Override
+  public ResponseEntity<ApiCloneControlledGcpGcsBucketResult> getCloneGcsBucketResult(
+      UUID workspaceId, String jobId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ApiCloneControlledGcpGcsBucketResult result = fetchCloneGcsBucketResult(jobId, userRequest);
+    return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
+  }
+
+  @Override
   public ResponseEntity<ApiGcpBigQueryDatasetResource> getBigQueryDataset(
       UUID workspaceId, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
