@@ -33,9 +33,7 @@ public class UnauthenticatedApiController implements UnauthenticatedApi {
   @Override
   public ResponseEntity<Void> serviceStatus() {
     return new ResponseEntity<>(
-        statusService.getCurrentStatus()
-            ? HttpStatus.NO_CONTENT
-            : HttpStatus.INTERNAL_SERVER_ERROR);
+        statusService.getCurrentStatus() ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   @Override
