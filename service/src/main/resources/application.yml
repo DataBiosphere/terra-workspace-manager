@@ -45,7 +45,7 @@ workspace:
     terra: ${env.urls.terra-datarepo}
   ingress:
     # Default value that's overridden by Helm.
-    domain-name: http://localhost:8080
+    domain-name: localhost:8080
 
   job:
     max-threads: 4
@@ -67,7 +67,7 @@ workspace:
     staleness-threshold-seconds: 125
 
   workspace-database:
-    initialize-on-start: ${env.db.init}
+    initialize-on-start: true
     password: ${env.db.ws.pass}
     upgrade-on-start: true
     uri: ${env.db.host}/${env.db.ws.name}
@@ -95,7 +95,7 @@ terra.common:
     in-kubernetes: false
   stairway:
     cluster-name-suffix: workspace-stairway
-    force-clean-start: false # ${env.db.init}
+    force-clean-start: true # ${env.db.init}
     max-parallel-flights: 50
     migrate-upgrade: true
     quiet-down-timeout: 30s

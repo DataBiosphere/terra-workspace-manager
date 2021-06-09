@@ -735,14 +735,9 @@ paths:
           $ref: '#/components/responses/ServerError'
 
 
-  /api/job/v1/jobs/{workspaceId}:
+  /api/job/v1/jobs/{jobId}:
     parameters:
-    - name: workspaceId
-      in: path
-      description: The unique id provided in JobControl to the async endpoint
-      required: true
-      schema:
-        type: string
+    - $ref: '#/components/parameters/JobId'
     get:
       tags:
       - jobs

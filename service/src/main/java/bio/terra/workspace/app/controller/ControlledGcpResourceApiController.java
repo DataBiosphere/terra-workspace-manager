@@ -151,7 +151,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .jobReport(jobResult.getJobReport())
             .errorReport(jobResult.getApiErrorReport());
     return new ResponseEntity<>(
-        response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));
+        response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
   }
 
   @Override
@@ -337,7 +337,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
     ApiCreatedControlledGcpAiNotebookInstanceResult result =
         fetchNotebookInstanceCreateResult(jobId, userRequest);
-    return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
+    return new ResponseEntity<>(
+        result, ControllerUtils.getAsyncResponseCode((result.getJobReport())));
   }
 
   @Override
@@ -346,7 +347,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ApiCreatedControlledGcpAiNotebookInstanceResult result =
         fetchNotebookInstanceCreateResult(jobId, userRequest);
-    return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
+    return new ResponseEntity<>(
+        result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
 
   private ApiCreatedControlledGcpAiNotebookInstanceResult fetchNotebookInstanceCreateResult(
@@ -387,7 +389,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             userRequest);
     ApiDeleteControlledGcpAiNotebookInstanceResult result =
         fetchNotebookInstanceDeleteResult(jobId, userRequest);
-    return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
+    return new ResponseEntity<>(
+        result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
 
   @Override
@@ -396,7 +399,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ApiDeleteControlledGcpAiNotebookInstanceResult result =
         fetchNotebookInstanceDeleteResult(jobId, userRequest);
-    return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
+    return new ResponseEntity<>(
+        result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
 
   private ApiDeleteControlledGcpAiNotebookInstanceResult fetchNotebookInstanceDeleteResult(

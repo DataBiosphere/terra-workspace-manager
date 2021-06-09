@@ -206,16 +206,30 @@ public class JobService {
     String completedDate = null;
     HttpStatus statusCode = HttpStatus.ACCEPTED;
 
-    if (flightState.getCompleted().isPresent()) {
-      FlightMap resultMap = getResultMap(flightState);
-      // The STATUS_CODE return only needs to be used to return alternate success responses.
-      // If it is not present, then we set it to the default OK status.
-      statusCode = resultMap.get(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class);
-      if (statusCode == null) {
-        statusCode = HttpStatus.OK;
-      }
-
+    if (jobStatus != StatusEnum.RUNNING) {
+      // If the job is completed, the JobReport should include a result code. We determine this code
+      // in the following order:
+      // 1. The error code from an error, if one occurred.
+      // 2. The value explicitly stored in JobMapKeys.STATUS_CODE, if one is present.
+      // 3. In any other case, 200.
       completedDate = flightState.getCompleted().get().toString();
+      if (jobStatus == StatusEnum.FAILED) {
+        int errorCode =
+            flightState
+                .getException()
+                .map(e -> ErrorReportUtils.buildApiErrorReport(e).getStatusCode())
+                .orElseThrow(
+                    () ->
+                        new InvalidResultStateException(
+                            "Flight failed with no exception reported"));
+        statusCode = HttpStatus.valueOf(errorCode);
+      } else {
+        FlightMap resultMap = getResultMap(flightState);
+        statusCode = resultMap.get(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class);
+        if (statusCode == null) {
+          statusCode = HttpStatus.OK;
+        }
+      }
     }
 
     ApiJobReport jobReport =
