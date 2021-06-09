@@ -140,13 +140,16 @@ public class CrlService {
   }
 
   /**
-   * Wrap the BigQuery existence check in its own method. That allows unit tests to mock this
+   * Wrap the BigQuery read access check in its own method. That allows unit tests to mock this
    * service and generate an answer without actually touching BigQuery.
+   *
+   * <p>The BigQuery API does not expose a "testIamPermissions" endpoint, so we check that the user
+   * can list the tables of a dataset as a proxy for read access instead.
    *
    * @param projectId Google project id where the dataset is
    * @param datasetName name of the dataset
    * @param userRequest auth info
-   * @return true if the dataset exists
+   * @return true if the user has permission to list the tables of the given dataset
    */
   public boolean canReadBigQueryDataset(
       String projectId, String datasetName, AuthenticatedUserRequest userRequest) {
@@ -201,12 +204,15 @@ public class CrlService {
   }
 
   /**
-   * Wrap the GcsBucket existence check in its own method. That allows unit tests to mock this
-   * service and generate an answer without actually touching CRL
+   * Wrap the GcsBucket read access check in its own method. That allows unit tests to mock this
+   * service and generate an answer without actually touching CRL.
+   *
+   * <p>This checks whether a user has either "storage.objects.get" or "storage.objects.list" on a
+   * GCP bucket. Either of these permissions allow a user to read the contents of a bucket.
    *
    * @param bucketName bucket of interest
    * @param userRequest auth info
-   * @return true if the bucket exists
+   * @return true if the user has permission to read the contents of the provided bucket
    */
   public boolean canReadGcsBucket(String bucketName, AuthenticatedUserRequest userRequest) {
     // Note that some roles grant "get" permissions but not "list", and vice-versa. Either can be

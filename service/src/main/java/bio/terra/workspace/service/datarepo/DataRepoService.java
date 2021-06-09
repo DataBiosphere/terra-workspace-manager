@@ -55,8 +55,12 @@ public class DataRepoService {
     }
   }
 
+  /**
+   * Returns whether or not a given snapshot is readable for a given user. On the TDR side,
+   * retrieveSnapshot requires that a user have read access to the snapshot's data.
+   */
   @Traced
-  public boolean snapshotExists(
+  public boolean snapshotReadable(
       String instanceName, String snapshotId, AuthenticatedUserRequest userReq) {
     RepositoryApi repositoryApi = repositoryApi(instanceName, userReq);
 

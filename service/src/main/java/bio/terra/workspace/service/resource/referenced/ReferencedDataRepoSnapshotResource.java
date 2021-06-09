@@ -109,7 +109,7 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
   @Override
   public boolean checkAccess(FlightBeanBag context, AuthenticatedUserRequest userReq) {
     DataRepoService dataRepoService = context.getDataRepoService();
-    return dataRepoService.snapshotExists(instanceName, snapshotId, userReq);
+    return dataRepoService.snapshotReadable(instanceName, snapshotId, userReq);
   }
 
   public static class Builder {

@@ -67,7 +67,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
   @BeforeEach
   void setup() {
-    doReturn(true).when(mockDataRepoService).snapshotExists(any(), any(), any());
+    doReturn(true).when(mockDataRepoService).snapshotReadable(any(), any(), any());
     workspaceId = createMcTestWorkspace();
     referenceResource = null;
   }
