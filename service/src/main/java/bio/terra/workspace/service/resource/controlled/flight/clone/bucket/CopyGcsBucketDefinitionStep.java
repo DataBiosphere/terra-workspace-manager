@@ -60,9 +60,11 @@ public class CopyGcsBucketDefinitionStep implements Step {
     final UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
-    final CloningInstructions cloningInstructions = Optional.ofNullable(
-            inputParameters.get(ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
-        .orElse(sourceBucket.getCloningInstructions());
+    final CloningInstructions cloningInstructions =
+        Optional.ofNullable(
+                inputParameters.get(
+                    ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
+            .orElse(sourceBucket.getCloningInstructions());
     // get creation parameters together from working map and input map
     // build a create flight
     ControlledGcsBucketResource destinationBucket =
@@ -77,16 +79,13 @@ public class CopyGcsBucketDefinitionStep implements Step {
             sourceBucket.getManagedBy(),
             bucketName);
 
-    final ApiGcpGcsBucketCreationParameters destinationCreationParameters = getDestinationCreationParameters(
-        inputParameters, workingMap);
+    final ApiGcpGcsBucketCreationParameters destinationCreationParameters =
+        getDestinationCreationParameters(inputParameters, workingMap);
 
     final List<ControlledResourceIamRole> iamRoles = getIamRoles(sourceBucket.getAccessScope());
     final ControlledGcsBucketResource clonedBucket =
         controlledResourceService.createBucket(
-            destinationBucket,
-            destinationCreationParameters,
-            iamRoles,
-            userRequest);
+            destinationBucket, destinationCreationParameters, iamRoles, userRequest);
     final ApiCreatedControlledGcpGcsBucket apiCreatedBucket =
         new ApiCreatedControlledGcpGcsBucket()
             .gcpBucket(clonedBucket.toApiResource())
@@ -105,8 +104,8 @@ public class CopyGcsBucketDefinitionStep implements Step {
     final ApiGcpGcsBucketCreationParameters sourceCreationParameters =
         workingMap.get(
             ControlledResourceKeys.CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
-    final Optional<String> suppliedLocation = Optional.ofNullable(
-        inputParameters.get(ControlledResourceKeys.LOCATION, String.class));
+    final Optional<String> suppliedLocation =
+        Optional.ofNullable(inputParameters.get(ControlledResourceKeys.LOCATION, String.class));
 
     // Override the location parameter if it was specified
     if (suppliedLocation.isPresent()) {

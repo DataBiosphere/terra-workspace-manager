@@ -1902,7 +1902,7 @@ components:
         TODO: should we allow setting the destination bucket's cloning
         instructions as well?
       type: object
-      required: []
+      required: [destinationWorkspaceId, jobControl]
       properties:
         destinationWorkspaceId:
           description: ID of workspace to be cloned into

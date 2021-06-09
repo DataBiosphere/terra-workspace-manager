@@ -104,13 +104,13 @@ public class ControlledResourceService {
   public String cloneGcsBucket(
       ControlledGcsBucketResource sourceBucketResource,
       UUID destinationWorkspaceId,
-      ApiCloningInstructionsEnum cloningInstructions, // FIXME
       ApiJobControl jobControl,
-      @Nullable String location,
+      AuthenticatedUserRequest userRequest,
       @Nullable String name,
       @Nullable String description,
       @Nullable String bucketName,
-      AuthenticatedUserRequest userRequest) {
+      @Nullable String location,
+      @Nullable ApiCloningInstructionsEnum cloningInstructions) {
     final String jobDescription =
         String.format(
             "Clone controlled resource %s; id %s; name %s",
@@ -131,7 +131,8 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, description)
             .addParameter(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName)
             .addParameter(ControlledResourceKeys.LOCATION, location)
-            .addParameter(ControlledResourceKeys.CLONING_INSTRUCTIONS,
+            .addParameter(
+                ControlledResourceKeys.CLONING_INSTRUCTIONS,
                 Optional.ofNullable(cloningInstructions)
                     .map(CloningInstructions::fromApiModel)
                     .orElse(null));
