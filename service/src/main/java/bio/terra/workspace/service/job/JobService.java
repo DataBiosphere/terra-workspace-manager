@@ -207,28 +207,32 @@ public class JobService {
     HttpStatus statusCode = HttpStatus.ACCEPTED;
 
     if (jobStatus != StatusEnum.RUNNING) {
-      // If the job is completed, the JobReport should include a result code. We determine this code
-      // in the following order:
-      // 1. The error code from an error, if one occurred.
-      // 2. The value explicitly stored in JobMapKeys.STATUS_CODE, if one is present.
-      // 3. In any other case, 200.
+      // If the job is completed, the JobReport should include a result code indicating success or
+      // failure. For failed jobs, this code is the error code. For successful jobs, this is the
+      // code specified by the flight if present, or a default of 200 if not.
       completedDate = flightState.getCompleted().get().toString();
-      if (jobStatus == StatusEnum.FAILED) {
-        int errorCode =
-            flightState
-                .getException()
-                .map(e -> ErrorReportUtils.buildApiErrorReport(e).getStatusCode())
-                .orElseThrow(
-                    () ->
-                        new InvalidResultStateException(
-                            "Flight failed with no exception reported"));
-        statusCode = HttpStatus.valueOf(errorCode);
-      } else {
-        FlightMap resultMap = getResultMap(flightState);
-        statusCode = resultMap.get(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class);
-        if (statusCode == null) {
-          statusCode = HttpStatus.OK;
-        }
+      switch (jobStatus) {
+        case FAILED:
+          int errorCode =
+              flightState
+                  .getException()
+                  .map(e -> ErrorReportUtils.buildApiErrorReport(e).getStatusCode())
+                  .orElseThrow(
+                      () ->
+                          new InvalidResultStateException(
+                              "Flight failed with no exception reported"));
+          statusCode = HttpStatus.valueOf(errorCode);
+          break;
+        case SUCCEEDED:
+          FlightMap resultMap = getResultMap(flightState);
+          statusCode = resultMap.get(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class);
+          if (statusCode == null) {
+            statusCode = HttpStatus.OK;
+          }
+          break;
+        default:
+          throw new IllegalStateException(
+              "Cannot get status code of flight in unknown state " + jobStatus);
       }
     }
 
