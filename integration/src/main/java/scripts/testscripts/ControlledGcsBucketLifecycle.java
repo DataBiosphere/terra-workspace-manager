@@ -202,15 +202,6 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, readerCannotDeleteBucket.getCode());
     logger.info("Failed to delete bucket {} directly as reader as expected", bucketName);
 
-    // Writer also cannot delete the bucket directly
-    StorageException writerCannotDeleteBucket =
-        assertThrows(
-            StorageException.class,
-            () -> readerStorageClient.get(bucketName).delete(),
-            "Workspace writer was able to delete a bucket directly!");
-    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, writerCannotDeleteBucket.getCode());
-    logger.info("Failed to delete bucket {} directly as writer as expected", bucketName);
-
     // Owner also cannot delete the bucket directly
     StorageException ownerCannotDeleteBucket =
         assertThrows(

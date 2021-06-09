@@ -124,7 +124,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     BlobId blobId = BlobId.of(bucketName, GCS_BLOB_NAME);
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
 
-    // Owner cannot write object to bucket
+    // Workspace owner cannot write object to bucket, this is not their private resource
     StorageException ownerCannotWritePrivateBucket =
         assertThrows(
             StorageException.class,
@@ -151,7 +151,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     assertEquals(createdBlob, retrievedBlob);
     logger.info("Private resource user can read {} from bucket", retrievedBlob.getName());
 
-    // Owner cannot read the bucket contents
+    // Workspace owner cannot read the bucket contents, because it is not their bucket
     StorageException ownerCannotReadPrivateBucket =
         assertThrows(
             StorageException.class,
@@ -173,7 +173,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     privateUserStorageClient.delete(blobId);
     logger.info("Private resource user successfully deleted blob {}", blobId.getName());
 
-    // Owner can delete the bucket through WSM
+    // Workspace owner can delete the bucket through WSM
     var ownerDeleteResult = deleteBucket(workspaceOwnerResourceApi, resourceId);
     logger.info(
         "For owner, delete bucket status is {}",
