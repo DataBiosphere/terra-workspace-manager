@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.referenced;
 
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.DbRetryUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
@@ -22,13 +23,18 @@ public class ReferencedResourceService {
   private final JobService jobService;
   private final ResourceDao resourceDao;
   private final WorkspaceService workspaceService;
+  private final FlightBeanBag beanBag;
 
   @Autowired
   public ReferencedResourceService(
-      JobService jobService, ResourceDao resourceDao, WorkspaceService workspaceService) {
+      JobService jobService,
+      ResourceDao resourceDao,
+      WorkspaceService workspaceService,
+      FlightBeanBag beanBag) {
     this.jobService = jobService;
     this.resourceDao = resourceDao;
     this.workspaceService = workspaceService;
+    this.beanBag = beanBag;
   }
 
   @Traced
@@ -107,7 +113,7 @@ public class ReferencedResourceService {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return DbRetryUtils.throwIfInterrupted(
-        () -> resourceDao.getResource(workspaceId, resourceId).castToReferenceResource());
+        () -> resourceDao.getResource(workspaceId, resourceId).castToReferencedResource());
   }
 
   public ReferencedResource getReferenceResourceByName(
@@ -115,7 +121,7 @@ public class ReferencedResourceService {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return DbRetryUtils.throwIfInterrupted(
-        () -> resourceDao.getResourceByName(workspaceId, name).castToReferenceResource());
+        () -> resourceDao.getResourceByName(workspaceId, name).castToReferencedResource());
   }
 
   public List<ReferencedResource> enumerateReferences(
@@ -124,5 +130,14 @@ public class ReferencedResourceService {
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return DbRetryUtils.throwIfInterrupted(
         () -> resourceDao.enumerateReferences(workspaceId, offset, limit));
+  }
+
+  public boolean checkAccess(UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
+    workspaceService.validateWorkspaceAndAction(
+        userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    ReferencedResource referencedResource =
+        DbRetryUtils.throwIfInterrupted(
+            () -> resourceDao.getResource(workspaceId, resourceId).castToReferencedResource());
+    return referencedResource.checkAccess(beanBag, userReq);
   }
 }
