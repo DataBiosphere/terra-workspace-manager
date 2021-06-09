@@ -41,9 +41,11 @@ import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
+import com.google.api.client.util.DateTime;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.DeleteLifecycleAction;
+import com.google.cloud.storage.BucketInfo.LifecycleRule.SetStorageClassLifecycleAction;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageClass;
 import java.util.List;
@@ -181,11 +183,20 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     final LifecycleRule clonedDeleteRule = destinationGcsBucket.getLifecycleRules().stream()
         .filter(r -> DeleteLifecycleAction.TYPE.equals(r.getAction().getActionType()))
         .findFirst()
-        .orElseThrow(() -> new RuntimeException("Can't find delete rule."));
+        .orElseThrow(() -> new RuntimeException("Can't find Delete lifecycle rule."));
     assertEquals(64, clonedDeleteRule.getCondition().getAge());
     assertTrue(clonedDeleteRule.getCondition().getIsLive());
     assertThat(clonedDeleteRule.getCondition().getMatchesStorageClass(), contains(StorageClass.ARCHIVE));
     assertEquals(2, clonedDeleteRule.getCondition().getNumberOfNewerVersions());
+
+    final LifecycleRule setStorageClassRule = destinationGcsBucket.getLifecycleRules().stream()
+        .filter(r -> SetStorageClassLifecycleAction.TYPE.equals(r.getAction().getActionType()))
+        .findFirst()
+        .orElseThrow(() -> new RuntimeException("Can't find SetStorageClass lifecycle rule."));
+    final SetStorageClassLifecycleAction setStorageClassLifecycleAction = (SetStorageClassLifecycleAction) setStorageClassRule.getAction();
+    assertEquals(StorageClass.NEARLINE, setStorageClassLifecycleAction.getStorageClass());
+    assertEquals(DateTime.parseRfc3339("2007-01-03"), setStorageClassRule.getCondition().getCreatedBefore());
+    assertThat(setStorageClassRule.getCondition().getMatchesStorageClass(), contains(StorageClass.STANDARD));
   }
 
   private CreatedControlledGcpGcsBucket createBucket(ControlledGcpResourceApi resourceApi, String bucketName, String resourceName)
