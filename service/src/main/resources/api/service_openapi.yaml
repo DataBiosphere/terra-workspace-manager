@@ -41,17 +41,11 @@ paths:
       tags: [Unauthenticated]
       responses:
         '200':
-          description: Service is functional
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SystemStatus'
+          description: Service can process requests
         '500':
-          description: Service is broken
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SystemStatus'
+          description: |
+            Service cannot process requests. That might be because dependent services are
+            unavailable, or because there is a problem with the service itself.
   /version:
     get:
       security: []
@@ -1408,26 +1402,6 @@ components:
           type: string
         # TODO: In the future, notification configuration will also be part of JobControl.
 
-    SystemStatus:
-      type: object
-      required: [ok, systems]
-      properties:
-        ok:
-          type: boolean
-          description: status of this service
-        systems:
-          type: object
-          additionalProperties:
-            type: object
-            properties:
-              ok:
-                type: boolean
-              critical:
-                type: boolean
-              messages:
-                type: array
-                items:
-                  type: string
     Name:
       # Note: These format restrictions are enforced by WM, not natively by
       # Swagger.

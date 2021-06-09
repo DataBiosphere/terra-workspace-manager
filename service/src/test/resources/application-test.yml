@@ -12,7 +12,7 @@ workspace:
   stairway-database:
     migrate-upgrade: true
     password: stairwaypwd
-    uri: jdbc:postgresql://127.0.0.1:5432/stairwaylib
+    uri: jdbc:postgresql://127.0.0.1:5432/wsm_stairway
     username: stairwayuser
   status-check:
     # Disable the periodic status check. We mock the Sam service, which is periodically called by
@@ -22,7 +22,7 @@ workspace:
   workspace-database:
     initialize-on-start: true
     password: dbpwd
-    uri: jdbc:postgresql://127.0.0.1:5432/testdb
+    uri: jdbc:postgresql://127.0.0.1:5432/wsm_db
     username: dbuser
 
 terra.common:

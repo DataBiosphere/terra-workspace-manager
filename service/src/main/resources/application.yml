@@ -5,13 +5,13 @@ env:
     host: jdbc:postgresql://${DATABASE_HOSTNAME:127.0.0.1}:5432
     init: ${INIT_DB:false}
     stairway:
-      name: ${STAIRWAY_DATABASE_NAME:stairwaylib}
+      name: ${STAIRWAY_DATABASE_NAME:wsm_stairway}
       pass: ${STAIRWAY_DATABASE_USER_PASSWORD:stairwaypwd}
       user: ${STAIRWAY_DATABASE_USER:stairwayuser}
     ws:
-      name: ${DATABASE_NAME:wm}
-      pass: ${DATABASE_USER_PASSWORD:wmpwd}
-      user: ${DATABASE_USER:wmuser}
+      name: ${DATABASE_NAME:wsm_db}
+      pass: ${DATABASE_USER_PASSWORD:dbpwd}
+      user: ${DATABASE_USER:dbuser}
   tracing:
     exportEnabled: ${CLOUD_TRACE_ENABLED:false}
     samplingRate: ${SAMPLING_PROBABILITY:0}
@@ -61,7 +61,10 @@ workspace:
     username: ${env.db.stairway.user}
 
   status-check:
-    staleness-threshold-ms: 600000
+    enabled: true
+    polling-interval-seconds: 60
+    startup-wait-seconds: 5
+    staleness-threshold-seconds: 125
 
   workspace-database:
     initialize-on-start: ${env.db.init}
