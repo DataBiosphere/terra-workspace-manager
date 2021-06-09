@@ -64,6 +64,7 @@ public class GcsBucketTestFixtures {
                       .live(true)
                       .numNewerVersions(3)
                       .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.ARCHIVE))));
-  public static final GcpGcsBucketUpdateParameters UPDATE_PARAMETERS_2 = new GcpGcsBucketUpdateParameters()
-                                      .defaultStorageClass(GcpGcsBucketDefaultStorageClass.COLDLINE);
+  public static final GcpGcsBucketUpdateParameters UPDATE_PARAMETERS_2 =
+      new GcpGcsBucketUpdateParameters()
+          .defaultStorageClass(GcpGcsBucketDefaultStorageClass.COLDLINE);
 }

@@ -20,12 +20,14 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.CloneControl
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledGcsBucketResourceFlight;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -129,7 +131,10 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, description)
             .addParameter(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName)
             .addParameter(ControlledResourceKeys.LOCATION, location)
-            .addParameter(ControlledResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions);
+            .addParameter(ControlledResourceKeys.CLONING_INSTRUCTIONS,
+                Optional.ofNullable(cloningInstructions)
+                    .map(CloningInstructions::fromApiModel)
+                    .orElse(null));
     return jobBuilder.submit();
   }
 

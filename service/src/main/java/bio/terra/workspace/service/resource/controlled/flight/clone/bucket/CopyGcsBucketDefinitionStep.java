@@ -15,6 +15,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.Collections;
 import java.util.List;
@@ -58,6 +59,10 @@ public class CopyGcsBucketDefinitionStep implements Step {
             .orElseGet(this::randomBucketName);
     final UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+
+    final CloningInstructions cloningInstructions = Optional.ofNullable(
+            inputParameters.get(ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
+        .orElse(sourceBucket.getCloningInstructions());
     // get creation parameters together from working map and input map
     // build a create flight
     ControlledGcsBucketResource destinationBucket =
@@ -66,18 +71,22 @@ public class CopyGcsBucketDefinitionStep implements Step {
             UUID.randomUUID(),
             resourceName,
             description,
-            sourceBucket.getCloningInstructions(),
+            sourceBucket.getCloningInstructions(), // TODO: allow override
             sourceBucket.getAssignedUser().orElse(null),
             sourceBucket.getAccessScope(),
             sourceBucket.getManagedBy(),
             bucketName);
-    final ApiGcpGcsBucketCreationParameters sourceCreationParameters =
-        workingMap.get(
-            ControlledResourceKeys.CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
+
+    final ApiGcpGcsBucketCreationParameters destinationCreationParameters = getDestinationCreationParameters(
+        inputParameters, workingMap);
+
     final List<ControlledResourceIamRole> iamRoles = getIamRoles(sourceBucket.getAccessScope());
     final ControlledGcsBucketResource clonedBucket =
         controlledResourceService.createBucket(
-            destinationBucket, sourceCreationParameters, iamRoles, userRequest);
+            destinationBucket,
+            destinationCreationParameters,
+            iamRoles,
+            userRequest);
     final ApiCreatedControlledGcpGcsBucket apiCreatedBucket =
         new ApiCreatedControlledGcpGcsBucket()
             .gcpBucket(clonedBucket.toApiResource())
@@ -89,6 +98,26 @@ public class CopyGcsBucketDefinitionStep implements Step {
             .sourceResourceId(sourceBucket.getResourceId());
     workingMap.put(JobMapKeys.RESPONSE.getKeyName(), apiBucketResult);
     return StepResult.getStepResultSuccess();
+  }
+
+  private ApiGcpGcsBucketCreationParameters getDestinationCreationParameters(
+      FlightMap inputParameters, FlightMap workingMap) {
+    final ApiGcpGcsBucketCreationParameters sourceCreationParameters =
+        workingMap.get(
+            ControlledResourceKeys.CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
+    final Optional<String> suppliedLocation = Optional.ofNullable(
+        inputParameters.get(ControlledResourceKeys.LOCATION, String.class));
+
+    // Override the location parameter if it was specified
+    if (suppliedLocation.isPresent()) {
+      return new ApiGcpGcsBucketCreationParameters()
+          .defaultStorageClass(sourceCreationParameters.getDefaultStorageClass())
+          .lifecycle(sourceCreationParameters.getLifecycle())
+          .name(sourceCreationParameters.getName())
+          .location(suppliedLocation.get());
+    } else {
+      return sourceCreationParameters;
+    }
   }
 
   @Override
