@@ -157,7 +157,8 @@ public class CrlService {
       createBigQueryCow(userRequest).tables().list(projectId, datasetName).execute();
       return true;
     } catch (GoogleJsonResponseException ex) {
-      if (ex.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+      if (ex.getStatusCode() == HttpStatus.SC_NOT_FOUND
+          || ex.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
         return false;
       }
       throw new InvalidReferenceException("Error while trying to access BigQuery dataset", ex);

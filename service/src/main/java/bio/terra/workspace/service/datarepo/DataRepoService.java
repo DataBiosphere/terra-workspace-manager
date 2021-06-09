@@ -7,7 +7,6 @@ import bio.terra.datarepo.client.ApiClient;
 import bio.terra.datarepo.client.ApiException;
 import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
 import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
-import bio.terra.workspace.service.datarepo.exception.DataRepoAuthorizationException;
 import bio.terra.workspace.service.datarepo.exception.DataRepoInternalServerErrorException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -69,11 +68,11 @@ public class DataRepoService {
       logger.info("Retrieved snapshotId {} on Data Repo instance {}", snapshotId, instanceName);
       return true;
     } catch (ApiException e) {
-      if (e.getCode() == HttpStatus.NOT_FOUND.value()) {
+      // TDR uses 401 (rather than 403) to indicate "user does not have permission", so we check for
+      // UNAUTHORIZED here instead of FORBIDDEN.
+      if (e.getCode() == HttpStatus.NOT_FOUND.value()
+          || e.getCode() == HttpStatus.UNAUTHORIZED.value()) {
         return false;
-      } else if (e.getCode() == HttpStatus.UNAUTHORIZED.value()) {
-        throw new DataRepoAuthorizationException(
-            "Not authorized to access Data Repo", e.getCause());
       } else {
         throw new DataRepoInternalServerErrorException(
             "Data Repo returned the following error: " + e.getMessage(), e.getCause());
