@@ -255,7 +255,11 @@ public class JobService {
     if (resultPath == null) {
       resultPath = "";
     }
-    return Path.of(ingressConfig.getDomainName(), resultPath).toString();
+    // This is a little hacky, but GCP rejects non-https traffic and a local server does not support
+    // it.
+    String protocol =
+        ingressConfig.getDomainName().startsWith("localhost") ? "http://" : "https://";
+    return protocol + Path.of(ingressConfig.getDomainName(), resultPath).toString();
   }
 
   private ApiJobReport.StatusEnum getJobStatus(FlightStatus flightStatus) {
