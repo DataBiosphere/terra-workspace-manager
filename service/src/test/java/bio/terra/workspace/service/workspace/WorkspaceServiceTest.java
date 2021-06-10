@@ -80,7 +80,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @BeforeEach
   void setup() throws Exception {
-    doReturn(true).when(dataRepoService).snapshotExists(any(), any(), any());
+    doReturn(true).when(dataRepoService).snapshotReadable(any(), any(), any());
     // By default, allow all spend link calls as authorized. (All other isAuthorized calls return
     // false by Mockito default.
     Mockito.when(

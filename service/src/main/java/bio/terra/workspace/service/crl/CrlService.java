@@ -9,7 +9,6 @@ import bio.terra.cloudres.google.compute.CloudComputeCow;
 import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
-import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.workspace.app.configuration.external.CrlConfiguration;
 import bio.terra.workspace.service.crl.exception.CrlInternalException;
@@ -24,10 +23,12 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
@@ -139,21 +140,25 @@ public class CrlService {
   }
 
   /**
-   * Wrap the BigQuery existence check in its own method. That allows unit tests to mock this
+   * Wrap the BigQuery read access check in its own method. That allows unit tests to mock this
    * service and generate an answer without actually touching BigQuery.
+   *
+   * <p>The BigQuery API does not expose a "testIamPermissions" endpoint, so we check that the user
+   * can list the tables of a dataset as a proxy for read access instead.
    *
    * @param projectId Google project id where the dataset is
    * @param datasetName name of the dataset
    * @param userRequest auth info
-   * @return true if the dataset exists
+   * @return true if the user has permission to list the tables of the given dataset
    */
-  public boolean bigQueryDatasetExists(
+  public boolean canReadBigQueryDataset(
       String projectId, String datasetName, AuthenticatedUserRequest userRequest) {
     try {
-      createBigQueryCow(userRequest).datasets().get(projectId, datasetName).execute();
+      createBigQueryCow(userRequest).tables().list(projectId, datasetName).execute();
       return true;
     } catch (GoogleJsonResponseException ex) {
-      if (ex.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+      if (ex.getStatusCode() == HttpStatus.SC_NOT_FOUND
+          || ex.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
         return false;
       }
       throw new InvalidReferenceException("Error while trying to access BigQuery dataset", ex);
@@ -200,17 +205,25 @@ public class CrlService {
   }
 
   /**
-   * Wrap the GcsBucket existence check in its own method. That allows unit tests to mock this
-   * service and generate an answer without actually touching CRL
+   * Wrap the GcsBucket read access check in its own method. That allows unit tests to mock this
+   * service and generate an answer without actually touching CRL.
+   *
+   * <p>This checks whether a user has either "storage.objects.get" or "storage.objects.list" on a
+   * GCP bucket. Either of these permissions allow a user to read the contents of a bucket.
    *
    * @param bucketName bucket of interest
    * @param userRequest auth info
-   * @return true if the bucket exists
+   * @return true if the user has permission to read the contents of the provided bucket
    */
-  public boolean gcsBucketExists(String bucketName, AuthenticatedUserRequest userRequest) {
+  public boolean canReadGcsBucket(String bucketName, AuthenticatedUserRequest userRequest) {
+    // Note that some roles grant "get" permissions but not "list", and vice-versa. Either can be
+    // used to read a bucket's contents, so here we only check that the user has at least one.
+    final List<String> readPermissions =
+        ImmutableList.of("storage.objects.get", "storage.objects.list");
     try {
-      BucketCow bucket = createStorageCow(null, userRequest).get(bucketName);
-      return (bucket != null);
+      StorageCow storage = createStorageCow(null, userRequest);
+      List<Boolean> hasPermissionsList = storage.testIamPermissions(bucketName, readPermissions);
+      return hasPermissionsList.contains(true);
     } catch (StorageException e) {
       throw new InvalidReferenceException(
           String.format("Error while trying to access GCS bucket %s", bucketName), e);

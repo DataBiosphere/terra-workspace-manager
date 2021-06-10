@@ -2,10 +2,13 @@ package bio.terra.workspace.service.resource.referenced;
 
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
+import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -88,6 +91,12 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
       throw new MissingRequiredFieldException("Missing required field for ReferenceGcsBucket.");
     }
     ValidationUtils.validateBucketName(getBucketName());
+  }
+
+  @Override
+  public boolean checkAccess(FlightBeanBag context, AuthenticatedUserRequest userReq) {
+    CrlService crlService = context.getCrlService();
+    return crlService.canReadGcsBucket(bucketName, userReq);
   }
 
   public static Builder builder() {
