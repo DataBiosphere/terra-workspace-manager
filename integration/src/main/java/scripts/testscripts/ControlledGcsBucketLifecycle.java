@@ -271,18 +271,14 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, readerCannotDeleteBucket.getCode());
     logger.info("Failed to delete bucket {} directly as reader as expected", bucketName);
 
-    // TODO(PF-633): Owners and writers can actually delete buckets due to workspace-level roles
-    //  included as a temporary workaround. This needs to be removed as we transition onto WSM
-    //  controlled resources.
-
-    // // Owner also cannot delete the bucket directly
-    // StorageException ownerCannotDeleteBucket =
-    //     assertThrows(
-    //         StorageException.class,
-    //         () -> ownerStorageClient.get(bucketName).delete(),
-    //         "Workspace owner was able to delete a bucket directly!");
-    // assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, ownerCannotDeleteBucket.getCode());
-    // logger.info("Failed to delete bucket {} directly as owner as expected", bucketName);
+    // Owner also cannot delete the bucket directly
+    StorageException ownerCannotDeleteBucket =
+        assertThrows(
+            StorageException.class,
+            () -> ownerStorageClient.get(bucketName).delete(),
+            "Workspace owner was able to delete a bucket directly!");
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, ownerCannotDeleteBucket.getCode());
+    logger.info("Failed to delete bucket {} directly as owner as expected", bucketName);
 
     // Owner can delete the bucket through WSM
     ResourceMaker.deleteControlledGcsBucket(resourceId, getWorkspaceId(), resourceApi);

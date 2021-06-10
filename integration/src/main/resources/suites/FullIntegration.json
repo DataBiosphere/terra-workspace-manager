@@ -15,7 +15,8 @@
     "integration/PrivateControlledAiNotebookInstanceLifecycle.json",
     "integration/EnumerateResources.json",
     "integration/DeleteGcpContextWithControlledResource.json",
-    "integration/DeleteWorkspaceWithControlledResource.json"
+    "integration/DeleteWorkspaceWithControlledResource.json",
+    "integration/ValidateReferencedResources.json"
   ]
 }
 

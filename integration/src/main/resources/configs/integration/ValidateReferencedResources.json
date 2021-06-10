@@ -1,0 +1,18 @@
+{
+  "name": "ValidateReferencedResources",
+  "description": "Exercise reference access validation over all resource types",
+  "serverSpecificationFile": "workspace-dev.json",
+  "kubernetes": {},
+  "application": {},
+  "testScripts": [
+    {
+      "name": "ValidateReferencedResources",
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 2,
+      "expectedTimeForEach": 5,
+      "expectedTimeForEachUnit": "MINUTES",
+      "parameters": ["wm-default-spend-profile", "97b5559a-2f8f-4df3-89ae-5a249173ee0c", "terra"]
+    }
+  ],
+  "testUserFiles": ["bella.json", "elijah.json"]
+}

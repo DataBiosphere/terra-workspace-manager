@@ -2,12 +2,9 @@ package bio.terra.workspace.service.datarepo;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.datarepo.api.RepositoryApi;
-import bio.terra.datarepo.api.UnauthenticatedApi;
 import bio.terra.datarepo.client.ApiClient;
 import bio.terra.datarepo.client.ApiException;
 import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
-import bio.terra.workspace.generated.model.ApiSystemStatusSystems;
-import bio.terra.workspace.service.datarepo.exception.DataRepoAuthorizationException;
 import bio.terra.workspace.service.datarepo.exception.DataRepoInternalServerErrorException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -55,8 +52,12 @@ public class DataRepoService {
     }
   }
 
+  /**
+   * Returns whether or not a given snapshot is readable for a given user. On the TDR side,
+   * retrieveSnapshot requires that a user have read access to the snapshot's data.
+   */
   @Traced
-  public boolean snapshotExists(
+  public boolean snapshotReadable(
       String instanceName, String snapshotId, AuthenticatedUserRequest userReq) {
     RepositoryApi repositoryApi = repositoryApi(instanceName, userReq);
 
@@ -65,30 +66,15 @@ public class DataRepoService {
       logger.info("Retrieved snapshotId {} on Data Repo instance {}", snapshotId, instanceName);
       return true;
     } catch (ApiException e) {
-      if (e.getCode() == HttpStatus.NOT_FOUND.value()) {
+      // TDR uses 401 (rather than 403) to indicate "user does not have permission", so we check for
+      // UNAUTHORIZED here instead of FORBIDDEN.
+      if (e.getCode() == HttpStatus.NOT_FOUND.value()
+          || e.getCode() == HttpStatus.UNAUTHORIZED.value()) {
         return false;
-      } else if (e.getCode() == HttpStatus.UNAUTHORIZED.value()) {
-        throw new DataRepoAuthorizationException(
-            "Not authorized to access Data Repo", e.getCause());
       } else {
         throw new DataRepoInternalServerErrorException(
             "Data Repo returned the following error: " + e.getMessage(), e.getCause());
       }
-    }
-  }
-
-  public ApiSystemStatusSystems status(String instanceUrl) {
-    UnauthenticatedApi unauthenticatedApi =
-        new UnauthenticatedApi(new ApiClient().setBasePath(instanceUrl));
-    try {
-      // TDR serviceStatus method returns cleanly on a 200 response and throws an error otherwise,
-      // no other information is available through this endpoint.
-      unauthenticatedApi.serviceStatus();
-      return new ApiSystemStatusSystems().ok(true);
-    } catch (ApiException nonOkStatusException) {
-      return new ApiSystemStatusSystems()
-          .ok(false)
-          .addMessagesItem(nonOkStatusException.getResponseBody());
     }
   }
 }

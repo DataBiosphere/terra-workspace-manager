@@ -132,7 +132,7 @@ public abstract class WsmResource {
     }
   }
 
-  public ReferencedResource castToReferenceResource() {
+  public ReferencedResource castToReferencedResource() {
     if (getStewardshipType() != StewardshipType.REFERENCED) {
       throw new InvalidMetadataException("Resource is not a referenced resource");
     }

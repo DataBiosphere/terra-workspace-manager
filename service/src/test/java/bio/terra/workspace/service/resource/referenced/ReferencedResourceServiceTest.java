@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.referenced;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
@@ -40,8 +41,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Tag("unit")
-class ReferenceResourceServiceTest extends BaseUnitTest {
-  private static final Logger logger = LoggerFactory.getLogger(ReferenceResourceServiceTest.class);
+class ReferencedResourceServiceTest extends BaseUnitTest {
+  private static final Logger logger = LoggerFactory.getLogger(ReferencedResourceServiceTest.class);
   private static final String DATA_REPO_INSTANCE_NAME = "terra";
   private static final String FAKE_PROJECT_ID = "fakeprojecctid";
 
@@ -66,7 +67,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
 
   @BeforeEach
   void setup() {
-    doReturn(true).when(mockDataRepoService).snapshotExists(any(), any(), any());
+    doReturn(true).when(mockDataRepoService).snapshotReadable(any(), any(), any());
     workspaceId = createMcTestWorkspace();
     referenceResource = null;
   }
@@ -227,6 +228,10 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
           resultReferenceResource.castToDataRepoSnapshotResource();
       assertThat(resource, equalTo(resultResource));
 
+      assertTrue(
+          referenceResourceService.checkAccess(
+              workspaceId, referenceResource.getResourceId(), USER_REQUEST));
+
       ReferencedResource byid =
           referenceResourceService.getReferenceResource(
               workspaceId, resource.getResourceId(), USER_REQUEST);
@@ -319,7 +324,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
       @BeforeEach
       void setup() throws Exception {
         // Make the Verify step always succeed
-        doReturn(true).when(mockCrlService).gcsBucketExists(any(), any());
+        doReturn(true).when(mockCrlService).canReadGcsBucket(any(), any());
       }
 
       private ReferencedGcsBucketResource makeGcsBucketResource() {
@@ -348,6 +353,10 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
         ReferencedGcsBucketResource resultResource =
             resultReferenceResource.castToGcsBucketResource();
         assertThat(resource, equalTo(resultResource));
+
+        assertTrue(
+            referenceResourceService.checkAccess(
+                workspaceId, referenceResource.getResourceId(), USER_REQUEST));
 
         ReferencedResource byid =
             referenceResourceService.getReferenceResource(
@@ -413,7 +422,7 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
       @BeforeEach
       void setup() throws Exception {
         // Make the Verify step always succeed
-        doReturn(true).when(mockCrlService).bigQueryDatasetExists(any(), any(), any());
+        doReturn(true).when(mockCrlService).canReadBigQueryDataset(any(), any(), any());
       }
 
       private ReferencedBigQueryDatasetResource makeBigQueryResource() {
@@ -444,6 +453,10 @@ class ReferenceResourceServiceTest extends BaseUnitTest {
         ReferencedBigQueryDatasetResource resultResource =
             resultReferenceResource.castToBigQueryDatasetResource();
         assertThat(resource, equalTo(resultResource));
+
+        assertTrue(
+            referenceResourceService.checkAccess(
+                workspaceId, referenceResource.getResourceId(), USER_REQUEST));
 
         ReferencedResource byid =
             referenceResourceService.getReferenceResource(

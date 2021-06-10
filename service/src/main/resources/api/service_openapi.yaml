@@ -41,17 +41,11 @@ paths:
       tags: [Unauthenticated]
       responses:
         '200':
-          description: Service is functional
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SystemStatus'
+          description: Service can process requests
         '500':
-          description: Service is broken
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SystemStatus'
+          description: |
+            Service cannot process requests. That might be because dependent services are
+            unavailable, or because there is a problem with the service itself.
   /version:
     get:
       security: []
@@ -285,7 +279,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-
+  ## END OF DEPRECATED PATHS ##
 
   /api/workspaces/v1/{workspaceId}/resources:
     parameters:
@@ -312,7 +306,26 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-  ## END OF DEPRECATED PATHS ##
+
+  /api/workspaces/v1/{workspaceId}/resources/referenced/{resourceId}/access:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Check a user's access to a referenced resource
+      operationId: checkReferenceAccess
+      tags: [Resource]
+      responses:
+        '200':
+          $ref: '#/components/responses/CheckReferenceAccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots:
     parameters:
@@ -1389,26 +1402,6 @@ components:
           type: string
         # TODO: In the future, notification configuration will also be part of JobControl.
 
-    SystemStatus:
-      type: object
-      required: [ok, systems]
-      properties:
-        ok:
-          type: boolean
-          description: status of this service
-        systems:
-          type: object
-          additionalProperties:
-            type: object
-            properties:
-              ok:
-                type: boolean
-              critical:
-                type: boolean
-              messages:
-                type: array
-                items:
-                  type: string
     Name:
       # Note: These format restrictions are enforced by WM, not natively by
       # Swagger.
@@ -2403,6 +2396,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ResourceList'
+
+    CheckReferenceAccessResponse:
+      description: Whether the specified reference is accessible or not
+      content:
+        application/json:
+          schema:
+            type: boolean
 
     # Error Responses
     BadRequest:

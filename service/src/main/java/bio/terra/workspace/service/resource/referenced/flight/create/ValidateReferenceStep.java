@@ -5,41 +5,39 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 
-public class CreateReferenceVerifyAccessBigQueryDatasetStep implements Step {
-  private final CrlService crlService;
+public class ValidateReferenceStep implements Step {
 
-  public CreateReferenceVerifyAccessBigQueryDatasetStep(CrlService crlService) {
-    this.crlService = crlService;
+  private final FlightBeanBag beanBag;
+
+  public ValidateReferenceStep(FlightBeanBag beanBag) {
+    this.beanBag = beanBag;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     FlightMap inputMap = flightContext.getInputParameters();
-
+    ReferencedResource referencedResource =
+        inputMap.get(JobMapKeys.REQUEST.getKeyName(), ReferencedResource.class);
     AuthenticatedUserRequest userReq =
         inputMap.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    ReferencedBigQueryDatasetResource referenceResource =
-        inputMap.get(JobMapKeys.REQUEST.getKeyName(), ReferencedBigQueryDatasetResource.class);
-    String projectId = referenceResource.getProjectId();
-    String datasetName = referenceResource.getDatasetName();
 
-    if (!crlService.bigQueryDatasetExists(projectId, datasetName, userReq)) {
+    if (!referencedResource.checkAccess(beanBag, userReq)) {
       throw new InvalidReferenceException(
           String.format(
-              "Could not access BigQuery dataset %s in project %s. Ensure the name and GCP project are correct and that you have access.",
-              datasetName, projectId));
+              "Referenced resource %s was not found or you do not have access. Verify that your reference was correctly defined and that you have access.",
+              referencedResource.getResourceId()));
     }
-
     return StepResult.getStepResultSuccess();
   }
 
+  // This is a read-only step, so there's nothing to undo.
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     return StepResult.getStepResultSuccess();
