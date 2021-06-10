@@ -163,6 +163,13 @@ tasks.withType(Test) {
     environment = [
             'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
     ]
+    testLogging {
+        if (System.getenv('PRINT_STANDARD_STREAMS') == null) {
+            events = ["passed", "failed", "skipped", "started"]
+        } else {
+            events = ["passed", "failed", "skipped", "started", "standard_out", "standard_error"]
+        }
+    }
 }
 
 jacocoTestReport {
@@ -178,14 +185,12 @@ test {
     useJUnitPlatform {
         includeTags "unit"
     }
+    outputs.upToDateWhen { false }
 }
 
 task unitTest(type: Test) {
     useJUnitPlatform {
         includeTags "unit"
-    }
-    testLogging {
-        events = ["passed", "failed", "skipped", "started"]
     }
     outputs.upToDateWhen { false }
     finalizedBy jacocoTestReport
@@ -195,9 +200,6 @@ task connectedTest(type: Test) {
     environment.put('TEST_ENV', System.getenv("TEST_ENV"))
     useJUnitPlatform {
         includeTags "connected"
-    }
-    testLogging {
-        events = ["passed", "failed", "skipped", "started"]
     }
     outputs.upToDateWhen { false }
 }
