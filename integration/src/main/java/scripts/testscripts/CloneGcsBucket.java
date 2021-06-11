@@ -48,6 +48,7 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule.DeleteLifecycleAction;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.SetStorageClassLifecycleAction;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageClass;
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -127,30 +128,27 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
         cloneRequest,
         sourceBucket.getGcpBucket().getMetadata().getWorkspaceId(),
         sourceBucket.getResourceId());
-//    logger.info("Clone result: {}", cloneResult);
-    StatusEnum status = cloneResult.getJobReport().getStatus();
-    while (status.equals(StatusEnum.RUNNING)) {
-      TimeUnit.SECONDS.sleep(5);
-      // get new status
-      cloneResult = resourceApi.getCloneGcsBucketResult(
-          cloneRequest.getDestinationWorkspaceId(),
-          cloneRequest.getJobControl().getId());
-      status = cloneResult.getJobReport().getStatus();
-      logger.info("Clone status is {}", status);
-    }
-    assertEquals(StatusEnum.SUCCEEDED, status);
+
+    cloneResult = ClientTestUtils.pollWhileRunning(
+        cloneResult,
+        () -> resourceApi.getCloneGcsBucketResult(
+            cloneRequest.getDestinationWorkspaceId(),
+            cloneRequest.getJobControl().getId()),
+        CloneControlledGcpGcsBucketResult::getJobReport,
+        Duration.ofSeconds(5));
+
+    assertEquals(StatusEnum.SUCCEEDED, cloneResult.getJobReport().getStatus());
     logger.info("Successfully cloned bucket with result {}", cloneResult);
 
     final ClonedControlledGcpGcsBucket clonedBucket = cloneResult.getBucket();
-//    logger.info("Cloned bucket: {}", clonedBucket);
     assertEquals(getWorkspaceId(), clonedBucket.getSourceWorkspaceId());
     assertEquals(sourceBucket.getResourceId(), clonedBucket.getSourceResourceId());
+
     final CreatedControlledGcpGcsBucket createdBucket = clonedBucket.getBucket();
-//    logger.info("Created bucket: {}", createdBucket);
     final GcpGcsBucketResource clonedResource = createdBucket.getGcpBucket();
-//    logger.info("Created bucket resource: {}", clonedResource);
+
     assertEquals(destinationBucketName, clonedResource.getAttributes().getBucketName());
-    ResourceMetadata clonedResourceMetadata = clonedResource.getMetadata();
+    final ResourceMetadata clonedResourceMetadata = clonedResource.getMetadata();
     assertEquals(destinationWorkspaceId, clonedResourceMetadata.getWorkspaceId());
     assertEquals(sourceResourceName, clonedResourceMetadata.getName());
     assertEquals(clonedBucketDescription, clonedResourceMetadata.getDescription());
