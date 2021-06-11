@@ -1955,6 +1955,8 @@ components:
         single response type for all resource clones?
       type: object
       properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
         sourceWorkspaceId:
           description: ID of the workspace of the source resource for this clone
           type: string

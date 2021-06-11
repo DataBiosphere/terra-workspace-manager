@@ -42,17 +42,26 @@ public class CopyGcsBucketDefinitionStep implements Step {
       throws InterruptedException, RetryException {
     final FlightMap inputParameters = flightContext.getInputParameters();
     final FlightMap workingMap = flightContext.getWorkingMap();
-    final String resourceName =
-        Optional.ofNullable(inputParameters.get(ControlledResourceKeys.RESOURCE_NAME, String.class))
-            .orElseGet(
-                () -> workingMap.get(ControlledResourceKeys.PREVIOUS_RESOURCE_NAME, String.class));
-    final String description =
+    final CloningInstructions cloningInstructions =
         Optional.ofNullable(
-                inputParameters.get(ControlledResourceKeys.RESOURCE_DESCRIPTION, String.class))
-            .orElseGet(
-                () ->
-                    workingMap.get(
-                        ControlledResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION, String.class));
+                inputParameters.get(
+                    ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
+            .orElse(sourceBucket.getCloningInstructions());
+    if (CloningInstructions.COPY_NOTHING.equals(cloningInstructions)) {
+      return StepResult.getStepResultSuccess();
+    }
+    final String resourceName =
+        getSuppliedOrPreviousValue(
+            flightContext,
+            ControlledResourceKeys.RESOURCE_NAME,
+            ControlledResourceKeys.PREVIOUS_RESOURCE_NAME,
+            String.class);
+    final String description =
+        getSuppliedOrPreviousValue(
+            flightContext,
+            ControlledResourceKeys.RESOURCE_DESCRIPTION,
+            ControlledResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
+            String.class);
     final String bucketName =
         Optional.ofNullable(
                 inputParameters.get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class))
@@ -60,20 +69,15 @@ public class CopyGcsBucketDefinitionStep implements Step {
     final UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
-    final CloningInstructions cloningInstructions =
-        Optional.ofNullable(
-                inputParameters.get(
-                    ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
-            .orElse(sourceBucket.getCloningInstructions());
     // get creation parameters together from working map and input map
     // build a create flight
-    ControlledGcsBucketResource destinationBucket =
+    ControlledGcsBucketResource destinationBucketResource =
         new ControlledGcsBucketResource(
             destinationWorkspaceId,
             UUID.randomUUID(),
             resourceName,
             description,
-            sourceBucket.getCloningInstructions(), // TODO: allow override
+            cloningInstructions,
             sourceBucket.getAssignedUser().orElse(null),
             sourceBucket.getAccessScope(),
             sourceBucket.getManagedBy(),
@@ -83,20 +87,42 @@ public class CopyGcsBucketDefinitionStep implements Step {
         getDestinationCreationParameters(inputParameters, workingMap);
 
     final List<ControlledResourceIamRole> iamRoles = getIamRoles(sourceBucket.getAccessScope());
+
+    // Launch a CreateControlledResourcesFlight to make the destination bucket
     final ControlledGcsBucketResource clonedBucket =
         controlledResourceService.createBucket(
-            destinationBucket, destinationCreationParameters, iamRoles, userRequest);
+            destinationBucketResource, destinationCreationParameters, iamRoles, userRequest);
+    // TODO: create new type & use it here
     final ApiCreatedControlledGcpGcsBucket apiCreatedBucket =
         new ApiCreatedControlledGcpGcsBucket()
             .gcpBucket(clonedBucket.toApiResource())
-            .resourceId(destinationBucket.getResourceId());
+            .resourceId(destinationBucketResource.getResourceId());
+    // todo: bundle everything so it doesn't use API types here.
     final ApiClonedControlledGcpGcsBucket apiBucketResult =
         new ApiClonedControlledGcpGcsBucket()
+            .effectiveCloningInstructions(cloningInstructions.toApiModel())
             .bucket(apiCreatedBucket)
             .sourceWorkspaceId(sourceBucket.getWorkspaceId())
             .sourceResourceId(sourceBucket.getResourceId());
     workingMap.put(JobMapKeys.RESPONSE.getKeyName(), apiBucketResult);
     return StepResult.getStepResultSuccess();
+  }
+
+  /**
+   * Get a supplied input value from input parameters, or, if that's missing, a default (previous)
+   * value from the working map, or null.
+   *
+   * @param flightContext - context object for the flight, used to get the input & working maps
+   * @param suppliedKey - key in input parameters for the supplied (override) value
+   * @param previousKey - key in the working map for the previous value
+   * @param klass - class of the value, e.g. String.class
+   * @param <T> - type parameter corresponding to the klass
+   * @return - a value from one of the two sources, or null
+   */
+  private <T> T getSuppliedOrPreviousValue(
+      FlightContext flightContext, String suppliedKey, String previousKey, Class<T> klass) {
+    return Optional.ofNullable(flightContext.getInputParameters().get(suppliedKey, klass))
+        .orElse(flightContext.getWorkingMap().get(previousKey, klass));
   }
 
   private ApiGcpGcsBucketCreationParameters getDestinationCreationParameters(

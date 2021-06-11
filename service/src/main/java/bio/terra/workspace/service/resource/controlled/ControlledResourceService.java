@@ -101,16 +101,35 @@ public class ControlledResourceService {
     return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
   }
 
+  /**
+   * Clone a GCS Bucket to another workspace.
+   *
+   * @param sourceBucketResource - original bucket controlled resouce
+   * @param destinationWorkspaceId - workspace ID to clone into
+   * @param jobControl - job service control structure
+   * @param userRequest - incoming request
+   * @param destinationResourceName - override value for resource name. Re-uses previous name if
+   *     null
+   * @param destinationDescription - override value for resource description. Re-uses previous value
+   *     if null
+   * @param destinationBucketName - GCS bucket name for cloned bucket. If null, a random name will
+   *     be generated
+   * @param destinationLocation - location string for the destination bucket. If null, the source
+   *     bucket's location will be used.
+   * @param cloningInstructionsOverride - cloning instructions for this operation. If null, the
+   *     source bucket's cloning instructions will be honored.
+   * @return - Job ID of submitted flight
+   */
   public String cloneGcsBucket(
       ControlledGcsBucketResource sourceBucketResource,
       UUID destinationWorkspaceId,
       ApiJobControl jobControl,
       AuthenticatedUserRequest userRequest,
-      @Nullable String name,
-      @Nullable String description,
-      @Nullable String bucketName,
-      @Nullable String location,
-      @Nullable ApiCloningInstructionsEnum cloningInstructions) {
+      @Nullable String destinationResourceName,
+      @Nullable String destinationDescription,
+      @Nullable String destinationBucketName,
+      @Nullable String destinationLocation,
+      @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
     final String jobDescription =
         String.format(
             "Clone controlled resource %s; id %s; name %s",
@@ -127,13 +146,13 @@ public class ControlledResourceService {
                 sourceBucketResource,
                 userRequest)
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
-            .addParameter(ControlledResourceKeys.RESOURCE_NAME, name)
-            .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, description)
-            .addParameter(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName)
-            .addParameter(ControlledResourceKeys.LOCATION, location)
+            .addParameter(ControlledResourceKeys.RESOURCE_NAME, destinationResourceName)
+            .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
+            .addParameter(ControlledResourceKeys.DESTINATION_BUCKET_NAME, destinationBucketName)
+            .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
             .addParameter(
                 ControlledResourceKeys.CLONING_INSTRUCTIONS,
-                Optional.ofNullable(cloningInstructions)
+                Optional.ofNullable(cloningInstructionsOverride)
                     .map(CloningInstructions::fromApiModel)
                     .orElse(null));
     return jobBuilder.submit();

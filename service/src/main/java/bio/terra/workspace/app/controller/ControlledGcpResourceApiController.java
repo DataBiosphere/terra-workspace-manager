@@ -1,13 +1,15 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.utils.ControllerUtils;
-import bio.terra.workspace.common.utils.IamUtils;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
@@ -32,6 +34,7 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
@@ -40,12 +43,15 @@ import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.slf4j.Logger;
@@ -104,7 +110,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .bucketName(body.getGcsBucket().getName())
             .build();
 
-    List<ControlledResourceIamRole> privateRoles = IamUtils.privateRolesFromBody(body.getCommon());
+    List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
 
     final ControlledGcsBucketResource createdBucket =
         controlledResourceService.createBucket(
@@ -176,6 +182,10 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResource resource =
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+    if (resource.getResourceType() != WsmResourceType.GCS_BUCKET) {
+      throw new InvalidControlledResourceException(
+          String.format("Resource %s is not a GCS Bucket", resourceId));
+    }
     final ControlledGcsBucketResource bucketResource = resource.castToGcsBucketResource();
     controlledResourceService.updateGcsBucket(
         bucketResource,
@@ -193,6 +203,10 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   public ResponseEntity<ApiCloneControlledGcpGcsBucketResult> cloneGcsBucket(
       UUID workspaceId, UUID resourceId, @Valid ApiCloneControlledGcpGcsBucketRequest body) {
     logger.info("Cloning GCS bucket resourceId {} workspaceId {}", resourceId, workspaceId);
+    if (ApiCloningInstructionsEnum.NOTHING.equals(body.getCloningInstructions())) {
+      // nothing to do
+      return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ControlledResource sourceResource =
         controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
@@ -312,7 +326,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .datasetName(body.getDataset().getDatasetId())
             .build();
 
-    List<ControlledResourceIamRole> privateRoles = IamUtils.privateRolesFromBody(body.getCommon());
+    List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
 
     final ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService
@@ -361,7 +375,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .instanceId(body.getAiNotebookInstance().getInstanceId())
             .build();
 
-    List<ControlledResourceIamRole> privateRoles = IamUtils.privateRolesFromBody(body.getCommon());
+    List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
 
     String jobId =
         controlledResourceService.createAiNotebookInstance(
@@ -464,6 +478,36 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
               "Resource %s in workspace %s is not a controlled AI Notebook Instance.",
               resourceId, workspaceId));
     }
+  }
+
+  /**
+   * Extract a list of ControlledResourceIamRoles from the common fields of a controlled resource
+   * request body, and validate that it's shaped appropriately for the specified AccessScopeType.
+   *
+   * <p>Shared access resources must not specify private resource roles. Private access resources
+   * must specify at least one private resource role.
+   */
+  private List<ControlledResourceIamRole> privateRolesFromBody(
+      ApiControlledResourceCommonFields commonFields) {
+    List<ControlledResourceIamRole> privateRoles =
+        Optional.ofNullable(commonFields.getPrivateResourceUser())
+            .map(
+                user ->
+                    user.getPrivateResourceIamRoles().stream()
+                        .map(ControlledResourceIamRole::fromApiModel)
+                        .collect(Collectors.toList()))
+            .orElse(Collections.emptyList());
+    // Validate that we get the private role when the resource is private and do not get it
+    // when the resource is public
+    AccessScopeType accessScope = AccessScopeType.fromApi(commonFields.getAccessScope());
+    if (accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE && privateRoles.isEmpty()) {
+      throw new ValidationException("At least one IAM role is required for private resources");
+    }
+    if (accessScope == AccessScopeType.ACCESS_SCOPE_SHARED && !privateRoles.isEmpty()) {
+      throw new ValidationException(
+          "Private resource IAM roles are not allowed for shared resources");
+    }
+    return privateRoles;
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {

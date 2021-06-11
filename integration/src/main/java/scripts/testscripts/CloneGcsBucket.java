@@ -60,33 +60,35 @@ import scripts.utils.WorkspaceAllocateTestScriptBase;
 public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(CloneGcsBucket.class);
 
-  private TestUserSpecification user;
+  private ControlledGcpResourceApi resourceApi;
+  private CreatedControlledGcpGcsBucket sourceBucket;
+  private String destinationProjectId;
+  private String nameSuffix;
   private String sourceBucketName;
+  private String sourceProjectId;
+  private String sourceResourceName;
+  private UUID destinationWorkspaceId;
 
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
     super.doSetup(testUsers, workspaceApi);
-    // Create a source bucket
-  }
-
-  @Override
-  protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
-      throws Exception {
     // Create the source cloud context
-    String sourceProjectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    sourceProjectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
     logger.info("Created source project {} in workspace {}", sourceProjectId, getWorkspaceId());
-    ControlledGcpResourceApi resourceApi =
-        ClientTestUtils.getControlledGcpResourceClient(testUser, server);
+
+    // Create a source bucket
+    // Create the source cloud context
+    resourceApi = ClientTestUtils.getControlledGcpResourceClient(testUsers.get(0), server);
 
     // create source bucket
-    final String nameSuffix = UUID.randomUUID().toString();
-    final String sourceBucketName = BUCKET_PREFIX + nameSuffix;
-    final String sourceResourceName = RESOURCE_PREFIX + nameSuffix; // TODO: why does this work? I thought hyphens were forbidden.
-    final CreatedControlledGcpGcsBucket sourceBucket = createBucket(resourceApi, sourceBucketName, sourceResourceName);
+    nameSuffix = UUID.randomUUID().toString();
+    sourceBucketName = BUCKET_PREFIX + nameSuffix;
+    sourceResourceName = RESOURCE_PREFIX + nameSuffix;
+    sourceBucket = createBucket(resourceApi, sourceBucketName, sourceResourceName);
 
     // create destination workspace
-    final UUID destinationWorkspaceId = UUID.randomUUID();
+    destinationWorkspaceId = UUID.randomUUID();
     final var requestBody =
         new CreateWorkspaceRequestBody()
             .id(destinationWorkspaceId)
@@ -96,8 +98,13 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     assertThat(workspace.getId(), equalTo(destinationWorkspaceId));
 
     // create destination cloud context
-    String destinationProjectId = CloudContextMaker.createGcpCloudContext(destinationWorkspaceId, workspaceApi);
+    destinationProjectId = CloudContextMaker.createGcpCloudContext(destinationWorkspaceId, workspaceApi);
     logger.info("Created destination project {} in workspace {}", destinationProjectId, destinationWorkspaceId);
+  }
+
+  @Override
+  protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
+      throws Exception {
     final String destinationBucketName = "clone-" + nameSuffix;
     // clone the bucket
     final String clonedBucketDescription = "A cloned bucket";
@@ -110,7 +117,7 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
         .cloningInstructions(CloningInstructionsEnum.DEFINITION)
         .jobControl(new JobControl().id(UUID.randomUUID().toString()));
 
-    logger.info("Cloning bucket name {} resource ID {} workspace {} into bucket name {} workspace {}",
+    logger.info("Cloning bucket name: {} resource ID: {} workspace: {} into bucket name: {} workspace: {}",
         sourceBucket.getGcpBucket().getMetadata().getName(),
         sourceBucket.getResourceId(),
         sourceBucket.getGcpBucket().getMetadata().getWorkspaceId(),
@@ -148,9 +155,7 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     assertEquals(sourceResourceName, clonedResourceMetadata.getName());
     assertEquals(clonedBucketDescription, clonedResourceMetadata.getDescription());
     final ResourceMetadata sourceMetadata = sourceBucket.getGcpBucket().getMetadata();
-    assertEquals(
-        sourceMetadata.getCloningInstructions(),
-        clonedResourceMetadata.getCloningInstructions());
+    assertEquals(CloningInstructionsEnum.DEFINITION, clonedResourceMetadata.getCloningInstructions());
     assertEquals(
         sourceMetadata.getCloudPlatform(),
         clonedResourceMetadata.getCloudPlatform());
