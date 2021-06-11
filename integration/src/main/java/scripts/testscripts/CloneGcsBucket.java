@@ -13,6 +13,7 @@ import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1;
 import static scripts.utils.GcsBucketTestFixtures.RESOURCE_DESCRIPTION;
 import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
+import static scripts.utils.ResourceMaker.makeControlledGcsBucketUserShared;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -84,10 +85,9 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
 
     // create source bucket
     nameSuffix = UUID.randomUUID().toString();
-    sourceBucketName = BUCKET_PREFIX + nameSuffix;
     sourceResourceName = RESOURCE_PREFIX + nameSuffix;
-    sourceBucket = createBucket(resourceApi, sourceBucketName, sourceResourceName);
-
+    sourceBucket = makeControlledGcsBucketUserShared(resourceApi, getWorkspaceId(), sourceResourceName);
+    sourceBucketName = sourceBucket.getGcpBucket().getAttributes().getBucketName();
     // create destination workspace
     destinationWorkspaceId = UUID.randomUUID();
     final var requestBody =
@@ -200,30 +200,5 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     assertEquals(StorageClass.NEARLINE, setStorageClassLifecycleAction.getStorageClass());
     assertEquals(DateTime.parseRfc3339("2007-01-03"), setStorageClassRule.getCondition().getCreatedBefore());
     assertThat(setStorageClassRule.getCondition().getMatchesStorageClass(), contains(StorageClass.STANDARD));
-  }
-
-  private CreatedControlledGcpGcsBucket createBucket(ControlledGcpResourceApi resourceApi, String bucketName, String resourceName)
-    throws ApiException {
-    var creationParameters =
-        new GcpGcsBucketCreationParameters()
-            .name(bucketName)
-            .location(BUCKET_LOCATION)
-            .defaultStorageClass(GcpGcsBucketDefaultStorageClass.STANDARD)
-            .lifecycle(new GcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
-
-    var commonParameters =
-        new ControlledResourceCommonFields()
-            .name(resourceName)
-            .description(RESOURCE_DESCRIPTION)
-            .cloningInstructions(CloningInstructionsEnum.NOTHING)
-            .accessScope(AccessScope.SHARED_ACCESS)
-            .managedBy(ManagedBy.USER);
-
-    var body =
-        new CreateControlledGcpGcsBucketRequestBody()
-            .gcsBucket(creationParameters)
-            .common(commonParameters);
-    logger.info("Attempting to create bucket {} workspace {}", bucketName, getWorkspaceId());
-    return resourceApi.createBucket(body, getWorkspaceId());
   }
 }
