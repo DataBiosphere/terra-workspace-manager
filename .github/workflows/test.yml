@@ -119,6 +119,9 @@ jobs:
       # Run tests
     - name: Run tests
       env:
+        # PRINT_STANDARD_STREAMS is temporary to let us inspect logs for a particular
+        # issue with Stairway serdes.
+        PRINT_STANDARD_STREAMS: please
         TEST_ENV: ${{ steps.set-env-step.outputs.test-env }}
       run: ./gradlew :service:${{ matrix.gradleTask }} --scan
 
