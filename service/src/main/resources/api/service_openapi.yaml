@@ -623,7 +623,7 @@ paths:
         '200':
           $ref: '#/components/responses/CreateCloudContextResultResponse'
         '202':
-          $ref: '#/components/responses/JobReportResponse'
+          $ref: '#/components/responses/CreateCloudContextResultResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
