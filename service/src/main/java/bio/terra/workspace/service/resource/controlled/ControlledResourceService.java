@@ -12,6 +12,7 @@ import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -132,6 +133,13 @@ public class ControlledResourceService {
       @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
     stageService.assertMcWorkspace(destinationWorkspaceId, "cloneGcsBucket");
 
+    // Verify user can read source resource in Sam
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest,
+        sourceBucketResource.getWorkspaceId(),
+        sourceBucketResource.getResourceId(),
+        SamControlledResourceActions.READ_ACTION);
+    // Write access to the target workspace will be established in the create flight
     final String jobDescription =
         String.format(
             "Clone controlled resource %s; id %s; name %s",

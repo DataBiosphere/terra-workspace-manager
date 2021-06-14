@@ -6,6 +6,8 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.exception.EnumNotRecognizedException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
@@ -17,10 +19,12 @@ import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResour
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import com.google.common.collect.ImmutableList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 
 public class CopyGcsBucketDefinitionStep implements Step {
 
@@ -69,12 +73,11 @@ public class CopyGcsBucketDefinitionStep implements Step {
     final UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
-    // get creation parameters together from working map and input map
-    // build a create flight
+    // bucket resource for create flight
     ControlledGcsBucketResource destinationBucketResource =
         new ControlledGcsBucketResource(
             destinationWorkspaceId,
-            UUID.randomUUID(),
+            UUID.randomUUID(), // random ID for new resource
             resourceName,
             description,
             cloningInstructions,
@@ -92,6 +95,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
     final ControlledGcsBucketResource clonedBucket =
         controlledResourceService.createBucket(
             destinationBucketResource, destinationCreationParameters, iamRoles, userRequest);
+
     // TODO: create new type & use it here
     final ApiCreatedControlledGcpGcsBucket apiCreatedBucket =
         new ApiCreatedControlledGcpGcsBucket()
@@ -104,7 +108,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
             .bucket(apiCreatedBucket)
             .sourceWorkspaceId(sourceBucket.getWorkspaceId())
             .sourceResourceId(sourceBucket.getResourceId());
-    workingMap.put(JobMapKeys.RESPONSE.getKeyName(), apiBucketResult);
+    FlightUtils.setResponse(flightContext, apiBucketResult, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }
 
@@ -159,25 +163,29 @@ public class CopyGcsBucketDefinitionStep implements Step {
   }
 
   private String randomBucketName() {
-    return UUID.randomUUID().toString().toLowerCase();
+    return "terra-wsm-" + UUID.randomUUID().toString().toLowerCase();
   }
 
   /**
    * Build the list of IAM roles for this user. If the resource was initially shared, we make the
-   * cloned resource shared as well. If it's private, the user making the clone must be the owner
-   * and becomes EDITOR on the new resource.
+   * cloned resource shared as well. If it's private, the user making the clone must be the resource user
+   * and becomes EDITOR, READER, and WRITER on the new resource.
    *
-   * @param accessScope
-   * @return
+   * @param accessScope - private vs shared access
+   * @return list of IAM roles for the user on the resource
    */
   private List<ControlledResourceIamRole> getIamRoles(AccessScopeType accessScope) {
     switch (accessScope) {
       case ACCESS_SCOPE_SHARED:
         return Collections.emptyList();
       case ACCESS_SCOPE_PRIVATE:
-        return Collections.singletonList(ControlledResourceIamRole.EDITOR);
+        // User owns the cloned private resource completely
+        return List.of(
+            ControlledResourceIamRole.READER,
+            ControlledResourceIamRole.WRITER,
+            ControlledResourceIamRole.EDITOR);
       default:
-        throw new BadRequestException(
+        throw new EnumNotRecognizedException(
             String.format("Access Scope %s is not recognized.", accessScope.toString()));
     }
   }

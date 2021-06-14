@@ -12,7 +12,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Bucket parameters for integration testing. This class has no methods.
+ */
 public class GcsBucketTestFixtures {
+
+  private GcsBucketTestFixtures() {
+  }
 
   public static final GcpGcsBucketLifecycleRule LIFECYCLE_RULE_1 =
       new GcpGcsBucketLifecycleRule()

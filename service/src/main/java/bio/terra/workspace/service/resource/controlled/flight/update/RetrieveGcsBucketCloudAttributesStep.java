@@ -28,6 +28,7 @@ public class RetrieveGcsBucketCloudAttributesStep implements Step {
   private final WorkspaceService workspaceService;
   private final RetrievalMode retrievalMode;
 
+  // TODO: PF-850 - just use creation parameters and remove retrieval mode.
   public enum RetrievalMode {
     UPDATE_PARAMETERS,
     CREATION_PARAMETERS

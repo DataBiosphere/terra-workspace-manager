@@ -6,7 +6,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static scripts.utils.GcsBucketTestFixtures.*;
+import static scripts.utils.GcsBucketTestFixtures.BUCKET_LOCATION;
+import static scripts.utils.GcsBucketTestFixtures.BUCKET_PREFIX;
+import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_CONTENT;
+import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_NAME;
+import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
+import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
+import static scripts.utils.GcsBucketTestFixtures.UPDATED_DESCRIPTION;
+import static scripts.utils.GcsBucketTestFixtures.UPDATED_RESOURCE_NAME;
+import static scripts.utils.GcsBucketTestFixtures.UPDATED_RESOURCE_NAME_2;
+import static scripts.utils.GcsBucketTestFixtures.UPDATE_PARAMETERS_1;
+import static scripts.utils.GcsBucketTestFixtures.UPDATE_PARAMETERS_2;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
