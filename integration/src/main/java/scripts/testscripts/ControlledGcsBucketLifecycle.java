@@ -3,6 +3,7 @@ package scripts.testscripts;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -193,11 +194,21 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceId());
 
     // TODO(PF-643): this should happen inside WSM.
-    logger.info("Waiting 30s for permissions to propagate");
-    TimeUnit.SECONDS.sleep(30);
-
-    // Second user can now read the blob
-    Blob readerRetrievedFile = readerStorageClient.get(blobId);
+    int numTries = 40;
+    Blob readerRetrievedFile = null;
+    while (numTries > 0) {
+      try {
+        // read blob as second user
+        readerRetrievedFile = readerStorageClient.get(blobId);
+        break;
+      } catch (StorageException e) {
+        numTries--;
+        int sleepSeconds = 30;
+        logger.info("Exception \"{}\". Waiting {} seconds for permissions to propagate. Tries remaining: {}", e.getMessage(), sleepSeconds, numTries);
+        TimeUnit.SECONDS.sleep(sleepSeconds);
+      }
+    }
+    assertNotNull(readerRetrievedFile);
     assertEquals(createdFile.getBlobId(), readerRetrievedFile.getBlobId());
     logger.info("Read existing blob {} from bucket as reader", retrievedFile.getBlobId());
 

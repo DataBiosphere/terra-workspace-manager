@@ -1,7 +1,7 @@
 {
   "name": "ControlledGcsBucketLifecycle",
   "description": "CRUD controlled GCS bucket tests.",
-  "serverSpecificationFile": "workspace-dev.json",
+  "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
@@ -9,7 +9,7 @@
       "name": "ControlledGcsBucketLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 2,
-      "expectedTimeForEach": 5,
+      "expectedTimeForEach": 20,
       "expectedTimeForEachUnit": "MINUTES",
       "parameters": ["wm-default-spend-profile"]
     }
