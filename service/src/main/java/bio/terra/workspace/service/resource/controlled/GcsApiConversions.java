@@ -57,7 +57,7 @@ public class GcsApiConversions {
   /**
    * Convert to creation parameters, which is needed for cloning. Very similar to
    * toUpdateParameters(). TODO: standardize on this function and remove the notion of update
-   * parameters, since this largely subsumes that.
+   * parameters, since this largely subsumes that. PF-850
    *
    * @param bucketInfo
    * @return

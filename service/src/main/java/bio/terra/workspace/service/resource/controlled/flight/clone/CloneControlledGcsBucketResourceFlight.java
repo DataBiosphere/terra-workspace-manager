@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
@@ -13,9 +12,10 @@ import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveCon
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveGcsBucketCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveGcsBucketCloudAttributesStep.RetrievalMode;
 
-public class CloneControlledResourceFlight extends Flight {
+public class CloneControlledGcsBucketResourceFlight extends Flight {
 
-  public CloneControlledResourceFlight(FlightMap inputParameters, Object applicationContext) {
+  public CloneControlledGcsBucketResourceFlight(
+      FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     final ControlledResource sourceResource =
@@ -35,28 +35,16 @@ public class CloneControlledResourceFlight extends Flight {
             flightBeanBag.getResourceDao(),
             sourceResource.getWorkspaceId(),
             sourceResource.getResourceId()));
-    switch (sourceResource.getResourceType()) {
-      case GCS_BUCKET:
-        final ControlledGcsBucketResource sourceBucket = sourceResource.castToGcsBucketResource();
-        addStep(
-            new RetrieveGcsBucketCloudAttributesStep(
-                sourceBucket,
-                flightBeanBag.getCrlService(),
-                flightBeanBag.getWorkspaceService(),
-                RetrievalMode.CREATION_PARAMETERS));
-        addStep(
-            new CopyGcsBucketDefinitionStep(
-                userRequest, sourceBucket, flightBeanBag.getControlledResourceService()));
-        //    addStep(new CopyGcsBucketDataStep());
-
-        break;
-      case AI_NOTEBOOK_INSTANCE:
-      case DATA_REPO_SNAPSHOT:
-      case BIG_QUERY_DATASET:
-      default:
-        throw new BadRequestException(
-            String.format(
-                "Clone resource not implemented for type %s", sourceResource.getResourceType()));
-    }
+    final ControlledGcsBucketResource sourceBucket = sourceResource.castToGcsBucketResource();
+    addStep(
+        new RetrieveGcsBucketCloudAttributesStep(
+            sourceBucket,
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getWorkspaceService(),
+            RetrievalMode.CREATION_PARAMETERS));
+    addStep(
+        new CopyGcsBucketDefinitionStep(
+            userRequest, sourceBucket, flightBeanBag.getControlledResourceService()));
+    //    addStep(new CopyGcsBucketDataStep());
   }
 }

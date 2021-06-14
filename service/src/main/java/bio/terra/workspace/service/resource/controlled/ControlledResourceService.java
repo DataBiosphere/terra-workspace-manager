@@ -16,7 +16,7 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceA
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.flight.clone.CloneControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.clone.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledGcsBucketResourceFlight;
@@ -130,10 +130,12 @@ public class ControlledResourceService {
       @Nullable String destinationBucketName,
       @Nullable String destinationLocation,
       @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
+    stageService.assertMcWorkspace(destinationWorkspaceId, "cloneGcsBucket");
+
     final String jobDescription =
         String.format(
             "Clone controlled resource %s; id %s; name %s",
-            ((ControlledResource) sourceBucketResource).getResourceType(),
+            sourceBucketResource.getResourceType(),
             sourceBucketResource.getResourceId(),
             sourceBucketResource.getName());
 
@@ -142,7 +144,7 @@ public class ControlledResourceService {
             .newJob(
                 jobDescription,
                 jobControl.getId(),
-                CloneControlledResourceFlight.class,
+                CloneControlledGcsBucketResourceFlight.class,
                 sourceBucketResource,
                 userRequest)
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)

@@ -109,22 +109,6 @@ public class ResourceMaker {
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucketUserShared(
       ControlledGcpResourceApi resourceApi, UUID workspaceId, String name) throws Exception {
 
-//    GcpGcsBucketLifecycleRule lifecycleRule =
-//        new GcpGcsBucketLifecycleRule()
-//            .action(
-//                new GcpGcsBucketLifecycleRuleAction()
-//                    .type(
-//                        GcpGcsBucketLifecycleRuleActionType
-//                            .DELETE)) // no storage class required for delete actions
-//            .condition(
-//                new GcpGcsBucketLifecycleRuleCondition()
-//                    .age(64)
-//                    .live(true)
-//                    .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.ARCHIVE)
-//                    .numNewerVersions(2));
-
-//    List<GcpGcsBucketLifecycleRule> lifecycleRules = new ArrayList<>(List.of(lifecycleRule));
-
     String bucketName = ClientTestUtils.generateCloudResourceName();
     var body =
         new CreateControlledGcpGcsBucketRequestBody()
