@@ -194,7 +194,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceId());
 
     // TODO(PF-643): this should happen inside WSM.
-    int numTries = 40;
+    int numTries = 20;
     Blob readerRetrievedFile = null;
     while (numTries > 0) {
       try {
