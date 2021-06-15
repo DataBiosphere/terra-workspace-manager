@@ -226,6 +226,18 @@ public class ClientTestUtils {
     return jobReport.getStatus().equals(JobReport.StatusEnum.RUNNING);
   }
 
+  /**
+   * Get a result from a call that might throw an exception. Treat the exception as retryable,
+   * sleep for a specific duration, and retry up to a fixed number of times. This structure
+   * is useful for situations where we are waiting on a cloud IAM permission change to take effect.
+   * @param supplier - code returning the result or throwing an exception
+   * @param numTries - number of times to retry the operation
+   * @param sleepDuration - sleep time between attempts
+   * @param logger - logger instance for updates
+   * @param <T> - type of result
+   * @return - result from supplier, the first time it doesn't throw
+   * @throws InterruptedException
+   */
   public static <T> T getWithRetryOnException(Supplier<T> supplier, int numTries, Duration sleepDuration, Logger logger) throws InterruptedException {
     T result = null;
     while (numTries > 0) {
