@@ -233,12 +233,11 @@ public class ClientTestUtils {
    * @param supplier - code returning the result or throwing an exception
    * @param numTries - number of times to retry the operation
    * @param sleepDuration - sleep time between attempts
-   * @param logger - logger instance for updates
    * @param <T> - type of result
    * @return - result from supplier, the first time it doesn't throw
    * @throws InterruptedException
    */
-  public static <T> T getWithRetryOnException(Supplier<T> supplier, int numTries, Duration sleepDuration, Logger logger) throws InterruptedException {
+  public static <T> T getWithRetryOnException(Supplier<T> supplier, int numTries, Duration sleepDuration) throws InterruptedException {
     T result = null;
     while (numTries > 0) {
       try {

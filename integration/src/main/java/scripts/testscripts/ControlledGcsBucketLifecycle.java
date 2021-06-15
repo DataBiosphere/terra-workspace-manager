@@ -198,8 +198,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
         .getWithRetryOnException(() ->
             readerStorageClient.get(blobId),
             20,
-            Duration.ofSeconds(30),
-            logger);
+            Duration.ofSeconds(30));
     assertNotNull(readerRetrievedFile);
     assertEquals(createdFile.getBlobId(), readerRetrievedFile.getBlobId());
     logger.info("Read existing blob {} from bucket as reader", retrievedFile.getBlobId());
