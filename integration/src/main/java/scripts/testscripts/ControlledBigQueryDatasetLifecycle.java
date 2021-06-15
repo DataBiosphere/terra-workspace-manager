@@ -19,6 +19,7 @@ import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.UpdateControlledResourceRequestBody;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.Field;
@@ -165,8 +166,12 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     assertTrue(
         writerBqClient.delete(TableId.of(projectId, DATASET_NAME, table.getTableId().getTable())));
 
-    // TODO(PF-735): test that neither owners or writers can directly delete the BQ dataset. They
-    //  currently can because of the broad project-level permissions we grant.
+    // Workspace writer cannot delete the dataset directly
+    var writerCannotDeleteException = assertThrows(BigQueryException.class, () -> writerBqClient.delete(DATASET_NAME));
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, writerCannotDeleteException.getCode());
+    // Workspace owner cannot delete the dataset directly
+    var ownerCannotDeleteException = assertThrows(BigQueryException.class, () -> ownerBqClient.delete(DATASET_NAME));
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, ownerCannotDeleteException.getCode());
 
     // Workspace owner can delete the dataset through WSM
     ownerResourceApi.deleteBigQueryDataset(getWorkspaceId(), resourceId);

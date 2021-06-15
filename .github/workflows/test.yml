@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       testEnv:
-        description: 'Environment in which tests should be run. Known to work for local, alpha and staging.'
+        description: 'Environment in which tests should be run. Regardless of how this is set, the tests run against a local Postgres and development Sam'
         required: true
 
 jobs:
@@ -111,12 +111,17 @@ jobs:
       id: config
       uses: ./.github/actions/write-config
       with:
-        target: ${{ steps.set-env-step.outputs.test-env }}
+        # Note that unit and connected tests run with local configuration regardless of
+        # the test-env specified on the workflow-dispatch input.
+        target: local
         vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
       # Run tests
     - name: Run tests
       env:
+        # PRINT_STANDARD_STREAMS is temporary to let us inspect logs for a particular
+        # issue with Stairway serdes.
+        PRINT_STANDARD_STREAMS: please
         TEST_ENV: ${{ steps.set-env-step.outputs.test-env }}
       run: ./gradlew :service:${{ matrix.gradleTask }} --scan
 
@@ -138,7 +143,7 @@ jobs:
         path: service/build/reports/tests
 
     - name: "Notify QA Slack"
-      if: steps.set-env-step.outputs.test-env == 'alpha' || steps.set-env-step.outputs.test-env == 'staging'
+      if: always() && (steps.set-env-step.outputs.test-env == 'alpha' || steps.set-env-step.outputs.test-env == 'staging')
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
       env:
