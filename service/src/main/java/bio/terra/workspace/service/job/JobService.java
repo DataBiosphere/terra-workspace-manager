@@ -206,16 +206,34 @@ public class JobService {
     String completedDate = null;
     HttpStatus statusCode = HttpStatus.ACCEPTED;
 
-    if (flightState.getCompleted().isPresent()) {
-      FlightMap resultMap = getResultMap(flightState);
-      // The STATUS_CODE return only needs to be used to return alternate success responses.
-      // If it is not present, then we set it to the default OK status.
-      statusCode = resultMap.get(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class);
-      if (statusCode == null) {
-        statusCode = HttpStatus.OK;
-      }
-
+    if (jobStatus != StatusEnum.RUNNING) {
+      // If the job is completed, the JobReport should include a result code indicating success or
+      // failure. For failed jobs, this code is the error code. For successful jobs, this is the
+      // code specified by the flight if present, or a default of 200 if not.
       completedDate = flightState.getCompleted().get().toString();
+      switch (jobStatus) {
+        case FAILED:
+          int errorCode =
+              flightState
+                  .getException()
+                  .map(e -> ErrorReportUtils.buildApiErrorReport(e).getStatusCode())
+                  .orElseThrow(
+                      () ->
+                          new InvalidResultStateException(
+                              "Flight failed with no exception reported"));
+          statusCode = HttpStatus.valueOf(errorCode);
+          break;
+        case SUCCEEDED:
+          FlightMap resultMap = getResultMap(flightState);
+          statusCode = resultMap.get(JobMapKeys.STATUS_CODE.getKeyName(), HttpStatus.class);
+          if (statusCode == null) {
+            statusCode = HttpStatus.OK;
+          }
+          break;
+        default:
+          throw new IllegalStateException(
+              "Cannot get status code of flight in unknown state " + jobStatus);
+      }
     }
 
     ApiJobReport jobReport =
@@ -237,7 +255,11 @@ public class JobService {
     if (resultPath == null) {
       resultPath = "";
     }
-    return Path.of(ingressConfig.getDomainName(), resultPath).toString();
+    // This is a little hacky, but GCP rejects non-https traffic and a local server does not support
+    // it.
+    String protocol =
+        ingressConfig.getDomainName().startsWith("localhost") ? "http://" : "https://";
+    return protocol + Path.of(ingressConfig.getDomainName(), resultPath).toString();
   }
 
   private ApiJobReport.StatusEnum getJobStatus(FlightStatus flightStatus) {
