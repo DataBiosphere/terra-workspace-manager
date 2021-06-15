@@ -2,7 +2,11 @@
   <configuration default="false" name="Main" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <module name="terra-workspace-manager.service.main" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="bio.terra.workspace.app.Main" />
+    <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/service" />
     <option name="ALTERNATIVE_JRE_PATH" />
+    <envs>
+      <env name="GOOGLE_APPLICATION_CREDENTIALS" value="../config/wsm-sa.json" />
+    </envs>
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
