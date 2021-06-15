@@ -34,10 +34,13 @@ import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scripts.testscripts.ControlledGcsBucketLifecycle;
 
 public class ClientTestUtils {
 
@@ -221,6 +224,23 @@ public class ClientTestUtils {
 
   public static boolean jobIsRunning(JobReport jobReport) {
     return jobReport.getStatus().equals(JobReport.StatusEnum.RUNNING);
+  }
+
+  public static <T> T getWithRetryOnException(Supplier<T> supplier, int numTries, Duration sleepDuration, Logger logger) throws InterruptedException {
+    T result = null;
+    while (numTries > 0) {
+      try {
+        // read blob as second user
+        result = supplier.get();
+        break;
+      } catch (Exception e) {
+        numTries--;
+        int sleepSeconds = 30;
+        logger.info("Exception \"{}\". Waiting {} seconds for permissions to propagate. Tries remaining: {}", e.getMessage(), sleepSeconds, numTries);
+        TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
+      }
+    }
+    return result;
   }
 
   /**

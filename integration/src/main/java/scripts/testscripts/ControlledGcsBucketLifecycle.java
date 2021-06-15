@@ -44,12 +44,12 @@ import com.google.cloud.storage.Storage.BucketField;
 import com.google.cloud.storage.Storage.BucketGetOption;
 import com.google.cloud.storage.StorageClass;
 import com.google.cloud.storage.StorageException;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -194,20 +194,12 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceId());
 
     // TODO(PF-643): this should happen inside WSM.
-    int numTries = 20;
-    Blob readerRetrievedFile = null;
-    while (numTries > 0) {
-      try {
-        // read blob as second user
-        readerRetrievedFile = readerStorageClient.get(blobId);
-        break;
-      } catch (StorageException e) {
-        numTries--;
-        int sleepSeconds = 30;
-        logger.info("Exception \"{}\". Waiting {} seconds for permissions to propagate. Tries remaining: {}", e.getMessage(), sleepSeconds, numTries);
-        TimeUnit.SECONDS.sleep(sleepSeconds);
-      }
-    }
+    Blob readerRetrievedFile = ClientTestUtils
+        .getWithRetryOnException(() ->
+            readerStorageClient.get(blobId),
+            20,
+            Duration.ofSeconds(30),
+            logger);
     assertNotNull(readerRetrievedFile);
     assertEquals(createdFile.getBlobId(), readerRetrievedFile.getBlobId());
     logger.info("Read existing blob {} from bucket as reader", retrievedFile.getBlobId());
