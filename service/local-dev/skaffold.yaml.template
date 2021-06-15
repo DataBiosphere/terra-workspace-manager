@@ -4,7 +4,7 @@ kind: Config
 build:
   artifacts:
   - image: gcr.io/terra-kernel-k8s/terra-workspace-manager
-    context: ../
+    context: ../../
     jib:
       project: service
 deploy:

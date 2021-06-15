@@ -408,7 +408,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     workspaceService.createGcpCloudContext(id, jobId, resultPath, userReq);
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userReq);
     return new ResponseEntity<>(
-        response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));
+        response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
   }
 
   @Override
@@ -417,7 +417,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userReq);
     return new ResponseEntity<>(
-        response, HttpStatus.valueOf(response.getJobReport().getStatusCode()));
+        response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
   }
 
   private ApiCreateCloudContextResult fetchCreateCloudContextResult(
