@@ -257,7 +257,7 @@ Spring auto-magically searches for properties files for the active profiles.
   and over, and also takes care of knowing when you're not in the root directory, so you
   don't have to figure out the appropriate number of `../`s. 
 - In IntelliJ, instead of running the local server with `bootRun`, use the `Main` Spring
-  Boot configuration that IntelliJ auto-generates. This allows you to debug 
+  Boot configuration shared in the `.run` directory. This allows you to debug 
   service code while running integration tests or using Swagger UI. To edit it, click on
   it (in the upper right of the window), and click `Edit Configurations`. 
     
