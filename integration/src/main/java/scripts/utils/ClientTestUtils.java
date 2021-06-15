@@ -246,8 +246,11 @@ public class ClientTestUtils {
         break;
       } catch (Exception e) {
         numTries--;
-        int sleepSeconds = 30;
-        logger.info("Exception \"{}\". Waiting {} seconds for permissions to propagate. Tries remaining: {}", e.getMessage(), sleepSeconds, numTries);
+        logger.info(
+            "Exception \"{}\". Waiting {} seconds for permissions to propagate. Tries remaining: {}",
+            e.getMessage(),
+            sleepDuration.toSeconds(),
+            numTries);
         TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
       }
     }
