@@ -19,12 +19,6 @@ public abstract class WorkspaceRequest {
   public abstract UUID workspaceId();
 
   /**
-   * An ID used for idempotency. WorkspaceRequests with matching jobIds are considered duplicate
-   * requests.
-   */
-  public abstract String jobId();
-
-  /**
    * The spend profile ID associated with this project, if one exists.
    *
    * <p>In the future, this will correlate to a spend profile in the Spend Profile Manager. For now,
@@ -47,8 +41,6 @@ public abstract class WorkspaceRequest {
   @AutoValue.Builder
   public abstract static class Builder {
     public abstract WorkspaceRequest.Builder workspaceId(UUID value);
-
-    public abstract WorkspaceRequest.Builder jobId(String value);
 
     public abstract WorkspaceRequest.Builder spendProfileId(Optional<SpendProfileId> value);
 
