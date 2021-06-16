@@ -6,14 +6,17 @@ import com.google.common.collect.EnumBiMap;
 import com.google.common.collect.EnumHashBiMap;
 
 /**
- * Enum describing how to treat a resource when its containing workspace is cloned. The
- * values stored with the resources may be overridden at clone time.
+ * Enum describing how to treat a resource when its containing workspace is cloned. The values
+ * stored with the resources may be overridden at clone time.
  *
- * COPY_NOTHING - do not clone anything for this resource
- * COPY_DEFINITION - copy the resource definition, but no data
- * COPY_RESOURCE - copy the resource, including its data
- * COPY_REFERENCE - create a referenced resource pointing to this resource, or to the
- *    resource it references (for referenced resources)
+ * <p>COPY_NOTHING - do not clone anything for this resource
+ *
+ * <p>COPY_DEFINITION - copy the resource definition, but no data
+ *
+ * <p>COPY_RESOURCE - copy the resource, including its data
+ *
+ * <p>COPY_REFERENCE - create a referenced resource pointing to this resource,
+ * or to the resource it references (for referenced resources)
  */
 public enum CloningInstructions {
   COPY_NOTHING,

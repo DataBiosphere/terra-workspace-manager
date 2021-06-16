@@ -8,7 +8,6 @@ import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
-import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
@@ -20,7 +19,6 @@ import bio.terra.workspace.generated.model.ApiDeleteControlledGcpAiNotebookInsta
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketResult;
-import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;

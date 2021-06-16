@@ -133,7 +133,8 @@ public class ControlledResourceService {
       @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
     stageService.assertMcWorkspace(destinationWorkspaceId, "cloneGcsBucket");
 
-    final ControlledResource sourceBucketResource = getControlledResource(sourceWorkspaceId, sourceResourceId, userRequest);
+    final ControlledResource sourceBucketResource =
+        getControlledResource(sourceWorkspaceId, sourceResourceId, userRequest);
 
     // Verify user can read source resource in Sam
     controlledResourceMetadataManager.validateControlledResourceAndAction(
