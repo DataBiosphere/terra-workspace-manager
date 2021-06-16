@@ -11,6 +11,10 @@ import static scripts.utils.GcsBucketTestFixtures.BUCKET_LOCATION;
 import static scripts.utils.GcsBucketTestFixtures.BUCKET_PREFIX;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1;
+import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1_CONDITION_AGE;
+import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1_CONDITION_LIVE;
+import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1_CONDITION_NUM_NEWER_VERSIONS;
+import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1_MATCHES_STORAGE_CLASS_ITEM;
 import static scripts.utils.GcsBucketTestFixtures.RESOURCE_DESCRIPTION;
 import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
 import static scripts.utils.ResourceMaker.makeControlledGcsBucketUserShared;
@@ -187,10 +191,11 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
         .filter(r -> DeleteLifecycleAction.TYPE.equals(r.getAction().getActionType()))
         .findFirst()
         .orElseThrow(() -> new RuntimeException("Can't find Delete lifecycle rule."));
-    assertEquals(64, clonedDeleteRule.getCondition().getAge());
-    assertTrue(clonedDeleteRule.getCondition().getIsLive());
-    assertThat(clonedDeleteRule.getCondition().getMatchesStorageClass(), contains(StorageClass.ARCHIVE));
-    assertEquals(2, clonedDeleteRule.getCondition().getNumberOfNewerVersions());
+    assertEquals(LIFECYCLE_RULE_1_CONDITION_AGE, clonedDeleteRule.getCondition().getAge());
+    assertEquals(LIFECYCLE_RULE_1_CONDITION_LIVE, clonedDeleteRule.getCondition().getIsLive());
+    assertThat(clonedDeleteRule.getCondition().getMatchesStorageClass(),
+        contains(LIFECYCLE_RULE_1_MATCHES_STORAGE_CLASS_ITEM));
+    assertEquals(LIFECYCLE_RULE_1_CONDITION_NUM_NEWER_VERSIONS, clonedDeleteRule.getCondition().getNumberOfNewerVersions());
 
     final LifecycleRule setStorageClassRule = destinationGcsBucket.getLifecycleRules().stream()
         .filter(r -> SetStorageClassLifecycleAction.TYPE.equals(r.getAction().getActionType()))

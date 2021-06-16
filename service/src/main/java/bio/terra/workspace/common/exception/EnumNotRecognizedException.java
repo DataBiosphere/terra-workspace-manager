@@ -21,8 +21,7 @@ public class EnumNotRecognizedException extends NotImplementedException {
     super(message, causes);
   }
 
-  public EnumNotRecognizedException(String message, Throwable cause,
-      List<String> causes) {
+  public EnumNotRecognizedException(String message, Throwable cause, List<String> causes) {
     super(message, cause, causes);
   }
 }

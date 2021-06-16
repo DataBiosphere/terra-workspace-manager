@@ -20,6 +20,10 @@ public class GcsBucketTestFixtures {
   private GcsBucketTestFixtures() {
   }
 
+  public static final int LIFECYCLE_RULE_1_CONDITION_AGE = 64;
+  public static final boolean LIFECYCLE_RULE_1_CONDITION_LIVE = true;
+  public static final int LIFECYCLE_RULE_1_CONDITION_NUM_NEWER_VERSIONS = 2;
+  public static final GcpGcsBucketDefaultStorageClass LIFECYCLE_RULE_1_MATCHES_STORAGE_CLASS_ITEM = GcpGcsBucketDefaultStorageClass.ARCHIVE;
   public static final GcpGcsBucketLifecycleRule LIFECYCLE_RULE_1 =
       new GcpGcsBucketLifecycleRule()
           .action(
@@ -29,10 +33,10 @@ public class GcsBucketTestFixtures {
                           .DELETE)) // no storage class required for delete actions
           .condition(
               new GcpGcsBucketLifecycleRuleCondition()
-                  .age(64)
-                  .live(true)
-                  .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.ARCHIVE)
-                  .numNewerVersions(2));
+                  .age(LIFECYCLE_RULE_1_CONDITION_AGE)
+                  .live(LIFECYCLE_RULE_1_CONDITION_LIVE)
+                  .addMatchesStorageClassItem(LIFECYCLE_RULE_1_MATCHES_STORAGE_CLASS_ITEM)
+                  .numNewerVersions(LIFECYCLE_RULE_1_CONDITION_NUM_NEWER_VERSIONS));
   private static final GcpGcsBucketLifecycleRule LIFECYCLE_RULE_2 =
       new GcpGcsBucketLifecycleRule()
           .action(

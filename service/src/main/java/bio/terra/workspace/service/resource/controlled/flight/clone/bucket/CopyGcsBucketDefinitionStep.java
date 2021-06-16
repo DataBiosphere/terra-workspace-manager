@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -13,13 +12,11 @@ import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import com.google.common.collect.ImmutableList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -52,8 +49,15 @@ public class CopyGcsBucketDefinitionStep implements Step {
                     ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
             .orElse(sourceBucket.getCloningInstructions());
     if (CloningInstructions.COPY_NOTHING.equals(cloningInstructions)) {
+      final ApiClonedControlledGcpGcsBucket noOpResult =
+          new ApiClonedControlledGcpGcsBucket()
+              .effectiveCloningInstructions(cloningInstructions.toApiModel())
+              .bucket(null)
+              .sourceWorkspaceId(sourceBucket.getWorkspaceId())
+              .sourceResourceId(sourceBucket.getResourceId());
+      FlightUtils.setResponse(flightContext, noOpResult, HttpStatus.OK);
       return StepResult.getStepResultSuccess();
-    }
+    } // todo: handle COPY_REFERENCE
     final String resourceName =
         getSuppliedOrPreviousValue(
             flightContext,
@@ -80,7 +84,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
             UUID.randomUUID(), // random ID for new resource
             resourceName,
             description,
-            cloningInstructions,
+            sourceBucket.getCloningInstructions(),
             sourceBucket.getAssignedUser().orElse(null),
             sourceBucket.getAccessScope(),
             sourceBucket.getManagedBy(),
@@ -168,8 +172,8 @@ public class CopyGcsBucketDefinitionStep implements Step {
 
   /**
    * Build the list of IAM roles for this user. If the resource was initially shared, we make the
-   * cloned resource shared as well. If it's private, the user making the clone must be the resource user
-   * and becomes EDITOR, READER, and WRITER on the new resource.
+   * cloned resource shared as well. If it's private, the user making the clone must be the resource
+   * user and becomes EDITOR, READER, and WRITER on the new resource.
    *
    * @param accessScope - private vs shared access
    * @return list of IAM roles for the user on the resource
