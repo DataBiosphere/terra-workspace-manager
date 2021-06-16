@@ -234,10 +234,14 @@ public class ClientTestUtils {
    * @param numTries - number of times to retry the operation
    * @param sleepDuration - sleep time between attempts
    * @param <T> - type of result
-   * @return - result from supplier, the first time it doesn't throw
+   * @return - result from supplier, the first time it doesn't throw, or null if all tries have been
+   *     exhausted
    * @throws InterruptedException
    */
-  public static <T> T getWithRetryOnException(Supplier<T> supplier, int numTries, Duration sleepDuration) throws InterruptedException {
+  public static @Nullable <T> T getWithRetryOnException(
+      Supplier<T> supplier,
+      int numTries,
+      Duration sleepDuration) throws InterruptedException {
     T result = null;
     while (numTries > 0) {
       try {
