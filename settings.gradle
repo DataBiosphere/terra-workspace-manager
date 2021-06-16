@@ -26,7 +26,7 @@ include 'integration'
 // -- Global Variables --
 // For defining shared state and common dependencies
 
-gradle.ext.wsmVersion = "0.254.45-SNAPSHOT"
+gradle.ext.wsmVersion = "0.254.46-SNAPSHOT"
 gradle.ext.openapiSourceFile = "${rootDir}/service/src/main/resources/api/service_openapi.yaml"
 
 // Single place to define the versions of dependencies shared between components.
