@@ -13,10 +13,10 @@
   "testScripts": [
     {
       "name": "ServiceStatus",
-      "parameters": [120],
+      "parameters": [150],
       "numberOfUserJourneyThreadsToRun": 2,
       "userJourneyThreadPoolSize": 2,
-      "expectedTimeForEach": 120,
+      "expectedTimeForEach": 150,
       "expectedTimeForEachUnit": "SECONDS"
     }
   ],
