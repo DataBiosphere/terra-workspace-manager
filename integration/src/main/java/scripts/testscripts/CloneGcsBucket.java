@@ -2,47 +2,29 @@ package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static scripts.utils.GcsBucketTestFixtures.BUCKET_LOCATION;
-import static scripts.utils.GcsBucketTestFixtures.BUCKET_PREFIX;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
-import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1_CONDITION_AGE;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1_CONDITION_LIVE;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1_CONDITION_NUM_NEWER_VERSIONS;
-import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1_MATCHES_STORAGE_CLASS_ITEM;
-import static scripts.utils.GcsBucketTestFixtures.RESOURCE_DESCRIPTION;
 import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
 import static scripts.utils.ResourceMaker.makeControlledGcsBucketUserShared;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
-import bio.terra.workspace.client.ApiException;
-import bio.terra.workspace.model.AccessScope;
 import bio.terra.workspace.model.CloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.model.CloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.model.ClonedControlledGcpGcsBucket;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CloudPlatform;
-import bio.terra.workspace.model.ControlledResourceCommonFields;
-import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.CreatedWorkspace;
-import bio.terra.workspace.model.GcpGcsBucketCreationParameters;
-import bio.terra.workspace.model.GcpGcsBucketDefaultStorageClass;
-import bio.terra.workspace.model.GcpGcsBucketLifecycle;
-import bio.terra.workspace.model.GcpGcsBucketLifecycleRule;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.JobControl;
-import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.JobReport.StatusEnum;
-import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
@@ -56,7 +38,6 @@ import com.google.cloud.storage.StorageClass;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
@@ -157,7 +138,7 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     assertEquals(sourceResourceName, clonedResourceMetadata.getName());
     assertEquals(clonedBucketDescription, clonedResourceMetadata.getDescription());
     final ResourceMetadata sourceMetadata = sourceBucket.getGcpBucket().getMetadata();
-    assertEquals(CloningInstructionsEnum.DEFINITION, clonedResourceMetadata.getCloningInstructions());
+    assertEquals(CloningInstructionsEnum.NOTHING, clonedResourceMetadata.getCloningInstructions());
     assertEquals(
         sourceMetadata.getCloudPlatform(),
         clonedResourceMetadata.getCloudPlatform());
@@ -193,8 +174,7 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
         .orElseThrow(() -> new RuntimeException("Can't find Delete lifecycle rule."));
     assertEquals(LIFECYCLE_RULE_1_CONDITION_AGE, clonedDeleteRule.getCondition().getAge());
     assertEquals(LIFECYCLE_RULE_1_CONDITION_LIVE, clonedDeleteRule.getCondition().getIsLive());
-    assertThat(clonedDeleteRule.getCondition().getMatchesStorageClass(),
-        contains(LIFECYCLE_RULE_1_MATCHES_STORAGE_CLASS_ITEM));
+    assertEquals(StorageClass.ARCHIVE, clonedDeleteRule.getCondition().getMatchesStorageClass().get(0));
     assertEquals(LIFECYCLE_RULE_1_CONDITION_NUM_NEWER_VERSIONS, clonedDeleteRule.getCondition().getNumberOfNewerVersions());
 
     final LifecycleRule setStorageClassRule = destinationGcsBucket.getLifecycleRules().stream()

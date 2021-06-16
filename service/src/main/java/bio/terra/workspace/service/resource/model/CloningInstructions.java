@@ -15,8 +15,8 @@ import com.google.common.collect.EnumHashBiMap;
  *
  * <p>COPY_RESOURCE - copy the resource, including its data
  *
- * <p>COPY_REFERENCE - create a referenced resource pointing to this resource,
- * or to the resource it references (for referenced resources)
+ * <p>COPY_REFERENCE - create a referenced resource pointing to this resource, or to the resource it
+ * references (for referenced resources)
  */
 public enum CloningInstructions {
   COPY_NOTHING,
