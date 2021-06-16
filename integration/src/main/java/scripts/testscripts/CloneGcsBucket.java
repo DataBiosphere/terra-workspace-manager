@@ -185,5 +185,6 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     assertEquals(StorageClass.NEARLINE, setStorageClassLifecycleAction.getStorageClass());
     assertEquals(DateTime.parseRfc3339("2007-01-03"), setStorageClassRule.getCondition().getCreatedBefore());
     assertThat(setStorageClassRule.getCondition().getMatchesStorageClass(), contains(StorageClass.STANDARD));
+    assertEquals(CloningInstructionsEnum.DEFINITION, clonedBucket.getEffectiveCloningInstructions());
   }
 }
