@@ -10,7 +10,7 @@ plugins {
     //  fine in the service project.
     // id "com.diffplug.spotless" version "5.12.4"
     // Terra Test Runner Plugin
-    id 'bio.terra.test-runner-plugin' version '0.0.5-SNAPSHOT'
+    id 'bio.terra.test-runner-plugin' version '0.0.6-SNAPSHOT'
 }
 
 dependencies {
@@ -34,7 +34,7 @@ dependencies {
         googleNotebook = "v1-rev20201110-1.30.10"
 
         datarepoClient = "1.0.155-SNAPSHOT"
-        testRunnerVersion = "0.0.5-SNAPSHOT"
+        testRunnerVersion = "0.0.6-SNAPSHOT"
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
     implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"

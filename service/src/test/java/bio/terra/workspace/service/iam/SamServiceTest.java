@@ -151,7 +151,6 @@ class SamServiceTest extends BaseConnectedTest {
         WorkspaceRequest.builder()
             .workspaceId(workspaceId)
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
-            .jobId(UUID.randomUUID().toString())
             .build();
     workspaceService.createWorkspace(rawlsRequest, defaultUserRequest());
     assertThrows(
@@ -356,7 +355,6 @@ class SamServiceTest extends BaseConnectedTest {
         WorkspaceRequest.builder()
             .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .jobId(UUID.randomUUID().toString())
             .build();
     return workspaceService.createWorkspace(request, userReq);
   }

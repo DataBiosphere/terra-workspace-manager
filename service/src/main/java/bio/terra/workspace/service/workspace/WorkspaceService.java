@@ -75,7 +75,11 @@ public class WorkspaceService {
     JobBuilder createJob =
         jobService
             .newJob(
-                description, workspaceRequest.jobId(), WorkspaceCreateFlight.class, null, userReq)
+                description,
+                UUID.randomUUID().toString(),
+                WorkspaceCreateFlight.class,
+                null,
+                userReq)
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceRequest.workspaceId().toString());
     if (workspaceRequest.spendProfileId().isPresent()) {
