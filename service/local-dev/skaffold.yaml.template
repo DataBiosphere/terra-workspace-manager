@@ -1,5 +1,5 @@
 #This is a Skaffold configuration, which lets developers continuously push new images to their development namespaces.
-apiVersion: skaffold/v2alpha4
+apiVersion: skaffold/v2beta17
 kind: Config
 build:
   artifacts:
@@ -8,15 +8,7 @@ build:
     jib:
       project: service
 deploy:
-  helm:
-    releases:
-      - name: workspacemanager-ENV
-        namespace: terra-ENV
-        chartPath: terra-helm/charts/workspacemanager
-        values:
-          image: gcr.io/terra-kernel-k8s/terra-workspace-manager
-        valuesFiles:
-          - terra-helmfile/terra/values/workspacemanager.yaml
-          - terra-helmfile/terra/values/workspacemanager/personal.yaml
-          - terra-helmfile/terra/values/workspacemanager/personal/ENV.yaml
-          - values.yaml
+  kubectl:
+    manifests:
+    - manifests.yaml
+    defaultNamespace: terra-ENV
