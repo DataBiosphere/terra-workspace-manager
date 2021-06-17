@@ -57,7 +57,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
               .sourceResourceId(sourceBucket.getResourceId());
       FlightUtils.setResponse(flightContext, noOpResult, HttpStatus.OK);
       return StepResult.getStepResultSuccess();
-    } // todo: handle COPY_REFERENCE
+    } // todo: handle COPY_REFERENCE PF-811, PF-812
     final String resourceName =
         getSuppliedOrPreviousValue(
             flightContext,

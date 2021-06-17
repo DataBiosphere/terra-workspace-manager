@@ -45,6 +45,6 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
     addStep(
         new CopyGcsBucketDefinitionStep(
             userRequest, sourceBucket, flightBeanBag.getControlledResourceService()));
-    //    addStep(new CopyGcsBucketDataStep());
+    //    addStep(new CopyGcsBucketDataStep()); // PF-810
   }
 }
