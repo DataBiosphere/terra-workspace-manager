@@ -10,7 +10,7 @@ plugins {
     //  fine in the service project.
     // id "com.diffplug.spotless" version "5.12.4"
     // Terra Test Runner Plugin
-    id 'bio.terra.test-runner-plugin' version '0.0.7a-SNAPSHOT'
+    id 'bio.terra.test-runner-plugin' version '0.0.7-SNAPSHOT'
 }
 
 dependencies {
