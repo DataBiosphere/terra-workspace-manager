@@ -25,7 +25,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.job.exception.DuplicateJobIdException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
