@@ -31,7 +31,6 @@ git clone -b "$TERRA_HELMFILE_BRANCH" --single-branch ${helmfilegit}
 
 # Template in environment
 sed "s|ENV|${ENV}|g" skaffold.yaml.template > skaffold.yaml
-sed "s|ENV|${ENV}|g" values.yaml.template > values.yaml
 
 # That's it! You can now deploy to the k8s cluster by running
 # $ skaffold run
