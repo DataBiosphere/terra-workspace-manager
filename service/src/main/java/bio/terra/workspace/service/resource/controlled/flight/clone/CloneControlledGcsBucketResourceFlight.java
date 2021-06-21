@@ -7,6 +7,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CopyGcsBucketDataStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CopyGcsBucketDefinitionStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveGcsBucketCloudAttributesStep;
@@ -45,6 +46,6 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
     addStep(
         new CopyGcsBucketDefinitionStep(
             userRequest, sourceBucket, flightBeanBag.getControlledResourceService()));
-    //    addStep(new CopyGcsBucketDataStep()); // PF-810
+    addStep(new CopyGcsBucketDataStep(sourceBucket));
   }
 }

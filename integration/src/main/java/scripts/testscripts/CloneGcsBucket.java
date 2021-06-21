@@ -100,7 +100,7 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
         .name(sourceResourceName)
         .description(clonedBucketDescription)
         .location(null) // use same as src
-        .cloningInstructions(CloningInstructionsEnum.DEFINITION)
+        .cloningInstructions(CloningInstructionsEnum.RESOURCE)
         .jobControl(new JobControl().id(UUID.randomUUID().toString()));
 
     logger.info("Cloning bucket name: {} resource ID: {} workspace: {} into bucket name: {} workspace: {}",

@@ -48,6 +48,8 @@ public class CopyGcsBucketDefinitionStep implements Step {
                 inputParameters.get(
                     ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
             .orElse(sourceBucket.getCloningInstructions());
+    // future steps need the resolved cloning instructions
+    workingMap.put(ControlledResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions);
     if (CloningInstructions.COPY_NOTHING.equals(cloningInstructions)) {
       final ApiClonedControlledGcpGcsBucket noOpResult =
           new ApiClonedControlledGcpGcsBucket()
