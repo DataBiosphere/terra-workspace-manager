@@ -74,6 +74,8 @@ public class CopyGcsBucketDefinitionStep implements Step {
         Optional.ofNullable(
                 inputParameters.get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class))
             .orElseGet(this::randomBucketName);
+    // Store effective bucket name for destination
+    workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
     final UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
