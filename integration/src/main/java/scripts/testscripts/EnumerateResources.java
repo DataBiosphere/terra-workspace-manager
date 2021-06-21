@@ -284,7 +284,8 @@ public class EnumerateResources extends DataRepoTestScriptBase {
           {
             GcpGcsBucketResource resource =
                 ResourceMaker.makeControlledGcsBucketUserShared(
-                    controlledGcpResourceApi, workspaceId, name);
+                    controlledGcpResourceApi, workspaceId, name)
+                .getGcpBucket();
             resourceList.add(resource.getMetadata());
             break;
           }

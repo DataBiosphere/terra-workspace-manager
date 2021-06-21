@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRule;
@@ -49,6 +50,22 @@ public class GcsApiConversions {
    */
   public static ApiGcpGcsBucketUpdateParameters toUpdateParameters(BucketInfo bucketInfo) {
     return new ApiGcpGcsBucketUpdateParameters()
+        .lifecycle(new ApiGcpGcsBucketLifecycle().rules(toWsmApiRulesList(bucketInfo)))
+        .defaultStorageClass(toWsmApi(bucketInfo.getStorageClass()));
+  }
+
+  /**
+   * Convert to creation parameters, which is needed for cloning. Very similar to
+   * toUpdateParameters(). TODO: standardize on this function and remove the notion of update
+   * parameters, since this largely subsumes that. PF-850
+   *
+   * @param bucketInfo
+   * @return
+   */
+  public static ApiGcpGcsBucketCreationParameters toCreationParameters(BucketInfo bucketInfo) {
+    return new ApiGcpGcsBucketCreationParameters()
+        .location(bucketInfo.getLocation())
+        .name(bucketInfo.getName())
         .lifecycle(new ApiGcpGcsBucketLifecycle().rules(toWsmApiRulesList(bucketInfo)))
         .defaultStorageClass(toWsmApi(bucketInfo.getStorageClass()));
   }
