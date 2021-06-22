@@ -316,10 +316,14 @@ public class ControlledResourceService {
     // If there is no assigned user, this condition is satisfied.
     //noinspection deprecation
     final boolean isAllowed =
-        controlledResource.getAssignedUser().map(requestUserEmail::equals).orElse(true);
+        controlledResource.getAssignedUser().map(requestUserEmail::equalsIgnoreCase).orElse(true);
     if (!isAllowed) {
       throw new BadRequestException(
-          "User may only assign a private controlled resource to themselves.");
+          "User ("
+              + requestUserEmail
+              + ") may only assign a private controlled resource to themselves ("
+              + controlledResource.getAssignedUser().orElse("")
+              + ").");
     }
   }
 }
