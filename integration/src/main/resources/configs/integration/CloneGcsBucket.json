@@ -1,7 +1,7 @@
 {
   "name": "CloneGcsBucket",
   "description": "Clone test",
-  "serverSpecificationFile": "workspace-local.json",
+  "serverSpecificationFile": "workspace-dev.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
