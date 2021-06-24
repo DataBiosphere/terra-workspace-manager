@@ -229,6 +229,10 @@ public class ControlledResourceFixtures {
           .setAge(42)
           .setIsLive(false)
           .setNumberOfNewerVersions(2)
+          .setDaysSinceNoncurrentTime(5)
+          .setNoncurrentTimeBefore(DATE_TIME_1)
+          .setCustomTimeBefore(DATE_TIME_2)
+          .setDaysSinceCustomTime(100)
           .build();
   public static final LifecycleCondition GCS_LIFECYCLE_CONDITION_2 =
       LifecycleCondition.newBuilder()
