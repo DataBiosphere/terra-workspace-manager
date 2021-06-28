@@ -212,10 +212,6 @@ public class GcsApiConversions {
     resultBuilder.setCreatedBefore(toGoogleDateTime(condition.getCreatedBefore()));
     resultBuilder.setNumberOfNewerVersions(condition.getNumNewerVersions());
     resultBuilder.setIsLive(condition.isLive());
-    resultBuilder.setMatchesStorageClass(
-        Optional.ofNullable(condition.getMatchesStorageClass())
-            .map(c -> c.stream().map(GcsApiConversions::toGcsApi).collect(Collectors.toList()))
-            .orElse(null));
     resultBuilder.setDaysSinceNoncurrentTime(condition.getDaysSinceNoncurrentTime());
     resultBuilder.setNoncurrentTimeBefore(toGoogleDateTime(condition.getNoncurrentTimeBefore()));
     resultBuilder.setCustomTimeBefore(toGoogleDateTime(condition.getCustomTimeBefore()));
