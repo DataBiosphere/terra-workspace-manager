@@ -13,6 +13,7 @@ import com.google.api.services.storagetransfer.v1.Storagetransfer;
 import com.google.api.services.storagetransfer.v1.StoragetransferScopes;
 import com.google.api.services.storagetransfer.v1.model.Date;
 import com.google.api.services.storagetransfer.v1.model.GcsData;
+import com.google.api.services.storagetransfer.v1.model.GoogleServiceAccount;
 import com.google.api.services.storagetransfer.v1.model.Operation;
 import com.google.api.services.storagetransfer.v1.model.Schedule;
 import com.google.api.services.storagetransfer.v1.model.TimeOfDay;
@@ -73,12 +74,19 @@ public class CopyGcsBucketDataStep implements Step {
     logger.info("Starting data copy from bucket {} to {}", sourceBucketName, destinationBucketName);
     try {
       final Storagetransfer storageTransferService = createStorageTransferService();
+
       final String transferJobName = createTransferJobName();
       final String projectId =
           Optional.ofNullable(ServiceOptions.getDefaultProjectId())
               .orElseThrow(
                   () -> new IllegalStateException("Could not determine default GCP project ID."));
       logger.info("Creating transfer job named {} in project {}", transferJobName, projectId);
+      final GoogleServiceAccount transferServiceSA =
+          storageTransferService.googleServiceAccounts().get(projectId).execute();
+      logger.info("STS SA: {}", transferServiceSA.getAccountEmail());
+
+      // Set source bucket permissions
+
       final TransferJob transferJobInput =
           new TransferJob()
               .setName(transferJobName)
@@ -97,29 +105,15 @@ public class CopyGcsBucketDataStep implements Step {
       // interval that's appropriate for a wide range of bucket sizes. Everything from millisecond
       // to hours.
 
-      // First, we poll the transfer jobs endpoint until an operation has started so that we can get
-      // its server-generated name.
-      int attempts = 0;
-      String operationName;
-      do {
-        TimeUnit.MILLISECONDS.sleep(JOBS_POLL_INTERVAL.toMillis());
-        final TransferJob getResponse =
-            storageTransferService.transferJobs().get(transferJobName, projectId).execute();
-        operationName = getResponse.getLatestOperationName();
-        attempts++;
-      } while (operationName == null && attempts < MAX_ATTEMPTS);
-      if (operationName == null) {
-        throw new RuntimeException("Exceeded max attempts to get transfer operation name");
-      }
-      logger.info("Latest transfer operation name is {}", operationName);
+      final String operationName =
+          pollForOperationName(storageTransferService, transferJobName, projectId);
 
       // Now that we have an operation name, we can poll the operations endpoint for completion
       // information.
-      attempts = 0;
+      int attempts = 0;
       Operation operation;
       do {
-        operation =
-            storageTransferService.transferOperations().get(operationName).execute();
+        operation = storageTransferService.transferOperations().get(operationName).execute();
         TimeUnit.MILLISECONDS.sleep(OPERATIONS_POLL_INTERVAL.toMillis());
         attempts++;
       } while (!operation.getDone() && attempts < MAX_ATTEMPTS);
@@ -138,6 +132,27 @@ public class CopyGcsBucketDataStep implements Step {
     }
 
     return StepResult.getStepResultSuccess();
+  }
+
+  // First, we poll the transfer jobs endpoint until an operation has started so that we can get
+  // its server-generated name.
+  private String pollForOperationName(
+      Storagetransfer storageTransferService, String transferJobName, String projectId)
+      throws InterruptedException, IOException {
+    int attempts = 0;
+    String operationName;
+    do {
+      TimeUnit.MILLISECONDS.sleep(JOBS_POLL_INTERVAL.toMillis());
+      final TransferJob getResponse =
+          storageTransferService.transferJobs().get(transferJobName, projectId).execute();
+      operationName = getResponse.getLatestOperationName();
+      attempts++;
+      if (attempts > MAX_ATTEMPTS) {
+        throw new RuntimeException("Exceeded max attempts to get transfer operation name");
+      }
+    } while (operationName == null);
+    logger.info("Latest transfer operation name is {}", operationName);
+    return operationName;
   }
 
   private TransferSpec createBulkTransferSpec(

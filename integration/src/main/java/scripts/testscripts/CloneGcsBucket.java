@@ -103,12 +103,14 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
         .cloningInstructions(CloningInstructionsEnum.RESOURCE)
         .jobControl(new JobControl().id(UUID.randomUUID().toString()));
 
-    logger.info("Cloning bucket name: {} resource ID: {} workspace: {} into bucket name: {} workspace: {}",
+    logger.info("Cloning bucket name: {}\n\tresource ID: {}\n\tworkspace: {}\n\tprojectID: {}\n\tinto bucket name: {}\n\tworkspace: {}\n\tprojectID: {}",
         sourceBucket.getGcpBucket().getMetadata().getName(),
         sourceBucket.getResourceId(),
         sourceBucket.getGcpBucket().getMetadata().getWorkspaceId(),
+        sourceProjectId,
         destinationBucketName,
-        destinationWorkspaceId);
+        destinationWorkspaceId,
+        destinationProjectId);
     CloneControlledGcpGcsBucketResult cloneResult = resourceApi.cloneGcsBucket(
         cloneRequest,
         sourceBucket.getGcpBucket().getMetadata().getWorkspaceId(),
