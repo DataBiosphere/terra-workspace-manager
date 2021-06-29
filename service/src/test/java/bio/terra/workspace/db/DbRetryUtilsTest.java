@@ -17,6 +17,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
+@SuppressWarnings(value = "unchecked")
 public class DbRetryUtilsTest extends BaseUnitTest {
 
   static String FAKE_QUERY = "INSERT INTO (fake_row, other_fake_row) VALUES (:foo, :bar)";
