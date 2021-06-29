@@ -122,6 +122,18 @@ public class GcsApiConversionsTest extends BaseUnitTest {
         gcsRule1.getCondition().getNumberOfNewerVersions());
     assertEquals(
         GCS_LIFECYCLE_RULE_1.getCondition().getIsLive(), gcsRule1.getCondition().getIsLive());
+    assertEquals(
+        GCS_LIFECYCLE_RULE_1.getCondition().getDaysSinceNoncurrentTime(),
+        gcsRule1.getCondition().getDaysSinceNoncurrentTime());
+    assertEquals(
+        GCS_LIFECYCLE_RULE_1.getCondition().getNoncurrentTimeBefore(),
+        gcsRule1.getCondition().getNoncurrentTimeBefore());
+    assertEquals(
+        GCS_LIFECYCLE_RULE_1.getCondition().getCustomTimeBefore(),
+        gcsRule1.getCondition().getCustomTimeBefore());
+    assertEquals(
+        GCS_LIFECYCLE_RULE_1.getCondition().getDaysSinceCustomTime(),
+        gcsRule1.getCondition().getDaysSinceCustomTime());
   }
 
   @Test

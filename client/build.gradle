@@ -80,6 +80,7 @@ java {
 publishing {
     publications {
         workspaceManagerClientLibrary(MavenPublication) {
+            artifactId = "workspace-manager-client"
             from components.java
             versionMapping {
                 usage("java-runtime") {

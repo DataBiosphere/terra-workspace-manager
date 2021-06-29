@@ -8,6 +8,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
@@ -15,6 +16,7 @@ import bio.terra.workspace.service.resource.controlled.GcsApiConversions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.cloud.storage.BucketInfo;
+import javax.ws.rs.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,14 +26,23 @@ public class RetrieveGcsBucketCloudAttributesStep implements Step {
   private final ControlledGcsBucketResource bucketResource;
   private final CrlService crlService;
   private final WorkspaceService workspaceService;
+  private final RetrievalMode retrievalMode;
+
+  // TODO: PF-850 - just use creation parameters and remove retrieval mode.
+  public enum RetrievalMode {
+    UPDATE_PARAMETERS,
+    CREATION_PARAMETERS
+  }
 
   public RetrieveGcsBucketCloudAttributesStep(
       ControlledGcsBucketResource bucketResource,
       CrlService crlService,
-      WorkspaceService workspaceService) {
+      WorkspaceService workspaceService,
+      RetrievalMode retrievalMode) {
     this.bucketResource = bucketResource;
     this.crlService = crlService;
     this.workspaceService = workspaceService;
+    this.retrievalMode = retrievalMode;
   }
 
   @Override
@@ -53,9 +64,21 @@ public class RetrieveGcsBucketCloudAttributesStep implements Step {
 
     // get the attributes
     final BucketInfo existingBucketInfo = existingBucketCow.getBucketInfo();
-    final ApiGcpGcsBucketUpdateParameters existingUpdateParameters =
-        GcsApiConversions.toUpdateParameters(existingBucketInfo);
-    workingMap.put(ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, existingUpdateParameters);
+    switch (retrievalMode) {
+      case UPDATE_PARAMETERS:
+        final ApiGcpGcsBucketUpdateParameters existingUpdateParameters =
+            GcsApiConversions.toUpdateParameters(existingBucketInfo);
+        workingMap.put(ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, existingUpdateParameters);
+        break;
+      case CREATION_PARAMETERS:
+        final ApiGcpGcsBucketCreationParameters creationParameters =
+            GcsApiConversions.toCreationParameters(existingBucketInfo);
+        workingMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+        break;
+      default:
+        throw new BadRequestException(
+            String.format("Unsupported Retrieval mode %s", retrievalMode.toString()));
+    }
 
     return StepResult.getStepResultSuccess();
   }

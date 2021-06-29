@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.db.DbRetryUtils;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
@@ -15,15 +16,18 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceA
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.flight.clone.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledGcsBucketResourceFlight;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,6 +101,77 @@ public class ControlledResourceService {
     return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
   }
 
+  /**
+   * Clone a GCS Bucket to another workspace.
+   *
+   * @param sourceBucketResource - original bucket controlled resouce
+   * @param destinationWorkspaceId - workspace ID to clone into
+   * @param jobControl - job service control structure
+   * @param userRequest - incoming request
+   * @param destinationResourceName - override value for resource name. Re-uses previous name if
+   *     null
+   * @param destinationDescription - override value for resource description. Re-uses previous value
+   *     if null
+   * @param destinationBucketName - GCS bucket name for cloned bucket. If null, a random name will
+   *     be generated
+   * @param destinationLocation - location string for the destination bucket. If null, the source
+   *     bucket's location will be used.
+   * @param cloningInstructionsOverride - cloning instructions for this operation. If null, the
+   *     source bucket's cloning instructions will be honored.
+   * @return - Job ID of submitted flight
+   */
+  public String cloneGcsBucket(
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destinationWorkspaceId,
+      ApiJobControl jobControl,
+      AuthenticatedUserRequest userRequest,
+      @Nullable String destinationResourceName,
+      @Nullable String destinationDescription,
+      @Nullable String destinationBucketName,
+      @Nullable String destinationLocation,
+      @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
+    stageService.assertMcWorkspace(destinationWorkspaceId, "cloneGcsBucket");
+
+    final ControlledResource sourceBucketResource =
+        getControlledResource(sourceWorkspaceId, sourceResourceId, userRequest);
+
+    // Verify user can read source resource in Sam
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest,
+        sourceBucketResource.getWorkspaceId(),
+        sourceBucketResource.getResourceId(),
+        SamControlledResourceActions.READ_ACTION);
+
+    // Write access to the target workspace will be established in the create flight
+    final String jobDescription =
+        String.format(
+            "Clone controlled resource %s; id %s; name %s",
+            sourceBucketResource.getResourceType(),
+            sourceBucketResource.getResourceId(),
+            sourceBucketResource.getName());
+
+    final JobBuilder jobBuilder =
+        jobService
+            .newJob(
+                jobDescription,
+                jobControl.getId(),
+                CloneControlledGcsBucketResourceFlight.class,
+                sourceBucketResource,
+                userRequest)
+            .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
+            .addParameter(ControlledResourceKeys.RESOURCE_NAME, destinationResourceName)
+            .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
+            .addParameter(ControlledResourceKeys.DESTINATION_BUCKET_NAME, destinationBucketName)
+            .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
+            .addParameter(
+                ControlledResourceKeys.CLONING_INSTRUCTIONS,
+                Optional.ofNullable(cloningInstructionsOverride)
+                    .map(CloningInstructions::fromApiModel)
+                    .orElse(null));
+    return jobBuilder.submit();
+  }
+
   /** Starts a create controlled BigQuery dataset resource, blocking until its job is finished. */
   public ControlledBigQueryDatasetResource createBqDataset(
       ControlledBigQueryDatasetResource resource,
@@ -149,18 +224,15 @@ public class ControlledResourceService {
             "Create controlled resource %s; id %s; name %s",
             resource.getResourceType(), resource.getResourceId(), resource.getName());
 
-    final JobBuilder jobBuilder =
-        jobService
-            .newJob(
-                jobDescription,
-                jobControl.getId(),
-                CreateControlledResourceFlight.class,
-                resource,
-                userRequest)
-            .addParameter(
-                ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, privateResourceIamRoles)
-            .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
-    return jobBuilder;
+    return jobService
+        .newJob(
+            jobDescription,
+            jobControl.getId(),
+            CreateControlledResourceFlight.class,
+            resource,
+            userRequest)
+        .addParameter(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, privateResourceIamRoles)
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
   }
 
   private void validateCreateFlightPrerequisites(
@@ -244,10 +316,14 @@ public class ControlledResourceService {
     // If there is no assigned user, this condition is satisfied.
     //noinspection deprecation
     final boolean isAllowed =
-        controlledResource.getAssignedUser().map(requestUserEmail::equals).orElse(true);
+        controlledResource.getAssignedUser().map(requestUserEmail::equalsIgnoreCase).orElse(true);
     if (!isAllowed) {
       throw new BadRequestException(
-          "User may only assign a private controlled resource to themselves.");
+          "User ("
+              + requestUserEmail
+              + ") may only assign a private controlled resource to themselves ("
+              + controlledResource.getAssignedUser().orElse("")
+              + ").");
     }
   }
 }

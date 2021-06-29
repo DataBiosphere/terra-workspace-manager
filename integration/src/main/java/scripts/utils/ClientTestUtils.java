@@ -34,10 +34,13 @@ import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scripts.testscripts.ControlledGcsBucketLifecycle;
 
 public class ClientTestUtils {
 
@@ -221,6 +224,41 @@ public class ClientTestUtils {
 
   public static boolean jobIsRunning(JobReport jobReport) {
     return jobReport.getStatus().equals(JobReport.StatusEnum.RUNNING);
+  }
+
+  /**
+   * Get a result from a call that might throw an exception. Treat the exception as retryable,
+   * sleep for a specific duration, and retry up to a fixed number of times. This structure
+   * is useful for situations where we are waiting on a cloud IAM permission change to take effect.
+   * @param supplier - code returning the result or throwing an exception
+   * @param numTries - number of times to retry the operation
+   * @param sleepDuration - sleep time between attempts
+   * @param <T> - type of result
+   * @return - result from supplier, the first time it doesn't throw, or null if all tries have been
+   *     exhausted
+   * @throws InterruptedException
+   */
+  public static @Nullable <T> T getWithRetryOnException(
+      Supplier<T> supplier,
+      int numTries,
+      Duration sleepDuration) throws InterruptedException {
+    T result = null;
+    while (numTries > 0) {
+      try {
+        // read blob as second user
+        result = supplier.get();
+        break;
+      } catch (Exception e) {
+        numTries--;
+        logger.info(
+            "Exception \"{}\". Waiting {} seconds for permissions to propagate. Tries remaining: {}",
+            e.getMessage(),
+            sleepDuration.toSeconds(),
+            numTries);
+        TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
+      }
+    }
+    return result;
   }
 
   /**

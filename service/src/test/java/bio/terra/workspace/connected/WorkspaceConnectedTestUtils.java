@@ -27,7 +27,6 @@ public class WorkspaceConnectedTestUtils {
         workspaceService.createWorkspace(
             WorkspaceRequest.builder()
                 .workspaceId(UUID.randomUUID())
-                .jobId(UUID.randomUUID().toString())
                 .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
                 .workspaceStage(WorkspaceStage.MC_WORKSPACE)
                 .build(),

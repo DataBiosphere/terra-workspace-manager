@@ -1,0 +1,18 @@
+{
+  "name": "CloneGcsBucket",
+  "description": "Clone test",
+  "serverSpecificationFile": "workspace-dev.json",
+  "kubernetes": {},
+  "application": {},
+  "testScripts": [
+    {
+      "name": "CloneGcsBucket",
+      "numberOfUserJourneyThreadsToRun": 1,
+      "userJourneyThreadPoolSize": 2,
+      "expectedTimeForEach": 15,
+      "expectedTimeForEachUnit": "MINUTES",
+      "parameters": ["wm-default-spend-profile"]
+    }
+  ],
+  "testUserFiles": ["bella.json"]
+}

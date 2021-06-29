@@ -16,7 +16,8 @@
     "integration/EnumerateResources.json",
     "integration/DeleteGcpContextWithControlledResource.json",
     "integration/DeleteWorkspaceWithControlledResource.json",
-    "integration/ValidateReferencedResources.json"
+    "integration/ValidateReferencedResources.json",
+    "integration/CloneGcsBucket.json"
   ]
 }
 

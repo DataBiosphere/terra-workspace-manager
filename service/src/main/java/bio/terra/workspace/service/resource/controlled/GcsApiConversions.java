@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRule;
@@ -49,6 +50,22 @@ public class GcsApiConversions {
    */
   public static ApiGcpGcsBucketUpdateParameters toUpdateParameters(BucketInfo bucketInfo) {
     return new ApiGcpGcsBucketUpdateParameters()
+        .lifecycle(new ApiGcpGcsBucketLifecycle().rules(toWsmApiRulesList(bucketInfo)))
+        .defaultStorageClass(toWsmApi(bucketInfo.getStorageClass()));
+  }
+
+  /**
+   * Convert to creation parameters, which is needed for cloning. Very similar to
+   * toUpdateParameters(). TODO: standardize on this function and remove the notion of update
+   * parameters, since this largely subsumes that. PF-850
+   *
+   * @param bucketInfo
+   * @return
+   */
+  public static ApiGcpGcsBucketCreationParameters toCreationParameters(BucketInfo bucketInfo) {
+    return new ApiGcpGcsBucketCreationParameters()
+        .location(bucketInfo.getLocation())
+        .name(bucketInfo.getName())
         .lifecycle(new ApiGcpGcsBucketLifecycle().rules(toWsmApiRulesList(bucketInfo)))
         .defaultStorageClass(toWsmApi(bucketInfo.getStorageClass()));
   }
@@ -191,12 +208,14 @@ public class GcsApiConversions {
   public static LifecycleCondition toGcsApi(ApiGcpGcsBucketLifecycleRuleCondition condition) {
     final var resultBuilder = LifecycleCondition.newBuilder();
 
-    /* TODO(PF-506): some conditions aren't in the version of the Google Storage API in the
-     *    latest version of the CRL. */
     resultBuilder.setAge(condition.getAge());
     resultBuilder.setCreatedBefore(toGoogleDateTime(condition.getCreatedBefore()));
     resultBuilder.setNumberOfNewerVersions(condition.getNumNewerVersions());
     resultBuilder.setIsLive(condition.isLive());
+    resultBuilder.setDaysSinceNoncurrentTime(condition.getDaysSinceNoncurrentTime());
+    resultBuilder.setNoncurrentTimeBefore(toGoogleDateTime(condition.getNoncurrentTimeBefore()));
+    resultBuilder.setCustomTimeBefore(toGoogleDateTime(condition.getCustomTimeBefore()));
+    resultBuilder.setDaysSinceCustomTime(condition.getDaysSinceCustomTime());
 
     resultBuilder.setMatchesStorageClass(
         Optional.ofNullable(condition.getMatchesStorageClass())
@@ -214,7 +233,11 @@ public class GcsApiConversions {
         .matchesStorageClass(
             Optional.ofNullable(condition.getMatchesStorageClass())
                 .map(c -> c.stream().map(GcsApiConversions::toWsmApi).collect(Collectors.toList()))
-                .orElse(null));
+                .orElse(null))
+        .daysSinceNoncurrentTime(condition.getDaysSinceNoncurrentTime())
+        .noncurrentTimeBefore(toOffsetDateTime(condition.getNoncurrentTimeBefore()))
+        .customTimeBefore(toOffsetDateTime(condition.getCustomTimeBefore()))
+        .daysSinceCustomTime(condition.getDaysSinceCustomTime());
   }
 
   @Nullable

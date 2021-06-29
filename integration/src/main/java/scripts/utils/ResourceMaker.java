@@ -3,6 +3,7 @@ package scripts.utils;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_PROJECT;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
+import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
 
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
@@ -15,6 +16,7 @@ import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpGcsBucketReferenceRequestBody;
+import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.DataRepoSnapshotAttributes;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.DeleteControlledGcpGcsBucketRequest;
@@ -104,26 +106,8 @@ public class ResourceMaker {
     return resourceApi.createBucketReference(body, workspaceId);
   }
 
-  public static GcpGcsBucketResource makeControlledGcsBucketUserShared(
+  public static CreatedControlledGcpGcsBucket makeControlledGcsBucketUserShared(
       ControlledGcpResourceApi resourceApi, UUID workspaceId, String name) throws Exception {
-
-    // TODO: we should tolerate getting no default storage and no lifecycle rule. That is captured
-    //  in PF-635. For now, we build those things so the bucket gets created.
-    GcpGcsBucketLifecycleRule lifecycleRule =
-        new GcpGcsBucketLifecycleRule()
-            .action(
-                new GcpGcsBucketLifecycleRuleAction()
-                    .type(
-                        GcpGcsBucketLifecycleRuleActionType
-                            .DELETE)) // no storage class required for delete actions
-            .condition(
-                new GcpGcsBucketLifecycleRuleCondition()
-                    .age(64)
-                    .live(true)
-                    .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.ARCHIVE)
-                    .numNewerVersions(2));
-
-    List<GcpGcsBucketLifecycleRule> lifecycleRules = new ArrayList<>(List.of(lifecycleRule));
 
     String bucketName = ClientTestUtils.generateCloudResourceName();
     var body =
@@ -139,11 +123,11 @@ public class ResourceMaker {
                 new GcpGcsBucketCreationParameters()
                     .name(bucketName)
                     .defaultStorageClass(GcpGcsBucketDefaultStorageClass.STANDARD)
-                    .lifecycle(new GcpGcsBucketLifecycle().rules(lifecycleRules))
+                    .lifecycle(new GcpGcsBucketLifecycle().rules(LIFECYCLE_RULES))
                     .location("US-CENTRAL1"));
 
     logger.info("Creating bucket {} workspace {}", bucketName, workspaceId);
-    return resourceApi.createBucket(body, workspaceId).getGcpBucket();
+    return resourceApi.createBucket(body, workspaceId);
   }
 
   public static void deleteControlledGcsBucket(

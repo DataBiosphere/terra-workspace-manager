@@ -623,7 +623,7 @@ paths:
         '200':
           $ref: '#/components/responses/CreateCloudContextResultResponse'
         '202':
-          $ref: '#/components/responses/JobReportResponse'
+          $ref: '#/components/responses/CreateCloudContextResultResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -735,14 +735,9 @@ paths:
           $ref: '#/components/responses/ServerError'
 
 
-  /api/job/v1/jobs/{workspaceId}:
+  /api/job/v1/jobs/{jobId}:
     parameters:
-    - name: workspaceId
-      in: path
-      description: The unique id provided in JobControl to the async endpoint
-      required: true
-      schema:
-        type: string
+    - $ref: '#/components/parameters/JobId'
     get:
       tags:
       - jobs
@@ -850,6 +845,49 @@ paths:
           $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
         '202':
           $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/{resourceId}/clone:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a GCS Bucket
+      operationId: cloneGcsBucket
+      tags: [ControlledGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneControlledGcpGcsBucketRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ClonedControlledGcpGcsBucketResponse'
+        '202':
+          $ref: '#/components/responses/ClonedControlledGcpGcsBucketResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/clone-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a gcp bucket clone job.
+      operationId: getCloneGcsBucketResult
+      tags: [ControlledGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/ClonedControlledGcpGcsBucketResponse'
+        '202':
+          $ref: '#/components/responses/ClonedControlledGcpGcsBucketResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -1450,16 +1488,6 @@ components:
           items:
             type: string
             format: uuid
-        jobId:
-          description: |
-            Optional ID used for idempotency. If multiple requests use the same
-            jobId, they will be considered logical duplicates rather than
-            unique requests. Sending different requests with the same jobId
-            will lead to all but one of the request bodies being ignored.
-            This will be randomly generated if not provided in a request.
-            Best practice is for job identifier to be a UUID, a ShortUUID,
-            or other globally unique identifier.
-          type: string
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
 
@@ -1872,6 +1900,71 @@ components:
             when there are at least N versions (including the live version) newer than this version
             of the object.
           type: integer
+
+    CloneControlledGcpGcsBucketRequest:
+      description: >-
+        Values to assign to the cloned bucket for a given source bucket. Leave
+        name and description null to take the source object's values.
+        TODO: should we allow setting the destination bucket's cloning
+        instructions as well?
+      type: object
+      required: [destinationWorkspaceId, jobControl]
+      properties:
+        destinationWorkspaceId:
+          description: ID of workspace to be cloned into
+          type: string
+          format: uuid
+        cloningInstructions:
+          $ref: "#/components/schemas/CloningInstructionsEnum"
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        bucketName:
+          description: >-
+            Name of created bucket (not the resource name). This name must
+            be globally unique, so it can't be a copy of the original bucket name.
+            It also can't be a simple formula like copy-of-bucket-name, as that would
+            fail on subsequent clone operations with bucket-name as the source bucket.
+            If null, a random bucket name will be created.
+          type: string
+        location:
+          description: >-
+            A valid bucket location per https://cloud.google.com/storage/docs/locations.
+            If null, will use source bucket's location.
+          type: string
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+    ClonedControlledGcpGcsBucket:
+      description: >-
+        Response object for clone of a GCS Bucket. Destination workspace and
+        resource IDs are available in the bucket's metadata object. TODO: generalize so there's a
+        single response type for all resource clones?
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        bucket:
+          $ref: "#/components/schemas/CreatedControlledGcpGcsBucket"
+    CloneControlledGcpGcsBucketResult:
+      description: >-
+        API result class for cloning a GCS bucket.
+      type: object
+      properties:
+        bucket:
+          $ref: '#/components/schemas/ClonedControlledGcpGcsBucket'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
 
     GcpBigQueryDatasetCreationParameters:
       description: >-
@@ -2324,6 +2417,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreatedControlledGcpGcsBucket'
+
+    ClonedControlledGcpGcsBucketResponse:
+      description: Response to GCS bucket clone operation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneControlledGcpGcsBucketResult'
 
     DeleteControlledGcpGcsBucketResponse:
       description: Response Payload for deleting a Gcs bucket
