@@ -1,13 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.generated.controller.ReferencedGcpResourceApi;
-import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDatasetReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
-import bio.terra.workspace.generated.model.ApiUpdateDataReferenceRequestBody;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -198,14 +192,19 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<ApiDataRepoSnapshotResource> getDataRepoSnapshotReference(
+  public ResponseEntity<ApiResourceDescription> getDataRepoSnapshotReference(
       UUID id, UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ReferencedResource referenceResource =
         referenceResourceService.getReferenceResource(id, referenceId, userReq);
-    ApiDataRepoSnapshotResource response =
-        referenceResource.castToDataRepoSnapshotResource().toApiResource();
-    return new ResponseEntity<>(response, HttpStatus.OK);
+    ApiResourceMetadata apiResourceMetadata = referenceResource.toApiMetadata();
+    ReferencedDataRepoSnapshotResource referencedDataRepoSnapshotResource =
+        referenceResource.castToDataRepoSnapshotResource();
+    ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
+    union.gcpDataRepoSnapshot(referencedDataRepoSnapshotResource.toApiAttributes());
+    return new ResponseEntity<>(
+        new ApiResourceDescription().metadata(apiResourceMetadata).resourceAttributes(union),
+        HttpStatus.OK);
   }
 
   @Override

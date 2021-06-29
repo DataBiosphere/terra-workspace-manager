@@ -362,7 +362,7 @@ paths:
       tags: [ReferencedGcpResource]
       responses:
         '200':
-          $ref: '#/components/responses/DataRepoSnapshotReferenceResponse'
+          $ref: '#/components/responses/SingleSnapshotReferenceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -2389,6 +2389,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/DataRepoSnapshotResource'
+
+    SingleSnapshotReferenceResponse:
+      description: Response containing a reference to a Data Repo snapshot.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceDescription'
 
     GcpGcsBucketReferenceResponse:
       description: Response containing a reference to a Gcp bucket.
