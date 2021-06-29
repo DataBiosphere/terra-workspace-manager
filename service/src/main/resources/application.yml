@@ -101,6 +101,9 @@ terra.common:
     quiet-down-timeout: 30s
     terminate-timeout: 30s
     tracing-enabled: true
+    retention-check-interval: 1d
+    completed-flight-retention: 7d
+
   tracing:
     stackdriverExportEnabled: ${env.tracing.exportEnabled}
     samplingRate: ${env.tracing.samplingRate}
