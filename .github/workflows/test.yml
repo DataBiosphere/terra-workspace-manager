@@ -7,7 +7,7 @@ on:
   push:
     branches: [ dev ]
     paths-ignore:
-      - 'README.md'
+      - '*.md'
       - '.github/**'
       - 'service/local-dev/**'
   pull_request:
