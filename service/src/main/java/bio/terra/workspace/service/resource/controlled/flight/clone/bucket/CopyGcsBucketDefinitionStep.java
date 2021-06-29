@@ -103,7 +103,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
     final ControlledGcsBucketResource clonedBucket =
         controlledResourceService.createBucket(
             destinationBucketResource, destinationCreationParameters, iamRoles, userRequest);
-
+    workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedBucket);
     // TODO: create new type & use it here
     final ApiCreatedControlledGcpGcsBucket apiCreatedBucket =
         new ApiCreatedControlledGcpGcsBucket()
@@ -116,7 +116,10 @@ public class CopyGcsBucketDefinitionStep implements Step {
             .bucket(apiCreatedBucket)
             .sourceWorkspaceId(sourceBucket.getWorkspaceId())
             .sourceResourceId(sourceBucket.getResourceId());
-    FlightUtils.setResponse(flightContext, apiBucketResult, HttpStatus.OK);
+    workingMap.put(ControlledResourceKeys.CLONE_DEFINITION_RESULT, apiBucketResult);
+    if (cloningInstructions.equals(CloningInstructions.COPY_DEFINITION)) {
+      FlightUtils.setResponse(flightContext, apiBucketResult, HttpStatus.OK);
+    }
     return StepResult.getStepResultSuccess();
   }
 
@@ -165,8 +168,10 @@ public class CopyGcsBucketDefinitionStep implements Step {
             .get(
                 ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
                 ControlledGcsBucketResource.class);
-    controlledResourceService.deleteControlledResourceSync(
-        clonedBucket.getWorkspaceId(), clonedBucket.getResourceId(), userRequest);
+    if (clonedBucket != null) {
+      controlledResourceService.deleteControlledResourceSync(
+          clonedBucket.getWorkspaceId(), clonedBucket.getResourceId(), userRequest);
+    }
     return StepResult.getStepResultSuccess();
   }
 

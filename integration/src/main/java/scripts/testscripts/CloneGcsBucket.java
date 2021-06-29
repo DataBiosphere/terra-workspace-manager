@@ -103,7 +103,8 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
         .cloningInstructions(CloningInstructionsEnum.RESOURCE)
         .jobControl(new JobControl().id(UUID.randomUUID().toString()));
 
-    logger.info("Cloning bucket name: {}\n\tresource ID: {}\n\tworkspace: {}\n\tprojectID: {}\n\tinto bucket name: {}\n\tworkspace: {}\n\tprojectID: {}",
+    logger.info("Cloning bucket\n\tname: {}\n\tresource ID: {}\n\tworkspace: {}\n\t"
+            + "projectID: {}\ninto destination bucket\n\tname: {}\n\tworkspace: {}\n\tprojectID: {}",
         sourceBucket.getGcpBucket().getMetadata().getName(),
         sourceBucket.getResourceId(),
         sourceBucket.getGcpBucket().getMetadata().getWorkspaceId(),
@@ -187,6 +188,6 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     assertEquals(StorageClass.NEARLINE, setStorageClassLifecycleAction.getStorageClass());
     assertEquals(DateTime.parseRfc3339("2007-01-03"), setStorageClassRule.getCondition().getCreatedBefore());
     assertThat(setStorageClassRule.getCondition().getMatchesStorageClass(), contains(StorageClass.STANDARD));
-    assertEquals(CloningInstructionsEnum.DEFINITION, clonedBucket.getEffectiveCloningInstructions());
+    assertEquals(CloningInstructionsEnum.RESOURCE, clonedBucket.getEffectiveCloningInstructions());
   }
 }

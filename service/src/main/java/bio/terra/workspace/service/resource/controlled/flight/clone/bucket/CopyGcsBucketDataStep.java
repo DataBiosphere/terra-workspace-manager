@@ -1,12 +1,18 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
+import bio.terra.cloudres.google.iam.IamCow;
+import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
@@ -22,6 +28,9 @@ import com.google.api.services.storagetransfer.v1.model.TransferOptions;
 import com.google.api.services.storagetransfer.v1.model.TransferSpec;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.Identity;
+import com.google.cloud.Policy;
+import com.google.cloud.Role;
 import com.google.cloud.ServiceOptions;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -30,10 +39,12 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 
 public class CopyGcsBucketDataStep implements Step {
 
@@ -46,9 +57,15 @@ public class CopyGcsBucketDataStep implements Step {
   private static final int MAX_ATTEMPTS = 100;
 
   private final ControlledGcsBucketResource sourceBucket;
+  private final CrlService crlService;
+  private final WorkspaceService workspaceService;
 
-  public CopyGcsBucketDataStep(ControlledGcsBucketResource sourceBucket) {
+  public CopyGcsBucketDataStep(ControlledGcsBucketResource sourceBucket,
+      CrlService crlService,
+      WorkspaceService workspaceService) {
     this.sourceBucket = sourceBucket;
+    this.crlService = crlService;
+    this.workspaceService = workspaceService;
   }
 
   // See https://cloud.google.com/storage-transfer/docs/reference/rest/v1/transferJobs/create
@@ -66,6 +83,8 @@ public class CopyGcsBucketDataStep implements Step {
       return StepResult.getStepResultSuccess();
     }
     final String sourceBucketName = sourceBucket.getBucketName();
+    final IamCow iamCow = crlService.getIamCow();
+//    iamCow.projects().roles().
     // Not to be confused with the destination bucket name in the input parameters.
     final String destinationBucketName =
         flightContext
@@ -86,14 +105,23 @@ public class CopyGcsBucketDataStep implements Step {
       logger.info("STS SA: {}", transferServiceSA.getAccountEmail());
 
       // Set source bucket permissions
+      setSourceBucketRoles(sourceBucketName, transferServiceSA.getAccountEmail());
 
+
+      // Set destination permissions
       final TransferJob transferJobInput =
           new TransferJob()
               .setName(transferJobName)
               .setDescription("Workspace Manager Clone GCS Bucket")
               .setProjectId(projectId)
               .setSchedule(createScheduleRunOnceNow())
-              .setTransferSpec(createBulkTransferSpec(sourceBucketName, destinationBucketName))
+              //              .setTransferSpec(createBulkTransferSpec(sourceBucketName,
+              // destinationBucketName))
+              .setTransferSpec(
+                  //                  createBulkTransferSpec("jaycarlton-test-source",
+                  // "jaycarlton-test-destination"))
+                  createBulkTransferSpec(
+                      "jaycarlton-test-source-1", "jaycarlton-test-destination-1"))
               .setStatus(ENABLED_STATUS);
       // Create the TransferJob for the associated schedule and spec in the correct project.
       final TransferJob transferJobOutput =
@@ -103,8 +131,7 @@ public class CopyGcsBucketDataStep implements Step {
       // for completion of the first transfer operation. The trick is going to be setting up a
       // polling
       // interval that's appropriate for a wide range of bucket sizes. Everything from millisecond
-      // to hours.
-
+      // to hours. The transfer operation won't exist until it starts.
       final String operationName =
           pollForOperationName(storageTransferService, transferJobName, projectId);
 
@@ -114,9 +141,16 @@ public class CopyGcsBucketDataStep implements Step {
       Operation operation;
       do {
         operation = storageTransferService.transferOperations().get(operationName).execute();
+        if (operation == null) {
+          throw new RuntimeException(
+              String.format("Failed to get transfer operation with name %s", operationName));
+        } else if (operation.getDone()) {
+          break;
+        }
         TimeUnit.MILLISECONDS.sleep(OPERATIONS_POLL_INTERVAL.toMillis());
         attempts++;
-      } while (!operation.getDone() && attempts < MAX_ATTEMPTS);
+        logger.info("Attempted to get transfer operation {} {} times", operationName, attempts);
+      } while (attempts < MAX_ATTEMPTS);
       logger.info("Operation {} in transfer job {} has completed", operationName, transferJobName);
       // Inspect the completed operation for success
       if (operation.getError() != null) {
@@ -130,10 +164,30 @@ public class CopyGcsBucketDataStep implements Step {
     } catch (IOException | GeneralSecurityException e) {
       throw new IllegalStateException("Failed to copy bucket data", e);
     }
-
+    final ApiClonedControlledGcpGcsBucket apiBucketResult =
+        flightContext
+            .getWorkingMap()
+            .get(
+                ControlledResourceKeys.CLONE_DEFINITION_RESULT,
+                ApiClonedControlledGcpGcsBucket.class);
+    FlightUtils.setResponse(flightContext, apiBucketResult, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }
 
+  private void setSourceBucketRoles(String sourceBucketName, String transferServiceSAEmail) {
+    final String sourceProjectId = workspaceService.getRequiredGcpProject(sourceBucket.getWorkspaceId());
+    final StorageCow sourceStorageCow = crlService.createStorageCow(sourceProjectId);
+    final Identity saIdentity = Identity.serviceAccount(transferServiceSAEmail);
+    final Policy sourceBucketPolicy = sourceStorageCow.getIamPolicy(sourceBucketName).toBuilder()
+        .addIdentity(Role.of("roles/storage.objectViewer"), saIdentity)
+        .addIdentity(Role.of("roles/storage.legacyBucketReader"), saIdentity)
+        .build();
+    sourceStorageCow.setIamPolicy(sourceBucketName, sourceBucketPolicy);
+  }
+
+  private void setBucketRoles(UUID workspaceId, String bucketName, String transferServiceSAEmail, Set<Role> roles) {
+    
+  }
   // First, we poll the transfer jobs endpoint until an operation has started so that we can get
   // its server-generated name.
   private String pollForOperationName(
@@ -158,8 +212,8 @@ public class CopyGcsBucketDataStep implements Step {
   private TransferSpec createBulkTransferSpec(
       String sourceBucketName, String destinationBucketName) {
     return new TransferSpec()
-        .setGcsDataSource(new GcsData().setBucketName(sourceBucketName).setPath(ROOT_PATH))
-        .setGcsDataSink(new GcsData().setBucketName(destinationBucketName).setPath(ROOT_PATH))
+        .setGcsDataSource(new GcsData().setBucketName(sourceBucketName))
+        .setGcsDataSink(new GcsData().setBucketName(destinationBucketName))
         .setTransferOptions(
             new TransferOptions()
                 .setDeleteObjectsFromSourceAfterTransfer(false)
@@ -206,6 +260,7 @@ public class CopyGcsBucketDataStep implements Step {
             Utils.getDefaultTransport(),
             Utils.getDefaultJsonFactory(),
             new HttpCredentialsAdapter(credential))
+        .setApplicationName("wsm-fixme") // FIXME
         .build();
   }
 }
