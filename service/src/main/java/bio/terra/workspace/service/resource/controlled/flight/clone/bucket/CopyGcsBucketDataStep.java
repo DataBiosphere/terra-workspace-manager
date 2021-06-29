@@ -32,6 +32,7 @@ import com.google.cloud.Identity;
 import com.google.cloud.Policy;
 import com.google.cloud.Role;
 import com.google.cloud.ServiceOptions;
+import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
@@ -49,7 +50,6 @@ import org.springframework.http.HttpStatus;
 public class CopyGcsBucketDataStep implements Step {
 
   private static final Logger logger = LoggerFactory.getLogger(CopyGcsBucketDataStep.class);
-  private static final String ROOT_PATH = "/";
   private static final String ENABLED_STATUS = "ENABLED";
   private static final Duration FUTURE_DELAY = Duration.ofSeconds(5);
   private static final Duration JOBS_POLL_INTERVAL = Duration.ofSeconds(10);
@@ -60,7 +60,8 @@ public class CopyGcsBucketDataStep implements Step {
   private final CrlService crlService;
   private final WorkspaceService workspaceService;
 
-  public CopyGcsBucketDataStep(ControlledGcsBucketResource sourceBucket,
+  public CopyGcsBucketDataStep(
+      ControlledGcsBucketResource sourceBucket,
       CrlService crlService,
       WorkspaceService workspaceService) {
     this.sourceBucket = sourceBucket;
@@ -84,7 +85,7 @@ public class CopyGcsBucketDataStep implements Step {
     }
     final String sourceBucketName = sourceBucket.getBucketName();
     final IamCow iamCow = crlService.getIamCow();
-//    iamCow.projects().roles().
+
     // Not to be confused with the destination bucket name in the input parameters.
     final String destinationBucketName =
         flightContext
@@ -107,21 +108,23 @@ public class CopyGcsBucketDataStep implements Step {
       // Set source bucket permissions
       setSourceBucketRoles(sourceBucketName, transferServiceSA.getAccountEmail());
 
-
       // Set destination permissions
+      final UUID destinationWorkspaceId =
+          flightContext
+              .getInputParameters()
+              .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+      setDestinationBucketRoles(
+          destinationWorkspaceId, destinationBucketName, transferServiceSA.getAccountEmail());
+
       final TransferJob transferJobInput =
           new TransferJob()
               .setName(transferJobName)
               .setDescription("Workspace Manager Clone GCS Bucket")
               .setProjectId(projectId)
               .setSchedule(createScheduleRunOnceNow())
-              //              .setTransferSpec(createBulkTransferSpec(sourceBucketName,
-              // destinationBucketName))
-              .setTransferSpec(
-                  //                  createBulkTransferSpec("jaycarlton-test-source",
-                  // "jaycarlton-test-destination"))
-                  createBulkTransferSpec(
-                      "jaycarlton-test-source-1", "jaycarlton-test-destination-1"))
+              .setTransferSpec(createBulkTransferSpec(sourceBucketName, destinationBucketName))
+              //                  createBulkTransferSpec(
+              //                      "jaycarlton-test-source-1", "jaycarlton-test-destination-1"))
               .setStatus(ENABLED_STATUS);
       // Create the TransferJob for the associated schedule and spec in the correct project.
       final TransferJob transferJobOutput =
@@ -164,6 +167,7 @@ public class CopyGcsBucketDataStep implements Step {
     } catch (IOException | GeneralSecurityException e) {
       throw new IllegalStateException("Failed to copy bucket data", e);
     }
+    // TODO: delete the completed transfer job, as it will never run again
     final ApiClonedControlledGcpGcsBucket apiBucketResult =
         flightContext
             .getWorkingMap()
@@ -175,19 +179,32 @@ public class CopyGcsBucketDataStep implements Step {
   }
 
   private void setSourceBucketRoles(String sourceBucketName, String transferServiceSAEmail) {
-    final String sourceProjectId = workspaceService.getRequiredGcpProject(sourceBucket.getWorkspaceId());
-    final StorageCow sourceStorageCow = crlService.createStorageCow(sourceProjectId);
-    final Identity saIdentity = Identity.serviceAccount(transferServiceSAEmail);
-    final Policy sourceBucketPolicy = sourceStorageCow.getIamPolicy(sourceBucketName).toBuilder()
-        .addIdentity(Role.of("roles/storage.objectViewer"), saIdentity)
-        .addIdentity(Role.of("roles/storage.legacyBucketReader"), saIdentity)
-        .build();
-    sourceStorageCow.setIamPolicy(sourceBucketName, sourceBucketPolicy);
+    setBucketRoles(
+        sourceBucket.getWorkspaceId(),
+        sourceBucketName,
+        transferServiceSAEmail,
+        ImmutableSet.of("roles/storage.objectViewer", "roles/storage.legacyBucketReader"));
   }
 
-  private void setBucketRoles(UUID workspaceId, String bucketName, String transferServiceSAEmail, Set<Role> roles) {
-    
+  private void setDestinationBucketRoles(
+      UUID destinationWorkspaceId, String bucketName, String transferServiceSAEmail) {
+    setBucketRoles(
+        destinationWorkspaceId,
+        bucketName,
+        transferServiceSAEmail,
+        ImmutableSet.of("roles/storage.legacyBucketWriter"));
   }
+
+  private void setBucketRoles(
+      UUID workspaceId, String bucketName, String transferServiceSAEmail, Set<String> roles) {
+    final String projectId = workspaceService.getRequiredGcpProject(workspaceId);
+    final StorageCow storageCow = crlService.createStorageCow(projectId);
+    final Identity saIdentity = Identity.serviceAccount(transferServiceSAEmail);
+    final Policy.Builder policyBuilder = storageCow.getIamPolicy(bucketName).toBuilder();
+    roles.forEach(s -> policyBuilder.addIdentity(Role.of(s), saIdentity));
+    storageCow.setIamPolicy(bucketName, policyBuilder.build());
+  }
+
   // First, we poll the transfer jobs endpoint until an operation has started so that we can get
   // its server-generated name.
   private String pollForOperationName(

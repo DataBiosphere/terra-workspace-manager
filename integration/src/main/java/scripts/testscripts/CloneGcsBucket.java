@@ -4,6 +4,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_CONTENT;
+import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_NAME;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1_CONDITION_AGE;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1_CONDITION_LIVE;
@@ -29,6 +32,9 @@ import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
 import com.google.api.client.util.DateTime;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.DeleteLifecycleAction;
@@ -73,6 +79,14 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     sourceResourceName = RESOURCE_PREFIX + nameSuffix;
     sourceBucket = makeControlledGcsBucketUserShared(resourceApi, getWorkspaceId(), sourceResourceName);
     sourceBucketName = sourceBucket.getGcpBucket().getAttributes().getBucketName();
+
+    // populate source bucket
+    Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUsers.get(0), sourceProjectId);
+    BlobId blobId = BlobId.of(sourceBucketName, GCS_BLOB_NAME);
+    BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
+    Blob createdFile = ownerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
+    logger.info("Wrote blob {} to bucket", createdFile.getBlobId());
+
     // create destination workspace
     destinationWorkspaceId = UUID.randomUUID();
     final var requestBody =
@@ -189,5 +203,11 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     assertEquals(DateTime.parseRfc3339("2007-01-03"), setStorageClassRule.getCondition().getCreatedBefore());
     assertThat(setStorageClassRule.getCondition().getMatchesStorageClass(), contains(StorageClass.STANDARD));
     assertEquals(CloningInstructionsEnum.RESOURCE, clonedBucket.getEffectiveCloningInstructions());
+
+    // test retrieving file from destination bucket
+    Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, destinationProjectId);
+    BlobId blobId = BlobId.of(destinationBucketName, GCS_BLOB_NAME);
+    final Blob retrievedFile = ownerStorageClient.get(blobId);
+    assertEquals(blobId, retrievedFile.getBlobId());
   }
 }
