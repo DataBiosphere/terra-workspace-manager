@@ -12,8 +12,6 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// USELESS CHANGE TO ALLOW A COMMIt
-
 /*
  This class is factored out with the idea that it could be moved to Terra Common Library.
 
