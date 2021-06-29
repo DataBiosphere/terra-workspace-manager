@@ -67,8 +67,7 @@ jobs:
       id: skiptest
       uses: ./.github/actions/bump-skip
       with:
-        #event-name: ${{ github.event_name }}
-        event-name: push
+        event-name: ${{ github.event_name }}
     - name: Bump the tag to a new version
       if: steps.skiptest.outputs.is-bump == 'no'
       uses: databiosphere/github-actions/actions/bumper@bumper-0.0.3
