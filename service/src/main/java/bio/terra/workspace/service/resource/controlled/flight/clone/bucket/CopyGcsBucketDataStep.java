@@ -38,7 +38,6 @@ import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -54,7 +53,7 @@ public class CopyGcsBucketDataStep implements Step {
   private static final Duration FUTURE_DELAY = Duration.ofSeconds(5);
   private static final Duration JOBS_POLL_INTERVAL = Duration.ofSeconds(10);
   private static final Duration OPERATIONS_POLL_INTERVAL = Duration.ofSeconds(30);
-  private static final int MAX_ATTEMPTS = 100;
+  private static final int MAX_ATTEMPTS = 25;
 
   private final ControlledGcsBucketResource sourceBucket;
   private final CrlService crlService;
@@ -119,12 +118,10 @@ public class CopyGcsBucketDataStep implements Step {
       final TransferJob transferJobInput =
           new TransferJob()
               .setName(transferJobName)
-              .setDescription("Workspace Manager Clone GCS Bucket")
+              .setDescription("Terra Workspace Manager Clone GCS Bucket")
               .setProjectId(projectId)
               .setSchedule(createScheduleRunOnceNow())
               .setTransferSpec(createBulkTransferSpec(sourceBucketName, destinationBucketName))
-              //                  createBulkTransferSpec(
-              //                      "jaycarlton-test-source-1", "jaycarlton-test-destination-1"))
               .setStatus(ENABLED_STATUS);
       // Create the TransferJob for the associated schedule and spec in the correct project.
       final TransferJob transferJobOutput =
@@ -136,7 +133,7 @@ public class CopyGcsBucketDataStep implements Step {
       // interval that's appropriate for a wide range of bucket sizes. Everything from millisecond
       // to hours. The transfer operation won't exist until it starts.
       final String operationName =
-          pollForOperationName(storageTransferService, transferJobName, projectId);
+          getLatestOperationName(storageTransferService, transferJobName, projectId);
 
       // Now that we have an operation name, we can poll the operations endpoint for completion
       // information.
@@ -147,12 +144,14 @@ public class CopyGcsBucketDataStep implements Step {
         if (operation == null) {
           throw new RuntimeException(
               String.format("Failed to get transfer operation with name %s", operationName));
-        } else if (operation.getDone()) {
+        } else if (operation.getDone() != null && operation.getDone()) {
           break;
+        } else {
+          // operation is not started or is in progress
+          TimeUnit.MILLISECONDS.sleep(OPERATIONS_POLL_INTERVAL.toMillis());
+          attempts++;
+          logger.info("Attempted to get transfer operation {} {} times", operationName, attempts);
         }
-        TimeUnit.MILLISECONDS.sleep(OPERATIONS_POLL_INTERVAL.toMillis());
-        attempts++;
-        logger.info("Attempted to get transfer operation {} {} times", operationName, attempts);
       } while (attempts < MAX_ATTEMPTS);
       logger.info("Operation {} in transfer job {} has completed", operationName, transferJobName);
       // Inspect the completed operation for success
@@ -160,14 +159,15 @@ public class CopyGcsBucketDataStep implements Step {
         logger.warn("Error in transfer operation {}: {}", operationName, operation.getError());
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL); // don't retry for now
       } else {
-        // response should be filled in
-        final Map<String, Object> responseMap = operation.getResponse();
-        final Map<String, Object> metadata = operation.getMetadata();
+        logger.info("Operation metadata: {}", operation.getMetadata());
       }
+      // Currently there is no delete endpoint for transfer jobs, so all of the completed clone jobs
+      // will clutter the console in the main control plane project.
+      // https://cloud.google.com/storage-transfer/docs/reference/rest
     } catch (IOException | GeneralSecurityException e) {
       throw new IllegalStateException("Failed to copy bucket data", e);
     }
-    // TODO: delete the completed transfer job, as it will never run again
+
     final ApiClonedControlledGcpGcsBucket apiBucketResult =
         flightContext
             .getWorkingMap()
@@ -207,7 +207,7 @@ public class CopyGcsBucketDataStep implements Step {
 
   // First, we poll the transfer jobs endpoint until an operation has started so that we can get
   // its server-generated name.
-  private String pollForOperationName(
+  private String getLatestOperationName(
       Storagetransfer storageTransferService, String transferJobName, String projectId)
       throws InterruptedException, IOException {
     int attempts = 0;
@@ -277,7 +277,7 @@ public class CopyGcsBucketDataStep implements Step {
             Utils.getDefaultTransport(),
             Utils.getDefaultJsonFactory(),
             new HttpCredentialsAdapter(credential))
-        .setApplicationName("wsm-fixme") // FIXME
+        .setApplicationName("terra-workspace-manager")
         .build();
   }
 }

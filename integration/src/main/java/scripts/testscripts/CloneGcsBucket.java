@@ -208,6 +208,6 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, destinationProjectId);
     BlobId blobId = BlobId.of(destinationBucketName, GCS_BLOB_NAME);
     final Blob retrievedFile = ownerStorageClient.get(blobId);
-    assertEquals(blobId, retrievedFile.getBlobId());
+    assertEquals(blobId.getName(), retrievedFile.getBlobId().getName());
   }
 }
