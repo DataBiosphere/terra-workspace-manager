@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Set part of semantic version to bump
-      id: semver
+      id: controls
       run: |
         SEMVER_PART=""
         CHECKOUT_BRANCH="$GITHUB_REF"
