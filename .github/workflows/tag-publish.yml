@@ -67,6 +67,7 @@ jobs:
       id: skiptest
       run: |
         log=$(git log --pretty='%B')
+        echo "log=$log"
         pattern="^bump .*"
         #event=${{ github.event_name }}
         event=push
@@ -74,75 +75,76 @@ jobs:
         if [[ "$event" == "push" && "$log" =~ $pattern ]]; then
           SKIP_OUT=yes
         fi
+        echo "SKIP_OUT=$SKIP_OUT"
         echo ::set-output name=skip-out::$SKIP_OUT
-    - name: Bump the tag to a new version
-      if: steps.skiptest.outputs.skip-out == 'no'
-      uses: databiosphere/github-actions/actions/bumper@bumper-0.0.3
-      id: tag
-      env:
-        DEFAULT_BUMP: patch
-        GITHUB_TOKEN: ${{ secrets.BROADBOT_TOKEN }}
-        HOTFIX_BRANCHES: hotfix.*
-        OVERRIDE_BUMP: ${{ steps.controls.outputs.semver-part }}
-        RELEASE_BRANCHES: dev
-        VERSION_FILE_PATH: settings.gradle
-        VERSION_LINE_MATCH: "^gradle.ext.wsmVersion\\s*=\\s*\".*\""
-        VERSION_SUFFIX: SNAPSHOT
-    - name: Set up AdoptOpenJDK
-      if: steps.skiptest.outputs.skip-out == 'no'
-      uses: joschi/setup-jdk@v2
-      with:
-        java-version: 11
-    - name: Cache Gradle packages
-      if: steps.skiptest.outputs.skip-out == 'no'
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
-        restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
-    - name: Grant execute permission for gradlew
-      if: steps.skiptest.outputs.skip-out == 'no'
-      run: chmod +x gradlew
-    - name: "Publish to Artifactory"
-      if: steps.skiptest.outputs.skip-out == 'no'
-      run: ./gradlew :client:artifactoryPublish
-      env:
-        ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-        ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-        ARTIFACTORY_REPO_KEY: "libs-snapshot-local"
-    - name: Auth to GCR
-      if: steps.skiptest.outputs.skip-out == 'no'
-      uses: google-github-actions/setup-gcloud@master
-      with:
-        version: '270.0.0'
-        service_account_email: ${{ secrets.GCR_PUBLISH_EMAIL }}
-        service_account_key: ${{ secrets.GCR_PUBLISH_KEY }}
-    - name: Explicitly auth Docker for GCR
-      if: steps.skiptest.outputs.skip-out == 'no'
-      run: gcloud auth configure-docker --quiet
-    - name: Construct docker image name and tag
-      if: steps.skiptest.outputs.skip-out == 'no'
-      id: image-name
-      run: |
-        DOCKER_TAG=${{ steps.tag.outputs.tag }}
-        echo ::set-output name=name::gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:${DOCKER_TAG}
-    - name: Build image locally with jib
-      run: "./gradlew :service:jibDockerBuild --image=${{ steps.image-name.outputs.name }} -Djib.console=plain"
-    - name: Run Trivy vulnerability scanner
-      # Link to the github location of the action https://github.com/broadinstitute/dsp-appsec-trivy-action
-      uses: broadinstitute/dsp-appsec-trivy-action@v1
-      with:
-        image: ${{ steps.image-name.outputs.name }}
-    - name: Push GCR image
-      if: steps.skiptest.outputs.skip-out == 'no'
-      run: "docker push ${{ steps.image-name.outputs.name }}"
-    - name: Deploy to Terra Dev environment
-      if: github.event_name == 'push' && steps.skiptest.outputs.skip-out == 'no'
-      uses: broadinstitute/repository-dispatch@master
-      with:
-        token: ${{ secrets.BROADBOT_TOKEN }}
-        repository: broadinstitute/terra-helmfile
-        event-type: update-service
-        client-payload: '{"service": "workspacemanager", "version": "${{ steps.tag.outputs.tag }}", "dev_only": false}'
+#    - name: Bump the tag to a new version
+#      if: steps.skiptest.outputs.skip-out == 'no'
+#      uses: databiosphere/github-actions/actions/bumper@bumper-0.0.3
+#      id: tag
+#      env:
+#        DEFAULT_BUMP: patch
+#        GITHUB_TOKEN: ${{ secrets.BROADBOT_TOKEN }}
+#        HOTFIX_BRANCHES: hotfix.*
+#        OVERRIDE_BUMP: ${{ steps.controls.outputs.semver-part }}
+#        RELEASE_BRANCHES: dev
+#        VERSION_FILE_PATH: settings.gradle
+#        VERSION_LINE_MATCH: "^gradle.ext.wsmVersion\\s*=\\s*\".*\""
+#        VERSION_SUFFIX: SNAPSHOT
+#    - name: Set up AdoptOpenJDK
+#      if: steps.skiptest.outputs.skip-out == 'no'
+#      uses: joschi/setup-jdk@v2
+#      with:
+#        java-version: 11
+#    - name: Cache Gradle packages
+#      if: steps.skiptest.outputs.skip-out == 'no'
+#      uses: actions/cache@v2
+#      with:
+#        path: |
+#          ~/.gradle/caches
+#          ~/.gradle/wrapper
+#        key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
+#        restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+#    - name: Grant execute permission for gradlew
+#      if: steps.skiptest.outputs.skip-out == 'no'
+#      run: chmod +x gradlew
+#    - name: "Publish to Artifactory"
+#      if: steps.skiptest.outputs.skip-out == 'no'
+#      run: ./gradlew :client:artifactoryPublish
+#      env:
+#        ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+#        ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+#        ARTIFACTORY_REPO_KEY: "libs-snapshot-local"
+#    - name: Auth to GCR
+#      if: steps.skiptest.outputs.skip-out == 'no'
+#      uses: google-github-actions/setup-gcloud@master
+#      with:
+#        version: '270.0.0'
+#        service_account_email: ${{ secrets.GCR_PUBLISH_EMAIL }}
+#        service_account_key: ${{ secrets.GCR_PUBLISH_KEY }}
+#    - name: Explicitly auth Docker for GCR
+#      if: steps.skiptest.outputs.skip-out == 'no'
+#      run: gcloud auth configure-docker --quiet
+#    - name: Construct docker image name and tag
+#      if: steps.skiptest.outputs.skip-out == 'no'
+#      id: image-name
+#      run: |
+#        DOCKER_TAG=${{ steps.tag.outputs.tag }}
+#        echo ::set-output name=name::gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:${DOCKER_TAG}
+#    - name: Build image locally with jib
+#      run: "./gradlew :service:jibDockerBuild --image=${{ steps.image-name.outputs.name }} -Djib.console=plain"
+#    - name: Run Trivy vulnerability scanner
+#      # Link to the github location of the action https://github.com/broadinstitute/dsp-appsec-trivy-action
+#      uses: broadinstitute/dsp-appsec-trivy-action@v1
+#      with:
+#        image: ${{ steps.image-name.outputs.name }}
+#    - name: Push GCR image
+#      if: steps.skiptest.outputs.skip-out == 'no'
+#      run: "docker push ${{ steps.image-name.outputs.name }}"
+#    - name: Deploy to Terra Dev environment
+#      if: github.event_name == 'push' && steps.skiptest.outputs.skip-out == 'no'
+#      uses: broadinstitute/repository-dispatch@master
+#      with:
+#        token: ${{ secrets.BROADBOT_TOKEN }}
+#        repository: broadinstitute/terra-helmfile
+#        event-type: update-service
+#        client-payload: '{"service": "workspacemanager", "version": "${{ steps.tag.outputs.tag }}", "dev_only": false}'
