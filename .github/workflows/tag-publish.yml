@@ -131,8 +131,10 @@ jobs:
         DOCKER_TAG=${{ steps.tag.outputs.tag }}
         echo ::set-output name=name::gcr.io/${GOOGLE_PROJECT}/${SERVICE_NAME}:${DOCKER_TAG}
     - name: Build image locally with jib
+      if: steps.skiptest.outputs.skip-out == 'no'
       run: "./gradlew :service:jibDockerBuild --image=${{ steps.image-name.outputs.name }} -Djib.console=plain"
     - name: Run Trivy vulnerability scanner
+      if: steps.skiptest.outputs.skip-out == 'no'
       # Link to the github location of the action https://github.com/broadinstitute/dsp-appsec-trivy-action
       uses: broadinstitute/dsp-appsec-trivy-action@v1
       with:
