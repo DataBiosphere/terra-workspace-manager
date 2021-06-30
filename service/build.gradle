@@ -2,7 +2,7 @@ buildscript {
     ext {
         springBootVersion = '2.4.0'
     }
-    apply from: "../common.gradle"
+    apply(from: "$rootDir/common.gradle")
 }
 
 plugins {
@@ -20,25 +20,26 @@ plugins {
     id 'ru.vyarus.quality' version '4.5.0'
 }
 
-group = 'bio.terra'
-version = gradle.wsmVersion
-sourceCompatibility = JavaVersion.VERSION_11
+project.group = 'bio.terra'
+project.version = gradle.wsmVersion
+project.sourceCompatibility = JavaVersion.VERSION_11
 
-def artifactGroup = "${group}.workspace"
-def openapiOutputDir = "${buildDir}/openapi"
-def resourceDir = "${projectDir}/src/main/resources"
-
-idea {
-    module {
-        generatedSourceDirs = [file("${openapiOutputDir}/src/main/java")]
-        downloadJavadoc = true
-    }
+project.ext {
+    artifactGroup = "${group}.workspace"
+    openapiOutputDir = "${buildDir}/openapi"
+    resourceDir = "${projectDir}/src/main/resources"
 }
 
-jacoco {
-    toolVersion = '0.8.2'
-}
+def includeDir = "$projectDir/gradle"
+// include order matters, so don't alphabetize (yet)
+apply(from: "$includeDir/buildScan.gradle")
+apply(from: "$includeDir/profiler.gradle")
+apply(from: "$includeDir/deploy.gradle")
+apply(from: "$includeDir/lint.gradle")
+apply(from: "$includeDir/openapi.gradle")
+apply(from: "$includeDir/versionProperties.gradle")
 
+// Manual Task Dependencies
 dependencies {
     // Google dependencies
     constraints {
@@ -102,58 +103,11 @@ dependencies {
     annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor", version: "2.4.0"
 }
 
-// for scans
-if (hasProperty("buildScan")) {
-    buildScan {
-        termsOfServiceUrl = "https://gradle.com/terms-of-service"
-        termsOfServiceAgree = "yes"
-    }
-}
-
-// Download and extract the Cloud Profiler Java Agent
-ext {
-    // where to place the Cloud Profiler agent in the container
-    cloudProfilerLocation = "/opt/cprof"
-
-    // location for jib extras, including the Java agent
-    jibExtraDirectory = "${buildDir}/jib-agents"
-}
-task downloadProfilerAgent(type: Download) {
-    // where to download the Cloud Profiler agent https://cloud.google.com/profiler/docs/profiling-java
-    src "https://storage.googleapis.com/cloud-profiler/java/latest/profiler_java_agent.tar.gz"
-    dest "${buildDir}/cprof_java_agent_gce.tar.gz"
-}
-task extractProfilerAgent(dependsOn: downloadProfilerAgent, type: Copy) {
-    from tarTree(downloadProfilerAgent.dest)
-    into "${jibExtraDirectory}/${cloudProfilerLocation}"
-}
-
-// OpenAPI/Swagger Server Generation
-swaggerSources {
-    server {
-        inputFile = file("${gradle.openapiSourceFile}")
-        code {
-            language = "spring"
-            library = "spring-boot"
-            outputDir = file(openapiOutputDir)
-            components = ["models", "apis"]
-            rawOptions = [
-                "--api-package", "${artifactGroup}.generated.controller",
-                "--model-package", "${artifactGroup}.generated.model",
-                "--model-name-prefix", "Api",
-                "-D", "interfaceOnly=true," +
-                      "useTags=true," +
-                      "dateLibrary=java8"
-            ]
-        }
-    }
-}
-
-// Testing config
+// Testing Tasks Configuration
 
 // The path to the default Google service account for the Workspace Manager to run as.
-// Created by scripts/write_config.sh
-def googleCredentialsFile = "${rootDir}/config/wsm-sa.json"
+// Created by render_config.sh
+def googleCredentialsFile = "${projectDir}/rendered/service-account.json"
 bootRun {
     environment = [
             'GOOGLE_APPLICATION_CREDENTIALS': "${googleCredentialsFile}"
@@ -180,7 +134,7 @@ jacocoTestReport {
     dependsOn test
 }
 
- // default test to unit tests so the build target succeeds
+// default test to unit tests so the build target succeeds
 test {
     useJUnitPlatform {
         includeTags "unit"
@@ -204,56 +158,24 @@ task connectedTest(type: Test) {
     outputs.upToDateWhen { false }
 }
 
-spotless {
-    java {
-        googleJavaFormat()
-        target 'src/*/java/**/*.java'
+
+task integrationTest(type: Test) {
+    environment.put('TEST_ENV', System.getenv("TEST_ENV"))
+    useJUnitPlatform {
+        includeTags "integration"
     }
+    testLogging {
+        events = ["passed", "failed", "skipped", "started"]
+    }
+    outputs.upToDateWhen { false }
 }
 
-// Generate/clean the version properties file
-// This was being done by a plugin: https://github.com/palantir/gradle-git-version
-// but it does not work with Gradle 7.0. It was also very complicated for a
-// what we need, so easily replaced with a bash script
-def generatedVersionFile = "${resourceDir}/generated/version.properties"
-
-task generateVersionProperties(type: Exec) {
-    commandLine "${projectDir}/writeVersionProperties.sh", "${version}", "${generatedVersionFile}"
+jacoco {
+    toolVersion = '0.8.2'
 }
 
-task cleanVersionProperties(type: Exec) {
-    commandLine "rm", "-f", "${generatedVersionFile}"
-}
-
-// Deploy config
-jib {
-    from {
-        // see https://github.com/broadinstitute/dsp-appsec-blessed-images/tree/main/jre
-        // Google's distroless images are openjdk, this is the simplest with adoptopenjdk
-        image = "us.gcr.io/broad-dsp-gcr-public/base/jre:11-debian"
-    }
-    extraDirectories {
-        paths = [file(jibExtraDirectory)]
-    }
-    container {
-        filesModificationTime = java.time.ZonedDateTime.now().toString() // to prevent ui caching
-        jvmFlags = [
-                "-agentpath:" + cloudProfilerLocation + "/profiler_java_agent.so=" +
-                        "-cprof_service=bio.terra.workspace" +
-                        ",-cprof_service_version=" + version +
-                        ",-cprof_enable_heap_sampling=true" +
-                        ",-logtostderr" +
-                        ",-minloglevel=2"
-        ]
-    }
-}
-
-sourceSets.main.java.srcDir "${openapiOutputDir}/src/main/java"
-
-compileJava.dependsOn swaggerSources.server.code, spotlessApply, generateVersionProperties
+tasks.compileJava.dependsOn(swaggerSources.server.code, spotlessApply, generateVersionProperties)
 tasks.jib.dependsOn extractProfilerAgent
 tasks.jibDockerBuild.dependsOn extractProfilerAgent
 tasks.jibBuildTar.dependsOn extractProfilerAgent
-clean.dependsOn cleanVersionProperties
-
-apply from: "$rootDir/gradle/quality.gradle"
+tasks.clean.dependsOn cleanVersionProperties
