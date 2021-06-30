@@ -21,7 +21,6 @@ import com.google.api.services.storagetransfer.v1.model.GcsData;
 import com.google.api.services.storagetransfer.v1.model.GoogleServiceAccount;
 import com.google.api.services.storagetransfer.v1.model.Operation;
 import com.google.api.services.storagetransfer.v1.model.Schedule;
-import com.google.api.services.storagetransfer.v1.model.TimeOfDay;
 import com.google.api.services.storagetransfer.v1.model.TransferJob;
 import com.google.api.services.storagetransfer.v1.model.TransferOptions;
 import com.google.api.services.storagetransfer.v1.model.TransferSpec;
@@ -52,12 +51,13 @@ public class CopyGcsBucketDataStep implements Step {
   private static final Duration FUTURE_DELAY = Duration.ofSeconds(5);
   private static final Duration JOBS_POLL_INTERVAL = Duration.ofSeconds(10);
   private static final Duration OPERATIONS_POLL_INTERVAL = Duration.ofSeconds(30);
-  private static final ImmutableSet<String> DESTINATION_BUCKET_ROLE_NAMES = ImmutableSet.of("roles/storage.legacyBucketWriter");
-  private static final ImmutableSet<String> SOURCE_BUCKET_ROLE_NAMES = ImmutableSet.of("roles/storage.objectViewer", "roles/storage.legacyBucketReader");
+  private static final ImmutableSet<String> DESTINATION_BUCKET_ROLE_NAMES =
+      ImmutableSet.of("roles/storage.legacyBucketWriter");
+  private static final ImmutableSet<String> SOURCE_BUCKET_ROLE_NAMES =
+      ImmutableSet.of("roles/storage.objectViewer", "roles/storage.legacyBucketReader");
   private static final int MAX_ATTEMPTS = 25;
   private static final Logger logger = LoggerFactory.getLogger(CopyGcsBucketDataStep.class);
   private static final String ENABLED_STATUS = "ENABLED";
-
 
   private final ControlledGcsBucketResource sourceBucket;
   private final CrlService crlService;
@@ -78,8 +78,7 @@ public class CopyGcsBucketDataStep implements Step {
     private final String bucketName;
     private final Set<Role> roles;
 
-    public BucketInputs(UUID workspaceId, String projectId, String bucketName,
-        Set<Role> roles) {
+    public BucketInputs(UUID workspaceId, String projectId, String bucketName, Set<Role> roles) {
       this.workspaceId = workspaceId;
       this.projectId = projectId;
       this.bucketName = bucketName;
@@ -104,12 +103,18 @@ public class CopyGcsBucketDataStep implements Step {
 
     @Override
     public String toString() {
-      return "BucketInputs{" +
-          "workspaceId=" + workspaceId +
-          ", projectId='" + projectId + '\'' +
-          ", bucketName='" + bucketName + '\'' +
-          ", roles=" + roles +
-          '}';
+      return "BucketInputs{"
+          + "workspaceId="
+          + workspaceId
+          + ", projectId='"
+          + projectId
+          + '\''
+          + ", bucketName='"
+          + bucketName
+          + '\''
+          + ", roles="
+          + roles
+          + '}';
     }
   }
 
@@ -131,13 +136,19 @@ public class CopyGcsBucketDataStep implements Step {
     final BucketInputs sourceInputs = getSourceInputs();
     final BucketInputs destinationInputs = getDestinationInputs(flightContext);
 
-    logger.info("Starting data copy from source bucket \n\t{}\nto destination\n\t{}", sourceInputs, destinationInputs);
+    logger.info(
+        "Starting data copy from source bucket \n\t{}\nto destination\n\t{}",
+        sourceInputs,
+        destinationInputs);
     final String transferJobName = createTransferJobName();
     final String controlPlaneProjectId =
         Optional.ofNullable(ServiceOptions.getDefaultProjectId())
             .orElseThrow(
-                () -> new IllegalStateException("Could not determine default GCP control plane project ID."));
-    logger.info("Creating transfer job named {} in project {}", transferJobName, controlPlaneProjectId);
+                () ->
+                    new IllegalStateException(
+                        "Could not determine default GCP control plane project ID."));
+    logger.info(
+        "Creating transfer job named {} in project {}", transferJobName, controlPlaneProjectId);
 
     try {
       final Storagetransfer storageTransferService = createStorageTransferService();
@@ -147,12 +158,12 @@ public class CopyGcsBucketDataStep implements Step {
       final GoogleServiceAccount transferServiceSA =
           storageTransferService.googleServiceAccounts().get(controlPlaneProjectId).execute();
       logger.debug("Storage Transfer Service SA: {}", transferServiceSA.getAccountEmail());
-
+      final String transferServiceSAEmail = transferServiceSA.getAccountEmail();
       // Set source bucket permissions
-      addSourceBucketRoles(sourceInputs.getBucketName(), transferServiceSA, sourceInputs.getProjectId());
+      addBucketRoles(sourceInputs, transferServiceSAEmail);
 
       // Set destination roles
-      addDestinationBucketRoles(destinationInputs.getBucketName(), transferServiceSA, destinationInputs.getProjectId());
+      addBucketRoles(destinationInputs, transferServiceSAEmail);
 
       final TransferJob transferJobInput =
           new TransferJob()
@@ -160,7 +171,9 @@ public class CopyGcsBucketDataStep implements Step {
               .setDescription("Terra Workspace Manager Clone GCS Bucket")
               .setProjectId(controlPlaneProjectId)
               .setSchedule(createScheduleRunOnceNow())
-              .setTransferSpec(createTransferSpec(sourceInputs.getBucketName(), destinationInputs.getBucketName()))
+              .setTransferSpec(
+                  createTransferSpec(
+                      sourceInputs.getBucketName(), destinationInputs.getBucketName()))
               .setStatus(ENABLED_STATUS);
       // Create the TransferJob for the associated schedule and spec in the correct project.
       final TransferJob transferJobOutput =
@@ -174,11 +187,10 @@ public class CopyGcsBucketDataStep implements Step {
       final String operationName =
           getLatestOperationName(storageTransferService, transferJobName, controlPlaneProjectId);
 
-      final StepResult operationResult = getTransferOperationResult(storageTransferService,
-          transferJobName, operationName);
-      removeSourceBucketRoles(sourceInputs.getBucketName(), transferServiceSA, sourceInputs.getProjectId());
-      removeDestinationBucketRoles(destinationInputs.getBucketName(), transferServiceSA,
-          destinationInputs.getProjectId());
+      final StepResult operationResult =
+          getTransferOperationResult(storageTransferService, transferJobName, operationName);
+      removeBucketRoles(sourceInputs, transferServiceSAEmail);
+      removeBucketRoles(destinationInputs, transferServiceSAEmail);
 
       if (StepStatus.STEP_RESULT_FAILURE_FATAL == operationResult.getStepStatus()) {
         return operationResult;
@@ -209,12 +221,13 @@ public class CopyGcsBucketDataStep implements Step {
   }
 
   private BucketInputs getSourceInputs() {
-    final String sourceProjectId = workspaceService.getRequiredGcpProject(sourceBucket.getWorkspaceId());
+    final String sourceProjectId =
+        workspaceService.getRequiredGcpProject(sourceBucket.getWorkspaceId());
     final String sourceBucketName = sourceBucket.getBucketName();
-    final Set<Role> roles = SOURCE_BUCKET_ROLE_NAMES.stream()
-        .map(Role::of)
-        .collect(Collectors.toSet());
-    return new BucketInputs(sourceBucket.getWorkspaceId(), sourceProjectId, sourceBucketName, roles);
+    final Set<Role> roles =
+        SOURCE_BUCKET_ROLE_NAMES.stream().map(Role::of).collect(Collectors.toSet());
+    return new BucketInputs(
+        sourceBucket.getWorkspaceId(), sourceProjectId, sourceBucketName, roles);
   }
 
   private BucketInputs getDestinationInputs(FlightContext flightContext) {
@@ -232,14 +245,14 @@ public class CopyGcsBucketDataStep implements Step {
         flightContext
             .getWorkingMap()
             .get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class);
-    final Set<Role> roles = DESTINATION_BUCKET_ROLE_NAMES.stream()
-        .map(Role::of)
-        .collect(Collectors.toSet());
+    final Set<Role> roles =
+        DESTINATION_BUCKET_ROLE_NAMES.stream().map(Role::of).collect(Collectors.toSet());
     return new BucketInputs(workspaceId, projectId, bucketName, roles);
   }
 
   /**
    * Poll for completion of the named transfer operation and return the result.
+   *
    * @param storageTransferService - svc to perform the transfer
    * @param transferJobName - name of job owning the transfer operation
    * @param operationName - server-generated name of running operation
@@ -247,8 +260,9 @@ public class CopyGcsBucketDataStep implements Step {
    * @throws IOException
    * @throws InterruptedException
    */
-  private StepResult getTransferOperationResult(Storagetransfer storageTransferService, String transferJobName,
-      String operationName) throws IOException, InterruptedException {
+  private StepResult getTransferOperationResult(
+      Storagetransfer storageTransferService, String transferJobName, String operationName)
+      throws IOException, InterruptedException {
     // Now that we have an operation name, we can poll the operations endpoint for completion
     // information.
     int attempts = 0;
@@ -278,44 +292,13 @@ public class CopyGcsBucketDataStep implements Step {
     }
   }
 
-  private void addSourceBucketRoles(String sourceBucketName, GoogleServiceAccount transferServiceSA,
-      String sourceProjectId) {
-    adjustBucketRoles(
-        BucketPolicyIdentityOperation.ADD,
-        sourceProjectId,
-        sourceBucketName,
-        transferServiceSA.getAccountEmail(),
-        SOURCE_BUCKET_ROLE_NAMES);
+  private void addBucketRoles(BucketInputs inputs, String transferServiceSAEmail) {
+    addOrRemoveBucketIdentities(BucketPolicyIdentityOperation.ADD, inputs, transferServiceSAEmail);
   }
 
-  private void addDestinationBucketRoles(String sourceBucketName, GoogleServiceAccount transferServiceSA,
-      String sourceProjectId) {
-    adjustBucketRoles(
-        BucketPolicyIdentityOperation.ADD,
-        sourceProjectId,
-        sourceBucketName,
-        transferServiceSA.getAccountEmail(),
-        DESTINATION_BUCKET_ROLE_NAMES);
-  }
-
-  private void removeSourceBucketRoles(String sourceBucketName, GoogleServiceAccount transferServiceSA,
-      String sourceProjectId) {
-    adjustBucketRoles(
-        BucketPolicyIdentityOperation.REMOVE,
-        sourceProjectId,
-        sourceBucketName,
-        transferServiceSA.getAccountEmail(),
-        SOURCE_BUCKET_ROLE_NAMES);
-  }
-
-  private void removeDestinationBucketRoles(String sourceBucketName, GoogleServiceAccount transferServiceSA,
-      String sourceProjectId) {
-    adjustBucketRoles(
-        BucketPolicyIdentityOperation.REMOVE,
-        sourceProjectId,
-        sourceBucketName,
-        transferServiceSA.getAccountEmail(),
-        DESTINATION_BUCKET_ROLE_NAMES);
+  private void removeBucketRoles(BucketInputs inputs, String transferServiceSAEmail) {
+    addOrRemoveBucketIdentities(
+        BucketPolicyIdentityOperation.REMOVE, inputs, transferServiceSAEmail);
   }
 
   private enum BucketPolicyIdentityOperation {
@@ -325,29 +308,29 @@ public class CopyGcsBucketDataStep implements Step {
 
   /**
    * Add or remove roles for an Identity
+   *
    * @param operation - flag for add or remove
-   * @param projectId - project id for user project containing the bucket
-   * @param bucketName - name of bucket
+   * @param inputs - source or destination input object
    * @param transferServiceSAEmail - STS SA email address
-   * @param roles - names of roles to use
    */
-  private void adjustBucketRoles(
-      BucketPolicyIdentityOperation operation, String projectId, String bucketName, String transferServiceSAEmail, Set<String> roles) {
-    final StorageCow storageCow = crlService.createStorageCow(projectId);
+  private void addOrRemoveBucketIdentities(
+      BucketPolicyIdentityOperation operation, BucketInputs inputs, String transferServiceSAEmail) {
+    final StorageCow storageCow = crlService.createStorageCow(inputs.getProjectId());
     final Identity saIdentity = Identity.serviceAccount(transferServiceSAEmail);
 
-    final Policy.Builder policyBuilder = storageCow.getIamPolicy(bucketName).toBuilder();
-    for (String roleName : roles) {
+    final Policy.Builder policyBuilder =
+        storageCow.getIamPolicy(inputs.getBucketName()).toBuilder();
+    for (Role role : inputs.getRoles()) {
       switch (operation) {
         case ADD:
-          policyBuilder.addIdentity(Role.of(roleName), saIdentity);
+          policyBuilder.addIdentity(role, saIdentity);
           break;
         case REMOVE:
-          policyBuilder.removeIdentity(Role.of(roleName), saIdentity);
+          policyBuilder.removeIdentity(role, saIdentity);
           break;
       }
     }
-    storageCow.setIamPolicy(bucketName, policyBuilder.build());
+    storageCow.setIamPolicy(inputs.getBucketName(), policyBuilder.build());
   }
 
   // First, we poll the transfer jobs endpoint until an operation has started so that we can get
@@ -371,8 +354,7 @@ public class CopyGcsBucketDataStep implements Step {
     return operationName;
   }
 
-  private TransferSpec createTransferSpec(
-      String sourceBucketName, String destinationBucketName) {
+  private TransferSpec createTransferSpec(String sourceBucketName, String destinationBucketName) {
     return new TransferSpec()
         .setGcsDataSource(new GcsData().setBucketName(sourceBucketName))
         .setGcsDataSink(new GcsData().setBucketName(destinationBucketName))
@@ -382,24 +364,24 @@ public class CopyGcsBucketDataStep implements Step {
                 .setOverwriteObjectsAlreadyExistingInSink(false));
   }
 
+  /**
+   * Build a schedule to indicate that the job should run an operation immediately and not repeat
+   * it. This isn't well-supported in the UI, but there are hints in the documentation. The most
+   * frustrating feature of the interface is that if a start date & time are in "the past", the run
+   * won't initiate until the next iteration (e.g. in 24 hours, assuming that's not past the end
+   * time). Which means we need to apply a fudge factor to make sure the time is a little bit in the
+   * future. Note that stepping through the code in the debugger too slowly can leave you with a
+   * stale timestamp and cause the job not to run.
+   *
+   * @return schedule object for the transfer job
+   */
   private Schedule createScheduleRunOnceNow() {
-    final OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC).plus(FUTURE_DELAY);
+    final OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
     final Date runDate =
         new Date().setYear(now.getYear()).setMonth(now.getMonthValue()).setDay(now.getDayOfMonth());
-    // Use a time a few seconds in the future to ensure the transfer doesn't have a
-    // start date in the past.
-    final TimeOfDay runTimeOfDay =
-        new TimeOfDay()
-            .setHours(now.getHour())
-            .setMinutes(now.getMinute())
-            .setSeconds(now.getSecond());
-    // " If `schedule_end_date` and schedule_start_date are the same and
+    // "If `schedule_end_date` and schedule_start_date are the same and
     // in the future relative to UTC, the transfer is executed only one time."
-    return new Schedule()
-        .setScheduleStartDate(runDate)
-        .setScheduleEndDate(runDate)
-        .setStartTimeOfDay(runTimeOfDay)
-        .setEndTimeOfDay(runTimeOfDay);
+    return new Schedule().setScheduleStartDate(runDate).setScheduleEndDate(runDate);
   }
 
   private String createTransferJobName() {
