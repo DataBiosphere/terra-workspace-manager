@@ -47,16 +47,13 @@ import org.springframework.http.HttpStatus;
 
 public class CopyGcsBucketDataStep implements Step {
 
-  private static final String APPLICATION_NAME = "terra-workspace-manager";
-  private static final Duration FUTURE_DELAY = Duration.ofSeconds(5);
   private static final Duration JOBS_POLL_INTERVAL = Duration.ofSeconds(10);
   private static final Duration OPERATIONS_POLL_INTERVAL = Duration.ofSeconds(30);
-  private static final ImmutableSet<String> DESTINATION_BUCKET_ROLE_NAMES =
-      ImmutableSet.of("roles/storage.legacyBucketWriter");
-  private static final ImmutableSet<String> SOURCE_BUCKET_ROLE_NAMES =
-      ImmutableSet.of("roles/storage.objectViewer", "roles/storage.legacyBucketReader");
+  private static final ImmutableSet<String> DESTINATION_BUCKET_ROLE_NAMES = ImmutableSet.of("roles/storage.legacyBucketWriter");
+  private static final ImmutableSet<String> SOURCE_BUCKET_ROLE_NAMES = ImmutableSet.of("roles/storage.objectViewer", "roles/storage.legacyBucketReader");
   private static final int MAX_ATTEMPTS = 25;
   private static final Logger logger = LoggerFactory.getLogger(CopyGcsBucketDataStep.class);
+  private static final String APPLICATION_NAME = "terra-workspace-manager";
   private static final String ENABLED_STATUS = "ENABLED";
 
   private final ControlledGcsBucketResource sourceBucket;
@@ -129,17 +126,17 @@ public class CopyGcsBucketDataStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class);
     // This step is only run for full resource clones
-    if (effectiveCloningInstructions != CloningInstructions.COPY_RESOURCE) {
+    if (CloningInstructions.COPY_RESOURCE != effectiveCloningInstructions) {
       return StepResult.getStepResultSuccess();
     }
     // Get source & destination bucket input values
     final BucketInputs sourceInputs = getSourceInputs();
     final BucketInputs destinationInputs = getDestinationInputs(flightContext);
-
     logger.info(
         "Starting data copy from source bucket \n\t{}\nto destination\n\t{}",
         sourceInputs,
         destinationInputs);
+
     final String transferJobName = createTransferJobName();
     final String controlPlaneProjectId =
         Optional.ofNullable(ServiceOptions.getDefaultProjectId())
@@ -155,10 +152,12 @@ public class CopyGcsBucketDataStep implements Step {
 
       // Get the service account in the control plane project used by the transfer service to
       // perform the actual data transfer. It's named for and scoped to the project.
-      final GoogleServiceAccount transferServiceSA =
-          storageTransferService.googleServiceAccounts().get(controlPlaneProjectId).execute();
-      logger.debug("Storage Transfer Service SA: {}", transferServiceSA.getAccountEmail());
-      final String transferServiceSAEmail = transferServiceSA.getAccountEmail();
+      final String transferServiceSAEmail = storageTransferService
+          .googleServiceAccounts()
+          .get(controlPlaneProjectId)
+          .execute()
+          .getAccountEmail();
+      logger.debug("Storage Transfer Service SA: {}", transferServiceSAEmail);
       // Set source bucket permissions
       addBucketRoles(sourceInputs, transferServiceSAEmail);
 
@@ -181,8 +180,7 @@ public class CopyGcsBucketDataStep implements Step {
       logger.debug("Created transfer job {}", transferJobOutput);
       // Job is now submitted with its schedule. We need to poll the transfer operations API
       // for completion of the first transfer operation. The trick is going to be setting up a
-      // polling
-      // interval that's appropriate for a wide range of bucket sizes. Everything from millisecond
+      // polling interval that's appropriate for a wide range of bucket sizes. Everything from millisecond
       // to hours. The transfer operation won't exist until it starts.
       final String operationName =
           getLatestOperationName(storageTransferService, transferJobName, controlPlaneProjectId);
@@ -285,7 +283,8 @@ public class CopyGcsBucketDataStep implements Step {
     // Inspect the completed operation for success
     if (operation.getError() != null) {
       logger.warn("Error in transfer operation {}: {}", operationName, operation.getError());
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL); // don't retry for now
+      final RuntimeException e = new RuntimeException("Failed transfer with error " + operation.getError().toString());
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     } else {
       logger.debug("Completed operation metadata: {}", operation.getMetadata());
       return StepResult.getStepResultSuccess();
@@ -334,7 +333,7 @@ public class CopyGcsBucketDataStep implements Step {
   }
 
   // First, we poll the transfer jobs endpoint until an operation has started so that we can get
-  // its server-generated name.
+  // its server-generated name. Returns the most recently started operation's name.
   private String getLatestOperationName(
       Storagetransfer storageTransferService, String transferJobName, String projectId)
       throws InterruptedException, IOException {
