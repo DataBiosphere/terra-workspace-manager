@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
-import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -42,18 +41,23 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 public class CopyGcsBucketDataStep implements Step {
 
-  private static final Logger logger = LoggerFactory.getLogger(CopyGcsBucketDataStep.class);
-  private static final String ENABLED_STATUS = "ENABLED";
+  private static final String APPLICATION_NAME = "terra-workspace-manager";
   private static final Duration FUTURE_DELAY = Duration.ofSeconds(5);
   private static final Duration JOBS_POLL_INTERVAL = Duration.ofSeconds(10);
   private static final Duration OPERATIONS_POLL_INTERVAL = Duration.ofSeconds(30);
+  private static final ImmutableSet<String> DESTINATION_BUCKET_ROLE_NAMES = ImmutableSet.of("roles/storage.legacyBucketWriter");
+  private static final ImmutableSet<String> SOURCE_BUCKET_ROLE_NAMES = ImmutableSet.of("roles/storage.objectViewer", "roles/storage.legacyBucketReader");
   private static final int MAX_ATTEMPTS = 25;
+  private static final Logger logger = LoggerFactory.getLogger(CopyGcsBucketDataStep.class);
+  private static final String ENABLED_STATUS = "ENABLED";
+
 
   private final ControlledGcsBucketResource sourceBucket;
   private final CrlService crlService;
@@ -66,6 +70,47 @@ public class CopyGcsBucketDataStep implements Step {
     this.sourceBucket = sourceBucket;
     this.crlService = crlService;
     this.workspaceService = workspaceService;
+  }
+
+  private static class BucketInputs {
+    private final UUID workspaceId;
+    private final String projectId;
+    private final String bucketName;
+    private final Set<Role> roles;
+
+    public BucketInputs(UUID workspaceId, String projectId, String bucketName,
+        Set<Role> roles) {
+      this.workspaceId = workspaceId;
+      this.projectId = projectId;
+      this.bucketName = bucketName;
+      this.roles = roles;
+    }
+
+    public UUID getWorkspaceId() {
+      return workspaceId;
+    }
+
+    public String getProjectId() {
+      return projectId;
+    }
+
+    public String getBucketName() {
+      return bucketName;
+    }
+
+    public Set<Role> getRoles() {
+      return roles;
+    }
+
+    @Override
+    public String toString() {
+      return "BucketInputs{" +
+          "workspaceId=" + workspaceId +
+          ", projectId='" + projectId + '\'' +
+          ", bucketName='" + bucketName + '\'' +
+          ", roles=" + roles +
+          '}';
+    }
   }
 
   // See https://cloud.google.com/storage-transfer/docs/reference/rest/v1/transferJobs/create
@@ -82,85 +127,63 @@ public class CopyGcsBucketDataStep implements Step {
     if (effectiveCloningInstructions != CloningInstructions.COPY_RESOURCE) {
       return StepResult.getStepResultSuccess();
     }
-    final String sourceBucketName = sourceBucket.getBucketName();
-    final IamCow iamCow = crlService.getIamCow();
+    // Get source & destination bucket input values
+    final BucketInputs sourceInputs = getSourceInputs();
+    final BucketInputs destinationInputs = getDestinationInputs(flightContext);
 
-    // Not to be confused with the destination bucket name in the input parameters.
-    final String destinationBucketName =
-        flightContext
-            .getWorkingMap()
-            .get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class);
-    logger.info("Starting data copy from bucket {} to {}", sourceBucketName, destinationBucketName);
+    logger.info("Starting data copy from source bucket \n\t{}\nto destination\n\t{}", sourceInputs, destinationInputs);
+    final String transferJobName = createTransferJobName();
+    final String controlPlaneProjectId =
+        Optional.ofNullable(ServiceOptions.getDefaultProjectId())
+            .orElseThrow(
+                () -> new IllegalStateException("Could not determine default GCP control plane project ID."));
+    logger.info("Creating transfer job named {} in project {}", transferJobName, controlPlaneProjectId);
+
     try {
       final Storagetransfer storageTransferService = createStorageTransferService();
 
-      final String transferJobName = createTransferJobName();
-      final String projectId =
-          Optional.ofNullable(ServiceOptions.getDefaultProjectId())
-              .orElseThrow(
-                  () -> new IllegalStateException("Could not determine default GCP project ID."));
-      logger.info("Creating transfer job named {} in project {}", transferJobName, projectId);
+      // Get the service account in the control plane project used by the transfer service to
+      // perform the actual data transfer. It's named for and scoped to the project.
       final GoogleServiceAccount transferServiceSA =
-          storageTransferService.googleServiceAccounts().get(projectId).execute();
-      logger.info("STS SA: {}", transferServiceSA.getAccountEmail());
+          storageTransferService.googleServiceAccounts().get(controlPlaneProjectId).execute();
+      logger.debug("Storage Transfer Service SA: {}", transferServiceSA.getAccountEmail());
 
       // Set source bucket permissions
-      setSourceBucketRoles(sourceBucketName, transferServiceSA.getAccountEmail());
+      addSourceBucketRoles(sourceInputs.getBucketName(), transferServiceSA, sourceInputs.getProjectId());
 
-      // Set destination permissions
-      final UUID destinationWorkspaceId =
-          flightContext
-              .getInputParameters()
-              .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-      setDestinationBucketRoles(
-          destinationWorkspaceId, destinationBucketName, transferServiceSA.getAccountEmail());
+      // Set destination roles
+      addDestinationBucketRoles(destinationInputs.getBucketName(), transferServiceSA, destinationInputs.getProjectId());
 
       final TransferJob transferJobInput =
           new TransferJob()
               .setName(transferJobName)
               .setDescription("Terra Workspace Manager Clone GCS Bucket")
-              .setProjectId(projectId)
+              .setProjectId(controlPlaneProjectId)
               .setSchedule(createScheduleRunOnceNow())
-              .setTransferSpec(createBulkTransferSpec(sourceBucketName, destinationBucketName))
+              .setTransferSpec(createTransferSpec(sourceInputs.getBucketName(), destinationInputs.getBucketName()))
               .setStatus(ENABLED_STATUS);
       // Create the TransferJob for the associated schedule and spec in the correct project.
       final TransferJob transferJobOutput =
           storageTransferService.transferJobs().create(transferJobInput).execute();
-
+      logger.debug("Created transfer job {}", transferJobOutput);
       // Job is now submitted with its schedule. We need to poll the transfer operations API
       // for completion of the first transfer operation. The trick is going to be setting up a
       // polling
       // interval that's appropriate for a wide range of bucket sizes. Everything from millisecond
       // to hours. The transfer operation won't exist until it starts.
       final String operationName =
-          getLatestOperationName(storageTransferService, transferJobName, projectId);
+          getLatestOperationName(storageTransferService, transferJobName, controlPlaneProjectId);
 
-      // Now that we have an operation name, we can poll the operations endpoint for completion
-      // information.
-      int attempts = 0;
-      Operation operation;
-      do {
-        operation = storageTransferService.transferOperations().get(operationName).execute();
-        if (operation == null) {
-          throw new RuntimeException(
-              String.format("Failed to get transfer operation with name %s", operationName));
-        } else if (operation.getDone() != null && operation.getDone()) {
-          break;
-        } else {
-          // operation is not started or is in progress
-          TimeUnit.MILLISECONDS.sleep(OPERATIONS_POLL_INTERVAL.toMillis());
-          attempts++;
-          logger.info("Attempted to get transfer operation {} {} times", operationName, attempts);
-        }
-      } while (attempts < MAX_ATTEMPTS);
-      logger.info("Operation {} in transfer job {} has completed", operationName, transferJobName);
-      // Inspect the completed operation for success
-      if (operation.getError() != null) {
-        logger.warn("Error in transfer operation {}: {}", operationName, operation.getError());
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL); // don't retry for now
-      } else {
-        logger.info("Operation metadata: {}", operation.getMetadata());
+      final StepResult operationResult = getTransferOperationResult(storageTransferService,
+          transferJobName, operationName);
+      removeSourceBucketRoles(sourceInputs.getBucketName(), transferServiceSA, sourceInputs.getProjectId());
+      removeDestinationBucketRoles(destinationInputs.getBucketName(), transferServiceSA,
+          destinationInputs.getProjectId());
+
+      if (StepStatus.STEP_RESULT_FAILURE_FATAL == operationResult.getStepStatus()) {
+        return operationResult;
       }
+
       // Currently there is no delete endpoint for transfer jobs, so all of the completed clone jobs
       // will clutter the console in the main control plane project.
       // https://cloud.google.com/storage-transfer/docs/reference/rest
@@ -178,30 +201,152 @@ public class CopyGcsBucketDataStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private void setSourceBucketRoles(String sourceBucketName, String transferServiceSAEmail) {
-    setBucketRoles(
-        sourceBucket.getWorkspaceId(),
-        sourceBucketName,
-        transferServiceSAEmail,
-        ImmutableSet.of("roles/storage.objectViewer", "roles/storage.legacyBucketReader"));
+  // Since we are billing users for the transfers, we don't want to throw away data from a partial
+  // success, especially for large bucket transfers.
+  @Override
+  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    return StepResult.getStepResultSuccess();
   }
 
-  private void setDestinationBucketRoles(
-      UUID destinationWorkspaceId, String bucketName, String transferServiceSAEmail) {
-    setBucketRoles(
-        destinationWorkspaceId,
-        bucketName,
-        transferServiceSAEmail,
-        ImmutableSet.of("roles/storage.legacyBucketWriter"));
+  private BucketInputs getSourceInputs() {
+    final String sourceProjectId = workspaceService.getRequiredGcpProject(sourceBucket.getWorkspaceId());
+    final String sourceBucketName = sourceBucket.getBucketName();
+    final Set<Role> roles = SOURCE_BUCKET_ROLE_NAMES.stream()
+        .map(Role::of)
+        .collect(Collectors.toSet());
+    return new BucketInputs(sourceBucket.getWorkspaceId(), sourceProjectId, sourceBucketName, roles);
   }
 
-  private void setBucketRoles(
-      UUID workspaceId, String bucketName, String transferServiceSAEmail, Set<String> roles) {
+  private BucketInputs getDestinationInputs(FlightContext flightContext) {
+    // Not to be confused with the destination bucket name in the input parameters, which was
+    // processed
+    // in a previous step. This is the effective destination bucket name that was either
+    // user-supplied
+    // or generated randomly.
+    final UUID workspaceId =
+        flightContext
+            .getInputParameters()
+            .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     final String projectId = workspaceService.getRequiredGcpProject(workspaceId);
+    final String bucketName =
+        flightContext
+            .getWorkingMap()
+            .get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class);
+    final Set<Role> roles = DESTINATION_BUCKET_ROLE_NAMES.stream()
+        .map(Role::of)
+        .collect(Collectors.toSet());
+    return new BucketInputs(workspaceId, projectId, bucketName, roles);
+  }
+
+  /**
+   * Poll for completion of the named transfer operation and return the result.
+   * @param storageTransferService - svc to perform the transfer
+   * @param transferJobName - name of job owning the transfer operation
+   * @param operationName - server-generated name of running operation
+   * @return StepResult indicating success or failure
+   * @throws IOException
+   * @throws InterruptedException
+   */
+  private StepResult getTransferOperationResult(Storagetransfer storageTransferService, String transferJobName,
+      String operationName) throws IOException, InterruptedException {
+    // Now that we have an operation name, we can poll the operations endpoint for completion
+    // information.
+    int attempts = 0;
+    Operation operation;
+    do {
+      operation = storageTransferService.transferOperations().get(operationName).execute();
+      if (operation == null) {
+        throw new RuntimeException(
+            String.format("Failed to get transfer operation with name %s", operationName));
+      } else if (operation.getDone() != null && operation.getDone()) {
+        break;
+      } else {
+        // operation is not started or is in progress
+        TimeUnit.MILLISECONDS.sleep(OPERATIONS_POLL_INTERVAL.toMillis());
+        attempts++;
+        logger.debug("Attempted to get transfer operation {} {} times", operationName, attempts);
+      }
+    } while (attempts < MAX_ATTEMPTS);
+    logger.info("Operation {} in transfer job {} has completed", operationName, transferJobName);
+    // Inspect the completed operation for success
+    if (operation.getError() != null) {
+      logger.warn("Error in transfer operation {}: {}", operationName, operation.getError());
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL); // don't retry for now
+    } else {
+      logger.debug("Completed operation metadata: {}", operation.getMetadata());
+      return StepResult.getStepResultSuccess();
+    }
+  }
+
+  private void addSourceBucketRoles(String sourceBucketName, GoogleServiceAccount transferServiceSA,
+      String sourceProjectId) {
+    adjustBucketRoles(
+        BucketPolicyIdentityOperation.ADD,
+        sourceProjectId,
+        sourceBucketName,
+        transferServiceSA.getAccountEmail(),
+        SOURCE_BUCKET_ROLE_NAMES);
+  }
+
+  private void addDestinationBucketRoles(String sourceBucketName, GoogleServiceAccount transferServiceSA,
+      String sourceProjectId) {
+    adjustBucketRoles(
+        BucketPolicyIdentityOperation.ADD,
+        sourceProjectId,
+        sourceBucketName,
+        transferServiceSA.getAccountEmail(),
+        DESTINATION_BUCKET_ROLE_NAMES);
+  }
+
+  private void removeSourceBucketRoles(String sourceBucketName, GoogleServiceAccount transferServiceSA,
+      String sourceProjectId) {
+    adjustBucketRoles(
+        BucketPolicyIdentityOperation.REMOVE,
+        sourceProjectId,
+        sourceBucketName,
+        transferServiceSA.getAccountEmail(),
+        SOURCE_BUCKET_ROLE_NAMES);
+  }
+
+  private void removeDestinationBucketRoles(String sourceBucketName, GoogleServiceAccount transferServiceSA,
+      String sourceProjectId) {
+    adjustBucketRoles(
+        BucketPolicyIdentityOperation.REMOVE,
+        sourceProjectId,
+        sourceBucketName,
+        transferServiceSA.getAccountEmail(),
+        DESTINATION_BUCKET_ROLE_NAMES);
+  }
+
+  private enum BucketPolicyIdentityOperation {
+    ADD,
+    REMOVE
+  }
+
+  /**
+   * Add or remove roles for an Identity
+   * @param operation - flag for add or remove
+   * @param projectId - project id for user project containing the bucket
+   * @param bucketName - name of bucket
+   * @param transferServiceSAEmail - STS SA email address
+   * @param roles - names of roles to use
+   */
+  private void adjustBucketRoles(
+      BucketPolicyIdentityOperation operation, String projectId, String bucketName, String transferServiceSAEmail, Set<String> roles) {
     final StorageCow storageCow = crlService.createStorageCow(projectId);
     final Identity saIdentity = Identity.serviceAccount(transferServiceSAEmail);
+
     final Policy.Builder policyBuilder = storageCow.getIamPolicy(bucketName).toBuilder();
-    roles.forEach(s -> policyBuilder.addIdentity(Role.of(s), saIdentity));
+    for (String roleName : roles) {
+      switch (operation) {
+        case ADD:
+          policyBuilder.addIdentity(Role.of(roleName), saIdentity);
+          break;
+        case REMOVE:
+          policyBuilder.removeIdentity(Role.of(roleName), saIdentity);
+          break;
+      }
+    }
     storageCow.setIamPolicy(bucketName, policyBuilder.build());
   }
 
@@ -226,7 +371,7 @@ public class CopyGcsBucketDataStep implements Step {
     return operationName;
   }
 
-  private TransferSpec createBulkTransferSpec(
+  private TransferSpec createTransferSpec(
       String sourceBucketName, String destinationBucketName) {
     return new TransferSpec()
         .setGcsDataSource(new GcsData().setBucketName(sourceBucketName))
@@ -235,11 +380,6 @@ public class CopyGcsBucketDataStep implements Step {
             new TransferOptions()
                 .setDeleteObjectsFromSourceAfterTransfer(false)
                 .setOverwriteObjectsAlreadyExistingInSink(false));
-  }
-
-  @Override
-  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    return StepResult.getStepResultSuccess();
   }
 
   private Schedule createScheduleRunOnceNow() {
@@ -277,7 +417,7 @@ public class CopyGcsBucketDataStep implements Step {
             Utils.getDefaultTransport(),
             Utils.getDefaultJsonFactory(),
             new HttpCredentialsAdapter(credential))
-        .setApplicationName("terra-workspace-manager")
+        .setApplicationName(APPLICATION_NAME)
         .build();
   }
 }
