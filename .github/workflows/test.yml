@@ -7,7 +7,7 @@ on:
   push:
     branches: [ dev ]
     paths-ignore:
-      - 'README.md'
+      - '*.md'
       - '.github/**'
       - 'service/local-dev/**'
   pull_request:
@@ -53,9 +53,17 @@ jobs:
           - 5432:5432
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout current code
+      uses: actions/checkout@v2
+
+    - name: Skip version bump merges
+      id: skiptest
+      uses: ./.github/actions/bump-skip
+      with:
+        event-name: ${{ github.event_name }}
 
     - name: Set env
+      if: steps.skiptest.outputs.is-bump == 'no'
       id: set-env-step
       run: |
         if ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}; then
@@ -69,16 +77,19 @@ jobs:
         echo ::set-output name=test-env::$ENV
 
     - name: Initialize Postgres DB
+      if: steps.skiptest.outputs.is-bump == 'no'
       env:
         PGPASSWORD: postgres
       run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
 
     - name: Set up AdoptOpenJDK 11
+      if: steps.skiptest.outputs.is-bump == 'no'
       uses: joschi/setup-jdk@v2
       with:
         java-version: 11
 
     - name: Cache Gradle packages
+      if: steps.skiptest.outputs.is-bump == 'no'
       uses: actions/cache@v2
       with:
         path: |
@@ -88,11 +99,12 @@ jobs:
         restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
 
     - name: Grant execute permission for gradlew
+      if: steps.skiptest.outputs.is-bump == 'no'
       run: chmod +x gradlew
 
     # These steps aren't needed for unit tests
     - name: Get Vault token
-      if: matrix.gradleTask != 'unitTest'
+      if: matrix.gradleTask != 'unitTest' && steps.skiptest.outputs.is-bump == 'no'
       id: vault-token-step
       env:
         VAULT_ADDR: https://clotho.broadinstitute.org:8200
@@ -107,7 +119,7 @@ jobs:
         echo ::add-mask::$VAULT_TOKEN
 
     - name: Write config
-      if: matrix.gradleTask != 'unitTest'
+      if: matrix.gradleTask != 'unitTest' && steps.skiptest.outputs.is-bump == 'no'
       id: config
       uses: ./.github/actions/write-config
       with:
@@ -118,6 +130,7 @@ jobs:
 
       # Run tests
     - name: Run tests
+      if: steps.skiptest.outputs.is-bump == 'no'
       env:
         # PRINT_STANDARD_STREAMS is temporary to let us inspect logs for a particular
         # issue with Stairway serdes.
@@ -126,7 +139,7 @@ jobs:
       run: ./gradlew :service:${{ matrix.gradleTask }} --scan
 
     - name: Codacy Coverage Reporter
-      if: matrix.gradleTask == 'unitTest'
+      if: matrix.gradleTask == 'unitTest' && steps.skiptest.outputs.is-bump == 'no'
       uses: codacy/codacy-coverage-reporter-action@0.2.0
       continue-on-error: true
       env:
@@ -136,7 +149,7 @@ jobs:
         coverage-reports: service/build/reports/jacoco/test/jacoco.xml
 
     - name: Upload Test Reports
-      if: always()
+      if: always() && steps.skiptest.outputs.is-bump == 'no'
       uses: actions/upload-artifact@v1
       with:
         name: Test Reports
