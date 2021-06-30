@@ -10,9 +10,12 @@ import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapsho
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -192,19 +195,14 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   }
 
   @Override
-  public ResponseEntity<ApiResourceDescription> getDataRepoSnapshotReference(
+  public ResponseEntity<ApiDataRepoSnapshotResource> getDataRepoSnapshotReference(
       UUID id, UUID referenceId) {
     AuthenticatedUserRequest userReq = getAuthenticatedInfo();
     ReferencedResource referenceResource =
         referenceResourceService.getReferenceResource(id, referenceId, userReq);
-    ApiResourceMetadata apiResourceMetadata = referenceResource.toApiMetadata();
-    ReferencedDataRepoSnapshotResource referencedDataRepoSnapshotResource =
-        referenceResource.castToDataRepoSnapshotResource();
-    ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
-    union.gcpDataRepoSnapshot(referencedDataRepoSnapshotResource.toApiAttributes());
-    return new ResponseEntity<>(
-        new ApiResourceDescription().metadata(apiResourceMetadata).resourceAttributes(union),
-        HttpStatus.OK);
+    ApiDataRepoSnapshotResource response =
+        referenceResource.castToDataRepoSnapshotResource().toApiResource();
+    return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
@@ -215,6 +213,22 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
         referenceResourceService.getReferenceResourceByName(id, name, userReq);
     ApiDataRepoSnapshotResource response =
         referenceResource.castToDataRepoSnapshotResource().toApiResource();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiSnapshotList> getSnapshotsForWorkspace(
+      UUID workspaceId, @Min(0) @Valid Integer offset, @Min(1) @Valid Integer limit) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    List<ReferencedResource> referencedResources =
+        referenceResourceService.enumerateSnapshots(workspaceId, offset, limit, userReq);
+    var response = new ApiSnapshotList();
+    List<ApiDataRepoSnapshotResource> result =
+        referencedResources.stream()
+            .map(ReferencedResource::castToDataRepoSnapshotResource)
+            .map(ReferencedDataRepoSnapshotResource::toApiResource)
+            .collect(Collectors.toList());
+    response.snapshots(result);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
