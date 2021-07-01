@@ -34,14 +34,17 @@ public class SetBucketRolesStep implements Step {
   private final ControlledGcsBucketResource sourceBucket;
   private final CrlService crlService;
   private final WorkspaceService workspaceService;
+  private final BucketCloneRolesService bucketCloneRolesService;
 
   public SetBucketRolesStep(
       ControlledGcsBucketResource sourceBucket,
       CrlService crlService,
-      WorkspaceService workspaceService) {
+      WorkspaceService workspaceService,
+      BucketCloneRolesService bucketCloneRolesService) {
     this.sourceBucket = sourceBucket;
     this.crlService = crlService;
     this.workspaceService = workspaceService;
+    this.bucketCloneRolesService = bucketCloneRolesService;
   }
 
   /**
@@ -78,8 +81,8 @@ public class SetBucketRolesStep implements Step {
         ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, storageTransferServiceSAEmail);
 
     // Apply source and destination bucket roles
-    addBucketRoles(sourceInputs, storageTransferServiceSAEmail);
-    addBucketRoles(destinationInputs, storageTransferServiceSAEmail);
+    bucketCloneRolesService.addBucketRoles(sourceInputs, storageTransferServiceSAEmail);
+    bucketCloneRolesService.addBucketRoles(destinationInputs, storageTransferServiceSAEmail);
 
     return StepResult.getStepResultSuccess();
   }
@@ -104,10 +107,10 @@ public class SetBucketRolesStep implements Step {
 
     if (!Strings.isNullOrEmpty(transferServiceSAEmail)) {
       if (sourceInputs != null) {
-        removeBucketRoles(sourceInputs, transferServiceSAEmail);
+        bucketCloneRolesService.removeBucketRoles(sourceInputs, transferServiceSAEmail);
       }
       if (destinationInputs != null) {
-        removeBucketRoles(destinationInputs, transferServiceSAEmail);
+        bucketCloneRolesService.removeBucketRoles(destinationInputs, transferServiceSAEmail);
       }
     }
     return null;
@@ -158,46 +161,4 @@ public class SetBucketRolesStep implements Step {
         .getAccountEmail();
   }
 
-  private void addBucketRoles(BucketCloneInputs inputs, String transferServiceSAEmail) {
-    addOrRemoveBucketIdentities(BucketPolicyIdentityOperation.ADD, inputs, transferServiceSAEmail);
-  }
-
-  private void removeBucketRoles(BucketCloneInputs inputs, String transferServiceSAEmail) {
-    addOrRemoveBucketIdentities(
-        BucketPolicyIdentityOperation.REMOVE, inputs, transferServiceSAEmail);
-  }
-
-  private enum BucketPolicyIdentityOperation {
-    ADD,
-    REMOVE
-  }
-
-  /**
-   * Add or remove roles for an Identity. TODO: move somewhere reusable
-   *
-   * @param operation - flag for add or remove
-   * @param inputs - source or destination input object
-   * @param transferServiceSAEmail - STS SA email address
-   */
-  private void addOrRemoveBucketIdentities(
-      BucketPolicyIdentityOperation operation,
-      BucketCloneInputs inputs,
-      String transferServiceSAEmail) {
-    final StorageCow storageCow = crlService.createStorageCow(inputs.getProjectId());
-    final Identity saIdentity = Identity.serviceAccount(transferServiceSAEmail);
-
-    final Policy.Builder policyBuilder =
-        storageCow.getIamPolicy(inputs.getBucketName()).toBuilder();
-    for (String roleName : inputs.getRoleNames()) {
-      switch (operation) {
-        case ADD:
-          policyBuilder.addIdentity(Role.of(roleName), saIdentity);
-          break;
-        case REMOVE:
-          policyBuilder.removeIdentity(Role.of(roleName), saIdentity);
-          break;
-      }
-    }
-    storageCow.setIamPolicy(inputs.getBucketName(), policyBuilder.build());
-  }
 }

@@ -51,7 +51,8 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
             userRequest, sourceBucket, flightBeanBag.getControlledResourceService()));
     addStep(
         new SetBucketRolesStep(
-            sourceBucket, flightBeanBag.getCrlService(), flightBeanBag.getWorkspaceService()));
+            sourceBucket, flightBeanBag.getCrlService(), flightBeanBag.getWorkspaceService(),
+            flightBeanBag.getBucketCloneRolesService()));
     addStep(new CopyGcsBucketDataStep());
   }
 }
