@@ -47,6 +47,10 @@ public final class WorkspaceFlightMapKeys {
     public static final String LOCATION = "location";
     public static final String CLONING_INSTRUCTIONS = "cloningInstructions";
     public static final String CLONE_DEFINITION_RESULT = "cloneDefinitionResult";
+    public static final String SOURCE_BUCKET_CLONE_INPUTS = "sourceBucketCloneInputs";
+    public static final String DESTINATION_BUCKET_CLONE_INPUTS = "destinationBucketCloneInputs";
+    public static final String CONTROL_PLANE_PROJECT_ID = "controlPlaneProjectId";
+    public static final String STORAGE_TRANSFER_SERVICE_SA_EMAIL = "storageTransferServiceSAEmail";
   }
 
   /** Common resource keys */
