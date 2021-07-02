@@ -76,14 +76,12 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi sourceOwnerWorkspaceApi)
       throws Exception {
     super.doSetup(testUsers, sourceOwnerWorkspaceApi);
-    // populate source bucket
     assertThat(testUsers, hasSize(2));
     // user creating the source resource
     final TestUserSpecification sourceOwnerUser = testUsers.get(0);
     // user cloning the bucket resource
     cloningUser = testUsers.get(1);
 
-    // Create the source cloud context
     sourceProjectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), sourceOwnerWorkspaceApi);
     logger.info("Created source project {} in workspace {}", sourceProjectId, getWorkspaceId());
 
@@ -103,6 +101,7 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     sourceOwnerWorkspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(cloningUser.userEmail), getWorkspaceId(), IamRole.READER);
 
+    // populate source bucket
     final Storage sourceOwnerStorageClient = ClientTestUtils.getGcpStorageClient(sourceOwnerUser, sourceProjectId);
     final BlobId blobId = BlobId.of(sourceBucketName, GCS_BLOB_NAME);
     final BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();

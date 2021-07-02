@@ -10,7 +10,6 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import com.google.api.client.util.Strings;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
 import com.google.api.services.storagetransfer.v1.model.Date;
 import com.google.api.services.storagetransfer.v1.model.GcsData;
@@ -196,7 +195,7 @@ public final class CopyGcsBucketDataStep implements Step {
       Storagetransfer storageTransferService, String transferJobName, String projectId)
       throws InterruptedException, IOException {
     String operationName = null;
-    for(int numAttempts = 0; numAttempts < MAX_ATTEMPTS; ++numAttempts) {
+    for (int numAttempts = 0; numAttempts < MAX_ATTEMPTS; ++numAttempts) {
       final TransferJob getResponse =
           storageTransferService.transferJobs().get(transferJobName, projectId).execute();
       operationName = getResponse.getLatestOperationName();
