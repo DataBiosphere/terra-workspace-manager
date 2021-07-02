@@ -1,7 +1,10 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
 import bio.terra.cloudres.google.storage.StorageCow;
+import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import com.google.api.client.util.Strings;
 import com.google.cloud.Identity;
 import com.google.cloud.Policy;
 import com.google.cloud.Role;
@@ -27,13 +30,38 @@ public class BucketCloneRolesService {
         BucketPolicyIdentityOperation.REMOVE, inputs, transferServiceSAEmail);
   }
 
+  /**
+   * A utility method for flight steps, at least two of which need this exact implemnetation. Fetch
+   * bucket details from the working map along with the correct project ID and remove the roles.
+   *
+   * @param workingMap
+   */
+  public void removeAllBucketRoles(FlightMap workingMap) {
+    final BucketCloneInputs sourceInputs =
+        workingMap.get(ControlledResourceKeys.SOURCE_BUCKET_CLONE_INPUTS, BucketCloneInputs.class);
+    final BucketCloneInputs destinationInputs =
+        workingMap.get(
+            ControlledResourceKeys.DESTINATION_BUCKET_CLONE_INPUTS, BucketCloneInputs.class);
+    final String transferServiceSAEmail =
+        workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, String.class);
+
+    if (!Strings.isNullOrEmpty(transferServiceSAEmail)) {
+      if (sourceInputs != null) {
+        removeBucketRoles(sourceInputs, transferServiceSAEmail);
+      }
+      if (destinationInputs != null) {
+        removeBucketRoles(destinationInputs, transferServiceSAEmail);
+      }
+    }
+  }
+
   private enum BucketPolicyIdentityOperation {
     ADD,
     REMOVE
   }
 
   /**
-   * Add or remove roles for an Identity. TODO: move somewhere reusable
+   * Add or remove roles for an Identity.
    *
    * @param operation - flag for add or remove
    * @param inputs - source or destination input object
@@ -43,6 +71,10 @@ public class BucketCloneRolesService {
       BucketPolicyIdentityOperation operation,
       BucketCloneInputs inputs,
       String transferServiceSAEmail) {
+    if (inputs.getRoleNames().isEmpty()) {
+      // No-op
+      return;
+    }
     final StorageCow storageCow = crlService.createStorageCow(inputs.getProjectId());
     final Identity saIdentity = Identity.serviceAccount(transferServiceSAEmail);
 
@@ -60,5 +92,4 @@ public class BucketCloneRolesService {
     }
     storageCow.setIamPolicy(inputs.getBucketName(), policyBuilder.build());
   }
-
 }

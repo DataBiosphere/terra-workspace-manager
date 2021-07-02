@@ -1,21 +1,15 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
-import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import com.google.api.client.util.Strings;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
-import com.google.cloud.Identity;
-import com.google.cloud.Policy;
-import com.google.cloud.Role;
 import com.google.cloud.ServiceOptions;
 import java.io.IOException;
 import java.util.List;
@@ -24,6 +18,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Give the Storage Transfer Service SA the appropriate roles on the source and destination (sink)
+ * buckets to allow a transfer job to be created.
+ */
 public class SetBucketRolesStep implements Step {
   private static final List<String> DESTINATION_BUCKET_ROLE_NAMES =
       Stream.of("roles/storage.legacyBucketWriter").collect(Collectors.toList());
@@ -32,25 +30,18 @@ public class SetBucketRolesStep implements Step {
           .collect(Collectors.toList());
 
   private final ControlledGcsBucketResource sourceBucket;
-  private final CrlService crlService;
   private final WorkspaceService workspaceService;
   private final BucketCloneRolesService bucketCloneRolesService;
 
   public SetBucketRolesStep(
       ControlledGcsBucketResource sourceBucket,
-      CrlService crlService,
       WorkspaceService workspaceService,
       BucketCloneRolesService bucketCloneRolesService) {
     this.sourceBucket = sourceBucket;
-    this.crlService = crlService;
     this.workspaceService = workspaceService;
     this.bucketCloneRolesService = bucketCloneRolesService;
   }
 
-  /**
-   * Give the Storage Transfer Service SA the appropriate roles on the source and destination (sink)
-   * buckets to allow a transfer job to be created.
-   */
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
@@ -88,7 +79,7 @@ public class SetBucketRolesStep implements Step {
   }
 
   /**
-   * Remove the roles from the buckets. The removeIdentity function is idempotent.
+   * Remove the roles from the buckets. The removeAllBucketRoles function is idempotent.
    *
    * @param flightContext
    * @return
@@ -96,24 +87,8 @@ public class SetBucketRolesStep implements Step {
    */
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    final FlightMap workingMap = flightContext.getWorkingMap();
-    final BucketCloneInputs sourceInputs =
-        workingMap.get(ControlledResourceKeys.SOURCE_BUCKET_CLONE_INPUTS, BucketCloneInputs.class);
-    final BucketCloneInputs destinationInputs =
-        workingMap.get(
-            ControlledResourceKeys.DESTINATION_BUCKET_CLONE_INPUTS, BucketCloneInputs.class);
-    final String transferServiceSAEmail =
-        workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, String.class);
-
-    if (!Strings.isNullOrEmpty(transferServiceSAEmail)) {
-      if (sourceInputs != null) {
-        bucketCloneRolesService.removeBucketRoles(sourceInputs, transferServiceSAEmail);
-      }
-      if (destinationInputs != null) {
-        bucketCloneRolesService.removeBucketRoles(destinationInputs, transferServiceSAEmail);
-      }
-    }
-    return null;
+    bucketCloneRolesService.removeAllBucketRoles(flightContext.getWorkingMap());
+    return StepResult.getStepResultSuccess();
   }
 
   private String getControlPlaneProjectId() {
@@ -160,5 +135,4 @@ public class SetBucketRolesStep implements Step {
         .execute()
         .getAccountEmail();
   }
-
 }

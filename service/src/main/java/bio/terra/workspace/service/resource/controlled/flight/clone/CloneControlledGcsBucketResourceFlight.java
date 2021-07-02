@@ -9,6 +9,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResour
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CopyGcsBucketDataStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CopyGcsBucketDefinitionStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.RemoveBucketRolesStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetBucketRolesStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveGcsBucketCloudAttributesStep;
@@ -31,9 +32,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
     // 3. Launch sub-flight to create appropriate resource
     // 4. Set roles for cloning service account
     // 5. (for resource clone) Clone Data
-    // 6. Copy data across resources
-    //
-
+    // 6. Clear bucket roles
     addStep(
         new RetrieveControlledResourceMetadataStep(
             flightBeanBag.getResourceDao(),
@@ -51,8 +50,10 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
             userRequest, sourceBucket, flightBeanBag.getControlledResourceService()));
     addStep(
         new SetBucketRolesStep(
-            sourceBucket, flightBeanBag.getCrlService(), flightBeanBag.getWorkspaceService(),
+            sourceBucket,
+            flightBeanBag.getWorkspaceService(),
             flightBeanBag.getBucketCloneRolesService()));
     addStep(new CopyGcsBucketDataStep());
+    addStep(new RemoveBucketRolesStep(flightBeanBag.getBucketCloneRolesService()));
   }
 }

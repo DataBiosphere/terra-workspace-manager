@@ -10,6 +10,7 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import com.google.api.client.util.Strings;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
 import com.google.api.services.storagetransfer.v1.model.Date;
 import com.google.api.services.storagetransfer.v1.model.GcsData;
@@ -76,6 +77,11 @@ public final class CopyGcsBucketDataStep implements Step {
 
       // Get the service account in the control plane project used by the transfer service to
       // perform the actual data transfer. It's named for and scoped to the project.
+      // Storage transfer service itself is free, so there should be no charges to the control
+      // plane project. The usual egress charges will be made on the source bucket.
+      // TODO(PF-888): understand what happens when the source bucket is requester pays. We don't
+      //   support requester pays right now for controlled gcs buckets, but it might be set on a
+      //   referenced bucket.
       final String transferServiceSAEmail =
           workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, String.class);
       logger.debug("Storage Transfer Service SA: {}", transferServiceSAEmail);
@@ -165,6 +171,12 @@ public final class CopyGcsBucketDataStep implements Step {
         logger.debug("Attempted to get transfer operation {} {} times", operationName, attempts);
       }
     } while (attempts < MAX_ATTEMPTS);
+    if (MAX_ATTEMPTS <= attempts) {
+      final String message = "Timed out waiting for operation result.";
+      logger.info(message);
+      final RuntimeException e = new RuntimeException(message);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    }
     logger.info("Operation {} in transfer job {} has completed", operationName, transferJobName);
     // Inspect the completed operation for success
     if (operation.getError() != null) {
@@ -183,19 +195,22 @@ public final class CopyGcsBucketDataStep implements Step {
   private String getLatestOperationName(
       Storagetransfer storageTransferService, String transferJobName, String projectId)
       throws InterruptedException, IOException {
-    int attempts = 0;
-    String operationName;
-    do {
-      TimeUnit.MILLISECONDS.sleep(JOBS_POLL_INTERVAL.toMillis());
+    String operationName = null;
+    for(int numAttempts = 0; numAttempts < MAX_ATTEMPTS; ++numAttempts) {
       final TransferJob getResponse =
           storageTransferService.transferJobs().get(transferJobName, projectId).execute();
       operationName = getResponse.getLatestOperationName();
-      attempts++;
-      if (attempts > MAX_ATTEMPTS) {
-        throw new RuntimeException("Exceeded max attempts to get transfer operation name");
+      if (null != operationName) {
+        break;
+      } else {
+        TimeUnit.MILLISECONDS.sleep(JOBS_POLL_INTERVAL.toMillis());
       }
-    } while (operationName == null);
-    logger.info("Latest transfer operation name is {}", operationName);
+    }
+    if (null == operationName) {
+      throw new RuntimeException("Exceeded max attempts to get transfer operation name");
+    }
+
+    logger.debug("Latest transfer operation name is {}", operationName);
     return operationName;
   }
 
@@ -211,12 +226,7 @@ public final class CopyGcsBucketDataStep implements Step {
 
   /**
    * Build a schedule to indicate that the job should run an operation immediately and not repeat
-   * it. This isn't well-supported in the UI, but there are hints in the documentation. The most
-   * frustrating feature of the interface is that if a start date & time are in "the past", the run
-   * won't initiate until the next iteration (e.g. in 24 hours, assuming that's not past the end
-   * time). Which means we need to apply a fudge factor to make sure the time is a little bit in the
-   * future. Note that stepping through the code in the debugger too slowly can leave you with a
-   * stale timestamp and cause the job not to run.
+   * it.
    *
    * @return schedule object for the transfer job
    */
@@ -224,8 +234,15 @@ public final class CopyGcsBucketDataStep implements Step {
     final OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
     final Date runDate =
         new Date().setYear(now.getYear()).setMonth(now.getMonthValue()).setDay(now.getDayOfMonth());
-    // "If `schedule_end_date` and schedule_start_date are the same and
+    // From the Javadoc: "If `schedule_end_date` and schedule_start_date are the same and
     // in the future relative to UTC, the transfer is executed only one time."
+    //
+    // Likewise, the doc for setStartTimeOfDay() states
+    // "The time in UTC that a transfer job is scheduled to run. Transfers may start later than this
+    // time. If `start_time_of_day` is not specified: * One-time transfers run immediately. *
+    // Recurring transfers run immediately, and each day at midnight UTC, through schedule_end_date.
+    //
+    // Since our start and end days are the same, we get Run Once Now behavior.
     return new Schedule().setScheduleStartDate(runDate).setScheduleEndDate(runDate);
   }
 
