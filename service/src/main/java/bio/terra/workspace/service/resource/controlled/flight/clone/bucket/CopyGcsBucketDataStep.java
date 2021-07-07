@@ -18,6 +18,7 @@ import com.google.api.services.storagetransfer.v1.model.Schedule;
 import com.google.api.services.storagetransfer.v1.model.TransferJob;
 import com.google.api.services.storagetransfer.v1.model.TransferOptions;
 import com.google.api.services.storagetransfer.v1.model.TransferSpec;
+import com.google.api.services.storagetransfer.v1.model.UpdateTransferJobRequest;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -34,8 +35,8 @@ public final class CopyGcsBucketDataStep implements Step {
   private static final Duration OPERATIONS_POLL_INTERVAL = Duration.ofSeconds(30);
   private static final int MAX_ATTEMPTS = 25;
   private static final Logger logger = LoggerFactory.getLogger(CopyGcsBucketDataStep.class);
-  private static final String APPLICATION_NAME = "terra-workspace-manager";
   private static final String ENABLED_STATUS = "ENABLED";
+  private static final String DELETED_STATUS = "DELETED";
 
   public CopyGcsBucketDataStep() {}
 
@@ -113,9 +114,8 @@ public final class CopyGcsBucketDataStep implements Step {
       if (StepStatus.STEP_RESULT_FAILURE_FATAL == operationResult.getStepStatus()) {
         return operationResult;
       }
-      // Currently there is no delete endpoint for transfer jobs, so all of the completed clone jobs
-      // will clutter the console in the main control plane project.
-      // https://cloud.google.com/storage-transfer/docs/reference/rest
+
+      deleteTransferJob(storageTransferService, transferJobName, controlPlaneProjectId);
     } catch (IOException e) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
@@ -137,6 +137,25 @@ public final class CopyGcsBucketDataStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     return StepResult.getStepResultSuccess();
+  }
+
+  // Delete the transfer job, as we don't support reusing them.
+  private void deleteTransferJob(Storagetransfer storageTransferService, String transferJobName,
+      String controlPlaneProjectId) throws IOException {
+    final TransferJob patchedTransferJob = new TransferJob().setStatus(DELETED_STATUS);
+    final UpdateTransferJobRequest updateTransferJobRequest =
+        new UpdateTransferJobRequest()
+            .setUpdateTransferJobFieldMask("status")
+            .setTransferJob(patchedTransferJob)
+            .setProjectId(controlPlaneProjectId);
+    final TransferJob deletedTransferJob =
+        storageTransferService
+            .transferJobs()
+            .patch(transferJobName, updateTransferJobRequest)
+            .execute();
+    if (!DELETED_STATUS.equals(deletedTransferJob.getStatus())) {
+      logger.warn("Failed to delete transfer job {}", deletedTransferJob.getName());
+    }
   }
 
   /**
