@@ -218,7 +218,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             body.getCloningInstructions());
     final ApiCloneControlledGcpGcsBucketResult result =
         fetchCloneGcsBucketResult(jobId, userRequest);
-    return new ResponseEntity<>(result, HttpStatus.valueOf(result.getJobReport().getStatusCode()));
+    return new ResponseEntity<>(
+        result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
 
   private ApiCloneControlledGcpGcsBucketResult fetchCloneGcsBucketResult(
