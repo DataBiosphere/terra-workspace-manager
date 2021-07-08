@@ -1,7 +1,7 @@
 {
   "name": "ValidateReferencedResources",
   "description": "Exercise reference access validation over all resource types",
-  "serverSpecificationFile": "workspace-local.json",
+  "serverSpecificationFile": "workspace-dev.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [

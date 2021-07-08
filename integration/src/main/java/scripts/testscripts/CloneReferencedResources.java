@@ -16,6 +16,7 @@ import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.ResourceType;
+import bio.terra.workspace.model.StewardshipType;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -29,7 +30,7 @@ import scripts.utils.WorkspaceAllocateTestScriptBase;
 public class CloneReferencedResources extends WorkspaceAllocateTestScriptBase {
 
   private static final Logger logger = LoggerFactory.getLogger(CloneReferencedResources.class);
-  private static final String CLONED_BUCKET_NAME = "a_new_name";
+  private static final String CLONED_BUCKET_RESOURCE_NAME = "a_new_name";
   private GcpGcsBucketResource sourceBucketReference;
 
   private UUID destinationWorkspaceId;
@@ -71,16 +72,19 @@ public class CloneReferencedResources extends WorkspaceAllocateTestScriptBase {
     // clone source reference to destination
     final var body = new CloneReferencedResourceRequestBody()
         .cloningInstructions(CloningInstructionsEnum.REFERENCE)
-        .name(CLONED_BUCKET_NAME)
+        .name(CLONED_BUCKET_RESOURCE_NAME)
         .destinationWorkspaceId(destinationWorkspaceId);
     final CloneReferencedResourceResult cloneResult = referencedGcpResourceApi.cloneReferencedResource(body,
         getWorkspaceId(),
         sourceBucketReference.getMetadata().getResourceId());
     assertEquals(getWorkspaceId(), cloneResult.getSourceWorkspaceId());
-    assertEquals(CLONED_BUCKET_NAME, cloneResult.getResource().getMetadata().getName());
+    assertEquals(StewardshipType.REFERENCED, cloneResult.getResource().getMetadata().getStewardshipType());
     assertEquals(ResourceType.GCS_BUCKET, cloneResult.getResource().getMetadata().getResourceType());
+    assertEquals(sourceBucketReference.getMetadata().getResourceId(), cloneResult.getSourceResourceId());
+    assertEquals(sourceBucketReference.getMetadata().getDescription(), cloneResult.getResource().getMetadata().getDescription());
+    assertEquals(CLONED_BUCKET_RESOURCE_NAME, cloneResult.getResource().getMetadata().getName());
+
     assertEquals(TEST_BUCKET_NAME,
         cloneResult.getResource().getResourceAttributes().getGcpGcsBucket().getBucketName());
-
   }
 }
