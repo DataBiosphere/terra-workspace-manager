@@ -1,6 +1,7 @@
 package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -9,11 +10,16 @@ import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
+import bio.terra.workspace.model.CloneControlledGcpGcsBucketResult;
+import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
+import bio.terra.workspace.model.CloneReferencedResourceResult;
+import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
+import bio.terra.workspace.model.ResourceType;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -23,10 +29,13 @@ import scripts.utils.ResourceMaker;
 
 public class ValidateReferencedResources extends DataRepoTestScriptBase {
 
+  private static final String CLONED_BUCKET_NAME = "a_new_name";
   private TestUserSpecification secondUser;
+  private GcpGcsBucketResource gcpGcsBucketResource;
   private UUID bqResourceId;
   private UUID bucketResourceId;
   private UUID snapshotResourceId;
+  private ReferencedGcpResourceApi referencedGcpResourceApi;
 
   @Override
   public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
@@ -38,15 +47,15 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
     this.secondUser = testUsers.get(1);
 
     ApiClient apiClient = ClientTestUtils.getClientForTestUser(testUsers.get(0), server);
-    ReferencedGcpResourceApi referencedGcpResourceApi = new ReferencedGcpResourceApi(apiClient);
+    referencedGcpResourceApi = new ReferencedGcpResourceApi(apiClient);
     String bqReferenceName = RandomStringUtils.random(6, true, false);
     GcpBigQueryDatasetResource bqReference =
         ResourceMaker.makeBigQueryReference(referencedGcpResourceApi, getWorkspaceId(), bqReferenceName);
     bqResourceId = bqReference.getMetadata().getResourceId();
     String bucketReferenceName = RandomStringUtils.random(6, true, false);
-    GcpGcsBucketResource bucketReference =
+    gcpGcsBucketResource =
         ResourceMaker.makeGcsBucketReference(referencedGcpResourceApi, getWorkspaceId(), bucketReferenceName);
-    bucketResourceId = bucketReference.getMetadata().getResourceId();
+    bucketResourceId = gcpGcsBucketResource.getMetadata().getResourceId();
     String snapshotReferenceName = RandomStringUtils.random(6, true, false);
     DataRepoSnapshotResource snapshotReference =
         ResourceMaker.makeDataRepoSnapshotReference(referencedGcpResourceApi, getWorkspaceId(), snapshotReferenceName, getDataRepoSnapshotId(), getDataRepoInstanceName());
@@ -72,5 +81,6 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
     assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), bqResourceId));
     assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), bucketResourceId));
     assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), snapshotResourceId));
+
   }
 }

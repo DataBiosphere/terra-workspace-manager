@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.referenced;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.DbRetryUtils;
 import bio.terra.workspace.db.ResourceDao;
@@ -10,9 +11,11 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceResourceFlight;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -141,7 +144,51 @@ public class ReferencedResourceService {
     return referencedResource.checkAccess(beanBag, userReq);
   }
 
-  public ReferencedResource cloneReferencedResource(ReferencedResource resource, UUID destinationWorkspaceId) {
+  public ReferencedResource cloneReferencedResource(
+      ReferencedResource sourceReferencedResource,
+      UUID destinationWorkspaceId,
+      @Nullable String name,
+      @Nullable String description,
+      AuthenticatedUserRequest userReq) {
+    switch (sourceReferencedResource.getResourceType()) {
+      case AI_NOTEBOOK_INSTANCE:
+        throw new InternalLogicException("References to AI notebooks are not supported.");
+      case GCS_BUCKET:
+        final ReferencedGcsBucketResource sourceBucketResource =
+            sourceReferencedResource.castToGcsBucketResource();
+        return cloneGcsBucketReference(
+            userReq, sourceBucketResource, destinationWorkspaceId, name, description);
+      case DATA_REPO_SNAPSHOT:
+      case BIG_QUERY_DATASET:
+      default:
+        throw new BadRequestException("Resource type not supported");
+    }
+  }
 
+  /**
+   * Create a clone of a reference, which is identical in all fields except workspace ID, resource
+   * ID, and (possibly) name and description. This method reuses the createReferenceResource()
+   * method on the ReferenceResourceService.
+   *
+   * @param body - API request body
+   * @param userReq - authenticated user request object
+   * @param sourceBucketResource - original resource to be cloned
+   * @return
+   */
+  private ReferencedResource cloneGcsBucketReference(
+      AuthenticatedUserRequest userReq,
+      ReferencedGcsBucketResource sourceBucketResource,
+      UUID destinationWorkspaceId,
+      @Nullable String name,
+      @Nullable String description) {
+
+    final ReferencedGcsBucketResource.Builder destinationBucketResourceBuilder =
+        sourceBucketResource.toBuilder()
+            .workspaceId(destinationWorkspaceId)
+            .resourceId(UUID.randomUUID());
+    // apply optional override variables
+    Optional.ofNullable(name).ifPresent(destinationBucketResourceBuilder::name);
+    Optional.ofNullable(description).ifPresent(destinationBucketResourceBuilder::description);
+    return createReferenceResource(destinationBucketResourceBuilder.build(), userReq);
   }
 }

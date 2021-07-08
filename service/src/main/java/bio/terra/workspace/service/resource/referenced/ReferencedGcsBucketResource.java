@@ -100,8 +100,9 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
   }
 
   /**
-   * Make a copy of this object via a new builder. This is convenient for reusing objects with one or
-   * two fields changed.
+   * Make a copy of this object via a new builder. This is convenient for reusing objects with one
+   * or two fields changed.
+   *
    * @return builder object ready for new values to replace existing ones
    */
   public Builder toBuilder() {
