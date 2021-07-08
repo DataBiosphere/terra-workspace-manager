@@ -140,4 +140,8 @@ public class ReferencedResourceService {
             () -> resourceDao.getResource(workspaceId, resourceId).castToReferencedResource());
     return referencedResource.checkAccess(beanBag, userReq);
   }
+
+  public ReferencedResource cloneReferencedResource(ReferencedResource resource, UUID destinationWorkspaceId) {
+
+  }
 }
