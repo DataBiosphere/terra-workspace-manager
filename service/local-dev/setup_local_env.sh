@@ -25,8 +25,13 @@ fi
 # Clone Helm chart and helmfile repos
 rm -rf terra-helm
 rm -rf terra-helmfile
-git clone -b "$TERRA_HELM_BRANCH" --single-branch ${helmgit}
-git clone -b "$TERRA_HELMFILE_BRANCH" --single-branch ${helmfilegit}
+
+# Clone minimal state from repos and remove .git dir (nested .git directories confuse humans, IDE, and git)
+git clone -b "$TERRA_HELM_BRANCH" --single-branch --depth=1 ${helmgit}
+rm -rf terra-helm/.git
+
+git clone -b "$TERRA_HELMFILE_BRANCH" --single-branch --depth=1 ${helmfilegit}
+rm -rf terra-helmfile/.git
 
 # Template in environment
 sed "s|ENV|${ENV}|g" skaffold.yaml.template > skaffold.yaml
