@@ -132,8 +132,7 @@ public final class CopyGcsBucketDataStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  // Since we are billing users for the transfers, we don't want to throw away data from a partial
-  // success, especially for large bucket transfers.
+  // All data in the bucket will be deleted in the previous step's undo method
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     return StepResult.getStepResultSuccess();

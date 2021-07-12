@@ -123,6 +123,22 @@ public class CopyGcsBucketDefinitionStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
+  // Delete the bucket and its row in the resource table
+  @Override
+  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    final ControlledGcsBucketResource clonedBucket =
+        flightContext
+            .getWorkingMap()
+            .get(
+                ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
+                ControlledGcsBucketResource.class);
+    if (clonedBucket != null) {
+      controlledResourceService.deleteControlledResourceSync(
+          clonedBucket.getWorkspaceId(), clonedBucket.getResourceId(), userRequest);
+    }
+    return StepResult.getStepResultSuccess();
+  }
+
   /**
    * Get a supplied input value from input parameters, or, if that's missing, a default (previous)
    * value from the working map, or null.
@@ -160,20 +176,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
     }
   }
 
-  @Override
-  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    final ControlledGcsBucketResource clonedBucket =
-        flightContext
-            .getWorkingMap()
-            .get(
-                ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
-                ControlledGcsBucketResource.class);
-    if (clonedBucket != null) {
-      controlledResourceService.deleteControlledResourceSync(
-          clonedBucket.getWorkspaceId(), clonedBucket.getResourceId(), userRequest);
-    }
-    return StepResult.getStepResultSuccess();
-  }
+
 
   private String randomBucketName() {
     return "terra-wsm-" + UUID.randomUUID().toString().toLowerCase();
