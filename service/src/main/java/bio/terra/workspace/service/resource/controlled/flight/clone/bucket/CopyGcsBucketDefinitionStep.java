@@ -176,8 +176,6 @@ public class CopyGcsBucketDefinitionStep implements Step {
     }
   }
 
-
-
   private String randomBucketName() {
     return "terra-wsm-" + UUID.randomUUID().toString().toLowerCase();
   }

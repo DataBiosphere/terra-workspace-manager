@@ -139,8 +139,9 @@ public final class CopyGcsBucketDataStep implements Step {
   }
 
   // Delete the transfer job, as we don't support reusing them.
-  private void deleteTransferJob(Storagetransfer storageTransferService, String transferJobName,
-      String controlPlaneProjectId) throws IOException {
+  private void deleteTransferJob(
+      Storagetransfer storageTransferService, String transferJobName, String controlPlaneProjectId)
+      throws IOException {
     final TransferJob patchedTransferJob = new TransferJob().setStatus(DELETED_STATUS);
     final UpdateTransferJobRequest updateTransferJobRequest =
         new UpdateTransferJobRequest()
