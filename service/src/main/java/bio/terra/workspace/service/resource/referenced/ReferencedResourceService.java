@@ -160,6 +160,9 @@ public class ReferencedResourceService {
             userReq, sourceBucketResource, destinationWorkspaceId, name, description);
       case DATA_REPO_SNAPSHOT:
       case BIG_QUERY_DATASET:
+        final ReferencedBigQueryDatasetResource sourceBigQueryResource =
+            sourceReferencedResource.castToBigQueryDatasetResource();
+
       default:
         throw new BadRequestException("Resource type not supported");
     }
@@ -190,5 +193,18 @@ public class ReferencedResourceService {
     Optional.ofNullable(name).ifPresent(destinationBucketResourceBuilder::name);
     Optional.ofNullable(description).ifPresent(destinationBucketResourceBuilder::description);
     return createReferenceResource(destinationBucketResourceBuilder.build(), userReq);
+  }
+
+  private ReferencedResource cloneBigQueryDatasetReference(
+      AuthenticatedUserRequest userReq,
+      ReferencedBigQueryDatasetResource sourceBigQueryResource,
+      UUID destinationWorkspaceId,
+      @Nullable String name,
+      @Nullable String description) {
+    final ReferencedBigQueryDatasetResource.Builder destinationDatasetBuilder = sourceBigQueryResource.toBuilder()
+        .workspaceId(destinationWorkspaceId)
+        .resourceId(UUID.randomUUID());
+    Optional.ofNullable(name).ifPresent(destinationDatasetBuilder::name);
+    Optional.ofNullable()
   }
 }
