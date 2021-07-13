@@ -162,7 +162,8 @@ public class ReferencedResourceService {
       case BIG_QUERY_DATASET:
         final ReferencedBigQueryDatasetResource sourceBigQueryResource =
             sourceReferencedResource.castToBigQueryDatasetResource();
-
+        return cloneBigQueryDatasetReference(
+            userReq, sourceBigQueryResource, destinationWorkspaceId, name, description);
       default:
         throw new BadRequestException("Resource type not supported");
     }
@@ -173,9 +174,11 @@ public class ReferencedResourceService {
    * ID, and (possibly) name and description. This method reuses the createReferenceResource()
    * method on the ReferenceResourceService.
    *
-   * @param body - API request body
    * @param userReq - authenticated user request object
    * @param sourceBucketResource - original resource to be cloned
+   * @param destinationWorkspaceId - workspace ID for new reference
+   * @param name - resource name for cloned reference. Will use original name if this is null.
+   * @param description - resource description for cloned reference. Uses original if left null.
    * @return
    */
   private ReferencedResource cloneGcsBucketReference(
@@ -201,10 +204,15 @@ public class ReferencedResourceService {
       UUID destinationWorkspaceId,
       @Nullable String name,
       @Nullable String description) {
-    final ReferencedBigQueryDatasetResource.Builder destinationDatasetBuilder = sourceBigQueryResource.toBuilder()
-        .workspaceId(destinationWorkspaceId)
-        .resourceId(UUID.randomUUID());
+    final String destinationProjectId =
+        workspaceService.getRequiredGcpProject(destinationWorkspaceId);
+    // keep projectId and dataset name the same since they are for the referent
+    final ReferencedBigQueryDatasetResource.Builder destinationDatasetBuilder =
+        sourceBigQueryResource.toBuilder()
+            .workspaceId(destinationWorkspaceId)
+            .resourceId(UUID.randomUUID());
     Optional.ofNullable(name).ifPresent(destinationDatasetBuilder::name);
-    Optional.ofNullable()
+    Optional.ofNullable(description).ifPresent(destinationDatasetBuilder::description);
+    return createReferenceResource(destinationDatasetBuilder.build(), userReq);
   }
 }

@@ -14,7 +14,9 @@ import bio.terra.workspace.model.CloneReferencedResourceResult;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
+import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
 import java.util.List;
@@ -29,10 +31,13 @@ import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class CloneReferencedResources extends WorkspaceAllocateTestScriptBase {
 
+  public static final String DATASET_RESOURCE_NAME = "dataset_resource_name";
   private static final Logger logger = LoggerFactory.getLogger(CloneReferencedResources.class);
   private static final String CLONED_BUCKET_RESOURCE_NAME = "a_new_name";
+  public static final String CLONED_DATASET_RESOURCE_NAME = "a_cloned_reference";
+  public static final String CLONED_DATASET_DESCRIPTION = "Second star to the right.";
   private GcpGcsBucketResource sourceBucketReference;
-
+  private GcpBigQueryDatasetResource sourceBigQueryDatasetReference;
   private UUID destinationWorkspaceId;
   private String destinationProjectId;
   private ReferencedGcpResourceApi referencedGcpResourceApi;
@@ -49,6 +54,8 @@ public class CloneReferencedResources extends WorkspaceAllocateTestScriptBase {
         ResourceMaker
             .makeGcsBucketReference(referencedGcpResourceApi, getWorkspaceId(), bucketReferenceName);
 
+    sourceBigQueryDatasetReference = ResourceMaker.makeBigQueryReference(referencedGcpResourceApi, getWorkspaceId(),
+        DATASET_RESOURCE_NAME);
     // create a new workspace with cloud context
     destinationWorkspaceId = UUID.randomUUID();
     final var requestBody =
@@ -70,21 +77,49 @@ public class CloneReferencedResources extends WorkspaceAllocateTestScriptBase {
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
     // clone source reference to destination
-    final var body = new CloneReferencedResourceRequestBody()
+    final var cloneBucketReferenceRequestBody = new CloneReferencedResourceRequestBody()
         .cloningInstructions(CloningInstructionsEnum.REFERENCE)
         .name(CLONED_BUCKET_RESOURCE_NAME)
         .destinationWorkspaceId(destinationWorkspaceId);
-    final CloneReferencedResourceResult cloneResult = referencedGcpResourceApi.cloneReferencedResource(body,
+    logger.info("Cloning GCS Bucket Reference\n\tworkspaceId: {}\n\tresourceId: {}\ninto\n\tworkspaceId: {}",
+        sourceBucketReference.getMetadata().getWorkspaceId(),
+        sourceBucketReference.getMetadata().getResourceId(),
+        destinationWorkspaceId);
+    final CloneReferencedResourceResult cloneBucketReferenceResult = referencedGcpResourceApi.cloneReferencedResource(cloneBucketReferenceRequestBody,
         getWorkspaceId(),
         sourceBucketReference.getMetadata().getResourceId());
-    assertEquals(getWorkspaceId(), cloneResult.getSourceWorkspaceId());
-    assertEquals(StewardshipType.REFERENCED, cloneResult.getResource().getMetadata().getStewardshipType());
-    assertEquals(ResourceType.GCS_BUCKET, cloneResult.getResource().getMetadata().getResourceType());
-    assertEquals(sourceBucketReference.getMetadata().getResourceId(), cloneResult.getSourceResourceId());
-    assertEquals(sourceBucketReference.getMetadata().getDescription(), cloneResult.getResource().getMetadata().getDescription());
-    assertEquals(CLONED_BUCKET_RESOURCE_NAME, cloneResult.getResource().getMetadata().getName());
-
+    assertEquals(getWorkspaceId(), cloneBucketReferenceResult.getSourceWorkspaceId());
+    assertEquals(StewardshipType.REFERENCED, cloneBucketReferenceResult.getResource().getMetadata().getStewardshipType());
+    assertEquals(ResourceType.GCS_BUCKET, cloneBucketReferenceResult.getResource().getMetadata().getResourceType());
+    assertEquals(sourceBucketReference.getMetadata().getResourceId(), cloneBucketReferenceResult.getSourceResourceId());
+    assertEquals(sourceBucketReference.getMetadata().getDescription(), cloneBucketReferenceResult.getResource().getMetadata().getDescription());
+    assertEquals(CLONED_BUCKET_RESOURCE_NAME, cloneBucketReferenceResult.getResource().getMetadata().getName());
     assertEquals(TEST_BUCKET_NAME,
-        cloneResult.getResource().getResourceAttributes().getGcpGcsBucket().getBucketName());
+        cloneBucketReferenceResult.getResource().getResourceAttributes().getGcpGcsBucket().getBucketName());
+
+    final var cloneBigQueryDatasetRequestBody = new CloneReferencedResourceRequestBody()
+        .cloningInstructions(CloningInstructionsEnum.REFERENCE)
+        .name(CLONED_DATASET_RESOURCE_NAME)
+        .description(CLONED_DATASET_DESCRIPTION)
+        .destinationWorkspaceId(destinationWorkspaceId);
+
+    logger.info("Cloning BigQuery Dataset Reference\n\tworkspaceId: {}\n\tresourceId: {}\ninto\n\tworkspaceId: {}",
+        sourceBigQueryDatasetReference.getMetadata().getWorkspaceId(),
+        sourceBigQueryDatasetReference.getMetadata().getResourceId(),
+        destinationWorkspaceId);
+
+    final CloneReferencedResourceResult cloneDatasetReferenceResult =
+        referencedGcpResourceApi.cloneReferencedResource(cloneBigQueryDatasetRequestBody,
+        getWorkspaceId(),
+        sourceBigQueryDatasetReference.getMetadata().getResourceId());
+    assertEquals(getWorkspaceId(), cloneDatasetReferenceResult.getSourceWorkspaceId());
+    final ResourceMetadata clonedDatasetResourceMetadata = cloneDatasetReferenceResult.getResource().getMetadata();
+    assertEquals(StewardshipType.REFERENCED, clonedDatasetResourceMetadata.getStewardshipType());
+    assertEquals(ResourceType.BIG_QUERY_DATASET, clonedDatasetResourceMetadata.getResourceType());
+    assertEquals(sourceBigQueryDatasetReference.getMetadata().getResourceId(), cloneDatasetReferenceResult.getSourceResourceId());
+    assertEquals(CLONED_DATASET_RESOURCE_NAME, clonedDatasetResourceMetadata.getName());
+    assertEquals(CLONED_DATASET_DESCRIPTION, clonedDatasetResourceMetadata.getDescription());
+    assertEquals(sourceBigQueryDatasetReference.getAttributes().getProjectId(),
+        cloneDatasetReferenceResult.getResource().getResourceAttributes().getGcpBqDataset().getProjectId());
   }
 }

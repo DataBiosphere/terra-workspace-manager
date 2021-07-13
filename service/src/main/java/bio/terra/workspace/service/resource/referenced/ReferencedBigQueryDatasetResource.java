@@ -118,6 +118,7 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
   /**
    * Build a builder with values from this object. This is useful when creating related objects that
    * share several values.
+   *
    * @return - a Builder for a new ReferencedBigQueryDatasetResource
    */
   public Builder toBuilder() {
