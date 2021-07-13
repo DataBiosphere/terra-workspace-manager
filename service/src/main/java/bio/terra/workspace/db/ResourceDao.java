@@ -139,6 +139,16 @@ public class ResourceDao {
     return DbRetryUtils.retry(() -> enumerateReferencesInner(workspaceId, offset, limit));
   }
 
+  public List<ReferencedResource> enumerateSnapshots(UUID workspaceId, int offset, int limit)
+      throws InterruptedException {
+    List<WsmResource> wsmResources =
+        DbRetryUtils.retry(
+            () ->
+                enumerateResourcesInner(
+                    workspaceId, null, WsmResourceType.DATA_REPO_SNAPSHOT, null, offset, limit));
+    return wsmResources.stream().map(ReferencedResource.class::cast).collect(Collectors.toList());
+  }
+
   @Transactional(
       propagation = Propagation.REQUIRED,
       isolation = Isolation.SERIALIZABLE,

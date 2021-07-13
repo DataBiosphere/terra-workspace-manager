@@ -132,6 +132,14 @@ public class ReferencedResourceService {
         () -> resourceDao.enumerateReferences(workspaceId, offset, limit));
   }
 
+  public List<ReferencedResource> enumerateSnapshots(
+      UUID workspaceId, int offset, int limit, AuthenticatedUserRequest userReq) {
+    workspaceService.validateWorkspaceAndAction(
+        userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    return DbRetryUtils.throwIfInterrupted(
+        () -> resourceDao.enumerateSnapshots(workspaceId, offset, limit));
+  }
+
   public boolean checkAccess(UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
     workspaceService.validateWorkspaceAndAction(
         userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
