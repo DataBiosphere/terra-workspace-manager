@@ -70,7 +70,7 @@ jobs:
         event-name: ${{ github.event_name }}
     - name: Bump the tag to a new version
       if: steps.skiptest.outputs.is-bump == 'no'
-      uses: databiosphere/github-actions/actions/bumper@bumper-0.0.3
+      uses: databiosphere/github-actions/actions/bumper@bumper-0.0.4
       id: tag
       env:
         DEFAULT_BUMP: patch
