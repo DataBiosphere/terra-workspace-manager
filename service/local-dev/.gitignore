@@ -4,6 +4,9 @@
 # file.
 # Ignore everything in this directory...
 *
+./terra-helm/**
+./terra-helmfile/**
+
 # Except...
 !.gitignore
 !local-postgres-init.sql
