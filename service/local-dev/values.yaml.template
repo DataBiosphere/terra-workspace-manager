@@ -1,5 +1,0 @@
-imageConfig:
-  imagePullPolicy: IfNotPresent
-global:
-  terraEnv: ENV
-initDB: true
