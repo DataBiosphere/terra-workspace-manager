@@ -27,8 +27,6 @@ import scripts.testscripts.GetWorkspace;
  * classes.
  */
 public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestScriptBase {
-  private static final Logger logger = LoggerFactory.getLogger(GetWorkspace.class);
-
   private UUID workspaceId;
   private String spendProfileId;
 

@@ -69,6 +69,10 @@ dependencies {
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-serviceusage'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-storage'
 
+    // Storage transfer service
+    implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20210602-1.31.5'
+    implementation group: "com.google.auth", name: "google-auth-library-oauth2-http", version: "0.22.1"
+
     // Versioned direct deps
     implementation group: "org.hashids", name: "hashids", version: "1.0.3"
     implementation group: "org.liquibase", name: "liquibase-core", version: "4.2.1"
