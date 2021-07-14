@@ -12,12 +12,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class BucketCloneRolesService {
+public class BucketCloneRolesComponent {
 
   private final CrlService crlService;
 
   @Autowired
-  public BucketCloneRolesService(CrlService crlService) {
+  public BucketCloneRolesComponent(CrlService crlService) {
     this.crlService = crlService;
   }
 

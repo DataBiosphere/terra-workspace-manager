@@ -8,6 +8,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
+import bio.terra.workspace.service.resource.controlled.exception.StorageTransferServiceTimeoutException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
@@ -117,6 +118,7 @@ public final class CopyGcsBucketDataStep implements Step {
 
       deleteTransferJob(storageTransferService, transferJobName, controlPlaneProjectId);
     } catch (IOException e) {
+
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new IllegalStateException("Failed to copy bucket data", e));
@@ -192,8 +194,9 @@ public final class CopyGcsBucketDataStep implements Step {
     if (MAX_ATTEMPTS <= attempts) {
       final String message = "Timed out waiting for operation result.";
       logger.info(message);
-      final RuntimeException e = new RuntimeException(message);
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new StorageTransferServiceTimeoutException(message));
     }
     logger.info("Operation {} in transfer job {} has completed", operationName, transferJobName);
     // Inspect the completed operation for success
@@ -225,7 +228,8 @@ public final class CopyGcsBucketDataStep implements Step {
       }
     }
     if (null == operationName) {
-      throw new RuntimeException("Exceeded max attempts to get transfer operation name");
+      throw new StorageTransferServiceTimeoutException(
+          "Exceeded max attempts to get transfer operation name");
     }
 
     logger.debug("Latest transfer operation name is {}", operationName);

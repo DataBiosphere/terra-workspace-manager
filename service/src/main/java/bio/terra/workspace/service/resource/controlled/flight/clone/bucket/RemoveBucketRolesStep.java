@@ -15,9 +15,9 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
  */
 public class RemoveBucketRolesStep implements Step {
 
-  private final BucketCloneRolesService bucketCloneRolesService;
+  private final BucketCloneRolesComponent bucketCloneRolesService;
 
-  public RemoveBucketRolesStep(BucketCloneRolesService bucketCloneRolesService) {
+  public RemoveBucketRolesStep(BucketCloneRolesComponent bucketCloneRolesService) {
     this.bucketCloneRolesService = bucketCloneRolesService;
   }
 

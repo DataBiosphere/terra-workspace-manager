@@ -31,12 +31,12 @@ public class SetBucketRolesStep implements Step {
 
   private final ControlledGcsBucketResource sourceBucket;
   private final WorkspaceService workspaceService;
-  private final BucketCloneRolesService bucketCloneRolesService;
+  private final BucketCloneRolesComponent bucketCloneRolesService;
 
   public SetBucketRolesStep(
       ControlledGcsBucketResource sourceBucket,
       WorkspaceService workspaceService,
-      BucketCloneRolesService bucketCloneRolesService) {
+      BucketCloneRolesComponent bucketCloneRolesService) {
     this.sourceBucket = sourceBucket;
     this.workspaceService = workspaceService;
     this.bucketCloneRolesService = bucketCloneRolesService;
