@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.flight.clone;
+package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
@@ -7,10 +7,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CopyGcsBucketDataStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CopyGcsBucketDefinitionStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.RemoveBucketRolesStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetBucketRolesStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveGcsBucketCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveGcsBucketCloudAttributesStep.RetrievalMode;
@@ -30,9 +26,11 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
     // 1. Gather controlled resource metadata for source object
     // 2. Gather creation parameters from existing object
     // 3. Launch sub-flight to create appropriate resource
-    // 4. Set roles for cloning service account
-    // 5. (for resource clone) Clone Data
-    // 6. Clear bucket roles
+    // 4. Set bucket roles for cloning service account
+    // 5. (for resource clone) Create Storage Transfer Service transfer job
+    // 6. Listen for running operation in transfer job
+    // 7. Delete the storage transfer job
+    // 8. Clear bucket roles
     addStep(
         new RetrieveControlledResourceMetadataStep(
             flightBeanBag.getResourceDao(),
@@ -53,7 +51,9 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
             sourceBucket,
             flightBeanBag.getWorkspaceService(),
             flightBeanBag.getBucketCloneRolesService()));
-    addStep(new CopyGcsBucketDataStep());
+    addStep(new CreateStorageTransferServiceJobStep());
+    addStep(new CompleteTransferOperationStep());
+    addStep(new DeleteStorageTransferServiceJobStep());
     addStep(new RemoveBucketRolesStep(flightBeanBag.getBucketCloneRolesService()));
   }
 }

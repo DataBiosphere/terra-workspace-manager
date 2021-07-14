@@ -7,6 +7,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
@@ -46,6 +47,14 @@ public class SetBucketRolesStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     final FlightMap workingMap = flightContext.getWorkingMap();
+
+    final CloningInstructions effectiveCloningInstructions =
+        workingMap.get(ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class);
+    // This step is only run for full resource clones
+    if (CloningInstructions.COPY_RESOURCE != effectiveCloningInstructions) {
+      return StepResult.getStepResultSuccess();
+    }
+
     // Gather bucket inputs and store them in the working map for the next
     // step.
     final BucketCloneInputs sourceInputs = getSourceInputs();
