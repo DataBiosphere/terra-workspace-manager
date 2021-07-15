@@ -5,8 +5,10 @@ import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
+import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
+import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
@@ -478,6 +480,16 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
               "Resource %s in workspace %s is not a controlled AI Notebook Instance.",
               resourceId, workspaceId));
     }
+  }
+
+  @Override
+  public ResponseEntity<ApiClonedControlledGcpBigQueryDatasetResult> cloneBigQueryDataset(
+      UUID workspaceId, UUID resourceId, @Valid ApiCloneControlledGcpBigQueryDatasetRequest body) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    // call clone on service
+    // fetch the result
+    // build response entity
+    return null;
   }
 
   /**
