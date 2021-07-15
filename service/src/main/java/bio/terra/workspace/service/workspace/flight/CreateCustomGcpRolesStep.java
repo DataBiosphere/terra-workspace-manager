@@ -21,7 +21,7 @@ import org.springframework.http.HttpStatus;
 
 /**
  * This step creates custom role definitions in our GCP context. It does not grant these roles to
- * any users, though other steps will do that in the future.
+ * any users, though other steps do.
  */
 public class CreateCustomGcpRolesStep implements Step {
 
@@ -39,7 +39,7 @@ public class CreateCustomGcpRolesStep implements Step {
     String projectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
     // First, create the project-level custom roles.
     // Multiple WSM roles may share the same GCP role. De-duping here prevents duplicate requests,
-    // which would lead to unnecessary CONFLICT responses from the cloud.
+    // which would lead to unnecessary CONFLICT responses from GCP.
     ImmutableSet<CustomGcpIamRole> customProjectRoles =
         CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES.values().stream()
             .collect(ImmutableSet.toImmutableSet());
@@ -55,8 +55,7 @@ public class CreateCustomGcpRolesStep implements Step {
   }
 
   /**
-   * Utility for translating WSM's CustomGcpIamRole object to GCP's equivalent and making a request
-   * to the cloud.
+   * Utility for creating custom roles in GCP from  WSM's CustomGcpIamRole objects.
    */
   private void createCustomRole(CustomGcpIamRole customRole, String projectId)
       throws RetryException {

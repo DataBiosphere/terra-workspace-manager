@@ -190,11 +190,12 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   }
 
   /**
-   * Validate that a GCP policy contains expected role bindings for the given role.
+   * Validate that a GCP policy contains the expected role binding for the given role.
    *
-   * @param role An IAM role. Maps to expected GCP roles in CloudSyncRoleMapping.
-   * @param groupEmail The group we expect roles to be bound to.
-   * @param gcpPolicy The GCP policy we're checking for role bindings.
+   * @param role An IAM role. Maps to an expected GCP role in CloudSyncRoleMapping.
+   * @param groupEmail The group we expect the role to be bound to.
+   * @param gcpPolicy The GCP policy we're checking for the role binding.
+   * @param projectId The GCP project our custom roles are defined in.
    */
   private void assertRoleBindingInPolicy(
       WsmIamRole role, String groupEmail, Policy gcpPolicy, String projectId) {
