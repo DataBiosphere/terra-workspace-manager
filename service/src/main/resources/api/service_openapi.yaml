@@ -327,6 +327,32 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/referenced/{resourceId}/clone:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a referenced resource
+      operationId: cloneReferencedResource
+      tags: [ReferencedGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneReferencedResourceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneReferencedResourceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
@@ -1202,6 +1228,25 @@ components:
         $ref: '#/components/schemas/CloudPlatform'
 
   schemas:
+    CloneReferencedResourceRequestBody:
+      description: >-
+        Cloning options for referenced resources. If optional parameters are omitted,
+        the source values will be used.
+      type: object
+      required: [destinationWorkspaceId]
+      properties:
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        destinationWorkspaceId:
+          type: string
+          format: uuid
+        # Null for original name
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          description: Description for the referenced resource clone, or null to use original.
+          type: string
+
     ### DEPRECATED SCHEMAS ###
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     CreateDataReferenceRequestBody:
@@ -1965,7 +2010,26 @@ components:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
-
+    CloneReferencedResourceResult:
+      description: >-
+        API result class for cloning a referenced resource. Includes source workspace
+        and resource IDs for provenance, and uses the union-typed ResourceDescription object
+        for the cloned referenced resource details. If the effective cloning instructions are not
+        COPY_REFERENCE, then no clone is created and the resource is null.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        resource:
+          $ref: '#/components/schemas/ResourceDescription'
     GcpBigQueryDatasetCreationParameters:
       description: >-
         Dataset-specific properties to be set on creation. These are a subset of the
@@ -2424,6 +2488,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneControlledGcpGcsBucketResult'
+
+    CloneReferencedResourceResponse:
+      description: Response to referenced resource clone operation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneReferencedResourceResult'
 
     DeleteControlledGcpGcsBucketResponse:
       description: Response Payload for deleting a Gcs bucket

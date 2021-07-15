@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.referenced;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.DbRetryUtils;
 import bio.terra.workspace.db.ResourceDao;
@@ -13,6 +14,7 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -139,5 +141,104 @@ public class ReferencedResourceService {
         DbRetryUtils.throwIfInterrupted(
             () -> resourceDao.getResource(workspaceId, resourceId).castToReferencedResource());
     return referencedResource.checkAccess(beanBag, userReq);
+  }
+
+  public ReferencedResource cloneReferencedResource(
+      ReferencedResource sourceReferencedResource,
+      UUID destinationWorkspaceId,
+      @Nullable String name,
+      @Nullable String description,
+      AuthenticatedUserRequest userReq) {
+    final ReferencedResource destinationResource;
+    switch (sourceReferencedResource.getResourceType()) {
+      case GCS_BUCKET:
+        destinationResource =
+            buildDestinationGcsBucketReference(
+                sourceReferencedResource.castToGcsBucketResource(),
+                destinationWorkspaceId,
+                name,
+                description);
+        break;
+      case DATA_REPO_SNAPSHOT:
+        destinationResource =
+            buildDestinationDataRepoSnapshotReference(
+                sourceReferencedResource.castToDataRepoSnapshotResource(),
+                destinationWorkspaceId,
+                name,
+                description);
+        break;
+      case BIG_QUERY_DATASET:
+        destinationResource =
+            buildDestinationBigQueryDatasetReference(
+                sourceReferencedResource.castToBigQueryDatasetResource(),
+                destinationWorkspaceId,
+                name,
+                description);
+        break;
+      case AI_NOTEBOOK_INSTANCE:
+      default:
+        throw new BadRequestException(
+            String.format(
+                "Resource type %s not supported",
+                sourceReferencedResource.getResourceType().toString()));
+    }
+    return createReferenceResource(destinationResource, userReq);
+  }
+
+  /**
+   * Create a clone of a reference, which is identical in all fields except workspace ID, resource
+   * ID, and (possibly) name and description. This method reuses the createReferenceResource()
+   * method on the ReferenceResourceService.
+   *
+   * @param userReq - authenticated user request object
+   * @param sourceBucketResource - original resource to be cloned
+   * @param destinationWorkspaceId - workspace ID for new reference
+   * @param name - resource name for cloned reference. Will use original name if this is null.
+   * @param description - resource description for cloned reference. Uses original if left null.
+   * @return
+   */
+  private ReferencedResource buildDestinationGcsBucketReference(
+      ReferencedGcsBucketResource sourceBucketResource,
+      UUID destinationWorkspaceId,
+      @Nullable String name,
+      @Nullable String description) {
+
+    final ReferencedGcsBucketResource.Builder resultBuilder =
+        sourceBucketResource.toBuilder()
+            .workspaceId(destinationWorkspaceId)
+            .resourceId(UUID.randomUUID());
+    // apply optional override variables
+    Optional.ofNullable(name).ifPresent(resultBuilder::name);
+    Optional.ofNullable(description).ifPresent(resultBuilder::description);
+    return resultBuilder.build();
+  }
+
+  private ReferencedResource buildDestinationBigQueryDatasetReference(
+      ReferencedBigQueryDatasetResource sourceBigQueryResource,
+      UUID destinationWorkspaceId,
+      @Nullable String name,
+      @Nullable String description) {
+    // keep projectId and dataset name the same since they are for the referent
+    final ReferencedBigQueryDatasetResource.Builder resultBuilder =
+        sourceBigQueryResource.toBuilder()
+            .workspaceId(destinationWorkspaceId)
+            .resourceId(UUID.randomUUID());
+    Optional.ofNullable(name).ifPresent(resultBuilder::name);
+    Optional.ofNullable(description).ifPresent(resultBuilder::description);
+    return resultBuilder.build();
+  }
+
+  private ReferencedResource buildDestinationDataRepoSnapshotReference(
+      ReferencedDataRepoSnapshotResource sourceReferencedDataRepoSnapshotResource,
+      UUID destinationWorkspaceId,
+      @Nullable String name,
+      @Nullable String description) {
+    final ReferencedDataRepoSnapshotResource.Builder resultBuilder =
+        sourceReferencedDataRepoSnapshotResource.toBuilder()
+            .workspaceId(destinationWorkspaceId)
+            .resourceId(UUID.randomUUID());
+    Optional.ofNullable(name).ifPresent(resultBuilder::name);
+    Optional.ofNullable(description).ifPresent(resultBuilder::description);
+    return resultBuilder.build();
   }
 }
