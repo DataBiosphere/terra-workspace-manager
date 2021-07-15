@@ -34,7 +34,7 @@ public class CompleteTransferOperationStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
 
-    // If cloning instructions don't say copy resource, bail FIXME
+    // If cloning instructions don't say copy resource, bail
     final CloningInstructions effectiveCloningInstructions =
         flightContext
             .getWorkingMap()
@@ -87,7 +87,7 @@ public class CompleteTransferOperationStep implements Step {
   // Nothing to undo, as this step has no side effects
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    return null;
+    return StepResult.getStepResultSuccess();
   }
   /**
    * Poll for completion of the named transfer operation and return the result.

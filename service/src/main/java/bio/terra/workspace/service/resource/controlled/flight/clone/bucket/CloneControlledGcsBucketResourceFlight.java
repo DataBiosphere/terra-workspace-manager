@@ -26,8 +26,9 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
     // 1. Gather controlled resource metadata for source object
     // 2. Gather creation parameters from existing object
     // 3. Launch sub-flight to create appropriate resource
+    // Steps 4-8 are for resource clone only
     // 4. Set bucket roles for cloning service account
-    // 5. (for resource clone) Create Storage Transfer Service transfer job
+    // 5. Create Storage Transfer Service transfer job
     // 6. Listen for running operation in transfer job
     // 7. Delete the storage transfer job
     // 8. Clear bucket roles
