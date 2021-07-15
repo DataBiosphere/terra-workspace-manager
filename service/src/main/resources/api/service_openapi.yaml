@@ -637,6 +637,31 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets/{resourceId}/clone:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a BigQuery Dataset
+      operationId: cloneGcpBigQueryDatasetReference
+      tags: [ReferencedGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneReferencedResourceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneReferencedGcpBigQueryDatasetResourceResponse'
+        '202':
+          $ref: '#/components/responses/CloneReferencedGcpBigQueryDatasetResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets/name/{name}:
     parameters:
@@ -2053,6 +2078,25 @@ components:
           format: uuid
         resource:
           $ref: '#/components/schemas/GcpGcsBucketResource'
+    CloneReferencedGcpBigQueryDatasetResourceResult:
+      description: >-
+        API result class for cloning a referenced BigQuery dataset resource. Includes source workspace
+        and resource IDs for provenance. If the effective cloning instructions are not
+        COPY_REFERENCE, then no clone is created and the resource is null.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        resource:
+          $ref: '#/components/schemas/GcpBigQueryDatasetResource'
     CloneReferencedResourceResult:
       description: >-
         API result class for cloning a referenced resource. Includes source workspace
@@ -2605,6 +2649,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneReferencedGcpGcsBucketResourceResult'
+    CloneReferencedGcpBigQueryDatasetResourceResponse:
+      description: Response for successful BigQuery dataset reference clone
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneReferencedGcpBigQueryDatasetResourceResult'
     JobReportResponse:
       description: A response containing a JobReport object. Returned for running jobs.
       headers:

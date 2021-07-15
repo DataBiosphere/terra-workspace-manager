@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.generated.controller.ReferencedGcpResourceApi;
+import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDatasetResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsBucketResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCloneReferencedResourceResult;
@@ -325,6 +326,49 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     final var result =
         new ApiCloneReferencedGcpGcsBucketResourceResult()
             .resource(clonedReferencedResource.castToGcsBucketResource().toApiModel())
+            .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+            .sourceResourceId(sourceReferencedResource.getResourceId())
+            .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCloneReferencedGcpBigQueryDatasetResourceResult>
+      cloneGcpBigQueryDatasetReference(
+          UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+
+    final ReferencedResource sourceReferencedResource =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, userReq);
+
+    final CloningInstructions effectiveCloningInstructions =
+        Optional.ofNullable(body.getCloningInstructions())
+            .map(CloningInstructions::fromApiModel)
+            .orElse(sourceReferencedResource.getCloningInstructions());
+    if (CloningInstructions.COPY_REFERENCE != effectiveCloningInstructions) {
+      // Nothing to clone here
+      final var emptyResult =
+          new ApiCloneReferencedGcpBigQueryDatasetResourceResult()
+              .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
+              .sourceResourceId(sourceReferencedResource.getResourceId())
+              .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+              .resource(null);
+      return new ResponseEntity<>(emptyResult, HttpStatus.OK);
+    }
+
+    // Clone the reference
+    final ReferencedResource clonedReferencedResource =
+        referenceResourceService.cloneReferencedResource(
+            sourceReferencedResource,
+            body.getDestinationWorkspaceId(),
+            body.getName(),
+            body.getDescription(),
+            userReq);
+
+    // Build the correct response type
+    final var result =
+        new ApiCloneReferencedGcpBigQueryDatasetResourceResult()
+            .resource(clonedReferencedResource.castToBigQueryDatasetResource().toApiResource())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());

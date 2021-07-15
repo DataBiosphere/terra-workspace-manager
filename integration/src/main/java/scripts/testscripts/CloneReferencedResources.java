@@ -119,8 +119,8 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         sourceBigQueryDatasetReference.getMetadata().getResourceId(),
         destinationWorkspaceId);
 
-    final CloneReferencedResourceResult cloneDatasetReferenceResult =
-        referencedGcpResourceApi.cloneReferencedResource(cloneBigQueryDatasetRequestBody,
+    final var cloneDatasetReferenceResult =
+        referencedGcpResourceApi.cloneGcpBigQueryDatasetReference(cloneBigQueryDatasetRequestBody,
         getWorkspaceId(),
         sourceBigQueryDatasetReference.getMetadata().getResourceId());
     assertEquals(getWorkspaceId(), cloneDatasetReferenceResult.getSourceWorkspaceId());
@@ -131,7 +131,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
     assertEquals(CLONED_DATASET_RESOURCE_NAME, clonedDatasetResourceMetadata.getName());
     assertEquals(CLONED_DATASET_DESCRIPTION, clonedDatasetResourceMetadata.getDescription());
     assertEquals(sourceBigQueryDatasetReference.getAttributes().getProjectId(),
-        cloneDatasetReferenceResult.getResource().getResourceAttributes().getGcpBqDataset().getProjectId());
+        cloneDatasetReferenceResult.getResource().getAttributes().getProjectId());
 
     final var cloneDataRepoSnapshotReferenceRequestBody = new CloneReferencedResourceRequestBody()
         .cloningInstructions(CloningInstructionsEnum.REFERENCE)
