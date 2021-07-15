@@ -190,7 +190,6 @@ public class ReferencedResourceService {
    * ID, and (possibly) name and description. This method reuses the createReferenceResource()
    * method on the ReferenceResourceService.
    *
-   * @param userReq - authenticated user request object
    * @param sourceBucketResource - original resource to be cloned
    * @param destinationWorkspaceId - workspace ID for new reference
    * @param name - resource name for cloned reference. Will use original name if this is null.

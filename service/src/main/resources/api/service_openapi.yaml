@@ -520,7 +520,31 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/buckets/{resourceId}/clone:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a referenced GCS Bucket resource
+      operationId: cloneGcpGcsBucketReference
+      tags: [ReferencedGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneReferencedResourceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneReferencedGcpGcsBucketResourceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/buckets/name/{name}:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
@@ -2010,6 +2034,25 @@ components:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
+    CloneReferencedGcpGcsBucketResourceResult:
+      description: >-
+        API result class for cloning a referenced GCS Bucket resource. Includes source workspace
+        and resource IDs for provenance. If the effective cloning instructions are not
+        COPY_REFERENCE, then no clone is created and the resource is null.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        resource:
+          $ref: '#/components/schemas/GcpGcsBucketResource'
     CloneReferencedResourceResult:
       description: >-
         API result class for cloning a referenced resource. Includes source workspace
@@ -2556,7 +2599,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreateCloudContextResult'
-
+    CloneReferencedGcpGcsBucketResourceResponse:
+      description: Response for successful GCS Bucket reference clone
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneReferencedGcpGcsBucketResourceResult'
     JobReportResponse:
       description: A response containing a JobReport object. Returned for running jobs.
       headers:

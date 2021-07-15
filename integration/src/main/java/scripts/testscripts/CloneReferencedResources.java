@@ -9,6 +9,7 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
+import bio.terra.workspace.model.CloneReferencedGcpGcsBucketResourceResult;
 import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
 import bio.terra.workspace.model.CloneReferencedResourceResult;
 import bio.terra.workspace.model.CloningInstructionsEnum;
@@ -95,7 +96,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         sourceBucketReference.getMetadata().getWorkspaceId(),
         sourceBucketReference.getMetadata().getResourceId(),
         destinationWorkspaceId);
-    final CloneReferencedResourceResult cloneBucketReferenceResult = referencedGcpResourceApi.cloneReferencedResource(cloneBucketReferenceRequestBody,
+    final CloneReferencedGcpGcsBucketResourceResult cloneBucketReferenceResult = referencedGcpResourceApi.cloneGcpGcsBucketReference(cloneBucketReferenceRequestBody,
         getWorkspaceId(),
         sourceBucketReference.getMetadata().getResourceId());
     assertEquals(getWorkspaceId(), cloneBucketReferenceResult.getSourceWorkspaceId());
@@ -105,7 +106,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
     assertEquals(sourceBucketReference.getMetadata().getDescription(), cloneBucketReferenceResult.getResource().getMetadata().getDescription());
     assertEquals(CLONED_BUCKET_RESOURCE_NAME, cloneBucketReferenceResult.getResource().getMetadata().getName());
     assertEquals(TEST_BUCKET_NAME,
-        cloneBucketReferenceResult.getResource().getResourceAttributes().getGcpGcsBucket().getBucketName());
+        cloneBucketReferenceResult.getResource().getAttributes().getBucketName());
 
     final var cloneBigQueryDatasetRequestBody = new CloneReferencedResourceRequestBody()
         .cloningInstructions(CloningInstructionsEnum.REFERENCE)

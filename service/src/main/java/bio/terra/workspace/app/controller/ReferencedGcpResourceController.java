@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.generated.controller.ReferencedGcpResourceApi;
+import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsBucketResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCloneReferencedResourceResult;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
@@ -246,6 +247,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
+  // TODO: remove once all the per-resource-type clone methods are in
   @Override
   public ResponseEntity<ApiCloneReferencedResourceResult> cloneReferencedResource(
       UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
@@ -258,11 +260,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .orElse(sourceReferencedResource.getCloningInstructions());
     if (CloningInstructions.COPY_REFERENCE != effectiveCloningInstructions) {
       // Nothing to clone here
-      final var emptyResult = new ApiCloneReferencedResourceResult()
-          .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
-          .sourceResourceId(sourceReferencedResource.getResourceId())
-          .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
-          .resource(null);
+      final var emptyResult =
+          new ApiCloneReferencedResourceResult()
+              .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
+              .sourceResourceId(sourceReferencedResource.getResourceId())
+              .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+              .resource(null);
       return new ResponseEntity<>(emptyResult, HttpStatus.OK);
     }
     final ReferencedResource clonedReferencedResource =
@@ -280,6 +283,48 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     final ApiCloneReferencedResourceResult result =
         new ApiCloneReferencedResourceResult()
             .resource(resourceDescription)
+            .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+            .sourceResourceId(sourceReferencedResource.getResourceId())
+            .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCloneReferencedGcpGcsBucketResourceResult> cloneGcpGcsBucketReference(
+      UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
+    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+
+    final ReferencedResource sourceReferencedResource =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, userReq);
+
+    final CloningInstructions effectiveCloningInstructions =
+        Optional.ofNullable(body.getCloningInstructions())
+            .map(CloningInstructions::fromApiModel)
+            .orElse(sourceReferencedResource.getCloningInstructions());
+    if (CloningInstructions.COPY_REFERENCE != effectiveCloningInstructions) {
+      // Nothing to clone here
+      final var emptyResult =
+          new ApiCloneReferencedGcpGcsBucketResourceResult()
+              .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
+              .sourceResourceId(sourceReferencedResource.getResourceId())
+              .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+              .resource(null);
+      return new ResponseEntity<>(emptyResult, HttpStatus.OK);
+    }
+
+    // Clone the reference
+    final ReferencedResource clonedReferencedResource =
+        referenceResourceService.cloneReferencedResource(
+            sourceReferencedResource,
+            body.getDestinationWorkspaceId(),
+            body.getName(),
+            body.getDescription(),
+            userReq);
+
+    // Build the correct response type
+    final var result =
+        new ApiCloneReferencedGcpGcsBucketResourceResult()
+            .resource(clonedReferencedResource.castToGcsBucketResource().toApiModel())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
