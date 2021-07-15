@@ -148,7 +148,8 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
    * CustomGcpIamRoleMapping}
    */
   private void assertRolesExist(Project project) throws IOException {
-    for (CustomGcpIamRole customRole : CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES.values()) {
+    for (CustomGcpIamRole customRole :
+        CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES.values()) {
       String fullRoleName =
           "projects/" + project.getProjectId() + "/roles/" + customRole.getRoleName();
       Role gcpRole = crl.getIamCow().projects().roles().get(fullRoleName).execute();
@@ -183,29 +184,32 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
             .getIamPolicy(project.getProjectId(), new GetIamPolicyRequest())
             .execute();
     for (WsmIamRole role : WsmIamRole.values()) {
-      assertRoleBindingsInPolicy(role, roleToSamGroup.get(role), currentPolicy);
+      assertRoleBindingInPolicy(
+          role, roleToSamGroup.get(role), currentPolicy, project.getProjectId());
     }
   }
 
   /**
-   * Validate that a GCP policy contains expected role bindings.
+   * Validate that a GCP policy contains expected role bindings for the given role.
    *
    * @param role An IAM role. Maps to expected GCP roles in CloudSyncRoleMapping.
    * @param groupEmail The group we expect roles to be bound to.
    * @param gcpPolicy The GCP policy we're checking for role bindings.
    */
-  private void assertRoleBindingsInPolicy(WsmIamRole role, String groupEmail, Policy gcpPolicy) {
-    List<String> expectedGcpRoleList = CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(role);
+  private void assertRoleBindingInPolicy(
+      WsmIamRole role, String groupEmail, Policy gcpPolicy, String projectId) {
+    String expectedGcpRoleName =
+        CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
+            .get(role)
+            .getFullyQualifiedRoleName(projectId);
     List<Binding> actualGcpBindingList = gcpPolicy.getBindings();
     List<String> actualGcpRoleList =
         actualGcpBindingList.stream().map(Binding::getRole).collect(Collectors.toList());
-    for (String gcpRole : expectedGcpRoleList) {
-      assertTrue(actualGcpRoleList.contains(gcpRole));
-      assertTrue(
-          actualGcpBindingList
-              .get(actualGcpRoleList.indexOf(gcpRole))
-              .getMembers()
-              .contains(groupEmail));
-    }
+    assertTrue(actualGcpRoleList.contains(expectedGcpRoleName));
+    assertTrue(
+        actualGcpBindingList
+            .get(actualGcpRoleList.indexOf(expectedGcpRoleName))
+            .getMembers()
+            .contains(groupEmail));
   }
 }

@@ -111,7 +111,7 @@ public class CustomGcpIamRoleMapping {
   // The ASSIGNER role does not grant GCP permissions, only Sam permissions. It's included in
   // this map for completeness.
   public static final Table<WsmResourceType, ControlledResourceIamRole, CustomGcpIamRole>
-      CUSTOM_GCP_IAM_ROLES =
+      CUSTOM_GCP_RESOURCE_IAM_ROLES =
           new ImmutableTable.Builder<WsmResourceType, ControlledResourceIamRole, CustomGcpIamRole>()
               // GCS bucket
               .put(
