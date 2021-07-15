@@ -3,7 +3,11 @@ package scripts.testscripts;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_CONTENT;
+import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_NAME;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1_CONDITION_AGE;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULE_1_CONDITION_LIVE;
@@ -23,12 +27,17 @@ import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GrantRoleRequestBody;
+import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport.StatusEnum;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
 import com.google.api.client.util.DateTime;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.DeleteLifecycleAction;
@@ -47,49 +56,76 @@ import scripts.utils.WorkspaceAllocateTestScriptBase;
 public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(CloneGcsBucket.class);
 
-  private ControlledGcpResourceApi resourceApi;
+  private ControlledGcpResourceApi cloningUserResourceApi;
   private CreatedControlledGcpGcsBucket sourceBucket;
   private String destinationProjectId;
   private String nameSuffix;
   private String sourceBucketName;
   private String sourceProjectId;
   private String sourceResourceName;
+  private TestUserSpecification cloningUser;
   private UUID destinationWorkspaceId;
 
+  /**
+   *
+   * @param testUsers - test user configurations
+   * @param sourceOwnerWorkspaceApi - API with workspace methods for first listed user (sourceOwnerUser)
+   * @throws Exception
+   */
   @Override
-  protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
+  protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi sourceOwnerWorkspaceApi)
       throws Exception {
-    super.doSetup(testUsers, workspaceApi);
-    // Create the source cloud context
-    sourceProjectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    super.doSetup(testUsers, sourceOwnerWorkspaceApi);
+    assertThat(testUsers, hasSize(2));
+    // user creating the source resource
+    final TestUserSpecification sourceOwnerUser = testUsers.get(0);
+    // user cloning the bucket resource
+    cloningUser = testUsers.get(1);
+
+    sourceProjectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), sourceOwnerWorkspaceApi);
     logger.info("Created source project {} in workspace {}", sourceProjectId, getWorkspaceId());
 
     // Create a source bucket
     // Create the source cloud context
-    resourceApi = ClientTestUtils.getControlledGcpResourceClient(testUsers.get(0), server);
+    final ControlledGcpResourceApi sourceOwnerResourceApi = ClientTestUtils
+        .getControlledGcpResourceClient(sourceOwnerUser, server);
+    cloningUserResourceApi = ClientTestUtils.getControlledGcpResourceClient(cloningUser, server);
 
     // create source bucket
     nameSuffix = UUID.randomUUID().toString();
     sourceResourceName = RESOURCE_PREFIX + nameSuffix;
-    sourceBucket = makeControlledGcsBucketUserShared(resourceApi, getWorkspaceId(), sourceResourceName);
+    sourceBucket = makeControlledGcsBucketUserShared(sourceOwnerResourceApi, getWorkspaceId(), sourceResourceName);
     sourceBucketName = sourceBucket.getGcpBucket().getAttributes().getBucketName();
+
+    // Make the cloning user a reader on the existing workspace
+    sourceOwnerWorkspaceApi.grantRole(
+        new GrantRoleRequestBody().memberEmail(cloningUser.userEmail), getWorkspaceId(), IamRole.READER);
+
+    // populate source bucket
+    final Storage sourceOwnerStorageClient = ClientTestUtils.getGcpStorageClient(sourceOwnerUser, sourceProjectId);
+    final BlobId blobId = BlobId.of(sourceBucketName, GCS_BLOB_NAME);
+    final BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
+    final Blob createdFile = sourceOwnerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
+    logger.info("Wrote blob {} to bucket", createdFile.getBlobId());
+
     // create destination workspace
+    final WorkspaceApi cloningUserWorkspaceApi = ClientTestUtils.getWorkspaceClient(cloningUser, server);
     destinationWorkspaceId = UUID.randomUUID();
     final var requestBody =
         new CreateWorkspaceRequestBody()
             .id(destinationWorkspaceId)
             .spendProfile(getSpendProfileId())
             .stage(getStageModel());
-    final CreatedWorkspace workspace = workspaceApi.createWorkspace(requestBody);
-    assertThat(workspace.getId(), equalTo(destinationWorkspaceId));
+    final CreatedWorkspace createdDestinationWorkspace = cloningUserWorkspaceApi.createWorkspace(requestBody);
+    assertThat(createdDestinationWorkspace.getId(), equalTo(destinationWorkspaceId));
 
     // create destination cloud context
-    destinationProjectId = CloudContextMaker.createGcpCloudContext(destinationWorkspaceId, workspaceApi);
+    destinationProjectId = CloudContextMaker.createGcpCloudContext(destinationWorkspaceId, cloningUserWorkspaceApi);
     logger.info("Created destination project {} in workspace {}", destinationProjectId, destinationWorkspaceId);
   }
 
   @Override
-  protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
+  protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi unused)
       throws Exception {
     final String destinationBucketName = "clone-" + nameSuffix;
     // clone the bucket
@@ -100,23 +136,26 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
         .name(sourceResourceName)
         .description(clonedBucketDescription)
         .location(null) // use same as src
-        .cloningInstructions(CloningInstructionsEnum.DEFINITION)
+        .cloningInstructions(CloningInstructionsEnum.RESOURCE)
         .jobControl(new JobControl().id(UUID.randomUUID().toString()));
 
-    logger.info("Cloning bucket name: {} resource ID: {} workspace: {} into bucket name: {} workspace: {}",
+    logger.info("Cloning bucket\n\tname: {}\n\tresource ID: {}\n\tworkspace: {}\n\t"
+            + "projectID: {}\ninto destination bucket\n\tname: {}\n\tworkspace: {}\n\tprojectID: {}",
         sourceBucket.getGcpBucket().getMetadata().getName(),
         sourceBucket.getResourceId(),
         sourceBucket.getGcpBucket().getMetadata().getWorkspaceId(),
+        sourceProjectId,
         destinationBucketName,
-        destinationWorkspaceId);
-    CloneControlledGcpGcsBucketResult cloneResult = resourceApi.cloneGcsBucket(
+        destinationWorkspaceId,
+        destinationProjectId);
+    CloneControlledGcpGcsBucketResult cloneResult = cloningUserResourceApi.cloneGcsBucket(
         cloneRequest,
         sourceBucket.getGcpBucket().getMetadata().getWorkspaceId(),
         sourceBucket.getResourceId());
 
     cloneResult = ClientTestUtils.pollWhileRunning(
         cloneResult,
-        () -> resourceApi.getCloneGcsBucketResult(
+        () -> cloningUserResourceApi.getCloneGcsBucketResult(
             cloneRequest.getDestinationWorkspaceId(),
             cloneRequest.getJobControl().getId()),
         CloneControlledGcpGcsBucketResult::getJobReport,
@@ -162,7 +201,7 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
         clonedResourceMetadata.getCloudPlatform());
     final Storage sourceProjectStorageClient = ClientTestUtils.getGcpStorageClient(testUser, sourceProjectId);
     final Bucket sourceGcsBucket = sourceProjectStorageClient.get(sourceBucketName);
-    final Storage destinationProjectStorageClient = ClientTestUtils.getGcpStorageClient(testUser, destinationProjectId);
+    final Storage destinationProjectStorageClient = ClientTestUtils.getGcpStorageClient(cloningUser, destinationProjectId);
     final Bucket destinationGcsBucket = destinationProjectStorageClient.get(destinationBucketName);
     assertEquals(sourceGcsBucket.getStorageClass(), destinationGcsBucket.getStorageClass());
     assertEquals(sourceGcsBucket.getLocation(), destinationGcsBucket.getLocation()); // default since not specified
@@ -185,6 +224,15 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     assertEquals(StorageClass.NEARLINE, setStorageClassLifecycleAction.getStorageClass());
     assertEquals(DateTime.parseRfc3339("2007-01-03"), setStorageClassRule.getCondition().getCreatedBefore());
     assertThat(setStorageClassRule.getCondition().getMatchesStorageClass(), contains(StorageClass.STANDARD));
-    assertEquals(CloningInstructionsEnum.DEFINITION, clonedBucket.getEffectiveCloningInstructions());
+    assertEquals(CloningInstructionsEnum.RESOURCE, clonedBucket.getEffectiveCloningInstructions());
+
+    // test retrieving file from destination bucket
+    Storage cloningUserStorageClient = ClientTestUtils.getGcpStorageClient(cloningUser, destinationProjectId);
+    BlobId blobId = BlobId.of(destinationBucketName, GCS_BLOB_NAME);
+    assertNotNull(blobId);
+
+    final Blob retrievedFile = cloningUserStorageClient.get(blobId);
+    assertNotNull(retrievedFile);
+    assertEquals(blobId.getName(), retrievedFile.getBlobId().getName());
   }
 }

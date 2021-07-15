@@ -1,7 +1,7 @@
 {
   "name": "CloneGcsBucket",
   "description": "Clone test",
-  "serverSpecificationFile": "workspace-dev.json",
+  "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
@@ -14,5 +14,5 @@
       "parameters": ["wm-default-spend-profile"]
     }
   ],
-  "testUserFiles": ["bella.json"]
+  "testUserFiles": ["bella.json", "elijah.json"]
 }

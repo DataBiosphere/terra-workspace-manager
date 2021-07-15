@@ -48,6 +48,8 @@ public class CopyGcsBucketDefinitionStep implements Step {
                 inputParameters.get(
                     ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
             .orElse(sourceBucket.getCloningInstructions());
+    // future steps need the resolved cloning instructions
+    workingMap.put(ControlledResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions);
     if (CloningInstructions.COPY_NOTHING.equals(cloningInstructions)) {
       final ApiClonedControlledGcpGcsBucket noOpResult =
           new ApiClonedControlledGcpGcsBucket()
@@ -74,6 +76,8 @@ public class CopyGcsBucketDefinitionStep implements Step {
         Optional.ofNullable(
                 inputParameters.get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class))
             .orElseGet(this::randomBucketName);
+    // Store effective bucket name for destination
+    workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
     final UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
@@ -99,7 +103,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
     final ControlledGcsBucketResource clonedBucket =
         controlledResourceService.createBucket(
             destinationBucketResource, destinationCreationParameters, iamRoles, userRequest);
-
+    workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedBucket);
     // TODO: create new type & use it here
     final ApiCreatedControlledGcpGcsBucket apiCreatedBucket =
         new ApiCreatedControlledGcpGcsBucket()
@@ -112,7 +116,26 @@ public class CopyGcsBucketDefinitionStep implements Step {
             .bucket(apiCreatedBucket)
             .sourceWorkspaceId(sourceBucket.getWorkspaceId())
             .sourceResourceId(sourceBucket.getResourceId());
-    FlightUtils.setResponse(flightContext, apiBucketResult, HttpStatus.OK);
+    workingMap.put(ControlledResourceKeys.CLONE_DEFINITION_RESULT, apiBucketResult);
+    if (cloningInstructions.equals(CloningInstructions.COPY_DEFINITION)) {
+      FlightUtils.setResponse(flightContext, apiBucketResult, HttpStatus.OK);
+    }
+    return StepResult.getStepResultSuccess();
+  }
+
+  // Delete the bucket and its row in the resource table
+  @Override
+  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    final ControlledGcsBucketResource clonedBucket =
+        flightContext
+            .getWorkingMap()
+            .get(
+                ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
+                ControlledGcsBucketResource.class);
+    if (clonedBucket != null) {
+      controlledResourceService.deleteControlledResourceSync(
+          clonedBucket.getWorkspaceId(), clonedBucket.getResourceId(), userRequest);
+    }
     return StepResult.getStepResultSuccess();
   }
 
@@ -151,19 +174,6 @@ public class CopyGcsBucketDefinitionStep implements Step {
     } else {
       return sourceCreationParameters;
     }
-  }
-
-  @Override
-  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    final ControlledGcsBucketResource clonedBucket =
-        flightContext
-            .getWorkingMap()
-            .get(
-                ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
-                ControlledGcsBucketResource.class);
-    controlledResourceService.deleteControlledResourceSync(
-        clonedBucket.getWorkspaceId(), clonedBucket.getResourceId(), userRequest);
-    return StepResult.getStepResultSuccess();
   }
 
   private String randomBucketName() {
