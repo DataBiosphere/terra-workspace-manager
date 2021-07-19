@@ -198,7 +198,7 @@ public class ControlledResourceService {
       AuthenticatedUserRequest userRequest,
       @Nullable String destinationResourceName,
       @Nullable String destinationDescription,
-      @Nullable String destinationBucketName,
+      @Nullable String destinationDatasetName,
       @Nullable String destinationLocation,
       @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
     stageService.assertMcWorkspace(destinationWorkspaceId, "cloneGcpBigQueryDataset");
@@ -231,6 +231,7 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.RESOURCE_NAME, destinationResourceName)
             .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
+            .addParameter(ControlledResourceKeys.DESTINATION_DATASET_NAME, destinationDatasetName)
             .addParameter(
                 ControlledResourceKeys.CLONING_INSTRUCTIONS,
                 Optional.ofNullable(cloningInstructionsOverride)
