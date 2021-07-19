@@ -9,9 +9,9 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
+import bio.terra.workspace.model.CloneReferencedGcpDataRepoSnapshotResourceResult;
 import bio.terra.workspace.model.CloneReferencedGcpGcsBucketResourceResult;
 import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
-import bio.terra.workspace.model.CloneReferencedResourceResult;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
@@ -141,8 +141,8 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         sourceDataRepoSnapshotReference.getMetadata().getResourceId(),
         destinationWorkspaceId);
 
-    final CloneReferencedResourceResult cloneDataRepoSnapshotResult =
-        referencedGcpResourceApi.cloneReferencedResource(cloneDataRepoSnapshotReferenceRequestBody,
+    final CloneReferencedGcpDataRepoSnapshotResourceResult cloneDataRepoSnapshotResult =
+        referencedGcpResourceApi.cloneGcpDataRepoSnapshotReference(cloneDataRepoSnapshotReferenceRequestBody,
             sourceDataRepoSnapshotReference.getMetadata().getWorkspaceId(),
             sourceDataRepoSnapshotReference.getMetadata().getResourceId());
     assertEquals(getWorkspaceId(), cloneDataRepoSnapshotResult.getSourceWorkspaceId());
@@ -153,8 +153,8 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
     assertEquals(sourceDataRepoSnapshotReference.getMetadata().getName(), clonedDataRepoSnapshotResourceMetadata.getName());
     assertEquals(sourceDataRepoSnapshotReference.getMetadata().getDescription(), clonedDataRepoSnapshotResourceMetadata.getDescription());
     assertEquals(sourceDataRepoSnapshotReference.getAttributes().getSnapshot(),
-        cloneDataRepoSnapshotResult.getResource().getResourceAttributes().getGcpDataRepoSnapshot().getSnapshot());
+        cloneDataRepoSnapshotResult.getResource().getAttributes().getSnapshot());
     assertEquals(sourceDataRepoSnapshotReference.getAttributes().getInstanceName(),
-        cloneDataRepoSnapshotResult.getResource().getResourceAttributes().getGcpDataRepoSnapshot().getInstanceName());
+        cloneDataRepoSnapshotResult.getResource().getAttributes().getInstanceName());
   }
 }
