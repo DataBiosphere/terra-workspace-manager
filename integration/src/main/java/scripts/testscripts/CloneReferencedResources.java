@@ -76,12 +76,6 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
             .stage(getStageModel());
     final CreatedWorkspace createdDestinationWorkspace = workspaceApi.createWorkspace(requestBody);
     assertThat(createdDestinationWorkspace.getId(), equalTo(destinationWorkspaceId));
-
-    // create destination cloud context
-    String destinationProjectId = CloudContextMaker
-        .createGcpCloudContext(destinationWorkspaceId, workspaceApi);
-    logger.info("Created destination project {} in workspace {}", destinationProjectId, destinationWorkspaceId);
-
   }
 
   @Override
