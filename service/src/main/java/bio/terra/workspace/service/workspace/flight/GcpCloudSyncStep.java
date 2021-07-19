@@ -70,9 +70,8 @@ public class GcpCloudSyncStep implements Step {
       // Add all existing bindings to ensure we don't accidentally clobber existing permissions.
       newBindings.addAll(currentPolicy.getBindings());
       // Add appropriate project-level roles for each WSM IAM role.
-      for (Map.Entry<WsmIamRole, String> entry : workspaceRoleGroupsMap.entrySet()) {
-        newBindings.add(bindingForRole(entry.getKey(), entry.getValue(), gcpProjectId));
-      }
+      workspaceRoleGroupsMap.forEach(
+          (role, email) -> newBindings.add(bindingForRole(role, email, gcpProjectId)));
 
       Policy newPolicy =
           new Policy()

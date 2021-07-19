@@ -20,7 +20,7 @@ public class CloudSyncRoleMapping {
   // Note that custom roles defined at the project level cannot contain the
   // "resourcemanager.projects.list" permission, even though it was previously included here.
   // See https://cloud.google.com/iam/docs/understanding-custom-roles#known_limitations
-  private static final List<String> READER_PERMISSIONS =
+  private static final List<String> PROJECT_READER_PERMISSIONS =
       ImmutableList.of(
           "bigquery.jobs.create",
           "lifesciences.operations.get",
@@ -32,9 +32,9 @@ public class CloudSyncRoleMapping {
           "serviceusage.quotas.get",
           "serviceusage.services.get",
           "serviceusage.services.list");
-  private static final List<String> WRITER_PERMISSIONS =
+  private static final List<String> PROJECT_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
-          .addAll(READER_PERMISSIONS)
+          .addAll(PROJECT_READER_PERMISSIONS)
           .add(
               // TODO(wchambers): Revise service account permissions when there are controlled
               // resources for service accounts. (Also used by NextFlow)
@@ -47,9 +47,9 @@ public class CloudSyncRoleMapping {
           .build();
 
   private static final CustomGcpIamRole PROJECT_READER =
-      new CustomGcpIamRole("PROJECT_READER", READER_PERMISSIONS);
+      CustomGcpIamRole.of("PROJECT_READER", PROJECT_READER_PERMISSIONS);
   private static final CustomGcpIamRole PROJECT_WRITER =
-      new CustomGcpIamRole("PROJECT_WRITER", WRITER_PERMISSIONS);
+      CustomGcpIamRole.of("PROJECT_WRITER", PROJECT_WRITER_PERMISSIONS);
   // Currently, workspace editors, applications and owners have the same cloud permissions as
   // writers. If that changes, create a new CustomGcpIamRole and modify the map below.
   public static final ImmutableMap<WsmIamRole, CustomGcpIamRole> CUSTOM_GCP_PROJECT_IAM_ROLES =

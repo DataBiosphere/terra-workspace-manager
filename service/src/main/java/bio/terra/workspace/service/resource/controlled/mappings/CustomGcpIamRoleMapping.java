@@ -117,28 +117,28 @@ public class CustomGcpIamRoleMapping {
               .put(
                   WsmResourceType.GCS_BUCKET,
                   ControlledResourceIamRole.READER,
-                  new CustomGcpIamRole(
+                  CustomGcpIamRole.ofResource(
                       WsmResourceType.GCS_BUCKET,
                       ControlledResourceIamRole.READER,
                       GCS_BUCKET_READER_PERMISSIONS))
               .put(
                   WsmResourceType.GCS_BUCKET,
                   ControlledResourceIamRole.WRITER,
-                  new CustomGcpIamRole(
+                  CustomGcpIamRole.ofResource(
                       WsmResourceType.GCS_BUCKET,
                       ControlledResourceIamRole.WRITER,
                       GCS_BUCKET_WRITER_PERMISSIONS))
               .put(
                   WsmResourceType.GCS_BUCKET,
                   ControlledResourceIamRole.EDITOR,
-                  new CustomGcpIamRole(
+                  CustomGcpIamRole.ofResource(
                       WsmResourceType.GCS_BUCKET,
                       ControlledResourceIamRole.EDITOR,
                       GCS_BUCKET_EDITOR_PERMISSIONS))
               .put(
                   WsmResourceType.GCS_BUCKET,
                   ControlledResourceIamRole.ASSIGNER,
-                  new CustomGcpIamRole(
+                  CustomGcpIamRole.ofResource(
                       WsmResourceType.GCS_BUCKET,
                       ControlledResourceIamRole.ASSIGNER,
                       Collections.emptyList()))
@@ -146,28 +146,28 @@ public class CustomGcpIamRoleMapping {
               .put(
                   WsmResourceType.BIG_QUERY_DATASET,
                   ControlledResourceIamRole.READER,
-                  new CustomGcpIamRole(
+                  CustomGcpIamRole.ofResource(
                       WsmResourceType.BIG_QUERY_DATASET,
                       ControlledResourceIamRole.READER,
                       BIG_QUERY_DATASET_READER_PERMISSIONS))
               .put(
                   WsmResourceType.BIG_QUERY_DATASET,
                   ControlledResourceIamRole.WRITER,
-                  new CustomGcpIamRole(
+                  CustomGcpIamRole.ofResource(
                       WsmResourceType.BIG_QUERY_DATASET,
                       ControlledResourceIamRole.WRITER,
                       BIG_QUERY_DATASET_WRITER_PERMISSIONS))
               .put(
                   WsmResourceType.BIG_QUERY_DATASET,
                   ControlledResourceIamRole.EDITOR,
-                  new CustomGcpIamRole(
+                  CustomGcpIamRole.ofResource(
                       WsmResourceType.BIG_QUERY_DATASET,
                       ControlledResourceIamRole.EDITOR,
                       BIG_QUERY_DATASET_EDITOR_PERMISSIONS))
               .put(
                   WsmResourceType.BIG_QUERY_DATASET,
                   ControlledResourceIamRole.ASSIGNER,
-                  new CustomGcpIamRole(
+                  CustomGcpIamRole.ofResource(
                       WsmResourceType.BIG_QUERY_DATASET,
                       ControlledResourceIamRole.ASSIGNER,
                       Collections.emptyList()))
@@ -175,28 +175,28 @@ public class CustomGcpIamRoleMapping {
               .put(
                   WsmResourceType.AI_NOTEBOOK_INSTANCE,
                   ControlledResourceIamRole.READER,
-                  new CustomGcpIamRole(
+                  CustomGcpIamRole.ofResource(
                       WsmResourceType.AI_NOTEBOOK_INSTANCE,
                       ControlledResourceIamRole.READER,
                       AI_NOTEBOOK_INSTANCE_READER_PERMISSIONS))
               .put(
                   WsmResourceType.AI_NOTEBOOK_INSTANCE,
                   ControlledResourceIamRole.WRITER,
-                  new CustomGcpIamRole(
+                  CustomGcpIamRole.ofResource(
                       WsmResourceType.AI_NOTEBOOK_INSTANCE,
                       ControlledResourceIamRole.WRITER,
                       AI_NOTEBOOK_INSTANCE_WRITER_PERMISSIONS))
               .put(
                   WsmResourceType.AI_NOTEBOOK_INSTANCE,
                   ControlledResourceIamRole.EDITOR,
-                  new CustomGcpIamRole(
+                  CustomGcpIamRole.ofResource(
                       WsmResourceType.AI_NOTEBOOK_INSTANCE,
                       ControlledResourceIamRole.EDITOR,
                       AI_NOTEBOOK_INSTANCE_EDITOR_PERMISSIONS))
               .put(
                   WsmResourceType.AI_NOTEBOOK_INSTANCE,
                   ControlledResourceIamRole.ASSIGNER,
-                  new CustomGcpIamRole(
+                  CustomGcpIamRole.ofResource(
                       WsmResourceType.AI_NOTEBOOK_INSTANCE,
                       ControlledResourceIamRole.ASSIGNER,
                       Collections.emptyList()))

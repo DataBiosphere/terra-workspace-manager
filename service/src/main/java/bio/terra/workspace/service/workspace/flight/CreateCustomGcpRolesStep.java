@@ -55,7 +55,8 @@ public class CreateCustomGcpRolesStep implements Step {
   }
 
   /**
-   * Utility for creating custom roles in GCP from  WSM's CustomGcpIamRole objects.
+   * Utility for creating custom roles in GCP from WSM's CustomGcpIamRole objects. These roles will
+   * be defined at the project level in the specified by projectId.
    */
   private void createCustomRole(CustomGcpIamRole customRole, String projectId)
       throws RetryException {
@@ -66,7 +67,7 @@ public class CreateCustomGcpRolesStep implements Step {
               .setTitle(customRole.getRoleName());
       CreateRoleRequest request =
           new CreateRoleRequest().setRole(gcpRole).setRoleId(customRole.getRoleName());
-      logger.info(
+      logger.debug(
           "Creating role {} with permissions {} in project {}",
           customRole.getRoleName(),
           customRole.getIncludedPermissions(),
