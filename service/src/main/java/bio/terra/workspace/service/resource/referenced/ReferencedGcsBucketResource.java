@@ -99,17 +99,33 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
     return crlService.canReadGcsBucket(bucketName, userReq);
   }
 
+  /**
+   * Make a copy of this object via a new builder. This is convenient for reusing objects with one
+   * or two fields changed.
+   *
+   * @return builder object ready for new values to replace existing ones
+   */
+  public Builder toBuilder() {
+    return builder()
+        .bucketName(getBucketName())
+        .cloningInstructions(getCloningInstructions())
+        .description(getDescription())
+        .name(getName())
+        .resourceId(getResourceId())
+        .workspaceId(getWorkspaceId());
+  }
+
   public static Builder builder() {
     return new Builder();
   }
 
   public static class Builder {
-    private UUID workspaceId;
-    private UUID resourceId;
-    private String name;
-    private String description;
     private CloningInstructions cloningInstructions;
     private String bucketName;
+    private String description;
+    private String name;
+    private UUID resourceId;
+    private UUID workspaceId;
 
     public Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
