@@ -56,7 +56,7 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
     var creationParameters =
         ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
-    controlledResourceService.createBqDataset(
+    controlledResourceService.createBigQueryDataset(
         dataset, creationParameters, Collections.emptyList(), userReq);
 
     ControlledResource gotResource =
@@ -113,7 +113,7 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
     var creationParameters =
         ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
-    controlledResourceService.createBqDataset(
+    controlledResourceService.createBigQueryDataset(
         dataset, creationParameters, Collections.emptyList(), userReq);
 
     ControlledResource gotResource =

@@ -1785,8 +1785,7 @@ components:
           format: uuid
         gcpBucket:
           $ref: '#/components/schemas/GcpGcsBucketResource'
-
-      CreatedControlledGcpBigQueryDataset:
+    CreatedControlledGcpBigQueryDataset:
       description: Response Payload for requesting a new controlled BigQuery dataset.
       type: object
       properties:

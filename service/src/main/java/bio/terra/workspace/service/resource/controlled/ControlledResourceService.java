@@ -169,12 +169,12 @@ public class ControlledResourceService {
                 ControlledResourceKeys.CLONING_INSTRUCTIONS,
                 Optional.ofNullable(cloningInstructionsOverride)
                     .map(CloningInstructions::fromApiModel)
-                    .orElse(null));
+                    .orElse(sourceBucketResource.getCloningInstructions()));
     return jobBuilder.submit();
   }
 
   /** Starts a create controlled BigQuery dataset resource, blocking until its job is finished. */
-  public ControlledBigQueryDatasetResource createBqDataset(
+  public ControlledBigQueryDatasetResource createBigQueryDataset(
       ControlledBigQueryDatasetResource resource,
       ApiGcpBigQueryDatasetCreationParameters creationParameters,
       List<ControlledResourceIamRole> privateResourceIamRoles,
@@ -236,9 +236,10 @@ public class ControlledResourceService {
                 ControlledResourceKeys.CLONING_INSTRUCTIONS,
                 Optional.ofNullable(cloningInstructionsOverride)
                     .map(CloningInstructions::fromApiModel)
-                    .orElse(null));
+                    .orElse(sourceDatasetResource.getCloningInstructions()));
     return jobBuilder.submit();
   }
+
   /** Starts a create controlled AI Notebook instance resource job, returning the job id. */
   public String createAiNotebookInstance(
       ControlledAiNotebookInstanceResource resource,

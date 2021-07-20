@@ -328,7 +328,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
     final ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService
-            .createBqDataset(resource, body.getDataset(), privateRoles, userRequest)
+            .createBigQueryDataset(resource, body.getDataset(), privateRoles, userRequest)
             .castToBigQueryDatasetResource();
     var response =
         new ApiCreatedControlledGcpBigQueryDataset()
