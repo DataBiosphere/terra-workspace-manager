@@ -89,7 +89,8 @@ public class GcpPolicyBuilder {
    */
   private Binding buildBinding(ControlledResourceIamRole resourceRole, String memberIdentifier) {
     CustomGcpIamRole customRole =
-        CustomGcpIamRoleMapping.CUSTOM_GCP_IAM_ROLES.get(resource.getResourceType(), resourceRole);
+        CustomGcpIamRoleMapping.CUSTOM_GCP_RESOURCE_IAM_ROLES.get(
+            resource.getResourceType(), resourceRole);
     return Binding.newBuilder()
         .setRole(customRole.getFullyQualifiedRoleName(projectId))
         .setMembers(Collections.singletonList(memberIdentifier))
