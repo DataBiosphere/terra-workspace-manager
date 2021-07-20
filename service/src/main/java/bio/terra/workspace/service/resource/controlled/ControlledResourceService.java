@@ -202,8 +202,8 @@ public class ControlledResourceService {
    * @param destinationResourceName - resource name. Uses source name if null
    * @param destinationDescription - description string for cloned dataset. Source description if
    *     null.
-   * @param destinationDatasetName - name for new resource. Can equal source name. If null, a
-   *     random name will be generated
+   * @param destinationDatasetName - name for new resource. Can equal source name. If null, a random
+   *     name will be generated
    * @param destinationLocation - location override. Uses source location if null
    * @param cloningInstructionsOverride - Cloning instructions for this clone operation, overriding
    *     any existing instructions. Existing instructions are used if null.

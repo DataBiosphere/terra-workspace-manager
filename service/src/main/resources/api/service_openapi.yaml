@@ -1081,6 +1081,24 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/clone-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a gcp BigQuery dataset clone job.
+      operationId: getCloneBigQueryDatasetResult
+      tags: [ControlledGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/ClonedControlledGcpBigQueryDatasetResponse'
+        '202':
+          $ref: '#/components/responses/ClonedControlledGcpBigQueryDatasetResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -2161,6 +2179,9 @@ components:
           description: ID of workspace to be cloned into
           type: string
           format: uuid
+        destinationDatasetName:
+          description: Name for destination dataset. Letters, numbers and underscores only.
+          type: string
         cloningInstructions:
           $ref: "#/components/schemas/CloningInstructionsEnum"
         name:
@@ -2180,7 +2201,7 @@ components:
       properties:
         dataset:
           $ref: '#/components/schemas/ClonedControlledGcpBigQueryDataset'
-        jobRport:
+        jobReport:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'

@@ -8,6 +8,7 @@ import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
+import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
@@ -486,20 +487,43 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   public ResponseEntity<ApiClonedControlledGcpBigQueryDatasetResult> cloneBigQueryDataset(
       UUID workspaceId, UUID resourceId, @Valid ApiCloneControlledGcpBigQueryDatasetRequest body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // call clone on service
-    final String jobId = controlledResourceService.cloneGcsBigQueryDataset(
-        workspaceId, resourceId, body.getDestinationWorkspaceId(),
-        new ApiJobControl().id(UUID.randomUUID().toString()),
-        userRequest,
-        body.getName(),
-        body.getDescription(),
-        null, // fixme
-        body.getLocation(),
-        body.getCloningInstructions());
-    );
-    // fetch the result
-    // build response entity
-    return null;
+    final String jobId =
+        controlledResourceService.cloneGcsBigQueryDataset(
+            workspaceId,
+            resourceId,
+            body.getDestinationWorkspaceId(),
+            body.getJobControl(),
+            userRequest,
+            body.getName(),
+            body.getDescription(),
+            body.getDestinationDatasetName(),
+            body.getLocation(),
+            body.getCloningInstructions());
+    final ApiClonedControlledGcpBigQueryDatasetResult result =
+        fetchCloneBigQueryDatasetResult(jobId, userRequest);
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  private ApiClonedControlledGcpBigQueryDatasetResult fetchCloneBigQueryDatasetResult(
+      String jobId, AuthenticatedUserRequest userRequest) {
+    final AsyncJobResult<ApiClonedControlledGcpBigQueryDataset> jobResult =
+        jobService.retrieveAsyncJobResult(
+            jobId, ApiClonedControlledGcpBigQueryDataset.class, userRequest);
+    return new ApiClonedControlledGcpBigQueryDatasetResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .dataset(jobResult.getResult());
+  }
+
+  @Override
+  public ResponseEntity<ApiClonedControlledGcpBigQueryDatasetResult> getCloneBigQueryDatasetResult(
+      UUID workspaceId, String jobId) {
+    // TODO: validate correct workspace ID. PF-859
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ApiClonedControlledGcpBigQueryDatasetResult result =
+        fetchCloneBigQueryDatasetResult(jobId, userRequest);
+    return new ResponseEntity<>(
+        result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
 
   /**

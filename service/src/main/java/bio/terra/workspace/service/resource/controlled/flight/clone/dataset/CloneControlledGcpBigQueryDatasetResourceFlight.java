@@ -41,6 +41,9 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
 
     addStep(
         new CopyBigQueryDatasetDefinitionStep(
-            sourceDataset, flightBeanBag.getControlledResourceService(), userReq));
+            sourceDataset,
+            flightBeanBag.getControlledResourceService(),
+            userReq,
+            flightBeanBag.getWorkspaceService()));
   }
 }
