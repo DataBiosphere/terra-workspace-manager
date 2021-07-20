@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRole;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
@@ -11,34 +12,52 @@ import java.util.List;
  * <p>Granting these roles at the project level was implemented as a temporary workaround to support
  * objects in a cloud context before controlled resources were built. As controlled resources become
  * available, roles should be granted directly on controlled resources instead (see {@code
- * CustomGcpIamRoleMapping}), and should be removed from this list.
+ * CustomGcpIamRoleMapping}), and should be removed from this list. Some permissions must be granted
+ * at the project level, and will continue to live here.
  */
 public class CloudSyncRoleMapping {
-  // Note that bigquery.jobUser is required at the project level, unlike other permissions which can
-  // be per-dataset.
-  private static final List<String> READER_PERMISSIONS =
+
+  // Note that custom roles defined at the project level cannot contain the
+  // "resourcemanager.projects.list" permission, even though it was previously included here.
+  // See https://cloud.google.com/iam/docs/understanding-custom-roles#known_limitations
+  private static final List<String> PROJECT_READER_PERMISSIONS =
       ImmutableList.of(
-          "roles/bigquery.jobUser",
-          "roles/lifesciences.viewer",
-          "roles/serviceusage.serviceUsageViewer");
-  private static final List<String> WRITER_PERMISSIONS =
+          "bigquery.jobs.create",
+          "lifesciences.operations.get",
+          "lifesciences.operations.list",
+          "resourcemanager.projects.get",
+          "monitoring.timeSeries.list",
+          "serviceusage.operations.get",
+          "serviceusage.operations.list",
+          "serviceusage.quotas.get",
+          "serviceusage.services.get",
+          "serviceusage.services.list");
+  private static final List<String> PROJECT_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
-          .addAll(READER_PERMISSIONS)
+          .addAll(PROJECT_READER_PERMISSIONS)
           .add(
               // TODO(wchambers): Revise service account permissions when there are controlled
               // resources for service accounts. (Also used by NextFlow)
-              "roles/iam.serviceAccountUser",
-              "roles/lifesciences.editor",
-              "roles/serviceusage.serviceUsageConsumer")
+              "iam.serviceAccounts.actAs",
+              "iam.serviceAccounts.get",
+              "iam.serviceAccounts.list",
+              "lifesciences.workflows.run",
+              "lifesciences.operations.cancel",
+              "serviceusage.services.use")
           .build();
-  // Currently, workspace editors, applications and owners have the sam cloud permissions as
-  // writers. If that changes, create a new list and modify the map below.
-  public static final ImmutableMap<WsmIamRole, List<String>> CLOUD_SYNC_ROLE_MAP =
+
+  private static final CustomGcpIamRole PROJECT_READER =
+      CustomGcpIamRole.of("PROJECT_READER", PROJECT_READER_PERMISSIONS);
+  private static final CustomGcpIamRole PROJECT_WRITER =
+      CustomGcpIamRole.of("PROJECT_WRITER", PROJECT_WRITER_PERMISSIONS);
+  // Currently, workspace editors, applications and owners have the same cloud permissions as
+  // writers. If that changes, create a new CustomGcpIamRole and modify the map below.
+  public static final ImmutableMap<WsmIamRole, CustomGcpIamRole> CUSTOM_GCP_PROJECT_IAM_ROLES =
       ImmutableMap.of(
-          // TODO: this should map to OWNER_PERMISSIONS if that's created.
-          WsmIamRole.OWNER, WRITER_PERMISSIONS,
-          // TODO: this should map to APPLICATION_PERMISSIONS if that's created.
-          WsmIamRole.APPLICATION, WRITER_PERMISSIONS,
-          WsmIamRole.WRITER, WRITER_PERMISSIONS,
-          WsmIamRole.READER, READER_PERMISSIONS);
+          // TODO: this should map to PROJECT_OWNER if that's created.
+          WsmIamRole.OWNER, PROJECT_WRITER,
+          // TODO: this should map to PROJECT_APPLICATION if that's created.
+          WsmIamRole.APPLICATION, PROJECT_WRITER,
+          WsmIamRole.WRITER, PROJECT_WRITER,
+          WsmIamRole.READER, PROJECT_READER);
 }

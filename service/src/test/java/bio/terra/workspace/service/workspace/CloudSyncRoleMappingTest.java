@@ -16,21 +16,39 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
   @Test
   void writerPermissionsContainReaderPermissions() {
     assertThat(
-        CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(WsmIamRole.READER),
-        everyItem(in((CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(WsmIamRole.WRITER)))));
+        CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
+            .get(WsmIamRole.READER)
+            .getIncludedPermissions(),
+        everyItem(
+            in(
+                (CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
+                    .get(WsmIamRole.WRITER)
+                    .getIncludedPermissions()))));
   }
 
   @Test
   void applicationPermissionsContainWriterPermissions() {
     assertThat(
-        CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(WsmIamRole.WRITER),
-        everyItem(in((CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(WsmIamRole.APPLICATION)))));
+        CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
+            .get(WsmIamRole.WRITER)
+            .getIncludedPermissions(),
+        everyItem(
+            in(
+                (CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
+                    .get(WsmIamRole.APPLICATION)
+                    .getIncludedPermissions()))));
   }
 
   @Test
   void ownerPermissionsContainWriterPermissions() {
     assertThat(
-        CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(WsmIamRole.WRITER),
-        everyItem(in((CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(WsmIamRole.OWNER)))));
+        CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
+            .get(WsmIamRole.WRITER)
+            .getIncludedPermissions(),
+        everyItem(
+            in(
+                (CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES
+                    .get(WsmIamRole.OWNER)
+                    .getIncludedPermissions()))));
   }
 }

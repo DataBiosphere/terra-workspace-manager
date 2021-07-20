@@ -9,6 +9,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRole;
 import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.exceptions.RetryableCrlException;
 import com.google.api.services.cloudresourcemanager.v3.model.Binding;
@@ -20,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +52,7 @@ public class GcpCloudSyncStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    String gcpProjectName = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
+    String gcpProjectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
     FlightMap workingMap = flightContext.getWorkingMap();
     // Read Sam groups for each workspace role. Stairway does not
     // have a cleaner way of deserializing parameterized types, so we suppress warnings here.
@@ -63,15 +63,15 @@ public class GcpCloudSyncStep implements Step {
       Policy currentPolicy =
           resourceManagerCow
               .projects()
-              .getIamPolicy(gcpProjectName, new GetIamPolicyRequest())
+              .getIamPolicy(gcpProjectId, new GetIamPolicyRequest())
               .execute();
 
       List<Binding> newBindings = new ArrayList<>();
       // Add all existing bindings to ensure we don't accidentally clobber existing permissions.
       newBindings.addAll(currentPolicy.getBindings());
-      for (Map.Entry<WsmIamRole, String> entry : workspaceRoleGroupsMap.entrySet()) {
-        newBindings.addAll(bindingsForRole(entry.getKey(), entry.getValue()));
-      }
+      // Add appropriate project-level roles for each WSM IAM role.
+      workspaceRoleGroupsMap.forEach(
+          (role, email) -> newBindings.add(bindingForRole(role, email, gcpProjectId)));
 
       Policy newPolicy =
           new Policy()
@@ -80,7 +80,7 @@ public class GcpCloudSyncStep implements Step {
               .setEtag(currentPolicy.getEtag());
       SetIamPolicyRequest iamPolicyRequest = new SetIamPolicyRequest().setPolicy(newPolicy);
       logger.info("Setting new Cloud Context IAM policy: " + iamPolicyRequest.toPrettyString());
-      resourceManagerCow.projects().setIamPolicy(gcpProjectName, iamPolicyRequest).execute();
+      resourceManagerCow.projects().setIamPolicy(gcpProjectId, iamPolicyRequest).execute();
     } catch (IOException e) {
       throw new RetryableCrlException("Error setting IAM permissions", e);
     }
@@ -95,19 +95,17 @@ public class GcpCloudSyncStep implements Step {
   }
 
   /**
-   * Build a list of role bindings for a given group, using CloudSyncRoleMapping.
+   * Build the project-level role binding for a given group, using CloudSyncRoleMapping.
    *
    * @param role The role granted to this user. Translated to GCP roles using CloudSyncRoleMapping.
    * @param email The email of the Google group being granted a role.
+   * @param gcpProjectId The ID of the project the custom role is defined in.
    */
-  private List<Binding> bindingsForRole(WsmIamRole role, String email) {
-    return CloudSyncRoleMapping.CLOUD_SYNC_ROLE_MAP.get(role).stream()
-        .map(
-            gcpRole ->
-                new Binding()
-                    .setRole(gcpRole)
-                    .setMembers(Collections.singletonList(toMemberIdentifier(email))))
-        .collect(Collectors.toList());
+  private Binding bindingForRole(WsmIamRole role, String email, String gcpProjectId) {
+    CustomGcpIamRole customRole = CloudSyncRoleMapping.CUSTOM_GCP_PROJECT_IAM_ROLES.get(role);
+    return new Binding()
+        .setRole(customRole.getFullyQualifiedRoleName(gcpProjectId))
+        .setMembers(Collections.singletonList(toMemberIdentifier(email)));
   }
 
   /**
