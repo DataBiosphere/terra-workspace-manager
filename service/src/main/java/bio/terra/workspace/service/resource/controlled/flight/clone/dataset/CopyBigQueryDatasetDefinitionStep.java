@@ -29,7 +29,8 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
   private final AuthenticatedUserRequest userReq;
   private final WorkspaceService workspaceService;
 
-  public CopyBigQueryDatasetDefinitionStep(ControlledBigQueryDatasetResource sourceDataset,
+  public CopyBigQueryDatasetDefinitionStep(
+      ControlledBigQueryDatasetResource sourceDataset,
       ControlledResourceService controlledResourceService,
       AuthenticatedUserRequest userReq,
       WorkspaceService workspaceService) {
@@ -46,20 +47,22 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
     final FlightMap workingMap = flightContext.getWorkingMap();
     final CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(
-            inputParameters.get(
-                ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
+                inputParameters.get(
+                    ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
             .orElse(sourceDataset.getCloningInstructions());
     // future steps need the resolved cloning instructions
     workingMap.put(ControlledResourceKeys.CLONING_INSTRUCTIONS, effectiveCloningInstructions);
 
-    if (CloningInstructions.COPY_NOTHING.equals(effectiveCloningInstructions)) {
+    if (CloningInstructions.COPY_NOTHING.equals(effectiveCloningInstructions)
+        || CloningInstructions.COPY_REFERENCE.equals(effectiveCloningInstructions)) {
       // nothing further to do here or on following steps
       // Build an empty response object
-      final ApiClonedControlledGcpBigQueryDataset result = new ApiClonedControlledGcpBigQueryDataset()
-          .dataset(null)
-          .sourceWorkspaceId(sourceDataset.getWorkspaceId())
-          .sourceResourceId(sourceDataset.getResourceId())
-          .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
+      final ApiClonedControlledGcpBigQueryDataset result =
+          new ApiClonedControlledGcpBigQueryDataset()
+              .dataset(null)
+              .sourceWorkspaceId(sourceDataset.getWorkspaceId())
+              .sourceResourceId(sourceDataset.getResourceId())
+              .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
       FlightUtils.setResponse(flightContext, result, HttpStatus.OK);
       return StepResult.getStepResultSuccess();
     }
@@ -75,42 +78,53 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             ControlledResourceKeys.RESOURCE_DESCRIPTION,
             ControlledResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             String.class);
-    final String datasetName = Optional.ofNullable(inputParameters.get(ControlledResourceKeys.DESTINATION_DATASET_NAME, String.class))
-        .orElseGet(this::randomDatasetName);
+    final String datasetName =
+        Optional.ofNullable(
+                inputParameters.get(ControlledResourceKeys.DESTINATION_DATASET_NAME, String.class))
+            .orElseGet(this::randomDatasetName);
     workingMap.put(ControlledResourceKeys.DESTINATION_DATASET_NAME, datasetName);
     final UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    final String location = FlightUtils.getInputParameterOrWorkingValue(
-        flightContext, ControlledResourceKeys.LOCATION, ControlledResourceKeys.LOCATION, String.class);
-    final ControlledBigQueryDatasetResource destinationResource = ControlledBigQueryDatasetResource.builder()
-        .accessScope(sourceDataset.getAccessScope())
-        .assignedUser(sourceDataset.getAssignedUser().orElse(null))
-        .cloningInstructions(sourceDataset.getCloningInstructions())
-        .datasetName(datasetName)
-        .description(description)
-        .managedBy(sourceDataset.getManagedBy())
-        .name(resourceName)
-        .resourceId(UUID.randomUUID())
-        .workspaceId(destinationWorkspaceId)
-        .build();
+    final String location =
+        FlightUtils.getInputParameterOrWorkingValue(
+            flightContext,
+            ControlledResourceKeys.LOCATION,
+            ControlledResourceKeys.LOCATION,
+            String.class);
+    final ControlledBigQueryDatasetResource destinationResource =
+        ControlledBigQueryDatasetResource.builder()
+            .accessScope(sourceDataset.getAccessScope())
+            .assignedUser(sourceDataset.getAssignedUser().orElse(null))
+            .cloningInstructions(sourceDataset.getCloningInstructions())
+            .datasetName(datasetName)
+            .description(description)
+            .managedBy(sourceDataset.getManagedBy())
+            .name(resourceName)
+            .resourceId(UUID.randomUUID())
+            .workspaceId(destinationWorkspaceId)
+            .build();
 
-    final ApiGcpBigQueryDatasetCreationParameters creationParameters = new ApiGcpBigQueryDatasetCreationParameters()
-        .datasetId(datasetName)
-        .location(location);
-    final List<ControlledResourceIamRole> iamRoles = IamRoleUtils.getIamRolesForAccessScope(destinationResource.getAccessScope());
+    final ApiGcpBigQueryDatasetCreationParameters creationParameters =
+        new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetName).location(location);
+    final List<ControlledResourceIamRole> iamRoles =
+        IamRoleUtils.getIamRolesForAccessScope(destinationResource.getAccessScope());
 
-    final ControlledBigQueryDatasetResource clonedResource = controlledResourceService.createBigQueryDataset(
-        destinationResource, creationParameters, iamRoles, userReq);
-    final String destinationProjectId = workspaceService.getRequiredGcpProject(destinationWorkspaceId);
-    final ApiCreatedControlledGcpBigQueryDataset apiCreatedDataset = new ApiCreatedControlledGcpBigQueryDataset()
-        .resourceId(destinationResource.getResourceId())
-        .bigQueryDataset(clonedResource.toApiResource(destinationProjectId));
+    final ControlledBigQueryDatasetResource clonedResource =
+        controlledResourceService.createBigQueryDataset(
+            destinationResource, creationParameters, iamRoles, userReq);
+    final String destinationProjectId =
+        workspaceService.getRequiredGcpProject(destinationWorkspaceId);
+    final ApiCreatedControlledGcpBigQueryDataset apiCreatedDataset =
+        new ApiCreatedControlledGcpBigQueryDataset()
+            .resourceId(destinationResource.getResourceId())
+            .bigQueryDataset(clonedResource.toApiResource(destinationProjectId));
     // Wrap this into an ApiClonedControlledGcpBigQueryDataset object
-    final ApiClonedControlledGcpBigQueryDataset apiResult = new ApiClonedControlledGcpBigQueryDataset()
-        .dataset(apiCreatedDataset)
-        .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
-        .sourceWorkspaceId(sourceDataset.getWorkspaceId())
-        .sourceResourceId(sourceDataset.getResourceId());
+    final ApiClonedControlledGcpBigQueryDataset apiResult =
+        new ApiClonedControlledGcpBigQueryDataset()
+            .dataset(apiCreatedDataset)
+            .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
+            .sourceWorkspaceId(sourceDataset.getWorkspaceId())
+            .sourceResourceId(sourceDataset.getResourceId());
     workingMap.put(ControlledResourceKeys.CLONE_DEFINITION_RESULT, apiResult);
     if (CloningInstructions.COPY_DEFINITION.equals(effectiveCloningInstructions)) {
       // we're done

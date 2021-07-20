@@ -8,8 +8,7 @@ import java.util.List;
 
 public final class IamRoleUtils {
 
-  private IamRoleUtils() {
-  }
+  private IamRoleUtils() {}
 
   /**
    * Build the list of IAM roles for this user. If the resource was initially shared, we make the
@@ -19,7 +18,8 @@ public final class IamRoleUtils {
    * @param accessScope - private vs shared access
    * @return list of IAM roles for the user on the resource
    */
-  public static List<ControlledResourceIamRole> getIamRolesForAccessScope(AccessScopeType accessScope) {
+  public static List<ControlledResourceIamRole> getIamRolesForAccessScope(
+      AccessScopeType accessScope) {
     switch (accessScope) {
       case ACCESS_SCOPE_SHARED:
         return Collections.emptyList();

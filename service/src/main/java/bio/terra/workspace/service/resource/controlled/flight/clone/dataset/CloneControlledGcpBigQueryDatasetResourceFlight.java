@@ -11,8 +11,8 @@ import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveCon
 
 public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
 
-  public CloneControlledGcpBigQueryDatasetResourceFlight(FlightMap inputParameters,
-      Object applicationContext) {
+  public CloneControlledGcpBigQueryDatasetResourceFlight(
+      FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     final ControlledResource sourceResource =
@@ -20,24 +20,27 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
     final AuthenticatedUserRequest userReq =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-
     // Flight Plan
     // 1. Gather controlled resource metadata for source object
     // 2. Gather creation parameters from existing object
     // 3. Launch sub-flight to create appropriate resource
-    addStep(new RetrieveControlledResourceMetadataStep(
-        flightBeanBag.getResourceDao(),
-        sourceResource.getWorkspaceId(),
-        sourceResource.getResourceId()));
-    final ControlledBigQueryDatasetResource sourceDataset = sourceResource.castToBigQueryDatasetResource();
+    addStep(
+        new RetrieveControlledResourceMetadataStep(
+            flightBeanBag.getResourceDao(),
+            sourceResource.getWorkspaceId(),
+            sourceResource.getResourceId()));
+    final ControlledBigQueryDatasetResource sourceDataset =
+        sourceResource.castToBigQueryDatasetResource();
 
-    addStep(new RetrieveGcsBigQueryDatasetCloudAttributesStep(
-        sourceDataset,
-        flightBeanBag.getCrlService(),
-        flightBeanBag.getWorkspaceService(),
-        userReq));
+    addStep(
+        new RetrieveGcsBigQueryDatasetCloudAttributesStep(
+            sourceDataset,
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getWorkspaceService(),
+            userReq));
 
-    addStep(new CopyBigQueryDatasetDefinitionStep(sourceDataset,
-        flightBeanBag.getControlledResourceService(), userReq));
+    addStep(
+        new CopyBigQueryDatasetDefinitionStep(
+            sourceDataset, flightBeanBag.getControlledResourceService(), userReq));
   }
 }

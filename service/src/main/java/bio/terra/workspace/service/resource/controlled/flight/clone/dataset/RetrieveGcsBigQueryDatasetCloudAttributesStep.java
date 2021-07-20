@@ -15,10 +15,7 @@ import com.google.api.client.util.Strings;
 import com.google.api.services.bigquery.model.Dataset;
 import java.io.IOException;
 
-/**
- * Retrieve the Dataset creation parameters from the
- * cloud object.
- */
+/** Retrieve the Dataset creation parameters from the cloud object. */
 public class RetrieveGcsBigQueryDatasetCloudAttributesStep implements Step {
 
   private final ControlledBigQueryDatasetResource datasetResource;
@@ -40,8 +37,8 @@ public class RetrieveGcsBigQueryDatasetCloudAttributesStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final String suppliedLocation = flightContext.getInputParameters()
-        .get(ControlledResourceKeys.LOCATION, String.class);
+    final String suppliedLocation =
+        flightContext.getInputParameters().get(ControlledResourceKeys.LOCATION, String.class);
     if (!Strings.isNullOrEmpty(suppliedLocation)) {
       flightContext.getWorkingMap().put(ControlledResourceKeys.LOCATION, suppliedLocation);
       // we can stop here as we don't need the original location
@@ -49,13 +46,12 @@ public class RetrieveGcsBigQueryDatasetCloudAttributesStep implements Step {
     }
     // Since no location was specified, we need to find the original one
     // from the source dataset.
-    final String projectId = workspaceService.getRequiredGcpProject(datasetResource.getWorkspaceId());
+    final String projectId =
+        workspaceService.getRequiredGcpProject(datasetResource.getWorkspaceId());
     final BigQueryCow bigQueryCow = crlService.createBigQueryCow(userReq);
     try {
-      final Dataset dataset = bigQueryCow
-          .datasets()
-          .get(projectId, datasetResource.getDatasetName())
-          .execute();
+      final Dataset dataset =
+          bigQueryCow.datasets().get(projectId, datasetResource.getDatasetName()).execute();
       final String sourceLocation = dataset.getLocation();
       flightContext.getWorkingMap().put(ControlledResourceKeys.LOCATION, sourceLocation);
       return StepResult.getStepResultSuccess();

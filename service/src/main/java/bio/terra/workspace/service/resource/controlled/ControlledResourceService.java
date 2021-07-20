@@ -104,6 +104,7 @@ public class ControlledResourceService {
 
   /**
    * Clone a GCS Bucket to another workspace.
+   *
    * @param sourceWorkspaceId - workspace ID fo source bucket
    * @param sourceResourceId - resource ID of source bucket
    * @param destinationWorkspaceId - workspace ID to clone into
@@ -190,6 +191,24 @@ public class ControlledResourceService {
     return jobBuilder.submitAndWait(ControlledBigQueryDatasetResource.class);
   }
 
+  /**
+   * Make a clone of a BigQuery dataset
+   *
+   * @param sourceWorkspaceId - workspace ID of original dataset
+   * @param sourceResourceId - resource ID of original dataset
+   * @param destinationWorkspaceId - destination (sink) workspace ID
+   * @param jobControl - job control structure (should already have ID)
+   * @param userRequest - request object for this call
+   * @param destinationResourceName - resource name. Uses source name if null
+   * @param destinationDescription - description string for cloned dataset. Source description if
+   *     null.
+   * @param destinationDatasetName - name for new resource. Can equal source name. If null, a
+   *     random name will be generated
+   * @param destinationLocation - location override. Uses source location if null
+   * @param cloningInstructionsOverride - Cloning instructions for this clone operation, overriding
+   *     any existing instructions. Existing instructions are used if null.
+   * @return
+   */
   public String cloneGcsBigQueryDataset(
       UUID sourceWorkspaceId,
       UUID sourceResourceId,

@@ -487,6 +487,16 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, UUID resourceId, @Valid ApiCloneControlledGcpBigQueryDatasetRequest body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // call clone on service
+    final String jobId = controlledResourceService.cloneGcsBigQueryDataset(
+        workspaceId, resourceId, body.getDestinationWorkspaceId(),
+        new ApiJobControl().id(UUID.randomUUID().toString()),
+        userRequest,
+        body.getName(),
+        body.getDescription(),
+        null, // fixme
+        body.getLocation(),
+        body.getCloningInstructions());
+    );
     // fetch the result
     // build response entity
     return null;

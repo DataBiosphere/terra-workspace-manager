@@ -95,7 +95,8 @@ public class CopyGcsBucketDefinitionStep implements Step {
     final ApiGcpGcsBucketCreationParameters destinationCreationParameters =
         getDestinationCreationParameters(inputParameters, workingMap);
 
-    final List<ControlledResourceIamRole> iamRoles = IamRoleUtils.getIamRolesForAccessScope(sourceBucket.getAccessScope());
+    final List<ControlledResourceIamRole> iamRoles =
+        IamRoleUtils.getIamRolesForAccessScope(sourceBucket.getAccessScope());
 
     // Launch a CreateControlledResourcesFlight to make the destination bucket
     final ControlledGcsBucketResource clonedBucket =
@@ -160,5 +161,4 @@ public class CopyGcsBucketDefinitionStep implements Step {
   private String randomBucketName() {
     return "terra-wsm-" + UUID.randomUUID().toString().toLowerCase();
   }
-
 }
