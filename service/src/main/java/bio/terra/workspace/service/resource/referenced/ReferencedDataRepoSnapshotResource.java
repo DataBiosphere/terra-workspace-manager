@@ -112,14 +112,25 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
     return dataRepoService.snapshotReadable(instanceName, snapshotId, userReq);
   }
 
+  public Builder toBuilder() {
+    return builder()
+        .cloningInstructions(getCloningInstructions())
+        .description(getDescription())
+        .instanceName(getInstanceName())
+        .name(getName())
+        .snapshotId(getSnapshotId())
+        .resourceId(getResourceId())
+        .workspaceId(getWorkspaceId());
+  }
+
   public static class Builder {
-    private UUID workspaceId;
-    private UUID resourceId;
-    private String name;
-    private String description;
     private CloningInstructions cloningInstructions;
+    private String description;
     private String instanceName;
+    private String name;
     private String snapshotId;
+    private UUID resourceId;
+    private UUID workspaceId;
 
     public ReferencedDataRepoSnapshotResource.Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;

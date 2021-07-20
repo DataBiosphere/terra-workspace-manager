@@ -115,6 +115,23 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
     return crlService.canReadBigQueryDataset(projectId, datasetName, userReq);
   }
 
+  /**
+   * Build a builder with values from this object. This is useful when creating related objects that
+   * share several values.
+   *
+   * @return - a Builder for a new ReferencedBigQueryDatasetResource
+   */
+  public Builder toBuilder() {
+    return builder()
+        .cloningInstructions(getCloningInstructions())
+        .datasetName(getDatasetName())
+        .description(getDescription())
+        .name(getName())
+        .projectId(getProjectId())
+        .resourceId(getResourceId())
+        .workspaceId(getWorkspaceId());
+  }
+
   public static class Builder {
     private UUID workspaceId;
     private UUID resourceId;
