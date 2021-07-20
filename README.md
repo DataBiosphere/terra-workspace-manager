@@ -307,3 +307,4 @@ The integration tests live in the `integration` project. Consult the integration
 
 In the early days of the project, there were JUnit-based integration tests. We are in
 process of migrating them to Test Runner.
+foo
