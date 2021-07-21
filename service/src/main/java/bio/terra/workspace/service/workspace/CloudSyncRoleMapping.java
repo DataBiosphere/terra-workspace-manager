@@ -43,7 +43,11 @@ public class CloudSyncRoleMapping {
               "iam.serviceAccounts.list",
               "lifesciences.workflows.run",
               "lifesciences.operations.cancel",
-              "serviceusage.services.use")
+              "serviceusage.services.use",
+              "notebooks.operations.cancel",
+              "notebooks.operations.delete",
+              "notebooks.operations.get",
+              "notebooks.operations.list")
           .build();
 
   private static final CustomGcpIamRole PROJECT_READER =

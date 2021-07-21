@@ -86,11 +86,7 @@ public class CustomGcpIamRoleMapping {
               "notebooks.instances.setMachineType",
               "notebooks.instances.start",
               "notebooks.instances.stop",
-              "notebooks.instances.use",
-              "notebooks.operations.cancel",
-              "notebooks.operations.delete",
-              "notebooks.operations.get",
-              "notebooks.operations.list")
+              "notebooks.instances.use")
           .build();
   static final ImmutableList<String> AI_NOTEBOOK_INSTANCE_EDITOR_PERMISSIONS =
       ImmutableList.of(
