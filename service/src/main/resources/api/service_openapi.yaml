@@ -2222,7 +2222,7 @@ components:
           type: string
           format: uuid
         dataset:
-          $ref: "#/components/schemas/CreatedControlledGcpBigQueryDataset"
+          $ref: "#/components/schemas/GcpBigQueryDatasetResource"
     DeleteControlledGcpGcsBucketRequest:
       type: object
       required: [ jobControl ]

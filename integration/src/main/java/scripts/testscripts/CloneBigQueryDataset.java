@@ -4,6 +4,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
 import static scripts.utils.ResourceMaker.makeControlledBigQueryDatasetUserShared;
 
@@ -11,9 +13,11 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.model.CloneControlledGcpBigQueryDatasetRequest;
+import bio.terra.workspace.model.ClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.model.ClonedControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
+import bio.terra.workspace.model.CreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
@@ -96,7 +100,7 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
     final String clonedDatasetDescription = "Clone of " + destinationDatasetName;
     final String jobId = UUID.randomUUID().toString();
     final CloneControlledGcpBigQueryDatasetRequest cloneRequest = new CloneControlledGcpBigQueryDatasetRequest()
-        .cloningInstructions(CloningInstructionsEnum.REFERENCE)
+        .cloningInstructions(CloningInstructionsEnum.DEFINITION)
         .description(clonedDatasetDescription)
         .location(null) // keep same
         .destinationWorkspaceId(destinationWorkspaceId)
@@ -129,6 +133,23 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
 
     assertEquals(StatusEnum.SUCCEEDED, cloneResult.getJobReport().getStatus());
     logger.info("Successfully cloned BigQuery dataset with result {}", cloneResult);
+    assertEquals(sourceDataset.getMetadata().getWorkspaceId(), cloneResult.getDataset().getSourceWorkspaceId());
+    assertEquals(sourceDataset.getMetadata().getResourceId(), cloneResult.getDataset().getSourceResourceId());
 
+    // unwrap the result one layer at a time
+    final ClonedControlledGcpBigQueryDataset clonedControlledGcpBigQueryDataset = cloneResult.getDataset();
+    assertEquals(CloningInstructionsEnum.DEFINITION, clonedControlledGcpBigQueryDataset.getEffectiveCloningInstructions());
+
+    final GcpBigQueryDatasetResource clonedResource = clonedControlledGcpBigQueryDataset.getDataset();
+    assertEquals(sourceDataset.getMetadata().getCloningInstructions(), clonedResource.getMetadata().getCloningInstructions());
+    assertEquals(sourceDataset.getMetadata().getCloudPlatform(), clonedResource.getMetadata().getCloudPlatform());
+    assertEquals(sourceDataset.getMetadata().getResourceType(), clonedResource.getMetadata().getResourceType());
+    assertEquals(sourceDataset.getMetadata().getStewardshipType(), clonedResource.getMetadata().getStewardshipType());
+    assertEquals(sourceDataset.getMetadata().getControlledResourceMetadata().getManagedBy(),
+        clonedResource.getMetadata().getControlledResourceMetadata().getManagedBy());
+    assertEquals(sourceDataset.getMetadata().getControlledResourceMetadata().getAccessScope(),
+        clonedResource.getMetadata().getControlledResourceMetadata().getAccessScope());
+    assertNotEquals(sourceDataset.getAttributes().getProjectId(), clonedResource.getAttributes().getProjectId());
+    assertNotEquals(sourceDataset.getAttributes().getDatasetId(), clonedResource.getAttributes().getDatasetId());
   }
 }

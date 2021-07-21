@@ -121,7 +121,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
     // Wrap this into an ApiClonedControlledGcpBigQueryDataset object
     final ApiClonedControlledGcpBigQueryDataset apiResult =
         new ApiClonedControlledGcpBigQueryDataset()
-            .dataset(apiCreatedDataset)
+            .dataset(apiCreatedDataset.getBigQueryDataset())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
             .sourceWorkspaceId(sourceDataset.getWorkspaceId())
             .sourceResourceId(sourceDataset.getResourceId());
