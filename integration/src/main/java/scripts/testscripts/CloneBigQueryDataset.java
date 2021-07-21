@@ -5,7 +5,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
 import static scripts.utils.ResourceMaker.makeControlledBigQueryDatasetUserShared;
 
@@ -14,10 +13,9 @@ import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.model.CloneControlledGcpBigQueryDatasetRequest;
 import bio.terra.workspace.model.ClonedControlledGcpBigQueryDataset;
-import bio.terra.workspace.model.ClonedControlledGcpBigQueryDatasetResult;
+import bio.terra.workspace.model.CloneControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
-import bio.terra.workspace.model.CreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
@@ -40,10 +38,7 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
   private GcpBigQueryDatasetResource sourceDataset;
   private String destinationProjectId;
   private String nameSuffix;
-  private String sourceDatasetId;
   private String sourceProjectId;
-  private String sourceResourceName;
-  private TestUserSpecification cloningUser;
   private UUID destinationWorkspaceId;
 
   @Override
@@ -54,7 +49,7 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
     // user creating the source resource
     final TestUserSpecification sourceOwnerUser = testUsers.get(0);
     // user cloning the dataset resource
-    cloningUser = testUsers.get(1);
+    final TestUserSpecification cloningUser = testUsers.get(1);
 
     // source workspace project
     sourceProjectId = CloudContextMaker
@@ -68,9 +63,9 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
 
     // Construct the source dataset
     nameSuffix = UUID.randomUUID().toString();
-    sourceResourceName = (RESOURCE_PREFIX + nameSuffix).replace('-', '_');
-    sourceDataset = makeControlledBigQueryDatasetUserShared(sourceOwnerResourceApi, getWorkspaceId(), sourceResourceName);
-    sourceDatasetId = sourceDataset.getAttributes().getDatasetId();
+    final String sourceResourceName = (RESOURCE_PREFIX + nameSuffix).replace('-', '_');
+    sourceDataset = makeControlledBigQueryDatasetUserShared(sourceOwnerResourceApi, getWorkspaceId(),
+        sourceResourceName);
 
     // Make the cloning user a reader on the existing workspace
     sourceOwnerWorkspaceApi.grantRole(
@@ -118,7 +113,7 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
         destinationProjectId);
 
     // Submit clone request and poll for async result
-    ClonedControlledGcpBigQueryDatasetResult cloneResult =
+    CloneControlledGcpBigQueryDatasetResult cloneResult =
         cloningUserResourceApi.cloneBigQueryDataset(
             cloneRequest,
             sourceDataset.getMetadata().getWorkspaceId(),
@@ -128,7 +123,7 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
         () -> cloningUserResourceApi.getCloneBigQueryDatasetResult(
             cloneRequest.getDestinationWorkspaceId(),
             cloneRequest.getJobControl().getId()),
-        ClonedControlledGcpBigQueryDatasetResult::getJobReport,
+        CloneControlledGcpBigQueryDatasetResult::getJobReport,
         Duration.ofSeconds(5));
 
     assertEquals(StatusEnum.SUCCEEDED, cloneResult.getJobReport().getStatus());

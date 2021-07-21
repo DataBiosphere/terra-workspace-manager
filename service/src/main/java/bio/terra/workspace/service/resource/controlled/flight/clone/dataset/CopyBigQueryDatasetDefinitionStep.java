@@ -8,7 +8,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.IamRoleUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
-import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -46,13 +45,8 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
     final FlightMap inputParameters = flightContext.getInputParameters();
     final FlightMap workingMap = flightContext.getWorkingMap();
     final CloningInstructions effectiveCloningInstructions =
-        Optional.ofNullable(
-                inputParameters.get(
-                    ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class))
-            .orElse(sourceDataset.getCloningInstructions());
-    // future steps need the resolved cloning instructions
-    workingMap.put(ControlledResourceKeys.CLONING_INSTRUCTIONS, effectiveCloningInstructions);
-
+        inputParameters.get(ControlledResourceKeys.CLONING_INSTRUCTIONS, CloningInstructions.class);
+    // TODO: handle cloning a controlled resource with REFERENCE option, PF-812
     if (CloningInstructions.COPY_NOTHING.equals(effectiveCloningInstructions)
         || CloningInstructions.COPY_REFERENCE.equals(effectiveCloningInstructions)) {
       // nothing further to do here or on following steps
@@ -112,16 +106,12 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
     final ControlledBigQueryDatasetResource clonedResource =
         controlledResourceService.createBigQueryDataset(
             destinationResource, creationParameters, iamRoles, userReq);
+    workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedResource);
     final String destinationProjectId =
         workspaceService.getRequiredGcpProject(destinationWorkspaceId);
-    final ApiCreatedControlledGcpBigQueryDataset apiCreatedDataset =
-        new ApiCreatedControlledGcpBigQueryDataset()
-            .resourceId(destinationResource.getResourceId())
-            .bigQueryDataset(clonedResource.toApiResource(destinationProjectId));
-    // Wrap this into an ApiClonedControlledGcpBigQueryDataset object
     final ApiClonedControlledGcpBigQueryDataset apiResult =
         new ApiClonedControlledGcpBigQueryDataset()
-            .dataset(apiCreatedDataset.getBigQueryDataset())
+            .dataset(clonedResource.toApiResource(destinationProjectId))
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
             .sourceWorkspaceId(sourceDataset.getWorkspaceId())
             .sourceResourceId(sourceDataset.getResourceId());
@@ -137,7 +127,17 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
   // Delete the dataset and its resource entry, i.e. remove the controlled resource
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    return null;
+    final ControlledBigQueryDatasetResource clonedDataset =
+        flightContext
+            .getWorkingMap()
+            .get(
+                ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
+                ControlledBigQueryDatasetResource.class);
+    if (clonedDataset != null) {
+      controlledResourceService.deleteControlledResourceSync(
+          clonedDataset.getWorkspaceId(), clonedDataset.getResourceId(), userReq);
+    }
+    return StepResult.getStepResultSuccess();
   }
 
   private String randomDatasetName() {

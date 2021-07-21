@@ -1071,9 +1071,9 @@ paths:
               $ref: '#/components/schemas/CloneControlledGcpBigQueryDatasetRequest'
       responses:
         '200':
-          $ref: '#/components/responses/ClonedControlledGcpBigQueryDatasetResponse'
+          $ref: '#/components/responses/CloneControlledGcpBigQueryDatasetResponse'
         '202':
-          $ref: '#/components/responses/ClonedControlledGcpBigQueryDatasetResponse'
+          $ref: '#/components/responses/CloneControlledGcpBigQueryDatasetResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -1091,9 +1091,9 @@ paths:
       tags: [ControlledGcpResource]
       responses:
         '200':
-          $ref: '#/components/responses/ClonedControlledGcpBigQueryDatasetResponse'
+          $ref: '#/components/responses/CloneControlledGcpBigQueryDatasetResponse'
         '202':
-          $ref: '#/components/responses/ClonedControlledGcpBigQueryDatasetResponse'
+          $ref: '#/components/responses/CloneControlledGcpBigQueryDatasetResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -2195,7 +2195,7 @@ components:
           type: string
         jobControl:
           $ref: '#/components/schemas/JobControl'
-    ClonedControlledGcpBigQueryDatasetResult:
+    CloneControlledGcpBigQueryDatasetResult:
       description: Result of successful BigQuery dataset clone
       type: object
       properties:
@@ -2774,12 +2774,12 @@ components:
         application/json:
           schema:
             type: boolean
-    ClonedControlledGcpBigQueryDatasetResponse:
+    CloneControlledGcpBigQueryDatasetResponse:
       description: response to clone BigQuery dataset operation.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ClonedControlledGcpBigQueryDatasetResult'
+            $ref: '#/components/schemas/CloneControlledGcpBigQueryDatasetResult'
     # Error Responses
     BadRequest:
       description: Bad request
