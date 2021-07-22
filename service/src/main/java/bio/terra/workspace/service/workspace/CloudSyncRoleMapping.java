@@ -23,6 +23,9 @@ public class CloudSyncRoleMapping {
   private static final List<String> PROJECT_READER_PERMISSIONS =
       ImmutableList.of(
           "bigquery.jobs.create",
+          "bigquery.readsessions.create",
+          "bigquery.readsessions.getData",
+          "bigquery.readsessions.update",
           "lifesciences.operations.get",
           "lifesciences.operations.list",
           "resourcemanager.projects.get",
