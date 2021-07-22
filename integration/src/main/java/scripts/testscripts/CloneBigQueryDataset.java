@@ -145,6 +145,6 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
     assertEquals(sourceDataset.getMetadata().getControlledResourceMetadata().getAccessScope(),
         clonedResource.getMetadata().getControlledResourceMetadata().getAccessScope());
     assertNotEquals(sourceDataset.getAttributes().getProjectId(), clonedResource.getAttributes().getProjectId());
-    assertNotEquals(sourceDataset.getAttributes().getDatasetId(), clonedResource.getAttributes().getDatasetId());
+    assertEquals(sourceDataset.getAttributes().getDatasetId(), clonedResource.getAttributes().getDatasetId());
   }
 }
