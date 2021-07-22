@@ -75,7 +75,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
     final String datasetName =
         Optional.ofNullable(
                 inputParameters.get(ControlledResourceKeys.DESTINATION_DATASET_NAME, String.class))
-            .orElseGet(this::randomDatasetName);
+            .orElse(sourceDataset.getDatasetName());
     workingMap.put(ControlledResourceKeys.DESTINATION_DATASET_NAME, datasetName);
     final UUID destinationWorkspaceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
@@ -106,6 +106,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
     final ControlledBigQueryDatasetResource clonedResource =
         controlledResourceService.createBigQueryDataset(
             destinationResource, creationParameters, iamRoles, userReq);
+
     workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedResource);
     final String destinationProjectId =
         workspaceService.getRequiredGcpProject(destinationWorkspaceId);

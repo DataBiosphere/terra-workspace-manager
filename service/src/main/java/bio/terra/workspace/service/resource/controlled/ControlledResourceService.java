@@ -209,7 +209,7 @@ public class ControlledResourceService {
    *     any existing instructions. Existing instructions are used if null.
    * @return
    */
-  public String cloneGcsBigQueryDataset(
+  public String cloneBigQueryDataset(
       UUID sourceWorkspaceId,
       UUID sourceResourceId,
       UUID destinationWorkspaceId,
@@ -253,6 +253,7 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.DESTINATION_DATASET_NAME, destinationDatasetName)
             .addParameter(
                 ControlledResourceKeys.CLONING_INSTRUCTIONS,
+                // compute effective cloning instructions
                 Optional.ofNullable(cloningInstructionsOverride)
                     .map(CloningInstructions::fromApiModel)
                     .orElse(sourceDatasetResource.getCloningInstructions()));
