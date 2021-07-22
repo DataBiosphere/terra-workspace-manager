@@ -25,8 +25,8 @@ public class CloudSyncRoleMapping {
           "bigquery.jobs.create",
           "lifesciences.operations.get",
           "lifesciences.operations.list",
-          "resourcemanager.projects.get",
           "monitoring.timeSeries.list",
+          "resourcemanager.projects.get",
           "serviceusage.operations.get",
           "serviceusage.operations.list",
           "serviceusage.quotas.get",
@@ -41,13 +41,13 @@ public class CloudSyncRoleMapping {
               "iam.serviceAccounts.actAs",
               "iam.serviceAccounts.get",
               "iam.serviceAccounts.list",
-              "lifesciences.workflows.run",
               "lifesciences.operations.cancel",
-              "serviceusage.services.use",
+              "lifesciences.workflows.run",
               "notebooks.operations.cancel",
               "notebooks.operations.delete",
               "notebooks.operations.get",
-              "notebooks.operations.list")
+              "notebooks.operations.list",
+              "serviceusage.services.use")
           .build();
 
   private static final CustomGcpIamRole PROJECT_READER =
