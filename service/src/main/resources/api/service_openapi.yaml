@@ -1060,7 +1060,7 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ResourceId'
     post:
-      summary: Clone a BigQuerey dataset
+      summary: Clone a BigQuery dataset
       operationId: cloneBigQueryDataset
       tags: [ControlledGcpResource]
       requestBody:
