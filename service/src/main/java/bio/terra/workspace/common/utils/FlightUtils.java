@@ -4,6 +4,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.service.job.JobMapKeys;
+import java.util.Optional;
 import org.springframework.http.HttpStatus;
 
 /** Common methods for building flights */
@@ -35,5 +36,22 @@ public final class FlightUtils {
     FlightMap workingMap = context.getWorkingMap();
     workingMap.put(JobMapKeys.RESPONSE.getKeyName(), responseObject);
     workingMap.put(JobMapKeys.STATUS_CODE.getKeyName(), responseStatus);
+  }
+
+  /**
+   * Get a supplied input value from input parameters, or, if that's missing, a default (previous)
+   * value from the working map, or null.
+   *
+   * @param flightContext - context object for the flight, used to get the input & working maps
+   * @param inputKey - key in input parameters for the supplied (override) value
+   * @param workingKey - key in the working map for the previous value
+   * @param klass - class of the value, e.g. String.class
+   * @param <T> - type parameter corresponding to the klass
+   * @return - a value from one of the two sources, or null
+   */
+  public static <T> T getInputParameterOrWorkingValue(
+      FlightContext flightContext, String inputKey, String workingKey, Class<T> klass) {
+    return Optional.ofNullable(flightContext.getInputParameters().get(inputKey, klass))
+        .orElse(flightContext.getWorkingMap().get(workingKey, klass));
   }
 }

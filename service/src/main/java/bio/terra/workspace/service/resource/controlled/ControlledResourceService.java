@@ -17,6 +17,7 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledGcsBucketResourceFlight;
@@ -104,7 +105,8 @@ public class ControlledResourceService {
   /**
    * Clone a GCS Bucket to another workspace.
    *
-   * @param sourceBucketResource - original bucket controlled resouce
+   * @param sourceWorkspaceId - workspace ID fo source bucket
+   * @param sourceResourceId - resource ID of source bucket
    * @param destinationWorkspaceId - workspace ID to clone into
    * @param jobControl - job service control structure
    * @param userRequest - incoming request
@@ -168,12 +170,12 @@ public class ControlledResourceService {
                 ControlledResourceKeys.CLONING_INSTRUCTIONS,
                 Optional.ofNullable(cloningInstructionsOverride)
                     .map(CloningInstructions::fromApiModel)
-                    .orElse(null));
+                    .orElse(sourceBucketResource.getCloningInstructions()));
     return jobBuilder.submit();
   }
 
   /** Starts a create controlled BigQuery dataset resource, blocking until its job is finished. */
-  public ControlledBigQueryDatasetResource createBqDataset(
+  public ControlledBigQueryDatasetResource createBigQueryDataset(
       ControlledBigQueryDatasetResource resource,
       ApiGcpBigQueryDatasetCreationParameters creationParameters,
       List<ControlledResourceIamRole> privateResourceIamRoles,
@@ -187,6 +189,75 @@ public class ControlledResourceService {
                 userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return jobBuilder.submitAndWait(ControlledBigQueryDatasetResource.class);
+  }
+
+  /**
+   * Make a clone of a BigQuery dataset
+   *
+   * @param sourceWorkspaceId - workspace ID of original dataset
+   * @param sourceResourceId - resource ID of original dataset
+   * @param destinationWorkspaceId - destination (sink) workspace ID
+   * @param jobControl - job control structure (should already have ID)
+   * @param userRequest - request object for this call
+   * @param destinationResourceName - resource name. Uses source name if null
+   * @param destinationDescription - description string for cloned dataset. Source description if
+   *     null.
+   * @param destinationDatasetName - name for new resource. Can equal source name. If null, a random
+   *     name will be generated
+   * @param destinationLocation - location override. Uses source location if null
+   * @param cloningInstructionsOverride - Cloning instructions for this clone operation, overriding
+   *     any existing instructions. Existing instructions are used if null.
+   * @return
+   */
+  public String cloneBigQueryDataset(
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destinationWorkspaceId,
+      ApiJobControl jobControl,
+      AuthenticatedUserRequest userRequest,
+      @Nullable String destinationResourceName,
+      @Nullable String destinationDescription,
+      @Nullable String destinationDatasetName,
+      @Nullable String destinationLocation,
+      @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
+    stageService.assertMcWorkspace(destinationWorkspaceId, "cloneGcpBigQueryDataset");
+    final ControlledResource sourceDatasetResource =
+        getControlledResource(sourceWorkspaceId, sourceResourceId, userRequest);
+
+    // Verify user can read source resource in Sam
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest,
+        sourceDatasetResource.getWorkspaceId(),
+        sourceDatasetResource.getResourceId(),
+        SamControlledResourceActions.READ_ACTION);
+
+    // Write access to the target workspace will be established in the create flight
+    final String jobDescription =
+        String.format(
+            "Clone controlled resource %s; id %s; name %s",
+            sourceDatasetResource.getResourceType(),
+            sourceDatasetResource.getResourceId(),
+            sourceDatasetResource.getName());
+    final JobBuilder jobBuilder =
+        jobService
+            .newJob(
+                jobDescription,
+                jobControl.getId(),
+                CloneControlledGcpBigQueryDatasetResourceFlight.class,
+                sourceDatasetResource,
+                userRequest)
+            .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
+            .addParameter(ControlledResourceKeys.RESOURCE_NAME, destinationResourceName)
+            .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
+            .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
+            .addParameter(ControlledResourceKeys.DESTINATION_DATASET_NAME, destinationDatasetName)
+            .addParameter(
+                ControlledResourceKeys.CLONING_INSTRUCTIONS,
+                // compute effective cloning instructions
+                Optional.ofNullable(cloningInstructionsOverride)
+                    .map(CloningInstructions::fromApiModel)
+                    .orElse(sourceDatasetResource.getCloningInstructions()));
+    return jobBuilder.submit();
   }
 
   /** Starts a create controlled AI Notebook instance resource job, returning the job id. */

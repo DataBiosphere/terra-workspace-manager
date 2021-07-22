@@ -1055,6 +1055,49 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/{resourceId}/clone:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a BigQuerey dataset
+      operationId: cloneBigQueryDataset
+      tags: [ControlledGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneControlledGcpBigQueryDatasetRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneControlledGcpBigQueryDatasetResponse'
+        '202':
+          $ref: '#/components/responses/CloneControlledGcpBigQueryDatasetResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/clone-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a gcp BigQuery dataset clone job.
+      operationId: getCloneBigQueryDatasetResult
+      tags: [ControlledGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneControlledGcpBigQueryDatasetResponse'
+        '202':
+          $ref: '#/components/responses/CloneControlledGcpBigQueryDatasetResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/ai-notebook-instances:
     parameters:
@@ -1853,7 +1896,6 @@ components:
           format: uuid
         gcpBucket:
           $ref: '#/components/schemas/GcpGcsBucketResource'
-
     CreatedControlledGcpBigQueryDataset:
       description: Response Payload for requesting a new controlled BigQuery dataset.
       type: object
@@ -1998,8 +2040,6 @@ components:
       description: >-
         Values to assign to the cloned bucket for a given source bucket. Leave
         name and description null to take the source object's values.
-        TODO: should we allow setting the destination bucket's cloning
-        instructions as well?
       type: object
       required: [destinationWorkspaceId, jobControl]
       properties:
@@ -2128,6 +2168,61 @@ components:
           description: A valid dataset location per https://cloud.google.com/bigquery/docs/locations.
           type: string
 
+    CloneControlledGcpBigQueryDatasetRequest:
+      description: >-
+        Values to assign to the cloned dataset for a given source dataset. Leave
+        name and description null to take the source object's values.
+      type: object
+      required: [destinationWorkspaceId, jobControl]
+      properties:
+        destinationWorkspaceId:
+          description: ID of workspace to be cloned into
+          type: string
+          format: uuid
+        destinationDatasetName:
+          description: Name for destination dataset. Letters, numbers and underscores only.
+          type: string
+        cloningInstructions:
+          $ref: "#/components/schemas/CloningInstructionsEnum"
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        location:
+          description: >-
+            A valid dataset location per https://cloud.google.com/bigquery/docs/locations.
+            If null, will use source dataset's location.
+          type: string
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+    CloneControlledGcpBigQueryDatasetResult:
+      description: Result of successful BigQuery dataset clone
+      type: object
+      properties:
+        dataset:
+          $ref: '#/components/schemas/ClonedControlledGcpBigQueryDataset'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+    ClonedControlledGcpBigQueryDataset:
+      description: >-
+        Response object for clone of a BigQuery dataset. Destination workspace and
+        resource IDs are available in the bucket's metadata object.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        dataset:
+          $ref: "#/components/schemas/GcpBigQueryDatasetResource"
     DeleteControlledGcpGcsBucketRequest:
       type: object
       required: [ jobControl ]
@@ -2679,7 +2774,12 @@ components:
         application/json:
           schema:
             type: boolean
-
+    CloneControlledGcpBigQueryDatasetResponse:
+      description: response to clone BigQuery dataset operation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneControlledGcpBigQueryDatasetResult'
     # Error Responses
     BadRequest:
       description: Bad request
