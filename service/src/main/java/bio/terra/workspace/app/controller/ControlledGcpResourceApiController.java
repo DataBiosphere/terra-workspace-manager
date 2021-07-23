@@ -25,8 +25,8 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
+import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateControlledResourceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -257,11 +257,26 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
   @Override
   public ResponseEntity<ApiGcpBigQueryDatasetResource> updateBigQueryDataset(
-      UUID workspaceId, UUID resourceId, ApiUpdateControlledResourceRequestBody body) {
+      UUID workspaceId, UUID resourceId, ApiUpdateControlledGcpBigQueryDatasetRequestBody body) {
+    logger.info("Updating dataset resourceId {} workspaceId {}", resourceId, workspaceId);
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final ControlledResource resource =
+        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+    if (resource.getResourceType() != WsmResourceType.BIG_QUERY_DATASET) {
+      throw new InvalidControlledResourceException(
+          String.format("Resource %s is not a BigQuery Dataset", resourceId));
+    }
+    final ControlledBigQueryDatasetResource datasetResource =
+        resource.castToBigQueryDatasetResource();
+    controlledResourceService.updateBqDataset(
+        datasetResource,
+        body.getUpdateParameters(),
+        userRequest,
+        body.getName(),
+        body.getDescription());
+
+    // Retrieve and cast response to UpdateControlledGcpBigQueryDatasetResponse
     String projectId = workspaceService.getRequiredGcpProject(workspaceId);
-    controlledResourceMetadataManager.updateControlledResourceMetadata(
-        workspaceId, resourceId, body.getName(), body.getDescription(), userRequest);
     return getControlledResourceAsResponseEntity(
         workspaceId,
         resourceId,

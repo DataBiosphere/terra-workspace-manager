@@ -17,6 +17,7 @@ import bio.terra.workspace.service.crl.exception.CrlSecurityException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.services.bigquery.model.Dataset;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
@@ -165,6 +166,35 @@ public class CrlService {
     } catch (IOException ex) {
       throw new InvalidReferenceException("Error while trying to access BigQuery dataset", ex);
     }
+  }
+
+  /**
+   * Wrap the BigQuery dataset fetch in its own method. This allows unit tests to mock this service
+   * and generate an answer without actually touching BigQuery.
+   *
+   * @param bigQueryCow BigQuery client object, wrapped by CRL
+   * @param projectId Google project id where the dataset is
+   * @param datasetName name of the dataset
+   * @return the fetched Dataset object
+   */
+  public Dataset getBigQueryDataset(BigQueryCow bigQueryCow, String projectId, String datasetName)
+      throws IOException {
+    return bigQueryCow.datasets().get(projectId, datasetName).execute();
+  }
+
+  /**
+   * Wrap the BigQuery dataset patch in its own method. This allows unit tests to mock this service
+   * and generate an answer without actually touching BigQuery.
+   *
+   * @param bigQueryCow BigQuery client object, wrapped by CRL
+   * @param projectId Google project id where the dataset is
+   * @param datasetName name of the dataset
+   * @param dataset the Dataset object with its properties updated to the new values
+   */
+  public void patchBigQueryDataset(
+      BigQueryCow bigQueryCow, String projectId, String datasetName, Dataset dataset)
+      throws IOException {
+    bigQueryCow.datasets().patch(projectId, datasetName, dataset).execute();
   }
 
   /**
