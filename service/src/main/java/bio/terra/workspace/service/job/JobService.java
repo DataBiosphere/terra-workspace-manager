@@ -91,14 +91,14 @@ public class JobService {
       String jobId,
       Class<? extends Flight> flightClass,
       Object request,
-      AuthenticatedUserRequest userReq) {
+      AuthenticatedUserRequest userRequest) {
 
     // If clients provide a non-null job ID, it cannot be whitespace-only
     if (StringUtils.isWhitespace(jobId)) {
       throw new InvalidJobIdException("jobId cannot be whitespace-only.");
     }
 
-    return new JobBuilder(description, jobId, flightClass, request, userReq, this)
+    return new JobBuilder(description, jobId, flightClass, request, userRequest, this)
         .addParameter(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext())
         .addParameter(
             TracingHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY,
@@ -136,10 +136,10 @@ public class JobService {
       String jobId) {
     submit(flightClass, parameterMap, jobId);
     waitForJob(jobId);
-    AuthenticatedUserRequest userReq =
+    AuthenticatedUserRequest userRequest =
         parameterMap.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    JobResultOrException<T> resultOrException = retrieveJobResult(jobId, resultClass, userReq);
+    JobResultOrException<T> resultOrException = retrieveJobResult(jobId, resultClass, userRequest);
     if (resultOrException.getException() != null) {
       throw resultOrException.getException();
     }
@@ -187,9 +187,9 @@ public class JobService {
   }
 
   @Traced
-  public void releaseJob(String jobId, AuthenticatedUserRequest userReq) {
+  public void releaseJob(String jobId, AuthenticatedUserRequest userRequest) {
     try {
-      verifyUserAccess(jobId, userReq); // jobId=flightId
+      verifyUserAccess(jobId, userRequest); // jobId=flightId
       stairwayComponent.get().deleteFlight(jobId, false);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
@@ -275,13 +275,13 @@ public class JobService {
     }
   }
 
-  public List<ApiJobReport> enumerateJobs(int offset, int limit, AuthenticatedUserRequest userReq) {
+  public List<ApiJobReport> enumerateJobs(int offset, int limit, AuthenticatedUserRequest userRequest) {
 
     List<FlightState> flightStateList;
     try {
       FlightFilter filter = new FlightFilter();
       filter.addFilterInputParameter(
-          JobMapKeys.SUBJECT_ID.getKeyName(), FlightFilterOp.EQUAL, userReq.getSubjectId());
+          JobMapKeys.SUBJECT_ID.getKeyName(), FlightFilterOp.EQUAL, userRequest.getSubjectId());
       flightStateList = stairwayComponent.get().getFlights(offset, limit, filter);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
@@ -296,10 +296,10 @@ public class JobService {
   }
 
   @Traced
-  public ApiJobReport retrieveJob(String jobId, AuthenticatedUserRequest userReq) {
+  public ApiJobReport retrieveJob(String jobId, AuthenticatedUserRequest userRequest) {
 
     try {
-      verifyUserAccess(jobId, userReq); // jobId=flightId
+      verifyUserAccess(jobId, userRequest); // jobId=flightId
       FlightState flightState = stairwayComponent.get().getFlightState(jobId);
       return mapFlightStateToApiJobReport(flightState);
     } catch (StairwayException | InterruptedException stairwayEx) {
@@ -329,10 +329,10 @@ public class JobService {
    */
   @Traced
   public <T> JobResultOrException<T> retrieveJobResult(
-      String jobId, Class<T> resultClass, AuthenticatedUserRequest userReq) {
+      String jobId, Class<T> resultClass, AuthenticatedUserRequest userRequest) {
 
     try {
-      verifyUserAccess(jobId, userReq); // jobId=flightId
+      verifyUserAccess(jobId, userRequest); // jobId=flightId
       return retrieveJobResultWorker(jobId, resultClass);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
@@ -351,10 +351,10 @@ public class JobService {
    * return a ApiJobReport without a result or error.
    */
   public <T> AsyncJobResult<T> retrieveAsyncJobResult(
-      String jobId, Class<T> resultClass, AuthenticatedUserRequest userReq) {
+      String jobId, Class<T> resultClass, AuthenticatedUserRequest userRequest) {
     try {
-      verifyUserAccess(jobId, userReq); // jobId=flightId
-      ApiJobReport jobReport = retrieveJob(jobId, userReq);
+      verifyUserAccess(jobId, userRequest); // jobId=flightId
+      ApiJobReport jobReport = retrieveJob(jobId, userRequest);
       if (jobReport.getStatus().equals(StatusEnum.RUNNING)) {
         return new AsyncJobResult<T>().jobReport(jobReport);
       }
@@ -419,13 +419,13 @@ public class JobService {
     return resultMap;
   }
 
-  private void verifyUserAccess(String jobId, AuthenticatedUserRequest userReq) {
+  private void verifyUserAccess(String jobId, AuthenticatedUserRequest userRequest) {
     try {
       FlightState flightState = stairwayComponent.get().getFlightState(jobId);
       FlightMap inputParameters = flightState.getInputParameters();
       String flightSubjectId =
           inputParameters.get(JobMapKeys.SUBJECT_ID.getKeyName(), String.class);
-      if (!StringUtils.equals(flightSubjectId, userReq.getSubjectId())) {
+      if (!StringUtils.equals(flightSubjectId, userRequest.getSubjectId())) {
         throw new JobUnauthorizedException("Unauthorized");
       }
     } catch (DatabaseOperationException | InterruptedException ex) {

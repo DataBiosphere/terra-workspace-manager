@@ -54,9 +54,9 @@ public abstract class ReferencedResource extends WsmResource {
    * type. This call will impersonate a user via the provided credentials.
    *
    * @param context A FlightBeanBag holding Service objects for talking to various external services
-   * @param userReq Credentials of the user to impersonate for validation
+   * @param userRequest Credentials of the user to impersonate for validation
    */
-  public abstract boolean checkAccess(FlightBeanBag context, AuthenticatedUserRequest userReq);
+  public abstract boolean checkAccess(FlightBeanBag context, AuthenticatedUserRequest userRequest);
 
   private void validateSubclass(WsmResourceType expectedType) {
     if (getResourceType() != expectedType) {

@@ -69,7 +69,7 @@ public class WorkspaceService {
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
-  public UUID createWorkspace(WorkspaceRequest workspaceRequest, AuthenticatedUserRequest userReq) {
+  public UUID createWorkspace(WorkspaceRequest workspaceRequest, AuthenticatedUserRequest userRequest) {
 
     String description = "Create workspace " + workspaceRequest.workspaceId().toString();
     JobBuilder createJob =
@@ -79,7 +79,7 @@ public class WorkspaceService {
                 UUID.randomUUID().toString(),
                 WorkspaceCreateFlight.class,
                 null,
-                userReq)
+                userRequest)
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceRequest.workspaceId().toString());
     if (workspaceRequest.spendProfileId().isPresent()) {
@@ -110,20 +110,20 @@ public class WorkspaceService {
    * <p>Returns the Workspace object if it exists and the user is permitted to perform the specified
    * action.
    *
-   * @param userReq the user's authenticated request
+   * @param userRequest the user's authenticated request
    * @param workspaceId id of the workspace in question
    * @param action the action to authorize against the workspace
    * @return the workspace, if it exists and the user is permitted to perform the specified action.
    */
   @Traced
   public Workspace validateWorkspaceAndAction(
-      AuthenticatedUserRequest userReq, UUID workspaceId, String action) {
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String action) {
     Workspace workspace =
         DbRetryUtils.throwIfInterrupted(() -> workspaceDao.getWorkspace(workspaceId));
     SamService.rethrowIfSamInterrupted(
         () ->
             samService.checkAuthz(
-                userReq, SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), action),
+                userRequest, SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), action),
         "checkAuthz");
     return workspace;
   }
@@ -131,23 +131,23 @@ public class WorkspaceService {
   /**
    * List all workspaces a user has read access to.
    *
-   * @param userReq Authentication object for the caller
+   * @param userRequest Authentication object for the caller
    * @param offset The number of items to skip before starting to collect the result set.
    * @param limit The maximum number of items to return.
    */
   @Traced
-  public List<Workspace> listWorkspaces(AuthenticatedUserRequest userReq, int offset, int limit) {
+  public List<Workspace> listWorkspaces(AuthenticatedUserRequest userRequest, int offset, int limit) {
     List<UUID> samWorkspaceIds =
         SamService.rethrowIfSamInterrupted(
-            () -> samService.listWorkspaceIds(userReq), "listWorkspaceIds");
+            () -> samService.listWorkspaceIds(userRequest), "listWorkspaceIds");
     return DbRetryUtils.throwIfInterrupted(
         () -> workspaceDao.getWorkspacesMatchingList(samWorkspaceIds, offset, limit));
   }
 
   /** Retrieves an existing workspace by ID */
   @Traced
-  public Workspace getWorkspace(UUID id, AuthenticatedUserRequest userReq) {
-    return validateWorkspaceAndAction(userReq, id, SamConstants.SAM_WORKSPACE_READ_ACTION);
+  public Workspace getWorkspace(UUID id, AuthenticatedUserRequest userRequest) {
+    return validateWorkspaceAndAction(userRequest, id, SamConstants.SAM_WORKSPACE_READ_ACTION);
   }
 
   /**
@@ -159,11 +159,11 @@ public class WorkspaceService {
    * @param description description to change - may be null
    */
   public Workspace updateWorkspace(
-      AuthenticatedUserRequest userReq,
+      AuthenticatedUserRequest userRequest,
       UUID workspaceId,
       @Nullable String name,
       @Nullable String description) {
-    validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     DbRetryUtils.throwIfInterrupted(
         () -> workspaceDao.updateWorkspace(workspaceId, name, description));
     return DbRetryUtils.throwIfInterrupted(() -> workspaceDao.getWorkspace(workspaceId));
@@ -171,9 +171,9 @@ public class WorkspaceService {
 
   /** Delete an existing workspace by ID. */
   @Traced
-  public void deleteWorkspace(UUID id, AuthenticatedUserRequest userReq) {
+  public void deleteWorkspace(UUID id, AuthenticatedUserRequest userRequest) {
     Workspace workspace =
-        validateWorkspaceAndAction(userReq, id, SamConstants.SAM_WORKSPACE_DELETE_ACTION);
+        validateWorkspaceAndAction(userRequest, id, SamConstants.SAM_WORKSPACE_DELETE_ACTION);
 
     String description = "Delete workspace " + id;
     JobBuilder deleteJob =
@@ -183,7 +183,7 @@ public class WorkspaceService {
                 UUID.randomUUID().toString(),
                 WorkspaceDeleteFlight.class,
                 null, // Delete does not have a useful request body
-                userReq)
+                userRequest)
             .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, id.toString())
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
@@ -196,11 +196,11 @@ public class WorkspaceService {
    * @param workspaceId workspace in which to create the context
    * @param jobId called-supplied job id of the async job
    * @param resultPath endpoint where the result of the completed job can be retrieved
-   * @param userReq user authentication info
+   * @param userRequest user authentication info
    */
   @Traced
   public void createGcpCloudContext(
-      UUID workspaceId, String jobId, String resultPath, AuthenticatedUserRequest userReq) {
+      UUID workspaceId, String jobId, String resultPath, AuthenticatedUserRequest userRequest) {
 
     if (!bufferServiceConfiguration.getEnabled()) {
       throw new BufferServiceDisabledException(
@@ -208,7 +208,7 @@ public class WorkspaceService {
     }
 
     Workspace workspace =
-        validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+        validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     stageService.assertMcWorkspace(workspace, "createCloudContext");
 
     // TODO: We should probably do this in a step of the job. It will be talking to another
@@ -218,7 +218,7 @@ public class WorkspaceService {
         workspace
             .getSpendProfileId()
             .orElseThrow(() -> new MissingSpendProfileException(workspaceId));
-    SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId, userReq);
+    SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId, userRequest);
     if (spendProfile.billingAccountId().isEmpty()) {
       throw new NoBillingAccountException(spendProfileId);
     }
@@ -229,7 +229,7 @@ public class WorkspaceService {
             jobId,
             CreateGcpContextFlight.class,
             /* request= */ null,
-            userReq)
+            userRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
         .addParameter(
             WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendProfile.billingAccountId().get())
@@ -242,9 +242,9 @@ public class WorkspaceService {
    * permission before deleting the cloud context.
    */
   @Traced
-  public void deleteGcpCloudContext(UUID workspaceId, AuthenticatedUserRequest userReq) {
+  public void deleteGcpCloudContext(UUID workspaceId, AuthenticatedUserRequest userRequest) {
     Workspace workspace =
-        validateWorkspaceAndAction(userReq, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+        validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     stageService.assertMcWorkspace(workspace, "deleteGcpCloudContext");
     jobService
         .newJob(
@@ -252,7 +252,7 @@ public class WorkspaceService {
             UUID.randomUUID().toString(),
             DeleteGcpContextFlight.class,
             /* request= */ null,
-            userReq)
+            userRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
         .submitAndWait(null);
   }

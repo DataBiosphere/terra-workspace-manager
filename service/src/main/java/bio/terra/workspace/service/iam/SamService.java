@@ -233,15 +233,15 @@ public class SamService {
    * specific exception types.
    */
   @Traced
-  public void createWorkspaceWithDefaults(AuthenticatedUserRequest userReq, UUID id)
+  public void createWorkspaceWithDefaults(AuthenticatedUserRequest userRequest, UUID id)
       throws InterruptedException {
-    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+    ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     // Sam will throw an error if no owner is specified, so the caller's email is required. It can
     // be looked up using the auth token if that's all the caller provides.
     String callerEmail =
-        userReq.getEmail() == null
-            ? getEmailFromToken(userReq.getRequiredToken())
-            : userReq.getEmail();
+        userRequest.getEmail() == null
+            ? getEmailFromToken(userRequest.getRequiredToken())
+            : userRequest.getEmail();
     CreateResourceRequestV2 workspaceRequest =
         new CreateResourceRequestV2()
             .resourceId(id.toString())
@@ -261,8 +261,8 @@ public class SamService {
    * Rawls, some of these workspaces will be Rawls managed and WSM will not know about them.
    */
   @Traced
-  public List<UUID> listWorkspaceIds(AuthenticatedUserRequest userReq) throws InterruptedException {
-    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+  public List<UUID> listWorkspaceIds(AuthenticatedUserRequest userRequest) throws InterruptedException {
+    ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     List<UUID> workspaceIds = new ArrayList<>();
     try {
       List<ResourceAndAccessPolicy> resourceAndPolicies =
@@ -323,18 +323,18 @@ public class SamService {
    * access to a resource. The wrapped call will perform a check for the appropriate permission in
    * Sam. This call answers the question "does user X have permission to do action Y on resource Z".
    *
-   * @param userReq Credentials of the user whose permissions are being checked
+   * @param userRequest Credentials of the user whose permissions are being checked
    * @param resourceType The Sam type of the resource being checked
    * @param resourceId The ID of the resource being checked
    * @param action The action being checked on the resource
    */
   @Traced
   public void checkAuthz(
-      AuthenticatedUserRequest userReq, String resourceType, String resourceId, String action)
+      AuthenticatedUserRequest userRequest, String resourceType, String resourceId, String action)
       throws InterruptedException {
     boolean isAuthorized =
-        isAuthorized(userReq.getRequiredToken(), resourceType, resourceId, action);
-    final String userEmail = getEmailFromToken(userReq.getRequiredToken());
+        isAuthorized(userRequest.getRequiredToken(), resourceType, resourceId, action);
+    final String userEmail = getEmailFromToken(userRequest.getRequiredToken());
     if (!isAuthorized)
       throw new UnauthorizedException(
           String.format(
@@ -356,22 +356,22 @@ public class SamService {
    * permissions directly on other workspaces.
    *
    * @param workspaceId The workspace this operation takes place in
-   * @param userReq Credentials of the user requesting this operation. Only owners have permission
+   * @param userRequest Credentials of the user requesting this operation. Only owners have permission
    *     to modify roles in a workspace.
    * @param role The role being granted.
    * @param email The user being granted a role.
    */
   @Traced
   public void grantWorkspaceRole(
-      UUID workspaceId, AuthenticatedUserRequest userReq, WsmIamRole role, String email)
+      UUID workspaceId, AuthenticatedUserRequest userRequest, WsmIamRole role, String email)
       throws InterruptedException {
     stageService.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
     checkAuthz(
-        userReq,
+        userRequest,
         SamConstants.SAM_WORKSPACE_RESOURCE,
         workspaceId.toString(),
         samActionToModifyRole(role));
-    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+    ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       SamRetry.retry(
           () ->
@@ -396,15 +396,15 @@ public class SamService {
    */
   @Traced
   public void removeWorkspaceRole(
-      UUID workspaceId, AuthenticatedUserRequest userReq, WsmIamRole role, String email)
+      UUID workspaceId, AuthenticatedUserRequest userRequest, WsmIamRole role, String email)
       throws InterruptedException {
     stageService.assertMcWorkspace(workspaceId, "removeWorkspaceRole");
     checkAuthz(
-        userReq,
+        userRequest,
         SamConstants.SAM_WORKSPACE_RESOURCE,
         workspaceId.toString(),
         samActionToModifyRole(role));
-    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+    ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       SamRetry.retry(
           () ->
@@ -427,15 +427,15 @@ public class SamService {
    * permissions directly on other workspaces.
    */
   @Traced
-  public List<RoleBinding> listRoleBindings(UUID workspaceId, AuthenticatedUserRequest userReq)
+  public List<RoleBinding> listRoleBindings(UUID workspaceId, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     stageService.assertMcWorkspace(workspaceId, "listRoleBindings");
     checkAuthz(
-        userReq,
+        userRequest,
         SamConstants.SAM_WORKSPACE_RESOURCE,
         workspaceId.toString(),
         SamConstants.SAM_WORKSPACE_READ_IAM_ACTION);
-    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+    ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       List<AccessPolicyResponseEntry> samResult =
           SamRetry.retry(
@@ -462,11 +462,11 @@ public class SamService {
    */
   @Traced
   public String syncWorkspacePolicy(
-      UUID workspaceId, WsmIamRole role, AuthenticatedUserRequest userReq)
+      UUID workspaceId, WsmIamRole role, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     String group =
         syncPolicyOnObject(
-            SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), userReq);
+            SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), userRequest);
     logger.info(
         "Synced role {} to google group {} in workspace {}", role.toSamRole(), group, workspaceId);
     return group;
@@ -485,12 +485,12 @@ public class SamService {
    *
    * @param resource The resource to sync a binding for
    * @param role The policy to sync in Sam
-   * @param userReq User authentication
+   * @param userRequest User authentication
    * @return
    */
   @Traced
   public String syncPrivateResourcePolicy(
-      ControlledResource resource, ControlledResourceIamRole role, AuthenticatedUserRequest userReq)
+      ControlledResource resource, ControlledResourceIamRole role, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     // TODO: in the future, this function will also be called for application managed resources,
     //  including app-shared. This check should be modified appropriately.
@@ -503,7 +503,7 @@ public class SamService {
             resource.getCategory().getSamResourceName(),
             resource.getResourceId().toString(),
             role.toSamRole(),
-            userReq);
+            userRequest);
     logger.info(
         "Synced role {} to google group {} for resource {}",
         role.toSamRole(),
@@ -518,16 +518,16 @@ public class SamService {
    * @param resourceTypeName The type of the Sam resource, as configured with Sam.
    * @param resourceId The Sam ID of the resource to sync a policy for
    * @param policyName The name of the policy to sync
-   * @param userReq User credentials to pass to Sam
+   * @param userRequest User credentials to pass to Sam
    * @return The Google group whose membership is synced to the specified policy.
    */
   private String syncPolicyOnObject(
       String resourceTypeName,
       String resourceId,
       String policyName,
-      AuthenticatedUserRequest userReq)
+      AuthenticatedUserRequest userRequest)
       throws InterruptedException {
-    GoogleApi googleApi = samGoogleApi(userReq.getRequiredToken());
+    GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
     try {
       // Sam makes no guarantees about what values are returned from the POST call, so we instead
       // fetch the group in a separate call after syncing.
@@ -545,17 +545,17 @@ public class SamService {
    * @param resource The WSM representation of the resource to create.
    * @param privateIamRoles The IAM role(s) to grant a private user. Required for private resources,
    *     should be null otherwise.
-   * @param userReq Credentials to use for talking to Sam.
+   * @param userRequest Credentials to use for talking to Sam.
    */
   @Traced
   public void createControlledResource(
       ControlledResource resource,
       List<ControlledResourceIamRole> privateIamRoles,
-      AuthenticatedUserRequest userReq)
+      AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     // Set up the master OWNER user in Sam for all controlled resources, if it's not already.
     initializeWsmServiceAccount();
-    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+    ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     FullyQualifiedResourceId workspaceParentFqId =
         new FullyQualifiedResourceId()
             .resourceId(resource.getWorkspaceId().toString())
@@ -571,7 +571,7 @@ public class SamService {
     // applications in the future.
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
       // The assigned user is always the current user for private resources.
-      addPrivateResourcePolicies(resourceRequest, privateIamRoles, getRequestUserEmail(userReq));
+      addPrivateResourcePolicies(resourceRequest, privateIamRoles, getRequestUserEmail(userRequest));
     }
 
     try {
@@ -599,8 +599,8 @@ public class SamService {
 
   @Traced
   public void deleteControlledResource(
-      ControlledResource resource, AuthenticatedUserRequest userReq) throws InterruptedException {
-    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+      ControlledResource resource, AuthenticatedUserRequest userRequest) throws InterruptedException {
+    ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       SamRetry.retry(
           () ->
@@ -629,8 +629,8 @@ public class SamService {
    */
   @Traced
   public List<String> listControlledResourceIds(
-      AuthenticatedUserRequest userReq, String samResourceTypeName) throws InterruptedException {
-    ResourcesApi resourceApi = samResourcesApi(userReq.getRequiredToken());
+      AuthenticatedUserRequest userRequest, String samResourceTypeName) throws InterruptedException {
+    ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     List<String> controlledResourceIds = new ArrayList<>();
     try {
       List<UserResourcesResponse> userResources =

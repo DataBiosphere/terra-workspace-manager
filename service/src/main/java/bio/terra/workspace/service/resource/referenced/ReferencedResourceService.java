@@ -41,9 +41,9 @@ public class ReferencedResourceService {
 
   @Traced
   public ReferencedResource createReferenceResource(
-      ReferencedResource resource, AuthenticatedUserRequest userReq) {
+      ReferencedResource resource, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userReq, resource.getWorkspaceId(), SamConstants.SAM_CREATE_REFERENCED_RESOURCE);
+        userRequest, resource.getWorkspaceId(), SamConstants.SAM_CREATE_REFERENCED_RESOURCE);
     resource.validate();
 
     String jobDescription =
@@ -61,7 +61,7 @@ public class ReferencedResourceService {
                 UUID.randomUUID().toString(),
                 CreateReferenceResourceFlight.class,
                 resource,
-                userReq)
+                userRequest)
             .addParameter(
                 WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE,
                 resource.getResourceType().name());
@@ -71,7 +71,7 @@ public class ReferencedResourceService {
       throw new InvalidMetadataException("Input and output resource ids do not match");
     }
 
-    return getReferenceResource(resource.getWorkspaceId(), resourceIdResult, userReq);
+    return getReferenceResource(resource.getWorkspaceId(), resourceIdResult, userRequest);
   }
 
   /**
@@ -88,9 +88,9 @@ public class ReferencedResourceService {
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
-      AuthenticatedUserRequest userReq) {
+      AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userReq, workspaceId, SamConstants.SAM_UPDATE_REFERENCED_RESOURCE);
+        userRequest, workspaceId, SamConstants.SAM_UPDATE_REFERENCED_RESOURCE);
     DbRetryUtils.throwIfInterrupted(
         () -> resourceDao.updateResource(workspaceId, resourceId, name, description));
   }
@@ -101,46 +101,46 @@ public class ReferencedResourceService {
    *
    * @param workspaceId workspace of interest
    * @param resourceId resource to delete
-   * @param userReq authenticated user
+   * @param userRequest authenticated user
    */
   public void deleteReferenceResource(
-      UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
+      UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userReq, workspaceId, SamConstants.SAM_DELETE_REFERENCED_RESOURCE);
+        userRequest, workspaceId, SamConstants.SAM_DELETE_REFERENCED_RESOURCE);
     DbRetryUtils.throwIfInterrupted(() -> resourceDao.deleteResource(workspaceId, resourceId));
   }
 
   public ReferencedResource getReferenceResource(
-      UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
+      UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return DbRetryUtils.throwIfInterrupted(
         () -> resourceDao.getResource(workspaceId, resourceId).castToReferencedResource());
   }
 
   public ReferencedResource getReferenceResourceByName(
-      UUID workspaceId, String name, AuthenticatedUserRequest userReq) {
+      UUID workspaceId, String name, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return DbRetryUtils.throwIfInterrupted(
         () -> resourceDao.getResourceByName(workspaceId, name).castToReferencedResource());
   }
 
   public List<ReferencedResource> enumerateReferences(
-      UUID workspaceId, int offset, int limit, AuthenticatedUserRequest userReq) {
+      UUID workspaceId, int offset, int limit, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return DbRetryUtils.throwIfInterrupted(
         () -> resourceDao.enumerateReferences(workspaceId, offset, limit));
   }
 
-  public boolean checkAccess(UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
+  public boolean checkAccess(UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userReq, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     ReferencedResource referencedResource =
         DbRetryUtils.throwIfInterrupted(
             () -> resourceDao.getResource(workspaceId, resourceId).castToReferencedResource());
-    return referencedResource.checkAccess(beanBag, userReq);
+    return referencedResource.checkAccess(beanBag, userRequest);
   }
 
   public ReferencedResource cloneReferencedResource(
@@ -148,7 +148,7 @@ public class ReferencedResourceService {
       UUID destinationWorkspaceId,
       @Nullable String name,
       @Nullable String description,
-      AuthenticatedUserRequest userReq) {
+      AuthenticatedUserRequest userRequest) {
     final ReferencedResource destinationResource;
     switch (sourceReferencedResource.getResourceType()) {
       case GCS_BUCKET:
@@ -182,7 +182,7 @@ public class ReferencedResourceService {
                 "Resource type %s not supported",
                 sourceReferencedResource.getResourceType().toString()));
     }
-    return createReferenceResource(destinationResource, userReq);
+    return createReferenceResource(destinationResource, userRequest);
   }
 
   /**
