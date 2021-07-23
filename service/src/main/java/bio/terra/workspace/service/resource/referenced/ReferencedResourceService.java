@@ -134,7 +134,8 @@ public class ReferencedResourceService {
         () -> resourceDao.enumerateReferences(workspaceId, offset, limit));
   }
 
-  public boolean checkAccess(UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
+  public boolean checkAccess(
+      UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     ReferencedResource referencedResource =

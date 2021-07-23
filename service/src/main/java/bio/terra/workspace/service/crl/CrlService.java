@@ -186,7 +186,8 @@ public class CrlService {
    * @return CRL {@link StorageCow} which wraps Google Cloud Storage API in the given project using
    *     provided user credentials.
    */
-  public StorageCow createStorageCow(@Nullable String projectId, AuthenticatedUserRequest userRequest) {
+  public StorageCow createStorageCow(
+      @Nullable String projectId, AuthenticatedUserRequest userRequest) {
     return createStorageCowWorker(projectId, userRequest);
   }
 

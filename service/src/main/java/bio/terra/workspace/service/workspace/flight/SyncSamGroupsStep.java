@@ -36,14 +36,17 @@ public class SyncSamGroupsStep implements Step {
     // This cannot be an ImmutableMap, as those do not deserialize properly with Jackson.
     var workspaceRoleGroupMap = new HashMap<WsmIamRole, String>();
     workspaceRoleGroupMap.put(
-        WsmIamRole.OWNER, samService.syncWorkspacePolicy(workspaceId, WsmIamRole.OWNER, userRequest));
+        WsmIamRole.OWNER,
+        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.OWNER, userRequest));
     workspaceRoleGroupMap.put(
         WsmIamRole.APPLICATION,
         samService.syncWorkspacePolicy(workspaceId, WsmIamRole.APPLICATION, userRequest));
     workspaceRoleGroupMap.put(
-        WsmIamRole.WRITER, samService.syncWorkspacePolicy(workspaceId, WsmIamRole.WRITER, userRequest));
+        WsmIamRole.WRITER,
+        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.WRITER, userRequest));
     workspaceRoleGroupMap.put(
-        WsmIamRole.READER, samService.syncWorkspacePolicy(workspaceId, WsmIamRole.READER, userRequest));
+        WsmIamRole.READER,
+        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.READER, userRequest));
 
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, workspaceRoleGroupMap);

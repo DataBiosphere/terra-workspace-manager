@@ -261,7 +261,8 @@ public class SamService {
    * Rawls, some of these workspaces will be Rawls managed and WSM will not know about them.
    */
   @Traced
-  public List<UUID> listWorkspaceIds(AuthenticatedUserRequest userRequest) throws InterruptedException {
+  public List<UUID> listWorkspaceIds(AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     List<UUID> workspaceIds = new ArrayList<>();
     try {
@@ -356,8 +357,8 @@ public class SamService {
    * permissions directly on other workspaces.
    *
    * @param workspaceId The workspace this operation takes place in
-   * @param userRequest Credentials of the user requesting this operation. Only owners have permission
-   *     to modify roles in a workspace.
+   * @param userRequest Credentials of the user requesting this operation. Only owners have
+   *     permission to modify roles in a workspace.
    * @param role The role being granted.
    * @param email The user being granted a role.
    */
@@ -466,7 +467,10 @@ public class SamService {
       throws InterruptedException {
     String group =
         syncPolicyOnObject(
-            SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole(), userRequest);
+            SamConstants.SAM_WORKSPACE_RESOURCE,
+            workspaceId.toString(),
+            role.toSamRole(),
+            userRequest);
     logger.info(
         "Synced role {} to google group {} in workspace {}", role.toSamRole(), group, workspaceId);
     return group;
@@ -490,7 +494,9 @@ public class SamService {
    */
   @Traced
   public String syncPrivateResourcePolicy(
-      ControlledResource resource, ControlledResourceIamRole role, AuthenticatedUserRequest userRequest)
+      ControlledResource resource,
+      ControlledResourceIamRole role,
+      AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     // TODO: in the future, this function will also be called for application managed resources,
     //  including app-shared. This check should be modified appropriately.
@@ -571,7 +577,8 @@ public class SamService {
     // applications in the future.
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
       // The assigned user is always the current user for private resources.
-      addPrivateResourcePolicies(resourceRequest, privateIamRoles, getRequestUserEmail(userRequest));
+      addPrivateResourcePolicies(
+          resourceRequest, privateIamRoles, getRequestUserEmail(userRequest));
     }
 
     try {
@@ -599,7 +606,8 @@ public class SamService {
 
   @Traced
   public void deleteControlledResource(
-      ControlledResource resource, AuthenticatedUserRequest userRequest) throws InterruptedException {
+      ControlledResource resource, AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       SamRetry.retry(
@@ -629,7 +637,8 @@ public class SamService {
    */
   @Traced
   public List<String> listControlledResourceIds(
-      AuthenticatedUserRequest userRequest, String samResourceTypeName) throws InterruptedException {
+      AuthenticatedUserRequest userRequest, String samResourceTypeName)
+      throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     List<String> controlledResourceIds = new ArrayList<>();
     try {

@@ -69,7 +69,8 @@ public class WorkspaceService {
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
   @Traced
-  public UUID createWorkspace(WorkspaceRequest workspaceRequest, AuthenticatedUserRequest userRequest) {
+  public UUID createWorkspace(
+      WorkspaceRequest workspaceRequest, AuthenticatedUserRequest userRequest) {
 
     String description = "Create workspace " + workspaceRequest.workspaceId().toString();
     JobBuilder createJob =
@@ -136,7 +137,8 @@ public class WorkspaceService {
    * @param limit The maximum number of items to return.
    */
   @Traced
-  public List<Workspace> listWorkspaces(AuthenticatedUserRequest userRequest, int offset, int limit) {
+  public List<Workspace> listWorkspaces(
+      AuthenticatedUserRequest userRequest, int offset, int limit) {
     List<UUID> samWorkspaceIds =
         SamService.rethrowIfSamInterrupted(
             () -> samService.listWorkspaceIds(userRequest), "listWorkspaceIds");
@@ -208,7 +210,8 @@ public class WorkspaceService {
     }
 
     Workspace workspace =
-        validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+        validateWorkspaceAndAction(
+            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     stageService.assertMcWorkspace(workspace, "createCloudContext");
 
     // TODO: We should probably do this in a step of the job. It will be talking to another
@@ -244,7 +247,8 @@ public class WorkspaceService {
   @Traced
   public void deleteGcpCloudContext(UUID workspaceId, AuthenticatedUserRequest userRequest) {
     Workspace workspace =
-        validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+        validateWorkspaceAndAction(
+            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     stageService.assertMcWorkspace(workspace, "deleteGcpCloudContext");
     jobService
         .newJob(

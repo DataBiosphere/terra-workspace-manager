@@ -275,7 +275,8 @@ public class JobService {
     }
   }
 
-  public List<ApiJobReport> enumerateJobs(int offset, int limit, AuthenticatedUserRequest userRequest) {
+  public List<ApiJobReport> enumerateJobs(
+      int offset, int limit, AuthenticatedUserRequest userRequest) {
 
     List<FlightState> flightStateList;
     try {

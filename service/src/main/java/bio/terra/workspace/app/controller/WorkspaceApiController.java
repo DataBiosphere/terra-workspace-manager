@@ -312,7 +312,8 @@ public class WorkspaceApiController implements WorkspaceApi {
       @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
       @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info("Getting snapshot data references in workspace {} for {}", id, userRequest.getEmail());
+    logger.info(
+        "Getting snapshot data references in workspace {} for {}", id, userRequest.getEmail());
     ControllerValidationUtils.validatePaginationParams(offset, limit);
     List<ReferencedResource> enumerateResult =
         referenceResourceService.enumerateReferences(id, offset, limit, userRequest);
