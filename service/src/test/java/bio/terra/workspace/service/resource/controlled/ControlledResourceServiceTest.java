@@ -504,7 +504,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castToBigQueryDatasetResource();
     assertEquals(resource, fetchedDataset);
 
-    String newName = "newResourceName";
+    String newName = "NEW_createGetUpdateDeleteBqDataset";
     String newDescription = "new resource description";
     Integer newDefaultTableLifetime = 3600;
     Integer newDefaultPartitionLifetime = 3601;
@@ -799,7 +799,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
     // update the dataset
-    String newName = "newResourceName";
+    String newName = "NEW_updateBqDatasetDo";
     String newDescription = "new resource description";
     Integer newDefaultTableLifetime = 3600;
     Integer newDefaultPartitionLifetime = 3601;
@@ -841,12 +841,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // create the dataset
     String datasetId = uniqueDatasetId();
     String location = "us-central1";
-    Integer defaultPartitionLifetime = 6400;
+    Integer initialDefaultTableLifetime = 4800;
+    Integer initialDefaultPartitionLifetime = 4801;
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters()
             .datasetId(datasetId)
             .location(location)
-            .defaultTableLifetime(null);
+            .defaultTableLifetime(initialDefaultTableLifetime)
+            .defaultPartitionLifetime(initialDefaultPartitionLifetime);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
             .workspaceId(workspace.getWorkspaceId())
@@ -887,7 +889,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 resource,
                 updateParameters,
                 user.getAuthenticatedRequest(),
-                "newResourceName",
+                "NEW_updateBqDatasetUndo",
                 "new resource description"));
 
     // check the properties stored on the cloud were not updated
@@ -895,8 +897,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     Dataset cloudDataset =
         bqCow.datasets().get(projectId, createdDataset.getDatasetName()).execute();
     assertEquals(location, cloudDataset.getLocation());
-    assertNull(cloudDataset.getDefaultTableExpirationMs());
-    assertEquals(defaultPartitionLifetime * 1000, cloudDataset.getDefaultPartitionExpirationMs());
+    assertEquals(initialDefaultTableLifetime * 1000, cloudDataset.getDefaultTableExpirationMs());
+    assertEquals(
+        initialDefaultPartitionLifetime * 1000, cloudDataset.getDefaultPartitionExpirationMs());
 
     // check the properties stored in WSM were not updated
     ControlledBigQueryDatasetResource fetchedResource =
