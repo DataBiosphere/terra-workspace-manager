@@ -491,7 +491,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .datasetName(datasetId)
             .build();
     ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService.createBqDataset(
+        controlledResourceService.createBigQueryDataset(
             resource, creationParameters, Collections.emptyList(), user.getAuthenticatedRequest());
     assertEquals(resource, createdDataset);
 
@@ -579,7 +579,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
     ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService.createBqDataset(
+        controlledResourceService.createBigQueryDataset(
             resource, creationParameters, Collections.emptyList(), user.getAuthenticatedRequest());
     assertEquals(resource, createdDataset);
 
@@ -636,7 +636,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertThrows(
         InvalidResultStateException.class,
         () ->
-            controlledResourceService.createBqDataset(
+            controlledResourceService.createBigQueryDataset(
                 resource,
                 creationParameters,
                 Collections.emptyList(),
@@ -679,7 +679,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .build();
 
     ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService.createBqDataset(
+        controlledResourceService.createBigQueryDataset(
             resource, creationParameters, Collections.emptyList(), user.getAuthenticatedRequest());
     assertEquals(resource, createdDataset);
 
@@ -732,7 +732,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .build();
 
     ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService.createBqDataset(
+        controlledResourceService.createBigQueryDataset(
             resource, creationParameters, Collections.emptyList(), user.getAuthenticatedRequest());
     assertEquals(resource, createdDataset);
 
@@ -785,7 +785,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .datasetName(datasetId)
             .build();
     ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService.createBqDataset(
+        controlledResourceService.createBigQueryDataset(
             resource, creationParameters, Collections.emptyList(), user.getAuthenticatedRequest());
     assertEquals(resource, createdDataset);
 
@@ -855,7 +855,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .datasetName(datasetId)
             .build();
     ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService.createBqDataset(
+        controlledResourceService.createBigQueryDataset(
             resource, creationParameters, Collections.emptyList(), user.getAuthenticatedRequest());
     assertEquals(resource, createdDataset);
 

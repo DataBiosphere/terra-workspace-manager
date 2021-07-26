@@ -5,6 +5,7 @@
   "testConfigurationFiles": [
     "integration/BasicAuthenticated.json",
     "integration/BasicUnauthenticated.json",
+    "integration/CloneBigQueryDataset.json",
     "integration/CloneGcsBucket.json",
     "integration/CloneReferencedResources.json",
     "integration/ControlledBigQueryDatasetLifecycle.json",
