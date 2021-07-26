@@ -533,9 +533,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .get(workspace.getGcpCloudContext().get().getGcpProjectId(), datasetId)
             .execute();
     assertEquals(
-        newDefaultTableLifetime * 1000, updatedDatasetFromCloud.getDefaultTableExpirationMs());
+        newDefaultTableLifetime * 1000L, updatedDatasetFromCloud.getDefaultTableExpirationMs());
     assertEquals(
-        newDefaultPartitionLifetime * 1000,
+        newDefaultPartitionLifetime * 1000L,
         updatedDatasetFromCloud.getDefaultPartitionExpirationMs());
 
     controlledResourceService.deleteControlledResourceSync(

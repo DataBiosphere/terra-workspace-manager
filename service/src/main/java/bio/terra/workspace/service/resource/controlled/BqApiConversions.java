@@ -23,7 +23,8 @@ public class BqApiConversions {
                 fromBqExpirationTime(dataset.getDefaultPartitionExpirationMs()));
 
     // for BQ GET dataset: null = no existing expiration time
-    // for WSM PATCH BQ dataset resource: null = don't change anything, 0 = remove the existing expiration time
+    // for WSM PATCH BQ dataset resource: null = don't change anything, 0 = remove the existing
+    // expiration time
     // since we're trying to preserve the exiting state in case we need to put it back during an
     // undo, convert an existing null expiration time to a 0, so that it gets removed again
     if (updateParams.getDefaultTableLifetime() == null) {

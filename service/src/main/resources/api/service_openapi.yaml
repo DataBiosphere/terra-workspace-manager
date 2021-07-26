@@ -2182,20 +2182,20 @@ components:
           type: string
           required: true
         defaultTableLifetime:
-          description: Default lifetime (in seconds) for newly created tables.
+          description: Default lifetime (in seconds) for newly created tables. Specify zero (0) to unset an existing value.
           type: integer
         defaultPartitionLifetime:
-          description: Default lifetime (in seconds) for partitions in newly created partitioned tables.
+          description: Default lifetime (in seconds) for partitions in newly created partitioned tables. Specify zero (0) to unset an existing value.
           type: integer
     GcpBigQueryDatasetUpdateParameters:
       description: >-
         Parameters that may be changed by a user. Location and dataset id are fixed upon create.
       properties:
         defaultTableLifetime:
-          description: Default lifetime (in seconds) for newly created tables.
+          description: Default lifetime (in seconds) for newly created tables. Specify zero (0) to unset an existing value.
           type: integer
         defaultPartitionLifetime:
-          description: Default lifetime (in seconds) for partitions in newly created partitioned tables.
+          description: Default lifetime (in seconds) for partitions in newly created partitioned tables. Specify zero (0) to unset an existing value.
           type: integer
 
     CloneControlledGcpBigQueryDatasetRequest:

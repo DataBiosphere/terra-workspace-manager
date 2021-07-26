@@ -25,6 +25,7 @@ import bio.terra.workspace.service.resource.controlled.flight.update.UpdateBigQu
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.services.bigquery.model.Dataset;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,10 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
   @Captor private ArgumentCaptor<Dataset> datasetCaptor;
 
   @BeforeEach
+  @SuppressFBWarnings(
+      value = "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT",
+      justification =
+          "OK to ignore return value for Mockito functions that setup mocked return values")
   public void setup() throws IOException {
     // new dataset properties
     final FlightMap inputParameters = new FlightMap();
