@@ -64,7 +64,7 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
         .getBigQueryDataset(eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class));
     doNothing()
         .when(mockCrlService)
-        .patchBigQueryDataset(
+        .updateBigQueryDataset(
             eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class), datasetCaptor.capture());
 
     final ControlledBigQueryDatasetResource datasetResource =
@@ -153,7 +153,7 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
     verify(mockCrlService, times(numTimesGetCalled))
         .getBigQueryDataset(eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class));
     verify(mockCrlService, times(numTimesUpdateCalled))
-        .patchBigQueryDataset(eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class), any());
+        .updateBigQueryDataset(eq(mockBigQueryCow), eq(PROJECT_ID), any(String.class), any());
   }
 
   /**

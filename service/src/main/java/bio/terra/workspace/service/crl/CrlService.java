@@ -191,10 +191,10 @@ public class CrlService {
    * @param datasetName name of the dataset
    * @param dataset the Dataset object with its properties updated to the new values
    */
-  public void patchBigQueryDataset(
+  public void updateBigQueryDataset(
       BigQueryCow bigQueryCow, String projectId, String datasetName, Dataset dataset)
       throws IOException {
-    bigQueryCow.datasets().patch(projectId, datasetName, dataset).execute();
+    bigQueryCow.datasets().update(projectId, datasetName, dataset).execute();
   }
 
   /**

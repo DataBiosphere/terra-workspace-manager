@@ -52,6 +52,7 @@ import com.google.api.services.bigquery.model.Dataset;
 import com.google.api.services.iam.v1.model.TestIamPermissionsRequest;
 import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -811,13 +812,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         resource, updateParameters, user.getAuthenticatedRequest(), newName, newDescription);
 
     // check the properties stored on the cloud were updated
-    BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
-    Dataset cloudDataset =
-        bqCow.datasets().get(projectId, createdDataset.getDatasetName()).execute();
-    assertEquals(location, cloudDataset.getLocation());
-    assertEquals(newDefaultTableLifetime * 1000, cloudDataset.getDefaultTableExpirationMs());
-    assertEquals(
-        newDefaultPartitionLifetime * 1000, cloudDataset.getDefaultPartitionExpirationMs());
+    validateBigQueryDatasetCloudMetadata(
+        projectId,
+        createdDataset.getDatasetName(),
+        location,
+        newDefaultTableLifetime,
+        newDefaultPartitionLifetime);
 
     // check the properties stored in WSM were updated
     ControlledBigQueryDatasetResource fetchedResource =
@@ -893,13 +893,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 "new resource description"));
 
     // check the properties stored on the cloud were not updated
-    BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
-    Dataset cloudDataset =
-        bqCow.datasets().get(projectId, createdDataset.getDatasetName()).execute();
-    assertEquals(location, cloudDataset.getLocation());
-    assertEquals(initialDefaultTableLifetime * 1000, cloudDataset.getDefaultTableExpirationMs());
-    assertEquals(
-        initialDefaultPartitionLifetime * 1000, cloudDataset.getDefaultPartitionExpirationMs());
+    validateBigQueryDatasetCloudMetadata(
+        projectId,
+        createdDataset.getDatasetName(),
+        location,
+        initialDefaultTableLifetime,
+        initialDefaultPartitionLifetime);
 
     // check the properties stored in WSM were not updated
     ControlledBigQueryDatasetResource fetchedResource =
@@ -911,5 +910,116 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .castToBigQueryDatasetResource();
     assertEquals(resource.getName(), fetchedResource.getName());
     assertEquals(resource.getDescription(), fetchedResource.getDescription());
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  public void updateBqDatasetWithUndefinedExpirationTimes() throws Exception {
+    UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
+    Workspace workspace = reusableWorkspace(user);
+    String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
+
+    // create the dataset, with expiration times initially defined
+    String datasetId = uniqueDatasetId();
+    String location = "us-central1";
+    Integer initialDefaultTableLifetime = 4800;
+    Integer initialDefaultPartitionLifetime = 4801;
+    ApiGcpBigQueryDatasetCreationParameters creationParameters =
+        new ApiGcpBigQueryDatasetCreationParameters()
+            .datasetId(datasetId)
+            .location(location)
+            .defaultTableLifetime(initialDefaultTableLifetime)
+            .defaultPartitionLifetime(initialDefaultPartitionLifetime);
+    ControlledBigQueryDatasetResource resource =
+        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
+            .workspaceId(workspace.getWorkspaceId())
+            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .datasetName(datasetId)
+            .build();
+    ControlledBigQueryDatasetResource createdDataset =
+        controlledResourceService.createBigQueryDataset(
+            resource, creationParameters, Collections.emptyList(), user.getAuthenticatedRequest());
+
+    // check the expiration times stored on the cloud are defined
+    validateBigQueryDatasetCloudMetadata(
+        projectId,
+        createdDataset.getDatasetName(),
+        location,
+        initialDefaultTableLifetime,
+        initialDefaultPartitionLifetime);
+
+    // make an update request to set the expiration times to undefined values
+    ApiGcpBigQueryDatasetUpdateParameters updateParameters =
+        new ApiGcpBigQueryDatasetUpdateParameters()
+            .defaultTableLifetime(0)
+            .defaultPartitionLifetime(0);
+    controlledResourceService.updateBqDataset(
+        resource, updateParameters, user.getAuthenticatedRequest(), null, null);
+
+    // check the expiration times stored on the cloud are now undefined
+    validateBigQueryDatasetCloudMetadata(
+        projectId, createdDataset.getDatasetName(), location, null, null);
+
+    // update just one expiration time back to a defined value
+    Integer newDefaultTableLifetime = 3600;
+    updateParameters =
+        new ApiGcpBigQueryDatasetUpdateParameters().defaultTableLifetime(newDefaultTableLifetime);
+    controlledResourceService.updateBqDataset(
+        resource, updateParameters, user.getAuthenticatedRequest(), null, null);
+    controlledResourceService.updateBqDataset(
+        resource, updateParameters, user.getAuthenticatedRequest(), null, null);
+
+    // check there is one defined and one undefined expiration value
+    validateBigQueryDatasetCloudMetadata(
+        projectId, createdDataset.getDatasetName(), location, newDefaultTableLifetime, null);
+
+    // update the other expiration time back to a defined value
+    Integer newDefaultPartitionLifetime = 3601;
+    updateParameters =
+        new ApiGcpBigQueryDatasetUpdateParameters()
+            .defaultPartitionLifetime(newDefaultPartitionLifetime);
+    controlledResourceService.updateBqDataset(
+        resource, updateParameters, user.getAuthenticatedRequest(), null, null);
+    controlledResourceService.updateBqDataset(
+        resource, updateParameters, user.getAuthenticatedRequest(), null, null);
+
+    // check the expiration times stored on the cloud are both defined again
+    validateBigQueryDatasetCloudMetadata(
+        projectId,
+        createdDataset.getDatasetName(),
+        location,
+        newDefaultTableLifetime,
+        newDefaultPartitionLifetime);
+  }
+
+  /**
+   * Lookup the location and expiration times stored on the cloud, and assert they match the given
+   * values.
+   */
+  private void validateBigQueryDatasetCloudMetadata(
+      String projectId,
+      String datasetId,
+      String location,
+      Integer defaultTableExpirationSec,
+      Integer defaultPartitionExpirationSec)
+      throws IOException {
+    BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
+    Dataset cloudDataset = bqCow.datasets().get(projectId, datasetId).execute();
+
+    assertEquals(location, cloudDataset.getLocation());
+
+    if (defaultTableExpirationSec == null) {
+      assertNull(cloudDataset.getDefaultTableExpirationMs());
+    } else {
+      assertEquals(defaultTableExpirationSec * 1000, cloudDataset.getDefaultTableExpirationMs());
+    }
+
+    if (defaultPartitionExpirationSec == null) {
+      assertNull(cloudDataset.getDefaultPartitionExpirationMs());
+    } else {
+      assertEquals(
+          defaultPartitionExpirationSec * 1000, cloudDataset.getDefaultPartitionExpirationMs());
+    }
   }
 }

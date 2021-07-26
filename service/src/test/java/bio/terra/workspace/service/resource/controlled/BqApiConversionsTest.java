@@ -27,13 +27,13 @@ public class BqApiConversionsTest extends BaseUnitTest {
   }
 
   @Test
-  public void testMillisecondsToSeconds() {
+  public void testFromBqExpirationTime() {
     assertNull(fromBqExpirationTime(null));
     assertEquals(123, fromBqExpirationTime(Long.valueOf(123000)));
   }
 
   @Test
-  public void testSecondsToMilliseconds() {
+  public void testToBqExpirationTime() {
     assertNull(toBqExpirationTime(null));
     assertEquals(456000, toBqExpirationTime(456));
   }

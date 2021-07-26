@@ -96,7 +96,7 @@ public class UpdateBigQueryDatasetStep implements Step {
             BqApiConversions.toBqExpirationTime(newDefaultPartitionLifetime));
       }
       if (defaultTableLifetimeChanged || defaultPartitionLifetimeChanged) {
-        crlService.patchBigQueryDataset(bigQueryCow, projectId, datasetId, existingDataset);
+        crlService.updateBigQueryDataset(bigQueryCow, projectId, datasetId, existingDataset);
       } else {
         logger.info(
             "Cloud attributes for Dataset {} were not changed as all inputs were null.", datasetId);

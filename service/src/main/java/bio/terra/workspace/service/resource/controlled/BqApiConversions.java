@@ -23,7 +23,7 @@ public class BqApiConversions {
                 fromBqExpirationTime(dataset.getDefaultPartitionExpirationMs()));
 
     // for BQ GET dataset: null = no existing expiration time
-    // for BQ PATCH dataset: null = don't change anything, 0 = remove the existing expiration time
+    // for WSM PATCH BQ dataset resource: null = don't change anything, 0 = remove the existing expiration time
     // since we're trying to preserve the exiting state in case we need to put it back during an
     // undo, convert an existing null expiration time to a 0, so that it gets removed again
     if (updateParams.getDefaultTableLifetime() == null) {
@@ -48,9 +48,9 @@ public class BqApiConversions {
    * Helper method to convert sec -> ms, because the GCP API uses ms and the WSM API uses sec. The
    * bq command line also uses sec.
    *
-   * <p>If the number of seconds is null or zero, then treat
+   * <p>If the number of seconds is null or zero, then treat it as an undefined expiration time.
    */
   public static Long toBqExpirationTime(@Nullable Integer sec) {
-    return sec == null ? null : Long.valueOf(sec * 1000);
+    return sec == null || sec == 0 ? null : Long.valueOf(sec * 1000);
   }
 }
