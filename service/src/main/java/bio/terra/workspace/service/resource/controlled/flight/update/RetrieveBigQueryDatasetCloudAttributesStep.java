@@ -55,10 +55,11 @@ public class RetrieveBigQueryDatasetCloudAttributesStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ioEx);
     }
 
-    // save the current attributes in the working map
-    final ApiGcpBigQueryDatasetUpdateParameters existingUpdateParameters =
+    // save the current attributes in the working map, in case something goes wrong and we need to
+    // undo the update
+    final ApiGcpBigQueryDatasetUpdateParameters updateParametersForUndo =
         BqApiConversions.toUpdateParameters(existingDataset);
-    workingMap.put(ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, existingUpdateParameters);
+    workingMap.put(ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, updateParametersForUndo);
 
     return StepResult.getStepResultSuccess();
   }

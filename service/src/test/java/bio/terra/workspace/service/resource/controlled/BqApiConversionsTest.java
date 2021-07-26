@@ -35,6 +35,7 @@ public class BqApiConversionsTest extends BaseUnitTest {
   @Test
   public void testToBqExpirationTime() {
     assertNull(toBqExpirationTime(null));
+    assertNull(toBqExpirationTime(0));
     assertEquals(456000, toBqExpirationTime(456));
   }
 

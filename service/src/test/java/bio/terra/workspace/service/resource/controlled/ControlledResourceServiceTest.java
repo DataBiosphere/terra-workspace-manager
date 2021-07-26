@@ -479,11 +479,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     String location = "us-central1";
 
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
-        new ApiGcpBigQueryDatasetCreationParameters()
-            .datasetId(datasetId)
-            .location(location)
-            .defaultTableLifetime(4800)
-            .defaultPartitionLifetime(4801);
+        new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
             .workspaceId(workspace.getWorkspaceId())
@@ -559,13 +555,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     String datasetId = uniqueDatasetId();
     String location = "us-central1";
-
+    Integer defaultTableLifetimeSec = 5900;
+    Integer defaultPartitionLifetimeSec = 5901;
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters()
             .datasetId(datasetId)
             .location(location)
-            .defaultTableLifetime(5900)
-            .defaultPartitionLifetime(5901);
+            .defaultTableLifetime(defaultTableLifetimeSec)
+            .defaultPartitionLifetime(defaultPartitionLifetimeSec);
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
             .workspaceId(workspace.getWorkspaceId())
@@ -588,8 +585,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     Dataset cloudDataset =
         bqCow.datasets().get(projectId, createdDataset.getDatasetName()).execute();
     assertEquals(location, cloudDataset.getLocation());
-    assertEquals(5900 * 1000, cloudDataset.getDefaultTableExpirationMs());
-    assertEquals(5901 * 1000, cloudDataset.getDefaultPartitionExpirationMs());
+    assertEquals(defaultTableLifetimeSec * 1000L, cloudDataset.getDefaultTableExpirationMs());
+    assertEquals(
+        defaultPartitionLifetimeSec * 1000L, cloudDataset.getDefaultPartitionExpirationMs());
 
     assertEquals(
         resource,
@@ -967,8 +965,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetUpdateParameters().defaultTableLifetime(newDefaultTableLifetime);
     controlledResourceService.updateBqDataset(
         resource, updateParameters, user.getAuthenticatedRequest(), null, null);
-    controlledResourceService.updateBqDataset(
-        resource, updateParameters, user.getAuthenticatedRequest(), null, null);
 
     // check there is one defined and one undefined expiration value
     validateBigQueryDatasetCloudMetadata(
@@ -979,8 +975,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     updateParameters =
         new ApiGcpBigQueryDatasetUpdateParameters()
             .defaultPartitionLifetime(newDefaultPartitionLifetime);
-    controlledResourceService.updateBqDataset(
-        resource, updateParameters, user.getAuthenticatedRequest(), null, null);
     controlledResourceService.updateBqDataset(
         resource, updateParameters, user.getAuthenticatedRequest(), null, null);
 
@@ -994,8 +988,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   }
 
   /**
-   * Lookup the location and expiration times stored on the cloud, and assert they match the given
-   * values.
+   * Lookup the location and expiration times stored on the cloud for a BigQuery dataset, and assert
+   * they match the given values.
    */
   private void validateBigQueryDatasetCloudMetadata(
       String projectId,

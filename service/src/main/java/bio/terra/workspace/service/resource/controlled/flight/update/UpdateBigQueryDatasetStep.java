@@ -99,7 +99,8 @@ public class UpdateBigQueryDatasetStep implements Step {
         crlService.updateBigQueryDataset(bigQueryCow, projectId, datasetId, existingDataset);
       } else {
         logger.info(
-            "Cloud attributes for Dataset {} were not changed as all inputs were null.", datasetId);
+            "Cloud attributes for Dataset {} were not changed as all inputs were null or unchanged.",
+            datasetId);
       }
       return StepResult.getStepResultSuccess();
     } catch (IOException ioEx) {
@@ -108,8 +109,8 @@ public class UpdateBigQueryDatasetStep implements Step {
   }
 
   /**
-   * Helper method to check if the default expiration time fields changed. Since this is a PATCH,
-   * not an UPDATE, a null for the new value means no update.
+   * Helper method to check if the default expiration time fields changed. Since this WSM API is a
+   * PATCH, not an UPDATE, a null for the new value means no update.
    */
   private static boolean valueChanged(Integer newVal, Integer prevVal) {
     return newVal == null ? false : !newVal.equals(prevVal);

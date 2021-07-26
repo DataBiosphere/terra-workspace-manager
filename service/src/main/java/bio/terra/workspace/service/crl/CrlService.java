@@ -183,7 +183,7 @@ public class CrlService {
   }
 
   /**
-   * Wrap the BigQuery dataset patch in its own method. This allows unit tests to mock this service
+   * Wrap the BigQuery dataset update in its own method. This allows unit tests to mock this service
    * and generate an answer without actually touching BigQuery.
    *
    * @param bigQueryCow BigQuery client object, wrapped by CRL
