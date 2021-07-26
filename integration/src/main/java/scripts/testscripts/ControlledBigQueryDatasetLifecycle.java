@@ -35,6 +35,7 @@ import com.google.cloud.bigquery.Table;
 import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.TableInfo;
 import com.google.cloud.bigquery.TableResult;
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -90,9 +91,6 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceId(), IamRole.READER);
 
-    logger.info("Waiting 15s for permissions to propagate");
-    TimeUnit.SECONDS.sleep(15);
-
     // Create a cloud context
     String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
     logger.info("Created project {}", projectId);
@@ -117,7 +115,10 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     String tableName = table.getTableId().getTable();
 
     // Workspace reader can read the table
-    var readTable = readerBqClient.getTable(table.getTableId());
+    // This is the reader's first use of cloud APIs after being added to the workspace, so we
+    // retry this operation until cloud IAM has properly synced.
+    var readTable = ClientTestUtils.getWithRetryOnException(() ->
+        readerBqClient.getTable(table.getTableId()), 20, Duration.ofSeconds(30));
     assertEquals(table, readTable);
     logger.info("Read table {} as workspace reader", tableName);
 

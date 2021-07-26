@@ -226,6 +226,11 @@ public class ClientTestUtils {
     return jobReport.getStatus().equals(JobReport.StatusEnum.RUNNING);
   }
 
+  @FunctionalInterface
+  public interface SupplierWithException<T> {
+    T get() throws Exception;
+  }
+
   /**
    * Get a result from a call that might throw an exception. Treat the exception as retryable,
    * sleep for a specific duration, and retry up to a fixed number of times. This structure
@@ -239,7 +244,7 @@ public class ClientTestUtils {
    * @throws InterruptedException
    */
   public static @Nullable <T> T getWithRetryOnException(
-      Supplier<T> supplier,
+      SupplierWithException<T> supplier,
       int numTries,
       Duration sleepDuration) throws InterruptedException {
     T result = null;
