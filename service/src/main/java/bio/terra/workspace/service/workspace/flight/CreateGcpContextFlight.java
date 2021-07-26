@@ -28,7 +28,7 @@ public class CreateGcpContextFlight extends Flight {
 
     UUID workspaceId =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    AuthenticatedUserRequest userReq =
+    AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     addStep(new GenerateProjectIdStep());
@@ -42,7 +42,7 @@ public class CreateGcpContextFlight extends Flight {
     addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()));
     addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), retryRule);
     addStep(new StoreGcpContextStep(appContext.getWorkspaceDao(), workspaceId), retryRule);
-    addStep(new SyncSamGroupsStep(appContext.getSamService(), workspaceId, userReq), retryRule);
+    addStep(new SyncSamGroupsStep(appContext.getSamService(), workspaceId, userRequest), retryRule);
     addStep(new GcpCloudSyncStep(crl.getCloudResourceManagerCow()), retryRule);
     addStep(new SetGcpContextOutputStep());
   }
