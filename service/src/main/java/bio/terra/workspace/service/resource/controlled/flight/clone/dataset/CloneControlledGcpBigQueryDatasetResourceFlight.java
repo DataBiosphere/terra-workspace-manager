@@ -33,7 +33,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
         sourceResource.castToBigQueryDatasetResource();
 
     addStep(
-        new RetrieveGcsBigQueryDatasetCloudAttributesStep(
+        new RetrieveBigQueryDatasetCloudAttributesStep(
             sourceDataset,
             flightBeanBag.getCrlService(),
             flightBeanBag.getWorkspaceService(),
@@ -45,5 +45,11 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
             flightBeanBag.getControlledResourceService(),
             userReq,
             flightBeanBag.getWorkspaceService()));
+    addStep(
+        new SetDatasetRolesStep(
+            sourceDataset,
+            flightBeanBag.getWorkspaceService(),
+            flightBeanBag.getDatasetCloneRolesComponent()));
+    addStep(new CreateDatasetTransferConfigStep(sourceDataset));
   }
 }

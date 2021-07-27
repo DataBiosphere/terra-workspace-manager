@@ -34,7 +34,7 @@ public class RemoveBucketRolesStep implements Step {
       return StepResult.getStepResultSuccess();
     }
 
-    bucketCloneRolesService.removeAllBucketRoles(workingMap);
+    bucketCloneRolesService.removeAllAddedBucketRoles(workingMap);
     return StepResult.getStepResultSuccess();
   }
 

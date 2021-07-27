@@ -95,7 +95,7 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
     final String clonedDatasetDescription = "Clone of " + destinationDatasetName;
     final String jobId = UUID.randomUUID().toString();
     final CloneControlledGcpBigQueryDatasetRequest cloneRequest = new CloneControlledGcpBigQueryDatasetRequest()
-        .cloningInstructions(CloningInstructionsEnum.DEFINITION)
+        .cloningInstructions(CloningInstructionsEnum.RESOURCE)
         .description(clonedDatasetDescription)
         .location(null) // keep same
         .destinationWorkspaceId(destinationWorkspaceId)
@@ -133,7 +133,7 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
 
     // unwrap the result one layer at a time
     final ClonedControlledGcpBigQueryDataset clonedControlledGcpBigQueryDataset = cloneResult.getDataset();
-    assertEquals(CloningInstructionsEnum.DEFINITION, clonedControlledGcpBigQueryDataset.getEffectiveCloningInstructions());
+    assertEquals(CloningInstructionsEnum.RESOURCE, clonedControlledGcpBigQueryDataset.getEffectiveCloningInstructions());
 
     final GcpBigQueryDatasetResource clonedResource = clonedControlledGcpBigQueryDataset.getDataset();
     assertEquals(sourceDataset.getMetadata().getCloningInstructions(), clonedResource.getMetadata().getCloningInstructions());

@@ -46,10 +46,9 @@ public final class CreateStorageTransferServiceJobStep implements Step {
 
     // Get source & destination bucket input values
     final BucketCloneInputs sourceInputs =
-        workingMap.get(ControlledResourceKeys.SOURCE_BUCKET_CLONE_INPUTS, BucketCloneInputs.class);
+        workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, BucketCloneInputs.class);
     final BucketCloneInputs destinationInputs =
-        workingMap.get(
-            ControlledResourceKeys.DESTINATION_BUCKET_CLONE_INPUTS, BucketCloneInputs.class);
+        workingMap.get(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, BucketCloneInputs.class);
     logger.info(
         "Starting data copy from source bucket \n\t{}\nto destination\n\t{}",
         sourceInputs,
