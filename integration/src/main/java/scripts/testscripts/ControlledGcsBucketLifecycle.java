@@ -146,12 +146,8 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
         new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceId(), IamRole.READER);
     logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceId());
 
-    // TODO(PF-643): this should happen inside WSM.
     Blob readerRetrievedFile = ClientTestUtils
-        .getWithRetryOnException(() ->
-            readerStorageClient.get(blobId),
-            20,
-            Duration.ofSeconds(30));
+        .getWithRetryOnException(() -> readerStorageClient.get(blobId));
     assertNotNull(readerRetrievedFile);
     assertEquals(createdFile.getBlobId(), readerRetrievedFile.getBlobId());
     logger.info("Read existing blob {} from bucket as reader", retrievedFile.getBlobId());

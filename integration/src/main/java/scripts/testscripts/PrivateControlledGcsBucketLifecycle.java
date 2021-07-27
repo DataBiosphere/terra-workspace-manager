@@ -35,6 +35,7 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -101,12 +102,11 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     logger.info(
         "Added {} as a writer to workspace {}", privateResourceUser.userEmail, getWorkspaceId());
 
-    // TODO(PF-643): this should happen inside WSM.
-    logger.info("Waiting 15s for permissions to propagate");
-    TimeUnit.SECONDS.sleep(15);
-
     // Create a private bucket, which privateResourceUser assigns to themself.
-    CreatedControlledGcpGcsBucket bucket = createPrivateBucket(privateUserResourceApi);
+    // Cloud IAM permissions may take several minutes to sync, so we retry this operation until
+    // it succeeds.
+    CreatedControlledGcpGcsBucket bucket = ClientTestUtils.getWithRetryOnException(() ->
+        createPrivateBucket(privateUserResourceApi));
     UUID resourceId = bucket.getResourceId();
 
     // Retrieve the bucket resource from WSM
