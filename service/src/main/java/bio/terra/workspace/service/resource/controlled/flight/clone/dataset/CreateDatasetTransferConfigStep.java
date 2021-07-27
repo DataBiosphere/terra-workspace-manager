@@ -11,10 +11,10 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import com.google.cloud.bigquery.datatransfer.v1.CreateTransferConfigRequest;
 import com.google.cloud.bigquery.datatransfer.v1.DataTransferServiceClient;
-import com.google.cloud.bigquery.datatransfer.v1.StartManualTransferRunsRequest;
+import com.google.cloud.bigquery.datatransfer.v1.ProjectName;
 import com.google.cloud.bigquery.datatransfer.v1.TransferConfig;
+import com.google.cloud.bigquery.datatransfer.v1.TransferConfigName;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import java.io.IOException;
@@ -53,40 +53,41 @@ public class CreateDatasetTransferConfigStep implements Step {
             String.class);
 
     final String transferConfigName =
-        buildConfigName(controlPlaneProjectId, location, flightContext.getFlightId());
+        TransferConfigName.ofProjectLocationTransferConfigName(
+                controlPlaneProjectId, location, flightContext.getFlightId())
+            .toString();
 
-    try {
-      final DataTransferServiceClient dataTransferServiceClient =
-          DataTransferServiceClient.create();
+    try (DataTransferServiceClient dataTransferServiceClient = DataTransferServiceClient.create()) {
       final Map<String, Value> params = new HashMap<>();
       params.put(
           "source_project_id",
-          Value.newBuilder().setStringValue(sourceInputs.getProjectId()).build());
+          Value.newBuilder()
+              .setStringValue(ProjectName.of(sourceInputs.getProjectId()).toString())
+              .build());
       params.put(
           "source_dataset_id",
-          Value.newBuilder().setStringValue(sourceInputs.getDatasetName()).build());
-
-      TransferConfig inputTransferConfig =
+          Value.newBuilder().setStringValue(sourceInputs.getDatasetId()).build());
+      final TransferConfig inputTransferConfig =
           TransferConfig.newBuilder()
-              .setDestinationDatasetId(destinationInputs.getDatasetName())
+              .setDestinationDatasetId(destinationInputs.getDatasetId())
               .setName(transferConfigName)
               .setDisplayName("Dataset Clone")
               .setParams(Struct.newBuilder().putAllFields(params).build())
+              //              .setDataSourceId("cross_region_copy")
               //              .setSchedule(buildSchedule())
-              .setName(flightContext.getFlightId())
               .build();
-      // TODO: check if the transfer already exists
-      CreateTransferConfigRequest request =
-          CreateTransferConfigRequest.newBuilder()
-              .setParent(destinationInputs.getProjectId())
-              .setTransferConfig(inputTransferConfig)
-              .build();
-      TransferConfig createdConfig = dataTransferServiceClient.createTransferConfig(request);
-      StartManualTransferRunsRequest manualTransferRunsRequest =
-          StartManualTransferRunsRequest.newBuilder().setParent(createdConfig.getName()).build();
-
-      dataTransferServiceClient.startManualTransferRuns(manualTransferRunsRequest);
-
+      final TransferConfig createdConfig =
+          dataTransferServiceClient.createTransferConfig(
+              ProjectName.of(destinationInputs.getProjectId()).toString(), inputTransferConfig);
+      final String dataSourceId = createdConfig.getDataSourceId(); // FIXME
+      //      final StartManualTransferRunsRequest manualTransferRunsRequest =
+      //
+      // StartManualTransferRunsRequest.newBuilder().setParent(createdConfig.getName()).build();
+      //
+      //      final StartManualTransferRunsResponse response =
+      //          dataTransferServiceClient.startManualTransferRuns(manualTransferRunsRequest);
+      //      final List<TransferRun> runs = response.getRunsList();
+      //      final int runsCount = response.getRunsCount();
     } catch (IOException | RuntimeException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
@@ -96,11 +97,6 @@ public class CreateDatasetTransferConfigStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     return StepResult.getStepResultSuccess();
-  }
-
-  private String buildConfigName(String projectName, String location, String configId) {
-    return String.format(
-        "projects/%s/locations/%s/transferConfigs/%s", projectName, location, configId);
   }
 
   private String buildSchedule() {

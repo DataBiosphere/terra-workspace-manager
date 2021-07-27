@@ -48,4 +48,13 @@ public class DatasetCloneInputs {
         + roleNames
         + '}';
   }
+
+  /**
+   * The dataset ID includes the project name.
+   *
+   * @return
+   */
+  public String getDatasetId() {
+    return String.format("projects/%s/datasets/%s", getProjectId(), getDatasetName());
+  }
 }

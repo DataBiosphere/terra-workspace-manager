@@ -44,7 +44,7 @@ dependencies {
     constraints {
         implementation 'com.google.guava:guava:30.1.1-jre' // "-jre" for Java 8 or higher
     }
-    implementation platform('com.google.cloud:libraries-bom:20.2.0')
+    implementation platform('com.google.cloud:libraries-bom:20.9.0')
     implementation group: "com.google.auto.value", name: "auto-value-annotations"
     implementation group: "com.google.guava", name:"guava"
 
