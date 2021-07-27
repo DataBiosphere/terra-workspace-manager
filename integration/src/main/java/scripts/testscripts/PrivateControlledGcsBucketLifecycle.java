@@ -106,7 +106,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     // Cloud IAM permissions may take several minutes to sync, so we retry this operation until
     // it succeeds.
     CreatedControlledGcpGcsBucket bucket = ClientTestUtils.getWithRetryOnException(() ->
-        createPrivateBucket(privateUserResourceApi), 20, Duration.ofSeconds(30));
+        createPrivateBucket(privateUserResourceApi));
     UUID resourceId = bucket.getResourceId();
 
     // Retrieve the bucket resource from WSM

@@ -118,7 +118,7 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     // This is the reader's first use of cloud APIs after being added to the workspace, so we
     // retry this operation until cloud IAM has properly synced.
     var readTable = ClientTestUtils.getWithRetryOnException(() ->
-        readerBqClient.getTable(table.getTableId()), 20, Duration.ofSeconds(30));
+        readerBqClient.getTable(table.getTableId()));
     assertEquals(table, readTable);
     logger.info("Read table {} as workspace reader", tableName);
 

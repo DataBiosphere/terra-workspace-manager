@@ -233,21 +233,19 @@ public class ClientTestUtils {
 
   /**
    * Get a result from a call that might throw an exception. Treat the exception as retryable,
-   * sleep for a specific duration, and retry up to a fixed number of times. This structure
-   * is useful for situations where we are waiting on a cloud IAM permission change to take effect.
+   * sleep for 15 seconds, and retry up to 40 times. This structure is useful for situations where
+   * we are waiting on a cloud IAM permission change to take effect.
    * @param supplier - code returning the result or throwing an exception
-   * @param numTries - number of times to retry the operation
-   * @param sleepDuration - sleep time between attempts
    * @param <T> - type of result
    * @return - result from supplier, the first time it doesn't throw, or null if all tries have been
    *     exhausted
    * @throws InterruptedException
    */
   public static @Nullable <T> T getWithRetryOnException(
-      SupplierWithException<T> supplier,
-      int numTries,
-      Duration sleepDuration) throws InterruptedException {
+      SupplierWithException<T> supplier) throws InterruptedException {
     T result = null;
+    int numTries = 40;
+    Duration sleepDuration = Duration.ofSeconds(15);
     while (numTries > 0) {
       try {
         // read blob as second user
