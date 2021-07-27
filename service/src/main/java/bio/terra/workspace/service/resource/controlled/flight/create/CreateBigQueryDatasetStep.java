@@ -14,7 +14,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.BqApiConversions;
+import bio.terra.workspace.service.resource.controlled.BigQueryApiConversions;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -76,9 +76,10 @@ public class CreateBigQueryDatasetStep implements Step {
             .setDatasetReference(datasetId)
             .setLocation(creationParameters.getLocation())
             .setDefaultTableExpirationMs(
-                BqApiConversions.toBqExpirationTime(creationParameters.getDefaultTableLifetime()))
+                BigQueryApiConversions.toBqExpirationTime(
+                    creationParameters.getDefaultTableLifetime()))
             .setDefaultPartitionExpirationMs(
-                BqApiConversions.toBqExpirationTime(
+                BigQueryApiConversions.toBqExpirationTime(
                     creationParameters.getDefaultPartitionLifetime()))
             .setAccess(accessConfiguration);
 

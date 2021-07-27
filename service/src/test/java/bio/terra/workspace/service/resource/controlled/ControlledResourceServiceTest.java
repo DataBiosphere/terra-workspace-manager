@@ -987,6 +987,62 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         newDefaultPartitionLifetime);
   }
 
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  public void updateBqDatasetWithInvalidExpirationTimes() throws Exception {
+    UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
+    Workspace workspace = reusableWorkspace(user);
+    String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
+
+    // create the dataset, with expiration times initially undefined
+    String datasetId = uniqueDatasetId();
+    String location = "us-central1";
+    ApiGcpBigQueryDatasetCreationParameters creationParameters =
+        new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
+    ControlledBigQueryDatasetResource resource =
+        ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
+            .workspaceId(workspace.getWorkspaceId())
+            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .datasetName(datasetId)
+            .build();
+    ControlledBigQueryDatasetResource createdDataset =
+        controlledResourceService.createBigQueryDataset(
+            resource, creationParameters, Collections.emptyList(), user.getAuthenticatedRequest());
+
+    // make an update request to set the table expiration time to an invalid value (<3600)
+    final ApiGcpBigQueryDatasetUpdateParameters updateParameters =
+        new ApiGcpBigQueryDatasetUpdateParameters()
+            .defaultTableLifetime(3000)
+            .defaultPartitionLifetime(3601);
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            controlledResourceService.updateBqDataset(
+                resource, updateParameters, user.getAuthenticatedRequest(), null, null));
+
+    // check the expiration times stored on the cloud are still undefined, because the update above
+    // failed
+    validateBigQueryDatasetCloudMetadata(
+        projectId, createdDataset.getDatasetName(), location, null, null);
+
+    // make another update request to set the partition expiration time to an invalid value (<0)
+    final ApiGcpBigQueryDatasetUpdateParameters updateParameters2 =
+        new ApiGcpBigQueryDatasetUpdateParameters()
+            .defaultTableLifetime(3600)
+            .defaultPartitionLifetime(-2);
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            controlledResourceService.updateBqDataset(
+                resource, updateParameters2, user.getAuthenticatedRequest(), null, null));
+
+    // check the expiration times stored on the cloud are still undefined, because the update above
+    // failed
+    validateBigQueryDatasetCloudMetadata(
+        projectId, createdDataset.getDatasetName(), location, null, null);
+  }
+
   /**
    * Lookup the location and expiration times stored on the cloud for a BigQuery dataset, and assert
    * they match the given values.

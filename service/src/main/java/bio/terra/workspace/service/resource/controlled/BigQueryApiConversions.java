@@ -5,9 +5,9 @@ import com.google.api.services.bigquery.model.Dataset;
 import javax.annotation.Nullable;
 
 /** Utility methods for converting BQ dataset objects between WSM formats and GCP formats. */
-public class BqApiConversions {
+public class BigQueryApiConversions {
 
-  private BqApiConversions() {}
+  private BigQueryApiConversions() {}
 
   /**
    * Build update parameters from an existing BQ dataset object.

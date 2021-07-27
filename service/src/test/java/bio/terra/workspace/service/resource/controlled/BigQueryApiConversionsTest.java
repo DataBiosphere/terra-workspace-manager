@@ -2,9 +2,9 @@ package bio.terra.workspace.service.resource.controlled;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BQ_DATASET_WITHOUT_EXPIRATION;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BQ_DATASET_WITH_EXPIRATION;
-import static bio.terra.workspace.service.resource.controlled.BqApiConversions.fromBqExpirationTime;
-import static bio.terra.workspace.service.resource.controlled.BqApiConversions.toBqExpirationTime;
-import static bio.terra.workspace.service.resource.controlled.BqApiConversions.toUpdateParameters;
+import static bio.terra.workspace.service.resource.controlled.BigQueryApiConversions.fromBqExpirationTime;
+import static bio.terra.workspace.service.resource.controlled.BigQueryApiConversions.toBqExpirationTime;
+import static bio.terra.workspace.service.resource.controlled.BigQueryApiConversions.toUpdateParameters;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -12,7 +12,7 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import org.junit.jupiter.api.Test;
 
-public class BqApiConversionsTest extends BaseUnitTest {
+public class BigQueryApiConversionsTest extends BaseUnitTest {
   @Test
   public void testToUpdateParameters() {
     final ApiGcpBigQueryDatasetUpdateParameters updateParameters1 =

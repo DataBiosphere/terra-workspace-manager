@@ -19,7 +19,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.controlled.BqApiConversions;
+import bio.terra.workspace.service.resource.controlled.BigQueryApiConversions;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateBigQueryDatasetStep;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -147,9 +147,9 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
   private void mockExistingDatasetExpirationTimes(ApiGcpBigQueryDatasetUpdateParameters params) {
     mockExistingDataset
         .setDefaultTableExpirationMs(
-            BqApiConversions.toBqExpirationTime(params.getDefaultTableLifetime()))
+            BigQueryApiConversions.toBqExpirationTime(params.getDefaultTableLifetime()))
         .setDefaultPartitionExpirationMs(
-            BqApiConversions.toBqExpirationTime(params.getDefaultPartitionLifetime()));
+            BigQueryApiConversions.toBqExpirationTime(params.getDefaultPartitionLifetime()));
   }
 
   /** Assert that the step called BigQuery get() and update() the specified number of times. */

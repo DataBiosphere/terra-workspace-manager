@@ -9,7 +9,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.controlled.BqApiConversions;
+import bio.terra.workspace.service.resource.controlled.BigQueryApiConversions;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -48,8 +48,10 @@ public class RetrieveBigQueryDatasetCloudAttributesStep implements Step {
     try {
       existingDataset = bigQueryCow.datasets().get(projectId, datasetId).execute();
       if (existingDataset == null) {
-        logger.info("No dataset found with id {}.", datasetId);
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, null);
+        IllegalStateException isEx =
+            new IllegalStateException("No dataset found with id " + datasetId);
+        logger.error("No dataset found with id {}.", datasetId, isEx);
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, isEx);
       }
     } catch (IOException ioEx) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ioEx);
@@ -58,7 +60,7 @@ public class RetrieveBigQueryDatasetCloudAttributesStep implements Step {
     // save the current attributes in the working map, in case something goes wrong and we need to
     // undo the update
     final ApiGcpBigQueryDatasetUpdateParameters updateParametersForUndo =
-        BqApiConversions.toUpdateParameters(existingDataset);
+        BigQueryApiConversions.toUpdateParameters(existingDataset);
     workingMap.put(ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, updateParametersForUndo);
 
     return StepResult.getStepResultSuccess();

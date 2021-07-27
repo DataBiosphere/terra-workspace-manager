@@ -10,6 +10,7 @@ import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.cloudres.google.storage.StorageCow;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.app.configuration.external.CrlConfiguration;
 import bio.terra.workspace.service.crl.exception.CrlInternalException;
 import bio.terra.workspace.service.crl.exception.CrlNotInUseException;
@@ -194,7 +195,15 @@ public class CrlService {
   public void updateBigQueryDataset(
       BigQueryCow bigQueryCow, String projectId, String datasetName, Dataset dataset)
       throws IOException {
-    bigQueryCow.datasets().update(projectId, datasetName, dataset).execute();
+    try {
+      bigQueryCow.datasets().update(projectId, datasetName, dataset).execute();
+    } catch (GoogleJsonResponseException gjEx) {
+      if (gjEx.getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
+        throw new BadRequestException(
+            "Error updating BigQuery dataset " + projectId + ", " + datasetName, gjEx);
+      }
+      throw gjEx;
+    }
   }
 
   /**

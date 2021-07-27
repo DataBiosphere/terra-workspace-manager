@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.update;
 
-import static bio.terra.workspace.service.resource.controlled.BqApiConversions.fromBqExpirationTime;
+import static bio.terra.workspace.service.resource.controlled.BigQueryApiConversions.fromBqExpirationTime;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.UPDATE_PARAMETERS;
 
@@ -13,7 +13,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.controlled.BqApiConversions;
+import bio.terra.workspace.service.resource.controlled.BigQueryApiConversions;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.api.services.bigquery.model.Dataset;
@@ -72,8 +72,10 @@ public class UpdateBigQueryDatasetStep implements Step {
       // get the existing dataset
       Dataset existingDataset = crlService.getBigQueryDataset(bigQueryCow, projectId, datasetId);
       if (existingDataset == null) {
-        logger.info("No dataset found to update with id {}. Treating as success.", datasetId);
-        return StepResult.getStepResultSuccess();
+        IllegalStateException isEx =
+            new IllegalStateException("No dataset found to update with id " + datasetId);
+        logger.error("No dataset found to update with id {}.", datasetId, isEx);
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, isEx);
       }
 
       final Integer newDefaultTableLifetime = updateParameters.getDefaultTableLifetime();
@@ -89,11 +91,11 @@ public class UpdateBigQueryDatasetStep implements Step {
               fromBqExpirationTime(existingDataset.getDefaultPartitionExpirationMs()));
       if (defaultTableLifetimeChanged) {
         existingDataset.setDefaultTableExpirationMs(
-            BqApiConversions.toBqExpirationTime(newDefaultTableLifetime));
+            BigQueryApiConversions.toBqExpirationTime(newDefaultTableLifetime));
       }
       if (defaultPartitionLifetimeChanged) {
         existingDataset.setDefaultPartitionExpirationMs(
-            BqApiConversions.toBqExpirationTime(newDefaultPartitionLifetime));
+            BigQueryApiConversions.toBqExpirationTime(newDefaultPartitionLifetime));
       }
       if (defaultTableLifetimeChanged || defaultPartitionLifetimeChanged) {
         crlService.updateBigQueryDataset(bigQueryCow, projectId, datasetId, existingDataset);
