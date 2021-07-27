@@ -20,7 +20,7 @@ public class WorkspaceDeleteFlight extends Flight {
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
 
-    AuthenticatedUserRequest userReq =
+    AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     WorkspaceStage workspaceStage =
         WorkspaceStage.valueOf(
@@ -43,7 +43,7 @@ public class WorkspaceDeleteFlight extends Flight {
             appContext.getResourceDao(),
             workspaceId,
             /* cloudPlatform= */ null,
-            userReq),
+            userRequest),
         retryRule);
     addStep(
         new DeleteProjectStep(appContext.getCrlService(), appContext.getWorkspaceDao()), retryRule);
@@ -52,7 +52,7 @@ public class WorkspaceDeleteFlight extends Flight {
     switch (workspaceStage) {
       case MC_WORKSPACE:
         addStep(
-            new DeleteWorkspaceAuthzStep(appContext.getSamService(), userReq, workspaceId),
+            new DeleteWorkspaceAuthzStep(appContext.getSamService(), userRequest, workspaceId),
             retryRule);
         break;
       case RAWLS_WORKSPACE:

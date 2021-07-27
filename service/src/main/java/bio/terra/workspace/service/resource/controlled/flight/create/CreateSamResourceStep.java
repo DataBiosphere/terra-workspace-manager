@@ -17,7 +17,7 @@ public class CreateSamResourceStep implements Step {
   private final SamService samService;
   private final ControlledResource resource;
   private final List<ControlledResourceIamRole> privateResourceIamRole;
-  private final AuthenticatedUserRequest userReq;
+  private final AuthenticatedUserRequest userRequest;
 
   private final Logger logger = LoggerFactory.getLogger(CreateSamResourceStep.class);
 
@@ -25,23 +25,23 @@ public class CreateSamResourceStep implements Step {
       SamService samService,
       ControlledResource resource,
       List<ControlledResourceIamRole> privateResourceIamRoles,
-      AuthenticatedUserRequest userReq) {
+      AuthenticatedUserRequest userRequest) {
     this.samService = samService;
     this.resource = resource;
     this.privateResourceIamRole = privateResourceIamRoles;
-    this.userReq = userReq;
+    this.userRequest = userRequest;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    samService.createControlledResource(resource, privateResourceIamRole, userReq);
+    samService.createControlledResource(resource, privateResourceIamRole, userRequest);
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    samService.deleteControlledResource(resource, userReq);
+    samService.deleteControlledResource(resource, userRequest);
     return StepResult.getStepResultSuccess();
   }
 }

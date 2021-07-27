@@ -19,13 +19,13 @@ import org.slf4j.LoggerFactory;
 public class CreateWorkspaceAuthzStep implements Step {
 
   private final SamService samService;
-  private final AuthenticatedUserRequest userReq;
+  private final AuthenticatedUserRequest userRequest;
 
   private final Logger logger = LoggerFactory.getLogger(CreateWorkspaceAuthzStep.class);
 
-  public CreateWorkspaceAuthzStep(SamService samService, AuthenticatedUserRequest userReq) {
+  public CreateWorkspaceAuthzStep(SamService samService, AuthenticatedUserRequest userRequest) {
     this.samService = samService;
-    this.userReq = userReq;
+    this.userRequest = userRequest;
   }
 
   @Override
@@ -38,7 +38,7 @@ public class CreateWorkspaceAuthzStep implements Step {
     // possible this step already created the resource. If WSM can either read the existing Sam
     // resource or create a new one, this is considered successful.
     if (!canReadExistingWorkspace(workspaceID)) {
-      samService.createWorkspaceWithDefaults(userReq, workspaceID);
+      samService.createWorkspaceWithDefaults(userRequest, workspaceID);
     }
     return StepResult.getStepResultSuccess();
   }
@@ -48,13 +48,13 @@ public class CreateWorkspaceAuthzStep implements Step {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceID =
         UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    samService.deleteWorkspace(userReq.getRequiredToken(), workspaceID);
+    samService.deleteWorkspace(userRequest.getRequiredToken(), workspaceID);
     return StepResult.getStepResultSuccess();
   }
 
   private boolean canReadExistingWorkspace(UUID workspaceID) throws InterruptedException {
     return samService.isAuthorized(
-        userReq.getRequiredToken(),
+        userRequest.getRequiredToken(),
         SamConstants.SAM_WORKSPACE_RESOURCE,
         workspaceID.toString(),
         SamConstants.SAM_WORKSPACE_READ_ACTION);

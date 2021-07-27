@@ -16,7 +16,7 @@ public class WorkspaceCreateFlight extends Flight {
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
 
     // get data from inputs that steps need
-    AuthenticatedUserRequest userReq =
+    AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     WorkspaceStage workspaceStage =
         WorkspaceStage.valueOf(
@@ -26,10 +26,10 @@ public class WorkspaceCreateFlight extends Flight {
     // resource or not, as indicated by the workspace stage enum.
     switch (workspaceStage) {
       case MC_WORKSPACE:
-        addStep(new CreateWorkspaceAuthzStep(appContext.getSamService(), userReq));
+        addStep(new CreateWorkspaceAuthzStep(appContext.getSamService(), userRequest));
         break;
       case RAWLS_WORKSPACE:
-        addStep(new CheckSamWorkspaceAuthzStep(appContext.getSamService(), userReq));
+        addStep(new CheckSamWorkspaceAuthzStep(appContext.getSamService(), userRequest));
         break;
       default:
         throw new InternalLogicException(

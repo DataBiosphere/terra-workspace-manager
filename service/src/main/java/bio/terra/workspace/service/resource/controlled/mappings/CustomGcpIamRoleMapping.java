@@ -36,7 +36,6 @@ public class CustomGcpIamRoleMapping {
   static final ImmutableList<String> BIG_QUERY_DATASET_READER_PERMISSIONS =
       ImmutableList.of(
           "bigquery.datasets.get",
-          "bigquery.jobs.create",
           "bigquery.models.export",
           "bigquery.models.getData",
           "bigquery.models.getMetadata",

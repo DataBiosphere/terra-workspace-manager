@@ -33,9 +33,9 @@ public class DataRepoService {
     return client;
   }
 
-  private RepositoryApi repositoryApi(String instanceName, AuthenticatedUserRequest userReq) {
+  private RepositoryApi repositoryApi(String instanceName, AuthenticatedUserRequest userRequest) {
     String instanceUrl = getInstanceUrl(instanceName);
-    return new RepositoryApi(getApiClient(userReq.getRequiredToken()).setBasePath(instanceUrl));
+    return new RepositoryApi(getApiClient(userRequest.getRequiredToken()).setBasePath(instanceUrl));
   }
 
   public String getInstanceUrl(String instanceName) {
@@ -58,8 +58,8 @@ public class DataRepoService {
    */
   @Traced
   public boolean snapshotReadable(
-      String instanceName, String snapshotId, AuthenticatedUserRequest userReq) {
-    RepositoryApi repositoryApi = repositoryApi(instanceName, userReq);
+      String instanceName, String snapshotId, AuthenticatedUserRequest userRequest) {
+    RepositoryApi repositoryApi = repositoryApi(instanceName, userRequest);
 
     try {
       repositoryApi.retrieveSnapshot(snapshotId);

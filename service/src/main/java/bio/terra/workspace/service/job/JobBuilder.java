@@ -19,7 +19,7 @@ public class JobBuilder {
       String jobId,
       Class<? extends Flight> flightClass,
       Object request,
-      AuthenticatedUserRequest userReq,
+      AuthenticatedUserRequest userRequest,
       JobService jobServiceRef) {
     this.jobServiceRef = jobServiceRef;
     this.flightClass = flightClass;
@@ -29,8 +29,8 @@ public class JobBuilder {
     this.jobParameterMap = new FlightMap();
     jobParameterMap.put(JobMapKeys.DESCRIPTION.getKeyName(), description);
     jobParameterMap.put(JobMapKeys.REQUEST.getKeyName(), request);
-    jobParameterMap.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userReq);
-    jobParameterMap.put(JobMapKeys.SUBJECT_ID.getKeyName(), userReq.getSubjectId());
+    jobParameterMap.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+    jobParameterMap.put(JobMapKeys.SUBJECT_ID.getKeyName(), userRequest.getSubjectId());
   }
 
   // use addParameter method for optional parameter
