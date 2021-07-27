@@ -25,10 +25,10 @@ public class ValidateReferenceStep implements Step {
     FlightMap inputMap = flightContext.getInputParameters();
     ReferencedResource referencedResource =
         inputMap.get(JobMapKeys.REQUEST.getKeyName(), ReferencedResource.class);
-    AuthenticatedUserRequest userReq =
+    AuthenticatedUserRequest userRequest =
         inputMap.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
-    if (!referencedResource.checkAccess(beanBag, userReq)) {
+    if (!referencedResource.checkAccess(beanBag, userRequest)) {
       throw new InvalidReferenceException(
           String.format(
               "Referenced resource %s was not found or you do not have access. Verify that your reference was correctly defined and that you have access.",

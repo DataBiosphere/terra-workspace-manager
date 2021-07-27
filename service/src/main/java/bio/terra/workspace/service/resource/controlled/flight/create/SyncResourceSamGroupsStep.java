@@ -20,13 +20,13 @@ public class SyncResourceSamGroupsStep implements Step {
 
   private final SamService samService;
   private final ControlledResource resource;
-  private final AuthenticatedUserRequest userReq;
+  private final AuthenticatedUserRequest userRequest;
 
   public SyncResourceSamGroupsStep(
-      SamService samService, ControlledResource resource, AuthenticatedUserRequest userReq) {
+      SamService samService, ControlledResource resource, AuthenticatedUserRequest userRequest) {
     this.samService = samService;
     this.resource = resource;
-    this.userReq = userReq;
+    this.userRequest = userRequest;
   }
 
   @Override
@@ -36,13 +36,16 @@ public class SyncResourceSamGroupsStep implements Step {
     var resourceRoleGroupMap = new HashMap<ControlledResourceIamRole, String>();
     resourceRoleGroupMap.put(
         ControlledResourceIamRole.EDITOR,
-        samService.syncPrivateResourcePolicy(resource, ControlledResourceIamRole.EDITOR, userReq));
+        samService.syncPrivateResourcePolicy(
+            resource, ControlledResourceIamRole.EDITOR, userRequest));
     resourceRoleGroupMap.put(
         ControlledResourceIamRole.WRITER,
-        samService.syncPrivateResourcePolicy(resource, ControlledResourceIamRole.WRITER, userReq));
+        samService.syncPrivateResourcePolicy(
+            resource, ControlledResourceIamRole.WRITER, userRequest));
     resourceRoleGroupMap.put(
         ControlledResourceIamRole.READER,
-        samService.syncPrivateResourcePolicy(resource, ControlledResourceIamRole.READER, userReq));
+        samService.syncPrivateResourcePolicy(
+            resource, ControlledResourceIamRole.READER, userRequest));
 
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(ControlledResourceKeys.IAM_RESOURCE_GROUP_EMAIL_MAP, resourceRoleGroupMap);

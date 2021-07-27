@@ -25,17 +25,17 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
 
   private final ControlledBigQueryDatasetResource sourceDataset;
   private final ControlledResourceService controlledResourceService;
-  private final AuthenticatedUserRequest userReq;
+  private final AuthenticatedUserRequest userRequest;
   private final WorkspaceService workspaceService;
 
   public CopyBigQueryDatasetDefinitionStep(
       ControlledBigQueryDatasetResource sourceDataset,
       ControlledResourceService controlledResourceService,
-      AuthenticatedUserRequest userReq,
+      AuthenticatedUserRequest userRequest,
       WorkspaceService workspaceService) {
     this.sourceDataset = sourceDataset;
     this.controlledResourceService = controlledResourceService;
-    this.userReq = userReq;
+    this.userRequest = userRequest;
     this.workspaceService = workspaceService;
   }
 
@@ -105,7 +105,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
 
     final ControlledBigQueryDatasetResource clonedResource =
         controlledResourceService.createBigQueryDataset(
-            destinationResource, creationParameters, iamRoles, userReq);
+            destinationResource, creationParameters, iamRoles, userRequest);
 
     workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedResource);
     final String destinationProjectId =
@@ -136,7 +136,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
                 ControlledBigQueryDatasetResource.class);
     if (clonedDataset != null) {
       controlledResourceService.deleteControlledResourceSync(
-          clonedDataset.getWorkspaceId(), clonedDataset.getResourceId(), userReq);
+          clonedDataset.getWorkspaceId(), clonedDataset.getResourceId(), userRequest);
     }
     return StepResult.getStepResultSuccess();
   }

@@ -44,10 +44,10 @@ public class ControlledResourceMetadataManager {
       UUID resourceId,
       @Nullable String name,
       @Nullable String description,
-      AuthenticatedUserRequest userReq) {
+      AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(workspaceId, "updateControlledResource");
     validateControlledResourceAndAction(
-        userReq, workspaceId, resourceId, SamControlledResourceActions.EDIT_ACTION);
+        userRequest, workspaceId, resourceId, SamControlledResourceActions.EDIT_ACTION);
     // Name may be null if the user is not updating it in this request.
     if (name != null) {
       ValidationUtils.validateResourceName(name);
@@ -71,21 +71,21 @@ public class ControlledResourceMetadataManager {
    * <p>Returns the controlled resource object if it exists and the user is permitted to perform the
    * specified action.
    *
-   * @param userReq the user's authenticated request
+   * @param userRequest the user's authenticated request
    * @param workspaceId if of the workspace this resource exists in
    * @param resourceId id of the resource in question
    * @param action the action to authorize against the resource
    */
   @Traced
   public void validateControlledResourceAndAction(
-      AuthenticatedUserRequest userReq, UUID workspaceId, UUID resourceId, String action) {
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId, String action) {
     WsmResource resource =
         DbRetryUtils.throwIfInterrupted(() -> resourceDao.getResource(workspaceId, resourceId));
     ControlledResource controlledResource = resource.castToControlledResource();
     SamService.rethrowIfSamInterrupted(
         () ->
             samService.checkAuthz(
-                userReq,
+                userRequest,
                 controlledResource.getCategory().getSamResourceName(),
                 resourceId.toString(),
                 action),

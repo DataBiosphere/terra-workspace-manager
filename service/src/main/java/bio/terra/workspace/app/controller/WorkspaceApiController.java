@@ -94,8 +94,8 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiCreatedWorkspace> createWorkspace(
       @RequestBody ApiCreateWorkspaceRequestBody body) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info("Creating workspace {} for {}", body.getId(), userReq.getEmail());
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    logger.info("Creating workspace {} for {}", body.getId(), userRequest.getEmail());
 
     // Existing client libraries should not need to know about the stage, as they won't use any of
     // the features it gates. If stage isn't specified in a create request, we default to
@@ -114,19 +114,19 @@ public class WorkspaceApiController implements WorkspaceApi {
             .displayName(Optional.ofNullable(body.getDisplayName()))
             .description(Optional.ofNullable(body.getDescription()))
             .build();
-    UUID createdId = workspaceService.createWorkspace(internalRequest, userReq);
+    UUID createdId = workspaceService.createWorkspace(internalRequest, userRequest);
 
     ApiCreatedWorkspace responseWorkspace = new ApiCreatedWorkspace().id(createdId);
-    logger.info("Created workspace {} for {}", responseWorkspace, userReq.getEmail());
+    logger.info("Created workspace {} for {}", responseWorkspace, userRequest.getEmail());
 
     return new ResponseEntity<>(responseWorkspace, HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<ApiWorkspaceDescriptionList> listWorkspaces(Integer offset, Integer limit) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info("Listgin workspaces for {}", userReq.getEmail());
-    List<Workspace> workspaces = workspaceService.listWorkspaces(userReq, offset, limit);
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    logger.info("Listgin workspaces for {}", userRequest.getEmail());
+    List<Workspace> workspaces = workspaceService.listWorkspaces(userRequest, offset, limit);
     var response =
         new ApiWorkspaceDescriptionList()
             .workspaces(
@@ -153,11 +153,11 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiWorkspaceDescription> getWorkspace(
       @PathVariable("workspaceId") UUID id) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info("Getting workspace {} for {}", id, userReq.getEmail());
-    Workspace workspace = workspaceService.getWorkspace(id, userReq);
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    logger.info("Getting workspace {} for {}", id, userRequest.getEmail());
+    Workspace workspace = workspaceService.getWorkspace(id, userRequest);
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace);
-    logger.info("Got workspace {} for {}", desc, userReq.getEmail());
+    logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
   }
@@ -166,24 +166,24 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<ApiWorkspaceDescription> updateWorkspace(
       @PathVariable("workspaceId") UUID workspaceId,
       @RequestBody ApiUpdateWorkspaceRequestBody body) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info("Updating workspace {} for {}", workspaceId, userReq.getEmail());
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    logger.info("Updating workspace {} for {}", workspaceId, userRequest.getEmail());
     Workspace workspace =
         workspaceService.updateWorkspace(
-            userReq, workspaceId, body.getDisplayName(), body.getDescription());
+            userRequest, workspaceId, body.getDisplayName(), body.getDescription());
 
     ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace);
-    logger.info("Updated workspace {} for {}", desc, userReq.getEmail());
+    logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<Void> deleteWorkspace(@PathVariable("workspaceId") UUID id) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info("Deleting workspace {} for {}", id, userReq.getEmail());
-    workspaceService.deleteWorkspace(id, userReq);
-    logger.info("Deleted workspace {} for {}", id, userReq.getEmail());
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    logger.info("Deleting workspace {} for {}", id, userRequest.getEmail());
+    workspaceService.deleteWorkspace(id, userRequest);
+    logger.info("Deleted workspace {} for {}", id, userRequest.getEmail());
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -193,11 +193,11 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiDataReferenceDescription> createDataReference(
       @PathVariable("workspaceId") UUID id, @RequestBody ApiCreateDataReferenceRequestBody body) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info(
         "Creating data reference in workspace {} for {} with body {}",
         id,
-        userReq.getEmail(),
+        userRequest.getEmail(),
         body);
 
     ControllerValidationUtils.validate(body);
@@ -223,15 +223,15 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<ApiDataReferenceDescription> getDataReference(
       @PathVariable("workspaceId") UUID workspaceId,
       @PathVariable("referenceId") UUID referenceId) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info(
         "Getting data reference by id {} in workspace {} for {}",
         referenceId,
         workspaceId,
-        userReq.getEmail());
+        userRequest.getEmail());
 
     ReferencedResource referenceResource =
-        referenceResourceService.getReferenceResource(workspaceId, referenceId, userReq);
+        referenceResourceService.getReferenceResource(workspaceId, referenceId, userRequest);
 
     // TODO(PF-404): this endpoint's return type does not support reference types beyond snapshots.
     // Clients should migrate to type-specific endpoints, and this endpoint should be removed.
@@ -249,7 +249,7 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("workspaceId") UUID workspaceId,
       @PathVariable("referenceType") ApiReferenceTypeEnum referenceType,
       @PathVariable("name") String name) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // TODO(PF-404): this endpoint's return type does not support reference types beyond snapshots.
     // Clients should migrate to type-specific endpoints, and this endpoint should be removed.
     if (referenceType != ApiReferenceTypeEnum.DATA_REPO_SNAPSHOT) {
@@ -259,7 +259,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     ValidationUtils.validateResourceName(name);
 
     ReferencedResource referenceResource =
-        referenceResourceService.getReferenceResourceByName(workspaceId, name, userReq);
+        referenceResourceService.getReferenceResourceByName(workspaceId, name, userRequest);
     ApiDataReferenceDescription response = makeApiDataReferenceDescription(referenceResource);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
@@ -269,7 +269,7 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("workspaceId") UUID id,
       @PathVariable("referenceId") UUID referenceId,
       @RequestBody ApiUpdateDataReferenceRequestBody body) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     if (body.getName() == null && body.getDescription() == null) {
       throw new InvalidReferenceException("Must specify name or description to update.");
@@ -280,7 +280,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     }
 
     referenceResourceService.updateReferenceResource(
-        id, referenceId, body.getName(), body.getDescription(), userReq);
+        id, referenceId, body.getName(), body.getDescription(), userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -288,20 +288,20 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<Void> deleteDataReference(
       @PathVariable("workspaceId") UUID workspaceId,
       @PathVariable("referenceId") UUID referenceId) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info(
         "Deleting data reference by id {} in workspace {} for {}",
         referenceId,
         workspaceId,
-        userReq.getEmail());
+        userRequest.getEmail());
 
-    referenceResourceService.deleteReferenceResource(workspaceId, referenceId, userReq);
+    referenceResourceService.deleteReferenceResource(workspaceId, referenceId, userRequest);
 
     logger.info(
         "Deleted data reference by id {} in workspace {} for {}",
         referenceId,
         workspaceId,
-        userReq.getEmail());
+        userRequest.getEmail());
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -311,11 +311,12 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("workspaceId") UUID id,
       @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
       @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    logger.info("Getting snapshot data references in workspace {} for {}", id, userReq.getEmail());
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    logger.info(
+        "Getting snapshot data references in workspace {} for {}", id, userRequest.getEmail());
     ControllerValidationUtils.validatePaginationParams(offset, limit);
     List<ReferencedResource> enumerateResult =
-        referenceResourceService.enumerateReferences(id, offset, limit, userReq);
+        referenceResourceService.enumerateReferences(id, offset, limit, userRequest);
     // TODO(PF-404): this is a workaround until clients migrate off this endpoint.
     ApiDataReferenceList responseList = new ApiDataReferenceList();
     for (ReferencedResource resource : enumerateResult) {
@@ -397,13 +398,13 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<ApiCreateCloudContextResult> createCloudContext(
       UUID id, @Valid ApiCreateCloudContextRequest body) {
     ControllerValidationUtils.validateCloudPlatform(body.getCloudPlatform());
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String jobId = body.getJobControl().getId();
     String resultPath = ControllerUtils.getAsyncResultEndpoint(request, jobId);
 
     // For now, the cloud type is always GCP and that is guaranteed in the validate.
-    workspaceService.createGcpCloudContext(id, jobId, resultPath, userReq);
-    ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userReq);
+    workspaceService.createGcpCloudContext(id, jobId, resultPath, userRequest);
+    ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
     return new ResponseEntity<>(
         response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
   }
@@ -411,16 +412,16 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiCreateCloudContextResult> getCreateCloudContextResult(
       UUID id, String jobId) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
-    ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userReq);
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
     return new ResponseEntity<>(
         response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
   }
 
   private ApiCreateCloudContextResult fetchCreateCloudContextResult(
-      String jobId, AuthenticatedUserRequest userReq) {
+      String jobId, AuthenticatedUserRequest userRequest) {
     final AsyncJobResult<GcpCloudContext> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, GcpCloudContext.class, userReq);
+        jobService.retrieveAsyncJobResult(jobId, GcpCloudContext.class, userRequest);
 
     final ApiGcpContext gcpContext;
     if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
@@ -436,9 +437,9 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   @Override
   public ResponseEntity<Void> deleteCloudContext(UUID id, ApiCloudPlatform cloudPlatform) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControllerValidationUtils.validateCloudPlatform(cloudPlatform);
-    workspaceService.deleteGcpCloudContext(id, userReq);
+    workspaceService.deleteGcpCloudContext(id, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 }

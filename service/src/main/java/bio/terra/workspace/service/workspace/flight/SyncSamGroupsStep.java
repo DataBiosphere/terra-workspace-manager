@@ -19,13 +19,13 @@ public class SyncSamGroupsStep implements Step {
 
   private final SamService samService;
   private final UUID workspaceId;
-  private final AuthenticatedUserRequest userReq;
+  private final AuthenticatedUserRequest userRequest;
 
   public SyncSamGroupsStep(
-      SamService samService, UUID workspaceId, AuthenticatedUserRequest userReq) {
+      SamService samService, UUID workspaceId, AuthenticatedUserRequest userRequest) {
     this.samService = samService;
     this.workspaceId = workspaceId;
-    this.userReq = userReq;
+    this.userRequest = userRequest;
   }
 
   // Note that the SamService.syncWorkspacePolicy is already idempotent, so this doesn't need to
@@ -36,14 +36,17 @@ public class SyncSamGroupsStep implements Step {
     // This cannot be an ImmutableMap, as those do not deserialize properly with Jackson.
     var workspaceRoleGroupMap = new HashMap<WsmIamRole, String>();
     workspaceRoleGroupMap.put(
-        WsmIamRole.OWNER, samService.syncWorkspacePolicy(workspaceId, WsmIamRole.OWNER, userReq));
+        WsmIamRole.OWNER,
+        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.OWNER, userRequest));
     workspaceRoleGroupMap.put(
         WsmIamRole.APPLICATION,
-        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.APPLICATION, userReq));
+        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.APPLICATION, userRequest));
     workspaceRoleGroupMap.put(
-        WsmIamRole.WRITER, samService.syncWorkspacePolicy(workspaceId, WsmIamRole.WRITER, userReq));
+        WsmIamRole.WRITER,
+        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.WRITER, userRequest));
     workspaceRoleGroupMap.put(
-        WsmIamRole.READER, samService.syncWorkspacePolicy(workspaceId, WsmIamRole.READER, userReq));
+        WsmIamRole.READER,
+        samService.syncWorkspacePolicy(workspaceId, WsmIamRole.READER, userRequest));
 
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, workspaceRoleGroupMap);

@@ -117,10 +117,10 @@ public class CrlService {
   }
 
   /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
-  public BigQueryCow createBigQueryCow(AuthenticatedUserRequest userReq) {
+  public BigQueryCow createBigQueryCow(AuthenticatedUserRequest userRequest) {
     assertCrlInUse();
     try {
-      return BigQueryCow.create(clientConfig, googleCredentialsFromUserReq(userReq));
+      return BigQueryCow.create(clientConfig, googleCredentialsFromUserReq(userRequest));
     } catch (IOException | GeneralSecurityException e) {
       throw new CrlInternalException("Error creating BigQuery API wrapper", e);
     }
@@ -182,21 +182,22 @@ public class CrlService {
    * This creates a storage COW that will operate with the user's credentials.
    *
    * @param projectId optional GCP project
-   * @param userReq user auth
+   * @param userRequest user auth
    * @return CRL {@link StorageCow} which wraps Google Cloud Storage API in the given project using
    *     provided user credentials.
    */
-  public StorageCow createStorageCow(@Nullable String projectId, AuthenticatedUserRequest userReq) {
-    return createStorageCowWorker(projectId, userReq);
+  public StorageCow createStorageCow(
+      @Nullable String projectId, AuthenticatedUserRequest userRequest) {
+    return createStorageCowWorker(projectId, userRequest);
   }
 
   private StorageCow createStorageCowWorker(
-      @Nullable String projectId, @Nullable AuthenticatedUserRequest userReq) {
+      @Nullable String projectId, @Nullable AuthenticatedUserRequest userRequest) {
     assertCrlInUse();
 
     StorageOptions.Builder optionsBuilder = StorageOptions.newBuilder();
-    if (userReq != null) {
-      optionsBuilder.setCredentials(googleCredentialsFromUserReq(userReq));
+    if (userRequest != null) {
+      optionsBuilder.setCredentials(googleCredentialsFromUserReq(userRequest));
     }
     if (!StringUtils.isEmpty(projectId)) {
       optionsBuilder.setProjectId(projectId);
@@ -247,9 +248,9 @@ public class CrlService {
     }
   }
 
-  private GoogleCredentials googleCredentialsFromUserReq(AuthenticatedUserRequest userReq) {
+  private GoogleCredentials googleCredentialsFromUserReq(AuthenticatedUserRequest userRequest) {
     // The expirationTime argument is only used for refresh tokens, not access tokens.
-    AccessToken accessToken = new AccessToken(userReq.getRequiredToken(), null);
+    AccessToken accessToken = new AccessToken(userRequest.getRequiredToken(), null);
     return GoogleCredentials.create(accessToken);
   }
 
