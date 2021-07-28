@@ -202,7 +202,7 @@ public class ControlledResourceService {
       @Nullable String resourceDescription) {
     final String jobDescription =
         String.format(
-            "Update controlled BigQuery Dataset resource %s; id %s; name %s",
+            "Update controlled BigQuery Dataset name %s ; resource id %s; resource name %s",
             resource.getDatasetName(), resource.getResourceId(), resource.getName());
     final JobBuilder jobBuilder =
         jobService
