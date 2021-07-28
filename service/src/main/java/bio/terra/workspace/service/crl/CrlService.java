@@ -10,6 +10,7 @@ import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.cloudres.google.storage.StorageCow;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.app.configuration.external.CrlConfiguration;
 import bio.terra.workspace.service.crl.exception.CrlInternalException;
 import bio.terra.workspace.service.crl.exception.CrlNotInUseException;
@@ -17,6 +18,7 @@ import bio.terra.workspace.service.crl.exception.CrlSecurityException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.services.bigquery.model.Dataset;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
@@ -164,6 +166,43 @@ public class CrlService {
       throw new InvalidReferenceException("Error while trying to access BigQuery dataset", ex);
     } catch (IOException ex) {
       throw new InvalidReferenceException("Error while trying to access BigQuery dataset", ex);
+    }
+  }
+
+  /**
+   * Wrap the BigQuery dataset fetch in its own method. This allows unit tests to mock this service
+   * and generate an answer without actually touching BigQuery.
+   *
+   * @param bigQueryCow BigQuery client object, wrapped by CRL
+   * @param projectId Google project id where the dataset is
+   * @param datasetName name of the dataset
+   * @return the fetched Dataset object
+   */
+  public Dataset getBigQueryDataset(BigQueryCow bigQueryCow, String projectId, String datasetName)
+      throws IOException {
+    return bigQueryCow.datasets().get(projectId, datasetName).execute();
+  }
+
+  /**
+   * Wrap the BigQuery dataset update in its own method. This allows unit tests to mock this service
+   * and generate an answer without actually touching BigQuery.
+   *
+   * @param bigQueryCow BigQuery client object, wrapped by CRL
+   * @param projectId Google project id where the dataset is
+   * @param datasetName name of the dataset
+   * @param dataset the Dataset object with its properties updated to the new values
+   */
+  public void updateBigQueryDataset(
+      BigQueryCow bigQueryCow, String projectId, String datasetName, Dataset dataset)
+      throws IOException {
+    try {
+      bigQueryCow.datasets().update(projectId, datasetName, dataset).execute();
+    } catch (GoogleJsonResponseException gjEx) {
+      if (gjEx.getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
+        throw new BadRequestException(
+            "Error updating BigQuery dataset " + projectId + ", " + datasetName, gjEx);
+      }
+      throw gjEx;
     }
   }
 

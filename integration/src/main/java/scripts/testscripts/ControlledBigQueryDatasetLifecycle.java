@@ -2,6 +2,7 @@ package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -9,12 +10,15 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
+import bio.terra.workspace.model.GcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
-import bio.terra.workspace.model.UpdateControlledResourceRequestBody;
+import bio.terra.workspace.model.UpdateControlledGcpBigQueryDatasetRequestBody;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryException;
+import com.google.cloud.bigquery.Dataset;
+import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.Field;
 import com.google.cloud.bigquery.Job;
 import com.google.cloud.bigquery.JobId;
@@ -28,10 +32,8 @@ import com.google.cloud.bigquery.Table;
 import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.TableInfo;
 import com.google.cloud.bigquery.TableResult;
-import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
@@ -148,12 +150,19 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
 
     // Workspace owner can update the dataset resource through WSM
     String resourceDescription = "a description for WSM";
+    Integer defaultTableLifetimeSec = 5400;
     var updateDatasetRequest =
-        new UpdateControlledResourceRequestBody().description(resourceDescription);
+        new UpdateControlledGcpBigQueryDatasetRequestBody().description(resourceDescription)
+                .updateParameters(new GcpBigQueryDatasetUpdateParameters().defaultTableLifetime(defaultTableLifetimeSec));
     ownerResourceApi.updateBigQueryDataset(updateDatasetRequest, getWorkspaceId(), resourceId);
     var datasetAfterUpdate = ownerResourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
     assertEquals(datasetAfterUpdate.getMetadata().getDescription(), resourceDescription);
     logger.info("Workspace owner updated resource {}", resourceId);
+
+    // Cloud metadata matches the updated values
+    Dataset cloudDataset = ownerBqClient.getDataset(DatasetId.of(projectId, DATASET_NAME));
+    assertEquals(defaultTableLifetimeSec * 1000, cloudDataset.getDefaultTableLifetime());
+    assertNull(cloudDataset.getDefaultPartitionExpirationMs());
 
     // Workspace writer can delete the table we created earlier
     logger.info("Deleting table {} from dataset {}", table.getTableId().getTable(), DATASET_NAME);
