@@ -16,14 +16,14 @@ import com.google.api.services.bigquery.model.Dataset;
 import java.io.IOException;
 
 /** Retrieve the Dataset creation parameters from the cloud object. */
-public class RetrieveGcsBigQueryDatasetCloudAttributesStep implements Step {
+public class RetrieveBigQueryDatasetCloudAttributesStep implements Step {
 
   private final ControlledBigQueryDatasetResource datasetResource;
   private final CrlService crlService;
   private final WorkspaceService workspaceService;
   private final AuthenticatedUserRequest userRequest;
 
-  public RetrieveGcsBigQueryDatasetCloudAttributesStep(
+  public RetrieveBigQueryDatasetCloudAttributesStep(
       ControlledBigQueryDatasetResource datasetResource,
       CrlService crlService,
       WorkspaceService workspaceService,
