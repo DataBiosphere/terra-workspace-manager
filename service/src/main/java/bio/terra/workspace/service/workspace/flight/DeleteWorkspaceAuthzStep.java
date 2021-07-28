@@ -13,20 +13,20 @@ import org.slf4j.LoggerFactory;
 public class DeleteWorkspaceAuthzStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(DeleteWorkspaceAuthzStep.class);
   private final SamService samService;
-  private final AuthenticatedUserRequest userReq;
+  private final AuthenticatedUserRequest userRequest;
   private final UUID workspaceId;
 
   public DeleteWorkspaceAuthzStep(
-      SamService samService, AuthenticatedUserRequest userReq, UUID workspaceId) {
+      SamService samService, AuthenticatedUserRequest userRequest, UUID workspaceId) {
     this.samService = samService;
-    this.userReq = userReq;
+    this.userRequest = userRequest;
     this.workspaceId = workspaceId;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws RetryException, InterruptedException {
-    samService.deleteWorkspace(userReq.getRequiredToken(), workspaceId);
+    samService.deleteWorkspace(userRequest.getRequiredToken(), workspaceId);
     return StepResult.getStepResultSuccess();
   }
 

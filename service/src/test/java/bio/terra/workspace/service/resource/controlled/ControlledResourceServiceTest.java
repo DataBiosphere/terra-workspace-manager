@@ -58,7 +58,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.hamcrest.Matchers;
@@ -161,10 +160,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         resource,
         controlledResourceService.getControlledResource(
             workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()));
-
-    // TODO(PF-643): this should happen inside WSM.
-    // Waiting 15s for permissions to propagate
-    TimeUnit.SECONDS.sleep(15);
 
     InstanceName instanceName =
         resource.toInstanceName(workspace.getGcpCloudContext().get().getGcpProjectId());

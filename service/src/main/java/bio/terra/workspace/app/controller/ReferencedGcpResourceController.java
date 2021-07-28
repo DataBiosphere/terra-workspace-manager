@@ -88,18 +88,18 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   @Override
   public ResponseEntity<ApiGcpGcsBucketResource> getBucketReference(UUID id, UUID referenceId) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource referenceResource =
-        referenceResourceService.getReferenceResource(id, referenceId, userReq);
+        referenceResourceService.getReferenceResource(id, referenceId, userRequest);
     ApiGcpGcsBucketResource response = referenceResource.castToGcsBucketResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
   public ResponseEntity<ApiGcpGcsBucketResource> getBucketReferenceByName(UUID id, String name) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource referenceResource =
-        referenceResourceService.getReferenceResourceByName(id, name, userReq);
+        referenceResourceService.getReferenceResourceByName(id, name, userRequest);
     ApiGcpGcsBucketResource response = referenceResource.castToGcsBucketResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
@@ -107,9 +107,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> updateBucketReference(
       UUID id, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.updateReferenceResource(
-        id, referenceId, body.getName(), body.getDescription(), userReq);
+        id, referenceId, body.getName(), body.getDescription(), userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -149,9 +149,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiGcpBigQueryDatasetResource> getBigQueryDatasetReference(
       UUID id, UUID referenceId) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource referenceResource =
-        referenceResourceService.getReferenceResource(id, referenceId, userReq);
+        referenceResourceService.getReferenceResource(id, referenceId, userRequest);
     ApiGcpBigQueryDatasetResource response =
         referenceResource.castToBigQueryDatasetResource().toApiResource();
     return new ResponseEntity<>(response, HttpStatus.OK);
@@ -160,9 +160,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiGcpBigQueryDatasetResource> getBigQueryDatasetReferenceByName(
       UUID id, String name) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource referenceResource =
-        referenceResourceService.getReferenceResourceByName(id, name, userReq);
+        referenceResourceService.getReferenceResourceByName(id, name, userRequest);
     ApiGcpBigQueryDatasetResource response =
         referenceResource.castToBigQueryDatasetResource().toApiResource();
     return new ResponseEntity<>(response, HttpStatus.OK);
@@ -171,9 +171,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> updateBigQueryDatasetReference(
       UUID id, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.updateReferenceResource(
-        id, referenceId, body.getName(), body.getDescription(), userReq);
+        id, referenceId, body.getName(), body.getDescription(), userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -212,9 +212,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiDataRepoSnapshotResource> getDataRepoSnapshotReference(
       UUID id, UUID referenceId) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource referenceResource =
-        referenceResourceService.getReferenceResource(id, referenceId, userReq);
+        referenceResourceService.getReferenceResource(id, referenceId, userRequest);
     ApiDataRepoSnapshotResource response =
         referenceResource.castToDataRepoSnapshotResource().toApiResource();
     return new ResponseEntity<>(response, HttpStatus.OK);
@@ -223,9 +223,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiDataRepoSnapshotResource> getDataRepoSnapshotReferenceByName(
       UUID id, String name) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource referenceResource =
-        referenceResourceService.getReferenceResourceByName(id, name, userReq);
+        referenceResourceService.getReferenceResourceByName(id, name, userRequest);
     ApiDataRepoSnapshotResource response =
         referenceResource.castToDataRepoSnapshotResource().toApiResource();
     return new ResponseEntity<>(response, HttpStatus.OK);
@@ -234,9 +234,9 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> updateDataRepoSnapshotReference(
       UUID id, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.updateReferenceResource(
-        id, referenceId, body.getName(), body.getDescription(), userReq);
+        id, referenceId, body.getName(), body.getDescription(), userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -250,10 +250,10 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiCloneReferencedGcpGcsBucketResourceResult> cloneGcpGcsBucketReference(
       UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     final ReferencedResource sourceReferencedResource =
-        referenceResourceService.getReferenceResource(workspaceId, resourceId, userReq);
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, userRequest);
 
     final CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
@@ -277,7 +277,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             body.getDestinationWorkspaceId(),
             body.getName(),
             body.getDescription(),
-            userReq);
+            userRequest);
 
     // Build the correct response type
     final var result =
@@ -293,10 +293,10 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<ApiCloneReferencedGcpBigQueryDatasetResourceResult>
       cloneGcpBigQueryDatasetReference(
           UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     final ReferencedResource sourceReferencedResource =
-        referenceResourceService.getReferenceResource(workspaceId, resourceId, userReq);
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, userRequest);
 
     final CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
@@ -320,7 +320,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             body.getDestinationWorkspaceId(),
             body.getName(),
             body.getDescription(),
-            userReq);
+            userRequest);
 
     // Build the correct response type
     final var result =
@@ -336,10 +336,10 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<ApiCloneReferencedGcpDataRepoSnapshotResourceResult>
       cloneGcpDataRepoSnapshotReference(
           UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    AuthenticatedUserRequest userReq = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     final ReferencedResource sourceReferencedResource =
-        referenceResourceService.getReferenceResource(workspaceId, resourceId, userReq);
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, userRequest);
 
     final CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
@@ -363,7 +363,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             body.getDestinationWorkspaceId(),
             body.getName(),
             body.getDescription(),
-            userReq);
+            userRequest);
 
     // Build the correct response type
     final var result =

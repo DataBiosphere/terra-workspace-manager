@@ -16,22 +16,22 @@ import com.google.api.services.bigquery.model.Dataset;
 import java.io.IOException;
 
 /** Retrieve the Dataset creation parameters from the cloud object. */
-public class RetrieveGcsBigQueryDatasetCloudAttributesStep implements Step {
+public class RetrieveBigQueryDatasetCloudAttributesStep implements Step {
 
   private final ControlledBigQueryDatasetResource datasetResource;
   private final CrlService crlService;
   private final WorkspaceService workspaceService;
-  private final AuthenticatedUserRequest userReq;
+  private final AuthenticatedUserRequest userRequest;
 
-  public RetrieveGcsBigQueryDatasetCloudAttributesStep(
+  public RetrieveBigQueryDatasetCloudAttributesStep(
       ControlledBigQueryDatasetResource datasetResource,
       CrlService crlService,
       WorkspaceService workspaceService,
-      AuthenticatedUserRequest userReq) {
+      AuthenticatedUserRequest userRequest) {
     this.datasetResource = datasetResource;
     this.crlService = crlService;
     this.workspaceService = workspaceService;
-    this.userReq = userReq;
+    this.userRequest = userRequest;
   }
 
   @Override
@@ -48,7 +48,7 @@ public class RetrieveGcsBigQueryDatasetCloudAttributesStep implements Step {
     // from the source dataset.
     final String projectId =
         workspaceService.getRequiredGcpProject(datasetResource.getWorkspaceId());
-    final BigQueryCow bigQueryCow = crlService.createBigQueryCow(userReq);
+    final BigQueryCow bigQueryCow = crlService.createBigQueryCow(userRequest);
     try {
       final Dataset dataset =
           bigQueryCow.datasets().get(projectId, datasetResource.getDatasetName()).execute();

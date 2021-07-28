@@ -350,13 +350,13 @@ class SamServiceTest extends BaseConnectedTest {
     return createWorkspaceForUser(defaultUserRequest());
   }
 
-  private UUID createWorkspaceForUser(AuthenticatedUserRequest userReq) {
+  private UUID createWorkspaceForUser(AuthenticatedUserRequest userRequest) {
     WorkspaceRequest request =
         WorkspaceRequest.builder()
             .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
-    return workspaceService.createWorkspace(request, userReq);
+    return workspaceService.createWorkspace(request, userRequest);
   }
 
   /**

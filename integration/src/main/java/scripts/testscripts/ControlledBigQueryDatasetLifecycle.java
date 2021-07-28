@@ -9,19 +9,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
-import bio.terra.workspace.model.AccessScope;
-import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.ControlledResourceCommonFields;
-import bio.terra.workspace.model.CreateControlledGcpBigQueryDatasetRequestBody;
-import bio.terra.workspace.model.CreatedControlledGcpBigQueryDataset;
-import bio.terra.workspace.model.GcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
-import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.UpdateControlledGcpBigQueryDatasetRequestBody;
-import bio.terra.workspace.model.UpdateControlledResourceRequestBody;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryException;
@@ -42,7 +34,6 @@ import com.google.cloud.bigquery.TableInfo;
 import com.google.cloud.bigquery.TableResult;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
@@ -95,9 +86,6 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceId(), IamRole.READER);
 
-    logger.info("Waiting 15s for permissions to propagate");
-    TimeUnit.SECONDS.sleep(15);
-
     // Create a cloud context
     String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
     logger.info("Created project {}", projectId);
@@ -122,7 +110,10 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     String tableName = table.getTableId().getTable();
 
     // Workspace reader can read the table
-    var readTable = readerBqClient.getTable(table.getTableId());
+    // This is the reader's first use of cloud APIs after being added to the workspace, so we
+    // retry this operation until cloud IAM has properly synced.
+    var readTable = ClientTestUtils.getWithRetryOnException(() ->
+        readerBqClient.getTable(table.getTableId()));
     assertEquals(table, readTable);
     logger.info("Read table {} as workspace reader", tableName);
 

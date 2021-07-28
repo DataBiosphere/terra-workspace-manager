@@ -16,13 +16,13 @@ import org.slf4j.LoggerFactory;
 public class CheckSamWorkspaceAuthzStep implements Step {
 
   private final SamService samService;
-  private final AuthenticatedUserRequest userReq;
+  private final AuthenticatedUserRequest userRequest;
 
   private final Logger logger = LoggerFactory.getLogger(CreateWorkspaceAuthzStep.class);
 
-  public CheckSamWorkspaceAuthzStep(SamService samService, AuthenticatedUserRequest userReq) {
+  public CheckSamWorkspaceAuthzStep(SamService samService, AuthenticatedUserRequest userRequest) {
     this.samService = samService;
-    this.userReq = userReq;
+    this.userRequest = userRequest;
   }
 
   @Override
@@ -50,7 +50,7 @@ public class CheckSamWorkspaceAuthzStep implements Step {
 
   private boolean canReadExistingWorkspace(UUID workspaceID) throws InterruptedException {
     return samService.isAuthorized(
-        userReq.getRequiredToken(),
+        userRequest.getRequiredToken(),
         SamConstants.SAM_WORKSPACE_RESOURCE,
         workspaceID.toString(),
         SamConstants.SAM_WORKSPACE_READ_ACTION);

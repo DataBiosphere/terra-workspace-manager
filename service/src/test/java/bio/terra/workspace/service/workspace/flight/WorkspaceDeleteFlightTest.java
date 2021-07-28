@@ -47,8 +47,8 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteMcWorkspaceWithResource() throws Exception {
     // Create a workspace with a controlled resource
-    AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
-    Workspace workspace = connectedTestUtils.createWorkspaceWithGcpContext(userReq);
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    Workspace workspace = connectedTestUtils.createWorkspaceWithGcpContext(userRequest);
     ControlledBigQueryDatasetResource dataset =
         ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
             .workspaceId(workspace.getWorkspaceId())
@@ -57,11 +57,11 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
         ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
     controlledResourceService.createBigQueryDataset(
-        dataset, creationParameters, Collections.emptyList(), userReq);
+        dataset, creationParameters, Collections.emptyList(), userRequest);
 
     ControlledResource gotResource =
         controlledResourceService.getControlledResource(
-            workspace.getWorkspaceId(), dataset.getResourceId(), userReq);
+            workspace.getWorkspaceId(), dataset.getResourceId(), userRequest);
     assertEquals(dataset, gotResource.castToBigQueryDatasetResource());
 
     // Run the delete flight, retrying every step once
@@ -70,7 +70,7 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
         WorkspaceFlightMapKeys.WORKSPACE_ID, workspace.getWorkspaceId().toString());
     deleteParameters.put(
         WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
-    deleteParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userReq);
+    deleteParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 
     Map<String, StepStatus> doFailures = new HashMap<>();
     doFailures.put(
@@ -94,18 +94,18 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
         WorkspaceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                dataset.getWorkspaceId(), dataset.getResourceId(), userReq));
+                dataset.getWorkspaceId(), dataset.getResourceId(), userRequest));
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(workspace.getWorkspaceId(), userReq));
+        () -> workspaceService.getWorkspace(workspace.getWorkspaceId(), userRequest));
   }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void cannotUndoWorkspaceDelete() throws Exception {
     // Create a workspace with a controlled resource
-    AuthenticatedUserRequest userReq = userAccessUtils.defaultUserAuthRequest();
-    Workspace workspace = connectedTestUtils.createWorkspaceWithGcpContext(userReq);
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    Workspace workspace = connectedTestUtils.createWorkspaceWithGcpContext(userRequest);
     ControlledBigQueryDatasetResource dataset =
         ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
             .workspaceId(workspace.getWorkspaceId())
@@ -114,11 +114,11 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
         ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
     controlledResourceService.createBigQueryDataset(
-        dataset, creationParameters, Collections.emptyList(), userReq);
+        dataset, creationParameters, Collections.emptyList(), userRequest);
 
     ControlledResource gotResource =
         controlledResourceService.getControlledResource(
-            workspace.getWorkspaceId(), dataset.getResourceId(), userReq);
+            workspace.getWorkspaceId(), dataset.getResourceId(), userRequest);
     assertEquals(dataset, gotResource.castToBigQueryDatasetResource());
 
     FlightMap deleteParameters = new FlightMap();
@@ -126,7 +126,7 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
         WorkspaceFlightMapKeys.WORKSPACE_ID, workspace.getWorkspaceId().toString());
     deleteParameters.put(
         WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
-    deleteParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userReq);
+    deleteParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 
     // Deletion steps can't be undone, so if the flight fails at the end, this should be marked as
     // a dismal failure and the deletion should persist.
@@ -145,9 +145,9 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
         WorkspaceNotFoundException.class,
         () ->
             controlledResourceService.getControlledResource(
-                dataset.getWorkspaceId(), dataset.getResourceId(), userReq));
+                dataset.getWorkspaceId(), dataset.getResourceId(), userRequest));
     assertThrows(
         WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(workspace.getWorkspaceId(), userReq));
+        () -> workspaceService.getWorkspace(workspace.getWorkspaceId(), userRequest));
   }
 }

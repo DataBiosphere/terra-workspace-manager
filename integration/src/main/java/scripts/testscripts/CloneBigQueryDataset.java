@@ -56,7 +56,6 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
         .createGcpCloudContext(getWorkspaceId(), sourceOwnerWorkspaceApi);
     logger.info("Created source project {} in workspace {}", sourceProjectId, getWorkspaceId());
 
-    // Create a source dataset
     final ControlledGcpResourceApi sourceOwnerResourceApi = ClientTestUtils
         .getControlledGcpResourceClient(sourceOwnerUser, server);
     cloningUserResourceApi = ClientTestUtils.getControlledGcpResourceClient(cloningUser, server);

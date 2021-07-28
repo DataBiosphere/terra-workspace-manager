@@ -17,7 +17,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     final ControlledResource sourceResource =
         inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
-    final AuthenticatedUserRequest userReq =
+    final AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     // Flight Plan
@@ -33,17 +33,17 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
         sourceResource.castToBigQueryDatasetResource();
 
     addStep(
-        new RetrieveGcsBigQueryDatasetCloudAttributesStep(
+        new RetrieveBigQueryDatasetCloudAttributesStep(
             sourceDataset,
             flightBeanBag.getCrlService(),
             flightBeanBag.getWorkspaceService(),
-            userReq));
+            userRequest));
 
     addStep(
         new CopyBigQueryDatasetDefinitionStep(
             sourceDataset,
             flightBeanBag.getControlledResourceService(),
-            userReq,
+            userRequest,
             flightBeanBag.getWorkspaceService()));
   }
 }

@@ -344,10 +344,10 @@ public class ControlledResourceService {
   }
 
   public ControlledResource getControlledResource(
-      UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userReq) {
+      UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(workspaceId, "getControlledResource");
     controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userReq, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION);
+        userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION);
     return DbRetryUtils.throwIfInterrupted(
         () -> resourceDao.getResource(workspaceId, resourceId).castToControlledResource());
   }
