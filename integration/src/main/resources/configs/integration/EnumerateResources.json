@@ -14,5 +14,5 @@
       "parameters": ["wm-default-spend-profile", "97b5559a-2f8f-4df3-89ae-5a249173ee0c", "terra"]
     }
   ],
-  "testUserFiles": ["bella.json"]
+  "testUserFiles": ["bella.json", "liam.json"]
 }

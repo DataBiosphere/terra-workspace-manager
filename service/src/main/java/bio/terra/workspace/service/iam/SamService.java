@@ -12,7 +12,6 @@ import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
@@ -38,7 +37,6 @@ import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
 import org.broadinstitute.dsde.workbench.client.sam.model.ResourceAndAccessPolicy;
 import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
-import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,19 +54,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class SamService {
 
-  public static final int MAX_INITIALIZE_RETRIES = 5;
   private final SamConfiguration samConfig;
-  private final ObjectMapper objectMapper;
   private final StageService stageService;
 
   private final Set<String> SAM_OAUTH_SCOPES = ImmutableSet.of("openid", "email", "profile");
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(
-      SamConfiguration samConfig, ObjectMapper objectMapper, StageService stageService) {
+  public SamService(SamConfiguration samConfig, StageService stageService) {
     this.samConfig = samConfig;
-    this.objectMapper = objectMapper;
     this.stageService = stageService;
     this.wsmServiceAccountInitialized = false;
   }
@@ -629,29 +623,6 @@ public class SamService {
       }
       throw SamExceptionFactory.create("Error deleting controlled resource in Sam", apiException);
     }
-  }
-
-  /**
-   * Generate a list of the controlled resource ids in Sam that this user has access to. This builds
-   * a list for a specific type of controlled resource (user shared, application private, etc).
-   */
-  @Traced
-  public List<String> listControlledResourceIds(
-      AuthenticatedUserRequest userRequest, String samResourceTypeName)
-      throws InterruptedException {
-    ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
-    List<String> controlledResourceIds = new ArrayList<>();
-    try {
-      List<UserResourcesResponse> userResources =
-          SamRetry.retry(() -> resourceApi.listResourcesAndPoliciesV2(samResourceTypeName));
-      for (UserResourcesResponse userResource : userResources) {
-        controlledResourceIds.add(userResource.getResourceId());
-      }
-    } catch (ApiException samException) {
-      throw SamExceptionFactory.create(
-          "Error listing controlled resource ids in Sam", samException);
-    }
-    return controlledResourceIds;
   }
 
   public Boolean status() {

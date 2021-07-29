@@ -11,15 +11,20 @@ import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
+import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.ControlledResourceMetadata;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GrantRoleRequestBody;
+import bio.terra.workspace.model.IamRole;
+import bio.terra.workspace.model.PrivateResourceIamRoles;
 import bio.terra.workspace.model.ResourceDescription;
 import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -42,11 +47,16 @@ public class EnumerateResources extends DataRepoTestScriptBase {
   private static final int RESOURCE_COUNT = 10;
   // Page size to use for enumeration paging
   private static final int PAGE_SIZE = 4;
+  // Roles to grant user on private resource
+  private static final ImmutableList<ControlledResourceIamRole> PRIVATE_ROLES =
+      ImmutableList.of(ControlledResourceIamRole.WRITER, ControlledResourceIamRole.EDITOR);
 
-  private ControlledGcpResourceApi controlledGcpResourceApi;
-  private ReferencedGcpResourceApi referencedGcpResourceApi;
-  private ResourceApi resourceApi;
+  private ControlledGcpResourceApi ownerControlledGcpResourceApi;
+  private ReferencedGcpResourceApi ownerReferencedGcpResourceApi;
+  private ResourceApi ownerResourceApi;
+  private ResourceApi readerResourceApi;
   private List<ResourceMetadata> resourceList;
+  private TestUserSpecification workspaceReader;
 
   @Override
   public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
@@ -55,21 +65,23 @@ public class EnumerateResources extends DataRepoTestScriptBase {
     // initialize workspace
     super.doSetup(testUsers, workspaceApi);
 
+    assertThat(
+        "There must be two test users defined for this test.",
+        testUsers != null && testUsers.size() == 2);
+    TestUserSpecification workspaceOwner = testUsers.get(0);
+    workspaceReader = testUsers.get(1);
+
     // static assumptions
     assertThat(PAGE_SIZE * 2, lessThan(RESOURCE_COUNT));
     assertThat(PAGE_SIZE * 3, greaterThan(RESOURCE_COUNT));
 
-    // REVIEWERS: Looking at all of these clients, I am wondering if our controller breakdown is
-    // really what we want. It makes sense from the implementation of WSM server, but for the
-    // client, having to mint all of these API objects could be an annoyance.
-    // What do you all think?
-    //
-    // One idea: we could have a general controller, but have it just get the userRequest and
-    // dispatch to controller layer classes that would do the API <-> internal conversions.
-    ApiClient apiClient = ClientTestUtils.getClientForTestUser(testUsers.get(0), server);
-    controlledGcpResourceApi = new ControlledGcpResourceApi(apiClient);
-    referencedGcpResourceApi = new ReferencedGcpResourceApi(apiClient);
-    resourceApi = new ResourceApi(apiClient);
+    ApiClient ownerApiClient = ClientTestUtils.getClientForTestUser(workspaceOwner, server);
+    ownerControlledGcpResourceApi = new ControlledGcpResourceApi(ownerApiClient);
+    ownerReferencedGcpResourceApi = new ReferencedGcpResourceApi(ownerApiClient);
+    ownerResourceApi = new ResourceApi(ownerApiClient);
+
+    ApiClient readerApiClient = ClientTestUtils.getClientForTestUser(workspaceReader, server);
+    readerResourceApi = new ResourceApi(readerApiClient);
 
     // Create a cloud context for the workspace
     CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
@@ -77,34 +89,44 @@ public class EnumerateResources extends DataRepoTestScriptBase {
     // create the resources for the test
     logger.info("Creating {} resources", RESOURCE_COUNT);
     resourceList =
-        makeResources(referencedGcpResourceApi, controlledGcpResourceApi, getWorkspaceId());
+        makeResources(ownerReferencedGcpResourceApi, ownerControlledGcpResourceApi, getWorkspaceId(), workspaceOwner.userEmail);
     logger.info("Created {} resources", resourceList.size());
   }
 
   @Override
   public void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
-    // TODO: when we have resource permissions in shape, test visibility:
-    //  - private controlled resources
+
+    // Add second user to the workspace as a reader
+    workspaceApi.grantRole(new GrantRoleRequestBody().memberEmail(workspaceReader.userEmail),
+        getWorkspaceId(),IamRole.READER);
 
     // Case 1: fetch all
     ResourceList enumList =
-        resourceApi.enumerateResources(getWorkspaceId(), 0, RESOURCE_COUNT, null, null);
+        ownerResourceApi.enumerateResources(getWorkspaceId(), 0, RESOURCE_COUNT, null, null);
     logResult("fetchall", enumList);
     // Make sure we got all of the expected ids
     matchFullResourceList(enumList.getResources());
 
+    // Repeat case 1 as the workspace reader.
+    // As this is the first operation after modifying workspace IAM groups, retry here to compensate
+    // for the delay in GCP IAM propagation.
+    ResourceList readerEnumList = ClientTestUtils.getWithRetryOnException(
+        () -> readerResourceApi.enumerateResources(getWorkspaceId(), 0, RESOURCE_COUNT, null, null));
+    logResult("fetchall reader", readerEnumList);
+    matchFullResourceList(readerEnumList.getResources());
+
     // Case 2: fetch by pages
     ResourceList page1List =
-        resourceApi.enumerateResources(getWorkspaceId(), 0, PAGE_SIZE, null, null);
+        ownerResourceApi.enumerateResources(getWorkspaceId(), 0, PAGE_SIZE, null, null);
     logResult("page1", page1List);
     assertThat(page1List.getResources().size(), equalTo(PAGE_SIZE));
     ResourceList page2List =
-        resourceApi.enumerateResources(getWorkspaceId(), PAGE_SIZE, PAGE_SIZE, null, null);
+        ownerResourceApi.enumerateResources(getWorkspaceId(), PAGE_SIZE, PAGE_SIZE, null, null);
     logResult("page2", page2List);
     assertThat(page2List.getResources().size(), equalTo(PAGE_SIZE));
     ResourceList page3List =
-        resourceApi.enumerateResources(getWorkspaceId(), 2 * PAGE_SIZE, PAGE_SIZE, null, null);
+        ownerResourceApi.enumerateResources(getWorkspaceId(), 2 * PAGE_SIZE, PAGE_SIZE, null, null);
     logResult("page3", page3List);
     assertThat(page3List.getResources().size(), lessThan(PAGE_SIZE));
 
@@ -116,12 +138,12 @@ public class EnumerateResources extends DataRepoTestScriptBase {
 
     // Case 3: no results if offset is too high
     ResourceList enumEmptyList =
-        resourceApi.enumerateResources(getWorkspaceId(), 10 * PAGE_SIZE, PAGE_SIZE, null, null);
+        ownerResourceApi.enumerateResources(getWorkspaceId(), 10 * PAGE_SIZE, PAGE_SIZE, null, null);
     assertThat(enumEmptyList.getResources().size(), equalTo(0));
 
     // Case 4: filter by resource type
     ResourceList snapshots =
-        resourceApi.enumerateResources(
+        ownerResourceApi.enumerateResources(
             getWorkspaceId(), 0, RESOURCE_COUNT, ResourceType.DATA_REPO_SNAPSHOT, null);
     logResult("snapshots", snapshots);
     long expectedSnapshots =
@@ -135,7 +157,7 @@ public class EnumerateResources extends DataRepoTestScriptBase {
 
     // Case 5: filter by stewardship type
     ResourceList referencedList =
-        resourceApi.enumerateResources(
+        ownerResourceApi.enumerateResources(
             getWorkspaceId(), 0, RESOURCE_COUNT, null, StewardshipType.REFERENCED);
     logResult("referenced", referencedList);
     long expectedReferenced =
@@ -148,7 +170,7 @@ public class EnumerateResources extends DataRepoTestScriptBase {
 
     // Case 6: filter by resource and stewardship
     ResourceList controlledBucketList =
-        resourceApi.enumerateResources(
+        ownerResourceApi.enumerateResources(
             getWorkspaceId(),
             0,
             RESOURCE_COUNT,
@@ -176,10 +198,10 @@ public class EnumerateResources extends DataRepoTestScriptBase {
         switch (metadata.getResourceType()) {
           case GCS_BUCKET:
             ResourceMaker.deleteControlledGcsBucket(
-                metadata.getResourceId(), getWorkspaceId(), controlledGcpResourceApi);
+                metadata.getResourceId(), getWorkspaceId(), ownerControlledGcpResourceApi);
             break;
           case BIG_QUERY_DATASET:
-            controlledGcpResourceApi.deleteBigQueryDataset(
+            ownerControlledGcpResourceApi.deleteBigQueryDataset(
                 getWorkspaceId(), metadata.getResourceId());
             break;
           case AI_NOTEBOOK:
@@ -239,7 +261,8 @@ public class EnumerateResources extends DataRepoTestScriptBase {
   private List<ResourceMetadata> makeResources(
       ReferencedGcpResourceApi referencedGcpResourceApi,
       ControlledGcpResourceApi controlledGcpResourceApi,
-      UUID workspaceId)
+      UUID workspaceId,
+      String testUserEmail)
       throws Exception {
 
     List<ResourceMetadata> resourceList = new ArrayList<>();
@@ -282,9 +305,11 @@ public class EnumerateResources extends DataRepoTestScriptBase {
 
         case 3:
           {
+            PrivateResourceIamRoles privateRoles = new PrivateResourceIamRoles();
+            privateRoles.addAll(PRIVATE_ROLES);
             GcpGcsBucketResource resource =
-                ResourceMaker.makeControlledGcsBucketUserShared(
-                    controlledGcpResourceApi, workspaceId, name)
+                ResourceMaker.makeControlledGcsBucketUserPrivate(
+                    controlledGcpResourceApi, workspaceId, name, testUserEmail, privateRoles)
                 .getGcpBucket();
             resourceList.add(resource.getMetadata());
             break;
