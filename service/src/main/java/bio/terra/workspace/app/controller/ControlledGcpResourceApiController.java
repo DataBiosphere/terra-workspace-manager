@@ -5,6 +5,7 @@ import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.generated.controller.ControlledGcpResourceApi;
+import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpBigQueryDatasetResult;
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest;
@@ -27,11 +28,11 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
-import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
@@ -42,7 +43,6 @@ import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInsta
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
@@ -69,8 +69,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final ControlledResourceService controlledResourceService;
+  private final SamService samService;
   private final WorkspaceService workspaceService;
-  private final ControlledResourceMetadataManager controlledResourceMetadataManager;
   private final HttpServletRequest request;
   private final JobService jobService;
 
@@ -78,14 +78,14 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   public ControlledGcpResourceApiController(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ControlledResourceService controlledResourceService,
+      SamService samService,
       WorkspaceService workspaceService,
       JobService jobService,
-      ControlledResourceMetadataManager controlledResourceMetadataManager,
       HttpServletRequest request) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.controlledResourceService = controlledResourceService;
+    this.samService = samService;
     this.workspaceService = workspaceService;
-    this.controlledResourceMetadataManager = controlledResourceMetadataManager;
     this.request = request;
     this.jobService = jobService;
   }
@@ -103,10 +103,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .description(body.getCommon().getDescription())
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(
-                Optional.ofNullable(body.getCommon().getPrivateResourceUser())
-                    .map(ApiPrivateResourceUser::getUserName)
-                    .orElse(null))
+            .assignedUser(assignedUserFromBodyOrToken(body.getCommon(), userRequest))
             .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
             .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
             .bucketName(body.getGcsBucket().getName())
@@ -196,7 +193,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         body.getName(),
         body.getDescription());
 
-    // Retrieve and cast response to UpdateControlledGcpGcsBucketResponse
+    // Retrieve and cast response to ApiGcpGcsBucketResource
     return getControlledResourceAsResponseEntity(
         workspaceId, resourceId, userRequest, r -> r.castToGcsBucketResource().toApiResource());
   }
@@ -331,10 +328,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .description(body.getCommon().getDescription())
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(
-                Optional.ofNullable(body.getCommon().getPrivateResourceUser())
-                    .map(ApiPrivateResourceUser::getUserName)
-                    .orElse(null))
+            .assignedUser(assignedUserFromBodyOrToken(body.getCommon(), userRequest))
             .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
             .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
             .datasetName(body.getDataset().getDatasetId())
@@ -379,10 +373,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .description(body.getCommon().getDescription())
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(
-                Optional.ofNullable(body.getCommon().getPrivateResourceUser())
-                    .map(ApiPrivateResourceUser::getUserName)
-                    .orElse(null))
+            .assignedUser(assignedUserFromBodyOrToken(body.getCommon(), userRequest))
             .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
             .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
             .location(body.getAiNotebookInstance().getLocation())
@@ -539,6 +530,22 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         fetchCloneBigQueryDatasetResult(jobId, userRequest);
     return new ResponseEntity<>(
         result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
+  }
+
+  /**
+   * Extract the assigned user from a request to create a controlled resource. This field is only
+   * populated for private resources, but if a resource is private then a "null" value means "assign
+   * this resource to the requesting user" and should be populated here.
+   */
+  private String assignedUserFromBodyOrToken(
+      ApiControlledResourceCommonFields commonFields, AuthenticatedUserRequest userRequest) {
+    if (commonFields.getAccessScope() != ApiAccessScope.PRIVATE_ACCESS) {
+      return null;
+    }
+    return Optional.ofNullable(commonFields.getPrivateResourceUser().getUserName())
+        .orElse(
+            SamService.rethrowIfSamInterrupted(
+                () -> samService.getRequestUserEmail(userRequest), "getRequestUserEmail"));
   }
 
   /**
