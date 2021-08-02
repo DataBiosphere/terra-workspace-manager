@@ -220,12 +220,10 @@ public class ResourceDao {
     }
 
     // There are three cases for the stewardship type filter
-    // 1. If it is REFERENCED, then we ignore id list and just filter
-    //    for referenced resources.
-    // 2. If it is CONTROLLED, then we filter for
-    //    CONTROLLED resources.
-    // 3. If no filter is specified (it is null), then we want both REFERENCED
-    //    and CONTROLLED resources; that is, we want the OR of 1 and 2
+    // 1. If it is REFERENCED, then we ignore id list and just filter for referenced resources.
+    // 2. If it is CONTROLLED, then we filter for CONTROLLED resources.
+    // 3. If no filter is specified (it is null), then we want both REFERENCED and CONTROLLED
+    //    resources; that is, we want the OR of 1 and 2
     boolean includeReferenced = (stewardshipType == null || stewardshipType == REFERENCED);
     boolean includeControlled = (stewardshipType == null || stewardshipType == CONTROLLED);
 
