@@ -51,6 +51,6 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
             flightBeanBag.getWorkspaceService(),
             flightBeanBag.getDatasetCloneRolesComponent(),
             flightBeanBag.getCrlService()));
-    addStep(new CreateDataTransferConfigStep(sourceDataset, flightBeanBag.getCrlService()));
+    addStep(new CreateDataTransferConfigStep(flightBeanBag.getCrlService()));
   }
 }

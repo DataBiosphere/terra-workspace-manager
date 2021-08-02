@@ -12,7 +12,6 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.gax.rpc.FailedPreconditionException;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
@@ -31,21 +30,25 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CreateDataTransferConfigStep implements Step {
+  private static final Logger logger = LoggerFactory.getLogger(CreateDataTransferConfigStep.class);
   private static final Duration SCHEDULE_DELAY = Duration.ofMinutes(1);
-  private static final String SA_FORMAT =
+  private static final String FQ_P4_SA_FORMAT =
       "projects/%s/serviceAccounts/service-%s@gcp-sa-bigquerydatatransfer.iam.gserviceaccount.com";
+  // Format specified on the command line for binding members
+  private static final String CLI_P4_SA_FORMAT =
+      "serviceAccount:service-%s@gcp-sa-bigquerydatatransfer.iam.gserviceaccount.com";
 
-  private final ControlledBigQueryDatasetResource sourceDataset;
   private final CrlService crlService;
 
-  public CreateDataTransferConfigStep(
-      ControlledBigQueryDatasetResource sourceDataset, CrlService crlService) {
-    this.sourceDataset = sourceDataset;
+  public CreateDataTransferConfigStep(CrlService crlService) {
     this.crlService = crlService;
   }
 
@@ -68,9 +71,10 @@ public class CreateDataTransferConfigStep implements Step {
             ControlledResourceKeys.LOCATION,
             ControlledResourceKeys.LOCATION,
             String.class);
-    final String saEmail =
+    final String controlPlaneSaEmail =
         workingMap.get(ControlledResourceKeys.CONTROL_PLANE_SA_EMAIL, String.class);
-
+    final String controlPlaneSaFqid =
+        String.format("projects/%s/serviceAccounts/%s", controlPlaneProjectId, controlPlaneSaEmail);
     final String transferConfigName =
         TransferConfigName.ofProjectLocationTransferConfigName(
                 destinationInputs.getProjectId(), location, flightContext.getFlightId())
@@ -109,7 +113,7 @@ public class CreateDataTransferConfigStep implements Step {
       try {
         dataTransferServiceClient.createTransferConfig(createTransferConfigRequest);
       } catch (FailedPreconditionException expected) {
-        // continue
+        logger.info("Received expected failure: ", expected);
       }
 
       // The destination project has a P4 service account which needs permission to impersonate the
@@ -117,7 +121,7 @@ public class CreateDataTransferConfigStep implements Step {
       // control plane service account and do the transfer.
       final String destinationP4sa = getP4ServiceAccount(destinationInputs.getProjectId());
       // delegate role to P4 service account
-      delegatePolicyBinding(destinationP4sa);
+      final Policy updatedPolicy = delegatePolicyBinding(controlPlaneSaFqid, destinationP4sa);
       final TransferConfig createdConfig =
           dataTransferServiceClient.createTransferConfig(createTransferConfigRequest);
       final String dataSourceId = createdConfig.getDataSourceId(); // FIXME
@@ -140,23 +144,22 @@ public class CreateDataTransferConfigStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private String getP4ServiceAccount(String destinationProjectName) {
+  private String getP4ServiceAccount(String destinationProjectId) {
     // get the P4 service account name. First, determine the destination project number
     try {
       final CloudResourceManagerCow cloudResourceManagerCow =
           crlService.getCloudResourceManagerCow();
       final Project project =
-          cloudResourceManagerCow.projects().get(destinationProjectName).execute();
+          cloudResourceManagerCow.projects().get(destinationProjectId).execute();
       // Project "name" has the form projects/123456. A.k.a. the project number.
       final String projectName = project.getName();
       String[] parts = projectName.split("/");
       final String projectNumber = parts[1];
-      //      return String.format(P4_SA_FORMAT, projectNumber);
-      return String.format(SA_FORMAT, destinationProjectName, projectNumber);
+      //      return String.format(FQ_P4_SA_FORMAT, destinationProjectId, projectNumber);
+      return String.format(CLI_P4_SA_FORMAT, projectNumber);
     } catch (IOException e) {
       throw new IllegalArgumentException(
-          String.format(
-              "Cannot determine project number for project ID %s", destinationProjectName),
+          String.format("Cannot determine project number for project ID %s", destinationProjectId),
           e);
     }
   }
@@ -165,23 +168,31 @@ public class CreateDataTransferConfigStep implements Step {
    * Set a binding to the role roles/iam.serviceAccountTokenCreator to the P4 service account
    * associated with the user's project and the gcp-sa-bigquerydatatransfer service. See go/p4sa.
    *
-   * @param p4sa - service account in format projects/projectId/serviceAccounts/serviceAccountEmail
+   * @param controlPlaneSA - controll plane service account in format
+   *     projects/projectId/serviceAccounts/serviceAccountEmail
+   * @param p4sa - service account in format serviceAccount:serviceAccountEmail
+   * @return updated policy
    */
-  private Policy delegatePolicyBinding(String p4sa) throws IOException {
+  private Policy delegatePolicyBinding(String controlPlaneSA, String p4sa) throws IOException {
     final IamCow iamCow = crlService.getIamCow();
-    final Policy policy = iamCow.projects().serviceAccounts().getIamPolicy(p4sa).execute();
+    final Policy policy =
+        iamCow.projects().serviceAccounts().getIamPolicy(controlPlaneSA).execute();
     // Add the binding to the existing policy
     final List<Binding> existingBindings = policy.getBindings();
+
     final Binding tokenCreatorBinding =
-        new Binding().setRole("roles/iam.serviceAccountTokenCreator");
+        new Binding()
+            .setRole("roles/iam.serviceAccountTokenCreator")
+            .setMembers(Collections.singletonList(p4sa));
     final List<Binding> newBindings =
-        ImmutableList.<Binding>builder()
-            .addAll(existingBindings)
-            .add(tokenCreatorBinding)
-            .build();
+        ImmutableList.<Binding>builder().addAll(existingBindings).add(tokenCreatorBinding).build();
     policy.setBindings(newBindings);
     final SetIamPolicyRequest policyRequest = new SetIamPolicyRequest().setPolicy(policy);
-    return iamCow.projects().serviceAccounts().setIamPolicy(p4sa, policyRequest).execute();
+    return iamCow
+        .projects()
+        .serviceAccounts()
+        .setIamPolicy(controlPlaneSA, policyRequest)
+        .execute();
   }
 
   private String buildSchedule() {
