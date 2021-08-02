@@ -14,6 +14,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResour
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.cloud.Policy;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -52,7 +53,7 @@ public class GcsBucketCloudSyncStep implements Step {
     // have a cleaner way of deserializing parameterized types, so we suppress warnings here.
     @SuppressWarnings("unchecked")
     Map<WsmIamRole, String> workspaceRoleGroupsMap =
-        workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, Map.class);
+        workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, new TypeReference<>() {});
     for (Map.Entry<WsmIamRole, String> entry : workspaceRoleGroupsMap.entrySet()) {
       updatedPolicyBuilder.addWorkspaceBinding(entry.getKey(), entry.getValue());
     }
@@ -63,7 +64,8 @@ public class GcsBucketCloudSyncStep implements Step {
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
       @SuppressWarnings("unchecked")
       Map<ControlledResourceIamRole, String> resourceRoleGroupsMap =
-          workingMap.get(ControlledResourceKeys.IAM_RESOURCE_GROUP_EMAIL_MAP, Map.class);
+          workingMap.get(
+              ControlledResourceKeys.IAM_RESOURCE_GROUP_EMAIL_MAP, new TypeReference<>() {});
       for (Map.Entry<ControlledResourceIamRole, String> entry : resourceRoleGroupsMap.entrySet()) {
         updatedPolicyBuilder.addResourceBinding(entry.getKey(), entry.getValue());
       }

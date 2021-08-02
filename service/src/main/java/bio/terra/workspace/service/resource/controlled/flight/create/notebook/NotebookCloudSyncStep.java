@@ -16,6 +16,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInsta
 import bio.terra.workspace.service.resource.controlled.flight.create.GcpPolicyBuilder;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.notebooks.v1.model.Binding;
 import com.google.api.services.notebooks.v1.model.Policy;
 import com.google.api.services.notebooks.v1.model.SetIamPolicyRequest;
@@ -82,7 +83,7 @@ public class NotebookCloudSyncStep implements Step {
     // have a cleaner way of deserializing parameterized types, so we suppress warnings here.
     @SuppressWarnings("unchecked")
     Map<WsmIamRole, String> workspaceRoleGroupsMap =
-        workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, Map.class);
+        workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, new TypeReference<>() {});
     for (Map.Entry<WsmIamRole, String> entry : workspaceRoleGroupsMap.entrySet()) {
       policyBuilder.addWorkspaceBinding(entry.getKey(), entry.getValue());
     }
@@ -95,7 +96,7 @@ public class NotebookCloudSyncStep implements Step {
       Map<ControlledResourceIamRole, String> resourceRoleGroupsMap =
           workingMap.get(
               WorkspaceFlightMapKeys.ControlledResourceKeys.IAM_RESOURCE_GROUP_EMAIL_MAP,
-              Map.class);
+              new TypeReference<>() {});
       for (Map.Entry<ControlledResourceIamRole, String> entry : resourceRoleGroupsMap.entrySet()) {
         policyBuilder.addResourceBinding(entry.getKey(), entry.getValue());
       }

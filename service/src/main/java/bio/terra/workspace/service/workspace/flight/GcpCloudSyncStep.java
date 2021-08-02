@@ -12,6 +12,7 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRole;
 import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.exceptions.RetryableCrlException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.cloudresourcemanager.v3.model.Binding;
 import com.google.api.services.cloudresourcemanager.v3.model.GetIamPolicyRequest;
 import com.google.api.services.cloudresourcemanager.v3.model.Policy;
@@ -54,11 +55,11 @@ public class GcpCloudSyncStep implements Step {
       throws InterruptedException, RetryException {
     String gcpProjectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
     FlightMap workingMap = flightContext.getWorkingMap();
-    // Read Sam groups for each workspace role. Stairway does not
-    // have a cleaner way of deserializing parameterized types, so we suppress warnings here.
+    // Read Sam groups for each workspace role.
     @SuppressWarnings("unchecked")
     Map<WsmIamRole, String> workspaceRoleGroupsMap =
-        workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, Map.class);
+        workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, new TypeReference<>() {});
+
     try {
       Policy currentPolicy =
           resourceManagerCow

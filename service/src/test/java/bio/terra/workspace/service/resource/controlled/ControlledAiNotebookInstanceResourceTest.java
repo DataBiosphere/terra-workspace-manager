@@ -58,7 +58,7 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
     serializeMap.put("resource", resource);
 
     FlightMap deserializedMap = new FlightMap();
-    deserializedMap.fromJson(serializeMap.toJson());
+    deserializedMap.putRaw("resource", serializeMap.getRaw("resource"));
 
     assertEquals(
         resource, deserializedMap.get("resource", ControlledAiNotebookInstanceResource.class));
