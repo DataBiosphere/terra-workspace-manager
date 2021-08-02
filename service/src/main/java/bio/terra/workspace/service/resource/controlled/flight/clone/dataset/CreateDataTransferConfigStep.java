@@ -21,10 +21,14 @@ import com.google.api.services.iam.v1.model.SetIamPolicyRequest;
 import com.google.cloud.bigquery.datatransfer.v1.CreateTransferConfigRequest;
 import com.google.cloud.bigquery.datatransfer.v1.DataTransferServiceClient;
 import com.google.cloud.bigquery.datatransfer.v1.ProjectName;
+import com.google.cloud.bigquery.datatransfer.v1.StartManualTransferRunsRequest;
+import com.google.cloud.bigquery.datatransfer.v1.StartManualTransferRunsResponse;
 import com.google.cloud.bigquery.datatransfer.v1.TransferConfig;
 import com.google.cloud.bigquery.datatransfer.v1.TransferConfigName;
+import com.google.cloud.bigquery.datatransfer.v1.TransferRun;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.Struct;
+import com.google.protobuf.Timestamp;
 import com.google.protobuf.Value;
 import java.io.IOException;
 import java.time.Duration;
@@ -34,10 +38,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CreateDataTransferConfigStep implements Step {
+
   private static final Logger logger = LoggerFactory.getLogger(CreateDataTransferConfigStep.class);
   private static final Duration SCHEDULE_DELAY = Duration.ofMinutes(1);
   private static final String FQ_P4_SA_FORMAT =
@@ -45,6 +51,7 @@ public class CreateDataTransferConfigStep implements Step {
   // Format specified on the command line for binding members
   private static final String CLI_P4_SA_FORMAT =
       "serviceAccount:service-%s@gcp-sa-bigquerydatatransfer.iam.gserviceaccount.com";
+  public static final Duration MANUAL_RUN_DELAY = Duration.ofSeconds(10L);
 
   private final CrlService crlService;
 
@@ -110,33 +117,43 @@ public class CreateDataTransferConfigStep implements Step {
               .build();
 
       // Run, and fail, once to prime the pump and create the P4 service account.
-      try {
-        dataTransferServiceClient.createTransferConfig(createTransferConfigRequest);
-      } catch (FailedPreconditionException expected) {
-        logger.info("Received expected failure: ", expected);
-      }
+      instantiateP4ServiceAccount(dataTransferServiceClient, createTransferConfigRequest);
 
       // The destination project has a P4 service account which needs permission to impersonate the
-      // main
-      // control plane service account and do the transfer.
+      // main control plane service account and do the transfer.
       final String destinationP4sa = getP4ServiceAccount(destinationInputs.getProjectId());
-      // delegate role to P4 service account
+      // delegate role to P4 service account TODO: remove binding when we're done
       final Policy updatedPolicy = delegatePolicyBinding(controlPlaneSaFqid, destinationP4sa);
+      TimeUnit.SECONDS.sleep(30);
       final TransferConfig createdConfig =
           dataTransferServiceClient.createTransferConfig(createTransferConfigRequest);
-      final String dataSourceId = createdConfig.getDataSourceId(); // FIXME
-      //      final StartManualTransferRunsRequest manualTransferRunsRequest =
-      //
-      // StartManualTransferRunsRequest.newBuilder().setParent(createdConfig.getName()).build();
-      //
-      //      final StartManualTransferRunsResponse response =
-      //          dataTransferServiceClient.startManualTransferRuns(manualTransferRunsRequest);
-      //      final List<TransferRun> runs = response.getRunsList();
-      //      final int runsCount = response.getRunsCount();
+      final StartManualTransferRunsRequest manualTransferRunsRequest =
+          StartManualTransferRunsRequest.newBuilder()
+              .setParent(createdConfig.getName())
+              .setRequestedRunTime(
+                  Timestamp.newBuilder()
+                      .setSeconds(OffsetDateTime.now().plus(MANUAL_RUN_DELAY).toEpochSecond())
+                      .build())
+              .build();
+
+      final StartManualTransferRunsResponse response =
+          dataTransferServiceClient.startManualTransferRuns(manualTransferRunsRequest);
+      final List<TransferRun> runs = response.getRunsList();
+      final int runsCount = response.getRunsCount();
     } catch (IOException | RuntimeException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
     return StepResult.getStepResultSuccess();
+  }
+
+  private void instantiateP4ServiceAccount(
+      DataTransferServiceClient dataTransferServiceClient,
+      CreateTransferConfigRequest createTransferConfigRequest) {
+    try {
+      dataTransferServiceClient.createTransferConfig(createTransferConfigRequest);
+    } catch (FailedPreconditionException expected) {
+      logger.debug("Received expected failure: {}", expected.getMessage());
+    }
   }
 
   @Override
