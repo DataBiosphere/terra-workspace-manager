@@ -11,6 +11,7 @@ import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.AccessScope;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.ControlledResourceCommonFields;
+import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreateDataRepoSnapshotReferenceRequestBody;
@@ -36,6 +37,8 @@ import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
+import bio.terra.workspace.model.PrivateResourceIamRoles;
+import bio.terra.workspace.model.PrivateResourceUser;
 import bio.terra.workspace.model.ReferenceResourceCommonFields;
 import java.util.ArrayList;
 import java.util.List;
@@ -115,6 +118,33 @@ public class ResourceMaker {
             .common(
                 new ControlledResourceCommonFields()
                     .accessScope(AccessScope.SHARED_ACCESS)
+                    .managedBy(ManagedBy.USER)
+                    .cloningInstructions(CloningInstructionsEnum.NOTHING)
+                    .description("Description of " + name)
+                    .name(name))
+            .gcsBucket(
+                new GcpGcsBucketCreationParameters()
+                    .name(bucketName)
+                    .defaultStorageClass(GcpGcsBucketDefaultStorageClass.STANDARD)
+                    .lifecycle(new GcpGcsBucketLifecycle().rules(LIFECYCLE_RULES))
+                    .location("US-CENTRAL1"));
+
+    logger.info("Creating bucket {} workspace {}", bucketName, workspaceId);
+    return resourceApi.createBucket(body, workspaceId);
+  }
+
+  public static CreatedControlledGcpGcsBucket makeControlledGcsBucketUserPrivate(
+      ControlledGcpResourceApi resourceApi, UUID workspaceId, String name,
+      String privateResourceUserEmail, PrivateResourceIamRoles privateResourceRoles) throws Exception {
+    String bucketName = ClientTestUtils.generateCloudResourceName();
+    var body =
+        new CreateControlledGcpGcsBucketRequestBody()
+            .common(
+                new ControlledResourceCommonFields()
+                    .accessScope(AccessScope.PRIVATE_ACCESS)
+                    .privateResourceUser(new PrivateResourceUser()
+                      .userName(privateResourceUserEmail)
+                      .privateResourceIamRoles(privateResourceRoles))
                     .managedBy(ManagedBy.USER)
                     .cloningInstructions(CloningInstructionsEnum.NOTHING)
                     .description("Description of " + name)

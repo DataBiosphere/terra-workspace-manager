@@ -26,15 +26,22 @@ public class CloudSyncRoleMapping {
           "bigquery.readsessions.create",
           "bigquery.readsessions.getData",
           "bigquery.readsessions.update",
+          "compute.acceleratorTypes.list",
+          "compute.diskTypes.list",
+          "compute.instances.list",
+          "compute.machineTypes.list",
+          "compute.subnetworks.list",
           "lifesciences.operations.get",
           "lifesciences.operations.list",
           "monitoring.timeSeries.list",
+          "notebooks.instances.list",
           "resourcemanager.projects.get",
           "serviceusage.operations.get",
           "serviceusage.operations.list",
           "serviceusage.quotas.get",
           "serviceusage.services.get",
-          "serviceusage.services.list");
+          "serviceusage.services.list",
+          "storage.buckets.list");
   private static final List<String> PROJECT_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
           .addAll(PROJECT_READER_PERMISSIONS)
