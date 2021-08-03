@@ -22,8 +22,20 @@ import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport.StatusEnum;
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.Field;
+import com.google.cloud.bigquery.InsertAllRequest;
+import com.google.cloud.bigquery.InsertAllRequest.RowToInsert;
+import com.google.cloud.bigquery.LegacySQLTypeName;
+import com.google.cloud.bigquery.Schema;
+import com.google.cloud.bigquery.StandardTableDefinition;
+import com.google.cloud.bigquery.Table;
+import com.google.cloud.bigquery.TableId;
+import com.google.cloud.bigquery.TableInfo;
+import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +77,41 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
     final String sourceResourceName = (RESOURCE_PREFIX + nameSuffix).replace('-', '_');
     sourceDataset = makeControlledBigQueryDatasetUserShared(sourceOwnerResourceApi, getWorkspaceId(),
         sourceResourceName);
+
+    // Add tables to the source dataset
+    final BigQuery bigQueryClient = ClientTestUtils.getGcpBigQueryClient(sourceOwnerUser, sourceProjectId);
+
+    final Schema employeeSchema = Schema.of(
+        Field.of("employee_id", LegacySQLTypeName.INTEGER),
+        Field.of("name", LegacySQLTypeName.STRING));
+    final TableId employeeTableId = TableId.of(sourceProjectId, sourceDataset.getAttributes().getDatasetId(), "employee");
+    final TableInfo employeeTableInfo = TableInfo.newBuilder(employeeTableId, StandardTableDefinition.of(employeeSchema))
+        .setFriendlyName("Employee")
+        .build();
+
+    final Schema departmentSchema = Schema.of(
+        Field.of("department_id", LegacySQLTypeName.INTEGER),
+        Field.of("manager_id", LegacySQLTypeName.INTEGER),
+        Field.of("name", LegacySQLTypeName.STRING));
+    final TableId departmentTableId = TableId.of(sourceProjectId, sourceDataset.getAttributes().getDatasetId(), "department");
+    final TableInfo departmentTableInfo = TableInfo.newBuilder(departmentTableId, StandardTableDefinition.of(departmentSchema))
+        .setFriendlyName("Department")
+        .build();
+
+    final Table createdEmployeeTable = bigQueryClient.create(employeeTableInfo);
+    logger.info("Employee Table: {}", createdEmployeeTable);
+    final Table createdDepartmentTable = bigQueryClient.create(departmentTableInfo);
+    logger.info("Department Table: {}", createdDepartmentTable);
+
+    // Add rows to the tables
+    bigQueryClient.insertAll(InsertAllRequest.newBuilder(employeeTableInfo)
+        .addRow(ImmutableMap.of("employee_id", 101, "name", "Aquaman"))
+        .addRow(ImmutableMap.of("employee_id", 102, "name", "Superman"))
+        .build());
+    bigQueryClient.insertAll(InsertAllRequest.newBuilder(departmentTableInfo)
+        .addRow(ImmutableMap.of("department_id", 201, "manager_id", 101, "name", "ocean"))
+        .addRow(ImmutableMap.of("department_id", 202, "manager_id", 102, "name", "sky"))
+        .build());
 
     // Make the cloning user a reader on the existing workspace
     sourceOwnerWorkspaceApi.grantRole(
