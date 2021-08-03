@@ -12,6 +12,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.gax.rpc.FailedPreconditionException;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
@@ -26,6 +27,7 @@ import com.google.cloud.bigquery.datatransfer.v1.StartManualTransferRunsResponse
 import com.google.cloud.bigquery.datatransfer.v1.TransferConfig;
 import com.google.cloud.bigquery.datatransfer.v1.TransferConfigName;
 import com.google.cloud.bigquery.datatransfer.v1.TransferRun;
+import com.google.cloud.bigquery.datatransfer.v1.TransferState;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Timestamp;
@@ -104,7 +106,7 @@ public class CreateDataTransferConfigStep implements Step {
       final TransferConfig inputTransferConfig =
           TransferConfig.newBuilder()
               .setDestinationDatasetId(destinationInputs.getDatasetName())
-              //              .setName(transferConfigName)
+              .setName(transferConfigName)
               .setDisplayName("Dataset Clone")
               .setParams(Struct.newBuilder().putAllFields(params).build())
               .setDataSourceId("cross_region_copy")
@@ -124,9 +126,24 @@ public class CreateDataTransferConfigStep implements Step {
       final String destinationP4sa = getP4ServiceAccount(destinationInputs.getProjectId());
       // delegate role to P4 service account TODO: remove binding when we're done
       final Policy updatedPolicy = delegatePolicyBinding(controlPlaneSaFqid, destinationP4sa);
-      TimeUnit.SECONDS.sleep(30);
-      final TransferConfig createdConfig =
-          dataTransferServiceClient.createTransferConfig(createTransferConfigRequest);
+      TransferConfig createdConfig = null;
+      int attempts = 20;
+      while (attempts-- > 0) {
+        try {
+          createdConfig =
+              dataTransferServiceClient.createTransferConfig(createTransferConfigRequest);
+          break;
+        } catch (FailedPreconditionException e) {
+          logger.debug("Failed precondition exception - retrying: {}", e.getMessage());
+          TimeUnit.SECONDS.sleep(15);
+        }
+      }
+      if (null == createdConfig) {
+        return new StepResult(
+            StepStatus.STEP_RESULT_FAILURE_FATAL,
+            new RuntimeException(
+                "Failed to create BigQuery Data Transfer Service transfer config."));
+      }
       final StartManualTransferRunsRequest manualTransferRunsRequest =
           StartManualTransferRunsRequest.newBuilder()
               .setParent(createdConfig.getName())
@@ -140,6 +157,20 @@ public class CreateDataTransferConfigStep implements Step {
           dataTransferServiceClient.startManualTransferRuns(manualTransferRunsRequest);
       final List<TransferRun> runs = response.getRunsList();
       final int runsCount = response.getRunsCount();
+      if (0 == runsCount) {
+        return new StepResult(
+            StepStatus.STEP_RESULT_FAILURE_FATAL,
+            new RuntimeException("Can't find manual TransferRun."));
+      }
+      final TransferRun firstRun = runs.get(0);
+      TransferState transferState = firstRun.getState();
+      //      do {
+      //        TimeUnit.SECONDS.sleep(10);
+      //        transferState = firstRun.getState();
+      //      }
+      //      while (!isFinished(transferState));
+
+      // wait while the run is running
     } catch (IOException | RuntimeException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
@@ -159,6 +190,22 @@ public class CreateDataTransferConfigStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     return StepResult.getStepResultSuccess();
+  }
+
+  private boolean isFinished(TransferState transferState) {
+    switch (transferState) {
+      case TRANSFER_STATE_UNSPECIFIED:
+      case PENDING:
+      case RUNNING:
+        return false;
+      case SUCCEEDED:
+      case FAILED:
+      case CANCELLED:
+        return true;
+      default:
+      case UNRECOGNIZED:
+        throw new InternalLogicException("Unrecognized transfer state");
+    }
   }
 
   private String getP4ServiceAccount(String destinationProjectId) {
