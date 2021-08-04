@@ -56,7 +56,6 @@ public class GcpCloudSyncStep implements Step {
     String gcpProjectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
     FlightMap workingMap = flightContext.getWorkingMap();
     // Read Sam groups for each workspace role.
-    @SuppressWarnings("unchecked")
     Map<WsmIamRole, String> workspaceRoleGroupsMap =
         workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, new TypeReference<>() {});
 

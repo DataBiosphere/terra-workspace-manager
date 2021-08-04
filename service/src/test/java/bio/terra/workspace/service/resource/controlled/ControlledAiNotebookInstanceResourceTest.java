@@ -54,14 +54,13 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
     ControlledAiNotebookInstanceResource resource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance().build();
 
-    FlightMap serializeMap = new FlightMap();
-    serializeMap.put("resource", resource);
+    // TODO: [PF-935] Create a public API on FlightMap or Stairway test fixture that explicitly
+    // tests that a type serializes and deserializes to the correct result.  For now leverage the
+    // fact that we know that FlightMap internally serializes/deserializes on put/get.
 
-    FlightMap deserializedMap = new FlightMap();
-    deserializedMap.putRaw("resource", serializeMap.getRaw("resource"));
-
-    assertEquals(
-        resource, deserializedMap.get("resource", ControlledAiNotebookInstanceResource.class));
+    FlightMap flightMap = new FlightMap();
+    flightMap.put("resource", resource);
+    assertEquals(resource, flightMap.get("resource", ControlledAiNotebookInstanceResource.class));
   }
 
   @Test
