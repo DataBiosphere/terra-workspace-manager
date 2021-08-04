@@ -114,6 +114,10 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     GcpGcsBucketResource gotBucket = privateUserResourceApi.getBucket(getWorkspaceId(), resourceId);
     assertEquals(bucket.getGcpBucket().getAttributes().getBucketName(), gotBucket.getAttributes().getBucketName());
     assertEquals(bucketName, gotBucket.getAttributes().getBucketName());
+    // Assert the bucket is assigned to privateResourceUser, even though resource user was
+    // not specified
+    assertEquals(privateResourceUser.userEmail,
+        gotBucket.getMetadata().getControlledResourceMetadata().getPrivateResourceUser().getUserName());
 
     Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, projectId);
     Storage privateUserStorageClient =
@@ -211,7 +215,6 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
             .accessScope(AccessScope.PRIVATE_ACCESS)
             .privateResourceUser(
                 new PrivateResourceUser()
-                    .userName(privateResourceUser.userEmail)
                     .privateResourceIamRoles(privateUser))
             .managedBy(ManagedBy.USER);
 

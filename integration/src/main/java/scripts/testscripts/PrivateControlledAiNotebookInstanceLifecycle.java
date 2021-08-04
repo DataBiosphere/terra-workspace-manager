@@ -108,6 +108,8 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     assertEquals(instanceId, resource.getAttributes().getInstanceId());
     assertEquals(instanceId,
         creationResult.getAiNotebookInstance().getAttributes().getInstanceId());
+    assertEquals(resourceUser.userEmail,
+        resource.getMetadata().getControlledResourceMetadata().getPrivateResourceUser().getUserName());
 
     String instanceName = String
         .format("projects/%s/locations/%s/instances/%s", resource.getAttributes().getProjectId(),
