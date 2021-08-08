@@ -54,6 +54,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String STORAGE_TRANSFER_JOB_NAME = "storageTransferJobName";
     public static final String DESTINATION_DATASET_NAME = "destinationDatasetName";
     public static final String CONTROL_PLANE_SA_EMAIL = "controlPlaneSAEmail";
+    public static final String TABLE_TO_JOB_ID_MAP = "tableToJobIdMap";
   }
 
   /** Common resource keys */

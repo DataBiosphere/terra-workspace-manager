@@ -134,15 +134,18 @@ public class CrlService {
 
   /**
    * Create a vanilla Bigquery client object, for testing things that aren't in CRL yet.
+   *
    * @param userRequest
    * @return
    */
   public Bigquery createNakedBigQueryClient(AuthenticatedUserRequest userRequest) {
     assertCrlInUse();
     try {
-      return new Bigquery(Defaults.httpTransport(), Defaults.jsonFactory(), new HttpCredentialsAdapter(GoogleCredentials.getApplicationDefault().createScoped(
-          BigqueryScopes.all()))
-      );
+      return new Bigquery(
+          Defaults.httpTransport(),
+          Defaults.jsonFactory(),
+          new HttpCredentialsAdapter(
+              GoogleCredentials.getApplicationDefault().createScoped(BigqueryScopes.all())));
     } catch (IOException | GeneralSecurityException e) {
       throw new CrlInternalException("Error creating naked BigQuery client.");
     }
