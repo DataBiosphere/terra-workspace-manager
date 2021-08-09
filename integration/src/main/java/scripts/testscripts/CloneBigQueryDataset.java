@@ -111,24 +111,25 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
 
     // Add rows to the tables
 
-    // Stream insert one row to check the error handling/warning. This row may not be copied.
+    // Stream insert one row to check the error handling/warning. This row may not be copied. (If
+    // the stream happens after the DDL insert, sometimes it gets copied).
     bigQueryClient.insertAll(InsertAllRequest.newBuilder(employeeTableInfo)
         .addRow(ImmutableMap.of("employee_id", 103, "name", "Batman"))
         .build());
 
     // Use DDL to insert rows instead of InsertAllRequest so that data won't be in the streaming buffer where
     // it's un-copyable for up to 90 minutes.
-    final QueryJobConfiguration insertEmployeeQuery = QueryJobConfiguration.newBuilder(
-        "INSERT INTO `" + sourceProjectId + "." + sourceDataset.getAttributes().getDatasetId() + ".employee` (employee_id, name) VALUES("
-        + "101, 'Aquaman'), (102, 'Superman');")
-        .build();
-    bigQueryClient.query(insertEmployeeQuery);
+    bigQueryClient.query(QueryJobConfiguration.newBuilder(
+        "INSERT INTO `" + sourceProjectId + "." + sourceDataset.getAttributes().getDatasetId()
+            + ".employee` (employee_id, name) VALUES("
+            + "101, 'Aquaman'), (102, 'Superman');")
+        .build());
 
-    final QueryJobConfiguration insertDepartmentQuery = QueryJobConfiguration.newBuilder(
-        "INSERT INTO `" + sourceProjectId + "." + sourceDataset.getAttributes().getDatasetId() + ".department` (department_id, manager_id, name) "
-        + "VALUES(201, 101, 'ocean'), (202, 102, 'sky');"
-    ).build();
-    bigQueryClient.query(insertDepartmentQuery);
+    bigQueryClient.query(QueryJobConfiguration.newBuilder(
+        "INSERT INTO `" + sourceProjectId + "." + sourceDataset.getAttributes().getDatasetId()
+            + ".department` (department_id, manager_id, name) "
+            + "VALUES(201, 101, 'ocean'), (202, 102, 'sky');"
+    ).build());
 
     // double-check the rows are there
     final QueryJobConfiguration employeeQueryJobConfiguration = QueryJobConfiguration.newBuilder(
@@ -233,15 +234,14 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
     logger.info("table result: {}", employeeTableResult);
     final long numRows = StreamSupport.stream(employeeTableResult.getValues().spliterator(), false)
         .count();
-    assertEquals(2, numRows);
+    assertThat(numRows, is(greaterThanOrEqualTo(2L)));
 
-    final QueryJobConfiguration departmentQueryJobConfiguration = QueryJobConfiguration.newBuilder(
+    final TableResult departmentTableResult = bigQueryClient.query(QueryJobConfiguration.newBuilder(
         "SELECT * FROM `"
             + destinationProjectId + "."
             + clonedResource.getAttributes().getDatasetId() + ".department` " +
             "WHERE department_id = 201;"
-    ).build();
-    final TableResult departmentTableResult = bigQueryClient.query(departmentQueryJobConfiguration);
+    ).build());
     final FieldValueList row = StreamSupport.stream(departmentTableResult.getValues().spliterator(), false).findFirst()
         .orElseThrow(() -> new RuntimeException("Can't find first row"));
     final FieldValue nameFieldValue = row.get("name");
