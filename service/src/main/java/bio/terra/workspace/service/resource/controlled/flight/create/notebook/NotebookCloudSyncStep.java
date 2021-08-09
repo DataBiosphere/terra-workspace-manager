@@ -16,6 +16,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInsta
 import bio.terra.workspace.service.resource.controlled.flight.create.GcpPolicyBuilder;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.notebooks.v1.model.Binding;
 import com.google.api.services.notebooks.v1.model.Policy;
 import com.google.api.services.notebooks.v1.model.SetIamPolicyRequest;
@@ -78,11 +79,9 @@ public class NotebookCloudSyncStep implements Step {
     GcpPolicyBuilder policyBuilder =
         new GcpPolicyBuilder(resource, projectId, com.google.cloud.Policy.newBuilder().build());
 
-    // Read Sam groups for each workspace role. Stairway does not
-    // have a cleaner way of deserializing parameterized types, so we suppress warnings here.
-    @SuppressWarnings("unchecked")
+    // Read Sam groups for each workspace role.
     Map<WsmIamRole, String> workspaceRoleGroupsMap =
-        workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, Map.class);
+        workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, new TypeReference<>() {});
     for (Map.Entry<WsmIamRole, String> entry : workspaceRoleGroupsMap.entrySet()) {
       policyBuilder.addWorkspaceBinding(entry.getKey(), entry.getValue());
     }
@@ -91,11 +90,10 @@ public class NotebookCloudSyncStep implements Step {
     // the resource's Sam policies to manage those individuals, so they must be synced here.
     // This section should also run for application managed resources, once those are supported.
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
-      @SuppressWarnings("unchecked")
       Map<ControlledResourceIamRole, String> resourceRoleGroupsMap =
           workingMap.get(
               WorkspaceFlightMapKeys.ControlledResourceKeys.IAM_RESOURCE_GROUP_EMAIL_MAP,
-              Map.class);
+              new TypeReference<>() {});
       for (Map.Entry<ControlledResourceIamRole, String> entry : resourceRoleGroupsMap.entrySet()) {
         policyBuilder.addResourceBinding(entry.getKey(), entry.getValue());
       }

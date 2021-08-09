@@ -19,6 +19,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDataset
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.model.Dataset;
 import com.google.api.services.bigquery.model.Dataset.Access;
@@ -116,20 +117,18 @@ public class CreateBigQueryDatasetStep implements Step {
     GcpPolicyBuilder policyBuilder =
         new GcpPolicyBuilder(resource, projectId, Policy.newBuilder().build());
 
-    // Read Sam groups for each workspace role. Stairway does not
-    // have a cleaner way of deserializing parameterized types, so we suppress warnings here.
-    @SuppressWarnings("unchecked")
+    // Read Sam groups for each workspace role.
     Map<WsmIamRole, String> workspaceRoleGroupMap =
-        workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, Map.class);
+        workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, new TypeReference<>() {});
     workspaceRoleGroupMap.forEach(policyBuilder::addWorkspaceBinding);
 
     // Resources with permissions given to individual users (private or application managed) use
     // the resource's Sam policies to manage those individuals, so they must be synced here.
     // This section should also run for application managed resources, once those are supported.
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
-      @SuppressWarnings("unchecked")
       Map<ControlledResourceIamRole, String> resourceRoleGroupMap =
-          workingMap.get(ControlledResourceKeys.IAM_RESOURCE_GROUP_EMAIL_MAP, Map.class);
+          workingMap.get(
+              ControlledResourceKeys.IAM_RESOURCE_GROUP_EMAIL_MAP, new TypeReference<>() {});
       resourceRoleGroupMap.forEach(policyBuilder::addResourceBinding);
     }
 
