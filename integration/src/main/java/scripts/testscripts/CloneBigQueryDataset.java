@@ -12,8 +12,8 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.model.CloneControlledGcpBigQueryDatasetRequest;
-import bio.terra.workspace.model.ClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.model.CloneControlledGcpBigQueryDatasetResult;
+import bio.terra.workspace.model.ClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
@@ -24,19 +24,22 @@ import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport.StatusEnum;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.Field;
+import com.google.cloud.bigquery.FieldValue;
+import com.google.cloud.bigquery.FieldValueList;
 import com.google.cloud.bigquery.InsertAllRequest;
-import com.google.cloud.bigquery.InsertAllRequest.RowToInsert;
 import com.google.cloud.bigquery.LegacySQLTypeName;
+import com.google.cloud.bigquery.QueryJobConfiguration;
 import com.google.cloud.bigquery.Schema;
 import com.google.cloud.bigquery.StandardTableDefinition;
 import com.google.cloud.bigquery.Table;
 import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.TableInfo;
+import com.google.cloud.bigquery.TableResult;
 import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
+import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
@@ -192,5 +195,28 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
         clonedResource.getMetadata().getControlledResourceMetadata().getAccessScope());
     assertNotEquals(sourceDataset.getAttributes().getProjectId(), clonedResource.getAttributes().getProjectId());
     assertEquals(sourceDataset.getAttributes().getDatasetId(), clonedResource.getAttributes().getDatasetId());
+
+    // compare dataset contents
+    final BigQuery bigQueryClient = ClientTestUtils.getGcpBigQueryClient(testUser, sourceProjectId);
+    final QueryJobConfiguration employeeQueryJobConfiguration = QueryJobConfiguration.newBuilder(
+        "SELECT * FROM " + clonedResource.getAttributes().getDatasetId() + ".employee;")
+        .build();
+    final TableResult employeeTableResult = bigQueryClient.query(employeeQueryJobConfiguration);
+    logger.info("table result: {}", employeeTableResult);
+    final long numRows = StreamSupport.stream(employeeTableResult.getValues().spliterator(), false)
+        .count();
+    assertEquals(2, numRows);
+
+    final QueryJobConfiguration departmentQueryJobConfiguration = QueryJobConfiguration.newBuilder(
+        "SELECT * FROM " + clonedResource.getAttributes().getDatasetId() + ".department " +
+            "WHERE department_id = 201;"
+    ).build();
+    final TableResult departmentTableResult = bigQueryClient.query(departmentQueryJobConfiguration);
+    final FieldValueList row = StreamSupport.stream(departmentTableResult.getValues().spliterator(), false).findFirst()
+        .orElseThrow(() -> new RuntimeException("Can't find first row"));
+    final FieldValue nameFieldValue = row.get("name");
+    assertEquals("ocean", nameFieldValue.getStringValue());
+    final FieldValue managerFieldValue = row.get("manager_id");
+    assertEquals(101, managerFieldValue.getLongValue());
   }
 }
