@@ -11,6 +11,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.bigquery.Bigquery;
 import com.google.api.services.bigquery.model.Job;
 import com.google.api.services.bigquery.model.JobConfiguration;
@@ -61,13 +62,11 @@ public class CreateTableCopyJobsStep implements Step {
               .list(sourceInputs.getProjectId(), sourceInputs.getDatasetName())
               .execute();
       // Start a copy job for each source table
-      //      final List<JobReference> submittedJobs = new ArrayList<>();
-      @SuppressWarnings("unchecked")
       final Map<String, String> tableToJobId =
           Optional.ofNullable(
                   workingMap.get(
                       ControlledResourceKeys.TABLE_TO_JOB_ID_MAP,
-                      Map.class)) // todo: use typereference
+                      new TypeReference<Map<String, String>>() {}))
               .orElseGet(HashMap::new);
       for (TableList.Tables table : sourceTables.getTables()) {
         if (tableToJobId.containsKey(table.getId())) {
@@ -85,6 +84,9 @@ public class CreateTableCopyJobsStep implements Step {
                     getTableName(table.getId()))
                 .execute();
         if (tableGetResponse.getStreamingBuffer() != null) {
+          // This is unfortunate, but our contract is to clone whatever BigQuery copies, which doesn't
+          // include recent streaming-inserted data. Warn in the log to assist in investigating
+          // customer complaints.
           logger.warn(
               "Streaming buffer data in table {} will not be copied. Estimated rows: {}, Oldest entry time: {}",
               table.getId(),
@@ -98,52 +100,9 @@ public class CreateTableCopyJobsStep implements Step {
         final Job submittedJob =
             bigQueryClient.jobs().insert(sourceInputs.getProjectId(), inputJob).execute();
 
-        final JobReference submittedJobReference = submittedJob.getJobReference();
         tableToJobId.put(table.getId(), submittedJob.getId());
         workingMap.put(ControlledResourceKeys.TABLE_TO_JOB_ID_MAP, tableToJobId);
-
-        //        final Jobs jobs = bigQueryClient.jobs();
-        //        final JobList allJobs = jobs.list(submittedJobReference.getProjectId()).execute();
-        //        allJobs.getJobs().forEach(j -> logger.info("Found job id {}", j.getId()));
-
-        //        final Job gotJob =
-        //            jobs.get(submittedJobReference.getProjectId(),
-        // submittedJobReference.getJobId())
-        //                .setLocation(submittedJobReference.getLocation())
-        //                .execute();
-        // job state string is undocumented, but assume it corresponds to
-        // https://googleapis.dev/java/google-cloud-bigquery/latest/com/google/cloud/bigquery/JobStatus.State.html
       }
-
-      // TODO: move to next step?
-      // wait for all jobs to be DONE
-      //      long totalChecks = COPY_JOB_TIMEOUT.toSeconds() / 10;
-      //      while (totalChecks-- > 0) {
-      //        final JobList allJobs =
-      // bigQueryClient.jobs().list(sourceInputs.getProjectId()).execute();
-      //        final long numJobs = allJobs.getJobs().size();
-      //        final long numPending =
-      //            allJobs.getJobs().stream().filter(j -> j.getState().equals("PENDING")).count();
-      //        final long numRunning =
-      //            allJobs.getJobs().stream().filter(j -> j.getState().equals("RUNNING")).count();
-      //        final long numDone =
-      //            allJobs.getJobs().stream().filter(j -> j.getState().equals("DONE")).count();
-      //        logger.info(
-      //            "Copying {} tables: {} PENDING, {} RUNNING, {} DONE.",
-      //            numJobs,
-      //            numPending,
-      //            numRunning,
-      //            numDone);
-      //        if (numJobs == numDone) {
-      //          break;
-      //        }
-      //        TimeUnit.SECONDS.sleep(10);
-      //      }
-      //      if (totalChecks == 0) {
-      //        return new StepResult(
-      //            StepStatus.STEP_RESULT_FAILURE_RETRY,
-      //            new RuntimeException("Jobs did not complete after 10000 seconds"));
-      //      }
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
@@ -157,7 +116,7 @@ public class CreateTableCopyJobsStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private Job buildTableCopyJob(
+  private static Job buildTableCopyJob(
       DatasetCloneInputs sourceInputs, DatasetCloneInputs destinationInputs, Tables table) {
     final JobConfigurationTableCopy jobConfigurationTableCopy = new JobConfigurationTableCopy();
     // The source and destination table have the same table type.
@@ -168,11 +127,8 @@ public class CreateTableCopyJobsStep implements Step {
     // replace contents on retry since appending will leave duplicate data
     jobConfigurationTableCopy.setWriteDisposition("WRITE_TRUNCATE");
 
-    final TableReference sourceTableReference = buildTableReference(sourceInputs, table);
-    jobConfigurationTableCopy.setSourceTable(sourceTableReference);
-
-    final TableReference destinationTableReference = buildTableReference(destinationInputs, table);
-    jobConfigurationTableCopy.setDestinationTable(destinationTableReference);
+    jobConfigurationTableCopy.setSourceTable(buildTableReference(sourceInputs, table));
+    jobConfigurationTableCopy.setDestinationTable(buildTableReference(destinationInputs, table));
 
     final JobConfiguration jobConfiguration = new JobConfiguration();
     jobConfiguration.setJobType("COPY");
@@ -185,17 +141,17 @@ public class CreateTableCopyJobsStep implements Step {
   }
 
   // Extract the table ID/name portion of an ID in the form project-id:dataset_name.tableId
-  public static String getTableName(String fqTableId) {
+  private static String getTableName(String fqTableId) {
     // Since neither the project nor the dataset can contain periods, we can simply split on
     // the period character
     final String[] parts = fqTableId.split("\\.");
     return parts[1];
   }
 
-  private TableReference buildTableReference(DatasetCloneInputs sourceInputs, Tables table) {
+  private static TableReference buildTableReference(DatasetCloneInputs inputs, Tables table) {
     final TableReference sourceTableReference = new TableReference();
-    sourceTableReference.setProjectId(sourceInputs.getProjectId());
-    sourceTableReference.setDatasetId(sourceInputs.getDatasetName());
+    sourceTableReference.setProjectId(inputs.getProjectId());
+    sourceTableReference.setDatasetId(inputs.getDatasetName());
     sourceTableReference.setTableId(getTableName(table.getId()));
     return sourceTableReference;
   }

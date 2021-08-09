@@ -42,25 +42,23 @@ public class CompleteTableCopyJobsStep implements Step {
     final Bigquery bigQueryClient = crlService.createNakedBigQueryClient(userRequest);
     try {
       for (Map.Entry<String, String> entry : tableToJobId.entrySet()) {
-        final String tableFqId = entry.getKey();
-        logger.info("Waiting for table {}", tableFqId);
-        final String jobFqId = entry.getValue();
+        final TableReference tableReference = tableFqIdToReference(entry.getKey());
+        final JobReference jobReference = jobFqIdToReference(entry.getValue());
+
         // wait for job to complete
         while (true) {
-          final TableReference tableReference = tableFqIdToReference(tableFqId);
-          final JobReference jobReference = jobFqIdToReference(jobFqId);
           final Job job =
               bigQueryClient
                   .jobs()
                   .get(jobReference.getProjectId(), jobReference.getJobId())
-                  .setLocation(jobReference.getLocation())
+                  .setLocation(jobReference.getLocation()) // returns NOT_FOUND unless location is specified
                   .execute();
           final String jobState = job.getStatus().getState();
-          logger.info("\tTable {} is {}", tableReference.getTableId(), jobState);
+          logger.debug("Table {} is {}", tableReference.getTableId(), jobState);
           if ("DONE".equals(jobState)) {
             break;
           }
-          TimeUnit.SECONDS.sleep(10);
+          TimeUnit.SECONDS.sleep(5);
         }
       }
     } catch (IOException | InterruptedException e) {
@@ -80,8 +78,6 @@ public class CompleteTableCopyJobsStep implements Step {
   // Fully-qualified table IDs are of the form project-id:dataset_id.table_id
   private TableReference tableFqIdToReference(String tableFqId) {
     final TableReference result = new TableReference();
-
-    //    final Matcher matcher = TABLE_FQ_ID_PATTERN.matcher(tableFqId);
     final String[] outerGroups = tableFqId.split(":");
     result.setProjectId(outerGroups[0]);
 
