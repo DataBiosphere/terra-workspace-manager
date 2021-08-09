@@ -51,7 +51,8 @@ public class CompleteTableCopyJobsStep implements Step {
               bigQueryClient
                   .jobs()
                   .get(jobReference.getProjectId(), jobReference.getJobId())
-                  .setLocation(jobReference.getLocation()) // returns NOT_FOUND unless location is specified
+                  .setLocation(
+                      jobReference.getLocation()) // returns NOT_FOUND unless location is specified
                   .execute();
           final String jobState = job.getStatus().getState();
           logger.debug("Table {} is {}", tableReference.getTableId(), jobState);

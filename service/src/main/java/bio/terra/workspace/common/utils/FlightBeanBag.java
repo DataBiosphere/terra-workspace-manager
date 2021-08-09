@@ -9,7 +9,6 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesComponent;
-import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.DatasetCloneRolesComponent;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -26,7 +25,6 @@ import org.springframework.stereotype.Component;
 public class FlightBeanBag {
 
   private final BucketCloneRolesComponent bucketCloneRolesComponent;
-  private final DatasetCloneRolesComponent datasetCloneRolesComponent;
   private final BufferService bufferService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
   private final ControlledResourceService controlledResourceService;
@@ -41,7 +39,6 @@ public class FlightBeanBag {
   @Autowired
   public FlightBeanBag(
       BucketCloneRolesComponent bucketCloneRolesComponent,
-      DatasetCloneRolesComponent datasetCloneRolesComponent,
       BufferService bufferService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
       ControlledResourceService controlledResourceService,
@@ -52,7 +49,6 @@ public class FlightBeanBag {
       WorkspaceDao workspaceDao,
       WorkspaceService workspaceService) {
     this.bucketCloneRolesComponent = bucketCloneRolesComponent;
-    this.datasetCloneRolesComponent = datasetCloneRolesComponent;
     this.bufferService = bufferService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
     this.controlledResourceService = controlledResourceService;
@@ -70,10 +66,6 @@ public class FlightBeanBag {
 
   public BucketCloneRolesComponent getBucketCloneRolesComponent() {
     return bucketCloneRolesComponent;
-  }
-
-  public DatasetCloneRolesComponent getDatasetCloneRolesComponent() {
-    return datasetCloneRolesComponent;
   }
 
   public BufferService getBufferService() {

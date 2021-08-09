@@ -10,13 +10,14 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.bigquery.Bigquery;
 import com.google.api.services.bigquery.model.Job;
 import com.google.api.services.bigquery.model.JobConfiguration;
 import com.google.api.services.bigquery.model.JobConfigurationTableCopy;
-import com.google.api.services.bigquery.model.JobReference;
 import com.google.api.services.bigquery.model.Table;
 import com.google.api.services.bigquery.model.TableList;
 import com.google.api.services.bigquery.model.TableList.Tables;
@@ -27,6 +28,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,19 +36,29 @@ public class CreateTableCopyJobsStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(CreateTableCopyJobsStep.class);
   public static final Duration COPY_JOB_TIMEOUT = Duration.ofHours(12);
   private final CrlService crlService;
+  private final WorkspaceService workspaceService;
+  private final ControlledBigQueryDatasetResource sourceDataset;
 
-  public CreateTableCopyJobsStep(CrlService crlService) {
+  public CreateTableCopyJobsStep(
+      CrlService crlService,
+      WorkspaceService workspaceService,
+      ControlledBigQueryDatasetResource sourceDataset) {
     this.crlService = crlService;
+    this.workspaceService = workspaceService;
+    this.sourceDataset = sourceDataset;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     final FlightMap workingMap = flightContext.getWorkingMap();
-    final DatasetCloneInputs sourceInputs =
-        workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, DatasetCloneInputs.class);
-    final DatasetCloneInputs destinationInputs =
-        workingMap.get(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, DatasetCloneInputs.class);
+    // Gather inputs
+    final DatasetCloneInputs sourceInputs = getSourceInputs();
+    workingMap.put(ControlledResourceKeys.SOURCE_CLONE_INPUTS, sourceInputs);
+
+    final DatasetCloneInputs destinationInputs = getDestinationInputs(flightContext);
+    workingMap.put(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, destinationInputs);
+
     final AuthenticatedUserRequest userRequest =
         flightContext
             .getInputParameters()
@@ -84,7 +96,8 @@ public class CreateTableCopyJobsStep implements Step {
                     getTableName(table.getId()))
                 .execute();
         if (tableGetResponse.getStreamingBuffer() != null) {
-          // This is unfortunate, but our contract is to clone whatever BigQuery copies, which doesn't
+          // This is unfortunate, but our contract is to clone whatever BigQuery copies, which
+          // doesn't
           // include recent streaming-inserted data. Warn in the log to assist in investigating
           // customer complaints.
           logger.warn(
@@ -154,5 +167,28 @@ public class CreateTableCopyJobsStep implements Step {
     sourceTableReference.setDatasetId(inputs.getDatasetName());
     sourceTableReference.setTableId(getTableName(table.getId()));
     return sourceTableReference;
+  }
+
+  private DatasetCloneInputs getSourceInputs() {
+    final String sourceProjectId =
+        workspaceService.getRequiredGcpProject(sourceDataset.getWorkspaceId());
+    final String sourceDatasetName = sourceDataset.getDatasetName();
+    return new DatasetCloneInputs(
+        sourceDataset.getWorkspaceId(), sourceProjectId, sourceDatasetName);
+  }
+
+  private DatasetCloneInputs getDestinationInputs(FlightContext flightContext) {
+    final UUID destinationWorkspaceId =
+        flightContext
+            .getInputParameters()
+            .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+    final String destinationProjectId =
+        workspaceService.getRequiredGcpProject(destinationWorkspaceId);
+    final String destinationDatasetName =
+        flightContext
+            .getWorkingMap()
+            .get(ControlledResourceKeys.DESTINATION_DATASET_NAME, String.class);
+    return new DatasetCloneInputs(
+        destinationWorkspaceId, destinationProjectId, destinationDatasetName);
   }
 }
