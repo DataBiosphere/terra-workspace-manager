@@ -2,7 +2,9 @@ package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
@@ -108,14 +110,36 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
     logger.info("Department Table: {}", createdDepartmentTable);
 
     // Add rows to the tables
+
+    // Stream insert one row to check the error handling/warning. This row may not be copied.
     bigQueryClient.insertAll(InsertAllRequest.newBuilder(employeeTableInfo)
-        .addRow(ImmutableMap.of("employee_id", 101, "name", "Aquaman"))
-        .addRow(ImmutableMap.of("employee_id", 102, "name", "Superman"))
+        .addRow(ImmutableMap.of("employee_id", 103, "name", "Batman"))
         .build());
-    bigQueryClient.insertAll(InsertAllRequest.newBuilder(departmentTableInfo)
-        .addRow(ImmutableMap.of("department_id", 201, "manager_id", 101, "name", "ocean"))
-        .addRow(ImmutableMap.of("department_id", 202, "manager_id", 102, "name", "sky"))
-        .build());
+
+    // Use DDL to insert rows instead of InsertAllRequest so that data won't be in the streaming buffer where
+    // it's un-copyable for up to 90 minutes.
+    final QueryJobConfiguration insertEmployeeQuery = QueryJobConfiguration.newBuilder(
+        "INSERT INTO `" + sourceProjectId + "." + sourceDataset.getAttributes().getDatasetId() + ".employee` (employee_id, name) VALUES("
+        + "101, 'Aquaman'), (102, 'Superman');")
+        .build();
+    bigQueryClient.query(insertEmployeeQuery);
+
+    final QueryJobConfiguration insertDepartmentQuery = QueryJobConfiguration.newBuilder(
+        "INSERT INTO `" + sourceProjectId + "." + sourceDataset.getAttributes().getDatasetId() + ".department` (department_id, manager_id, name) "
+        + "VALUES(201, 101, 'ocean'), (202, 102, 'sky');"
+    ).build();
+    bigQueryClient.query(insertDepartmentQuery);
+
+    // double-check the rows are there
+    final QueryJobConfiguration employeeQueryJobConfiguration = QueryJobConfiguration.newBuilder(
+        "SELECT * FROM `" +
+            sourceProjectId + "." +
+            sourceDataset.getAttributes().getDatasetId() + ".employee`;")
+        .build();
+    final TableResult employeeTableResult = bigQueryClient.query(employeeQueryJobConfiguration);
+    final long numRows = StreamSupport.stream(employeeTableResult.getValues().spliterator(), false)
+        .count();
+    assertThat(numRows, is(greaterThanOrEqualTo(2L)));
 
     // Make the cloning user a reader on the existing workspace
     sourceOwnerWorkspaceApi.grantRole(

@@ -15,17 +15,17 @@ import com.google.api.services.bigquery.Bigquery;
 import com.google.api.services.bigquery.model.Job;
 import com.google.api.services.bigquery.model.JobConfiguration;
 import com.google.api.services.bigquery.model.JobConfigurationTableCopy;
-import com.google.api.services.bigquery.model.JobList;
 import com.google.api.services.bigquery.model.JobReference;
+import com.google.api.services.bigquery.model.Table;
 import com.google.api.services.bigquery.model.TableList;
 import com.google.api.services.bigquery.model.TableList.Tables;
 import com.google.api.services.bigquery.model.TableReference;
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,13 +74,31 @@ public class CreateTableCopyJobsStep implements Step {
           // A job already exists for this table
           continue;
         }
+        // If the table contains data in its streaming buffer, that data can't be copied yet
+        // https://cloud.google.com/bigquery/streaming-data-into-bigquery#dataavailability
+        final Table tableGetResponse =
+            bigQueryCow
+                .tables()
+                .get(
+                    sourceInputs.getProjectId(),
+                    sourceInputs.getDatasetName(),
+                    getTableName(table.getId()))
+                .execute();
+        if (tableGetResponse.getStreamingBuffer() != null) {
+          logger.warn(
+              "Streaming buffer data in table {} will not be copied. Estimated rows: {}, Oldest entry time: {}",
+              table.getId(),
+              tableGetResponse.getStreamingBuffer().getEstimatedRows(),
+              Instant.ofEpochMilli(
+                      tableGetResponse.getStreamingBuffer().getOldestEntryTime().longValueExact())
+                  .toString());
+        }
         final Job inputJob = buildTableCopyJob(sourceInputs, destinationInputs, table);
         // bill the job to the source project
         final Job submittedJob =
             bigQueryClient.jobs().insert(sourceInputs.getProjectId(), inputJob).execute();
 
         final JobReference submittedJobReference = submittedJob.getJobReference();
-        //        submittedJobs.add(submittedJobReference);
         tableToJobId.put(table.getId(), submittedJob.getId());
         workingMap.put(ControlledResourceKeys.TABLE_TO_JOB_ID_MAP, tableToJobId);
 
@@ -99,32 +117,33 @@ public class CreateTableCopyJobsStep implements Step {
 
       // TODO: move to next step?
       // wait for all jobs to be DONE
-      long totalChecks = COPY_JOB_TIMEOUT.toSeconds() / 10;
-      while (totalChecks-- > 0) {
-        final JobList allJobs = bigQueryClient.jobs().list(sourceInputs.getProjectId()).execute();
-        final long numJobs = allJobs.getJobs().size();
-        final long numPending =
-            allJobs.getJobs().stream().filter(j -> j.getState().equals("PENDING")).count();
-        final long numRunning =
-            allJobs.getJobs().stream().filter(j -> j.getState().equals("RUNNING")).count();
-        final long numDone =
-            allJobs.getJobs().stream().filter(j -> j.getState().equals("DONE")).count();
-        logger.info(
-            "Copying {} tables: {} PENDING, {} RUNNING, {} DONE.",
-            numJobs,
-            numPending,
-            numRunning,
-            numDone);
-        if (numJobs == numDone) {
-          break;
-        }
-        TimeUnit.SECONDS.sleep(10);
-      }
-      if (totalChecks == 0) {
-        return new StepResult(
-            StepStatus.STEP_RESULT_FAILURE_RETRY,
-            new RuntimeException("Jobs did not complete after 10000 seconds"));
-      }
+      //      long totalChecks = COPY_JOB_TIMEOUT.toSeconds() / 10;
+      //      while (totalChecks-- > 0) {
+      //        final JobList allJobs =
+      // bigQueryClient.jobs().list(sourceInputs.getProjectId()).execute();
+      //        final long numJobs = allJobs.getJobs().size();
+      //        final long numPending =
+      //            allJobs.getJobs().stream().filter(j -> j.getState().equals("PENDING")).count();
+      //        final long numRunning =
+      //            allJobs.getJobs().stream().filter(j -> j.getState().equals("RUNNING")).count();
+      //        final long numDone =
+      //            allJobs.getJobs().stream().filter(j -> j.getState().equals("DONE")).count();
+      //        logger.info(
+      //            "Copying {} tables: {} PENDING, {} RUNNING, {} DONE.",
+      //            numJobs,
+      //            numPending,
+      //            numRunning,
+      //            numDone);
+      //        if (numJobs == numDone) {
+      //          break;
+      //        }
+      //        TimeUnit.SECONDS.sleep(10);
+      //      }
+      //      if (totalChecks == 0) {
+      //        return new StepResult(
+      //            StepStatus.STEP_RESULT_FAILURE_RETRY,
+      //            new RuntimeException("Jobs did not complete after 10000 seconds"));
+      //      }
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
