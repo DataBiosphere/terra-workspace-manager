@@ -54,6 +54,7 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
   private String destinationProjectId;
   private String nameSuffix;
   private String sourceProjectId;
+  private TestUserSpecification cloningUser;
   private UUID destinationWorkspaceId;
 
   @Override
@@ -64,7 +65,7 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
     // user creating the source resource
     final TestUserSpecification sourceOwnerUser = testUsers.get(0);
     // user cloning the dataset resource
-    final TestUserSpecification cloningUser = testUsers.get(1);
+    cloningUser = testUsers.get(1);
 
     // source workspace project
     sourceProjectId = CloudContextMaker
@@ -197,10 +198,13 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
     assertEquals(sourceDataset.getAttributes().getDatasetId(), clonedResource.getAttributes().getDatasetId());
 
     // compare dataset contents
-    final BigQuery bigQueryClient = ClientTestUtils.getGcpBigQueryClient(testUser, sourceProjectId);
+    final BigQuery bigQueryClient = ClientTestUtils.getGcpBigQueryClient(cloningUser, sourceProjectId);
     final QueryJobConfiguration employeeQueryJobConfiguration = QueryJobConfiguration.newBuilder(
-        "SELECT * FROM " + clonedResource.getAttributes().getDatasetId() + ".employee;")
+        "SELECT * FROM `" +
+            destinationProjectId + "." +
+            clonedResource.getAttributes().getDatasetId() + ".employee`;")
         .build();
+    logger.info("query: {}", employeeQueryJobConfiguration.getQuery());
     final TableResult employeeTableResult = bigQueryClient.query(employeeQueryJobConfiguration);
     logger.info("table result: {}", employeeTableResult);
     final long numRows = StreamSupport.stream(employeeTableResult.getValues().spliterator(), false)
@@ -208,7 +212,9 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
     assertEquals(2, numRows);
 
     final QueryJobConfiguration departmentQueryJobConfiguration = QueryJobConfiguration.newBuilder(
-        "SELECT * FROM " + clonedResource.getAttributes().getDatasetId() + ".department " +
+        "SELECT * FROM `"
+            + destinationProjectId + "."
+            + clonedResource.getAttributes().getDatasetId() + ".department` " +
             "WHERE department_id = 201;"
     ).build();
     final TableResult departmentTableResult = bigQueryClient.query(departmentQueryJobConfiguration);

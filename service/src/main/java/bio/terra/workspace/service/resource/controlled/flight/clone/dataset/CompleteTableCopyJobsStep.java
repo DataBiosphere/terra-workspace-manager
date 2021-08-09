@@ -10,6 +10,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.bigquery.Bigquery;
 import com.google.api.services.bigquery.model.Job;
 import com.google.api.services.bigquery.model.JobReference;
@@ -32,9 +33,8 @@ public class CompleteTableCopyJobsStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     final FlightMap workingMap = flightContext.getWorkingMap();
-    @SuppressWarnings("unchecked")
     final Map<String, String> tableToJobId =
-        workingMap.get(ControlledResourceKeys.TABLE_TO_JOB_ID_MAP, Map.class);
+        workingMap.get(ControlledResourceKeys.TABLE_TO_JOB_ID_MAP, new TypeReference<>() {});
     final AuthenticatedUserRequest userRequest =
         flightContext
             .getInputParameters()

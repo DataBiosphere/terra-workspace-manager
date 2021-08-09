@@ -141,6 +141,8 @@ public class CreateTableCopyJobsStep implements Step {
   private Job buildTableCopyJob(
       DatasetCloneInputs sourceInputs, DatasetCloneInputs destinationInputs, Tables table) {
     final JobConfigurationTableCopy jobConfigurationTableCopy = new JobConfigurationTableCopy();
+    // The source and destination table have the same table type.
+    jobConfigurationTableCopy.setOperationType("COPY");
     // make new tables in empty destination dataset
     jobConfigurationTableCopy.setCreateDisposition("CREATE_IF_NEEDED");
 
