@@ -5,7 +5,7 @@ name: Run Service Tests
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ main ]
     paths-ignore:
       - '*.md'
       - '.github/**'
