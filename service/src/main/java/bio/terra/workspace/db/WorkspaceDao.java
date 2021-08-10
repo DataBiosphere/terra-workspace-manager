@@ -1,5 +1,7 @@
 package bio.terra.workspace.db;
 
+import bio.terra.common.db.ReadTransaction;
+import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -27,20 +29,12 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * WorkspaceDao includes operations on the workspace and cloud_context tables. Each cloud context
  * has separate methods - well, will have. The types and their contents are different. We anticipate
  * a small integer of cloud contexts and they share nothing, so it is not worth using interfaces or
  * inheritance to treat them in common.
- *
- * <p>Publicly accessible methods are intentionally not annotated with {@code @Transactional}. These
- * methods handle retrying calls to private methods, which are @Transactional. The function that we
- * retry must start a new transaction: Postgres aborts transactions which encounter errors, and does
- * not allow us to retry SQL commands within an aborted transaction.
  */
 @Component
 public class WorkspaceDao {
@@ -68,12 +62,8 @@ public class WorkspaceDao {
    * @param workspace all properties of the workspace to create
    * @return workspace id
    */
-  public UUID createWorkspace(Workspace workspace) throws InterruptedException {
-    return DbRetryUtils.retry(() -> createWorkspaceInner(workspace));
-  }
-
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  private UUID createWorkspaceInner(Workspace workspace) {
+  @WriteTransaction
+  public UUID createWorkspace(Workspace workspace) {
     final String sql =
         "INSERT INTO workspace (workspace_id, display_name, description, spend_profile, properties, workspace_stage) "
             + "values (:workspace_id, :display_name, :description, :spend_profile,"
@@ -109,12 +99,8 @@ public class WorkspaceDao {
    * @param workspaceId unique identifier of the workspace
    * @return true on successful delete, false if there's nothing to delete
    */
-  public boolean deleteWorkspace(UUID workspaceId) throws InterruptedException {
-    return DbRetryUtils.retry(() -> deleteWorkspaceInner(workspaceId));
-  }
-
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  private boolean deleteWorkspaceInner(UUID workspaceId) {
+  @WriteTransaction
+  public boolean deleteWorkspace(UUID workspaceId) {
     final String sql = "DELETE FROM workspace WHERE workspace_id = :id";
 
     MapSqlParameterSource params =
@@ -137,15 +123,8 @@ public class WorkspaceDao {
    * @param id unique identifier of the workspace
    * @return workspace value object
    */
-  public Workspace getWorkspace(UUID id) throws InterruptedException {
-    return DbRetryUtils.retry(() -> getWorkspaceInner(id));
-  }
-
-  @Transactional(
-      propagation = Propagation.REQUIRED,
-      isolation = Isolation.SERIALIZABLE,
-      readOnly = true)
-  private Workspace getWorkspaceInner(UUID id) {
+  @ReadTransaction
+  public Workspace getWorkspace(UUID id) {
     if (id == null) {
       throw new MissingRequiredFieldException("Valid workspace id is required");
     }
@@ -164,8 +143,8 @@ public class WorkspaceDao {
     }
   }
 
-  public boolean updateWorkspace(UUID workspaceId, String name, String description)
-      throws InterruptedException {
+  @WriteTransaction
+  public boolean updateWorkspace(UUID workspaceId, String name, String description) {
     if (name == null && description == null) {
       throw new MissingRequiredFieldException("Must specify name or description to update.");
     }
@@ -180,150 +159,7 @@ public class WorkspaceDao {
       params.addValue("description", description);
     }
 
-    return DbRetryUtils.retry(() -> updateWorkspaceHelper(workspaceId, params));
-  }
-
-  /**
-   * Retrieve workspaces from a list of IDs. IDs not matching workspaces will be ignored.
-   *
-   * @param idList List of workspaceIds to query for
-   * @param offset The number of items to skip before starting to collect the result set.
-   * @param limit The maximum number of items to return.
-   * @return list of Workspaces corresponding to input IDs.
-   */
-  public List<Workspace> getWorkspacesMatchingList(List<UUID> idList, int offset, int limit)
-      throws InterruptedException {
-    return DbRetryUtils.retry(() -> getWorkspacesMatchingListInner(idList, offset, limit));
-  }
-
-  @Transactional(
-      propagation = Propagation.REQUIRED,
-      isolation = Isolation.SERIALIZABLE,
-      readOnly = true)
-  private List<Workspace> getWorkspacesMatchingListInner(List<UUID> idList, int offset, int limit) {
-    String sql =
-        WORKSPACE_SELECT_SQL
-            + " WHERE W.workspace_id IN (:workspace_ids) ORDER BY W.workspace_id OFFSET :offset LIMIT :limit";
-    var params =
-        new MapSqlParameterSource()
-            .addValue(
-                "workspace_ids", idList.stream().map(UUID::toString).collect(Collectors.toList()))
-            .addValue("offset", offset)
-            .addValue("limit", limit);
-    return jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER);
-  }
-
-  /**
-   * Retrieves the GCP cloud context of the workspace.
-   *
-   * @param workspaceId unique id of workspace
-   * @return optional GCP cloud context
-   */
-  public Optional<GcpCloudContext> getGcpCloudContext(UUID workspaceId)
-      throws InterruptedException {
-    return DbRetryUtils.retry(() -> getGcpCloudContextInner(workspaceId));
-  }
-
-  @Transactional(
-      propagation = Propagation.REQUIRED,
-      isolation = Isolation.SERIALIZABLE,
-      readOnly = true)
-  private Optional<GcpCloudContext> getGcpCloudContextInner(UUID workspaceId) {
-    String sql =
-        "SELECT context FROM cloud_context "
-            + "WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
-    MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_platform", CloudPlatform.GCP.toString());
-    try {
-      return Optional.ofNullable(
-          DataAccessUtils.singleResult(
-              jdbcTemplate.query(
-                  sql,
-                  params,
-                  (rs, rowNum) -> deserializeGcpCloudContext(rs.getString("context")))));
-    } catch (EmptyResultDataAccessException e) {
-      return Optional.empty();
-    }
-  }
-
-  /**
-   * Create the cloud context of the workspace
-   *
-   * @param workspaceId unique id of the workspace
-   * @param cloudContext the GCP cloud context to create
-   */
-  public void createGcpCloudContext(UUID workspaceId, GcpCloudContext cloudContext)
-      throws InterruptedException {
-    DbRetryUtils.retry(() -> createGcpCloudContextInner(workspaceId, cloudContext));
-  }
-
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  private void createGcpCloudContextInner(UUID workspaceId, GcpCloudContext cloudContext) {
-    final String sql =
-        "INSERT INTO cloud_context (workspace_id, cloud_platform, context)"
-            + " VALUES (:workspace_id, :cloud_platform, :context::json)";
-    MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_platform", CloudPlatform.GCP.toString())
-            .addValue("context", serializeGcpCloudContext(cloudContext));
-    try {
-      jdbcTemplate.update(sql, params);
-      logger.info("Inserted record for GCP cloud context for workspace {}", workspaceId);
-    } catch (DuplicateKeyException e) {
-      throw new DuplicateCloudContextException(
-          String.format("Workspace with id %s already has context for GCP cloud type", workspaceId),
-          e);
-    }
-  }
-
-  /**
-   * Delete the GCP cloud context for a workspace
-   *
-   * @param workspaceId workspace of the cloud context
-   */
-  public void deleteGcpCloudContext(UUID workspaceId) throws InterruptedException {
-    DbRetryUtils.retry(() -> deleteGcpCloudContextWorker(workspaceId));
-  }
-
-  /**
-   * Delete a cloud context for the workspace validating the projectId
-   *
-   * @param workspaceId workspace of the cloud context
-   * @param projectId the GCP project id to validate
-   */
-  public void deleteGcpCloudContextWithIdCheck(UUID workspaceId, String projectId)
-      throws InterruptedException {
-    // Only perform the delete, if the project id matches the input project id
-    Optional<GcpCloudContext> gcpCloudContext = getGcpCloudContext(workspaceId);
-    if (gcpCloudContext.isPresent()) {
-      if (StringUtils.equals(projectId, gcpCloudContext.get().getGcpProjectId())) {
-        deleteGcpCloudContextWorker(workspaceId);
-      }
-    }
-  }
-
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  private void deleteGcpCloudContextWorker(UUID workspaceId) {
-    final String sql =
-        "DELETE FROM cloud_context "
-            + "WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
-
-    MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_platform", CloudPlatform.GCP.toString());
-
-    int rowsAffected = jdbcTemplate.update(sql, params);
-    boolean deleted = rowsAffected > 0;
-
-    if (deleted) {
-      logger.info("Deleted GCP cloud context for workspace {}", workspaceId);
-    } else {
-      logger.info("No record to delete for GCP cloud context for workspace {}", workspaceId);
-    }
+    return updateWorkspaceHelper(workspaceId, params);
   }
 
   /**
@@ -334,7 +170,6 @@ public class WorkspaceDao {
    * @param workspaceId workspace identifier - not strictly necessarily, but an extra validation
    * @param params sql parameters
    */
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   private boolean updateWorkspaceHelper(UUID workspaceId, MapSqlParameterSource params) {
     StringBuilder sb = new StringBuilder("UPDATE workspace SET ");
 
@@ -362,6 +197,128 @@ public class WorkspaceDao {
         workspaceId);
 
     return updated;
+  }
+
+  /**
+   * Retrieve workspaces from a list of IDs. IDs not matching workspaces will be ignored.
+   *
+   * @param idList List of workspaceIds to query for
+   * @param offset The number of items to skip before starting to collect the result set.
+   * @param limit The maximum number of items to return.
+   * @return list of Workspaces corresponding to input IDs.
+   */
+  @ReadTransaction
+  public List<Workspace> getWorkspacesMatchingList(List<UUID> idList, int offset, int limit) {
+    String sql =
+        WORKSPACE_SELECT_SQL
+            + " WHERE W.workspace_id IN (:workspace_ids) ORDER BY W.workspace_id OFFSET :offset LIMIT :limit";
+    var params =
+        new MapSqlParameterSource()
+            .addValue(
+                "workspace_ids", idList.stream().map(UUID::toString).collect(Collectors.toList()))
+            .addValue("offset", offset)
+            .addValue("limit", limit);
+    return jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER);
+  }
+
+  /**
+   * Retrieves the GCP cloud context of the workspace.
+   *
+   * @param workspaceId unique id of workspace
+   * @return optional GCP cloud context
+   */
+  @ReadTransaction
+  public Optional<GcpCloudContext> getGcpCloudContext(UUID workspaceId) {
+    String sql =
+        "SELECT context FROM cloud_context "
+            + "WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("cloud_platform", CloudPlatform.GCP.toString());
+    try {
+      return Optional.ofNullable(
+          DataAccessUtils.singleResult(
+              jdbcTemplate.query(
+                  sql,
+                  params,
+                  (rs, rowNum) -> deserializeGcpCloudContext(rs.getString("context")))));
+    } catch (EmptyResultDataAccessException e) {
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Create the cloud context of the workspace
+   *
+   * @param workspaceId unique id of the workspace
+   * @param cloudContext the GCP cloud context to create
+   */
+  @WriteTransaction
+  public void createGcpCloudContext(UUID workspaceId, GcpCloudContext cloudContext) {
+    final String sql =
+        "INSERT INTO cloud_context (workspace_id, cloud_platform, context)"
+            + " VALUES (:workspace_id, :cloud_platform, :context::json)";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("cloud_platform", CloudPlatform.GCP.toString())
+            .addValue("context", serializeGcpCloudContext(cloudContext));
+    try {
+      jdbcTemplate.update(sql, params);
+      logger.info("Inserted record for GCP cloud context for workspace {}", workspaceId);
+    } catch (DuplicateKeyException e) {
+      throw new DuplicateCloudContextException(
+          String.format("Workspace with id %s already has context for GCP cloud type", workspaceId),
+          e);
+    }
+  }
+
+  /**
+   * Delete the GCP cloud context for a workspace
+   *
+   * @param workspaceId workspace of the cloud context
+   */
+  @WriteTransaction
+  public void deleteGcpCloudContext(UUID workspaceId) {
+    deleteGcpCloudContextWorker(workspaceId);
+  }
+
+  /**
+   * Delete a cloud context for the workspace validating the projectId
+   *
+   * @param workspaceId workspace of the cloud context
+   * @param projectId the GCP project id to validate
+   */
+  @WriteTransaction
+  public void deleteGcpCloudContextWithIdCheck(UUID workspaceId, String projectId) {
+    // Only perform the delete, if the project id matches the input project id
+    Optional<GcpCloudContext> gcpCloudContext = getGcpCloudContext(workspaceId);
+    if (gcpCloudContext.isPresent()) {
+      if (StringUtils.equals(projectId, gcpCloudContext.get().getGcpProjectId())) {
+        deleteGcpCloudContextWorker(workspaceId);
+      }
+    }
+  }
+
+  private void deleteGcpCloudContextWorker(UUID workspaceId) {
+    final String sql =
+        "DELETE FROM cloud_context "
+            + "WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
+
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("cloud_platform", CloudPlatform.GCP.toString());
+
+    int rowsAffected = jdbcTemplate.update(sql, params);
+    boolean deleted = rowsAffected > 0;
+
+    if (deleted) {
+      logger.info("Deleted GCP cloud context for workspace {}", workspaceId);
+    } else {
+      logger.info("No record to delete for GCP cloud context for workspace {}", workspaceId);
+    }
   }
 
   private static final RowMapper<Workspace> WORKSPACE_ROW_MAPPER =

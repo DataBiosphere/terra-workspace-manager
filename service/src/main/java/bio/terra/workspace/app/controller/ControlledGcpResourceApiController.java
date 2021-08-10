@@ -544,8 +544,9 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     }
     return Optional.ofNullable(commonFields.getPrivateResourceUser().getUserName())
         .orElseGet(
-            () -> SamService.rethrowIfSamInterrupted(
-                () -> samService.getRequestUserEmail(userRequest), "getRequestUserEmail"));
+            () ->
+                SamService.rethrowIfSamInterrupted(
+                    () -> samService.getRequestUserEmail(userRequest), "getRequestUserEmail"));
   }
 
   /**

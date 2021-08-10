@@ -5,6 +5,8 @@ import static bio.terra.workspace.service.resource.model.StewardshipType.REFEREN
 import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
 import static java.util.stream.Collectors.toList;
 
+import bio.terra.common.db.ReadTransaction;
+import bio.terra.common.db.WriteTransaction;
 import bio.terra.workspace.db.exception.CloudContextRequiredException;
 import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
@@ -41,18 +43,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Data access object for interacting with resources in the database.
- *
- * <p>Publicly accessible methods are intentionally not annotated with {@code @Transactional}. These
- * methods handle retrying calls to private methods, which are @Transactional. The function that we
- * retry must start a new transaction: Postgres aborts transactions which encounter errors, and does
- * not allow us to retry SQL commands within an aborted transaction.
- */
+/** Data access object for interacting with resources in the database. */
 @Component
 public class ResourceDao {
   private static final Logger logger = LoggerFactory.getLogger(ResourceDao.class);
@@ -100,12 +92,8 @@ public class ResourceDao {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  public boolean deleteResource(UUID workspaceId, UUID resourceId) throws InterruptedException {
-    return DbRetryUtils.retry(() -> deleteResourceInner(workspaceId, resourceId));
-  }
-
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  private boolean deleteResourceInner(UUID workspaceId, UUID resourceId) {
+  @WriteTransaction
+  public boolean deleteResource(UUID workspaceId, UUID resourceId) {
     final String sql =
         "DELETE FROM resource WHERE workspace_id = :workspace_id AND resource_id = :resource_id";
     MapSqlParameterSource params =
@@ -134,17 +122,8 @@ public class ResourceDao {
    * @param limit paging support
    * @return list of reference resources
    */
-  public List<ReferencedResource> enumerateReferences(UUID workspaceId, int offset, int limit)
-      throws InterruptedException {
-    return DbRetryUtils.retry(() -> enumerateReferencesInner(workspaceId, offset, limit));
-  }
-
-  @Transactional(
-      propagation = Propagation.REQUIRED,
-      isolation = Isolation.SERIALIZABLE,
-      readOnly = true)
-  private List<ReferencedResource> enumerateReferencesInner(
-      UUID workspaceId, int offset, int limit) {
+  @ReadTransaction
+  public List<ReferencedResource> enumerateReferences(UUID workspaceId, int offset, int limit) {
     String sql =
         RESOURCE_SELECT_SQL
             + " AND stewardship_type = :stewardship_type ORDER BY name OFFSET :offset LIMIT :limit";
@@ -180,22 +159,8 @@ public class ResourceDao {
    * @param limit maximum number of rows to return
    * @return list of resources
    */
+  @ReadTransaction
   public List<WsmResource> enumerateResources(
-      UUID workspaceId,
-      @Nullable WsmResourceType resourceType,
-      @Nullable StewardshipType stewardshipType,
-      int offset,
-      int limit)
-      throws InterruptedException {
-    return DbRetryUtils.retry(
-        () -> enumerateResourcesInner(workspaceId, resourceType, stewardshipType, offset, limit));
-  }
-
-  @Transactional(
-      propagation = Propagation.REQUIRED,
-      isolation = Isolation.SERIALIZABLE,
-      readOnly = true)
-  private List<WsmResource> enumerateResourcesInner(
       UUID workspaceId,
       @Nullable WsmResourceType resourceType,
       @Nullable StewardshipType stewardshipType,
@@ -256,16 +221,8 @@ public class ResourceDao {
    * @param cloudPlatform Optional. If present, this will only return resources from the specified
    *     cloud platform. If null, this will return resources from all cloud platforms.
    */
+  @ReadTransaction
   public List<ControlledResource> listControlledResources(
-      UUID workspaceId, @Nullable CloudPlatform cloudPlatform) throws InterruptedException {
-    return DbRetryUtils.retry(() -> listControlledResourcesInner(workspaceId, cloudPlatform));
-  }
-
-  @Transactional(
-      propagation = Propagation.REQUIRED,
-      isolation = Isolation.SERIALIZABLE,
-      readOnly = true)
-  private List<ControlledResource> listControlledResourcesInner(
       UUID workspaceId, @Nullable CloudPlatform cloudPlatform) {
     String sql = RESOURCE_SELECT_SQL + " AND stewardship_type = :controlled_resource ";
     MapSqlParameterSource params =
@@ -293,13 +250,8 @@ public class ResourceDao {
    *     listControlledResources, this is not optional.
    * @return True if at least one resource was deleted, false if no resources were deleted.
    */
-  public boolean deleteAllControlledResources(UUID workspaceId, CloudPlatform cloudPlatform)
-      throws InterruptedException {
-    return DbRetryUtils.retry(() -> deleteAllControlledResourcesInner(workspaceId, cloudPlatform));
-  }
-
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  private boolean deleteAllControlledResourcesInner(UUID workspaceId, CloudPlatform cloudPlatform) {
+  @WriteTransaction
+  public boolean deleteAllControlledResources(UUID workspaceId, CloudPlatform cloudPlatform) {
     String sql =
         "DELETE FROM resource WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform AND stewardship_type = :controlled_resource";
     MapSqlParameterSource params =
@@ -318,8 +270,16 @@ public class ResourceDao {
    * @param resourceId identifier of the resource for the lookup
    * @return WsmResource object
    */
-  public WsmResource getResource(UUID workspaceId, UUID resourceId) throws InterruptedException {
-    return DbRetryUtils.retry(() -> getResourceWithId(workspaceId, resourceId));
+  @ReadTransaction
+  public WsmResource getResource(UUID workspaceId, UUID resourceId) {
+    final String sql = RESOURCE_SELECT_SQL + " AND resource_id = :resource_id";
+
+    final var params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("resource_id", resourceId.toString());
+
+    return constructResource(getDbResource(sql, params));
   }
 
   /**
@@ -329,8 +289,15 @@ public class ResourceDao {
    * @param name name of the resource
    * @return WsmResource object
    */
-  public WsmResource getResourceByName(UUID workspaceId, String name) throws InterruptedException {
-    return DbRetryUtils.retry(() -> getResourceWithName(workspaceId, name));
+  public WsmResource getResourceByName(UUID workspaceId, String name) {
+    final String sql = RESOURCE_SELECT_SQL + " AND name = :name";
+
+    final var params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("name", name);
+
+    return constructResource(getDbResource(sql, params));
   }
 
   // -- Reference Methods -- //
@@ -342,13 +309,15 @@ public class ResourceDao {
    * @param resource a filled in reference resource
    * @throws DuplicateResourceException on a duplicate resource_id or (workspace_id, name)
    */
+  @WriteTransaction
   public void createReferenceResource(ReferencedResource resource)
-      throws DuplicateResourceException, InterruptedException {
-    DbRetryUtils.retry(() -> storeResource(resource));
+      throws DuplicateResourceException {
+    storeResource(resource);
   }
 
-  public boolean updateResource(UUID workspaceId, UUID resourceId, String name, String description)
-      throws InterruptedException {
+  @WriteTransaction
+  public boolean updateResource(
+      UUID workspaceId, UUID resourceId, String name, String description) {
     if (name == null && description == null) {
       return false;
     }
@@ -363,10 +332,50 @@ public class ResourceDao {
       params.addValue("description", description);
     }
 
-    return DbRetryUtils.retry(() -> updateResource(workspaceId, resourceId, params));
+    return updateResourceHelper(workspaceId, resourceId, params);
   }
 
-  // -- Private Methods -- //
+  /**
+   * This is an open ended method for constructing the SQL update statement. To use it, build the
+   * parameter list making the param name equal to the column name you want to update. The method
+   * generates the column_name = :column_name list. It is an error if the params map is empty.
+   *
+   * @param params sql parameters
+   * @param workspaceId workspace identifier - not strictly necessarily, but an extra validation
+   * @param resourceId resource identifier
+   */
+  private boolean updateResourceHelper(
+      UUID workspaceId, UUID resourceId, MapSqlParameterSource params) {
+    StringBuilder sb = new StringBuilder("UPDATE resource SET ");
+
+    String[] parameterNames = params.getParameterNames();
+    if (parameterNames.length == 0) {
+      throw new InvalidDaoRequestException("Must specify some data to be updated.");
+    }
+    for (int i = 0; i < parameterNames.length; i++) {
+      String columnName = parameterNames[i];
+      if (i > 0) {
+        sb.append(", ");
+      }
+      sb.append(columnName).append(" = :").append(columnName);
+    }
+    sb.append(" WHERE workspace_id = :workspace_id AND resource_id = :resource_id");
+
+    params
+        .addValue("workspace_id", workspaceId.toString())
+        .addValue("resource_id", resourceId.toString());
+
+    int rowsAffected = jdbcTemplate.update(sb.toString(), params);
+    boolean updated = rowsAffected > 0;
+
+    logger.info(
+        "{} record for resource {} in workspace {}",
+        (updated ? "Updated" : "No Update - did not find"),
+        resourceId,
+        workspaceId);
+
+    return updated;
+  }
 
   /**
    * Create a controlled resource in the database
@@ -374,13 +383,8 @@ public class ResourceDao {
    * @param controlledResource controlled resource to create
    * @throws DuplicateResourceException on a duplicate resource_id or (workspace_id, name)
    */
+  @WriteTransaction
   public void createControlledResource(ControlledResource controlledResource)
-      throws DuplicateResourceException, InterruptedException {
-    DbRetryUtils.retry(() -> createControlledResourceInner(controlledResource));
-  }
-
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  private void createControlledResourceInner(ControlledResource controlledResource)
       throws DuplicateResourceException {
 
     // Make sure there is a valid cloud context before we create the controlled resource
@@ -489,7 +493,6 @@ public class ResourceDao {
     }
   }
 
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   private void storeResource(WsmResource resource) {
 
     // TODO: add resource locking to fix this
@@ -587,28 +590,6 @@ public class ResourceDao {
     }
   }
 
-  private WsmResource getResourceWithId(UUID workspaceId, UUID resourceId) {
-    final String sql = RESOURCE_SELECT_SQL + " AND resource_id = :resource_id";
-
-    final var params =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
-            .addValue("resource_id", resourceId.toString());
-
-    return constructResource(getDbResource(sql, params));
-  }
-
-  private WsmResource getResourceWithName(UUID workspaceId, String name) {
-    final String sql = RESOURCE_SELECT_SQL + " AND name = :name";
-
-    final var params =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
-            .addValue("name", name);
-
-    return constructResource(getDbResource(sql, params));
-  }
-
   /**
    * Dispatch by stewardship and resource type to call the correct constructor for the WsmResource
    *
@@ -652,57 +633,11 @@ public class ResourceDao {
     }
   }
 
-  @Transactional(
-      propagation = Propagation.REQUIRED,
-      isolation = Isolation.SERIALIZABLE,
-      readOnly = true)
   private DbResource getDbResource(String sql, MapSqlParameterSource params) {
     try {
       return jdbcTemplate.queryForObject(sql, params, DB_RESOURCE_ROW_MAPPER);
     } catch (EmptyResultDataAccessException e) {
       throw new ResourceNotFoundException("Resource not found.");
     }
-  }
-
-  /**
-   * This is an open ended method for constructing the SQL update statement. To use it, build the
-   * parameter list making the param name equal to the column name you want to update. The method
-   * generates the column_name = :column_name list. It is an error if the params map is empty.
-   *
-   * @param params sql parameters
-   * @param workspaceId workspace identifier - not strictly necessarily, but an extra validation
-   * @param resourceId resource identifier
-   */
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  private boolean updateResource(UUID workspaceId, UUID resourceId, MapSqlParameterSource params) {
-    StringBuilder sb = new StringBuilder("UPDATE resource SET ");
-
-    String[] parameterNames = params.getParameterNames();
-    if (parameterNames.length == 0) {
-      throw new InvalidDaoRequestException("Must specify some data to be updated.");
-    }
-    for (int i = 0; i < parameterNames.length; i++) {
-      String columnName = parameterNames[i];
-      if (i > 0) {
-        sb.append(", ");
-      }
-      sb.append(columnName).append(" = :").append(columnName);
-    }
-    sb.append(" WHERE workspace_id = :workspace_id AND resource_id = :resource_id");
-
-    params
-        .addValue("workspace_id", workspaceId.toString())
-        .addValue("resource_id", resourceId.toString());
-
-    int rowsAffected = jdbcTemplate.update(sb.toString(), params);
-    boolean updated = rowsAffected > 0;
-
-    logger.info(
-        "{} record for resource {} in workspace {}",
-        (updated ? "Updated" : "No Update - did not find"),
-        resourceId,
-        workspaceId);
-
-    return updated;
   }
 }

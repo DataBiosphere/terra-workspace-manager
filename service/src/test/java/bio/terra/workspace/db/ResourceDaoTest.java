@@ -34,7 +34,7 @@ public class ResourceDaoTest extends BaseUnitTest {
    * <p>The {@link ResourceDao#createControlledResource(ControlledResource)} checks that a relevant
    * cloud context exists before storing the resource.
    */
-  private UUID createGcpWorkspace() throws InterruptedException {
+  private UUID createGcpWorkspace() {
     Workspace workspace =
         Workspace.builder()
             .workspaceId(UUID.randomUUID())
@@ -47,7 +47,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void createGetControlledGcsBucket() throws InterruptedException {
+  public void createGetControlledGcsBucket() {
     UUID workspaceId = createGcpWorkspace();
     ControlledGcsBucketResource resource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
@@ -61,7 +61,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void createGetDeleteControlledBigQueryDataset() throws InterruptedException {
+  public void createGetDeleteControlledBigQueryDataset() {
     UUID workspaceId = createGcpWorkspace();
     ControlledBigQueryDatasetResource resource =
         ControlledResourceFixtures.makeDefaultControlledBigQueryDatasetResource()
@@ -75,7 +75,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void createGetControlledAiNotebookInstance() throws InterruptedException {
+  public void createGetControlledAiNotebookInstance() {
     UUID workspaceId = createGcpWorkspace();
     ControlledAiNotebookInstanceResource resource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance().workspaceId(workspaceId).build();
@@ -88,7 +88,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void listAndDeleteControlledResourceInContext() throws InterruptedException {
+  public void listAndDeleteControlledResourceInContext() {
     UUID workspaceId = createGcpWorkspace();
     ControlledGcsBucketResource bucket =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
@@ -119,7 +119,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void duplicateControlledBucketNameRejected() throws InterruptedException {
+  public void duplicateControlledBucketNameRejected() {
     final String clashingBucketName = "not-a-pail";
     final UUID workspaceId1 = createGcpWorkspace();
     final ControlledGcsBucketResource initialResource =
@@ -152,7 +152,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   // to the underlying requirement that resource ID and resource names are unique within a
   // workspace.
   @Test
-  public void duplicateNotebookIsRejected() throws InterruptedException {
+  public void duplicateNotebookIsRejected() {
     final UUID workspaceId1 = createGcpWorkspace();
     final ControlledResource initialResource =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
@@ -214,7 +214,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void duplicateBigQueryDatasetRejected() throws InterruptedException {
+  public void duplicateBigQueryDatasetRejected() {
     String datasetName1 = "dataset1";
     final UUID workspaceId1 = createGcpWorkspace();
     final ControlledBigQueryDatasetResource initialResource =
