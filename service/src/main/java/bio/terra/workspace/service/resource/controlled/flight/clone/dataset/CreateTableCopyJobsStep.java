@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -51,7 +52,8 @@ public class CreateTableCopyJobsStep implements Step {
   /**
    * Create one BigQuery copy job for each table in the source dataset. Keep a running map from
    * table ID to job ID as new jobs are created, and only create jobs for tables that aren't in the
-   * map already (for example, after a restart).
+   * map already. Rerun the step after every table is processed so that the map may be persisted
+   * incrementally.
    *
    * <p>On retry, create the jobs for any tables that don't have them. Use WRITE_TRUNCATE to avoid
    * the possibility of duplicate data.
@@ -88,11 +90,12 @@ public class CreateTableCopyJobsStep implements Step {
                       ControlledResourceKeys.TABLE_TO_JOB_ID_MAP,
                       new TypeReference<Map<String, String>>() {}))
               .orElseGet(HashMap::new);
-      for (TableList.Tables table : sourceTables.getTables()) {
-        if (tableToJobId.containsKey(table.getId())) {
-          // A job already exists for this table
-          continue;
-        }
+      final List<Tables> tables = sourceTables.getTables();
+      // Find the first table whose ID isn't a key in the map.
+      final Optional<Tables> tableMaybe =
+          tables.stream().filter(t -> !tableToJobId.containsKey(t.getId())).findFirst();
+      if (tableMaybe.isPresent()) {
+        final Tables table = tableMaybe.get();
         // If the table contains data in its streaming buffer, that data can't be copied yet
         // https://cloud.google.com/bigquery/streaming-data-into-bigquery#dataavailability
         final Table tableGetResponse =
@@ -121,13 +124,17 @@ public class CreateTableCopyJobsStep implements Step {
         final Job submittedJob =
             bigQueryClient.jobs().insert(destinationInputs.getProjectId(), inputJob).execute();
 
+        // Update the map, which will be persisted
         tableToJobId.put(table.getId(), submittedJob.getId());
         workingMap.put(ControlledResourceKeys.TABLE_TO_JOB_ID_MAP, tableToJobId);
+        return new StepResult(StepStatus.STEP_RESULT_RERUN);
+      } else {
+        // All tables have entries in the map, so all jobs are started.
+        return StepResult.getStepResultSuccess();
       }
     } catch (IOException e) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
-    return StepResult.getStepResultSuccess();
   }
 
   // Nothing to undo here because the whole dataset will be deleted in the undo path for
