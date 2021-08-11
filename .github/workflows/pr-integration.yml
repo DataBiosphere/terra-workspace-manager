@@ -7,7 +7,7 @@ on:
   push:
     branches:
       - 'dev'
-      - 'un-as-789'
+      - 'un-as-789 '
     paths-ignore:
       - 'README.md'
       - '.github/**'
