@@ -168,3 +168,19 @@ jobs:
         username: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} tests"
         author_name: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} ${{ matrix.gradleTask }}"
         fields: repo,job,workflow,commit,eventName,author,took
+
+    # TODO: Is there a simple way to consolidate the code in this step AND the 'Notify QA Slack' step above, without complicating things?
+    #   The only that changed is the slack channel
+    - name: "Notify WSM Slack"
+      if: always() && github.event_name == 'push'
+      uses: broadinstitute/action-slack@v3.8.0
+      # see https://github.com/broadinstitute/action-slack
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        MATRIX_CONTEXT: ${{ toJson(matrix) }}
+      with:
+        status: ${{ job.status }}
+        channel: "#terra-workspace-manager"
+        username: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} tests"
+        author_name: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} ${{ matrix.gradleTask }}"
+        fields: repo,job,workflow,commit,eventName,author,took
