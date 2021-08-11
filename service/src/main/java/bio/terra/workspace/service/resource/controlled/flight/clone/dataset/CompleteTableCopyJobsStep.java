@@ -47,6 +47,7 @@ public class CompleteTableCopyJobsStep implements Step {
         final JobReference jobReference = jobFqIdToReference(entry.getValue());
 
         // wait for job to complete
+        int sleepTimeSeconds = 1;
         while (true) {
           final Job job =
               bigQueryClient
@@ -60,7 +61,8 @@ public class CompleteTableCopyJobsStep implements Step {
           if ("DONE".equals(jobState)) {
             break;
           }
-          TimeUnit.SECONDS.sleep(5);
+          TimeUnit.SECONDS.sleep(sleepTimeSeconds);
+          sleepTimeSeconds = Math.max(2 * sleepTimeSeconds, 60);
         }
       }
     } catch (IOException | InterruptedException e) {
