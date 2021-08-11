@@ -22,8 +22,7 @@ runs:
     - name: Wait for boot run to be ready
       id: wait-for-ready
       run: |
-        timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done'
-        resultStatus=$(echo > /dev/tcp/localhost/8080; echo $?)
+        resultStatus=$(timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done' && echo $?)
         if [[ $resultStatus == 0 ]]
         then
           echo "Server started successfully"
