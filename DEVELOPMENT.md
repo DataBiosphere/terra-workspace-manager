@@ -36,8 +36,8 @@ To push versions of this repository to different environments (including per-dev
 integration environments), update the
 [terra-helmfile deployment definitions](https://github.com/broadinstitute/terra-helmfile). 
 
-### On commit to dev
-1. New commit is merged to dev
+### On commit to main
+1. New commit is merged to main
 2. [The tag-publish workflow](https://github.com/DataBiosphere/terra-workspace-manager/blob/dev/.github/workflows/tag-publish.yml) is triggered. It builds the image, tags the image & commit, and pushes the image to GCR. It then sends a [dispatch](https://help.github.com/en/actions/reference/events-that-trigger-workflows#external-events-repository_dispatch) with the new version for the service to the [terra-helmfile repo](https://github.com/broadinstitute/terra-helmfile).
 3. This updates the default [version mapping for the app in question](https://github.com/broadinstitute/terra-helmfile/blob/master/versions.yaml).
 4. [Our deployment of ArgoCD](https://ap-argocd.dsp-devops.broadinstitute.org/applications) monitors the above repo, and any environments in which the app is set to auto-sync will immediately pick up the new version of the image. If the app is not set to auto-sync in an environment, it can be manually synced via the ArgoCD UI or API.
@@ -175,10 +175,10 @@ Then navigate to the Swagger: http://localhost:8080/swagger-ui.html
 ## Publishing and Versioning
 
 New versions of the WSM client library are automatically published with each merge to the
-dev branch. Since we publish very frequently, and Broad Dev Ops needs specific versions to
+main branch. Since we publish very frequently, and Broad Dev Ops needs specific versions to
 track through the release process, we use a variation of semantic versioning.
 
-By default, the patch version is incremented after each merge to dev. You can cause other
+By default, the patch version is incremented after each merge to main. You can cause other
 parts of the version to be changed as follows.
 - To bump the minor version, put the string `#minor` in your commit message. The minor
 version will be incremented and the patch version will be set to 0: `major.minor.0`
