@@ -33,6 +33,17 @@ rm -rf terra-helm/.git
 git clone -b "$TERRA_HELMFILE_BRANCH" --single-branch --depth=1 ${helmfilegit}
 rm -rf terra-helmfile/.git
 
+# Render manifests to terra-helmfile/output/ directory.
+#
+# Unfortunately we need to render them all into a single mega-file
+# because Skaffold's `kubectl` deployment does not support
+# recursive globbing like "output/manifests/**/*.yaml"
+mkdir -p ./terra-helmfile/output
+./terra-helmfile/bin/render \
+  -e "${ENV}" \
+  -a workspacemanager \
+  --stdout > terra-helmfile/output/manifests.yaml
+
 # Template in environment
 sed "s|ENV|${ENV}|g" skaffold.yaml.template > skaffold.yaml
 sed "s|ENV|${ENV}|g" values.yaml.template > values.yaml

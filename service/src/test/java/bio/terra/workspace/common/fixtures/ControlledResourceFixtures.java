@@ -3,6 +3,7 @@ package bio.terra.workspace.common.fixtures;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
@@ -18,6 +19,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResour
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.google.api.client.util.DateTime;
+import com.google.api.services.bigquery.model.Dataset;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
@@ -165,6 +167,20 @@ public class ControlledResourceFixtures {
         .managedBy(ManagedByType.MANAGED_BY_USER)
         .datasetName("test_dataset");
   }
+
+  public static final ApiGcpBigQueryDatasetUpdateParameters BQ_DATASET_UPDATE_PARAMETERS_NEW =
+      new ApiGcpBigQueryDatasetUpdateParameters()
+          .defaultTableLifetime(3600)
+          .defaultPartitionLifetime(3601);
+  public static final ApiGcpBigQueryDatasetUpdateParameters BQ_DATASET_UPDATE_PARAMETERS_PREV =
+      new ApiGcpBigQueryDatasetUpdateParameters()
+          .defaultTableLifetime(4800)
+          .defaultPartitionLifetime(4801);
+  public static final Dataset BQ_DATASET_WITH_EXPIRATION =
+      new Dataset()
+          .setDefaultTableExpirationMs(Long.valueOf(5900000))
+          .setDefaultPartitionExpirationMs(Long.valueOf(5901000));
+  public static final Dataset BQ_DATASET_WITHOUT_EXPIRATION = new Dataset();
 
   public static String uniqueName(String prefix) {
     return prefix + "-" + UUID.randomUUID().toString();

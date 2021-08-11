@@ -166,19 +166,14 @@ public class ResourceDao {
    * Resource enumeration
    *
    * <p>The default behavior of resource enumeration is to find all resources that are visible to
-   * the caller. If the caller has gotten this far, then they are allowed to see all referenced
-   * resources. We know which controlled resources they are allowed to see from the list provided as
-   * input.
+   * the caller. If the caller has gotten this far, then they are allowed to see all referenced and
+   * controlled resources.
    *
    * <p>The enumeration can be filtered by a resource type. If a resource type is specified, then
-   * only that type of resource is returned.
-   *
-   * <p>The enumeration can also be filtered by a stewardship type. The implementation of the
-   * stewardship type filter is more complex than simply filtering by type. That is because the
-   * placeholder substitution for the IN list yields invalid SQL if the list is empty.
+   * only that type of resource is returned. The enumeration can also be filtered by a stewardship
+   * type.
    *
    * @param workspaceId identifier for work space to enumerate
-   * @param controlledResourceIds identifiers of controlled resources visible to the caller
    * @param resourceType filter by this resource type - optional
    * @param stewardshipType filtered by this stewardship type - optional
    * @param offset starting row for result
@@ -187,16 +182,13 @@ public class ResourceDao {
    */
   public List<WsmResource> enumerateResources(
       UUID workspaceId,
-      @Nullable List<String> controlledResourceIds,
       @Nullable WsmResourceType resourceType,
       @Nullable StewardshipType stewardshipType,
       int offset,
       int limit)
       throws InterruptedException {
     return DbRetryUtils.retry(
-        () ->
-            enumerateResourcesInner(
-                workspaceId, controlledResourceIds, resourceType, stewardshipType, offset, limit));
+        () -> enumerateResourcesInner(workspaceId, resourceType, stewardshipType, offset, limit));
   }
 
   @Transactional(
@@ -205,7 +197,6 @@ public class ResourceDao {
       readOnly = true)
   private List<WsmResource> enumerateResourcesInner(
       UUID workspaceId,
-      @Nullable List<String> controlledResourceIds,
       @Nullable WsmResourceType resourceType,
       @Nullable StewardshipType stewardshipType,
       int offset,
@@ -229,30 +220,23 @@ public class ResourceDao {
     }
 
     // There are three cases for the stewardship type filter
-    // 1. If it is REFERENCED, then we ignore id list and just filter
-    //    for referenced resources.
-    // 2. If it is CONTROLLED, and the id list is not empty, then we filter for
-    //    CONTROLLED and require that the resources be in the id list.
-    // 3. If no filter is specified (it is null), then we want both REFERENCED
-    //    and CONTROLLED resources; that is, we want the OR of 1 and 2
+    // 1. If it is REFERENCED, then we ignore id list and just filter for referenced resources.
+    // 2. If it is CONTROLLED, then we filter for CONTROLLED resources.
+    // 3. If no filter is specified (it is null), then we want both REFERENCED and CONTROLLED
+    //    resources; that is, we want the OR of 1 and 2
     boolean includeReferenced = (stewardshipType == null || stewardshipType == REFERENCED);
-    boolean includeControlled =
-        ((controlledResourceIds != null && !controlledResourceIds.isEmpty())
-            && (stewardshipType == null || (stewardshipType == CONTROLLED)));
+    boolean includeControlled = (stewardshipType == null || stewardshipType == CONTROLLED);
 
     final String referencedPhrase = "stewardship_type = :referenced_resource";
-    final String controlledPhrase =
-        "(stewardship_type = :controlled_resource AND resource_id IN (:id_list))";
+    final String controlledPhrase = "stewardship_type = :controlled_resource";
 
     sb.append(" AND ");
     if (includeReferenced && includeControlled) {
       sb.append("(").append(referencedPhrase).append(" OR ").append(controlledPhrase).append(")");
-      params.addValue("id_list", controlledResourceIds);
     } else if (includeReferenced) {
       sb.append(referencedPhrase);
     } else if (includeControlled) {
       sb.append(controlledPhrase);
-      params.addValue("id_list", controlledResourceIds);
     } else {
       // Nothing is included, so we return an empty result
       return Collections.emptyList();

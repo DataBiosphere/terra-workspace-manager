@@ -105,7 +105,16 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
 
     final LifecycleCondition rule1condition = rules.get(0).getCondition();
     assertEquals(31, rule1condition.getAge());
-    assertEquals(toGoogleDateTime(OFFSET_DATE_TIME_2), rule1condition.getCreatedBefore());
+
+    // TODO: [PF-933] This (and all other date checks in this test) work around the fact that
+    // Stairway FlightMap loses time zone data at serialization time by normalizing to UTC via call
+    // to getValue().  Once PF-933 is addressed, these assertions should all revert to apply time
+    // zone comparison by removing the getValue() call from both sides of the equality assertion.
+
+    assertEquals(
+        toGoogleDateTime(OFFSET_DATE_TIME_2).getValue(),
+        rule1condition.getCreatedBefore().getValue());
+
     assertEquals(3, rule1condition.getNumberOfNewerVersions());
     assertTrue(rule1condition.getIsLive());
     assertThat(rule1condition.getMatchesStorageClass(), hasSize(2));
@@ -119,7 +128,9 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
 
     final LifecycleCondition rule2condition = rules.get(1).getCondition();
     assertEquals(15, rule2condition.getAge());
-    assertEquals(toGoogleDateTime(OFFSET_DATE_TIME_1), rule2condition.getCreatedBefore());
+    assertEquals(
+        toGoogleDateTime(OFFSET_DATE_TIME_1).getValue(),
+        rule2condition.getCreatedBefore().getValue());
     assertEquals(5, rule2condition.getNumberOfNewerVersions());
     assertTrue(rule2condition.getIsLive());
     assertThat(rule2condition.getMatchesStorageClass(), hasSize(1));
@@ -145,7 +156,8 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
 
     final LifecycleCondition condition = rules.get(0).getCondition();
     assertEquals(45, condition.getAge());
-    assertEquals(toGoogleDateTime(OFFSET_DATE_TIME_2), condition.getCreatedBefore());
+    assertEquals(
+        toGoogleDateTime(OFFSET_DATE_TIME_2).getValue(), condition.getCreatedBefore().getValue());
     assertEquals(1, condition.getNumberOfNewerVersions());
     assertTrue(condition.getIsLive());
     assertThat(condition.getMatchesStorageClass(), hasSize(1));

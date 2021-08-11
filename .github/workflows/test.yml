@@ -6,8 +6,9 @@ name: Run Service Tests
 on:
   push:
     branches:
-      - 'dev'
-      - 'un-as-789'
+      - main
+      - dev
+      - un-as-789
     paths-ignore:
       - '*.md'
       - '.github/**'

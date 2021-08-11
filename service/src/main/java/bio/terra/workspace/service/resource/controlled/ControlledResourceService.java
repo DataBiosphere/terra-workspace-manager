@@ -6,6 +6,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
@@ -20,6 +21,7 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.Clone
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.stage.StageService;
@@ -188,6 +190,31 @@ public class ControlledResourceService {
                 null,
                 userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    return jobBuilder.submitAndWait(ControlledBigQueryDatasetResource.class);
+  }
+
+  /** Starts an update controlled BigQuery dataset resource, blocking until its job is finished. */
+  public ControlledBigQueryDatasetResource updateBqDataset(
+      ControlledBigQueryDatasetResource resource,
+      @Nullable ApiGcpBigQueryDatasetUpdateParameters updateParameters,
+      AuthenticatedUserRequest userRequest,
+      @Nullable String resourceName,
+      @Nullable String resourceDescription) {
+    final String jobDescription =
+        String.format(
+            "Update controlled BigQuery Dataset name %s ; resource id %s; resource name %s",
+            resource.getDatasetName(), resource.getResourceId(), resource.getName());
+    final JobBuilder jobBuilder =
+        jobService
+            .newJob(
+                jobDescription,
+                UUID.randomUUID().toString(), // no need to track ID
+                UpdateControlledBigQueryDatasetResourceFlight.class,
+                resource,
+                userRequest)
+            .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
+            .addParameter(ControlledResourceKeys.RESOURCE_NAME, resourceName)
+            .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
     return jobBuilder.submitAndWait(ControlledBigQueryDatasetResource.class);
   }
 

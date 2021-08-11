@@ -11,6 +11,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
@@ -74,10 +75,11 @@ public class UpdateGcsBucketStep implements Step {
 
     final BucketCow existingBucketCow = storageCow.get(bucketResource.getBucketName());
     if (existingBucketCow == null) {
-      logger.info(
-          "No bucket found to update with name {}. Treating as success.",
-          bucketResource.getBucketName());
-      return StepResult.getStepResultSuccess();
+      IllegalStateException isEx =
+          new IllegalStateException(
+              "No bucket found to update with name " + bucketResource.getBucketName());
+      logger.error("No bucket found to update with name {}.", bucketResource.getBucketName(), isEx);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, isEx);
     }
     final List<LifecycleRule> gcsLifecycleRules =
         toGcsApiRulesList(updateParameters.getLifecycle());
