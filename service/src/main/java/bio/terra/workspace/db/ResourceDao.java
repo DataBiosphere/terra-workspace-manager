@@ -289,6 +289,7 @@ public class ResourceDao {
    * @param name name of the resource
    * @return WsmResource object
    */
+  @ReadTransaction
   public WsmResource getResourceByName(UUID workspaceId, String name) {
     final String sql = RESOURCE_SELECT_SQL + " AND name = :name";
 

@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.retry.backoff.BackOffInterruptedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -51,6 +52,20 @@ public class GlobalExceptionHandler {
             .message(validationErrorMessage)
             .statusCode(HttpStatus.BAD_REQUEST.value());
     return new ResponseEntity<>(errorReport, HttpStatus.BAD_REQUEST);
+  }
+
+  // Exception thrown by Spring Retry code when interrupted.
+  @ExceptionHandler({BackOffInterruptedException.class})
+  public ResponseEntity<ApiErrorReport> retryBackoffExceptionHandler(
+      BackOffInterruptedException ex) {
+    String errorMessage =
+        "Unexpected interrupt while retrying database logic. This may succeed on a retry. "
+            + ex.getMessage();
+    ApiErrorReport errorReport =
+        new ApiErrorReport()
+            .message(errorMessage)
+            .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+    return new ResponseEntity<>(errorReport, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   // -- catchall - log so we can understand what we have missed in the handlers above
