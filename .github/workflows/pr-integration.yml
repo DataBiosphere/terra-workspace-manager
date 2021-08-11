@@ -5,7 +5,9 @@
 name: PR Integration Tests
 on:
   push:
-    branches: [ dev ]
+    branches:
+      - 'dev'
+      - 'un-as-789'
     paths-ignore:
       - 'README.md'
       - '.github/**'
@@ -102,6 +104,6 @@ jobs:
       with:
         status: ${{ job.status }}
         channel: "#terra-workspace-manager"
-        username: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} tests"
-        author_name: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} ${{ matrix.gradleTask }}"
+        username: "Workspace Manager push to ...env... tests"
+        author_name: "Workspace Manager push to ...env... PR Integration Tests"
         fields: repo,job,workflow,commit,eventName,author,took
