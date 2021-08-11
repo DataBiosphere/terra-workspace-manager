@@ -62,7 +62,7 @@ public class CompleteTableCopyJobsStep implements Step {
             break;
           }
           TimeUnit.SECONDS.sleep(sleepTimeSeconds);
-          sleepTimeSeconds = Math.max(2 * sleepTimeSeconds, 60);
+          sleepTimeSeconds = Math.min(2 * sleepTimeSeconds, 60);
         }
       }
     } catch (IOException | InterruptedException e) {
