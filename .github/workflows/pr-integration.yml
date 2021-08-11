@@ -5,7 +5,9 @@
 name: PR Integration Tests
 on:
   push:
-    branches: [ dev ]
+    branches:
+      - main
+      - dev
     paths-ignore:
       - 'README.md'
       - '.github/**'

@@ -5,7 +5,7 @@ name: Bump, Tag, Publish, and Deploy
 #  3. Build docker image and publish to GCR
 #  4. Trigger deployment to the dev environment
 #
-# When run on merge to dev, it tags and bumps the patch version by default. You can
+# When run on merge to main, it tags and bumps the patch version by default. You can
 # bump other parts of the version by putting #major, #minor, or #patch in your commit
 # message.
 #
@@ -22,6 +22,7 @@ name: Bump, Tag, Publish, and Deploy
 on:
   push:
     branches:
+    - main
     - dev
     paths-ignore:
     - 'README.md'
@@ -36,7 +37,7 @@ on:
       branch:
         description: 'Branch to run the workflow on'
         required: false
-        default: 'dev'
+        default: 'main'
 env:
   SERVICE_NAME: ${{ github.event.repository.name }}
   GOOGLE_PROJECT: terra-kernel-k8s
@@ -77,7 +78,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.BROADBOT_TOKEN }}
         HOTFIX_BRANCHES: hotfix.*
         OVERRIDE_BUMP: ${{ steps.controls.outputs.semver-part }}
-        RELEASE_BRANCHES: dev
+        RELEASE_BRANCHES: main
         VERSION_FILE_PATH: settings.gradle
         VERSION_LINE_MATCH: "^gradle.ext.wsmVersion\\s*=\\s*\".*\""
         VERSION_SUFFIX: SNAPSHOT
