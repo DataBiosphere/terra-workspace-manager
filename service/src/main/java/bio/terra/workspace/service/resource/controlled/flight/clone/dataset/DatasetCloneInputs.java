@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.dataset;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
 
 public class DatasetCloneInputs {
@@ -44,6 +45,7 @@ public class DatasetCloneInputs {
    *
    * @return
    */
+  @JsonIgnore
   public String getDatasetId() {
     return String.format("projects/%s/datasets/%s", getProjectId(), getDatasetName());
   }

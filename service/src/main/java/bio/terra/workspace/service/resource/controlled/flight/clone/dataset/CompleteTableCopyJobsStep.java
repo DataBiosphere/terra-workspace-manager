@@ -39,6 +39,7 @@ public class CompleteTableCopyJobsStep implements Step {
         flightContext
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    // TODO(jaycarlton): PF-942 implement needed endpoints in CRL and use them here
     final Bigquery bigQueryClient = crlService.createNakedBigQueryClient(userRequest);
     try {
       for (Map.Entry<String, String> entry : tableToJobId.entrySet()) {

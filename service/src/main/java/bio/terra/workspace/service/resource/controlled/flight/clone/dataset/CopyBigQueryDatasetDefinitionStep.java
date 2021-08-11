@@ -119,6 +119,8 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
     workingMap.put(ControlledResourceKeys.CLONE_DEFINITION_RESULT, apiResult);
     if (CloningInstructions.COPY_DEFINITION.equals(effectiveCloningInstructions)
         || CloningInstructions.COPY_RESOURCE.equals(effectiveCloningInstructions)) {
+      // Later steps, if any, don't change the success response, since they only affect
+      // internal tables and rows in the dataset.
       FlightUtils.setResponse(flightContext, apiResult, HttpStatus.OK);
     }
 

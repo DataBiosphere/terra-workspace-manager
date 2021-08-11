@@ -48,6 +48,14 @@ public class CreateTableCopyJobsStep implements Step {
     this.sourceDataset = sourceDataset;
   }
 
+  /**
+   * Create one BigQuery copy job for each table in the source dataset. Keep a running map from
+   * table ID to job ID as new jobs are created, and only create jobs for tables that aren't in the
+   * map already (for example, after a restart).
+   *
+   * <p>On retry, create the jobs for any tables that don't have them. Use WRITE_TRUNCATE to avoid
+   * the possibility of duplicate data.
+   */
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
@@ -64,7 +72,7 @@ public class CreateTableCopyJobsStep implements Step {
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     final BigQueryCow bigQueryCow = crlService.createBigQueryCow(userRequest);
-    // TODO:  remove usage of this client when it's all in CRL
+    // TODO(jaycarlton):  remove usage of this client when it's all in CRL PF-942
     final Bigquery bigQueryClient = crlService.createNakedBigQueryClient(userRequest);
     try {
       // Get a list of all tables in the source dataset
@@ -109,9 +117,9 @@ public class CreateTableCopyJobsStep implements Step {
                   .toString());
         }
         final Job inputJob = buildTableCopyJob(sourceInputs, destinationInputs, table);
-        // bill the job to the source project
+        // bill the job to the destination project
         final Job submittedJob =
-            bigQueryClient.jobs().insert(sourceInputs.getProjectId(), inputJob).execute();
+            bigQueryClient.jobs().insert(destinationInputs.getProjectId(), inputJob).execute();
 
         tableToJobId.put(table.getId(), submittedJob.getId());
         workingMap.put(ControlledResourceKeys.TABLE_TO_JOB_ID_MAP, tableToJobId);
