@@ -175,7 +175,7 @@ jobs:
     # TODO: Is there a simple way to consolidate the code in this step AND the 'Notify QA Slack' step above, without complicating things?
     #   The only that changed is the slack channel
     - name: "Notify WSM Slack"
-      if: always() #&& github.event_name == 'push'
+      if: always() && github.event_name == 'refs/pull/420' # && github.event_name == 'push' && github.ref == refs/heads/main
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
       env:
@@ -184,6 +184,6 @@ jobs:
       with:
         status: ${{ job.status }}
         channel: "#uc-test-channel"
-        username: "Workspace Manager push-to-${{ github.event.branches }}  tests"
-        author_name: "Workspace Manager push-to-${{ github.ref }} ${{ matrix.gradleTask }}"
-        fields: author,commit,job
+        username: "Workspace Manager push-to-main branch"
+        author_name: "Workspace Manager ${{ matrix.gradleTask }}"
+        fields: job,commit,author
