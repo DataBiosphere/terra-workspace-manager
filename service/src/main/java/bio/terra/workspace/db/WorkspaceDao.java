@@ -159,7 +159,7 @@ public class WorkspaceDao {
       params.addValue("description", description);
     }
 
-    return updateWorkspaceHelper(workspaceId, params);
+    return updateWorkspaceColumns(workspaceId, params);
   }
 
   /**
@@ -168,27 +168,20 @@ public class WorkspaceDao {
    * generates the column_name = :column_name list. It is an error if the params map is empty.
    *
    * @param workspaceId workspace identifier - not strictly necessarily, but an extra validation
-   * @param params sql parameters
+   * @param columnParams sql parameters
    */
-  private boolean updateWorkspaceHelper(UUID workspaceId, MapSqlParameterSource params) {
+  private boolean updateWorkspaceColumns(UUID workspaceId, MapSqlParameterSource columnParams) {
     StringBuilder sb = new StringBuilder("UPDATE workspace SET ");
 
-    String[] parameterNames = params.getParameterNames();
-    if (parameterNames.length == 0) {
-      throw new MissingRequiredFieldException("Must specify some data to be updated.");
-    }
-    for (int i = 0; i < parameterNames.length; i++) {
-      String columnName = parameterNames[i];
-      if (i > 0) {
-        sb.append(", ");
-      }
-      sb.append(columnName).append(" = :").append(columnName);
-    }
+    sb.append(DbUtils.setColumnsClause(columnParams));
     sb.append(" WHERE workspace_id = :workspace_id");
 
-    params.addValue("workspace_id", workspaceId.toString());
+    MapSqlParameterSource queryParams = new MapSqlParameterSource();
+    queryParams
+        .addValues(columnParams.getValues())
+        .addValue("workspace_id", workspaceId.toString());
 
-    int rowsAffected = jdbcTemplate.update(sb.toString(), params);
+    int rowsAffected = jdbcTemplate.update(sb.toString(), queryParams);
     boolean updated = rowsAffected > 0;
 
     logger.info(

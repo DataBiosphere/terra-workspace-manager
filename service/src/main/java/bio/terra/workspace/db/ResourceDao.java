@@ -8,7 +8,6 @@ import static java.util.stream.Collectors.toList;
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.workspace.db.exception.CloudContextRequiredException;
-import bio.terra.workspace.db.exception.InvalidDaoRequestException;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.WsmResource;
@@ -333,7 +332,7 @@ public class ResourceDao {
       params.addValue("description", description);
     }
 
-    return updateResourceHelper(workspaceId, resourceId, params);
+    return updateResourceColumns(workspaceId, resourceId, params);
   }
 
   /**
@@ -341,32 +340,24 @@ public class ResourceDao {
    * parameter list making the param name equal to the column name you want to update. The method
    * generates the column_name = :column_name list. It is an error if the params map is empty.
    *
-   * @param params sql parameters
+   * @param columnParams sql parameters
    * @param workspaceId workspace identifier - not strictly necessarily, but an extra validation
    * @param resourceId resource identifier
    */
-  private boolean updateResourceHelper(
-      UUID workspaceId, UUID resourceId, MapSqlParameterSource params) {
+  private boolean updateResourceColumns(
+      UUID workspaceId, UUID resourceId, MapSqlParameterSource columnParams) {
     StringBuilder sb = new StringBuilder("UPDATE resource SET ");
 
-    String[] parameterNames = params.getParameterNames();
-    if (parameterNames.length == 0) {
-      throw new InvalidDaoRequestException("Must specify some data to be updated.");
-    }
-    for (int i = 0; i < parameterNames.length; i++) {
-      String columnName = parameterNames[i];
-      if (i > 0) {
-        sb.append(", ");
-      }
-      sb.append(columnName).append(" = :").append(columnName);
-    }
+    sb.append(DbUtils.setColumnsClause(columnParams));
     sb.append(" WHERE workspace_id = :workspace_id AND resource_id = :resource_id");
 
-    params
+    MapSqlParameterSource queryParams = new MapSqlParameterSource();
+    queryParams
+        .addValues(columnParams.getValues())
         .addValue("workspace_id", workspaceId.toString())
         .addValue("resource_id", resourceId.toString());
 
-    int rowsAffected = jdbcTemplate.update(sb.toString(), params);
+    int rowsAffected = jdbcTemplate.update(sb.toString(), queryParams);
     boolean updated = rowsAffected > 0;
 
     logger.info(
