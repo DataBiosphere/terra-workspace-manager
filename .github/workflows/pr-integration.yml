@@ -96,7 +96,7 @@ jobs:
         test: suites/FullIntegration.json
 
     - name: "Notify WSM Slack"
-      if: always() && github.event_name == 'push'
+      if: always() #&& github.event_name == 'push'
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
       env:

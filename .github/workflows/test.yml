@@ -175,7 +175,7 @@ jobs:
     # TODO: Is there a simple way to consolidate the code in this step AND the 'Notify QA Slack' step above, without complicating things?
     #   The only that changed is the slack channel
     - name: "Notify WSM Slack"
-      if: always() && github.event_name == 'push'
+      if: always() #&& github.event_name == 'push'
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
       env:
