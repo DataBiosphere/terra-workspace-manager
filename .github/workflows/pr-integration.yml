@@ -95,20 +95,6 @@ jobs:
         test: suites/FullIntegration.json
 
     - name: "Notify WSM Slack"
-      if: always() #&& github.event_name == 'push'
-      uses: broadinstitute/action-slack@v3.8.0
-      # see https://github.com/broadinstitute/action-slack
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        MATRIX_CONTEXT: ${{ toJson(matrix) }}
-      with:
-        status: ${{ job.status }}
-        channel: "#uc-test-channel"
-        username: "WSM push-to-${{ github.event.branches }} tests"
-        author_name: "WSM push-to-${{ github.ref }} ${{ matrix.gradleTask }}"
-        fields: author,commit,job
-
-    - name: "Notify WSM Slack"
       if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
