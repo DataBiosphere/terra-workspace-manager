@@ -157,6 +157,34 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/clone:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Clone a workspace and its elligible resources
+      operationId: cloneWorkspace
+      tags: [Workspace]
+      requestBody:
+        description: Details of workspce clone operation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/parameters/CloneWorkspaceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneWorkspaceResponse'
+        '202':
+          $ref: '#/components/responses/CloneWorkspaceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   ## DEPRECATED PATHS ##
   # TODO(PF-404): remove this in favor of reference-type specific objects.
   /api/workspaces/v1/{workspaceId}/datareferences:
@@ -2245,7 +2273,7 @@ components:
       description: >-
         Response object for clone of a BigQuery dataset. Destination workspace and
         resource IDs are available in the bucket's metadata object.
-      type: object
+      type: objectobjecst
       properties:
         effectiveCloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
@@ -2259,6 +2287,53 @@ components:
           format: uuid
         dataset:
           $ref: "#/components/schemas/GcpBigQueryDatasetResource"
+    CloneWorkspaceResult:
+      description: >-
+        Response for workspace clone, including details on each controlled or referenced resource
+        either cloned or attempted to be cloned.
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+        sourceWorkspaceId:
+          type: string
+          format: uuid
+        destinationWorkspaceId:
+          type: string
+          format: uuid
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceCloneDetails'
+    ResourceCloneDetails:
+      description: >-
+        A structure to give provenance of a controlled or referenced resource clone
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        resourceType:
+          $ref: '#/components/schemas/ResourceType'
+        stewardshipType:
+          $ref: '#/components/schemas/StewardshipType'
+        sourceResourceId:
+          description: resource ID of the original resource
+          type: string
+          format: uuid
+        destinationResourceId:
+          description: resource ID of the cloned resource, or null if failed or skipped
+          type: string
+          format: uuid
+        result:
+          $ref: '#/components/schemas/CloneResourceResult'
+    CloneResourceResult:
+      type: string
+      enum:
+        - SUCCEEDED
+        - FAILED
+        - SKIPPED
     DeleteControlledGcpGcsBucketRequest:
       type: object
       required: [ jobControl ]
@@ -2816,6 +2891,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneControlledGcpBigQueryDatasetResult'
+    CloneWorkspaceResponse:
+      description: Response to clone workspace request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneWorkspaceResult'
     # Error Responses
     BadRequest:
       description: Bad request

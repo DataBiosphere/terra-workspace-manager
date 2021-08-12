@@ -25,6 +25,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
+import bio.terra.workspace.service.workspace.model.WsmCloneWorkspaceResult;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Optional;
@@ -194,15 +195,15 @@ public class WorkspaceService {
 
   /**
    * Process the request to create a GCP cloud context
-   *
-   * @param workspaceId workspace in which to create the context
-   * @param jobId called-supplied job id of the async job
-   * @param resultPath endpoint where the result of the completed job can be retrieved
+   *  @param workspaceId workspace in which to create the context
+   * @param jobId caller-supplied job id of the async job
    * @param userRequest user authentication info
+   * @param resultPath optional endpoint where the result of the completed job can be retrieved
    */
   @Traced
   public void createGcpCloudContext(
-      UUID workspaceId, String jobId, String resultPath, AuthenticatedUserRequest userRequest) {
+      UUID workspaceId, String jobId, AuthenticatedUserRequest userRequest,
+      @Nullable String resultPath) {
 
     if (!bufferServiceConfiguration.getEnabled()) {
       throw new BufferServiceDisabledException(
@@ -238,6 +239,16 @@ public class WorkspaceService {
             WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendProfile.billingAccountId().get())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
         .submit();
+  }
+
+  public void createGcpCloudContext(
+      UUID workspaceId, String jobId, AuthenticatedUserRequest userRequest) {
+    createGcpCloudContext(workspaceId, jobId, userRequest, null);
+  }
+
+  public WsmCloneWorkspaceResult cloneWorkspace(UUID sourceWorkspaceId, AuthenticatedUserRequest userRequest) {
+    return null;
+
   }
 
   /**

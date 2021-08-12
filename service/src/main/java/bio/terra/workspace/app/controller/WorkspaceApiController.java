@@ -3,6 +3,7 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
+import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
@@ -403,7 +404,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     String resultPath = ControllerUtils.getAsyncResultEndpoint(request, jobId);
 
     // For now, the cloud type is always GCP and that is guaranteed in the validate.
-    workspaceService.createGcpCloudContext(id, jobId, resultPath, userRequest);
+    workspaceService.createGcpCloudContext(id, jobId, userRequest, resultPath);
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
     return new ResponseEntity<>(
         response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
@@ -441,5 +442,18 @@ public class WorkspaceApiController implements WorkspaceApi {
     ControllerValidationUtils.validateCloudPlatform(cloudPlatform);
     workspaceService.deleteGcpCloudContext(id, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  /**
+   * Clone an entire workspace by creating a new workspace and cloning the workspace's resources
+   * into it.
+   * @param workspaceId - ID of source workspace
+   * @return - result structure for the overall clone operation with details for each resource
+   */
+  @Override
+  public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(UUID workspaceId) {
+
+
+    return null;
   }
 }
