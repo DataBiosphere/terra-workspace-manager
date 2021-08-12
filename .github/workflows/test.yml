@@ -185,7 +185,6 @@ jobs:
       with:
         status: ${{ job.status }}
         channel: "#uc-test-channel"
-        username: "WSM push-to-main branch ${{ github.ref }}, ${{ github.event_name }} "
-        author_name: "WSM ${{ matrix.gradleTask }}"
-        text: "<https://github.com/DataBiosphere/terra-workspace-manager/actions/runs/$GITHUB_RUN_ID|Test run>"
+        username: "WSM push-to-main ${{ matrix.gradleTask }}, branch ${{ github.ref }}, ${{ github.event_name }} "
+        #author_name: "WSM ${{ matrix.gradleTask }}"
         fields: job,commit
