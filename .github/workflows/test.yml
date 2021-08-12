@@ -186,5 +186,5 @@ jobs:
         status: ${{ job.status }}
         channel: "#uc-test-channel"
         username: "WSM push-to-main ${{ matrix.gradleTask }}, branch ${{ github.ref }}, ${{ github.event_name }} "
-        #author_name: "WSM ${{ matrix.gradleTask }}"
-        fields: job,commit
+        author_name: "${{ matrix.gradleTask }}"
+        fields: job
