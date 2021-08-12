@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.common.exception.BadRequestException;
-import bio.terra.workspace.db.DbRetryUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
@@ -348,8 +347,7 @@ public class ControlledResourceService {
     stageService.assertMcWorkspace(workspaceId, "getControlledResource");
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION);
-    return DbRetryUtils.throwIfInterrupted(
-        () -> resourceDao.getResource(workspaceId, resourceId).castToControlledResource());
+    return resourceDao.getResource(workspaceId, resourceId).castToControlledResource();
   }
 
   /** Synchronously delete a controlled resource. */

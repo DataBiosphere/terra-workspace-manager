@@ -51,7 +51,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  void verifyCreatedWorkspaceExists() throws InterruptedException {
+  void verifyCreatedWorkspaceExists() {
     Workspace workspace =
         Workspace.builder()
             .workspaceId(workspaceId)
@@ -73,7 +73,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  void createAndDeleteWorkspace() throws InterruptedException {
+  void createAndDeleteWorkspace() {
     workspaceDao.createWorkspace(defaultWorkspace());
 
     MapSqlParameterSource params =
@@ -90,7 +90,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  void createAndGetWorkspace() throws InterruptedException {
+  void createAndGetWorkspace() {
     Workspace createdWorkspace = defaultWorkspace();
     workspaceDao.createWorkspace(createdWorkspace);
 
@@ -102,7 +102,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  void getWorkspacesFromList() throws InterruptedException {
+  void getWorkspacesFromList() {
     Workspace realWorkspace = defaultWorkspace();
     workspaceDao.createWorkspace(realWorkspace);
     UUID fakeWorkspaceId = UUID.randomUUID();
@@ -118,7 +118,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  void offsetSkipsWorkspaceInList() throws InterruptedException {
+  void offsetSkipsWorkspaceInList() {
     Workspace firstWorkspace = defaultWorkspace();
     workspaceDao.createWorkspace(firstWorkspace);
     Workspace secondWorkspace =
@@ -137,7 +137,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  void listWorkspaceLimitEnforced() throws InterruptedException {
+  void listWorkspaceLimitEnforced() {
     Workspace firstWorkspace = defaultWorkspace();
     workspaceDao.createWorkspace(firstWorkspace);
     Workspace secondWorkspace =
@@ -162,7 +162,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Workspace mcWorkspace;
 
     @BeforeEach
-    void setup() throws InterruptedException {
+    void setup() {
       mcWorkspaceId = UUID.randomUUID();
       mcWorkspace =
           Workspace.builder()
@@ -173,7 +173,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     }
 
     @Test
-    void createAndGetMcWorkspace() throws InterruptedException {
+    void createAndGetMcWorkspace() {
       Workspace workspace = workspaceDao.getWorkspace(mcWorkspaceId);
 
       assertEquals(mcWorkspace, workspace);
@@ -181,7 +181,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     }
 
     @Test
-    void getStageMatchesWorkspace() throws InterruptedException {
+    void getStageMatchesWorkspace() {
       Workspace workspace = workspaceDao.getWorkspace(mcWorkspaceId);
       assertThat(workspace.getWorkspaceStage(), equalTo(WorkspaceStage.MC_WORKSPACE));
     }
@@ -193,12 +193,12 @@ class WorkspaceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  void deleteNonExistentWorkspaceFails() throws InterruptedException {
+  void deleteNonExistentWorkspaceFails() {
     assertFalse(workspaceDao.deleteWorkspace(workspaceId));
   }
 
   @Test
-  void duplicateWorkspaceFails() throws InterruptedException {
+  void duplicateWorkspaceFails() {
     Workspace workspace = defaultWorkspace();
     workspaceDao.createWorkspace(workspace);
 
@@ -209,12 +209,12 @@ class WorkspaceDaoTest extends BaseUnitTest {
   class TestGcpCloudContext {
 
     @BeforeEach
-    void setUp() throws InterruptedException {
+    void setUp() {
       workspaceDao.createWorkspace(defaultWorkspace());
     }
 
     @Test
-    void createDeleteGcpCloudContext() throws InterruptedException {
+    void createDeleteGcpCloudContext() {
       String projectId = "my-project1";
       GcpCloudContext gcpCloudContext = new GcpCloudContext(projectId);
       workspaceDao.createGcpCloudContext(workspaceId, gcpCloudContext);
@@ -236,13 +236,13 @@ class WorkspaceDaoTest extends BaseUnitTest {
     }
 
     @Test
-    void noSetCloudContextIsNone() throws InterruptedException {
+    void noSetCloudContextIsNone() {
       Workspace workspace = workspaceDao.getWorkspace(workspaceId);
       assertTrue(workspace.getGcpCloudContext().isEmpty());
     }
 
     @Test
-    void deleteWorkspaceWithCloudContext() throws InterruptedException {
+    void deleteWorkspaceWithCloudContext() {
       String projectId = "my-project1";
       GcpCloudContext gcpCloudContext = new GcpCloudContext(projectId);
       workspaceDao.createGcpCloudContext(workspaceId, gcpCloudContext);

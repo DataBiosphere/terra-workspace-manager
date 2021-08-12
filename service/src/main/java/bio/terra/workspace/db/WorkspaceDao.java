@@ -1,5 +1,7 @@
 package bio.terra.workspace.db;
 
+import bio.terra.common.db.ReadTransaction;
+import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -27,20 +29,12 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * WorkspaceDao includes operations on the workspace and cloud_context tables. Each cloud context
  * has separate methods - well, will have. The types and their contents are different. We anticipate
  * a small integer of cloud contexts and they share nothing, so it is not worth using interfaces or
  * inheritance to treat them in common.
- *
- * <p>Publicly accessible methods are intentionally not annotated with {@code @Transactional}. These
- * methods handle retrying calls to private methods, which are @Transactional. The function that we
- * retry must start a new transaction: Postgres aborts transactions which encounter errors, and does
- * not allow us to retry SQL commands within an aborted transaction.
  */
 @Component
 public class WorkspaceDao {
@@ -68,12 +62,8 @@ public class WorkspaceDao {
    * @param workspace all properties of the workspace to create
    * @return workspace id
    */
-  public UUID createWorkspace(Workspace workspace) throws InterruptedException {
-    return DbRetryUtils.retry(() -> createWorkspaceInner(workspace));
-  }
-
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  private UUID createWorkspaceInner(Workspace workspace) {
+  @WriteTransaction
+  public UUID createWorkspace(Workspace workspace) {
     final String sql =
         "INSERT INTO workspace (workspace_id, display_name, description, spend_profile, properties, workspace_stage) "
             + "values (:workspace_id, :display_name, :description, :spend_profile,"
@@ -109,12 +99,8 @@ public class WorkspaceDao {
    * @param workspaceId unique identifier of the workspace
    * @return true on successful delete, false if there's nothing to delete
    */
-  public boolean deleteWorkspace(UUID workspaceId) throws InterruptedException {
-    return DbRetryUtils.retry(() -> deleteWorkspaceInner(workspaceId));
-  }
-
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  private boolean deleteWorkspaceInner(UUID workspaceId) {
+  @WriteTransaction
+  public boolean deleteWorkspace(UUID workspaceId) {
     final String sql = "DELETE FROM workspace WHERE workspace_id = :id";
 
     MapSqlParameterSource params =
@@ -137,15 +123,8 @@ public class WorkspaceDao {
    * @param id unique identifier of the workspace
    * @return workspace value object
    */
-  public Workspace getWorkspace(UUID id) throws InterruptedException {
-    return DbRetryUtils.retry(() -> getWorkspaceInner(id));
-  }
-
-  @Transactional(
-      propagation = Propagation.REQUIRED,
-      isolation = Isolation.SERIALIZABLE,
-      readOnly = true)
-  private Workspace getWorkspaceInner(UUID id) {
+  @ReadTransaction
+  public Workspace getWorkspace(UUID id) {
     if (id == null) {
       throw new MissingRequiredFieldException("Valid workspace id is required");
     }
@@ -164,8 +143,8 @@ public class WorkspaceDao {
     }
   }
 
-  public boolean updateWorkspace(UUID workspaceId, String name, String description)
-      throws InterruptedException {
+  @WriteTransaction
+  public boolean updateWorkspace(UUID workspaceId, String name, String description) {
     if (name == null && description == null) {
       throw new MissingRequiredFieldException("Must specify name or description to update.");
     }
@@ -180,7 +159,37 @@ public class WorkspaceDao {
       params.addValue("description", description);
     }
 
-    return DbRetryUtils.retry(() -> updateWorkspaceHelper(workspaceId, params));
+    return updateWorkspaceColumns(workspaceId, params);
+  }
+
+  /**
+   * This is an open ended method for constructing the SQL update statement. To use it, build the
+   * parameter list making the param name equal to the column name you want to update. The method
+   * generates the column_name = :column_name list. It is an error if the params map is empty.
+   *
+   * @param workspaceId workspace identifier - not strictly necessarily, but an extra validation
+   * @param columnParams sql parameters
+   */
+  private boolean updateWorkspaceColumns(UUID workspaceId, MapSqlParameterSource columnParams) {
+    StringBuilder sb = new StringBuilder("UPDATE workspace SET ");
+
+    sb.append(DbUtils.setColumnsClause(columnParams));
+    sb.append(" WHERE workspace_id = :workspace_id");
+
+    MapSqlParameterSource queryParams = new MapSqlParameterSource();
+    queryParams
+        .addValues(columnParams.getValues())
+        .addValue("workspace_id", workspaceId.toString());
+
+    int rowsAffected = jdbcTemplate.update(sb.toString(), queryParams);
+    boolean updated = rowsAffected > 0;
+
+    logger.info(
+        "{} record for workspace {}",
+        (updated ? "Updated" : "No Update - did not find"),
+        workspaceId);
+
+    return updated;
   }
 
   /**
@@ -191,16 +200,8 @@ public class WorkspaceDao {
    * @param limit The maximum number of items to return.
    * @return list of Workspaces corresponding to input IDs.
    */
-  public List<Workspace> getWorkspacesMatchingList(List<UUID> idList, int offset, int limit)
-      throws InterruptedException {
-    return DbRetryUtils.retry(() -> getWorkspacesMatchingListInner(idList, offset, limit));
-  }
-
-  @Transactional(
-      propagation = Propagation.REQUIRED,
-      isolation = Isolation.SERIALIZABLE,
-      readOnly = true)
-  private List<Workspace> getWorkspacesMatchingListInner(List<UUID> idList, int offset, int limit) {
+  @ReadTransaction
+  public List<Workspace> getWorkspacesMatchingList(List<UUID> idList, int offset, int limit) {
     String sql =
         WORKSPACE_SELECT_SQL
             + " WHERE W.workspace_id IN (:workspace_ids) ORDER BY W.workspace_id OFFSET :offset LIMIT :limit";
@@ -219,16 +220,8 @@ public class WorkspaceDao {
    * @param workspaceId unique id of workspace
    * @return optional GCP cloud context
    */
-  public Optional<GcpCloudContext> getGcpCloudContext(UUID workspaceId)
-      throws InterruptedException {
-    return DbRetryUtils.retry(() -> getGcpCloudContextInner(workspaceId));
-  }
-
-  @Transactional(
-      propagation = Propagation.REQUIRED,
-      isolation = Isolation.SERIALIZABLE,
-      readOnly = true)
-  private Optional<GcpCloudContext> getGcpCloudContextInner(UUID workspaceId) {
+  @ReadTransaction
+  public Optional<GcpCloudContext> getGcpCloudContext(UUID workspaceId) {
     String sql =
         "SELECT context FROM cloud_context "
             + "WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
@@ -254,13 +247,8 @@ public class WorkspaceDao {
    * @param workspaceId unique id of the workspace
    * @param cloudContext the GCP cloud context to create
    */
-  public void createGcpCloudContext(UUID workspaceId, GcpCloudContext cloudContext)
-      throws InterruptedException {
-    DbRetryUtils.retry(() -> createGcpCloudContextInner(workspaceId, cloudContext));
-  }
-
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  private void createGcpCloudContextInner(UUID workspaceId, GcpCloudContext cloudContext) {
+  @WriteTransaction
+  public void createGcpCloudContext(UUID workspaceId, GcpCloudContext cloudContext) {
     final String sql =
         "INSERT INTO cloud_context (workspace_id, cloud_platform, context)"
             + " VALUES (:workspace_id, :cloud_platform, :context::json)";
@@ -284,8 +272,9 @@ public class WorkspaceDao {
    *
    * @param workspaceId workspace of the cloud context
    */
-  public void deleteGcpCloudContext(UUID workspaceId) throws InterruptedException {
-    DbRetryUtils.retry(() -> deleteGcpCloudContextWorker(workspaceId));
+  @WriteTransaction
+  public void deleteGcpCloudContext(UUID workspaceId) {
+    deleteGcpCloudContextWorker(workspaceId);
   }
 
   /**
@@ -294,8 +283,8 @@ public class WorkspaceDao {
    * @param workspaceId workspace of the cloud context
    * @param projectId the GCP project id to validate
    */
-  public void deleteGcpCloudContextWithIdCheck(UUID workspaceId, String projectId)
-      throws InterruptedException {
+  @WriteTransaction
+  public void deleteGcpCloudContextWithIdCheck(UUID workspaceId, String projectId) {
     // Only perform the delete, if the project id matches the input project id
     Optional<GcpCloudContext> gcpCloudContext = getGcpCloudContext(workspaceId);
     if (gcpCloudContext.isPresent()) {
@@ -305,7 +294,6 @@ public class WorkspaceDao {
     }
   }
 
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
   private void deleteGcpCloudContextWorker(UUID workspaceId) {
     final String sql =
         "DELETE FROM cloud_context "
@@ -324,44 +312,6 @@ public class WorkspaceDao {
     } else {
       logger.info("No record to delete for GCP cloud context for workspace {}", workspaceId);
     }
-  }
-
-  /**
-   * This is an open ended method for constructing the SQL update statement. To use it, build the
-   * parameter list making the param name equal to the column name you want to update. The method
-   * generates the column_name = :column_name list. It is an error if the params map is empty.
-   *
-   * @param workspaceId workspace identifier - not strictly necessarily, but an extra validation
-   * @param params sql parameters
-   */
-  @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
-  private boolean updateWorkspaceHelper(UUID workspaceId, MapSqlParameterSource params) {
-    StringBuilder sb = new StringBuilder("UPDATE workspace SET ");
-
-    String[] parameterNames = params.getParameterNames();
-    if (parameterNames.length == 0) {
-      throw new MissingRequiredFieldException("Must specify some data to be updated.");
-    }
-    for (int i = 0; i < parameterNames.length; i++) {
-      String columnName = parameterNames[i];
-      if (i > 0) {
-        sb.append(", ");
-      }
-      sb.append(columnName).append(" = :").append(columnName);
-    }
-    sb.append(" WHERE workspace_id = :workspace_id");
-
-    params.addValue("workspace_id", workspaceId.toString());
-
-    int rowsAffected = jdbcTemplate.update(sb.toString(), params);
-    boolean updated = rowsAffected > 0;
-
-    logger.info(
-        "{} record for workspace {}",
-        (updated ? "Updated" : "No Update - did not find"),
-        workspaceId);
-
-    return updated;
   }
 
   private static final RowMapper<Workspace> WORKSPACE_ROW_MAPPER =
