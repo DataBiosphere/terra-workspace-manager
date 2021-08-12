@@ -187,5 +187,3 @@ jobs:
         channel: "#uc-test-channel"
         username: "WSM push-to-main ${{ matrix.gradleTask }}, branch ${{ github.ref }}, ${{ github.event_name }} "
         author_name: "${{ matrix.gradleTask }}"
-        text: "link ${process.env.AS_WORKFLOW}\n${process.env.AS_JOB}>"
-        #fields: job
