@@ -8,7 +8,6 @@ on:
     branches:
       - main
       - dev
-      - un-as-789
     paths-ignore:
       - '*.md'
       - '.github/**'
@@ -139,8 +138,7 @@ jobs:
         # issue with Stairway serdes.
         PRINT_STANDARD_STREAMS: please
         TEST_ENV: ${{ steps.set-env-step.outputs.test-env }}
-      # TODO: uncomment line below
-      run: ls #./gradlew :service:${{ matrix.gradleTask }} --scan
+      run: ./gradlew :service:${{ matrix.gradleTask }} --scan
 
     - name: Codacy Coverage Reporter
       if: matrix.gradleTask == 'unitTest' && steps.skiptest.outputs.is-bump == 'no'
@@ -174,7 +172,7 @@ jobs:
         fields: repo,job,workflow,commit,eventName,author,took
 
     - name: "Notify WSM Slack"
-      if: always() && github.event_name == 'pull_request' && github.ref == 'refs/pull/421/merge' #&& github.ref == refs/heads/main
+      if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
       env:
@@ -182,7 +180,7 @@ jobs:
         MATRIX_CONTEXT: ${{ toJson(matrix) }}
       with:
         status: ${{ job.status }}
-        channel: "#uc-test-channel"
+        channel: "#terra-workspace-manager"
         username: "WSM push to main branch"
         author_name: "${{ matrix.gradleTask }}"
         fields: job, commit
