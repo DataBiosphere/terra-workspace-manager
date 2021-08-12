@@ -105,29 +105,7 @@ public class CreateTableCopyJobsStep implements Step {
           tables.stream().filter(t -> !tableToJobId.containsKey(t.getId())).findFirst();
       if (tableMaybe.isPresent()) {
         final Tables table = tableMaybe.get();
-        // If the table contains data in its streaming buffer, that data can't be copied yet
-        // https://cloud.google.com/bigquery/streaming-data-into-bigquery#dataavailability
-        final Table tableGetResponse =
-            bigQueryCow
-                .tables()
-                .get(
-                    sourceInputs.getProjectId(),
-                    sourceInputs.getDatasetName(),
-                    getTableName(table.getId()))
-                .execute();
-        if (tableGetResponse.getStreamingBuffer() != null) {
-          // This is unfortunate, but our contract is to clone whatever BigQuery copies, which
-          // doesn't
-          // include recent streaming-inserted data. Warn in the log to assist in investigating
-          // customer complaints.
-          logger.warn(
-              "Streaming buffer data in table {} will not be copied. Estimated rows: {}, Oldest entry time: {}",
-              table.getId(),
-              tableGetResponse.getStreamingBuffer().getEstimatedRows(),
-              Instant.ofEpochMilli(
-                      tableGetResponse.getStreamingBuffer().getOldestEntryTime().longValueExact())
-                  .toString());
-        }
+        checkStreamingBuffer(sourceInputs, bigQueryCow, table);
         final Job inputJob = buildTableCopyJob(sourceInputs, destinationInputs, table);
         // bill the job to the destination project
         final Job submittedJob =
@@ -151,6 +129,34 @@ public class CreateTableCopyJobsStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     return StepResult.getStepResultSuccess();
+  }
+
+  // If the table contains data in its streaming buffer, that data can't be copied yet
+  // https://cloud.google.com/bigquery/streaming-data-into-bigquery#dataavailability.
+  // For now, we simply warn in the log if there's data that will be skipped.
+  private void checkStreamingBuffer(DatasetCloneInputs sourceInputs, BigQueryCow bigQueryCow, Tables table)
+      throws IOException {
+    final Table tableGetResponse =
+        bigQueryCow
+            .tables()
+            .get(
+                sourceInputs.getProjectId(),
+                sourceInputs.getDatasetName(),
+                getTableName(table.getId()))
+            .execute();
+    if (tableGetResponse.getStreamingBuffer() != null) {
+      // This is unfortunate, but our contract is to clone whatever BigQuery copies, which
+      // doesn't
+      // include recent streaming-inserted data. Warn in the log to assist in investigating
+      // customer complaints.
+      logger.warn(
+          "Streaming buffer data in table {} will not be copied. Estimated rows: {}, Oldest entry time: {}",
+          table.getId(),
+          tableGetResponse.getStreamingBuffer().getEstimatedRows(),
+          Instant.ofEpochMilli(
+                  tableGetResponse.getStreamingBuffer().getOldestEntryTime().longValueExact())
+              .toString());
+    }
   }
 
   private static Job buildTableCopyJob(

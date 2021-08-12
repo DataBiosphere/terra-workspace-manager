@@ -73,7 +73,7 @@ public class CompleteTableCopyJobsStep implements Step {
           sleepTimeSeconds = Math.min(2 * sleepTimeSeconds, 60);
         }
       }
-    } catch (IOException | InterruptedException e) {
+    } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 
