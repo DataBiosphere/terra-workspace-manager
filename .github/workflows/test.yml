@@ -174,7 +174,7 @@ jobs:
         fields: repo,job,workflow,commit,eventName,author,took
 
     - name: "Notify WSM Slack"
-      if: always() #&& github.event_name == 'push' #&& github.ref == 'refs/pull/420' # && github.event_name == 'push' && github.ref == refs/heads/main
+      if: always() && github.event_name == 'push' && github.ref == refs/pull/421/merge #&& github.ref == refs/heads/main
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
       env:
@@ -183,6 +183,6 @@ jobs:
       with:
         status: ${{ job.status }}
         channel: "#uc-test-channel"
-        username: "WSM push to main (${{ github.ref }}) branch, ${{ github.event_name }} "
+        username: "WSM push to main branch"
         author_name: "${{ matrix.gradleTask }}"
         fields: job, commit
