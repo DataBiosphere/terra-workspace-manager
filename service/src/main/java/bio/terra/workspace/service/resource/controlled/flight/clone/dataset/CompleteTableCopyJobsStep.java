@@ -67,6 +67,15 @@ public class CompleteTableCopyJobsStep implements Step {
           final String jobState = job.getStatus().getState();
           logger.debug("Table {} is {}", tableReference.getTableId(), jobState);
           if ("DONE".equals(jobState)) {
+            // Job has finished, but may have failed depending on the error result
+            if (null != job.getStatus().getErrorResult()) {
+              final String errorMessage = job.getStatus().getErrorResult().getMessage();
+              logger.warn("Job {} failed: {}", job.getId(), errorMessage);
+              // Retrying this step won't help, since the jobs are already started.
+              // We have to treat a table-level failure as fatal to the whole flight.
+              return new StepResult(
+                  StepStatus.STEP_RESULT_FAILURE_FATAL, new RuntimeException(errorMessage));
+            }
             break;
           }
           TimeUnit.SECONDS.sleep(sleepTimeSeconds);

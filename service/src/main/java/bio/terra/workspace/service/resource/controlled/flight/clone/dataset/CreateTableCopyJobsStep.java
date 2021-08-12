@@ -134,8 +134,8 @@ public class CreateTableCopyJobsStep implements Step {
   // If the table contains data in its streaming buffer, that data can't be copied yet
   // https://cloud.google.com/bigquery/streaming-data-into-bigquery#dataavailability.
   // For now, we simply warn in the log if there's data that will be skipped.
-  private void checkStreamingBuffer(DatasetCloneInputs sourceInputs, BigQueryCow bigQueryCow, Tables table)
-      throws IOException {
+  private void checkStreamingBuffer(
+      DatasetCloneInputs sourceInputs, BigQueryCow bigQueryCow, Tables table) throws IOException {
     final Table tableGetResponse =
         bigQueryCow
             .tables()
