@@ -7,6 +7,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.exception.RetryException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
+import com.google.cloud.ServiceOptions;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Optional;
@@ -71,5 +72,13 @@ public class GcpUtils {
               operation.getOperationAdapter().getName(),
               operation.getOperationAdapter().getError().getMessage()));
     }
+  }
+
+  public static String getControlPlaneProjectId() {
+    return Optional.ofNullable(ServiceOptions.getDefaultProjectId())
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    "Could not determine default GCP control plane project ID."));
   }
 }

@@ -36,12 +36,11 @@ public class BucketCloneRolesComponent {
    *
    * @param workingMap
    */
-  public void removeAllBucketRoles(FlightMap workingMap) {
+  public void removeAllAddedBucketRoles(FlightMap workingMap) {
     final BucketCloneInputs sourceInputs =
-        workingMap.get(ControlledResourceKeys.SOURCE_BUCKET_CLONE_INPUTS, BucketCloneInputs.class);
+        workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, BucketCloneInputs.class);
     final BucketCloneInputs destinationInputs =
-        workingMap.get(
-            ControlledResourceKeys.DESTINATION_BUCKET_CLONE_INPUTS, BucketCloneInputs.class);
+        workingMap.get(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, BucketCloneInputs.class);
     final String transferServiceSAEmail =
         workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, String.class);
 

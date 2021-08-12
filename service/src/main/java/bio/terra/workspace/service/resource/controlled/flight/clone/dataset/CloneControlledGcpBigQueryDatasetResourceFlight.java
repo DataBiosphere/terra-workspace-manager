@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.dataset;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
@@ -45,5 +46,12 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
             flightBeanBag.getControlledResourceService(),
             userRequest,
             flightBeanBag.getWorkspaceService()));
+    addStep(
+        new CreateTableCopyJobsStep(
+            flightBeanBag.getCrlService(), flightBeanBag.getWorkspaceService(), sourceDataset),
+        RetryRules.cloud());
+    addStep(
+        new CompleteTableCopyJobsStep(flightBeanBag.getCrlService()),
+        RetryRules.cloudLongRunning());
   }
 }

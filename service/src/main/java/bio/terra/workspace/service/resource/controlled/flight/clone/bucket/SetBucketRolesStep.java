@@ -6,15 +6,14 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
-import com.google.cloud.ServiceOptions;
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -58,12 +57,12 @@ public class SetBucketRolesStep implements Step {
     // Gather bucket inputs and store them in the working map for the next
     // step.
     final BucketCloneInputs sourceInputs = getSourceInputs();
-    workingMap.put(ControlledResourceKeys.SOURCE_BUCKET_CLONE_INPUTS, sourceInputs);
+    workingMap.put(ControlledResourceKeys.SOURCE_CLONE_INPUTS, sourceInputs);
 
     final BucketCloneInputs destinationInputs = getDestinationInputs(flightContext);
-    workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_CLONE_INPUTS, destinationInputs);
+    workingMap.put(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, destinationInputs);
 
-    final String controlPlaneProjectId = getControlPlaneProjectId();
+    final String controlPlaneProjectId = GcpUtils.getControlPlaneProjectId();
     workingMap.put(ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID, controlPlaneProjectId);
 
     // Get the Storage Transfer Service
@@ -96,16 +95,8 @@ public class SetBucketRolesStep implements Step {
    */
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    bucketCloneRolesService.removeAllBucketRoles(flightContext.getWorkingMap());
+    bucketCloneRolesService.removeAllAddedBucketRoles(flightContext.getWorkingMap());
     return StepResult.getStepResultSuccess();
-  }
-
-  private String getControlPlaneProjectId() {
-    return Optional.ofNullable(ServiceOptions.getDefaultProjectId())
-        .orElseThrow(
-            () ->
-                new IllegalStateException(
-                    "Could not determine default GCP control plane project ID."));
   }
 
   private BucketCloneInputs getSourceInputs() {

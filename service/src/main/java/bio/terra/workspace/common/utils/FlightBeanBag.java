@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class FlightBeanBag {
 
-  private final BucketCloneRolesComponent bucketCloneRolesService;
+  private final BucketCloneRolesComponent bucketCloneRolesComponent;
   private final BufferService bufferService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
   private final ControlledResourceService controlledResourceService;
@@ -38,7 +38,7 @@ public class FlightBeanBag {
   @Lazy
   @Autowired
   public FlightBeanBag(
-      BucketCloneRolesComponent bucketCloneRolesService,
+      BucketCloneRolesComponent bucketCloneRolesComponent,
       BufferService bufferService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
       ControlledResourceService controlledResourceService,
@@ -48,7 +48,7 @@ public class FlightBeanBag {
       SamService samService,
       WorkspaceDao workspaceDao,
       WorkspaceService workspaceService) {
-    this.bucketCloneRolesService = bucketCloneRolesService;
+    this.bucketCloneRolesComponent = bucketCloneRolesComponent;
     this.bufferService = bufferService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
     this.controlledResourceService = controlledResourceService;
@@ -64,8 +64,8 @@ public class FlightBeanBag {
     return (FlightBeanBag) object;
   }
 
-  public BucketCloneRolesComponent getBucketCloneRolesService() {
-    return bucketCloneRolesService;
+  public BucketCloneRolesComponent getBucketCloneRolesComponent() {
+    return bucketCloneRolesComponent;
   }
 
   public BufferService getBufferService() {

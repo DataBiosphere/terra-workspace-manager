@@ -2,6 +2,7 @@ package bio.terra.workspace.service.crl;
 
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.common.cleanup.CleanupConfig;
+import bio.terra.cloudres.google.api.services.common.Defaults;
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.billing.CloudBillingClientCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
@@ -18,7 +19,10 @@ import bio.terra.workspace.service.crl.exception.CrlSecurityException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.services.bigquery.Bigquery;
+import com.google.api.services.bigquery.BigqueryScopes;
 import com.google.api.services.bigquery.model.Dataset;
+import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
@@ -128,6 +132,25 @@ public class CrlService {
     }
   }
 
+  /**
+   * Create a vanilla Bigquery client object, for testing things that aren't in CRL yet.
+   * TODO(jaycarlton): PF-942 implement needed endpoints in CRL and use them here
+   *
+   * @param userRequest
+   * @return
+   */
+  public Bigquery createNakedBigQueryClient(AuthenticatedUserRequest userRequest) {
+    assertCrlInUse();
+    try {
+      return new Bigquery(
+          Defaults.httpTransport(),
+          Defaults.jsonFactory(),
+          new HttpCredentialsAdapter(
+              GoogleCredentials.getApplicationDefault().createScoped(BigqueryScopes.all())));
+    } catch (IOException | GeneralSecurityException e) {
+      throw new CrlInternalException("Error creating naked BigQuery client.");
+    }
+  }
   /**
    * @return CRL {@link BigQueryCow} which wraps Google BigQuery API using the WSM service account's
    *     credentials.
