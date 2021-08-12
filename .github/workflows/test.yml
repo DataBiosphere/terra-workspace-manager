@@ -140,7 +140,7 @@ jobs:
         PRINT_STANDARD_STREAMS: please
         TEST_ENV: ${{ steps.set-env-step.outputs.test-env }}
       # TODO: uncomment line below
-      #run: ./gradlew :service:${{ matrix.gradleTask }} --scan
+      run: ls #./gradlew :service:${{ matrix.gradleTask }} --scan
 
     - name: Codacy Coverage Reporter
       if: matrix.gradleTask == 'unitTest' && steps.skiptest.outputs.is-bump == 'no'
