@@ -12,8 +12,8 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.model.CloneControlledGcpBigQueryDatasetRequest;
-import bio.terra.workspace.model.ClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.model.CloneControlledGcpBigQueryDatasetResult;
+import bio.terra.workspace.model.ClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
@@ -21,7 +21,7 @@ import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
-import bio.terra.workspace.model.JobReport.StatusEnum;
+import com.google.cloud.bigquery.BigQuery;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
@@ -84,6 +84,11 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
     // create destination cloud context
     destinationProjectId = CloudContextMaker.createGcpCloudContext(destinationWorkspaceId, cloningUserWorkspaceApi);
     logger.info("Created destination project {} in workspace {}", destinationProjectId, destinationWorkspaceId);
+
+    // Wait for cloning user to have access to the source dataset before launching into the clone
+    BigQuery readerBqClient = ClientTestUtils.getGcpBigQueryClient(cloningUser, sourceDataset.getAttributes().getProjectId());
+    ClientTestUtils.getWithRetryOnException(() ->
+        readerBqClient.getDataset(sourceDataset.getAttributes().getDatasetId()));
   }
 
   @Override
@@ -125,8 +130,7 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
         CloneControlledGcpBigQueryDatasetResult::getJobReport,
         Duration.ofSeconds(5));
 
-    assertEquals(StatusEnum.SUCCEEDED, cloneResult.getJobReport().getStatus());
-    logger.info("Successfully cloned BigQuery dataset with result {}", cloneResult);
+    ClientTestUtils.assertJobSuccess("clone BigQuery dataset", cloneResult.getJobReport(), cloneResult.getErrorReport());
     assertEquals(sourceDataset.getMetadata().getWorkspaceId(), cloneResult.getDataset().getSourceWorkspaceId());
     assertEquals(sourceDataset.getMetadata().getResourceId(), cloneResult.getDataset().getSourceResourceId());
 

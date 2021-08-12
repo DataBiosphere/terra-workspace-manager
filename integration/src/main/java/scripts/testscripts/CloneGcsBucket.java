@@ -30,7 +30,6 @@ import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
-import bio.terra.workspace.model.JobReport.StatusEnum;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
@@ -161,8 +160,7 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
         CloneControlledGcpGcsBucketResult::getJobReport,
         Duration.ofSeconds(5));
 
-    assertEquals(StatusEnum.SUCCEEDED, cloneResult.getJobReport().getStatus());
-    logger.info("Successfully cloned bucket with result {}", cloneResult);
+    ClientTestUtils.assertJobSuccess("cloned bucket", cloneResult.getJobReport(), cloneResult.getErrorReport());
 
     final ClonedControlledGcpGcsBucket clonedBucket = cloneResult.getBucket();
     assertEquals(getWorkspaceId(), clonedBucket.getSourceWorkspaceId());

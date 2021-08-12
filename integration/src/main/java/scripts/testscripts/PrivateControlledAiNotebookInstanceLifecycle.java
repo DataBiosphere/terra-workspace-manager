@@ -3,7 +3,6 @@ package scripts.testscripts;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
@@ -24,7 +23,6 @@ import bio.terra.workspace.model.GcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
-import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceIamRoles;
 import bio.terra.workspace.model.PrivateResourceUser;
@@ -95,8 +93,8 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         () -> resourceUserApi.getCreateAiNotebookInstanceResult(getWorkspaceId(), creationJobId),
         CreatedControlledGcpAiNotebookInstanceResult::getJobReport,
         Duration.ofSeconds(10));
-    assertNull(creationResult.getErrorReport());
-    assertEquals(JobReport.StatusEnum.SUCCEEDED, creationResult.getJobReport().getStatus());
+    ClientTestUtils.assertJobSuccess("create ai notebook",
+        creationResult.getJobReport(), creationResult.getErrorReport());
     logger.info(
         "Creation succeeded for instanceId {}",
         creationResult.getAiNotebookInstance().getAttributes().getInstanceId());
@@ -142,8 +140,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         DeleteControlledGcpAiNotebookInstanceResult::getJobReport,
         Duration.ofSeconds(10));
 
-    assertNull(deleteResult.getErrorReport());
-    assertEquals(JobReport.StatusEnum.SUCCEEDED, deleteResult.getJobReport().getStatus());
+    ClientTestUtils.assertJobSuccess("delete ai notebook", deleteResult.getJobReport(), deleteResult.getErrorReport());
 
     // Verify the notebook was deleted from WSM metadata.
     ApiException notebookIsMissing =

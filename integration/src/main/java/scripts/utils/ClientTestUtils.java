@@ -2,7 +2,8 @@ package scripts.utils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.in;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
@@ -13,8 +14,10 @@ import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
+import bio.terra.workspace.model.ErrorReport;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobReport;
+import bio.terra.workspace.model.JobReport.StatusEnum;
 import bio.terra.workspace.model.RoleBindingList;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpStatusCodes;
@@ -36,11 +39,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scripts.testscripts.ControlledGcsBucketLifecycle;
 
 public class ClientTestUtils {
 
@@ -299,5 +300,28 @@ public class ClientTestUtils {
   public static String generateCloudResourceName() {
     String name = RESOURCE_NAME_PREFIX + UUID.randomUUID().toString();
     return name.replace("-", "_");
+  }
+
+  /**
+   * Check for job success with logging. On failure, this will assert. On success, it will return.
+   * This replaces use of the simple assert for success, since that hides the failure message,
+   * making debugging harder.
+   *
+   * @param operation string to present in the log message
+   * @param jobReport jobReport from the operation result
+   * @param errorReport errorReport from the operation result - may be null if no error
+   */
+  public static void assertJobSuccess(String operation, JobReport jobReport, @Nullable ErrorReport errorReport) {
+    if (jobReport.getStatus() == StatusEnum.SUCCEEDED) {
+      assertNull(errorReport);
+      logger.info("Operation {} succeeded", operation);
+    } else {
+      if (errorReport == null) {
+        logger.error("Operation {} failed - no error report", operation);
+      } else {
+        logger.error("Operation {} failed. Error report: {}", operation, errorReport);
+        fail("Failed operation " + operation);
+      }
+    }
   }
 }
