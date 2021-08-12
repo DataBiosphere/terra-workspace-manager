@@ -24,7 +24,6 @@ import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
-import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceIamRoles;
 import bio.terra.workspace.model.PrivateResourceUser;
@@ -35,7 +34,6 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
-import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -179,10 +177,8 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
     // Workspace owner can delete the bucket through WSM
     var ownerDeleteResult = deleteBucket(workspaceOwnerResourceApi, resourceId);
-    logger.info(
-        "For owner, delete bucket status is {}",
-        ownerDeleteResult.getJobReport().getStatus().toString());
-    assertEquals(JobReport.StatusEnum.SUCCEEDED, ownerDeleteResult.getJobReport().getStatus());
+    ClientTestUtils.assertJobSuccess("owner delete bucket",
+        ownerDeleteResult.getJobReport(), ownerDeleteResult.getErrorReport());
 
     // verify the bucket was deleted from WSM metadata
     ApiException bucketIsMissing =
