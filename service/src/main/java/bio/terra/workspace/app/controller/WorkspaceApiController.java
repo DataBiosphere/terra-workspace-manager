@@ -3,6 +3,7 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
+import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
@@ -448,12 +449,13 @@ public class WorkspaceApiController implements WorkspaceApi {
    * Clone an entire workspace by creating a new workspace and cloning the workspace's resources
    * into it.
    * @param workspaceId - ID of source workspace
+   * @param body - request body
    * @return - result structure for the overall clone operation with details for each resource
    */
   @Override
-  public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(UUID workspaceId) {
-
-
+  public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(UUID workspaceId,
+      @Valid ApiCloneWorkspaceRequest body) {
+    workspaceService.cloneWorkspace(workspaceId, getAuthenticatedInfo(), body.getLocation(), CloningInstructions.fromApiModel(body.getCloningInstructions()));
     return null;
   }
 }

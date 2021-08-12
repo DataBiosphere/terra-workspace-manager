@@ -9,6 +9,8 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneGcpWorkspaceFlight;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
@@ -22,6 +24,7 @@ import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
@@ -246,9 +249,22 @@ public class WorkspaceService {
     createGcpCloudContext(workspaceId, jobId, userRequest, null);
   }
 
-  public WsmCloneWorkspaceResult cloneWorkspace(UUID sourceWorkspaceId, AuthenticatedUserRequest userRequest) {
-    return null;
-
+  public WsmCloneWorkspaceResult cloneWorkspace(
+      UUID sourceWorkspaceId,
+      AuthenticatedUserRequest userRequest,
+      @Nullable String location,
+      @Nullable CloningInstructions cloningInstructions) {
+//    stageService.assertMcWorkspace(workspace, "deleteGcpCloudContext");
+    return jobService.newJob(
+    "Clone GCP Workspace " + sourceWorkspaceId.toString(),
+        UUID.randomUUID().toString(),
+        CloneGcpWorkspaceFlight.class,
+        null,
+        userRequest)
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, sourceWorkspaceId)
+        .addParameter(ControlledResourceKeys.LOCATION, location)
+        .addParameter(ControlledResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions)
+        .submit();
   }
 
   /**
