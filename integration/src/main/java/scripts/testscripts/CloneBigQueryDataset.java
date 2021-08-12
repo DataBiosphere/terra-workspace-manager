@@ -162,6 +162,11 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
     // create destination cloud context
     destinationProjectId = CloudContextMaker.createGcpCloudContext(destinationWorkspaceId, cloningUserWorkspaceApi);
     logger.info("Created destination project {} in workspace {}", destinationProjectId, destinationWorkspaceId);
+
+    // Wait for cloning user to have access to the source dataset before launching into the clone
+    BigQuery readerBqClient = ClientTestUtils.getGcpBigQueryClient(cloningUser, sourceDataset.getAttributes().getProjectId());
+    ClientTestUtils.getWithRetryOnException(() ->
+        readerBqClient.getDataset(sourceDataset.getAttributes().getDatasetId()));
   }
 
   @Override
@@ -204,8 +209,7 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
         CloneControlledGcpBigQueryDatasetResult::getJobReport,
         Duration.ofSeconds(5));
 
-    assertEquals(StatusEnum.SUCCEEDED, cloneResult.getJobReport().getStatus());
-    logger.info("Successfully cloned BigQuery dataset with result {}", cloneResult);
+    ClientTestUtils.assertJobSuccess("clone BigQuery dataset", cloneResult.getJobReport(), cloneResult.getErrorReport());
     assertEquals(sourceDatasetMetadata.getWorkspaceId(), cloneResult.getDataset().getSourceWorkspaceId());
     assertEquals(sourceDatasetMetadata.getResourceId(), cloneResult.getDataset().getSourceResourceId());
 
