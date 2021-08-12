@@ -183,7 +183,7 @@ jobs:
         MATRIX_CONTEXT: ${{ toJson(matrix) }}
       with:
         status: ${{ job.status }}
-        channel: "#terra-workspace-manager"
-        username: "Workspace Manager push to ...env... tests"
-        author_name: "Workspace Manager push to ...env... ${{ matrix.gradleTask }}"
-        fields: repo,job,workflow,commit,eventName,author,took
+        channel: "#uc-test-channel"
+        username: "Workspace Manager push-to-${{ github.event.branches }} tests"
+        author_name: "Workspace Manager push-to-${{ github.ref }} ${{ matrix.gradleTask }}"
+        fields: author,commit,job
