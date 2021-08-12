@@ -174,7 +174,7 @@ jobs:
         fields: repo,job,workflow,commit,eventName,author,took
 
     - name: "Notify WSM Slack"
-      if: always() && github.event_name == 'pull_request' && github.ref == refs/pull/421/merge #&& github.ref == refs/heads/main
+      if: always() && github.event_name == 'pull_request' && github.ref == 'refs/pull/421/merge' #&& github.ref == refs/heads/main
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
       env:
