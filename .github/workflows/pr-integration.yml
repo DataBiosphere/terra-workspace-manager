@@ -105,6 +105,6 @@ jobs:
       with:
         status: ${{ job.status }}
         channel: "#uc-test-channel"
-        username: "Workspace Manager push-to-${{ github.event.branches }} tests"
-        author_name: "Workspace Manager push-to-${{ github.ref }} ${{ matrix.gradleTask }}"
+        username: "WSM push-to-${{ github.event.branches }} tests"
+        author_name: "WSM push-to-${{ github.ref }} ${{ matrix.gradleTask }}"
         fields: author,commit,job
