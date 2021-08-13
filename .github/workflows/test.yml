@@ -170,3 +170,17 @@ jobs:
         username: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} tests"
         author_name: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} ${{ matrix.gradleTask }}"
         fields: repo,job,workflow,commit,eventName,author,took
+
+    - name: "Notify WSM Slack"
+      if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: broadinstitute/action-slack@v3.8.0
+      # see https://github.com/broadinstitute/action-slack
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        MATRIX_CONTEXT: ${{ toJson(matrix) }}
+      with:
+        status: ${{ job.status }}
+        channel: "#terra-workspace-manager"
+        username: "WSM push to main branch"
+        author_name: "${{ matrix.gradleTask }}"
+        fields: job, commit

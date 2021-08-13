@@ -93,3 +93,17 @@ jobs:
       with:
         test-server: workspace-local.json
         test: suites/FullIntegration.json
+
+    - name: "Notify WSM Slack"
+      if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: broadinstitute/action-slack@v3.8.0
+      # see https://github.com/broadinstitute/action-slack
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        MATRIX_CONTEXT: ${{ toJson(matrix) }}
+      with:
+        status: ${{ job.status }}
+        channel: "#terra-workspace-manager"
+        username: "WSM push to main branch"
+        author_name: "integrationTest"
+        fields: job, commit

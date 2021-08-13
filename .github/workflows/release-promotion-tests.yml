@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       testEnv:
-        description: 'Environment in which tests should be run. Currently works on dev, alpha and staging'
+        description: 'Environment in which tests should be run. Currently runs on alpha and staging'
         required: true
 
 jobs:
