@@ -21,6 +21,7 @@ on:
     # to run tests even when we only change a markdown file. So don't do what I did and put a
     # paths-ignore right here!
   workflow_dispatch: {}
+
 jobs:
   pr-integration-job:
 
