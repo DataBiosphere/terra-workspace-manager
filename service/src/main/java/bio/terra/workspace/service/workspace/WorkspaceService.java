@@ -28,7 +28,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
-import bio.terra.workspace.service.workspace.model.WsmCloneWorkspaceResult;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Optional;
@@ -198,14 +197,17 @@ public class WorkspaceService {
 
   /**
    * Process the request to create a GCP cloud context
-   *  @param workspaceId workspace in which to create the context
+   *
+   * @param workspaceId workspace in which to create the context
    * @param jobId caller-supplied job id of the async job
    * @param userRequest user authentication info
    * @param resultPath optional endpoint where the result of the completed job can be retrieved
    */
   @Traced
   public void createGcpCloudContext(
-      UUID workspaceId, String jobId, AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      String jobId,
+      AuthenticatedUserRequest userRequest,
       @Nullable String resultPath) {
 
     if (!bufferServiceConfiguration.getEnabled()) {
@@ -249,21 +251,24 @@ public class WorkspaceService {
     createGcpCloudContext(workspaceId, jobId, userRequest, null);
   }
 
-  public WsmCloneWorkspaceResult cloneWorkspace(
+  public String cloneWorkspace(
       UUID sourceWorkspaceId,
       AuthenticatedUserRequest userRequest,
-      @Nullable String location,
-      @Nullable CloningInstructions cloningInstructions) {
-//    stageService.assertMcWorkspace(workspace, "deleteGcpCloudContext");
-    return jobService.newJob(
-    "Clone GCP Workspace " + sourceWorkspaceId.toString(),
-        UUID.randomUUID().toString(),
-        CloneGcpWorkspaceFlight.class,
-        null,
-        userRequest)
-        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, sourceWorkspaceId)
+      @Nullable String location) {
+    final Workspace sourceWorkspace =
+        validateWorkspaceAndAction(
+            userRequest, sourceWorkspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    stageService.assertMcWorkspace(sourceWorkspace, "cloneGcpWorkspace");
+
+    return jobService
+        .newJob(
+            "Clone GCP Workspace " + sourceWorkspaceId.toString(),
+            UUID.randomUUID().toString(),
+            CloneGcpWorkspaceFlight.class,
+            null,
+            userRequest)
+        .addParameter(ControlledResourceKeys.SOURCE_WORKSPACE_ID, sourceWorkspaceId)
         .addParameter(ControlledResourceKeys.LOCATION, location)
-        .addParameter(ControlledResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions)
         .submit();
   }
 

@@ -5,9 +5,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-/**
- * Internal wrapper type for {@link ApiCloneResourceResult}.
- */
+/** Internal wrapper type for {@link ApiCloneResourceResult}. */
 public enum WsmCloneResourceResult {
   SUCCEEDED("SUCCEEDED", ApiCloneResourceResult.SUCCEEDED),
   FAILED("FAILED", ApiCloneResourceResult.FAILED),
@@ -16,8 +14,7 @@ public enum WsmCloneResourceResult {
   private final String value;
   private final ApiCloneResourceResult apiValue;
 
-  WsmCloneResourceResult(String value, ApiCloneResourceResult apiValue)
-  {
+  WsmCloneResourceResult(String value, ApiCloneResourceResult apiValue) {
     this.value = value;
     this.apiValue = apiValue;
   }
@@ -42,5 +39,4 @@ public enum WsmCloneResourceResult {
     }
     return null;
   }
-
 }

@@ -57,6 +57,8 @@ public final class WorkspaceFlightMapKeys {
     public static final String TABLE_TO_JOB_ID_MAP = "tableToJobIdMap";
     public static final String SOURCE_WORKSPACE_ID = "sourceWorkspaceId";
     public static final String CREATE_CLOUD_CONTEXT_JOB_ID = "createCloudContextJobId";
+    public static final String RESOURCES_TO_CLONE = "resourcesToClone";
+    public static final String RESOURCE_ID_TO_CLONE_RESULT = "resourceIdToCloneResult";
   }
 
   /** Common resource keys */

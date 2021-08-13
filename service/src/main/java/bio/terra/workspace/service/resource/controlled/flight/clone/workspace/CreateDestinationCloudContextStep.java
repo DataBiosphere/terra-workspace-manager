@@ -27,27 +27,32 @@ public class CreateDestinationCloudContextStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final var sourceWorkspaceId = context.getInputParameters()
-        .get(ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
-    final var userRequest = context.getInputParameters()
-        .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final var destinationWorkspaceId = context.getWorkingMap()
-        .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+    final var sourceWorkspaceId =
+        context.getInputParameters().get(ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
+    final var userRequest =
+        context
+            .getInputParameters()
+            .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    final var destinationWorkspaceId =
+        context.getWorkingMap().get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     final Workspace sourceWorkspace = workspaceService.getWorkspace(sourceWorkspaceId, userRequest);
 
     // Chack if hte destination workspace already exists
-    
-    final var workspaceRequest = WorkspaceRequest.builder()
-        .workspaceId(destinationWorkspaceId)
-        .displayName(sourceWorkspace.getDisplayName().map(n -> n + " (clone)"))
-        .description(Optional.of(String.format("Clone of workspace ID %s", sourceWorkspaceId)))
-        .build();
+
+    final var workspaceRequest =
+        WorkspaceRequest.builder()
+            .workspaceId(destinationWorkspaceId)
+            .displayName(sourceWorkspace.getDisplayName().map(n -> n + " (clone)"))
+            .description(Optional.of(String.format("Clone of workspace ID %s", sourceWorkspaceId)))
+            .build();
     // TODO: harden this to avoid creating a duplicate workspace after a restart. May need to pass
     //   in an ID instead of having it instantiated inside the method.
     workspaceService.createWorkspace(workspaceRequest, userRequest);
 
-    final var cloudContextJobId = context.getWorkingMap()
-        .get(ControlledResourceKeys.CREATE_CLOUD_CONTEXT_JOB_ID, String.class);
+    final var cloudContextJobId =
+        context
+            .getWorkingMap()
+            .get(ControlledResourceKeys.CREATE_CLOUD_CONTEXT_JOB_ID, String.class);
 
     boolean flightAlreadyExists;
     try {
@@ -59,7 +64,8 @@ public class CreateDestinationCloudContextStep implements Step {
     try {
       // we already have a flight, so don't launch another one
       if (!flightAlreadyExists) {
-        workspaceService.createGcpCloudContext(destinationWorkspaceId, cloudContextJobId, userRequest);
+        workspaceService.createGcpCloudContext(
+            destinationWorkspaceId, cloudContextJobId, userRequest);
       }
       context.getStairway().waitForFlight(cloudContextJobId, 10, 100);
 
@@ -69,14 +75,15 @@ public class CreateDestinationCloudContextStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  /**
-   * Destroy the created workspace and cloud context
-   */
+  /** Destroy the created workspace and cloud context */
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    final var userRequest = context.getInputParameters()
-        .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final var destinationWorkspaceId = context.getWorkingMap().get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+    final var userRequest =
+        context
+            .getInputParameters()
+            .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    final var destinationWorkspaceId =
+        context.getWorkingMap().get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     if (destinationWorkspaceId != null && userRequest != null) {
       workspaceService.deleteWorkspace(destinationWorkspaceId, userRequest);
     } // otherwise, if it never got created, that's fine too

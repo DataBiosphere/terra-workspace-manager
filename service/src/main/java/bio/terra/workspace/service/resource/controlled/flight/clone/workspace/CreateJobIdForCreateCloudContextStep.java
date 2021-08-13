@@ -15,7 +15,9 @@ public class CreateJobIdForCreateCloudContextStep implements Step {
     context.getWorkingMap().put(ControlledResourceKeys.CREATE_CLOUD_CONTEXT_JOB_ID, jobId);
 
     final UUID destinationWorkspaceId = UUID.randomUUID();
-    context.getWorkingMap().put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
+    context
+        .getWorkingMap()
+        .put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
 
     return StepResult.getStepResultSuccess();
   }

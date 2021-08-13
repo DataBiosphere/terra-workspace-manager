@@ -184,6 +184,23 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/clone-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a gcp bucket clone job.
+      operationId: getCloneWorkspaceResult
+      tags: [Workspace]
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneWorkspaceResponse'
+        '202':
+          $ref: '#/components/responses/CloneWorkspaceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
   ## DEPRECATED PATHS ##
   # TODO(PF-404): remove this in favor of reference-type specific objects.
@@ -2273,7 +2290,7 @@ components:
       description: >-
         Response object for clone of a BigQuery dataset. Destination workspace and
         resource IDs are available in the bucket's metadata object.
-      type: objectobjecst
+      type: object
       properties:
         effectiveCloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
@@ -2293,8 +2310,6 @@ components:
         the instructions on individual resources.
       type: object
       properties:
-        cloningInstructions:
-          $ref: "#/components/schemas/CloningInstructionsEnum"
         location:
           description: >-
             GCP Location to use for cloud-based resources. If omitted, the location of the source
@@ -2310,6 +2325,14 @@ components:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
+        workspace:
+          $ref: '#/components/schemas/ClonedWorkspace'
+    ClonedWorkspace:
+      description: >-
+        Flight result class for workspace clone. Indicates status for each resource
+        cloned (or skipped).
+      type: object
+      properties:
         sourceWorkspaceId:
           type: string
           format: uuid
@@ -2325,7 +2348,7 @@ components:
         A structure to give provenance of a controlled or referenced resource clone
       type: object
       properties:
-        effectiveCloningInstructions:
+        cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
         resourceType:
           $ref: '#/components/schemas/ResourceType'

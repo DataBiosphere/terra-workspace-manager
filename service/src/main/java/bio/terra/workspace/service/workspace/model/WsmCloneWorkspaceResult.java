@@ -7,9 +7,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
- * Internal wrapper type for {@link ApiCloneWorkspaceResult}
- */
+/** Internal wrapper type for {@link ApiCloneWorkspaceResult} */
 public class WsmCloneWorkspaceResult {
   private ApiJobReport jobReport;
   private ApiErrorReport errorReport;
@@ -17,8 +15,7 @@ public class WsmCloneWorkspaceResult {
   private UUID destinationWorkspaceId;
   private List<WsmResourceCloneDetails> resources;
 
-  public WsmCloneWorkspaceResult() {
-  }
+  public WsmCloneWorkspaceResult() {}
 
   public ApiJobReport getJobReport() {
     return jobReport;
@@ -56,8 +53,7 @@ public class WsmCloneWorkspaceResult {
     return resources;
   }
 
-  public void setResources(
-      List<WsmResourceCloneDetails> resources) {
+  public void setResources(List<WsmResourceCloneDetails> resources) {
     this.resources = resources;
   }
 
@@ -67,8 +63,9 @@ public class WsmCloneWorkspaceResult {
         .errorReport(errorReport)
         .sourceWorkspaceId(sourceWorkspaceId)
         .destinationWorkspaceId(destinationWorkspaceId)
-        .resources(resources.stream()
-            .map(WsmResourceCloneDetails::toApiModel)
-            .collect(Collectors.toList()));
+        .resources(
+            resources.stream()
+                .map(WsmResourceCloneDetails::toApiModel)
+                .collect(Collectors.toList()));
   }
 }

@@ -6,8 +6,7 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 
 public class CloneGcpWorkspaceFlight extends Flight {
 
-  public CloneGcpWorkspaceFlight(FlightMap inputParameters,
-      Object applicationContext) {
+  public CloneGcpWorkspaceFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
     // Flight Map
     // 0. Create a job id for create cloud context sub-flight
@@ -17,5 +16,9 @@ public class CloneGcpWorkspaceFlight extends Flight {
     final var flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     addStep(new CreateJobIdForCreateCloudContextStep());
     addStep(new CreateDestinationCloudContextStep(flightBeanBag.getWorkspaceService()));
+    addStep(new FindResourcesToCloneStep(flightBeanBag.getResourceDao()));
+    addStep(new CloneEachResourceStep(
+        flightBeanBag.getReferencedResourceService(),
+        flightBeanBag.getControlledResourceService()));
   }
 }

@@ -6,27 +6,23 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import java.util.UUID;
 
-/**
- * Internal wrapper type for {@link ApiResourceCloneDetails}
- */
+/** Internal wrapper type for {@link ApiResourceCloneDetails} */
 public class WsmResourceCloneDetails {
-  private CloningInstructions effectiveCloningInstructions;
+  private CloningInstructions cloningInstructions;
   private WsmResourceType resourceType;
   private StewardshipType stewardshipType;
   private UUID sourceResourceId;
   private UUID destinationResourceId;
   private WsmCloneResourceResult result;
 
-  public WsmResourceCloneDetails() {
+  public WsmResourceCloneDetails() {}
+
+  public CloningInstructions getCloningInstructions() {
+    return cloningInstructions;
   }
 
-  public CloningInstructions getEffectiveCloningInstructions() {
-    return effectiveCloningInstructions;
-  }
-
-  public void setEffectiveCloningInstructions(
-      CloningInstructions effectiveCloningInstructions) {
-    this.effectiveCloningInstructions = effectiveCloningInstructions;
+  public void setCloningInstructions(CloningInstructions cloningInstructions) {
+    this.cloningInstructions = cloningInstructions;
   }
 
   public WsmResourceType getResourceType() {
@@ -41,8 +37,7 @@ public class WsmResourceCloneDetails {
     return stewardshipType;
   }
 
-  public void setStewardshipType(
-      StewardshipType stewardshipType) {
+  public void setStewardshipType(StewardshipType stewardshipType) {
     this.stewardshipType = stewardshipType;
   }
 
@@ -72,7 +67,7 @@ public class WsmResourceCloneDetails {
 
   public ApiResourceCloneDetails toApiModel() {
     return new ApiResourceCloneDetails()
-        .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
+        .effectiveCloningInstructions(cloningInstructions.toApiModel())
         .resourceType(resourceType.toApiModel())
         .stewardshipType(stewardshipType.toApiModel())
         .sourceResourceId(sourceResourceId)
