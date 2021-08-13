@@ -67,7 +67,7 @@ public class WsmResourceCloneDetails {
 
   public ApiResourceCloneDetails toApiModel() {
     return new ApiResourceCloneDetails()
-        .effectiveCloningInstructions(cloningInstructions.toApiModel())
+        .cloningInstructions(cloningInstructions.toApiModel())
         .resourceType(resourceType.toApiModel())
         .stewardshipType(stewardshipType.toApiModel())
         .sourceResourceId(sourceResourceId)
