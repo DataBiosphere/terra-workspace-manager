@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
  * Intermediate base class for testing Workspace Manager in the TestRunner framework. This class
  * handles obtaining the WorkspaceApi object and basic checks and debugging around its status code.
  *
- * <p>Users of this class need to o verload doUserJourney() with the body of the userJourney()
+ * <p>Users of this class need to overload doUserJourney() with the body of the userJourney()
  * method, and optionally doSetup() and doCleanup() aw well.
  */
 public abstract class WorkspaceApiTestScriptBase extends TestScript {
