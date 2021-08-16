@@ -172,7 +172,9 @@ jobs:
         fields: repo,job,workflow,commit,eventName,author,took
 
     - name: "Notify WSM Slack"
-      if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+      # post to WSM Slack when code is pushed to main branch by a non-bumper user
+      if: always() && github.event_name == 'pull_request' && github.ref == 'refs/pull/423/merge' && steps.skiptest.outputs.is-bump == 'no'
+      #if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.skiptest.outputs.is-bump == 'no'
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
       env:
@@ -180,7 +182,7 @@ jobs:
         MATRIX_CONTEXT: ${{ toJson(matrix) }}
       with:
         status: ${{ job.status }}
-        channel: "#terra-workspace-manager"
+        channel: "#uc-test-channel"
         username: "WSM push to main branch"
         author_name: "${{ matrix.gradleTask }}"
         fields: job, commit
