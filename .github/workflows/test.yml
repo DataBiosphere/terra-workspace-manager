@@ -174,7 +174,7 @@ jobs:
     - name: "Notify WSM Slack"
       # post to WSM Slack when code is pushed to main branch by a non-bumper user
       #test
-      if: always() && github.event_name == 'pull_request' && github.ref == 'refs/pull/424/merge' #&& steps.skiptest.outputs.is-bump == 'no'
+      if: always() && github.event_name == 'pull_request' && github.ref == 'refs/pull/424/merge' && steps.skiptest.outputs.is-bump == 'no'
       #if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.skiptest.outputs.is-bump == 'no'
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
