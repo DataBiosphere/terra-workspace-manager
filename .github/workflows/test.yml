@@ -172,7 +172,8 @@ jobs:
         fields: repo,job,workflow,commit,eventName,author,took
 
     - name: "Notify WSM Slack"
-      if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+      # post to WSM Slack when a regular push (i.e. non-bumper push) is made to main branch
+      if: always() && github.event_name == 'push' && steps.skiptest.outputs.is-bump == 'no'
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
       env:

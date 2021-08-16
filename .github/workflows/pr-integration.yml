@@ -96,8 +96,15 @@ jobs:
         test-server: workspace-local.json
         test: suites/FullIntegration.json
 
+    - name: Skip version bump merges
+      id: bump-check
+      uses: ./.github/actions/bump-skip
+      with:
+        event-name: ${{ github.event_name }}
+
     - name: "Notify WSM Slack"
-      if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+      # post to WSM Slack when a regular push (i.e. non-bumper push) is made to main branch
+      if: always() && github.event_name == 'push' && steps.bump-check.outputs.is-bump == 'no'
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
       env:
