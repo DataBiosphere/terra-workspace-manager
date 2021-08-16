@@ -138,7 +138,7 @@ jobs:
         # issue with Stairway serdes.
         PRINT_STANDARD_STREAMS: please
         TEST_ENV: ${{ steps.set-env-step.outputs.test-env }}
-      run: ls #./gradlew :service:${{ matrix.gradleTask }} --scan
+      run: ./gradlew :service:${{ matrix.gradleTask }} --scan
 
     - name: Codacy Coverage Reporter
       if: matrix.gradleTask == 'unitTest' && steps.skiptest.outputs.is-bump == 'no'
@@ -172,10 +172,8 @@ jobs:
         fields: repo,job,workflow,commit,eventName,author,took
 
     - name: "Notify WSM Slack"
-      # post to WSM Slack when code is pushed to main branch by a non-bumper user
-      #test
-      if: always() && github.event_name == 'pull_request' && github.ref == 'refs/pull/424/merge' && steps.skiptest.outputs.is-bump == 'yes'
-      #if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.skiptest.outputs.is-bump == 'no'
+      # post to WSM Slack when a regular push (i.e. non-bumper push) is made to main branch
+      if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.skiptest.outputs.is-bump == 'no'
       uses: broadinstitute/action-slack@v3.8.0
       # see https://github.com/broadinstitute/action-slack
       env:
@@ -183,7 +181,7 @@ jobs:
         MATRIX_CONTEXT: ${{ toJson(matrix) }}
       with:
         status: ${{ job.status }}
-        channel: "#uc-test-channel"
+        channel: "#terra-workspace-manager"
         username: "WSM push to main branch"
         author_name: "${{ matrix.gradleTask }}"
         fields: job, commit
