@@ -110,7 +110,8 @@ public class ResourceMaker {
   }
 
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucketUserShared(
-      ControlledGcpResourceApi resourceApi, UUID workspaceId, String name) throws Exception {
+      ControlledGcpResourceApi resourceApi, UUID workspaceId, String name,
+      CloningInstructionsEnum cloningInstructions) throws Exception {
 
     String bucketName = ClientTestUtils.generateCloudResourceName();
     var body =
@@ -119,7 +120,35 @@ public class ResourceMaker {
                 new ControlledResourceCommonFields()
                     .accessScope(AccessScope.SHARED_ACCESS)
                     .managedBy(ManagedBy.USER)
-                    .cloningInstructions(CloningInstructionsEnum.NOTHING)
+                    .cloningInstructions(cloningInstructions)
+                    .description("Description of " + name)
+                    .name(name))
+            .gcsBucket(
+                new GcpGcsBucketCreationParameters()
+                    .name(bucketName)
+                    .defaultStorageClass(GcpGcsBucketDefaultStorageClass.STANDARD)
+                    .lifecycle(new GcpGcsBucketLifecycle().rules(LIFECYCLE_RULES))
+                    .location("US-CENTRAL1"));
+
+    logger.info("Creating bucket {} workspace {}", bucketName, workspaceId);
+    return resourceApi.createBucket(body, workspaceId);
+  }
+
+  public static CreatedControlledGcpGcsBucket makeControlledGcsBucketUserPrivate(
+      ControlledGcpResourceApi resourceApi, UUID workspaceId, String name,
+      String privateResourceUserEmail, PrivateResourceIamRoles privateResourceRoles,
+      CloningInstructionsEnum cloningInstructions) throws Exception {
+    String bucketName = ClientTestUtils.generateCloudResourceName();
+    var body =
+        new CreateControlledGcpGcsBucketRequestBody()
+            .common(
+                new ControlledResourceCommonFields()
+                    .accessScope(AccessScope.PRIVATE_ACCESS)
+                    .privateResourceUser(new PrivateResourceUser()
+                      .userName(privateResourceUserEmail)
+                      .privateResourceIamRoles(privateResourceRoles))
+                    .managedBy(ManagedBy.USER)
+                    .cloningInstructions(cloningInstructions)
                     .description("Description of " + name)
                     .name(name))
             .gcsBucket(
@@ -136,28 +165,8 @@ public class ResourceMaker {
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucketUserPrivate(
       ControlledGcpResourceApi resourceApi, UUID workspaceId, String name,
       String privateResourceUserEmail, PrivateResourceIamRoles privateResourceRoles) throws Exception {
-    String bucketName = ClientTestUtils.generateCloudResourceName();
-    var body =
-        new CreateControlledGcpGcsBucketRequestBody()
-            .common(
-                new ControlledResourceCommonFields()
-                    .accessScope(AccessScope.PRIVATE_ACCESS)
-                    .privateResourceUser(new PrivateResourceUser()
-                      .userName(privateResourceUserEmail)
-                      .privateResourceIamRoles(privateResourceRoles))
-                    .managedBy(ManagedBy.USER)
-                    .cloningInstructions(CloningInstructionsEnum.NOTHING)
-                    .description("Description of " + name)
-                    .name(name))
-            .gcsBucket(
-                new GcpGcsBucketCreationParameters()
-                    .name(bucketName)
-                    .defaultStorageClass(GcpGcsBucketDefaultStorageClass.STANDARD)
-                    .lifecycle(new GcpGcsBucketLifecycle().rules(LIFECYCLE_RULES))
-                    .location("US-CENTRAL1"));
-
-    logger.info("Creating bucket {} workspace {}", bucketName, workspaceId);
-    return resourceApi.createBucket(body, workspaceId);
+    return  makeControlledGcsBucketUserPrivate(
+         resourceApi,  workspaceId, name, privateResourceUserEmail, privateResourceRoles, CloningInstructionsEnum.NOTHING);
   }
 
   public static void deleteControlledGcsBucket(

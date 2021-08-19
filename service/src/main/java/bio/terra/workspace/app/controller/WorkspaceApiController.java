@@ -457,30 +457,32 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceId, @Valid ApiCloneWorkspaceRequest body) {
-    final String jobId = workspaceService.cloneWorkspace(
-        workspaceId,
-        getAuthenticatedInfo(),
-        body.getLocation());
+    final String jobId =
+        workspaceService.cloneWorkspace(workspaceId, getAuthenticatedInfo(), body.getLocation());
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, getAuthenticatedInfo());
-    return new ResponseEntity<>(result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
+    return new ResponseEntity<>(
+        result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
 
   /**
    * Return the workspace clone result, including job result and error result.
+   *
    * @param workspaceId - source workspace ID
    * @param jobId - ID of flight
    * @return - response with result
    */
   @Override
-  public ResponseEntity<ApiCloneWorkspaceResult> getCloneWorkspaceResult(UUID workspaceId,
-      String jobId) {
+  public ResponseEntity<ApiCloneWorkspaceResult> getCloneWorkspaceResult(
+      UUID workspaceId, String jobId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, userRequest);
-    return new ResponseEntity<>(result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
+    return new ResponseEntity<>(
+        result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
 
   // Retrieve the async result or progress for clone workspace.
-  private ApiCloneWorkspaceResult fetchCloneWorkspaceResult(String jobId, AuthenticatedUserRequest userRequest) {
+  private ApiCloneWorkspaceResult fetchCloneWorkspaceResult(
+      String jobId, AuthenticatedUserRequest userRequest) {
     final AsyncJobResult<ApiClonedWorkspace> jobResult =
         jobService.retrieveAsyncJobResult(jobId, ApiClonedWorkspace.class, userRequest);
     return new ApiCloneWorkspaceResult()

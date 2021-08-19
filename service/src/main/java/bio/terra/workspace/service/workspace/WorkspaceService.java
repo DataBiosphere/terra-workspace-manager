@@ -10,7 +10,6 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneGcpWorkspaceFlight;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
@@ -252,9 +251,7 @@ public class WorkspaceService {
   }
 
   public String cloneWorkspace(
-      UUID sourceWorkspaceId,
-      AuthenticatedUserRequest userRequest,
-      @Nullable String location) {
+      UUID sourceWorkspaceId, AuthenticatedUserRequest userRequest, @Nullable String location) {
     final Workspace sourceWorkspace =
         validateWorkspaceAndAction(
             userRequest, sourceWorkspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);

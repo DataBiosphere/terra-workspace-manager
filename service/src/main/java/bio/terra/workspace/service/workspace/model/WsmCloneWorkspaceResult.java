@@ -3,17 +3,12 @@ package bio.terra.workspace.service.workspace.model;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiJobReport;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 /** Internal wrapper type for {@link ApiCloneWorkspaceResult} */
 public class WsmCloneWorkspaceResult {
   private ApiJobReport jobReport;
   private ApiErrorReport errorReport;
-  private UUID sourceWorkspaceId;
-  private UUID destinationWorkspaceId;
-  private List<WsmResourceCloneDetails> resources;
+  private WsmClonedWorkspace workspace;
 
   public WsmCloneWorkspaceResult() {}
 
@@ -33,39 +28,18 @@ public class WsmCloneWorkspaceResult {
     this.errorReport = errorReport;
   }
 
-  public UUID getSourceWorkspaceId() {
-    return sourceWorkspaceId;
+  public WsmClonedWorkspace getWorkspace() {
+    return workspace;
   }
 
-  public void setSourceWorkspaceId(UUID sourceWorkspaceId) {
-    this.sourceWorkspaceId = sourceWorkspaceId;
-  }
-
-  public UUID getDestinationWorkspaceId() {
-    return destinationWorkspaceId;
-  }
-
-  public void setDestinationWorkspaceId(UUID destinationWorkspaceId) {
-    this.destinationWorkspaceId = destinationWorkspaceId;
-  }
-
-  public List<WsmResourceCloneDetails> getResources() {
-    return resources;
-  }
-
-  public void setResources(List<WsmResourceCloneDetails> resources) {
-    this.resources = resources;
+  public void setWorkspace(WsmClonedWorkspace workspace) {
+    this.workspace = workspace;
   }
 
   public ApiCloneWorkspaceResult toApiModel() {
     return new ApiCloneWorkspaceResult()
         .jobReport(jobReport)
         .errorReport(errorReport)
-        .sourceWorkspaceId(sourceWorkspaceId)
-        .destinationWorkspaceId(destinationWorkspaceId)
-        .resources(
-            resources.stream()
-                .map(WsmResourceCloneDetails::toApiModel)
-                .collect(Collectors.toList()));
+        .workspace(workspace.toApiModel());
   }
 }

@@ -17,8 +17,9 @@ public class CloneGcpWorkspaceFlight extends Flight {
     addStep(new CreateJobIdForCreateCloudContextStep());
     addStep(new CreateDestinationCloudContextStep(flightBeanBag.getWorkspaceService()));
     addStep(new FindResourcesToCloneStep(flightBeanBag.getResourceDao()));
-    addStep(new CloneEachResourceStep(
-        flightBeanBag.getReferencedResourceService(),
-        flightBeanBag.getControlledResourceService()));
+    addStep(
+        new CloneEachResourceStep(
+            flightBeanBag.getReferencedResourceService(),
+            flightBeanBag.getControlledResourceService()));
   }
 }
