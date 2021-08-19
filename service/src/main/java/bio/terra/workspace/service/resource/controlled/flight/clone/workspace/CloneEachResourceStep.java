@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
@@ -192,53 +193,73 @@ public class CloneEachResourceStep implements Step {
         String.format("Clone of GCS Bucket Resource %s", resource.getResourceId());
     final String jobId = UUID.randomUUID().toString();
     final ApiJobControl jobControl = new ApiJobControl().id(jobId);
-    controlledResourceService.cloneGcsBucket(
-        resource.getWorkspaceId(),
-        resource.getResourceId(),
-        destinationWorkspaceId,
-        jobControl,
-        userRequest,
-        null,
-        description,
-        null,
-        location,
-        null);
-
-    final FlightState flightState =
-        stairway.waitForFlight(
-            jobId, Math.toIntExact(FLIGHT_POLL_INTERVAL.toSeconds()), FLIGHT_POLL_CYCLES);
-    final FlightMap subFlightResultMap =
-        flightState
-            .getResultMap()
-            .orElseThrow(
-                () -> new MissingRequiredFieldsException("Sub-flight result map not found."));
-    WsmCloneResourceResult resultStatus;
-    UUID destinationResourceId = null;
-    final var response =
-        subFlightResultMap.get(
-            JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
-    if (null == response) {
-      resultStatus = WsmCloneResourceResult.FAILED;
-    } else if (null == response.getBucket()) {
-      if (CloningInstructions.COPY_NOTHING == resource.getCloningInstructions()) {
-        // bucket isn't populated when the cloning instructions are COPY_NOTHING
-        resultStatus = WsmCloneResourceResult.SKIPPED;
-      } else {
-        throw new MissingRequiredFieldsException("Bucket was not set on response object.");
-      }
-    } else {
-      resultStatus = WsmCloneResourceResult.SUCCEEDED;
-      destinationResourceId = response.getBucket().getResourceId();
+    boolean failedEarly = false;
+    try {
+      controlledResourceService.cloneGcsBucket(
+          resource.getWorkspaceId(),
+          resource.getResourceId(),
+          destinationWorkspaceId,
+          jobControl,
+          userRequest,
+          null,
+          description,
+          null,
+          location,
+          null);
+    } catch (UnauthorizedException e) {
+      // User doesn't have authority to clone this; likely
+      // a private resource
+      failedEarly = true;
     }
-    // get the clone result
-    final WsmResourceCloneDetails result = new WsmResourceCloneDetails();
-    result.setCloningInstructions(resource.getCloningInstructions());
-    result.setResult(resultStatus);
-    result.setResourceType(resource.getResourceType());
-    result.setSourceResourceId(resource.getResourceId());
-    result.setDestinationResourceId(destinationResourceId);
-    result.setStewardshipType(resource.getStewardshipType());
-    return result;
+    if (!failedEarly) {
+      // waitForFlight() is slated to be de-deprecated (reprecated?) soon
+      @SuppressWarnings("deprecation")
+      final FlightState flightState =
+          stairway.waitForFlight(
+              jobId, Math.toIntExact(FLIGHT_POLL_INTERVAL.toSeconds()), FLIGHT_POLL_CYCLES);
+      final FlightMap subFlightResultMap =
+          flightState
+              .getResultMap()
+              .orElseThrow(
+                  () -> new MissingRequiredFieldsException("Sub-flight result map not found."));
+      WsmCloneResourceResult resultStatus;
+      UUID destinationResourceId = null;
+      final var response =
+          subFlightResultMap.get(
+              JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
+      if (null == response) {
+        resultStatus = WsmCloneResourceResult.FAILED;
+      } else if (null == response.getBucket()) {
+        if (CloningInstructions.COPY_NOTHING == resource.getCloningInstructions()) {
+          // bucket isn't populated when the cloning instructions are COPY_NOTHING
+          resultStatus = WsmCloneResourceResult.SKIPPED;
+        } else {
+          throw new MissingRequiredFieldsException("Bucket was not set on response object.");
+        }
+      } else {
+        resultStatus = WsmCloneResourceResult.SUCCEEDED;
+        destinationResourceId = response.getBucket().getResourceId();
+      }
+      // get the clone result
+      final WsmResourceCloneDetails result = new WsmResourceCloneDetails();
+      result.setCloningInstructions(resource.getCloningInstructions());
+      result.setResult(resultStatus);
+      result.setResourceType(resource.getResourceType());
+      result.setSourceResourceId(resource.getResourceId());
+      result.setDestinationResourceId(destinationResourceId);
+      result.setStewardshipType(resource.getStewardshipType());
+      return result;
+    } else {
+      // Operation threw exception before the flight launched
+      final WsmResourceCloneDetails result = new WsmResourceCloneDetails();
+      result.setCloningInstructions(resource.getCloningInstructions());
+      result.setResult(WsmCloneResourceResult.FAILED);
+      result.setResourceType(resource.getResourceType());
+      result.setSourceResourceId(resource.getResourceId());
+      result.setDestinationResourceId(null);
+      result.setStewardshipType(resource.getStewardshipType());
+      return result;
+    }
   }
 
   private WsmResourceCloneDetails cloneBigQueryDataset(

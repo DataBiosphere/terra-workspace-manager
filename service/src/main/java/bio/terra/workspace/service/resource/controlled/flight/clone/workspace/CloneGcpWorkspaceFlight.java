@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 
 public class CloneGcpWorkspaceFlight extends Flight {
 
@@ -13,13 +14,17 @@ public class CloneGcpWorkspaceFlight extends Flight {
     // 1. Create destination workspace and cloud context
     // 2. Build a list of resources to clone
     // 3. Clone a resource on the list. Rerun until all resources are cloned.
+    // 4. Build the response payload.
     final var flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     addStep(new CreateJobIdForCreateCloudContextStep());
-    addStep(new CreateDestinationCloudContextStep(flightBeanBag.getWorkspaceService()));
-    addStep(new FindResourcesToCloneStep(flightBeanBag.getResourceDao()));
+    addStep(
+        new CreateDestinationCloudContextStep(flightBeanBag.getWorkspaceService()),
+        RetryRules.cloud());
+    addStep(new FindResourcesToCloneStep(flightBeanBag.getResourceDao()), RetryRules.cloud());
     addStep(
         new CloneEachResourceStep(
             flightBeanBag.getReferencedResourceService(),
-            flightBeanBag.getControlledResourceService()));
+            flightBeanBag.getControlledResourceService()),
+        RetryRules.cloud());
   }
 }

@@ -2,6 +2,10 @@ package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static scripts.utils.ClientTestUtils.assertPresentAndGet;
 import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
 import static scripts.utils.ResourceMaker.makeControlledGcsBucketUserPrivate;
 import static scripts.utils.ResourceMaker.makeControlledGcsBucketUserShared;
@@ -9,6 +13,7 @@ import static scripts.utils.ResourceMaker.makeControlledGcsBucketUserShared;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
+import bio.terra.workspace.model.CloneResourceResult;
 import bio.terra.workspace.model.CloneWorkspaceRequest;
 import bio.terra.workspace.model.CloneWorkspaceResult;
 import bio.terra.workspace.model.CloningInstructionsEnum;
@@ -17,7 +22,11 @@ import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.PrivateResourceIamRoles;
+import bio.terra.workspace.model.ResourceCloneDetails;
+import bio.terra.workspace.model.ResourceType;
+import bio.terra.workspace.model.StewardshipType;
 import com.google.common.collect.ImmutableList;
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -100,10 +109,46 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
     final WorkspaceApi cloningUserWorkspaceApi = ClientTestUtils.getWorkspaceClient(cloningUser, server);
     final CloneWorkspaceRequest cloneWorkspaceRequest = new CloneWorkspaceRequest()
         .location("us-central1");
-    final CloneWorkspaceResult result = cloningUserWorkspaceApi.cloneWorkspace(cloneWorkspaceRequest, getWorkspaceId());
-    logger.info("Clone result: {}", result);
-    // Verify first GCS bucket clone has data
+    CloneWorkspaceResult cloneResult = cloningUserWorkspaceApi.cloneWorkspace(cloneWorkspaceRequest, getWorkspaceId());
+
+    final String jobId = cloneResult.getJobReport().getId();
+    cloneResult = ClientTestUtils.pollWhileRunning(
+        cloneResult,
+        () -> cloningUserWorkspaceApi.getCloneWorkspaceResult(getWorkspaceId(), jobId),
+        CloneWorkspaceResult::getJobReport,
+        Duration.ofSeconds(10));
+    logger.info("Clone result: {}", cloneResult);
+    ClientTestUtils.assertJobSuccess("Clone Workspace", cloneResult.getJobReport(), cloneResult.getErrorReport());
+    assertNull(cloneResult.getErrorReport());
+
+    assertThat(cloneResult.getWorkspace().getResources(), hasSize(2));
+    assertEquals(getWorkspaceId(), cloneResult.getWorkspace().getSourceWorkspaceId());
+    final UUID destinationWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
+    assertNotNull(destinationWorkspaceId);
+
+    // Verify shared GCS bucket details
+    final ResourceCloneDetails sharedBucketCloneDetails = assertPresentAndGet(
+        cloneResult.getWorkspace().getResources().stream()
+        .filter(r -> sharedSourceBucket.getResourceId().equals(r.getSourceResourceId()))
+        .findFirst());
+    assertEquals(CloningInstructionsEnum.RESOURCE, sharedBucketCloneDetails.getCloningInstructions());
+    assertEquals(ResourceType.GCS_BUCKET, sharedBucketCloneDetails.getResourceType());
+    assertEquals(StewardshipType.CONTROLLED, sharedBucketCloneDetails.getStewardshipType());
+    assertNotNull(sharedBucketCloneDetails.getDestinationResourceId());
+    assertEquals(CloneResourceResult.SUCCEEDED, sharedBucketCloneDetails.getResult());
+    // assume data transfer is covered in other tests
+
     // Verify clone of private bucket fails
+    final ResourceCloneDetails privateBucketCloneDetails = assertPresentAndGet(
+        cloneResult.getWorkspace().getResources().stream()
+            .filter(r -> privateSourceBucket.getResourceId().equals(r.getSourceResourceId()))
+            .findFirst());
+    assertEquals(CloningInstructionsEnum.RESOURCE, privateBucketCloneDetails.getCloningInstructions());
+    assertEquals(ResourceType.GCS_BUCKET, privateBucketCloneDetails.getResourceType());
+    assertEquals(StewardshipType.CONTROLLED, privateBucketCloneDetails.getStewardshipType());
+    assertNull(privateBucketCloneDetails.getDestinationResourceId());
+    assertEquals(CloneResourceResult.FAILED, privateBucketCloneDetails.getResult());
+
     // Verify COPY_NOTHING bucket was skipped
     // verify COPY_DEFINITION bucket exists but is empty
     // verify COPY_RESOURCE bucket exists and has data
