@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import javax.validation.constraints.Null;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -251,7 +252,12 @@ public class WorkspaceService {
   }
 
   public String cloneWorkspace(
-      UUID sourceWorkspaceId, AuthenticatedUserRequest userRequest, @Nullable String location) {
+      UUID sourceWorkspaceId,
+      AuthenticatedUserRequest userRequest,
+      @Nullable String location,
+      @Nullable String displayName,
+      @Nullable String description,
+      String spendProfile) {
     final Workspace sourceWorkspace =
         validateWorkspaceAndAction(
             userRequest, sourceWorkspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
@@ -264,7 +270,11 @@ public class WorkspaceService {
             CloneGcpWorkspaceFlight.class,
             null,
             userRequest)
-        .addParameter(ControlledResourceKeys.SOURCE_WORKSPACE_ID, sourceWorkspaceId)
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, sourceWorkspaceId)
+        .addParameter(WorkspaceFlightMapKeys.DISPLAY_NAME_ID, displayName)
+        .addParameter(WorkspaceFlightMapKeys.DESCRIPTION_ID, description)
+        .addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfile)
+        .addParameter(ControlledResourceKeys.SOURCE_WORKSPACE_ID, sourceWorkspaceId) // TODO: remove this duplication
         .addParameter(ControlledResourceKeys.LOCATION, location)
         .submit();
   }

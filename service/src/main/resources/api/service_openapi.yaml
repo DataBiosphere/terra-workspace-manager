@@ -2306,10 +2306,21 @@ components:
           $ref: "#/components/schemas/GcpBigQueryDatasetResource"
     CloneWorkspaceRequest:
       description: >-
-        Request body for cloning an entire workspace. Provide cloning instructions to override
-        the instructions on individual resources.
+        Request body for cloning an entire workspace. The stage is always MC. Cloning instructions
+        are taken from individual resources.
       type: object
+      required:
+        - spendProfile
       properties:
+        displayName:
+          description: The human readable name of the workspace
+          type: string
+        description:
+          description: A description of the cloned workspace
+          type: string
+        spendProfile:
+          description: ID of provided spend profile
+          type: string
         location:
           description: >-
             GCP Location to use for cloud-based resources. If omitted, the location of the source
@@ -2364,6 +2375,9 @@ components:
           format: uuid
         result:
           $ref: '#/components/schemas/CloneResourceResult'
+        errorMessage:
+          description: If result is FAILED, a short description of the cause, if available.
+          type: string
     CloneResourceResult:
       type: string
       enum:

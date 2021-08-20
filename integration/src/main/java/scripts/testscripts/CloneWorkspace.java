@@ -130,8 +130,13 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
     // Get a new workspace API for the reader
     cloningUserWorkspaceApi = ClientTestUtils.getWorkspaceClient(cloningUser, server);
     final CloneWorkspaceRequest cloneWorkspaceRequest = new CloneWorkspaceRequest()
+        .displayName("Cloned Workspace")
+        .description("A clone of workspace " + getWorkspaceId().toString())
+        .spendProfile(getSpendProfileId()) // TODO- use a different one if available
         .location("us-central1");
-    CloneWorkspaceResult cloneResult = cloningUserWorkspaceApi.cloneWorkspace(cloneWorkspaceRequest, getWorkspaceId());
+    CloneWorkspaceResult cloneResult = cloningUserWorkspaceApi.cloneWorkspace(
+        cloneWorkspaceRequest,
+        getWorkspaceId());
 
     final String jobId = cloneResult.getJobReport().getId();
     cloneResult = ClientTestUtils.pollWhileRunning(

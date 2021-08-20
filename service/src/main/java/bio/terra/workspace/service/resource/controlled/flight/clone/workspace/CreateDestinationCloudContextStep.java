@@ -51,6 +51,7 @@ public class CreateDestinationCloudContextStep implements Step {
             .build();
     // TODO: harden this to avoid creating a duplicate workspace after a restart. May need to pass
     //   in an ID instead of having it instantiated inside the method.
+    // TODO: make this a separate step - reuse CreateWorkspaceStep if possible
     workspaceService.createWorkspace(workspaceRequest, userRequest);
 
     final var cloudContextJobId =
