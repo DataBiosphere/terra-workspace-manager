@@ -334,7 +334,7 @@ public class ClientTestUtils {
    * @return - value of optional, if present
    */
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-  public static <T> T assertPresentAndGet(Optional<T> optional) {
+  public static <T> T getOrFail(Optional<T> optional) {
     assertTrue(optional.isPresent(), "Optional value was empty.");
     return optional.get();
   }

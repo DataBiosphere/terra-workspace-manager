@@ -40,7 +40,7 @@ public class CreateDestinationCloudContextStep implements Step {
         context.getWorkingMap().get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     final Workspace sourceWorkspace = workspaceService.getWorkspace(sourceWorkspaceId, userRequest);
     final Optional<SpendProfileId> spendProfileId = sourceWorkspace.getSpendProfileId();
-    // Check if hte destination workspace already exists
+    // Check if the destination workspace already exists
     final var workspaceRequest =
         WorkspaceRequest.builder()
             .workspaceId(destinationWorkspaceId)
