@@ -5,12 +5,12 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 
-public class AwaitCloneReferenceResourceFlightStep implements Step {
+public class AwaitCloneGcsBucketResourceFlightStep implements Step {
 
-  private final String flightId;
+  private final String subflightId;
 
-  public AwaitCloneReferenceResourceFlightStep(String flightId) {
-    this.flightId = flightId;
+  public AwaitCloneGcsBucketResourceFlightStep(String subflightId) {
+    this.subflightId = subflightId;
   }
 
   @Override

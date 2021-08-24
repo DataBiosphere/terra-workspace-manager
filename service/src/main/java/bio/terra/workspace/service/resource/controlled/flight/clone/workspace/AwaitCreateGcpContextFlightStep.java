@@ -4,12 +4,10 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 
-public class CloneSingleGcsBucketStep implements Step {
+public class AwaitCreateGcpContextFlightStep implements Step {
 
-  public CloneSingleGcsBucketStep(ControlledGcsBucketResource resource, String subflightId) {
-  }
+  public AwaitCreateGcpContextFlightStep() {}
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {

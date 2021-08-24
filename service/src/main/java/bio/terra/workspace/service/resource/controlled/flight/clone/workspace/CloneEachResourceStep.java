@@ -40,6 +40,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.springframework.http.HttpStatus;
+
 @Deprecated
 public class CloneEachResourceStep implements Step {
 

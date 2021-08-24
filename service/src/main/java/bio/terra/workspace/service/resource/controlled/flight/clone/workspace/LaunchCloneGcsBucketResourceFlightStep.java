@@ -4,14 +4,15 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 
-public class CloneSingleBigQueryDatasetStep implements Step {
+public class LaunchCloneGcsBucketResourceFlightStep implements Step {
 
-  private final ControlledBigQueryDatasetResource resource;
+  private final ControlledGcsBucketResource resource;
   private final String subflightId;
 
-  public CloneSingleBigQueryDatasetStep(ControlledBigQueryDatasetResource resource, String subflightId) {
+  public LaunchCloneGcsBucketResourceFlightStep(
+      ControlledGcsBucketResource resource, String subflightId) {
     this.resource = resource;
     this.subflightId = subflightId;
   }

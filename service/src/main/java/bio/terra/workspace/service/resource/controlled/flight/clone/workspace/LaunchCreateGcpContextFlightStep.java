@@ -11,20 +11,15 @@ import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import java.util.Optional;
 import java.util.UUID;
 
-public class CreateDestinationCloudContextStep implements Step {
+public class LaunchCreateGcpContextFlightStep implements Step {
 
   private final WorkspaceService workspaceService;
 
-  public CreateDestinationCloudContextStep(WorkspaceService workspaceService) {
+  public LaunchCreateGcpContextFlightStep(WorkspaceService workspaceService) {
     this.workspaceService = workspaceService;
   }
 
@@ -38,21 +33,24 @@ public class CreateDestinationCloudContextStep implements Step {
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     final var destinationWorkspaceId =
         context.getWorkingMap().get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    final Workspace sourceWorkspace = workspaceService.getWorkspace(sourceWorkspaceId, userRequest);
-    final Optional<SpendProfileId> spendProfileId = sourceWorkspace.getSpendProfileId();
-    // Check if the destination workspace already exists
-    final var workspaceRequest =
-        WorkspaceRequest.builder()
-            .workspaceId(destinationWorkspaceId)
-            .displayName(sourceWorkspace.getDisplayName().map(n -> n + " (clone)"))
-            .description(Optional.of(String.format("Clone of workspace ID %s", sourceWorkspaceId)))
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .spendProfileId(spendProfileId)
-            .build();
-    // TODO: harden this to avoid creating a duplicate workspace after a restart. May need to pass
-    //   in an ID instead of having it instantiated inside the method.
-    // TODO: make this a separate step - reuse CreateWorkspaceStep if possible
-    workspaceService.createWorkspace(workspaceRequest, userRequest);
+    //    final Workspace sourceWorkspace = workspaceService.getWorkspace(sourceWorkspaceId,
+    // userRequest);
+    //    final Optional<SpendProfileId> spendProfileId = sourceWorkspace.getSpendProfileId();
+    //    // Check if the destination workspace already exists
+    //    final var workspaceRequest =
+    //        WorkspaceRequest.builder()
+    //            .workspaceId(destinationWorkspaceId)
+    //            .displayName(sourceWorkspace.getDisplayName().map(n -> n + " (clone)"))
+    //            .description(Optional.of(String.format("Clone of workspace ID %s",
+    // sourceWorkspaceId)))
+    //            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+    //            .spendProfileId(spendProfileId)
+    //            .build();
+    //    // TODO: harden this to avoid creating a duplicate workspace after a restart. May need to
+    // pass
+    //    //   in an ID instead of having it instantiated inside the method.
+    //    // TODO: make this a separate step - reuse CreateWorkspaceStep if possible
+    //    workspaceService.createWorkspace(workspaceRequest, userRequest);
 
     final var cloudContextJobId =
         context

@@ -4,13 +4,17 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 
-public class AwaitCloneReferenceResourceFlightStep implements Step {
+public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implements Step {
 
-  private final String flightId;
+  private final ControlledBigQueryDatasetResource resource;
+  private final String subflightId;
 
-  public AwaitCloneReferenceResourceFlightStep(String flightId) {
-    this.flightId = flightId;
+  public LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep(
+      ControlledBigQueryDatasetResource resource, String subflightId) {
+    this.resource = resource;
+    this.subflightId = subflightId;
   }
 
   @Override

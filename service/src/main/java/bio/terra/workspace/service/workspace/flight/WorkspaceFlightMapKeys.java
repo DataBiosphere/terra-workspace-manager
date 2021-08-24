@@ -8,14 +8,13 @@ public final class WorkspaceFlightMapKeys {
   public static final String BILLING_ACCOUNT_ID = "billingAccountId";
   public static final String IAM_GROUP_EMAIL_MAP = "iamGroupEmailMap";
   public static final String RBS_RESOURCE_ID = "rbsResourceId";
-  public static final String DISPLAY_NAME_ID = "displayNameId";
-  public static final String DESCRIPTION_ID = "descriptionId";
+  public static final String DISPLAY_NAME = "displayNameId";
+  public static final String DESCRIPTION = "descriptionId";
 
   private WorkspaceFlightMapKeys() {}
 
   /** Use inner class for new set of keys so it's easy to spot duplicates */
   public static class ControlledResourceKeys {
-
 
     private ControlledResourceKeys() {}
 
@@ -61,7 +60,6 @@ public final class WorkspaceFlightMapKeys {
     public static final String RESOURCE_ID_TO_CLONE_RESULT = "resourceIdToCloneResult";
     public static final String CLONE_ALL_RESOURCES_FLIGHT_ID = "cloneAllResourcesFlightId";
     public static final String WORKSPACE_CREATE_JOB_ID = "workspaceCreateJobId";
-
   }
 
   /** Common resource keys */

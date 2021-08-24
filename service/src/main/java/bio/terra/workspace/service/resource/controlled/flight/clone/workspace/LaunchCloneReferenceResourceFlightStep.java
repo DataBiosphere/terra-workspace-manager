@@ -20,8 +20,10 @@ public class LaunchCloneReferenceResourceFlightStep implements Step {
   private final ReferencedResource resource;
   private final String subflightId;
 
-  public LaunchCloneReferenceResourceFlightStep(ReferencedResourceService referencedResourceService,
-      ReferencedResource resource, String subflightId) {
+  public LaunchCloneReferenceResourceFlightStep(
+      ReferencedResourceService referencedResourceService,
+      ReferencedResource resource,
+      String subflightId) {
     this.referencedResourceService = referencedResourceService;
     this.resource = resource;
     this.subflightId = subflightId;
@@ -29,26 +31,30 @@ public class LaunchCloneReferenceResourceFlightStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-      final var destinationWorkspaceId = context.getInputParameters()
-          .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-      final var userRequest = context.getInputParameters()
-          .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-      final String description =
-          String.format("Clone of Referenced Resource %s", resource.getResourceId());
-      // TODO(jaycarlton): PF-918 don't reuse the service call; launch subflight directly
-      final ReferencedResource clonedResource =
-          referencedResourceService.(
-              resource, destinationWorkspaceId, null, description, userRequest);
-      final WsmResourceCloneDetails result = new WsmResourceCloneDetails();
-      result.setResourceType(resource.getResourceType());
-      result.setStewardshipType(resource.getStewardshipType());
-      result.setDestinationResourceId(clonedResource.getResourceId());
-      result.setResult(WsmCloneResourceResult.SUCCEEDED);
-      result.setCloningInstructions(
-          CloningInstructions
-              .COPY_REFERENCE); // FIXME(jaycarlton) reference clone doesn't use cloning instructions
+    final var destinationWorkspaceId =
+        context
+            .getInputParameters()
+            .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+    final var userRequest =
+        context
+            .getInputParameters()
+            .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    final String description =
+        String.format("Clone of Referenced Resource %s", resource.getResourceId());
+    // TODO(jaycarlton): PF-918 don't reuse the service call; launch subflight directly
+    final ReferencedResource clonedResource =
+        referencedResourceService.cloneReferencedResource(
+            resource, destinationWorkspaceId, null, description, userRequest);
+    final WsmResourceCloneDetails result = new WsmResourceCloneDetails();
+    result.setResourceType(resource.getResourceType());
+    result.setStewardshipType(resource.getStewardshipType());
+    result.setDestinationResourceId(clonedResource.getResourceId());
+    result.setResult(WsmCloneResourceResult.SUCCEEDED);
+    result.setCloningInstructions(
+        CloningInstructions
+            .COPY_REFERENCE); // FIXME(jaycarlton) reference clone doesn't use cloning instructions
 
-    // put result in the the output map
+    // put result in the output map
     return StepResult.getStepResultSuccess();
   }
 

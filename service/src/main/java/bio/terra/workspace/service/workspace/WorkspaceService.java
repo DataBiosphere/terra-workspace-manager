@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
-import javax.validation.constraints.Null;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -94,9 +93,9 @@ public class WorkspaceService {
         WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceRequest.workspaceStage().name());
 
     createJob.addParameter(
-        WorkspaceFlightMapKeys.DISPLAY_NAME_ID, workspaceRequest.displayName().orElse(""));
+        WorkspaceFlightMapKeys.DISPLAY_NAME, workspaceRequest.displayName().orElse(""));
     createJob.addParameter(
-        WorkspaceFlightMapKeys.DESCRIPTION_ID, workspaceRequest.description().orElse(""));
+        WorkspaceFlightMapKeys.DESCRIPTION, workspaceRequest.description().orElse(""));
     return createJob.submitAndWait(UUID.class);
   }
 
@@ -267,10 +266,12 @@ public class WorkspaceService {
             null,
             userRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, sourceWorkspaceId)
-        .addParameter(WorkspaceFlightMapKeys.DISPLAY_NAME_ID, displayName)
-        .addParameter(WorkspaceFlightMapKeys.DESCRIPTION_ID, description)
+        .addParameter(WorkspaceFlightMapKeys.DISPLAY_NAME, displayName)
+        .addParameter(WorkspaceFlightMapKeys.DESCRIPTION, description)
         .addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfile)
-        .addParameter(ControlledResourceKeys.SOURCE_WORKSPACE_ID, sourceWorkspaceId) // TODO: remove this duplication
+        .addParameter(
+            ControlledResourceKeys.SOURCE_WORKSPACE_ID,
+            sourceWorkspaceId) // TODO: remove this duplication
         .addParameter(ControlledResourceKeys.LOCATION, location)
         .submit();
   }

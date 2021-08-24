@@ -7,8 +7,7 @@ public class ResourceWithFlightId {
   private WsmResource resource;
   private String flightId;
 
-  public ResourceWithFlightId() {
-  }
+  public ResourceWithFlightId() {}
 
   public ResourceWithFlightId(WsmResource resource, String flightId) {
     this.resource = resource;
