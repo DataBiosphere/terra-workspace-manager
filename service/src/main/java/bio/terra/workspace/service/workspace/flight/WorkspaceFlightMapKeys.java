@@ -16,6 +16,7 @@ public final class WorkspaceFlightMapKeys {
   /** Use inner class for new set of keys so it's easy to spot duplicates */
   public static class ControlledResourceKeys {
 
+
     private ControlledResourceKeys() {}
 
     public static final String CREATION_PARAMETERS = "creationParameters";
@@ -53,12 +54,14 @@ public final class WorkspaceFlightMapKeys {
     public static final String STORAGE_TRANSFER_SERVICE_SA_EMAIL = "storageTransferServiceSAEmail";
     public static final String STORAGE_TRANSFER_JOB_NAME = "storageTransferJobName";
     public static final String DESTINATION_DATASET_NAME = "destinationDatasetName";
-    public static final String CONTROL_PLANE_SA_EMAIL = "controlPlaneSAEmail";
     public static final String TABLE_TO_JOB_ID_MAP = "tableToJobIdMap";
     public static final String SOURCE_WORKSPACE_ID = "sourceWorkspaceId";
     public static final String CREATE_CLOUD_CONTEXT_JOB_ID = "createCloudContextJobId";
     public static final String RESOURCES_TO_CLONE = "resourcesToClone";
     public static final String RESOURCE_ID_TO_CLONE_RESULT = "resourceIdToCloneResult";
+    public static final String CLONE_ALL_RESOURCES_FLIGHT_ID = "cloneAllResourcesFlightId";
+    public static final String WORKSPACE_CREATE_JOB_ID = "workspaceCreateJobId";
+
   }
 
   /** Common resource keys */

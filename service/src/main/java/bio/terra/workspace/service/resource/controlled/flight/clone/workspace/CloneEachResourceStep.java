@@ -40,7 +40,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.springframework.http.HttpStatus;
-
+@Deprecated
 public class CloneEachResourceStep implements Step {
 
   public static final Duration FLIGHT_POLL_INTERVAL = Duration.ofSeconds(10);

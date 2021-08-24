@@ -4,6 +4,8 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
+import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
 
@@ -53,5 +55,20 @@ public final class FlightUtils {
       FlightContext flightContext, String inputKey, String workingKey, Class<T> klass) {
     return Optional.ofNullable(flightContext.getInputParameters().get(inputKey, klass))
         .orElse(flightContext.getWorkingMap().get(workingKey, klass));
+  }
+
+  /**
+   * Validation function, intended to be called from the top and bottom of a doStep() method in a
+   * Step. Checks a list of input (or output) string keys to ensure they have a non-null value in the map.
+   * For checking the input parameters map, the call can be made from a flight constructor.
+   * @param flightMap - either an input parameters or working map
+   * @param keys - vararg of string keys to be checked
+   */
+  public static void validateRequiredEntriesNonNull(FlightMap flightMap, String... keys) {
+    for (String key : keys) {
+      if (null == flightMap.getRaw(key)) {
+        throw new MissingRequiredFieldsException("Required entry with key %s missing from flight map");
+      }
+    }
   }
 }
