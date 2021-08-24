@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.stage;
 
-import bio.terra.workspace.db.DbRetryUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -43,8 +42,7 @@ public class StageService {
    * @param actionMessage message to include in the error
    */
   public void assertMcWorkspace(UUID workspaceId, String actionMessage) {
-    Workspace workspace =
-        DbRetryUtils.throwIfInterrupted(() -> workspaceDao.getWorkspace(workspaceId));
+    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
     assertMcWorkspace(workspace, actionMessage);
   }
 }
