@@ -71,6 +71,14 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
     workspaceId = UUID.randomUUID();
+    createWorkspace(workspaceId, spendProfileId, workspaceApi);
+  }
+
+  /**
+   * Utility for making the WSM calls to create a workspace. Exposed as protected for test
+   * implementations which need to create additional workspaces.
+   */
+  protected CreatedWorkspace createWorkspace(UUID workspaceId, String spendProfileId, WorkspaceApi workspaceApi) throws Exception {
     final var requestBody =
         new CreateWorkspaceRequestBody()
             .id(workspaceId)
@@ -78,6 +86,7 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
             .stage(getStageModel());
     final CreatedWorkspace workspace = workspaceApi.createWorkspace(requestBody);
     assertThat(workspace.getId(), equalTo(workspaceId));
+    return workspace;
   }
 
   /**

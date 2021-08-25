@@ -69,13 +69,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
 
     // create a new workspace with cloud context
     destinationWorkspaceId = UUID.randomUUID();
-    final var requestBody =
-        new CreateWorkspaceRequestBody()
-            .id(destinationWorkspaceId)
-            .spendProfile(getSpendProfileId())
-            .stage(getStageModel());
-    final CreatedWorkspace createdDestinationWorkspace = workspaceApi.createWorkspace(requestBody);
-    assertThat(createdDestinationWorkspace.getId(), equalTo(destinationWorkspaceId));
+    createWorkspace(destinationWorkspaceId, getSpendProfileId(), workspaceApi);
   }
 
   @Override

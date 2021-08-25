@@ -110,13 +110,7 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     // create destination workspace
     final WorkspaceApi cloningUserWorkspaceApi = ClientTestUtils.getWorkspaceClient(cloningUser, server);
     destinationWorkspaceId = UUID.randomUUID();
-    final var requestBody =
-        new CreateWorkspaceRequestBody()
-            .id(destinationWorkspaceId)
-            .spendProfile(getSpendProfileId())
-            .stage(getStageModel());
-    final CreatedWorkspace createdDestinationWorkspace = cloningUserWorkspaceApi.createWorkspace(requestBody);
-    assertThat(createdDestinationWorkspace.getId(), equalTo(destinationWorkspaceId));
+    createWorkspace(destinationWorkspaceId, getSpendProfileId(), cloningUserWorkspaceApi);
 
     // create destination cloud context
     destinationProjectId = CloudContextMaker.createGcpCloudContext(destinationWorkspaceId, cloningUserWorkspaceApi);
