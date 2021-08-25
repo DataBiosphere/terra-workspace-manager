@@ -1,10 +1,22 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntriesNonNull;
+
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
+import bio.terra.stairway.exception.DatabaseOperationException;
+import bio.terra.stairway.exception.DuplicateFlightIdSubmittedException;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.stairway.exception.StairwayExecutionException;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
+import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import java.util.UUID;
 
 public class LaunchCloneGcsBucketResourceFlightStep implements Step {
 
@@ -19,11 +31,50 @@ public class LaunchCloneGcsBucketResourceFlightStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    return null;
+    validateRequiredEntriesNonNull(
+        context.getInputParameters(),
+        ControlledResourceKeys.LOCATION,
+        JobMapKeys.AUTH_USER_INFO.getKeyName());
+    validateRequiredEntriesNonNull(
+        context.getWorkingMap(), ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
+
+    final var location =
+        context.getInputParameters().get(ControlledResourceKeys.LOCATION, String.class);
+    final var userRequest =
+        context
+            .getInputParameters()
+            .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    final var destinationWorkspaceId =
+        context.getWorkingMap().get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+
+    // Gather input parameters for flight. See
+    // bio.terra.workspace.service.resource.controlled.ControlledResourceService#cloneGcsBucket.
+    final FlightMap subflightInputParameters = new FlightMap();
+    subflightInputParameters.put(ControlledResourceKeys.LOCATION, location);
+    subflightInputParameters.put(
+        ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
+    subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+    subflightInputParameters.put(JobMapKeys.REQUEST.getKeyName(), resource);
+    subflightInputParameters.put(
+        ControlledResourceKeys.CLONING_INSTRUCTIONS, resource.getCloningInstructions());
+
+    // submit flight
+    try {
+      context
+          .getStairway()
+          .submit(
+              subflightId, CloneControlledGcsBucketResourceFlight.class, subflightInputParameters);
+    } catch (DuplicateFlightIdSubmittedException unused) {
+      return StepResult.getStepResultSuccess();
+    } catch (DatabaseOperationException | StairwayExecutionException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    }
+    return StepResult.getStepResultSuccess();
   }
 
+  // Can't undo a launch step.
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    return null;
+    return StepResult.getStepResultSuccess();
   }
 }

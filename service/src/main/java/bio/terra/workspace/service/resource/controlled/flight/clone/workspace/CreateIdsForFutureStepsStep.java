@@ -1,12 +1,15 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntriesNonNull;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
+import java.util.HashMap;
 import java.util.UUID;
 
 /**
@@ -23,8 +26,9 @@ public class CreateIdsForFutureStepsStep implements Step {
     workingMap.put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.randomUUID());
     workingMap.put(
         ControlledResourceKeys.WORKSPACE_CREATE_JOB_ID, context.getStairway().createFlightId());
+    workingMap.put(ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT, new HashMap<UUID, WsmResourceCloneDetails>());
 
-    FlightUtils.validateRequiredEntriesNonNull(
+    validateRequiredEntriesNonNull(
         workingMap,
         ControlledResourceKeys.CREATE_CLOUD_CONTEXT_JOB_ID,
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,

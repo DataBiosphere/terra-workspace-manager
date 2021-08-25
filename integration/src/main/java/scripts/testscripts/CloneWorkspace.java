@@ -193,17 +193,17 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
     assertEquals(CloneResourceResult.SKIPPED, copyNothingBucketCloneDetails.getResult());
 
     // verify COPY_DEFINITION bucket exists but is empty
-    final ResourceCloneDetails copyDefinitionBucketDetatils = getOrFail(
+    final ResourceCloneDetails copyDefinitionBucketDetails = getOrFail(
         cloneResult.getWorkspace().getResources().stream()
             .filter(r -> copyDefinitionSourceBucket.getResourceId().equals(r.getSourceResourceId()))
             .findFirst());
-    assertEquals(CloningInstructionsEnum.DEFINITION, copyDefinitionBucketDetatils.getCloningInstructions());
-    assertEquals(ResourceType.GCS_BUCKET, copyDefinitionBucketDetatils.getResourceType());
-    assertEquals(StewardshipType.CONTROLLED, copyDefinitionBucketDetatils.getStewardshipType());
-    assertNull(copyDefinitionBucketDetatils.getDestinationResourceId());
-    assertEquals(CloneResourceResult.SUCCEEDED, copyDefinitionBucketDetatils.getResult());
+    assertEquals(CloningInstructionsEnum.DEFINITION, copyDefinitionBucketDetails.getCloningInstructions());
+    assertEquals(ResourceType.GCS_BUCKET, copyDefinitionBucketDetails.getResourceType());
+    assertEquals(StewardshipType.CONTROLLED, copyDefinitionBucketDetails.getStewardshipType());
+    assertNull(copyDefinitionBucketDetails.getDestinationResourceId());
+    assertEquals(CloneResourceResult.SUCCEEDED, copyDefinitionBucketDetails.getResult());
     final var clonedCopyDefinitionBucket = cloningUserResourceApi.getBucket(destinationWorkspaceId,
-        copyDefinitionBucketDetatils.getDestinationResourceId());
+        copyDefinitionBucketDetails.getDestinationResourceId());
     assertEmptyBucket(clonedCopyDefinitionBucket.getAttributes().getBucketName(), destinationProjectId);
 
     // verify COPY_DEFINITION dataset exists but has no tables

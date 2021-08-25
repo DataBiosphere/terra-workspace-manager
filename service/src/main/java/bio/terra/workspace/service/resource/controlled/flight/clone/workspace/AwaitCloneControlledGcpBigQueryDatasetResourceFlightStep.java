@@ -3,19 +3,16 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
-import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightException;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
+import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.WsmResourceType;
-import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -27,12 +24,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-public class AwaitCloneGcsBucketResourceFlightStep implements Step {
+/**
+ * Wait for the clone BigQuery dataset flight to complete and add the result to the
+ * appropriate map
+ */
+public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements Step {
 
-  private final ControlledGcsBucketResource resource;
+  private final ControlledBigQueryDatasetResource resource;
   private final String subflightId;
 
-  public AwaitCloneGcsBucketResourceFlightStep(ControlledGcsBucketResource resource, String subflightId) {
+  public AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep(
+      ControlledBigQueryDatasetResource resource, String subflightId) {
     this.resource = resource;
     this.subflightId = subflightId;
   }
@@ -42,42 +44,25 @@ public class AwaitCloneGcsBucketResourceFlightStep implements Step {
     // wait for the flight
     try {
       final FlightState subflightState = context.getStairway().waitForFlight(subflightId, 10, 360);
-      final FlightStatus subflightStatus = subflightState.getFlightStatus();
       final WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
-      switch (subflightStatus) {
-        default:
-        case WAITING:
-        case READY:
-        case QUEUED:
-        case READY_TO_RESTART:
-        case RUNNING:
-          throw new IllegalStateException(String.format("Unexpected status %s for finished flight id %s", subflightStatus, subflightId));
-        case SUCCESS:
-          if (CloningInstructions.COPY_NOTHING == resource.getCloningInstructions()) {
-            cloneDetails.setResult(WsmCloneResourceResult.SKIPPED);
-          } else {
-            cloneDetails.setResult(WsmCloneResourceResult.SUCCEEDED);
-          }
-          break;
-        case ERROR:
-        case FATAL:
-          cloneDetails.setResult(WsmCloneResourceResult.FAILED);
-          break;
-      }
+      final WsmCloneResourceResult cloneResult = WorkspaceCloneUtils.flightStatusToCloneResult(
+          subflightState.getFlightStatus(), resource);
+      cloneDetails.setResult(cloneResult);
+
       final FlightMap resultMap = subflightState.getResultMap().orElseThrow(() ->
           new MissingRequiredFieldsException(String.format("Result Map not found for flight ID %s", subflightId)));
-      final var clonedBucket = resultMap
-              .get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
+      final var clonedDataset = resultMap
+          .get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpBigQueryDataset.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
-      cloneDetails.setResourceType(WsmResourceType.GCS_BUCKET);
+      cloneDetails.setResourceType(WsmResourceType.BIG_QUERY_DATASET);
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());
       cloneDetails.setSourceResourceId(resource.getResourceId());
-      cloneDetails.setDestinationResourceId(clonedBucket.getBucket().getResourceId());
+      cloneDetails.setDestinationResourceId(clonedDataset.getDataset().getMetadata().getResourceId());
 
       // add to the map
       final var resourceIdToResult = Optional.ofNullable(context.getWorkingMap()
-          .get(ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
-              new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
+              .get(ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
+                  new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
           .orElseGet(HashMap::new);
       resourceIdToResult.put(resource.getResourceId(), cloneDetails);
       context.getWorkingMap().put(ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT, resourceIdToResult);
@@ -88,7 +73,7 @@ public class AwaitCloneGcsBucketResourceFlightStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  // Workspace will be deleted and take controlled resources with it. Nnothing to do here.
+  // Nothing to undo
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     return StepResult.getStepResultSuccess();

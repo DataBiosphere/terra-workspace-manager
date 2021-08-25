@@ -2,9 +2,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
-import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -18,8 +16,6 @@ public class CloneAllResourcesFlight extends Flight {
 
   public CloneAllResourcesFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
-    FlightUtils.validateRequiredEntriesNonNull(
-        inputParameters, ControlledResourceKeys.RESOURCES_TO_CLONE);
     final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
 
     final List<ResourceWithFlightId> resourcesAndIds =
@@ -27,35 +23,40 @@ public class CloneAllResourcesFlight extends Flight {
 
     // Each entry in the list corresponds to a new step in this flight
     for (ResourceWithFlightId resourceWithFlightId : resourcesAndIds) {
-      addStep(getFlightLaunchStepForResource(resourceWithFlightId, flightBeanBag));
-      addStep(new AwaitSubflightStep(resourceWithFlightId.getFlightId()));
+      addFlightLaunchStepsForResource(resourceWithFlightId, flightBeanBag);
     }
   }
 
-  private Step getFlightLaunchStepForResource(
+  private void addFlightLaunchStepsForResource(
       ResourceWithFlightId resourceWithFlightId, FlightBeanBag flightBeanBag) {
     switch (resourceWithFlightId.getResource().getStewardshipType()) {
       case REFERENCED:
-        return new LaunchCloneReferenceResourceFlightStep(
+        // TODO: we may just want a single step for this
+        addStep(new LaunchCloneReferenceResourceFlightStep(
             flightBeanBag.getReferencedResourceService(),
             resourceWithFlightId.getResource().castToReferencedResource(),
-            resourceWithFlightId.getFlightId());
+            resourceWithFlightId.getFlightId()));
       case CONTROLLED:
         switch (resourceWithFlightId.getResource().getResourceType()) {
           case GCS_BUCKET:
-            return new LaunchCloneGcsBucketResourceFlightStep(
+            addStep(new LaunchCloneGcsBucketResourceFlightStep(
                 resourceWithFlightId
                     .getResource()
                     .castToControlledResource()
                     .castToGcsBucketResource(),
-                resourceWithFlightId.getFlightId());
+                resourceWithFlightId.getFlightId()));
+            addStep(new AwaitCloneGcsBucketResourceFlightStep(resourceWithFlightId.getResource().castToControlledResource()
+                .castToGcsBucketResource(), resourceWithFlightId.getFlightId()));
           case BIG_QUERY_DATASET:
-            return new LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep(
+            addStep(new LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep(
                 resourceWithFlightId
                     .getResource()
                     .castToControlledResource()
                     .castToBigQueryDatasetResource(),
-                resourceWithFlightId.getFlightId());
+                resourceWithFlightId.getFlightId()));
+            addStep(new AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep(
+                resourceWithFlightId.getResource().castToControlledResource().castToBigQueryDatasetResource(),
+                resourceWithFlightId.getFlightId()));
           case DATA_REPO_SNAPSHOT:
           case AI_NOTEBOOK_INSTANCE:
           default:

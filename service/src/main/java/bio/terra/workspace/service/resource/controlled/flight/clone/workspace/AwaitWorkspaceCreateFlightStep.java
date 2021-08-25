@@ -33,8 +33,9 @@ public class AwaitWorkspaceCreateFlightStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
+  // No side effects to undo.
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    return null;
+    return StepResult.getStepResultSuccess();
   }
 }

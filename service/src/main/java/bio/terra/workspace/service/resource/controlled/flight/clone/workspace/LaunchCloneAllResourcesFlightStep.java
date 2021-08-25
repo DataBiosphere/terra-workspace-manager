@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntriesNonNull;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Stairway;
@@ -9,7 +11,6 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.DuplicateFlightIdSubmittedException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.stairway.exception.StairwayException;
-import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
@@ -22,9 +23,9 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    FlightUtils.validateRequiredEntriesNonNull(
+    validateRequiredEntriesNonNull(
         context.getInputParameters(), ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID);
-    FlightUtils.validateRequiredEntriesNonNull(
+    validateRequiredEntriesNonNull(
         context.getWorkingMap(), ControlledResourceKeys.RESOURCES_TO_CLONE);
 
     final var cloneAllResourcesFlightId =
@@ -49,11 +50,11 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
     } catch (StairwayException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
-    return null;
+    return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    return null;
+    return StepResult.getStepResultSuccess();
   }
 }

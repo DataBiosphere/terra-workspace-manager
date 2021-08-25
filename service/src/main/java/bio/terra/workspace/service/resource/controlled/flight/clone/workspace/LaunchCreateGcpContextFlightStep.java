@@ -1,12 +1,13 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntriesNonNull;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.DatabaseOperationException;
-import bio.terra.stairway.exception.FlightException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -25,6 +26,15 @@ public class LaunchCreateGcpContextFlightStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    validateRequiredEntriesNonNull(
+        context.getInputParameters(),
+        ControlledResourceKeys.SOURCE_WORKSPACE_ID,
+        JobMapKeys.AUTH_USER_INFO.getKeyName());
+    validateRequiredEntriesNonNull(
+        context.getWorkingMap(),
+        ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
+        ControlledResourceKeys.CREATE_CLOUD_CONTEXT_JOB_ID);
+
     final var sourceWorkspaceId =
         context.getInputParameters().get(ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
     final var userRequest =
@@ -33,24 +43,6 @@ public class LaunchCreateGcpContextFlightStep implements Step {
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     final var destinationWorkspaceId =
         context.getWorkingMap().get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    //    final Workspace sourceWorkspace = workspaceService.getWorkspace(sourceWorkspaceId,
-    // userRequest);
-    //    final Optional<SpendProfileId> spendProfileId = sourceWorkspace.getSpendProfileId();
-    //    // Check if the destination workspace already exists
-    //    final var workspaceRequest =
-    //        WorkspaceRequest.builder()
-    //            .workspaceId(destinationWorkspaceId)
-    //            .displayName(sourceWorkspace.getDisplayName().map(n -> n + " (clone)"))
-    //            .description(Optional.of(String.format("Clone of workspace ID %s",
-    // sourceWorkspaceId)))
-    //            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-    //            .spendProfileId(spendProfileId)
-    //            .build();
-    //    // TODO: harden this to avoid creating a duplicate workspace after a restart. May need to
-    // pass
-    //    //   in an ID instead of having it instantiated inside the method.
-    //    // TODO: make this a separate step - reuse CreateWorkspaceStep if possible
-    //    workspaceService.createWorkspace(workspaceRequest, userRequest);
 
     final var cloudContextJobId =
         context
@@ -66,17 +58,10 @@ public class LaunchCreateGcpContextFlightStep implements Step {
     } catch (DatabaseOperationException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
-    try {
-      // we already have a flight, so don't launch another one
-      if (!flightAlreadyExists) {
-        workspaceService.createGcpCloudContext(
-            destinationWorkspaceId, cloudContextJobId, userRequest);
-      }
-      //noinspection deprecation
-      context.getStairway().waitForFlight(cloudContextJobId, 10, 100);
-
-    } catch (DatabaseOperationException | FlightException e) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    // we already have a flight, so don't launch another one
+    if (!flightAlreadyExists) {
+      workspaceService.createGcpCloudContext(
+          destinationWorkspaceId, cloudContextJobId, userRequest);
     }
     return StepResult.getStepResultSuccess();
   }

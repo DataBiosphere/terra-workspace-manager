@@ -78,8 +78,10 @@ public class LaunchWorkspaceCreateFlightStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
+  // There is no way to kill a running flight currently, so nothing else useful to
+  // undo here.
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    return null;
+    return StepResult.getStepResultSuccess();
   }
 }

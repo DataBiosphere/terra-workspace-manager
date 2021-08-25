@@ -3,7 +3,12 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
+import bio.terra.stairway.exception.DatabaseOperationException;
+import bio.terra.stairway.exception.FlightException;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 
 public class AwaitCreateGcpContextFlightStep implements Step {
 
@@ -11,11 +16,24 @@ public class AwaitCreateGcpContextFlightStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    return null;
+    FlightUtils.validateRequiredEntriesNonNull(
+        context.getWorkingMap(), ControlledResourceKeys.CREATE_CLOUD_CONTEXT_JOB_ID);
+    final var jobId =
+        context
+            .getWorkingMap()
+            .get(ControlledResourceKeys.CREATE_CLOUD_CONTEXT_JOB_ID, String.class);
+    try {
+      context.getStairway().waitForFlight(jobId, 10, 360);
+    } catch (DatabaseOperationException | FlightException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    }
+
+    return StepResult.getStepResultSuccess();
   }
 
+  // Can't undo an await step.
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    return null;
+    return StepResult.getStepResultSuccess();
   }
 }
