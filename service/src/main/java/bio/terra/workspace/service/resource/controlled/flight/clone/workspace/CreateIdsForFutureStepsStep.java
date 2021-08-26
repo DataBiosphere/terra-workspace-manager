@@ -26,13 +26,18 @@ public class CreateIdsForFutureStepsStep implements Step {
     workingMap.put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.randomUUID());
     workingMap.put(
         ControlledResourceKeys.WORKSPACE_CREATE_JOB_ID, context.getStairway().createFlightId());
-    workingMap.put(ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT, new HashMap<UUID, WsmResourceCloneDetails>());
-
+    workingMap.put(
+        ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
+        new HashMap<UUID, WsmResourceCloneDetails>());
+    workingMap.put(
+        ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID,
+        context.getStairway().createFlightId());
     validateRequiredEntriesNonNull(
         workingMap,
         ControlledResourceKeys.CREATE_CLOUD_CONTEXT_JOB_ID,
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-        ControlledResourceKeys.WORKSPACE_CREATE_JOB_ID);
+        ControlledResourceKeys.WORKSPACE_CREATE_JOB_ID,
+        ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID);
     return StepResult.getStepResultSuccess();
   }
 

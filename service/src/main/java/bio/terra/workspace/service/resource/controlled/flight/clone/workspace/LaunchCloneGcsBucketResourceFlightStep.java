@@ -32,12 +32,11 @@ public class LaunchCloneGcsBucketResourceFlightStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     validateRequiredEntriesNonNull(
-        context.getInputParameters(),
-        ControlledResourceKeys.LOCATION,
-        JobMapKeys.AUTH_USER_INFO.getKeyName());
+        context.getInputParameters(), JobMapKeys.AUTH_USER_INFO.getKeyName());
     validateRequiredEntriesNonNull(
         context.getWorkingMap(), ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
 
+    // optional key
     final var location =
         context.getInputParameters().get(ControlledResourceKeys.LOCATION, String.class);
     final var userRequest =

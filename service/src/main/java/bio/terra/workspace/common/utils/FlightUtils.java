@@ -68,7 +68,7 @@ public final class FlightUtils {
     for (String key : keys) {
       if (null == flightMap.getRaw(key)) {
         throw new MissingRequiredFieldsException(
-            "Required entry with key %s missing from flight map");
+            String.format("Required entry with key %s missing from flight map.", key));
       }
     }
   }

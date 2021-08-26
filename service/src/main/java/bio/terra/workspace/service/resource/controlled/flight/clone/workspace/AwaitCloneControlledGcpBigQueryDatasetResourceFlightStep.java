@@ -25,8 +25,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Wait for the clone BigQuery dataset flight to complete and add the result to the
- * appropriate map
+ * Wait for the clone BigQuery dataset flight to complete and add the result to the appropriate map
  */
 public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements Step {
 
@@ -45,27 +44,40 @@ public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements
     try {
       final FlightState subflightState = context.getStairway().waitForFlight(subflightId, 10, 360);
       final WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
-      final WsmCloneResourceResult cloneResult = WorkspaceCloneUtils.flightStatusToCloneResult(
-          subflightState.getFlightStatus(), resource);
+      final WsmCloneResourceResult cloneResult =
+          WorkspaceCloneUtils.flightStatusToCloneResult(subflightState.getFlightStatus(), resource);
       cloneDetails.setResult(cloneResult);
 
-      final FlightMap resultMap = subflightState.getResultMap().orElseThrow(() ->
-          new MissingRequiredFieldsException(String.format("Result Map not found for flight ID %s", subflightId)));
-      final var clonedDataset = resultMap
-          .get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpBigQueryDataset.class);
+      final FlightMap resultMap =
+          subflightState
+              .getResultMap()
+              .orElseThrow(
+                  () ->
+                      new MissingRequiredFieldsException(
+                          String.format("Result Map not found for flight ID %s", subflightId)));
+      final var clonedDataset =
+          resultMap.get(
+              JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpBigQueryDataset.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
       cloneDetails.setResourceType(WsmResourceType.BIG_QUERY_DATASET);
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());
       cloneDetails.setSourceResourceId(resource.getResourceId());
-      cloneDetails.setDestinationResourceId(clonedDataset.getDataset().getMetadata().getResourceId());
+      cloneDetails.setDestinationResourceId(
+          clonedDataset.getDataset().getMetadata().getResourceId());
 
       // add to the map
-      final var resourceIdToResult = Optional.ofNullable(context.getWorkingMap()
-              .get(ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
-                  new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
-          .orElseGet(HashMap::new);
+      final var resourceIdToResult =
+          Optional.ofNullable(
+                  context
+                      .getWorkingMap()
+                      .get(
+                          ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
+                          new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
+              .orElseGet(HashMap::new);
       resourceIdToResult.put(resource.getResourceId(), cloneDetails);
-      context.getWorkingMap().put(ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT, resourceIdToResult);
+      context
+          .getWorkingMap()
+          .put(ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT, resourceIdToResult);
 
     } catch (DatabaseOperationException | FlightException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);

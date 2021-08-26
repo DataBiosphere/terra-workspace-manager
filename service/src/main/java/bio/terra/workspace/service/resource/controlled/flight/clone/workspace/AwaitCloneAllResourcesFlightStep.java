@@ -37,7 +37,8 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
           context.getStairway().waitForFlight(cloneAllResourcesFlightId, 10, 360);
       if (FlightStatus.SUCCESS != subflightState.getFlightStatus()) {
         // no point in retrying the await step
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, subflightState.getException().orElseGet(
+            () -> new RuntimeException(String.format("Subflight had unexpected status %s. No exception for subflight found.", subflightState.getFlightStatus()))));
       }
       final FlightMap subflightResultMap =
           subflightState

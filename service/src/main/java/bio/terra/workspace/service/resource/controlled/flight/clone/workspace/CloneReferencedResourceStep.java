@@ -14,13 +14,13 @@ import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
 import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
 import java.util.UUID;
 
-public class LaunchCloneReferenceResourceFlightStep implements Step {
+public class CloneReferencedResourceStep implements Step {
 
   private final ReferencedResourceService referencedResourceService;
   private final ReferencedResource resource;
   private final String subflightId;
 
-  public LaunchCloneReferenceResourceFlightStep(
+  public CloneReferencedResourceStep(
       ReferencedResourceService referencedResourceService,
       ReferencedResource resource,
       String subflightId) {

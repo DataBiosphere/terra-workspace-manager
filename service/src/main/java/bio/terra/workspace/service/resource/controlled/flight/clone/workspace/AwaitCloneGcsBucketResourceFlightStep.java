@@ -10,7 +10,6 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightException;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.WsmResourceType;
@@ -32,7 +31,8 @@ public class AwaitCloneGcsBucketResourceFlightStep implements Step {
   private final ControlledGcsBucketResource resource;
   private final String subflightId;
 
-  public AwaitCloneGcsBucketResourceFlightStep(ControlledGcsBucketResource resource, String subflightId) {
+  public AwaitCloneGcsBucketResourceFlightStep(
+      ControlledGcsBucketResource resource, String subflightId) {
     this.resource = resource;
     this.subflightId = subflightId;
   }
@@ -51,7 +51,9 @@ public class AwaitCloneGcsBucketResourceFlightStep implements Step {
         case QUEUED:
         case READY_TO_RESTART:
         case RUNNING:
-          throw new IllegalStateException(String.format("Unexpected status %s for finished flight id %s", subflightStatus, subflightId));
+          throw new IllegalStateException(
+              String.format(
+                  "Unexpected status %s for finished flight id %s", subflightStatus, subflightId));
         case SUCCESS:
           if (CloningInstructions.COPY_NOTHING == resource.getCloningInstructions()) {
             cloneDetails.setResult(WsmCloneResourceResult.SKIPPED);
@@ -64,10 +66,15 @@ public class AwaitCloneGcsBucketResourceFlightStep implements Step {
           cloneDetails.setResult(WsmCloneResourceResult.FAILED);
           break;
       }
-      final FlightMap resultMap = subflightState.getResultMap().orElseThrow(() ->
-          new MissingRequiredFieldsException(String.format("Result Map not found for flight ID %s", subflightId)));
-      final var clonedBucket = resultMap
-              .get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
+      final FlightMap resultMap =
+          subflightState
+              .getResultMap()
+              .orElseThrow(
+                  () ->
+                      new MissingRequiredFieldsException(
+                          String.format("Result Map not found for flight ID %s", subflightId)));
+      final var clonedBucket =
+          resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
       cloneDetails.setResourceType(WsmResourceType.GCS_BUCKET);
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());
@@ -75,12 +82,18 @@ public class AwaitCloneGcsBucketResourceFlightStep implements Step {
       cloneDetails.setDestinationResourceId(clonedBucket.getBucket().getResourceId());
 
       // add to the map
-      final var resourceIdToResult = Optional.ofNullable(context.getWorkingMap()
-          .get(ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
-              new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
-          .orElseGet(HashMap::new);
+      final var resourceIdToResult =
+          Optional.ofNullable(
+                  context
+                      .getWorkingMap()
+                      .get(
+                          ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
+                          new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
+              .orElseGet(HashMap::new);
       resourceIdToResult.put(resource.getResourceId(), cloneDetails);
-      context.getWorkingMap().put(ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT, resourceIdToResult);
+      context
+          .getWorkingMap()
+          .put(ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT, resourceIdToResult);
 
     } catch (DatabaseOperationException | FlightException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);

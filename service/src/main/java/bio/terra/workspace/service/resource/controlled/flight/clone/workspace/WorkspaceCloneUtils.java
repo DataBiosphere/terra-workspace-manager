@@ -9,7 +9,8 @@ public class WorkspaceCloneUtils {
 
   private WorkspaceCloneUtils() {}
 
-  public static WsmCloneResourceResult flightStatusToCloneResult(FlightStatus subflightStatus, WsmResource resource) {
+  public static WsmCloneResourceResult flightStatusToCloneResult(
+      FlightStatus subflightStatus, WsmResource resource) {
     switch (subflightStatus) {
       default:
       case WAITING:
@@ -17,19 +18,17 @@ public class WorkspaceCloneUtils {
       case QUEUED:
       case READY_TO_RESTART:
       case RUNNING:
-        throw new IllegalStateException(String.format("Unexpected status %s for finished flight",
-            subflightStatus));
+        throw new IllegalStateException(
+            String.format("Unexpected status %s for finished flight", subflightStatus));
       case SUCCESS:
         if (CloningInstructions.COPY_NOTHING == resource.getCloningInstructions()) {
           return WsmCloneResourceResult.SKIPPED;
         } else {
           return WsmCloneResourceResult.SUCCEEDED;
         }
-        break;
       case ERROR:
       case FATAL:
         return WsmCloneResourceResult.FAILED;
-        break;
     }
   }
 }

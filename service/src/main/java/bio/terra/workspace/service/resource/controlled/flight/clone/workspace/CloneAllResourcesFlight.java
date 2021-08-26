@@ -32,31 +32,46 @@ public class CloneAllResourcesFlight extends Flight {
     switch (resourceWithFlightId.getResource().getStewardshipType()) {
       case REFERENCED:
         // TODO: we may just want a single step for this
-        addStep(new LaunchCloneReferenceResourceFlightStep(
-            flightBeanBag.getReferencedResourceService(),
-            resourceWithFlightId.getResource().castToReferencedResource(),
-            resourceWithFlightId.getFlightId()));
+        addStep(
+            new CloneReferencedResourceStep(
+                flightBeanBag.getReferencedResourceService(),
+                resourceWithFlightId.getResource().castToReferencedResource(),
+                resourceWithFlightId.getFlightId()));
+        break;
       case CONTROLLED:
         switch (resourceWithFlightId.getResource().getResourceType()) {
           case GCS_BUCKET:
-            addStep(new LaunchCloneGcsBucketResourceFlightStep(
-                resourceWithFlightId
-                    .getResource()
-                    .castToControlledResource()
-                    .castToGcsBucketResource(),
-                resourceWithFlightId.getFlightId()));
-            addStep(new AwaitCloneGcsBucketResourceFlightStep(resourceWithFlightId.getResource().castToControlledResource()
-                .castToGcsBucketResource(), resourceWithFlightId.getFlightId()));
+            addStep(
+                new LaunchCloneGcsBucketResourceFlightStep(
+                    resourceWithFlightId
+                        .getResource()
+                        .castToControlledResource()
+                        .castToGcsBucketResource(),
+                    resourceWithFlightId.getFlightId()));
+            addStep(
+                new AwaitCloneGcsBucketResourceFlightStep(
+                    resourceWithFlightId
+                        .getResource()
+                        .castToControlledResource()
+                        .castToGcsBucketResource(),
+                    resourceWithFlightId.getFlightId()));
+            break;
           case BIG_QUERY_DATASET:
-            addStep(new LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep(
-                resourceWithFlightId
-                    .getResource()
-                    .castToControlledResource()
-                    .castToBigQueryDatasetResource(),
-                resourceWithFlightId.getFlightId()));
-            addStep(new AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep(
-                resourceWithFlightId.getResource().castToControlledResource().castToBigQueryDatasetResource(),
-                resourceWithFlightId.getFlightId()));
+            addStep(
+                new LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep(
+                    resourceWithFlightId
+                        .getResource()
+                        .castToControlledResource()
+                        .castToBigQueryDatasetResource(),
+                    resourceWithFlightId.getFlightId()));
+            addStep(
+                new AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep(
+                    resourceWithFlightId
+                        .getResource()
+                        .castToControlledResource()
+                        .castToBigQueryDatasetResource(),
+                    resourceWithFlightId.getFlightId()));
+            break;
           case DATA_REPO_SNAPSHOT:
           case AI_NOTEBOOK_INSTANCE:
           default:
@@ -65,6 +80,7 @@ public class CloneAllResourcesFlight extends Flight {
                     "Unsupported controlled resource type %s",
                     resourceWithFlightId.getResource().getResourceType()));
         }
+        break;
       default:
         throw new InternalLogicException(
             String.format(

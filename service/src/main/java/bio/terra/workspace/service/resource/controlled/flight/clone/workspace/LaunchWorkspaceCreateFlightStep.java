@@ -46,7 +46,7 @@ public class LaunchWorkspaceCreateFlightStep implements Step {
     final var displayName =
         context.getInputParameters().get(WorkspaceFlightMapKeys.DISPLAY_NAME, String.class);
     final var spendProfileId =
-        workingMap.get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, String.class);
+        context.getInputParameters().get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, String.class);
     final var workspaceCreateJobId =
         workingMap.get(ControlledResourceKeys.WORKSPACE_CREATE_JOB_ID, String.class);
 

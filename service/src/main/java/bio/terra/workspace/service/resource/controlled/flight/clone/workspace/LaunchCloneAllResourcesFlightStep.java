@@ -24,13 +24,13 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     validateRequiredEntriesNonNull(
-        context.getInputParameters(), ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID);
-    validateRequiredEntriesNonNull(
-        context.getWorkingMap(), ControlledResourceKeys.RESOURCES_TO_CLONE);
+        context.getWorkingMap(),
+        ControlledResourceKeys.RESOURCES_TO_CLONE,
+        ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID);
 
     final var cloneAllResourcesFlightId =
         context
-            .getInputParameters()
+            .getWorkingMap()
             .get(ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID, String.class);
 
     final List<ResourceWithFlightId> resourcesAndFlightIds =

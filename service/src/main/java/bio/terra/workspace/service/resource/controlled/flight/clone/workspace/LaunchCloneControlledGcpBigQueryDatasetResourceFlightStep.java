@@ -31,30 +31,39 @@ public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implement
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    validateRequiredEntriesNonNull(context.getInputParameters(),
-        JobMapKeys.AUTH_USER_INFO.getKeyName());
-    validateRequiredEntriesNonNull(context.getWorkingMap(),
+    validateRequiredEntriesNonNull(
+        context.getInputParameters(), JobMapKeys.AUTH_USER_INFO.getKeyName());
+    validateRequiredEntriesNonNull(
+        context.getWorkingMap(),
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         ControlledResourceKeys.LOCATION);
 
-    final var userRequest = context.getInputParameters()
-        .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final var destinationWorkspaceId = context.getWorkingMap()
-        .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    final var location = context.getWorkingMap()
-        .get(ControlledResourceKeys.LOCATION, String.class);
+    final var userRequest =
+        context
+            .getInputParameters()
+            .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    final var destinationWorkspaceId =
+        context.getWorkingMap().get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+    final var location = context.getWorkingMap().get(ControlledResourceKeys.LOCATION, String.class);
 
     // build input parameter map. Leave out resource name, description, and dataset name.
     final var subflightInputParameters = new FlightMap();
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
-    subflightInputParameters.put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
+    subflightInputParameters.put(
+        ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
     subflightInputParameters.put(ControlledResourceKeys.LOCATION, location);
-    subflightInputParameters.put(ControlledResourceKeys.CLONING_INSTRUCTIONS, resource.getCloningInstructions());
+    subflightInputParameters.put(
+        ControlledResourceKeys.CLONING_INSTRUCTIONS, resource.getCloningInstructions());
     subflightInputParameters.put(JobMapKeys.REQUEST.getKeyName(), resource);
 
     // launch the flight
     try {
-      context.getStairway().submit(subflightId, CloneControlledGcpBigQueryDatasetResourceFlight.class, subflightInputParameters);
+      context
+          .getStairway()
+          .submit(
+              subflightId,
+              CloneControlledGcpBigQueryDatasetResourceFlight.class,
+              subflightInputParameters);
     } catch (DuplicateFlightIdSubmittedException unused) {
       return StepResult.getStepResultSuccess();
     } catch (DatabaseOperationException | StairwayExecutionException e) {

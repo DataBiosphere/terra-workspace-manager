@@ -216,7 +216,9 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
       throws Exception {
     super.doCleanup(testUsers, workspaceApi);
     // Delete the cloned workspace (will delete context and resources)
-    cloningUserWorkspaceApi.deleteWorkspace(destinationWorkspaceId);
+    if (null != destinationWorkspaceId) {
+      cloningUserWorkspaceApi.deleteWorkspace(destinationWorkspaceId);
+    }
   }
 
   private Blob addFileToBucket(CreatedControlledGcpGcsBucket bucket) throws IOException {
