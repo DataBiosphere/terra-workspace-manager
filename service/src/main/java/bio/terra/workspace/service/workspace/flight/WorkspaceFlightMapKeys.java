@@ -50,6 +50,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String DESTINATION_BUCKET_NAME = "destinationBucketName";
     public static final String DESTINATION_CLONE_INPUTS = "destinationCloneInputs";
     public static final String DESTINATION_DATASET_NAME = "destinationDatasetName";
+    public static final String DESTINATION_REFERENCED_RESOURCE = "destinationReferencedResource";
     public static final String DESTINATION_WORKSPACE_ID = "destinationWorkspaceId";
     public static final String LOCATION = "location";
     public static final String RESOURCE_ID_TO_CLONE_RESULT = "resourceIdToCloneResult";

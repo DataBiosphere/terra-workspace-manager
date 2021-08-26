@@ -7,12 +7,16 @@ import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This flight uses a dynamic list of steps depending on ControlledResourceKeys.RESOURCES_TO_CLONE
  * in the input parameters list.
  */
 public class CloneAllResourcesFlight extends Flight {
+
+  private static final Logger logger = LoggerFactory.getLogger(CloneAllResourcesFlight.class);
 
   public CloneAllResourcesFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
@@ -31,12 +35,16 @@ public class CloneAllResourcesFlight extends Flight {
       ResourceWithFlightId resourceWithFlightId, FlightBeanBag flightBeanBag) {
     switch (resourceWithFlightId.getResource().getStewardshipType()) {
       case REFERENCED:
-        // TODO: we may just want a single step for this
         addStep(
-            new CloneReferencedResourceStep(
+            new LaunchCreateReferenceResourceFlightStep(
                 flightBeanBag.getReferencedResourceService(),
                 resourceWithFlightId.getResource().castToReferencedResource(),
                 resourceWithFlightId.getFlightId()));
+        addStep(
+            new AwaitCreateReferenceResourceFlightStep(
+                resourceWithFlightId.getResource().castToReferencedResource(),
+                resourceWithFlightId.getFlightId(),
+            flightBeanBag.getResourceDao()));
         break;
       case CONTROLLED:
         switch (resourceWithFlightId.getResource().getResourceType()) {
@@ -75,17 +83,14 @@ public class CloneAllResourcesFlight extends Flight {
           case DATA_REPO_SNAPSHOT:
           case AI_NOTEBOOK_INSTANCE:
           default:
-            throw new InternalLogicException(
-                String.format(
-                    "Unsupported controlled resource type %s",
-                    resourceWithFlightId.getResource().getResourceType()));
+            // Can't throw in a flight constructor
+            logger.error("Unsupported controlled resource type {}",
+                    resourceWithFlightId.getResource().getResourceType());
         }
         break;
       default:
-        throw new InternalLogicException(
-            String.format(
-                "Unsupported stewardship type %s",
-                resourceWithFlightId.getResource().getStewardshipType()));
+        logger.error("Unsupported stewardship type {}}",
+                resourceWithFlightId.getResource().getStewardshipType());
     }
   }
 }

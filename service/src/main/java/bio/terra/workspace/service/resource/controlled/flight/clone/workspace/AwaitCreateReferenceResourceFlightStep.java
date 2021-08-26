@@ -5,7 +5,6 @@ import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntri
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
-import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
@@ -13,12 +12,10 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.WsmResourceType;
-import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.WsmResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
@@ -29,26 +26,29 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-public class AwaitCloneGcsBucketResourceFlightStep implements Step {
+public class AwaitCreateReferenceResourceFlightStep implements Step {
 
-  private final ControlledGcsBucketResource resource;
-  private final String subflightId;
+  private final ReferencedResource resource;
+  private final String flightId;
+  private final ResourceDao resourceDao;
 
-  public AwaitCloneGcsBucketResourceFlightStep(
-      ControlledGcsBucketResource resource, String subflightId) {
+  public AwaitCreateReferenceResourceFlightStep(ReferencedResource resource, String flightId, ResourceDao resourceDao) {
     this.resource = resource;
-    this.subflightId = subflightId;
+    this.flightId = flightId;
+    this.resourceDao = resourceDao;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    // wait for the flight
     try {
-      final FlightState subflightState = context.getStairway().waitForFlight(subflightId, 10, 360);
-      final FlightStatus subflightStatus = subflightState.getFlightStatus();
-      final WsmCloneResourceResult cloneResult =
-          WorkspaceCloneUtils.flightStatusToCloneResult(subflightStatus, resource);
+      FlightUtils.validateRequiredEntriesNonNull(
+          context.getWorkingMap(),
+          ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE
+      );
 
+      final FlightState subflightState = context.getStairway().waitForFlight(flightId, 10, 10);
+      final WsmCloneResourceResult cloneResult =
+          WorkspaceCloneUtils.flightStatusToCloneResult(subflightState.getFlightStatus(), resource);
       final WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
       cloneDetails.setResult(cloneResult);
       final FlightMap resultMap =
@@ -57,16 +57,19 @@ public class AwaitCloneGcsBucketResourceFlightStep implements Step {
               .orElseThrow(
                   () ->
                       new MissingRequiredFieldsException(
-                          String.format("Result Map not found for flight ID %s", subflightId)));
-      final var clonedBucket =
-          resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
-      cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
-      cloneDetails.setResourceType(WsmResourceType.GCS_BUCKET);
-      cloneDetails.setCloningInstructions(resource.getCloningInstructions());
+                          String.format("Result Map not found for flight ID %s", context)));
+      // Input to the create flight
+      final var destinationReferencedResource = context.getWorkingMap()
+          .get(ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, ReferencedResource.class);
+      final var clonedReferencedResourceId = resultMap.get(JobMapKeys.RESPONSE.getKeyName(), UUID.class);
+      final WsmResource clonedResource = resourceDao.getResource(destinationReferencedResource.getWorkspaceId(), clonedReferencedResourceId);
+      cloneDetails.setResourceType(clonedResource.getResourceType());
+      cloneDetails.setStewardshipType(clonedResource.getStewardshipType());
+      cloneDetails.setCloningInstructions(clonedResource.getCloningInstructions());
       cloneDetails.setSourceResourceId(resource.getResourceId());
-      cloneDetails.setDestinationResourceId(clonedBucket.getBucket().getResourceId());
+      cloneDetails.setDestinationResourceId(clonedResource.getResourceId());
 
-      // add to the map
+      // add to the result map
       final var resourceIdToResult =
           Optional.ofNullable(
                   context
@@ -87,7 +90,6 @@ public class AwaitCloneGcsBucketResourceFlightStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  // Workspace will be deleted and take controlled resources with it. Nnothing to do here.
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     return StepResult.getStepResultSuccess();
