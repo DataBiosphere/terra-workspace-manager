@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
@@ -44,7 +43,7 @@ public class CloneAllResourcesFlight extends Flight {
             new AwaitCreateReferenceResourceFlightStep(
                 resourceWithFlightId.getResource().castToReferencedResource(),
                 resourceWithFlightId.getFlightId(),
-            flightBeanBag.getResourceDao()));
+                flightBeanBag.getResourceDao()));
         break;
       case CONTROLLED:
         switch (resourceWithFlightId.getResource().getResourceType()) {
@@ -84,13 +83,15 @@ public class CloneAllResourcesFlight extends Flight {
           case AI_NOTEBOOK_INSTANCE:
           default:
             // Can't throw in a flight constructor
-            logger.error("Unsupported controlled resource type {}",
-                    resourceWithFlightId.getResource().getResourceType());
+            logger.error(
+                "Unsupported controlled resource type {}",
+                resourceWithFlightId.getResource().getResourceType());
         }
         break;
       default:
-        logger.error("Unsupported stewardship type {}}",
-                resourceWithFlightId.getResource().getStewardshipType());
+        logger.error(
+            "Unsupported stewardship type {}}",
+            resourceWithFlightId.getResource().getStewardshipType());
     }
   }
 }

@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntriesNonNull;
+import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -31,9 +31,8 @@ public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implement
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    validateRequiredEntriesNonNull(
-        context.getInputParameters(), JobMapKeys.AUTH_USER_INFO.getKeyName());
-    validateRequiredEntriesNonNull(
+    validateRequiredEntries(context.getInputParameters(), JobMapKeys.AUTH_USER_INFO.getKeyName());
+    validateRequiredEntries(
         context.getWorkingMap(),
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         ControlledResourceKeys.LOCATION);

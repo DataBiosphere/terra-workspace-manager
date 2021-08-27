@@ -12,14 +12,11 @@ import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceResourceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
-import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
 import java.util.UUID;
 
 public class LaunchCreateReferenceResourceFlightStep implements Step {
@@ -39,7 +36,8 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    FlightUtils.validateRequiredEntriesNonNull(context.getInputParameters(),
+    FlightUtils.validateRequiredEntries(
+        context.getInputParameters(),
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         JobMapKeys.AUTH_USER_INFO.getKeyName());
     final var destinationWorkspaceId =
@@ -53,21 +51,25 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
     final String description =
         String.format("Clone of Referenced Resource %s", resource.getResourceId());
 
-    final ReferencedResource
-        destinationResource = WorkspaceCloneUtils.buildDestinationReferencedResource(
-        resource, destinationWorkspaceId, null, description);
+    final ReferencedResource destinationResource =
+        WorkspaceCloneUtils.buildDestinationReferencedResource(
+            resource, destinationWorkspaceId, null, description);
     // put the ddestination resource in the map, because it's not communicated
     // from the flight as the response (and we need the workspace ID)
-    context.getWorkingMap().put(ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, destinationResource);
+    context
+        .getWorkingMap()
+        .put(ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, destinationResource);
 
     final FlightMap subflightInputParameters = new FlightMap();
     subflightInputParameters.put(JobMapKeys.REQUEST.getKeyName(), destinationResource);
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
-    subflightInputParameters.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE,
-      resource.getResourceType().name());
+    subflightInputParameters.put(
+        WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE, resource.getResourceType().name());
 
     try {
-      context.getStairway().submit(subflightId, CreateReferenceResourceFlight.class, subflightInputParameters);
+      context
+          .getStairway()
+          .submit(subflightId, CreateReferenceResourceFlight.class, subflightInputParameters);
     } catch (DatabaseOperationException | StairwayExecutionException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     } catch (DuplicateFlightIdSubmittedException unused) {
@@ -75,22 +77,23 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
       return StepResult.getStepResultSuccess();
     }
     // TODO(jaycarlton): PF-918 don't reuse the service call; launch subflight directly
-//    final ReferencedResource clonedResource =
-//        referencedResourceService.cloneReferencedResource(
-//            resource, destinationWorkspaceId, null, description, userRequest);
-//    final WsmResourceCloneDetails result = new WsmResourceCloneDetails();
-//    result.setResourceType(resource.getResourceType());
-//    result.setStewardshipType(resource.getStewardshipType());
-//    result.setDestinationResourceId(clonedResource.getResourceId());
-//    result.setResult(WsmCloneResourceResult.SUCCEEDED);
-//    result.setCloningInstructions(
-//        CloningInstructions
-//            .COPY_REFERENCE); // FIXME(jaycarlton) reference clone doesn't use cloning instructions
-//
+    //    final ReferencedResource clonedResource =
+    //        referencedResourceService.cloneReferencedResource(
+    //            resource, destinationWorkspaceId, null, description, userRequest);
+    //    final WsmResourceCloneDetails result = new WsmResourceCloneDetails();
+    //    result.setResourceType(resource.getResourceType());
+    //    result.setStewardshipType(resource.getStewardshipType());
+    //    result.setDestinationResourceId(clonedResource.getResourceId());
+    //    result.setResult(WsmCloneResourceResult.SUCCEEDED);
+    //    result.setCloningInstructions(
+    //        CloningInstructions
+    //            .COPY_REFERENCE); // FIXME(jaycarlton) reference clone doesn't use cloning
+    // instructions
+    //
     // put result in the output map
 
-    FlightUtils.validateRequiredEntriesNonNull(context.getWorkingMap(),
-        ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE);
+    FlightUtils.validateRequiredEntries(
+        context.getWorkingMap(), ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE);
     return StepResult.getStepResultSuccess();
   }
 

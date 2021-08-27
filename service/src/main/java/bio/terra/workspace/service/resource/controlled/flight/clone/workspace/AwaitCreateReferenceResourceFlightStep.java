@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntriesNonNull;
+import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -14,7 +14,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -28,12 +27,13 @@ import java.util.UUID;
 
 public class AwaitCreateReferenceResourceFlightStep implements Step {
 
-  private final ReferencedResource resource;
+  private final ReferencedResource sourceResource;
   private final String flightId;
   private final ResourceDao resourceDao;
 
-  public AwaitCreateReferenceResourceFlightStep(ReferencedResource resource, String flightId, ResourceDao resourceDao) {
-    this.resource = resource;
+  public AwaitCreateReferenceResourceFlightStep(
+      ReferencedResource resource, String flightId, ResourceDao resourceDao) {
+    this.sourceResource = resource;
     this.flightId = flightId;
     this.resourceDao = resourceDao;
   }
@@ -41,14 +41,13 @@ public class AwaitCreateReferenceResourceFlightStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     try {
-      FlightUtils.validateRequiredEntriesNonNull(
-          context.getWorkingMap(),
-          ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE
-      );
+      FlightUtils.validateRequiredEntries(
+          context.getWorkingMap(), ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE);
 
       final FlightState subflightState = context.getStairway().waitForFlight(flightId, 10, 10);
       final WsmCloneResourceResult cloneResult =
-          WorkspaceCloneUtils.flightStatusToCloneResult(subflightState.getFlightStatus(), resource);
+          WorkspaceCloneUtils.flightStatusToCloneResult(
+              subflightState.getFlightStatus(), sourceResource);
       final WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
       cloneDetails.setResult(cloneResult);
       final FlightMap resultMap =
@@ -59,15 +58,21 @@ public class AwaitCreateReferenceResourceFlightStep implements Step {
                       new MissingRequiredFieldsException(
                           String.format("Result Map not found for flight ID %s", context)));
       // Input to the create flight
-      final var destinationReferencedResource = context.getWorkingMap()
-          .get(ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, ReferencedResource.class);
-      final var clonedReferencedResourceId = resultMap.get(JobMapKeys.RESPONSE.getKeyName(), UUID.class);
-      final WsmResource clonedResource = resourceDao.getResource(destinationReferencedResource.getWorkspaceId(), clonedReferencedResourceId);
-      cloneDetails.setResourceType(clonedResource.getResourceType());
-      cloneDetails.setStewardshipType(clonedResource.getStewardshipType());
-      cloneDetails.setCloningInstructions(clonedResource.getCloningInstructions());
-      cloneDetails.setSourceResourceId(resource.getResourceId());
-      cloneDetails.setDestinationResourceId(clonedResource.getResourceId());
+      final var destinationReferencedResource =
+          context
+              .getWorkingMap()
+              .get(
+                  ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE, ReferencedResource.class);
+      final var clonedReferencedResourceId =
+          resultMap.get(JobMapKeys.RESPONSE.getKeyName(), UUID.class);
+
+      // Use the destination referenced resource for things that are fixed over
+      // the operation, and the one from the database to verify the resource ID
+      cloneDetails.setResourceType(destinationReferencedResource.getResourceType());
+      cloneDetails.setStewardshipType(destinationReferencedResource.getStewardshipType());
+      cloneDetails.setCloningInstructions(destinationReferencedResource.getCloningInstructions());
+      cloneDetails.setSourceResourceId(sourceResource.getResourceId());
+      cloneDetails.setDestinationResourceId(clonedReferencedResourceId);
 
       // add to the result map
       final var resourceIdToResult =
@@ -78,7 +83,7 @@ public class AwaitCreateReferenceResourceFlightStep implements Step {
                           ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
                           new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
               .orElseGet(HashMap::new);
-      resourceIdToResult.put(resource.getResourceId(), cloneDetails);
+      resourceIdToResult.put(sourceResource.getResourceId(), cloneDetails);
       context
           .getWorkingMap()
           .put(ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT, resourceIdToResult);
@@ -86,7 +91,8 @@ public class AwaitCreateReferenceResourceFlightStep implements Step {
     } catch (DatabaseOperationException | FlightException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
-    validateRequiredEntriesNonNull(context.getWorkingMap(), ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT);
+    validateRequiredEntries(
+        context.getWorkingMap(), ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT);
     return StepResult.getStepResultSuccess();
   }
 

@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntriesNonNull;
+import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -12,12 +12,11 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightException;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
+import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -64,8 +63,14 @@ public class AwaitCloneGcsBucketResourceFlightStep implements Step {
       cloneDetails.setResourceType(WsmResourceType.GCS_BUCKET);
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());
       cloneDetails.setSourceResourceId(resource.getResourceId());
-      cloneDetails.setDestinationResourceId(clonedBucket.getBucket().getResourceId());
-
+      cloneDetails.setDestinationResourceId(
+          Optional.ofNullable(clonedBucket)
+              .map(ApiClonedControlledGcpGcsBucket::getBucket)
+              .map(ApiCreatedControlledGcpGcsBucket::getResourceId)
+              .orElse(null));
+      final String errorMessage =
+          subflightState.getException().map(Throwable::getMessage).orElse(null);
+      cloneDetails.setErrorMessage(errorMessage);
       // add to the map
       final var resourceIdToResult =
           Optional.ofNullable(
@@ -83,7 +88,8 @@ public class AwaitCloneGcsBucketResourceFlightStep implements Step {
     } catch (DatabaseOperationException | FlightException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
-    validateRequiredEntriesNonNull(context.getWorkingMap(), ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT);
+    validateRequiredEntries(
+        context.getWorkingMap(), ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT);
     return StepResult.getStepResultSuccess();
   }
 

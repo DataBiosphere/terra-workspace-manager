@@ -25,14 +25,14 @@ public class LaunchWorkspaceCreateFlightStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     final FlightMap workingMap = context.getWorkingMap();
-    FlightUtils.validateRequiredEntriesNonNull(
+    FlightUtils.validateRequiredEntries(
         context.getInputParameters(),
         JobMapKeys.AUTH_USER_INFO.getKeyName(),
         WorkspaceFlightMapKeys.DESCRIPTION,
         WorkspaceFlightMapKeys.DISPLAY_NAME,
         WorkspaceFlightMapKeys.SPEND_PROFILE_ID);
 
-    FlightUtils.validateRequiredEntriesNonNull(
+    FlightUtils.validateRequiredEntries(
         workingMap,
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         ControlledResourceKeys.WORKSPACE_CREATE_JOB_ID);

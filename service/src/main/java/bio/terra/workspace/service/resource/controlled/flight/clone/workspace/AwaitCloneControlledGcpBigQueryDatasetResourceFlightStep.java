@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
@@ -10,6 +12,8 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
+import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
@@ -63,8 +67,14 @@ public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());
       cloneDetails.setSourceResourceId(resource.getResourceId());
       cloneDetails.setDestinationResourceId(
-          clonedDataset.getDataset().getMetadata().getResourceId());
-
+          Optional.ofNullable(clonedDataset)
+              .map(ApiClonedControlledGcpBigQueryDataset::getDataset)
+              .map(ApiGcpBigQueryDatasetResource::getMetadata)
+              .map(ApiResourceMetadata::getResourceId)
+              .orElse(null));
+      final String errorMessage =
+          subflightState.getException().map(Throwable::getMessage).orElse(null);
+      cloneDetails.setErrorMessage(errorMessage);
       // add to the map
       final var resourceIdToResult =
           Optional.ofNullable(
@@ -82,6 +92,8 @@ public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements
     } catch (DatabaseOperationException | FlightException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
+    validateRequiredEntries(
+        context.getWorkingMap(), ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT);
     return StepResult.getStepResultSuccess();
   }
 

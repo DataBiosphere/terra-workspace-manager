@@ -111,7 +111,7 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
 
     // create a GCS bucket with data and COPY_DEFINITION
     copyDefinitionSourceBucket = makeControlledGcsBucketUserShared(sourceOwnerResourceApi, getWorkspaceId(),
-        UUID.randomUUID().toString(), CloningInstructionsEnum.NOTHING);
+        UUID.randomUUID().toString(), CloningInstructionsEnum.DEFINITION);
     addFileToBucket(copyDefinitionSourceBucket);
 
     // Create a BigQuery Dataset with tables and COPY_RESOURCE
@@ -148,6 +148,8 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
     ClientTestUtils.assertJobSuccess("Clone Workspace", cloneResult.getJobReport(), cloneResult.getErrorReport());
     assertNull(cloneResult.getErrorReport());
 
+    assertNotNull(cloneResult.getWorkspace());
+    assertNotNull(cloneResult.getWorkspace().getResources());
     assertThat(cloneResult.getWorkspace().getResources(), hasSize(4));
     assertEquals(getWorkspaceId(), cloneResult.getWorkspace().getSourceWorkspaceId());
     destinationWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
@@ -200,7 +202,7 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
     assertEquals(CloningInstructionsEnum.DEFINITION, copyDefinitionBucketDetails.getCloningInstructions());
     assertEquals(ResourceType.GCS_BUCKET, copyDefinitionBucketDetails.getResourceType());
     assertEquals(StewardshipType.CONTROLLED, copyDefinitionBucketDetails.getStewardshipType());
-    assertNull(copyDefinitionBucketDetails.getDestinationResourceId());
+    assertNotNull(copyDefinitionBucketDetails.getDestinationResourceId());
     assertEquals(CloneResourceResult.SUCCEEDED, copyDefinitionBucketDetails.getResult());
     final var clonedCopyDefinitionBucket = cloningUserResourceApi.getBucket(destinationWorkspaceId,
         copyDefinitionBucketDetails.getDestinationResourceId());

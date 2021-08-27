@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntriesNonNull;
+import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -31,10 +31,10 @@ public class LaunchCloneGcsBucketResourceFlightStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    validateRequiredEntriesNonNull(
-        context.getInputParameters(), JobMapKeys.AUTH_USER_INFO.getKeyName());
-    validateRequiredEntriesNonNull(
-        context.getWorkingMap(), ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
+    validateRequiredEntries(
+        context.getInputParameters(),
+        JobMapKeys.AUTH_USER_INFO.getKeyName(),
+        ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
 
     // optional key
     final var location =
@@ -44,7 +44,9 @@ public class LaunchCloneGcsBucketResourceFlightStep implements Step {
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     final var destinationWorkspaceId =
-        context.getWorkingMap().get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+        context
+            .getInputParameters()
+            .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
     // Gather input parameters for flight. See
     // bio.terra.workspace.service.resource.controlled.ControlledResourceService#cloneGcsBucket.

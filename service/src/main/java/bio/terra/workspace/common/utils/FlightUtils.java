@@ -64,7 +64,7 @@ public final class FlightUtils {
    * @param flightMap - either an input parameters or working map
    * @param keys - vararg of string keys to be checked
    */
-  public static void validateRequiredEntriesNonNull(FlightMap flightMap, String... keys) {
+  public static void validateRequiredEntries(FlightMap flightMap, String... keys) {
     for (String key : keys) {
       if (null == flightMap.getRaw(key)) {
         throw new MissingRequiredFieldsException(

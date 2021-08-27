@@ -143,10 +143,10 @@ public class ReferencedResourceService {
       @Nullable String name,
       @Nullable String description,
       AuthenticatedUserRequest userRequest) {
-    final ReferencedResource destinationResource = WorkspaceCloneUtils.buildDestinationReferencedResource(
-        sourceReferencedResource, destinationWorkspaceId, name, description);
+    final ReferencedResource destinationResource =
+        WorkspaceCloneUtils.buildDestinationReferencedResource(
+            sourceReferencedResource, destinationWorkspaceId, name, description);
     // launch the creation flight
     return createReferenceResource(destinationResource, userRequest);
   }
-
 }

@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntriesNonNull;
+import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightState;
@@ -26,11 +26,11 @@ public class LaunchCreateGcpContextFlightStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    validateRequiredEntriesNonNull(
+    validateRequiredEntries(
         context.getInputParameters(),
         ControlledResourceKeys.SOURCE_WORKSPACE_ID,
         JobMapKeys.AUTH_USER_INFO.getKeyName());
-    validateRequiredEntriesNonNull(
+    validateRequiredEntries(
         context.getWorkingMap(),
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         ControlledResourceKeys.CREATE_CLOUD_CONTEXT_JOB_ID);

@@ -29,7 +29,7 @@ public class FindResourcesToCloneStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    FlightUtils.validateRequiredEntriesNonNull(
+    FlightUtils.validateRequiredEntries(
         context.getInputParameters(), ControlledResourceKeys.SOURCE_WORKSPACE_ID);
     final var sourceWorkspaceId =
         context.getInputParameters().get(ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
@@ -47,7 +47,7 @@ public class FindResourcesToCloneStep implements Step {
     } while (batch.size() == limit);
     context.getWorkingMap().put(ControlledResourceKeys.RESOURCES_TO_CLONE, result);
 
-    FlightUtils.validateRequiredEntriesNonNull(
+    FlightUtils.validateRequiredEntries(
         context.getWorkingMap(), ControlledResourceKeys.RESOURCES_TO_CLONE);
     return StepResult.getStepResultSuccess();
   }

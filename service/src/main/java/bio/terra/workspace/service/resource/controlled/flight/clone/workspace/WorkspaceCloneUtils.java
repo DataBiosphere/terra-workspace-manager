@@ -40,8 +40,11 @@ public class WorkspaceCloneUtils {
     }
   }
 
-  public static ReferencedResource buildDestinationReferencedResource(ReferencedResource sourceReferencedResource,
-      UUID destinationWorkspaceId, String name, String description) {
+  public static ReferencedResource buildDestinationReferencedResource(
+      ReferencedResource sourceReferencedResource,
+      UUID destinationWorkspaceId,
+      String name,
+      String description) {
     final ReferencedResource destinationResource;
     switch (sourceReferencedResource.getResourceType()) {
       case GCS_BUCKET:

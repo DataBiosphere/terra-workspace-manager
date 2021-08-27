@@ -16,7 +16,7 @@ public class AwaitCreateGcpContextFlightStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    FlightUtils.validateRequiredEntriesNonNull(
+    FlightUtils.validateRequiredEntries(
         context.getWorkingMap(), ControlledResourceKeys.CREATE_CLOUD_CONTEXT_JOB_ID);
     final var jobId =
         context
