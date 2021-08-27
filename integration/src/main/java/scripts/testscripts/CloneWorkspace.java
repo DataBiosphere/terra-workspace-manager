@@ -9,6 +9,7 @@ import static scripts.utils.ClientTestUtils.getOrFail;
 import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_CONTENT;
 import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_NAME;
 import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
+import static scripts.utils.ResourceMaker.makeControlledBigQueryDatasetUserShared;
 import static scripts.utils.ResourceMaker.makeControlledGcsBucketUserPrivate;
 import static scripts.utils.ResourceMaker.makeControlledGcsBucketUserShared;
 
@@ -21,6 +22,7 @@ import bio.terra.workspace.model.CloneWorkspaceResult;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
+import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.PrivateResourceIamRoles;
@@ -50,6 +52,7 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
   private CreatedControlledGcpGcsBucket privateSourceBucket;
   private CreatedControlledGcpGcsBucket sharedCopyNothingSourceBucket;
   private CreatedControlledGcpGcsBucket sharedSourceBucket;
+  private GcpBigQueryDatasetResource copyDefinitionDataset;
   private String nameSuffix;
   private String sharedBucketSourceResourceName;
   private String sourceProjectId;
@@ -115,6 +118,10 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
     addFileToBucket(copyDefinitionSourceBucket);
 
     // Create a BigQuery Dataset with tables and COPY_RESOURCE
+    final String dataset1Name = "dataset1" + nameSuffix;
+    copyDefinitionDataset = makeControlledBigQueryDatasetUserShared(sourceOwnerResourceApi, getWorkspaceId(),
+        dataset1Name, CloningInstructionsEnum.DEFINITION);
+
     // Create a BigQuery dataset with tables and COPY_DEFINITION
     // Create a private BQ dataset
     // Create reference to GCS bucket with COPY_REFERENCE

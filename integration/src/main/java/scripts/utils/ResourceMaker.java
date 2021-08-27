@@ -1,10 +1,14 @@
 package scripts.utils;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.is;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_PROJECT;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
 
+import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.client.ApiException;
@@ -40,10 +44,26 @@ import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceIamRoles;
 import bio.terra.workspace.model.PrivateResourceUser;
 import bio.terra.workspace.model.ReferenceResourceCommonFields;
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.Field;
+import com.google.cloud.bigquery.InsertAllRequest;
+import com.google.cloud.bigquery.LegacySQLTypeName;
+import com.google.cloud.bigquery.QueryJobConfiguration;
+import com.google.cloud.bigquery.Schema;
+import com.google.cloud.bigquery.StandardTableDefinition;
+import com.google.cloud.bigquery.Table;
+import com.google.cloud.bigquery.TableId;
+import com.google.cloud.bigquery.TableInfo;
+import com.google.cloud.bigquery.TableResult;
+import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -192,7 +212,8 @@ public class ResourceMaker {
    * given datasetID as both the WSM resource name and the actual BigQuery dataset ID.
    */
   public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetUserShared(
-      ControlledGcpResourceApi resourceApi, UUID workspaceId, String datasetId) throws Exception {
+      ControlledGcpResourceApi resourceApi, UUID workspaceId, String datasetId,
+      @Nullable CloningInstructionsEnum cloningInstructions) throws Exception {
 
     var body =
         new CreateControlledGcpBigQueryDatasetRequestBody()
@@ -200,7 +221,7 @@ public class ResourceMaker {
                 new ControlledResourceCommonFields()
                     .accessScope(AccessScope.SHARED_ACCESS)
                     .managedBy(ManagedBy.USER)
-                    .cloningInstructions(CloningInstructionsEnum.NOTHING)
+                    .cloningInstructions(Optional.ofNullable(cloningInstructions).orElse(CloningInstructionsEnum.NOTHING))
                     .description("Description of " + datasetId)
                     .name(datasetId))
             .dataset(
@@ -210,5 +231,85 @@ public class ResourceMaker {
 
     logger.info("Creating dataset {} workspace {}", datasetId, workspaceId);
     return resourceApi.createBigQueryDataset(body, workspaceId).getBigQueryDataset();
+  }
+
+  public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetUserShared(
+      ControlledGcpResourceApi resourceApi, UUID workspaceId, String datasetId) throws Exception {
+    return makeControlledBigQueryDatasetUserShared(resourceApi, workspaceId, datasetId, null);
+  }
+
+  /**
+   * Create two tables with multiple rows in them into the provided dataset.
+   * Uses a mixture of streaming and DDL insertion to demonstrate the difference
+   * in copy job behavior.
+   * @param dataset - empty BigQuery dataset
+   * @param ownerUser - User who owns the dataset
+   * @param projectId - project that owns the dataset
+   * @throws IOException
+   * @throws InterruptedException
+   */
+  public static void populateBigQueryDataset(
+      GcpBigQueryDatasetResource dataset,
+      TestUserSpecification ownerUser,
+      String projectId)
+      throws IOException, InterruptedException {
+    // Add tables to the source dataset
+    final BigQuery bigQueryClient = ClientTestUtils.getGcpBigQueryClient(ownerUser, projectId);
+
+    final Schema employeeSchema = Schema.of(
+        Field.of("employee_id", LegacySQLTypeName.INTEGER),
+        Field.of("name", LegacySQLTypeName.STRING));
+    final TableId employeeTableId = TableId.of(projectId, dataset.getAttributes().getDatasetId(), "employee");
+
+    final TableInfo employeeTableInfo = TableInfo
+        .newBuilder(employeeTableId, StandardTableDefinition.of(employeeSchema))
+        .setFriendlyName("Employee")
+        .build();
+    final Table createdEmployeeTable = bigQueryClient.create(
+        employeeTableInfo);
+    logger.debug("Employee Table: {}", createdEmployeeTable);
+
+    final Table createdDepartmentTable = bigQueryClient.create(
+        TableInfo.newBuilder(TableId.of(projectId, dataset.getAttributes().getDatasetId(), "department"),
+        StandardTableDefinition.of(
+            Schema.of(
+                Field.of("department_id", LegacySQLTypeName.INTEGER),
+                Field.of("manager_id", LegacySQLTypeName.INTEGER),
+                Field.of("name", LegacySQLTypeName.STRING))))
+        .setFriendlyName("Department")
+        .build());
+    logger.debug("Department Table: {}", createdDepartmentTable);
+
+    // Add rows to the tables
+
+    // Stream insert one row to check the error handling/warning. This row may not be copied. (If
+    // the stream happens after the DDL insert, sometimes it gets copied).
+    bigQueryClient.insertAll(InsertAllRequest.newBuilder(employeeTableInfo)
+        .addRow(ImmutableMap.of("employee_id", 103, "name", "Batman"))
+        .build());
+
+    // Use DDL to insert rows instead of InsertAllRequest so that data won't
+    // be in the streaming buffer where it's un-copyable for up to 90 minutes.
+    bigQueryClient.query(QueryJobConfiguration.newBuilder(
+        "INSERT INTO `" + projectId + "." + dataset.getAttributes().getDatasetId()
+            + ".employee` (employee_id, name) VALUES("
+            + "101, 'Aquaman'), (102, 'Superman');")
+        .build());
+
+    bigQueryClient.query(QueryJobConfiguration.newBuilder(
+        "INSERT INTO `" + projectId + "." + dataset.getAttributes().getDatasetId()
+            + ".department` (department_id, manager_id, name) "
+            + "VALUES(201, 101, 'ocean'), (202, 102, 'sky');")
+        .build());
+
+    // double-check the rows are there
+    final TableResult employeeTableResult = bigQueryClient.query(QueryJobConfiguration.newBuilder(
+        "SELECT * FROM `" +
+            projectId + "." +
+            dataset.getAttributes().getDatasetId() + ".employee`;")
+        .build());
+    final long numRows = StreamSupport.stream(employeeTableResult.getValues().spliterator(), false)
+        .count();
+    assertThat(numRows, is(greaterThanOrEqualTo(2L)));
   }
 }
