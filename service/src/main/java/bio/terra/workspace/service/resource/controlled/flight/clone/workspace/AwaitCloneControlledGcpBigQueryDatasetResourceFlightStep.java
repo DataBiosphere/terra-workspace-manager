@@ -72,8 +72,11 @@ public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements
               .map(ApiGcpBigQueryDatasetResource::getMetadata)
               .map(ApiResourceMetadata::getResourceId)
               .orElse(null));
-      final String errorMessage =
-          subflightState.getException().map(Throwable::getMessage).orElse(null);
+      String errorMessage = subflightState.getException().map(Throwable::getMessage).orElse(null);
+      if (null == errorMessage && subflightState.getException().isPresent()) {
+        // If the exception doesn't provide a message, we can scrape the class name at least.
+        errorMessage = subflightState.getException().map(e -> e.getClass().getName()).orElse(null);
+      }
       cloneDetails.setErrorMessage(errorMessage);
       // add to the map
       final var resourceIdToResult =

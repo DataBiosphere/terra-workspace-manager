@@ -102,6 +102,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
 
     // Create the cloud context
     String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    assertNotNull(projectId);
     logger.info("Created project {}", projectId);
 
     // Create the bucket - should work this time

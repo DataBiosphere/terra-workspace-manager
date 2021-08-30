@@ -26,7 +26,10 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    validateRequiredEntries(context.getInputParameters(), JobMapKeys.AUTH_USER_INFO.getKeyName());
+    validateRequiredEntries(
+        context.getInputParameters(),
+        JobMapKeys.AUTH_USER_INFO.getKeyName(),
+        ControlledResourceKeys.LOCATION);
     validateRequiredEntries(
         context.getWorkingMap(),
         ControlledResourceKeys.RESOURCES_TO_CLONE,
@@ -36,6 +39,8 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    final var location =
+        context.getInputParameters().get(ControlledResourceKeys.LOCATION, String.class);
     final var cloneAllResourcesFlightId =
         context
             .getWorkingMap()
@@ -55,6 +60,7 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
     subflightInputParameters.put(ControlledResourceKeys.RESOURCES_TO_CLONE, resourcesAndFlightIds);
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
+    subflightInputParameters.put(ControlledResourceKeys.LOCATION, location);
 
     // Build a CloneAllResourcesFlight
     try {

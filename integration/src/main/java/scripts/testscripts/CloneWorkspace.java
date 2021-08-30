@@ -1,7 +1,9 @@
 package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -30,6 +32,9 @@ import bio.terra.workspace.model.ResourceCloneDetails;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
 import bio.terra.workspace.model.WorkspaceDescription;
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.QueryJobConfiguration;
+import com.google.cloud.bigquery.TableResult;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
@@ -39,11 +44,13 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.DataRepoTestScriptBase;
+import scripts.utils.ResourceMaker;
 
 public class CloneWorkspace extends DataRepoTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(CloneWorkspace.class);
@@ -53,6 +60,9 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
   private CreatedControlledGcpGcsBucket sharedCopyNothingSourceBucket;
   private CreatedControlledGcpGcsBucket sharedSourceBucket;
   private GcpBigQueryDatasetResource copyDefinitionDataset;
+  private GcpBigQueryDatasetResource copyResourceDataset;
+  private String copyDefinitionDatasetName;
+  private String copyResourceDatasetName;
   private String nameSuffix;
   private String sharedBucketSourceResourceName;
   private String sourceProjectId;
@@ -117,12 +127,18 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
         UUID.randomUUID().toString(), CloningInstructionsEnum.DEFINITION);
     addFileToBucket(copyDefinitionSourceBucket);
 
-    // Create a BigQuery Dataset with tables and COPY_RESOURCE
-    final String dataset1Name = "dataset1" + nameSuffix;
+    // Create a BigQuery Dataset with tables and COPY_DEFINITION
+    copyDefinitionDatasetName = "copy_definition_" + nameSuffix.replace('-', '_');
     copyDefinitionDataset = makeControlledBigQueryDatasetUserShared(sourceOwnerResourceApi, getWorkspaceId(),
-        dataset1Name, CloningInstructionsEnum.DEFINITION);
+        copyDefinitionDatasetName, CloningInstructionsEnum.DEFINITION);
+    ResourceMaker.populateBigQueryDataset(copyDefinitionDataset, sourceOwnerUser, sourceProjectId);
 
-    // Create a BigQuery dataset with tables and COPY_DEFINITION
+    // Create a BigQuery dataset with tables and COPY_RESOURCE
+    copyResourceDatasetName = "copy_resource_" +  nameSuffix.replace('-', '_');
+    copyResourceDataset = makeControlledBigQueryDatasetUserShared(sourceOwnerResourceApi, getWorkspaceId(),
+        copyResourceDatasetName, CloningInstructionsEnum.RESOURCE);
+    ResourceMaker.populateBigQueryDataset(copyResourceDataset, sourceOwnerUser, sourceProjectId);
+
     // Create a private BQ dataset
     // Create reference to GCS bucket with COPY_REFERENCE
     // create reference to BQ dataset with COPY_NOTHING
@@ -152,12 +168,13 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
         CloneWorkspaceResult::getJobReport,
         Duration.ofSeconds(10));
     logger.info("Clone result: {}", cloneResult);
-    ClientTestUtils.assertJobSuccess("Clone Workspace", cloneResult.getJobReport(), cloneResult.getErrorReport());
+    ClientTestUtils.assertJobSuccess("Clone Workspace",
+        cloneResult.getJobReport(), cloneResult.getErrorReport());
     assertNull(cloneResult.getErrorReport());
 
     assertNotNull(cloneResult.getWorkspace());
     assertNotNull(cloneResult.getWorkspace().getResources());
-    assertThat(cloneResult.getWorkspace().getResources(), hasSize(4));
+    assertThat(cloneResult.getWorkspace().getResources(), hasSize(6));
     assertEquals(getWorkspaceId(), cloneResult.getWorkspace().getSourceWorkspaceId());
     destinationWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
     assertNotNull(destinationWorkspaceId);
@@ -167,10 +184,12 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
         cloneResult.getWorkspace().getResources().stream()
         .filter(r -> sharedSourceBucket.getResourceId().equals(r.getSourceResourceId()))
         .findFirst());
+    logger.info(sharedBucketCloneDetails.toString());
     assertEquals(CloningInstructionsEnum.RESOURCE, sharedBucketCloneDetails.getCloningInstructions());
     assertEquals(ResourceType.GCS_BUCKET, sharedBucketCloneDetails.getResourceType());
     assertEquals(StewardshipType.CONTROLLED, sharedBucketCloneDetails.getStewardshipType());
     assertNotNull(sharedBucketCloneDetails.getDestinationResourceId());
+    assertNull(sharedBucketCloneDetails.getErrorMessage());
     assertEquals(CloneResourceResult.SUCCEEDED, sharedBucketCloneDetails.getResult());
 
     // We need to get the destination bucket name and project ID
@@ -188,6 +207,7 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
     assertEquals(ResourceType.GCS_BUCKET, privateBucketCloneDetails.getResourceType());
     assertEquals(StewardshipType.CONTROLLED, privateBucketCloneDetails.getStewardshipType());
     assertNull(privateBucketCloneDetails.getDestinationResourceId());
+    assertNotNull(privateBucketCloneDetails.getErrorMessage());
     assertEquals(CloneResourceResult.FAILED, privateBucketCloneDetails.getResult());
 
     // Verify COPY_NOTHING bucket was skipped
@@ -216,6 +236,51 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
     assertEmptyBucket(clonedCopyDefinitionBucket.getAttributes().getBucketName(), destinationProjectId);
 
     // verify COPY_DEFINITION dataset exists but has no tables
+    final ResourceCloneDetails copyDefinitionDatasetDetails = getOrFail(
+        cloneResult.getWorkspace().getResources().stream()
+            .filter(r -> copyDefinitionDataset.getMetadata().getResourceId().equals(r.getSourceResourceId()))
+            .findFirst());
+    assertEquals(CloningInstructionsEnum.DEFINITION, copyDefinitionDatasetDetails.getCloningInstructions());
+    assertEquals(ResourceType.BIG_QUERY_DATASET, copyDefinitionDatasetDetails.getResourceType());
+    assertEquals(StewardshipType.CONTROLLED, copyDefinitionDatasetDetails.getStewardshipType());
+    assertNotNull(copyDefinitionDatasetDetails.getDestinationResourceId());
+    assertNull(copyDefinitionDatasetDetails.getErrorMessage());
+    assertEquals(CloneResourceResult.SUCCEEDED, copyDefinitionDatasetDetails.getResult());
+
+    final BigQuery bigQueryClient = ClientTestUtils.getGcpBigQueryClient(cloningUser, destinationProjectId);
+    final QueryJobConfiguration listTablesQuery = QueryJobConfiguration.newBuilder(
+        "SELECT * FROM `"
+        + destinationProjectId + "."
+        + copyDefinitionDatasetName
+        + ".INFORMATION_SCHEMA.TABLES`;")
+        .build();
+    // Will throw not found if the dataset doesn't exist
+    final TableResult listTablesResult = bigQueryClient.query(listTablesQuery);
+    final long numRows = StreamSupport.stream(listTablesResult.getValues().spliterator(), false)
+        .count();
+    assertEquals(0, numRows);
+
+    // verify clone resource dataset succeeded and has rows and tables
+    final ResourceCloneDetails copyResourceDatasetDetails = getOrFail(
+        cloneResult.getWorkspace().getResources().stream()
+            .filter(r -> copyResourceDataset.getMetadata().getResourceId().equals(r.getSourceResourceId()))
+            .findFirst());
+    assertEquals(CloningInstructionsEnum.RESOURCE, copyResourceDatasetDetails.getCloningInstructions());
+    assertEquals(ResourceType.BIG_QUERY_DATASET, copyResourceDatasetDetails.getResourceType());
+    assertEquals(StewardshipType.CONTROLLED, copyResourceDatasetDetails.getStewardshipType());
+    assertNotNull(copyResourceDatasetDetails.getDestinationResourceId());
+    assertNull(copyResourceDatasetDetails.getErrorMessage());
+    assertEquals(CloneResourceResult.SUCCEEDED, copyResourceDatasetDetails.getResult());
+    final QueryJobConfiguration employeeQueryJobConfiguration = QueryJobConfiguration.newBuilder(
+            "SELECT * FROM `" +
+                destinationProjectId + "." +
+                copyResourceDatasetName + ".employee`;")
+        .build();
+    final TableResult employeeTableResult = bigQueryClient.query(employeeQueryJobConfiguration);
+    final long numEmployees = StreamSupport.stream(employeeTableResult.getValues().spliterator(), false)
+        .count();
+    assertThat(numEmployees, is(greaterThanOrEqualTo(2L)));
+
     // verify private dataset clone failed
 
   }
