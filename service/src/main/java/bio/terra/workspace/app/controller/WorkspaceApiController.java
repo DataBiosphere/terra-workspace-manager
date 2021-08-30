@@ -442,4 +442,11 @@ public class WorkspaceApiController implements WorkspaceApi {
     workspaceService.deleteGcpCloudContext(id, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
+
+  @Override
+  public ResponseEntity<String> enablePet(UUID workspaceId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    String petSaEmail = workspaceService.enablePet(workspaceId, userRequest);
+    return new ResponseEntity<>(petSaEmail, HttpStatus.OK);
+  }
 }

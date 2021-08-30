@@ -1,7 +1,9 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
@@ -24,7 +26,13 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
+import com.google.api.services.iam.v1.model.Binding;
+import com.google.api.services.iam.v1.model.Policy;
+import com.google.api.services.iam.v1.model.SetIamPolicyRequest;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,6 +57,7 @@ public class WorkspaceService {
   private final SpendProfileService spendProfileService;
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
+  private final CrlService crlService;
 
   @Autowired
   public WorkspaceService(
@@ -57,13 +66,15 @@ public class WorkspaceService {
       SamService samService,
       SpendProfileService spendProfileService,
       BufferServiceConfiguration bufferServiceConfiguration,
-      StageService stageService) {
+      StageService stageService,
+      CrlService crlService) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
     this.spendProfileService = spendProfileService;
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
+    this.crlService = crlService;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
@@ -284,5 +295,53 @@ public class WorkspaceService {
         .getWorkspace(workspaceId)
         .getGcpCloudContext()
         .map(GcpCloudContext::getGcpProjectId);
+  }
+
+  /**
+   * Grant a user permission to impersonate their pet service account in a given workspace. Unlike
+   * other operations, this does not run in a flight because it only requires one write operation.
+   * This operation is idempotent.
+   *
+   * @return The email identifier of the user's pet SA in the given workspace.
+   */
+  public String enablePet(UUID workspaceId, AuthenticatedUserRequest userRequest) {
+    final String serviceAccountUserRole = "roles/iam.serviceAccountUser";
+    Workspace workspace =
+        validateWorkspaceAndAction(
+            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+    stageService.assertMcWorkspace(workspace, "enablePet");
+
+    String userEmail =
+        SamService.rethrowIfSamInterrupted(
+            () -> samService.getRequestUserEmail(userRequest), "getUserEmail");
+    String projectId = getRequiredGcpProject(workspaceId);
+    String petSaEmail = samService.getPetSaEmail(projectId, userRequest);
+    ServiceAccountName petSaName =
+        ServiceAccountName.builder().email(petSaEmail).projectId(projectId).build();
+    try {
+      Policy saPolicy =
+          crlService.getIamCow().projects().serviceAccounts().getIamPolicy(petSaName).execute();
+      Binding saUserBinding =
+          new Binding()
+              .setRole(serviceAccountUserRole)
+              .setMembers(Collections.singletonList("user:" + userEmail));
+      // If no bindings exist, getBindings() returns null instead of an empty list.
+      List<Binding> bindingList =
+          Optional.ofNullable(saPolicy.getBindings()).orElse(new ArrayList<>());
+      // GCP automatically de-duplicates bindings, so this will have no effect if the user already
+      // has permission to use their pet service account.
+      bindingList.add(saUserBinding);
+      saPolicy.setBindings(bindingList);
+      SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(saPolicy);
+      crlService
+          .getIamCow()
+          .projects()
+          .serviceAccounts()
+          .setIamPolicy(petSaName, request)
+          .execute();
+      return petSaEmail;
+    } catch (IOException e) {
+      throw new RuntimeException("Error enabling user's pet SA", e);
+    }
   }
 }
