@@ -11,6 +11,7 @@ import static scripts.utils.ClientTestUtils.getOrFail;
 import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_CONTENT;
 import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_NAME;
 import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
+import static scripts.utils.ResourceMaker.makeControlledBigQueryDatasetUserPrivate;
 import static scripts.utils.ResourceMaker.makeControlledBigQueryDatasetUserShared;
 import static scripts.utils.ResourceMaker.makeControlledGcsBucketUserPrivate;
 import static scripts.utils.ResourceMaker.makeControlledGcsBucketUserShared;
@@ -61,9 +62,11 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
   private CreatedControlledGcpGcsBucket sharedSourceBucket;
   private GcpBigQueryDatasetResource copyDefinitionDataset;
   private GcpBigQueryDatasetResource copyResourceDataset;
+  private GcpBigQueryDatasetResource privateDataset;
   private String copyDefinitionDatasetName;
   private String copyResourceDatasetName;
   private String nameSuffix;
+  private String privateDatasetName;
   private String sharedBucketSourceResourceName;
   private String sourceProjectId;
   private TestUserSpecification sourceOwnerUser;
@@ -140,6 +143,10 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
     ResourceMaker.populateBigQueryDataset(copyResourceDataset, sourceOwnerUser, sourceProjectId);
 
     // Create a private BQ dataset
+    privateDatasetName = "private_dataset_" + nameSuffix.replace('-', '_');
+    privateDataset = makeControlledBigQueryDatasetUserPrivate(sourceOwnerResourceApi, getWorkspaceId(),
+        privateDatasetName, sourceOwnerUser.userEmail, privateRoles, CloningInstructionsEnum.RESOURCE);
+
     // Create reference to GCS bucket with COPY_REFERENCE
     // create reference to BQ dataset with COPY_NOTHING
     // create reference to Data Repo Snapshot
@@ -174,7 +181,7 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
 
     assertNotNull(cloneResult.getWorkspace());
     assertNotNull(cloneResult.getWorkspace().getResources());
-    assertThat(cloneResult.getWorkspace().getResources(), hasSize(6));
+    assertThat(cloneResult.getWorkspace().getResources(), hasSize(7));
     assertEquals(getWorkspaceId(), cloneResult.getWorkspace().getSourceWorkspaceId());
     destinationWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
     assertNotNull(destinationWorkspaceId);
@@ -282,7 +289,17 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
     assertThat(numEmployees, is(greaterThanOrEqualTo(2L)));
 
     // verify private dataset clone failed
-
+    final ResourceCloneDetails privateDatasetDetails = getOrFail(
+        cloneResult.getWorkspace().getResources().stream()
+            .filter(r -> privateDataset.getMetadata().getResourceId().equals(r.getSourceResourceId()))
+            .findFirst());
+    assertEquals(CloningInstructionsEnum.RESOURCE, privateDatasetDetails.getCloningInstructions());
+    assertEquals(ResourceType.BIG_QUERY_DATASET, privateDatasetDetails.getResourceType());
+    assertEquals(StewardshipType.CONTROLLED, privateDatasetDetails.getStewardshipType());
+    assertNull(privateDatasetDetails.getDestinationResourceId());
+    assertNotNull(privateDatasetDetails.getErrorMessage());
+    assertEquals(CloneResourceResult.FAILED, privateDatasetDetails.getResult());
+    logger.info("Clone of private dataset failed with message " + privateDatasetDetails.getErrorMessage());
   }
 
   @Override

@@ -238,6 +238,31 @@ public class ResourceMaker {
     return makeControlledBigQueryDatasetUserShared(resourceApi, workspaceId, datasetId, null);
   }
 
+  public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetUserPrivate(
+      ControlledGcpResourceApi resourceApi, UUID workspaceId, String datasetId,
+      String privateResourceUserEmail, PrivateResourceIamRoles iamRoles,
+      @Nullable CloningInstructionsEnum cloningInstructions) throws Exception {
+
+    var body =
+        new CreateControlledGcpBigQueryDatasetRequestBody()
+            .common(
+                new ControlledResourceCommonFields()
+                    .accessScope(AccessScope.PRIVATE_ACCESS)
+                    .managedBy(ManagedBy.USER)
+                    .privateResourceUser(new PrivateResourceUser()
+                        .userName(privateResourceUserEmail)
+                        .privateResourceIamRoles(iamRoles))
+                    .cloningInstructions(Optional.ofNullable(cloningInstructions).orElse(CloningInstructionsEnum.NOTHING))
+                    .description("Description of " + datasetId)
+                    .name(datasetId))
+            .dataset(
+                new GcpBigQueryDatasetCreationParameters()
+                    .datasetId(datasetId)
+                    .location("US-CENTRAL1"));
+
+    logger.info("Creating dataset {} workspace {}", datasetId, workspaceId);
+    return resourceApi.createBigQueryDataset(body, workspaceId).getBigQueryDataset();
+  }
   /**
    * Create two tables with multiple rows in them into the provided dataset.
    * Uses a mixture of streaming and DDL insertion to demonstrate the difference

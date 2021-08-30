@@ -28,6 +28,7 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -542,7 +543,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     if (commonFields.getAccessScope() != ApiAccessScope.PRIVATE_ACCESS) {
       return null;
     }
-    return Optional.ofNullable(commonFields.getPrivateResourceUser().getUserName())
+    return Optional.ofNullable(commonFields.getPrivateResourceUser())
+        .map(ApiPrivateResourceUser::getUserName)
         .orElseGet(
             () ->
                 SamService.rethrowIfSamInterrupted(
