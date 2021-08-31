@@ -131,6 +131,11 @@ jobs:
       uses: broadinstitute/dsp-appsec-trivy-action@v1
       with:
         image: ${{ steps.image-name.outputs.name }}
+    - name: Run trivy vulnerability scanner on GCE cloudsql proxy image
+        # Link to the github location of the action https://github.com/broadinstitute/dsp-appsec-trivy-action
+      uses: broadinstitute/dsp-appsec-trivy-action@v1
+      with:
+        image: gcr.io/cloudsql-docker/gce-proxy:1.24.0-buster
     - name: Push GCR image
       if: steps.skiptest.outputs.is-bump == 'no'
       run: "docker push ${{ steps.image-name.outputs.name }}"
