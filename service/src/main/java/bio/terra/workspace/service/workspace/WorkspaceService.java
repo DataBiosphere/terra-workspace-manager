@@ -306,6 +306,8 @@ public class WorkspaceService {
    */
   public String enablePet(UUID workspaceId, AuthenticatedUserRequest userRequest) {
     final String serviceAccountUserRole = "roles/iam.serviceAccountUser";
+    // Validate that the user is at least a writer in this workspace, as only writers can run
+    // workflows.
     Workspace workspace =
         validateWorkspaceAndAction(
             userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
