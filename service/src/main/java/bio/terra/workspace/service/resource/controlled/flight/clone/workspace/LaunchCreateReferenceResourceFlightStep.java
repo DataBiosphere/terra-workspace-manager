@@ -12,6 +12,7 @@ import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceResourceFlight;
@@ -36,6 +37,10 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    if (CloningInstructions.COPY_REFERENCE != resource.getCloningInstructions()) {
+      // Nothing to do -- don't launch flight
+      return StepResult.getStepResultSuccess();
+    }
     FlightUtils.validateRequiredEntries(
         context.getInputParameters(),
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,

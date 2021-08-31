@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightState;
+import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
@@ -23,7 +25,20 @@ public class AwaitCreateGcpContextFlightStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.CREATE_CLOUD_CONTEXT_JOB_ID, String.class);
     try {
-      context.getStairway().waitForFlight(jobId, 10, 360);
+      final FlightState subflightState = context.getStairway().waitForFlight(jobId, 10, 360);
+      if (FlightStatus.SUCCESS != subflightState.getFlightStatus()) {
+        // no point in retrying the await step
+        return new StepResult(
+            StepStatus.STEP_RESULT_FAILURE_FATAL,
+            subflightState
+                .getException()
+                .orElseGet(
+                    () ->
+                        new RuntimeException(
+                            String.format(
+                                "Subflight had unexpected status %s. No exception for subflight found.",
+                                subflightState.getFlightStatus()))));
+      }
     } catch (DatabaseOperationException | FlightException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }

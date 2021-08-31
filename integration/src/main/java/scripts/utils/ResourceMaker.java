@@ -115,18 +115,24 @@ public class ResourceMaker {
   }
 
   public static GcpGcsBucketResource makeGcsBucketReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name) throws ApiException {
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name,
+      @Nullable CloningInstructionsEnum cloningInstructions) throws ApiException {
 
     var body =
         new CreateGcpGcsBucketReferenceRequestBody()
             .metadata(
                 new ReferenceResourceCommonFields()
-                    .cloningInstructions(CloningInstructionsEnum.NOTHING)
+                    .cloningInstructions(Optional.ofNullable(cloningInstructions).orElse(CloningInstructionsEnum.NOTHING))
                     .description("Description of " + name)
                     .name(name))
             .bucket(new GcpGcsBucketAttributes().bucketName(TEST_BUCKET_NAME));
 
     return resourceApi.createBucketReference(body, workspaceId);
+  }
+
+  public static GcpGcsBucketResource makeGcsBucketReference(
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name) throws ApiException {
+    return makeGcsBucketReference(resourceApi, workspaceId, name, null);
   }
 
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucketUserShared(
