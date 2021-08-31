@@ -157,11 +157,18 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  # TODO(zloery): This endpoint is exposed as a workaround to support the CLI's
+  # use of Nextflow. It will likely be removed in the future in favor of other
+  # cloud sync methods.
   /api/workspaces/v1/{workspaceId}/gcp/enablepet:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Allow a user to use their pet SA in a given workspace
+      description: |
+        This endpoint is exposed as a workaround to support the CLI's
+        use of Nextflow. It will likely be removed in the future in favor of
+        other cloud sync methods.
       operationId: enablePet
       tags: [ Workspace ]
       responses:
