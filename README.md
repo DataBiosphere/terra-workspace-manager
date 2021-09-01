@@ -100,6 +100,14 @@ This build, and others in MC Terra require access to the Broad Institute's
 Artifactory server. That is where supporting libraries are published and where we publish
 the WSM client
 
+#### Building
+
+To, you may have to run a few things before `gradle build`, which builds and tests the code. 
+
+If you are developing in any openAPI components, you must run `./gradlew generateSwaggerCode` before you build.
+
+Additionally, you may need to run `./gradlew :service:dependencies --write-locks` if you add gradle packages.        
+
 ### Dependencies
 We use [Gradle's dependency locking](https://docs.gradle.org/current/userguide/dependency_locking.html)
 to ensure that builds use the same transitive dependencies, so they're reproducible. This means that

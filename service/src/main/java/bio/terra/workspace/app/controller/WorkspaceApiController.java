@@ -3,27 +3,10 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
-import bio.terra.workspace.generated.model.ApiCloudPlatform;
-import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
-import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
-import bio.terra.workspace.generated.model.ApiCreateDataReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
-import bio.terra.workspace.generated.model.ApiDataReferenceDescription;
-import bio.terra.workspace.generated.model.ApiDataReferenceList;
-import bio.terra.workspace.generated.model.ApiDataRepoSnapshot;
-import bio.terra.workspace.generated.model.ApiGcpContext;
-import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
-import bio.terra.workspace.generated.model.ApiIamRole;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
-import bio.terra.workspace.generated.model.ApiReferenceTypeEnum;
-import bio.terra.workspace.generated.model.ApiRoleBinding;
-import bio.terra.workspace.generated.model.ApiRoleBindingList;
-import bio.terra.workspace.generated.model.ApiUpdateDataReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
-import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
-import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.service.azurecompute.AzureComputeService;
+import bio.terra.workspace.service.azurecompute.model.CreateDeploymentRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -44,6 +27,7 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -68,6 +52,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
   private final ReferencedResourceService referenceResourceService;
+  private final AzureComputeService azureComputeService;
 
   @Autowired
   public WorkspaceApiController(
@@ -76,13 +61,15 @@ public class WorkspaceApiController implements WorkspaceApi {
       SamService samService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
-      ReferencedResourceService referenceResourceService) {
+      ReferencedResourceService referenceResourceService,
+      AzureComputeService azureComputeService) {
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.samService = samService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
     this.referenceResourceService = referenceResourceService;
+    this.azureComputeService = azureComputeService;
   }
 
   private final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
@@ -134,6 +121,31 @@ public class WorkspaceApiController implements WorkspaceApi {
                     .map(this::buildWorkspaceDescription)
                     .collect(Collectors.toList()));
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> createDeployment(@RequestBody ApiCreateDeploymentRequest request) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
+    logger.info(
+        "Creating deployment {} for {}", request.getDeploymentName(), userRequest.getEmail());
+    CreateDeploymentRequest internalRequest =
+        new CreateDeploymentRequest(request.getTemplate(), request.getDeploymentName());
+
+    ResponseEntity<Void> result;
+
+    try {
+      azureComputeService.create(internalRequest);
+      result = new ResponseEntity<>(null, HttpStatus.OK);
+    } catch (IOException e) {
+      result = new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+      logger.error(
+          "failed to create deployment {} for user {}"
+              .format(request.getDeploymentName(), userRequest.getEmail()),
+          e);
+    }
+
+    return result;
   }
 
   private ApiWorkspaceDescription buildWorkspaceDescription(Workspace workspace) {

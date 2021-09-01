@@ -157,6 +157,33 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/azuredeployment:
+    paramaters:
+      - $ref: '#/components/paramaters/WorkspaceId'
+    post:
+      summary: Create an azure deployment in a workspace
+      #TODO: does this matter?
+      operationId: createDeployment
+      tags: [Workspace]
+      requestBody:
+        required: true
+        description: Body specifying a template and other information about an azure compute deployment
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDeploymentRequest'
+      responses:
+        '200':
+          description: Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+
+
   ## DEPRECATED PATHS ##
   # TODO(PF-404): remove this in favor of reference-type specific objects.
   /api/workspaces/v1/{workspaceId}/datareferences:
@@ -1338,6 +1365,18 @@ components:
           description: Description for the referenced resource clone, or null to use original.
           type: string
 
+    CreateDeploymentRequest:
+      type: object
+      required: [template, deploymentName]
+      properties:
+        template:
+          type: string
+          description: The json template descripting the resource
+        deploymentName:
+          type: string
+          description: The name of the deployment. This should be retained by caller for subsequent polling.
+
+
     ### DEPRECATED SCHEMAS ###
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     CreateDataReferenceRequestBody:
@@ -2029,7 +2068,7 @@ components:
           type: boolean
         matchesStorageClass:
           description: >-
-            Objects having any of the storage classes specified by this condition will be matched. 
+            Objects having any of the storage classes specified by this condition will be matched.
             Values include "STANDARD", "NEARLINE", "COLDLINE", "ARCHIVE", "MULTI_REGIONAL",
             "REGIONAL", and "DURABLE_REDUCED_AVAILABILITY".
           type: array
