@@ -41,7 +41,7 @@ public class FindResourcesToCloneStep implements Step {
       batch = resourceDao.enumerateResources(sourceWorkspaceId, null, null, offset, limit);
       offset += limit;
       final List<WsmResource> cloneableResources =
-          batch.stream().filter(this::isCloneable).collect(Collectors.toList());
+          batch.stream().filter(FindResourcesToCloneStep::isCloneable).collect(Collectors.toList());
       cloneableResources.forEach(
           r -> result.add(new ResourceWithFlightId(r, context.getStairway().createFlightId())));
     } while (batch.size() == limit);
@@ -58,7 +58,7 @@ public class FindResourcesToCloneStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private boolean isCloneable(WsmResource resource) {
+  private static boolean isCloneable(WsmResource resource) {
     return StewardshipType.REFERENCED == resource.getStewardshipType()
         || (StewardshipType.CONTROLLED == resource.getStewardshipType()
             && (WsmResourceType.GCS_BUCKET == resource.getResourceType()

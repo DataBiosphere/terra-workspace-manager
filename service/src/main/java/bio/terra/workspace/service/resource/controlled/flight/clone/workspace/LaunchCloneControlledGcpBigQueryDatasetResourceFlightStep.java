@@ -17,6 +17,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDataset
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implements Step {
 
@@ -34,8 +35,7 @@ public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implement
     validateRequiredEntries(
         context.getInputParameters(),
         JobMapKeys.AUTH_USER_INFO.getKeyName(),
-        ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-        ControlledResourceKeys.LOCATION);
+        ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
 
     final var userRequest =
         context
@@ -45,6 +45,7 @@ public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implement
         context
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+    @Nullable
     final var location =
         context.getInputParameters().get(ControlledResourceKeys.LOCATION, String.class);
 

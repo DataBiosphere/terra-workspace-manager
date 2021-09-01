@@ -21,7 +21,9 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
 import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 public class AwaitCreateReferenceResourceFlightStep implements Step {
@@ -40,16 +42,15 @@ public class AwaitCreateReferenceResourceFlightStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     try {
-      FlightUtils.validateRequiredEntries(
-          context.getWorkingMap(), ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT);
 
       // add to the result map
       final var resourceIdToResult =
-          context
+          Optional.ofNullable(context
               .getWorkingMap()
               .get(
                   ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
-                  new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {});
+                  new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
+              .orElseGet(HashMap::new);
       final WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
 
       if (CloningInstructions.COPY_REFERENCE == sourceResource.getCloningInstructions()) {

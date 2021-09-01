@@ -249,10 +249,10 @@ public class WorkspaceService {
   public String cloneWorkspace(
       UUID sourceWorkspaceId,
       AuthenticatedUserRequest userRequest,
+      String spendProfile,
       @Nullable String location,
       @Nullable String displayName,
-      @Nullable String description,
-      String spendProfile) {
+      @Nullable String description) {
     final Workspace sourceWorkspace =
         validateWorkspaceAndAction(
             userRequest, sourceWorkspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);

@@ -27,9 +27,6 @@ public class CreateIdsForFutureStepsStep implements Step {
     workingMap.put(
         ControlledResourceKeys.WORKSPACE_CREATE_JOB_ID, context.getStairway().createFlightId());
     workingMap.put(
-        ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
-        new HashMap<UUID, WsmResourceCloneDetails>());
-    workingMap.put(
         ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID,
         context.getStairway().createFlightId());
     validateRequiredEntries(

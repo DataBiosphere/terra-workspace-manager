@@ -59,7 +59,7 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
     final ReferencedResource destinationResource =
         WorkspaceCloneUtils.buildDestinationReferencedResource(
             resource, destinationWorkspaceId, null, description);
-    // put the ddestination resource in the map, because it's not communicated
+    // put the destination resource in the map, because it's not communicated
     // from the flight as the response (and we need the workspace ID)
     context
         .getWorkingMap()
@@ -81,22 +81,6 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
       // already submitted the flight - treat as success
       return StepResult.getStepResultSuccess();
     }
-    // TODO(jaycarlton): PF-918 don't reuse the service call; launch subflight directly
-    //    final ReferencedResource clonedResource =
-    //        referencedResourceService.cloneReferencedResource(
-    //            resource, destinationWorkspaceId, null, description, userRequest);
-    //    final WsmResourceCloneDetails result = new WsmResourceCloneDetails();
-    //    result.setResourceType(resource.getResourceType());
-    //    result.setStewardshipType(resource.getStewardshipType());
-    //    result.setDestinationResourceId(clonedResource.getResourceId());
-    //    result.setResult(WsmCloneResourceResult.SUCCEEDED);
-    //    result.setCloningInstructions(
-    //        CloningInstructions
-    //            .COPY_REFERENCE); // FIXME(jaycarlton) reference clone doesn't use cloning
-    // instructions
-    //
-    // put result in the output map
-
     FlightUtils.validateRequiredEntries(
         context.getWorkingMap(), ControlledResourceKeys.DESTINATION_REFERENCED_RESOURCE);
     return StepResult.getStepResultSuccess();

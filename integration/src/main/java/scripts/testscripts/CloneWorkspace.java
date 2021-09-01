@@ -56,8 +56,9 @@ import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.DataRepoTestScriptBase;
 import scripts.utils.ResourceMaker;
+import scripts.utils.WorkspaceAllocateTestScriptBase;
 
-public class CloneWorkspace extends DataRepoTestScriptBase {
+public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private static final Logger logger = LoggerFactory.getLogger(CloneWorkspace.class);
   private ControlledGcpResourceApi cloningUserResourceApi;
   private CreatedControlledGcpGcsBucket copyDefinitionSourceBucket;
@@ -90,9 +91,9 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
     super.doSetup(testUsers, sourceOwnerWorkspaceApi);
     // set up 2 users
     assertThat(testUsers, hasSize(2));
-    // user creating the source resource
+    // user creating the source resources
     sourceOwnerUser = testUsers.get(0);
-    // user cloning the bucket resource
+    // user cloning the workspace
     cloningUser = testUsers.get(1);
 
     // Build source GCP project in main test workspace
@@ -143,18 +144,18 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
     ResourceMaker.populateBigQueryDataset(copyDefinitionDataset, sourceOwnerUser, sourceProjectId);
 
     // Create a BigQuery dataset with tables and COPY_RESOURCE
-    copyResourceDatasetName = "copy_resource_" +  nameSuffix.replace('-', '_');
+    copyResourceDatasetName = "copy_resource_dataset";
     copyResourceDataset = makeControlledBigQueryDatasetUserShared(sourceOwnerResourceApi, getWorkspaceId(),
         copyResourceDatasetName, CloningInstructionsEnum.RESOURCE);
     ResourceMaker.populateBigQueryDataset(copyResourceDataset, sourceOwnerUser, sourceProjectId);
 
     // Create a private BQ dataset
-    privateDatasetName = "private_dataset_" + nameSuffix.replace('-', '_');
+    privateDatasetName = "private_dataset";
     privateDataset = makeControlledBigQueryDatasetUserPrivate(sourceOwnerResourceApi, getWorkspaceId(),
         privateDatasetName, sourceOwnerUser.userEmail, privateRoles, CloningInstructionsEnum.RESOURCE);
 
     // Create reference to GCS bucket with COPY_REFERENCE
-    final ApiClient apiClient = ClientTestUtils.getClientForTestUser(testUsers.get(0), server);
+    final ApiClient apiClient = ClientTestUtils.getClientForTestUser(sourceOwnerUser, server);
     final var referencedGcpResourceApi = new ReferencedGcpResourceApi(apiClient);
     final String bucketReferenceName = RandomStringUtils.random(16, true, false);
 
@@ -170,7 +171,6 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
         referencedGcpResourceApi,
         getWorkspaceId(),
         "dataset_resource_1");
-    // create reference to Data Repo Snapshot
   }
 
   @Override
@@ -198,9 +198,7 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
     ClientTestUtils.assertJobSuccess("Clone Workspace",
         cloneResult.getJobReport(), cloneResult.getErrorReport());
     assertNull(cloneResult.getErrorReport());
-
     assertNotNull(cloneResult.getWorkspace());
-    assertNotNull(cloneResult.getWorkspace().getResources());
     assertThat(cloneResult.getWorkspace().getResources(), hasSize(9));
     assertEquals(getWorkspaceId(), cloneResult.getWorkspace().getSourceWorkspaceId());
     destinationWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
@@ -209,8 +207,8 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
     // Verify shared GCS bucket succeeds and is populated
     final ResourceCloneDetails sharedBucketCloneDetails = getOrFail(
         cloneResult.getWorkspace().getResources().stream()
-        .filter(r -> sharedSourceBucket.getResourceId().equals(r.getSourceResourceId()))
-        .findFirst());
+            .filter(r -> sharedSourceBucket.getResourceId().equals(r.getSourceResourceId()))
+            .findFirst());
     logger.info(sharedBucketCloneDetails.toString());
     assertEquals(CloneResourceResult.SUCCEEDED, sharedBucketCloneDetails.getResult());
     assertEquals(CloningInstructionsEnum.RESOURCE, sharedBucketCloneDetails.getCloningInstructions());
@@ -280,17 +278,7 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
     assertNull(copyDefinitionDatasetDetails.getErrorMessage());
 
     final BigQuery bigQueryClient = ClientTestUtils.getGcpBigQueryClient(cloningUser, destinationProjectId);
-    final QueryJobConfiguration listTablesQuery = QueryJobConfiguration.newBuilder(
-        "SELECT * FROM `"
-        + destinationProjectId + "."
-        + copyDefinitionDatasetName
-        + ".INFORMATION_SCHEMA.TABLES`;")
-        .build();
-    // Will throw not found if the dataset doesn't exist
-    final TableResult listTablesResult = bigQueryClient.query(listTablesQuery);
-    final long numRows = StreamSupport.stream(listTablesResult.getValues().spliterator(), false)
-        .count();
-    assertEquals(0, numRows);
+    assertDatasetHasNoTables(destinationProjectId, bigQueryClient, copyDefinitionDatasetName);
 
     // verify clone resource dataset succeeded and has rows and tables
     final ResourceCloneDetails copyResourceDatasetDetails = getOrFail(
@@ -361,6 +349,22 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
     }
   }
 
+  private static void assertDatasetHasNoTables(String destinationProjectId, BigQuery bigQueryClient, String datasetName)
+      throws InterruptedException {
+    final QueryJobConfiguration listTablesQuery = QueryJobConfiguration.newBuilder(
+            "SELECT * FROM `"
+                + destinationProjectId
+                + "."
+                + datasetName
+                + ".INFORMATION_SCHEMA.TABLES`;")
+        .build();
+    // Will throw not found if the dataset doesn't exist
+    final TableResult listTablesResult = bigQueryClient.query(listTablesQuery);
+    final long numRows = StreamSupport.stream(listTablesResult.getValues().spliterator(), false)
+        .count();
+    assertEquals(0, numRows);
+  }
+
   private Blob addFileToBucket(CreatedControlledGcpGcsBucket bucket) throws IOException {
     final Storage sourceOwnerStorageClient = ClientTestUtils.getGcpStorageClient(sourceOwnerUser, sourceProjectId);
     final BlobId blobId = BlobId.of(bucket.getGcpBucket().getAttributes().getBucketName(), GCS_BLOB_NAME);
@@ -375,7 +379,6 @@ public class CloneWorkspace extends DataRepoTestScriptBase {
     final Blob retrievedFile = cloningUserStorageClient.get(blobId);
     assertNotNull(retrievedFile);
     assertEquals(blobId.getName(), retrievedFile.getBlobId().getName());
-//    assertEquals(GCS_BLOB_CONTENT.getBytes(), retrievedFile.getContent());
     return retrievedFile;
   }
 

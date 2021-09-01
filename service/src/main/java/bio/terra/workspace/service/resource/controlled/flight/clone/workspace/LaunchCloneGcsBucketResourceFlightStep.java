@@ -17,6 +17,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResour
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class LaunchCloneGcsBucketResourceFlightStep implements Step {
 
@@ -36,7 +37,7 @@ public class LaunchCloneGcsBucketResourceFlightStep implements Step {
         JobMapKeys.AUTH_USER_INFO.getKeyName(),
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
 
-    // optional key
+    @Nullable
     final var location =
         context.getInputParameters().get(ControlledResourceKeys.LOCATION, String.class);
     final var userRequest =

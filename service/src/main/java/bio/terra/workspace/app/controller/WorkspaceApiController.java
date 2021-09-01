@@ -461,10 +461,10 @@ public class WorkspaceApiController implements WorkspaceApi {
         workspaceService.cloneWorkspace(
             workspaceId,
             getAuthenticatedInfo(),
-            body.getLocation(),
+            body.getSpendProfile(), body.getLocation(),
             body.getDisplayName(),
-            body.getDescription(),
-            body.getSpendProfile());
+            body.getDescription()
+        );
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, getAuthenticatedInfo());
     return new ResponseEntity<>(
         result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));

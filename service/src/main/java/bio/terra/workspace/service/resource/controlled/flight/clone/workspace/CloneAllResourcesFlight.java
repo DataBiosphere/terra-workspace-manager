@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This flight uses a dynamic list of steps depending on ControlledResourceKeys.RESOURCES_TO_CLONE
- * in the input parameters list.
+ * in the input parameters list. Each resource type requires a different subflight to be launched.
  */
 public class CloneAllResourcesFlight extends Flight {
 
@@ -86,12 +86,14 @@ public class CloneAllResourcesFlight extends Flight {
             logger.error(
                 "Unsupported controlled resource type {}",
                 resourceWithFlightId.getResource().getResourceType());
+            break;
         }
         break;
       default:
         logger.error(
-            "Unsupported stewardship type {}}",
+            "Unsupported stewardship type {}",
             resourceWithFlightId.getResource().getStewardshipType());
+        break;
     }
   }
 }

@@ -17,6 +17,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class LaunchWorkspaceCreateFlightStep implements Step {
 
@@ -28,8 +29,6 @@ public class LaunchWorkspaceCreateFlightStep implements Step {
     FlightUtils.validateRequiredEntries(
         context.getInputParameters(),
         JobMapKeys.AUTH_USER_INFO.getKeyName(),
-        WorkspaceFlightMapKeys.DESCRIPTION,
-        WorkspaceFlightMapKeys.DISPLAY_NAME,
         WorkspaceFlightMapKeys.SPEND_PROFILE_ID);
 
     FlightUtils.validateRequiredEntries(
@@ -41,8 +40,10 @@ public class LaunchWorkspaceCreateFlightStep implements Step {
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    @Nullable
     final var description =
         context.getInputParameters().get(WorkspaceFlightMapKeys.DESCRIPTION, String.class);
+    @Nullable
     final var displayName =
         context.getInputParameters().get(WorkspaceFlightMapKeys.DISPLAY_NAME, String.class);
     final var spendProfileId =

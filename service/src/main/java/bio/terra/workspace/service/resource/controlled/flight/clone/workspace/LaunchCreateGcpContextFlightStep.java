@@ -51,7 +51,7 @@ public class LaunchCreateGcpContextFlightStep implements Step {
 
     boolean flightAlreadyExists;
     try {
-      final FlightState flightState = context.getStairway().getFlightState(cloudContextJobId);
+      context.getStairway().getFlightState(cloudContextJobId);
       flightAlreadyExists = true;
     } catch (FlightNotFoundException e) {
       flightAlreadyExists = false;
@@ -66,7 +66,9 @@ public class LaunchCreateGcpContextFlightStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  /** Destroy the created workspace and cloud context */
+  /** Destroy the created workspace and cloud context
+   * TODO: does this go here?
+   * */
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     final var userRequest =

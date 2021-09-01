@@ -17,6 +17,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 /**
  * Given a list of resources to be cloned, build a flight with one step for each, run it, and wait.
@@ -28,8 +29,7 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     validateRequiredEntries(
         context.getInputParameters(),
-        JobMapKeys.AUTH_USER_INFO.getKeyName(),
-        ControlledResourceKeys.LOCATION);
+        JobMapKeys.AUTH_USER_INFO.getKeyName());
     validateRequiredEntries(
         context.getWorkingMap(),
         ControlledResourceKeys.RESOURCES_TO_CLONE,
@@ -39,6 +39,7 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
         context
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    @Nullable
     final var location =
         context.getInputParameters().get(ControlledResourceKeys.LOCATION, String.class);
     final var cloneAllResourcesFlightId =

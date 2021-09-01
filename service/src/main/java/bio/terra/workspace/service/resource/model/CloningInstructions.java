@@ -43,6 +43,7 @@ public enum CloningInstructions {
     sqlMap.put(COPY_REFERENCE, "COPY_REFERENCE");
   }
 
+  @Nullable
   public static CloningInstructions fromApiModel(@Nullable ApiCloningInstructionsEnum modelEnum) {
     if (null == modelEnum) {
       return null;

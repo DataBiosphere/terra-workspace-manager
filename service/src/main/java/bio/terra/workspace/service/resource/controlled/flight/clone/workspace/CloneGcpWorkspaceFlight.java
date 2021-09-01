@@ -10,12 +10,15 @@ public class CloneGcpWorkspaceFlight extends Flight {
 
   public CloneGcpWorkspaceFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
-    // Flight Map - FIXME
-    // 0. Create a job id for create cloud context sub-flight
-    // 1. Create destination workspace and cloud context
-    // 2. Build a list of resources to clone
-    // 3. Clone a resource on the list. Rerun until all resources are cloned.
-    // 4. Build the response payload.
+    // Flight Map
+    // 0. Build a list of resources to clone
+    // 1. Create job IDs for future sub-flights and a couple other things
+    // 2. Launch the flight to create destination workspace
+    // 2a. Wait for the workspace create flight.
+    // 3. Launch a flight to create the GCP cloud context
+    // 3a. Await the context flight
+    // 4. Launch a flight to clone all resources on the list
+    // 4a. Await the clone all resources flight and build a response
     final var flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
     addStep(new FindResourcesToCloneStep(flightBeanBag.getResourceDao()), RetryRules.cloud());
 

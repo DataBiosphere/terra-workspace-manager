@@ -328,7 +328,7 @@ public class ClientTestUtils {
   }
 
   /**
-   * Check Optional's value is present and return it
+   * Check Optional's value is present and return it, or else fail an assertion.
    * @param optional - Optional expression
    * @param <T> - value type of optional
    * @return - value of optional, if present
