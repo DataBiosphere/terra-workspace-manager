@@ -739,7 +739,7 @@ public class SamService {
    * Fetch the email of a user's pet service account in a given project. This request to Sam will
    * create the pet SA if it doesn't already exist.
    */
-  public String getPetSaEmail(String projectId, AuthenticatedUserRequest userRequest) {
+  public String getOrCreatePetSaEmail(String projectId, AuthenticatedUserRequest userRequest) {
     GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
     try {
       return googleApi.getPetServiceAccount(projectId);

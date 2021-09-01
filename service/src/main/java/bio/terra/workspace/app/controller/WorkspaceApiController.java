@@ -446,7 +446,8 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<String> enablePet(UUID workspaceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    String petSaEmail = workspaceService.enablePet(workspaceId, userRequest);
+    String petSaEmail =
+        workspaceService.enablePetServiceAccountImpersonation(workspaceId, userRequest);
     return new ResponseEntity<>(petSaEmail, HttpStatus.OK);
   }
 }

@@ -304,7 +304,8 @@ public class WorkspaceService {
    *
    * @return The email identifier of the user's pet SA in the given workspace.
    */
-  public String enablePet(UUID workspaceId, AuthenticatedUserRequest userRequest) {
+  public String enablePetServiceAccountImpersonation(
+      UUID workspaceId, AuthenticatedUserRequest userRequest) {
     final String serviceAccountUserRole = "roles/iam.serviceAccountUser";
     // Validate that the user is at least a writer in this workspace, as only writers can run
     // workflows.
@@ -315,9 +316,9 @@ public class WorkspaceService {
 
     String userEmail =
         SamService.rethrowIfSamInterrupted(
-            () -> samService.getRequestUserEmail(userRequest), "getUserEmail");
+            () -> samService.getRequestUserEmail(userRequest), "getRequestUserEmail");
     String projectId = getRequiredGcpProject(workspaceId);
-    String petSaEmail = samService.getPetSaEmail(projectId, userRequest);
+    String petSaEmail = samService.getOrCreatePetSaEmail(projectId, userRequest);
     ServiceAccountName petSaName =
         ServiceAccountName.builder().email(petSaEmail).projectId(projectId).build();
     try {

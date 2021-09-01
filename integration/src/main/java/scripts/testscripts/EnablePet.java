@@ -1,5 +1,7 @@
 package scripts.testscripts;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
@@ -36,7 +38,7 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
         .setPermissions(Collections.singletonList("iam.serviceAccounts.actAs"));
     TestIamPermissionsResponse response = iamClient.projects().serviceAccounts()
         .testIamPermissions(fullyQualifiedSaName, testIamRequest).execute();
-    assertEquals(1, response.getPermissions().size());
+    assertThat(response.getPermissions(), hasSize(1));
     assertEquals("iam.serviceAccounts.actAs", response.getPermissions().get(0));
   }
 }
