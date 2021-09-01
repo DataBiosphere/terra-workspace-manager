@@ -1,9 +1,9 @@
 package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.not;
 
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
@@ -29,30 +29,20 @@ public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
   private WorkspaceApi secondUserApi;
 
   @Override
-  protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws Exception {
+  protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi firstUserApi) throws Exception {
+    super.doSetup(testUsers, firstUserApi);
     assertThat("There must be two test users to run this test",
         testUsers.size() == 2);
     // Primary test user (index 0) is handled in the test base.
     TestUserSpecification nonWorkspaceUser = testUsers.get(1);
     secondUserApi = ClientTestUtils.getWorkspaceClient(nonWorkspaceUser, server);
-    // We expect test users to never have permanent workspaces. However, they may have some
-    // workspaces due to previous test failures. Before running this test, we clean up all
-    // workspaces for both test users.
-    WorkspaceDescriptionList preTestWorkspaceList = workspaceApi.listWorkspaces(/*offset=*/0, /*limit=*/10000);
-    for (WorkspaceDescription workspace : preTestWorkspaceList.getWorkspaces()) {
-      workspaceApi.deleteWorkspace(workspace.getId());
-    }
-    WorkspaceDescriptionList secondUserPreTestWorkspaceList = secondUserApi.listWorkspaces(/*offset=*/0, /*limit=*/10000);
-    for (WorkspaceDescription workspace : secondUserPreTestWorkspaceList.getWorkspaces()) {
-      secondUserApi.deleteWorkspace(workspace.getId());
-    }
 
     // Set up the test fixture workspaces. This must happen after cleaning up a user's workspaces.
-    super.doSetup(testUsers, workspaceApi);
+    // First workspace is set up via test base.
     workspaceId2 = UUID.randomUUID();
-    createWorkspace(workspaceId2, getSpendProfileId(), workspaceApi);
+    createWorkspace(workspaceId2, getSpendProfileId(), firstUserApi);
     workspaceId3 = UUID.randomUUID();
-    createWorkspace(workspaceId3, getSpendProfileId(), workspaceApi);
+    createWorkspace(workspaceId3, getSpendProfileId(), firstUserApi);
   }
 
   @Override
@@ -64,30 +54,40 @@ public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
   }
 
   @Override
-  protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
+  protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi firstUserApi)
       throws Exception {
-    // First, check that listing 3 workspaces will return the 3 we created.
-    WorkspaceDescriptionList workspaceList = workspaceApi.listWorkspaces(/*offset=*/0, /*limit=*/3);
+    // For the sake of listing "all" of a user's workspaces we must have a maximum upper limit. Test
+    // users are expected to never have permanent workspaces, so this should be more than sufficient.
+    int MAX_USER_WORKSPACES = 10000;
+
+    // While test users should not have any permanent workspaces, they may have some entries from
+    // previous failures or other tests running in parallel. We therefore cannot assume they only
+    // have 3 workspaces.
+    WorkspaceDescriptionList workspaceList = firstUserApi.listWorkspaces(/*offset=*/0, /*limit=*/
+        MAX_USER_WORKSPACES);
     List<UUID> workspaceIdList = workspaceList.getWorkspaces().stream().map(WorkspaceDescription::getId).collect(
         Collectors.toList());
-    assertThat(workspaceIdList, containsInAnyOrder(equalTo(getWorkspaceId()), equalTo(workspaceId2), equalTo(workspaceId3)));
+    assertThat(workspaceIdList, hasItems(getWorkspaceId(), workspaceId2, workspaceId3));
 
-    // Next, call the endpoint three times with limit 1 and different offsets.
+    // Next, cover the same set of workspaces across 3 pages.
+    int pageSize = MAX_USER_WORKSPACES / 3;
     List<WorkspaceDescription> callResults = new ArrayList<>();
-    callResults.addAll(workspaceApi.listWorkspaces(/*offset=*/0, /*limit=*/1).getWorkspaces());
-    callResults.addAll(workspaceApi.listWorkspaces(/*offset=*/1, /*limit=*/1).getWorkspaces());
-    callResults.addAll(workspaceApi.listWorkspaces(/*offset=*/2, /*limit=*/1).getWorkspaces());
+    callResults.addAll(firstUserApi.listWorkspaces(/*offset=*/0, /*limit=*/pageSize).getWorkspaces());
+    callResults.addAll(firstUserApi.listWorkspaces(/*offset=*/pageSize, /*limit=*/pageSize).getWorkspaces());
+    // pageSize may not be divisible by 3, so cover all remaining workspaces here instead.
+    callResults.addAll(firstUserApi.listWorkspaces(/*offset=*/pageSize*2, /*limit=*/(
+        MAX_USER_WORKSPACES - 2*pageSize)).getWorkspaces());
     List<UUID> callResultIdList = workspaceList.getWorkspaces().stream().map(WorkspaceDescription::getId).collect(
         Collectors.toList());
-    assertThat(callResultIdList, containsInAnyOrder(equalTo(getWorkspaceId()), equalTo(workspaceId2), equalTo(workspaceId3)));
-
-    // Assert that even with a limit > 3, we still only see the workspaces created here.
-    WorkspaceDescriptionList largeLimitResult = workspaceApi.listWorkspaces(/*offset=*/0, /*limit=*/100);
-    assertEquals(3, largeLimitResult.getWorkspaces().size());
+    assertThat(callResultIdList, hasItems(getWorkspaceId(), workspaceId2, workspaceId3));
 
     // Validate that a different user will not see any of these workspaces.
-    WorkspaceDescriptionList secondUserResult = secondUserApi.listWorkspaces(0, 3);
-    assertEquals(0, secondUserResult.getWorkspaces().size());
+    WorkspaceDescriptionList secondUserResult = secondUserApi.listWorkspaces(0, MAX_USER_WORKSPACES);
+    List<UUID> secondCallResultList = secondUserResult.getWorkspaces().stream().map(WorkspaceDescription::getId)
+        .collect(Collectors.toList());
+    assertThat(secondCallResultList, not(hasItem(getWorkspaceId())));
+    assertThat(secondCallResultList, not(hasItem(workspaceId2)));
+    assertThat(secondCallResultList, not(hasItem(workspaceId3)));
   }
 
 }
