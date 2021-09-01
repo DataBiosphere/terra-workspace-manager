@@ -17,11 +17,6 @@ import java.util.stream.Collectors;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
-/**
- * This test exercises WSM's listWorkspaces endpoint. Note that because this test reads the full
- * set of a user's workspaces, it is not thread safe and only one instance of this test should
- * run against a server at once.
- */
 public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
 
   private UUID workspaceId2;
