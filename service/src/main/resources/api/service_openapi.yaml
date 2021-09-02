@@ -181,6 +181,24 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
+    get:
+      summary: Get an azure deployment from the azure deployment service
+      parameters:
+        - $ref: '#/components/parameters/DeploymentName'
+      operationId: getDeployment
+      tags: [Workspace]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetDeployment'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 
 
 
@@ -1288,6 +1306,14 @@ components:
         minimum: 1
         default: 10
 
+    DeploymentName:
+      name: deploymentName
+      in: query
+      description: The name of the deployment (used an an azure idenifier)
+      required: true
+      schema:
+        type: string
+
     ResourceId:
       name: resourceId
       in: path
@@ -1367,7 +1393,7 @@ components:
 
     CreateDeploymentRequest:
       type: object
-      required: [template, deploymentName]
+      required: [deploymentName]
       properties:
         template:
           type: string
@@ -1719,6 +1745,17 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/WorkspaceDescription'
+
+    GetDeployment:
+      type: object
+      required: [name, provisioningState]
+      properties:
+        name:
+          description: deployment name, echoed back
+          type: string
+        provisioningState:
+          type: string
+          description: current state of deployment provisioning (e.g. 'Succeeded', 'Failed'). See full enum here https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.websites.models.provisioningstate?view=azure-dotnet
 
     CreateCloudContextRequest:
       type: object

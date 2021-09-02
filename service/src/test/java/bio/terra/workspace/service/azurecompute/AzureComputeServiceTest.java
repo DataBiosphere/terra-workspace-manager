@@ -47,6 +47,5 @@ public class AzureComputeServiceTest extends BaseConnectedTest {
     Deployment result = azureComputeService.pollUntilSuccess(deploy);
 
     assertEquals(result.provisioningState(), "Succeeded");
-    assertEquals(result.mode(), DeploymentMode.COMPLETE);
   }
 }

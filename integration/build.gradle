@@ -35,6 +35,7 @@ dependencies {
 
         datarepoClient = "1.0.155-SNAPSHOT"
         testRunnerVersion = "0.0.7-SNAPSHOT"
+        commonsIO = '2.11.0'
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
     implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"
@@ -46,6 +47,7 @@ dependencies {
     implementation "ch.qos.logback:logback-classic:${logback}"
     implementation "org.slf4j:slf4j-api:${slf4j}"
     implementation "org.hamcrest:hamcrest:${hamcrest}"
+    implementation group: 'commons-io', name: 'commons-io', version: "${commonsIO}"
 
     // Google dependencies
     constraints {

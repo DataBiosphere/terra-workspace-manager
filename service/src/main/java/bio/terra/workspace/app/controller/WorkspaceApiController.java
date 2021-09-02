@@ -28,12 +28,15 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -127,13 +130,29 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<Void> createDeployment(@RequestBody ApiCreateDeploymentRequest request) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
+    String resolvedTemplate;
+    logger.info(
+        "Received a create deployment request.\n\tTemplate contents:\n\t{}", request.getTemplate());
+
+    if (request.getTemplate() == null) {
+      logger.info("Deployment request did not include a template, using default");
+      try (InputStream stream =
+          getClass().getClassLoader().getResourceAsStream("azuredeploy.json")) {
+        resolvedTemplate = IOUtils.toString(stream, StandardCharsets.UTF_8);
+      } catch (IOException e) {
+        throw new RuntimeException("Problem reading default template", e);
+      }
+    } else {
+      logger.info("Deployment request included a template, using that");
+      resolvedTemplate = request.getTemplate();
+    }
+
     logger.info(
         "Creating deployment {} for {}", request.getDeploymentName(), userRequest.getEmail());
     CreateDeploymentRequest internalRequest =
-        new CreateDeploymentRequest(request.getTemplate(), request.getDeploymentName());
+        new CreateDeploymentRequest(resolvedTemplate, request.getDeploymentName());
 
     ResponseEntity<Void> result;
-
     try {
       azureComputeService.create(internalRequest);
       result = new ResponseEntity<>(null, HttpStatus.OK);
