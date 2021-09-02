@@ -52,7 +52,7 @@ public class ClientTestUtils {
   private static final Logger logger = LoggerFactory.getLogger(ClientTestUtils.class);
 
   // Required scopes for client tests include the usual login scopes and GCP scope.
-  private static final List<String> TEST_USER_SCOPES =
+  public static final List<String> TEST_USER_SCOPES =
       List.of("openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
 
   private ClientTestUtils() {}
@@ -132,6 +132,14 @@ public class ClientTestUtils {
             AuthenticationUtils.getDelegatedUserCredential(testUser, TEST_USER_SCOPES)));
   }
 
+  public static Iam getGcpIamClientFromToken(AccessToken accessToken)
+      throws GeneralSecurityException, IOException {
+    return new Iam(
+        GoogleNetHttpTransport.newTrustedTransport(),
+        JacksonFactory.getDefaultInstance(),
+        new HttpCredentialsAdapter(new GoogleCredentials(accessToken)));
+  }
+
   public static Storage getGcpStorageClient(TestUserSpecification testUser, String projectId)
       throws IOException {
     GoogleCredentials userCredential =
@@ -153,6 +161,12 @@ public class ClientTestUtils {
   public static WorkspaceApi getWorkspaceClient(
       TestUserSpecification testUser, ServerSpecification server) throws IOException {
     final ApiClient apiClient = getClientForTestUser(testUser, server);
+    return new WorkspaceApi(apiClient);
+  }
+
+  public static WorkspaceApi getWorkspaceClientFromToken(
+      AccessToken accessToken, ServerSpecification server) throws IOException {
+    final ApiClient apiClient = buildClient(accessToken, server);
     return new WorkspaceApi(apiClient);
   }
 

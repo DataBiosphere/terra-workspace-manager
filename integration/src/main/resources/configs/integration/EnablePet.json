@@ -8,10 +8,10 @@
     {
       "name": "EnablePet",
       "numberOfUserJourneyThreadsToRun": 1,
-      "userJourneyThreadPoolSize": 2,
+      "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 1,
       "expectedTimeForEachUnit": "MINUTES",
-      "parameters": ["wm-default-spend-profile"]
+      "parameters": ["wm-default-spend-profile", "https://sam.dsde-dev.broadinstitute.org"]
     }
   ],
   "testUserFiles": ["elijah.json"]

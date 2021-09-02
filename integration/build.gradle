@@ -35,6 +35,7 @@ dependencies {
 
         datarepoClient = "1.0.155-SNAPSHOT"
         testRunnerVersion = "0.0.7-SNAPSHOT"
+        samClient = "0.1-61135c7"
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
     implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"
@@ -67,8 +68,12 @@ dependencies {
     // Workspace Manager client library
     implementation project(":client")
 
+    // Sam client library
+    implementation "org.broadinstitute.dsde.workbench:sam-client_2.12:${samClient}"
+
     // Terra Test Runner Library
     implementation "bio.terra:terra-test-runner:${testRunnerVersion}"
+
 }
 
 version = gradle.wsmVersion
