@@ -26,32 +26,17 @@ import org.springframework.stereotype.Component;
 public class AzureComputeService {
   private final Logger logger = LoggerFactory.getLogger(AzureComputeService.class);
 
-  // TODO credentials
+  // TODO credentials in vault
   @Autowired
   public AzureComputeService() {}
 
-  /** The client name required by CRL. */
-  private static final String CLIENT_NAME = "azurecompute";
-
-  /** How long to keep the resource before Janitor does the cleanup. */
-  private static final Duration TEST_RESOURCE_TIME_TO_LIVE = Duration.ofHours(1);
-
   // TODO replace me
-  private static final UUID APPLICATION_ID =
-      UUID.fromString("51ef1ef2-b571-43b3-bcb3-ecaa3b49f0ed");
-  private static final UUID HOME_TENANT_ID =
-      UUID.fromString("fad90753-2022-4456-9b0a-c7e5b934e408");
-  private static final String SECRET = "v6828GxdSEXKPR5.oAUlEVAhv2_u_f8J~J";
-  private static final UUID TENANT_ID = UUID.fromString("0cb7a640-45a2-4ed6-be9f-63519f86e04b");
-  private static final UUID SUBSCRIPTION_ID =
-      UUID.fromString("3efc5bdf-be0e-44e7-b1d7-c08931e3c16c");
-  private static final String RESOURCE_GROUP = "mrg-rtitle-1-previe-20210819100327";
-  //    private static final UUID APPLICATION_ID = UUID.fromString("app-id");
-  //    private static final UUID HOME_TENANT_ID = UUID.fromString("home-tenant-id");
-  //    private static final String SECRET = "secret";
-  //    private static final UUID TENANT_ID = UUID.fromString("tenant-id");
-  //    private static final UUID SUBSCRIPTION_ID = UUID.fromString("subscription-id");
-  //    private static final String RESOURCE_GROUP = "mrg-name";
+      private static final UUID APPLICATION_ID = UUID.fromString("app-id");
+      private static final UUID HOME_TENANT_ID = UUID.fromString("home-tenant-id");
+      private static final String SECRET = "secret";
+      private static final UUID TENANT_ID = UUID.fromString("tenant-id");
+      private static final UUID SUBSCRIPTION_ID = UUID.fromString("subscription-id");
+      private static final String RESOURCE_GROUP = "mrg-name";
 
   public static final String DEFAULT_CLIENT_NAME = "azure-compute-client";
 
