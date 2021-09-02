@@ -5,6 +5,7 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.model.CreateDeploymentRequest;
 import bio.terra.workspace.model.GetDeployment;
 import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.Disabled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.testscripts.WorkspaceLifecycle;
@@ -18,6 +19,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
+@Disabled
 public class AzureComputeLifecycle extends WorkspaceApiTestScriptBase {
 
     private static final Logger logger = LoggerFactory.getLogger(WorkspaceLifecycle.class);

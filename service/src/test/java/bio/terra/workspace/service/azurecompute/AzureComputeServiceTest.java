@@ -14,11 +14,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Disabled
 public class AzureComputeServiceTest extends BaseConnectedTest {
   private final Logger logger = LoggerFactory.getLogger(AzureComputeServiceTest.class);
 

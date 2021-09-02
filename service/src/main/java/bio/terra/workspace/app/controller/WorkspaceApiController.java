@@ -167,6 +167,11 @@ public class WorkspaceApiController implements WorkspaceApi {
     return result;
   }
 
+  @Override
+  public ResponseEntity<ApiGetDeployment> getDeployment(@PathVariable("deploymentName") String deploymentName) {
+    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+  }
+
   private ApiWorkspaceDescription buildWorkspaceDescription(Workspace workspace) {
     ApiGcpContext gcpContext =
         workspace.getGcpCloudContext().map(GcpCloudContext::toApi).orElse(null);
