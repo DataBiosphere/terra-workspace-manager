@@ -46,7 +46,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String CLONED_RESOURCE_DEFINITION = "clonedResourceDefinition";
     public static final String CLONING_INSTRUCTIONS = "cloningInstructions";
     public static final String CONTROL_PLANE_PROJECT_ID = "controlPlaneProjectId";
-    public static final String CREATE_CLOUD_CONTEXT_JOB_ID = "createCloudContextJobId";
+    public static final String CREATE_CLOUD_CONTEXT_FLIGHT_ID = "createCloudContextFlightId";
     public static final String DESTINATION_BUCKET_NAME = "destinationBucketName";
     public static final String DESTINATION_CLONE_INPUTS = "destinationCloneInputs";
     public static final String DESTINATION_DATASET_NAME = "destinationDatasetName";
@@ -60,7 +60,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String STORAGE_TRANSFER_JOB_NAME = "storageTransferJobName";
     public static final String STORAGE_TRANSFER_SERVICE_SA_EMAIL = "storageTransferServiceSAEmail";
     public static final String TABLE_TO_JOB_ID_MAP = "tableToJobIdMap";
-    public static final String WORKSPACE_CREATE_JOB_ID = "workspaceCreateJobId";
+    public static final String WORKSPACE_CREATE_FLIGHT_ID = "workspaceCreateFlightId";
   }
 
   /** Common resource keys */

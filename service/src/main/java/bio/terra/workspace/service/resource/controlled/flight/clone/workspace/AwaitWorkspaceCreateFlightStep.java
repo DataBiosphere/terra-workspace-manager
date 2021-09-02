@@ -18,17 +18,20 @@ public class AwaitWorkspaceCreateFlightStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    FlightUtils.validateRequiredEntries(context.getWorkingMap(),
-        ControlledResourceKeys.WORKSPACE_CREATE_JOB_ID);
+    FlightUtils.validateRequiredEntries(
+        context.getWorkingMap(), ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID);
     final var workspaceCreateJobId =
-        context.getWorkingMap().get(ControlledResourceKeys.WORKSPACE_CREATE_JOB_ID, String.class);
+        context.getWorkingMap().get(ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID, String.class);
     try {
       final FlightState flightState =
           context.getStairway().waitForFlight(workspaceCreateJobId, 10, 360);
       if (FlightStatus.SUCCESS != flightState.getFlightStatus()) {
         // retrying this step won't help if the flight already failed
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL,
-            flightState.getException().orElseGet(() -> new RuntimeException("No exception found for subflight.")));
+        return new StepResult(
+            StepStatus.STEP_RESULT_FAILURE_FATAL,
+            flightState
+                .getException()
+                .orElseGet(() -> new RuntimeException("No exception found for subflight.")));
       }
     } catch (DatabaseOperationException | FlightException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);

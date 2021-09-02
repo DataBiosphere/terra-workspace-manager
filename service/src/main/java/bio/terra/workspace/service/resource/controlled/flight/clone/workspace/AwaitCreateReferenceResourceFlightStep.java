@@ -16,7 +16,6 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
-import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
 import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
@@ -45,11 +44,12 @@ public class AwaitCreateReferenceResourceFlightStep implements Step {
 
       // add to the result map
       final var resourceIdToResult =
-          Optional.ofNullable(context
-              .getWorkingMap()
-              .get(
-                  ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
-                  new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
+          Optional.ofNullable(
+                  context
+                      .getWorkingMap()
+                      .get(
+                          ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
+                          new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
               .orElseGet(HashMap::new);
       final WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
 
@@ -61,13 +61,8 @@ public class AwaitCreateReferenceResourceFlightStep implements Step {
             WorkspaceCloneUtils.flightStatusToCloneResult(
                 subflightState.getFlightStatus(), sourceResource);
         cloneDetails.setResult(cloneResult);
-        final FlightMap resultMap =
-            subflightState
-                .getResultMap()
-                .orElseThrow(
-                    () ->
-                        new MissingRequiredFieldsException(
-                            String.format("Result Map not found for flight ID %s", context)));
+        final FlightMap resultMap = FlightUtils.getResultMapRequired(flightId, subflightState);
+
         // Input to the create flight
         final var destinationReferencedResource =
             context
@@ -85,10 +80,11 @@ public class AwaitCreateReferenceResourceFlightStep implements Step {
         cloneDetails.setCloningInstructions(destinationReferencedResource.getCloningInstructions());
         cloneDetails.setSourceResourceId(sourceResource.getResourceId());
         cloneDetails.setDestinationResourceId(clonedReferencedResourceId);
-        cloneDetails.setErrorMessage(
-            subflightState.getException().map(Throwable::getMessage).orElse(null));
-
+        cloneDetails.setErrorMessage(FlightUtils.getFlightErrorMessage(subflightState));
+        cloneDetails.setName(sourceResource.getName());
+        cloneDetails.setDescription(sourceResource.getDescription());
       } else {
+        // No flight was created
         cloneDetails.setResult(WsmCloneResourceResult.SKIPPED);
         cloneDetails.setResourceType(sourceResource.getResourceType());
         cloneDetails.setStewardshipType(sourceResource.getStewardshipType());
@@ -96,6 +92,8 @@ public class AwaitCreateReferenceResourceFlightStep implements Step {
         cloneDetails.setSourceResourceId(sourceResource.getResourceId());
         cloneDetails.setDestinationResourceId(null);
         cloneDetails.setErrorMessage(null);
+        cloneDetails.setName(sourceResource.getName());
+        cloneDetails.setDescription(sourceResource.getDescription());
       }
       resourceIdToResult.put(sourceResource.getResourceId(), cloneDetails);
       context

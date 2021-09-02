@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.FlightState;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
@@ -33,7 +32,7 @@ public class LaunchCreateGcpContextFlightStep implements Step {
     validateRequiredEntries(
         context.getWorkingMap(),
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-        ControlledResourceKeys.CREATE_CLOUD_CONTEXT_JOB_ID);
+        ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID);
 
     final var sourceWorkspaceId =
         context.getInputParameters().get(ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
@@ -47,7 +46,7 @@ public class LaunchCreateGcpContextFlightStep implements Step {
     final var cloudContextJobId =
         context
             .getWorkingMap()
-            .get(ControlledResourceKeys.CREATE_CLOUD_CONTEXT_JOB_ID, String.class);
+            .get(ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID, String.class);
 
     boolean flightAlreadyExists;
     try {
@@ -66,9 +65,7 @@ public class LaunchCreateGcpContextFlightStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  /** Destroy the created workspace and cloud context
-   * TODO: does this go here?
-   * */
+  /** Destroy the created workspace and cloud context TODO: does this go here? */
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     final var userRequest =

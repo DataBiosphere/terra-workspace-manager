@@ -11,6 +11,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightException;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
@@ -18,7 +19,6 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
 import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
@@ -52,13 +52,7 @@ public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements
           WorkspaceCloneUtils.flightStatusToCloneResult(subflightState.getFlightStatus(), resource);
       cloneDetails.setResult(cloneResult);
 
-      final FlightMap resultMap =
-          subflightState
-              .getResultMap()
-              .orElseThrow(
-                  () ->
-                      new MissingRequiredFieldsException(
-                          String.format("Result Map not found for flight ID %s", subflightId)));
+      final FlightMap resultMap = FlightUtils.getResultMapRequired(subflightId, subflightState);
       final var clonedDataset =
           resultMap.get(
               JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpBigQueryDataset.class);
@@ -72,12 +66,11 @@ public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements
               .map(ApiGcpBigQueryDatasetResource::getMetadata)
               .map(ApiResourceMetadata::getResourceId)
               .orElse(null));
-      String errorMessage = subflightState.getException().map(Throwable::getMessage).orElse(null);
-      if (null == errorMessage && subflightState.getException().isPresent()) {
-        // If the exception doesn't provide a message, we can scrape the class name at least.
-        errorMessage = subflightState.getException().map(e -> e.getClass().getName()).orElse(null);
-      }
+      String errorMessage = FlightUtils.getFlightErrorMessage(subflightState);
       cloneDetails.setErrorMessage(errorMessage);
+
+      cloneDetails.setName(resource.getName());
+      cloneDetails.setDescription(resource.getDescription());
       // add to the map
       final var resourceIdToResult =
           Optional.ofNullable(

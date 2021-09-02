@@ -15,6 +15,8 @@ public class WsmResourceCloneDetails {
   private UUID destinationResourceId;
   private WsmCloneResourceResult result;
   private String errorMessage;
+  private String name;
+  private String description;
 
   public WsmResourceCloneDetails() {}
 
@@ -74,6 +76,22 @@ public class WsmResourceCloneDetails {
     this.errorMessage = errorMessage;
   }
 
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
   public ApiResourceCloneDetails toApiModel() {
     return new ApiResourceCloneDetails()
         .cloningInstructions(cloningInstructions.toApiModel())
@@ -82,6 +100,8 @@ public class WsmResourceCloneDetails {
         .sourceResourceId(sourceResourceId)
         .destinationResourceId(destinationResourceId)
         .result(result.toApiModel())
-        .errorMessage(errorMessage);
+        .errorMessage(errorMessage)
+        .name(name)
+        .description(description);
   }
 }

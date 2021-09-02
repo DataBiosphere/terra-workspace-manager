@@ -2378,6 +2378,12 @@ components:
         errorMessage:
           description: If result is FAILED, a short description of the cause, if available.
           type: string
+        name:
+          description: name of the resource (same as source)
+          type: string
+        description:
+          description:  description of the destination resource (same as source)
+          type: string
     CloneResourceResult:
       type: string
       enum:

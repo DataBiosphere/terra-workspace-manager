@@ -27,9 +27,7 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    validateRequiredEntries(
-        context.getInputParameters(),
-        JobMapKeys.AUTH_USER_INFO.getKeyName());
+    validateRequiredEntries(context.getInputParameters(), JobMapKeys.AUTH_USER_INFO.getKeyName());
     validateRequiredEntries(
         context.getWorkingMap(),
         ControlledResourceKeys.RESOURCES_TO_CLONE,

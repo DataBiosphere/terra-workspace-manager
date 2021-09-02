@@ -15,7 +15,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiClonedWorkspace;
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
-import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -64,13 +63,7 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
                                 subflightState.getFlightStatus()))));
       }
       final FlightMap subflightResultMap =
-          subflightState
-              .getResultMap()
-              .orElseThrow(
-                  () ->
-                      new MissingRequiredFieldsException(
-                          String.format(
-                              "ResultMap is missing for flight %s", cloneAllResourcesFlightId)));
+          FlightUtils.getResultMapRequired(cloneAllResourcesFlightId, subflightState);
       // build the response object from the resource ID to details map
       final var resourceIdToDetails =
           subflightResultMap.get(

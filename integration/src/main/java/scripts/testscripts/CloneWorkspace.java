@@ -216,6 +216,10 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(StewardshipType.CONTROLLED, sharedBucketCloneDetails.getStewardshipType());
     assertNotNull(sharedBucketCloneDetails.getDestinationResourceId());
     assertNull(sharedBucketCloneDetails.getErrorMessage());
+    assertEquals(sharedSourceBucket.getGcpBucket().getMetadata().getName(),
+        sharedBucketCloneDetails.getName());
+    assertEquals(sharedSourceBucket.getGcpBucket().getMetadata().getDescription(),
+        sharedBucketCloneDetails.getDescription());
 
     // We need to get the destination bucket name and project ID
     final WorkspaceDescription destinationWorkspace = cloningUserWorkspaceApi.getWorkspace(destinationWorkspaceId);
@@ -235,6 +239,10 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(StewardshipType.CONTROLLED, privateBucketCloneDetails.getStewardshipType());
     assertNull(privateBucketCloneDetails.getDestinationResourceId());
     assertNotNull(privateBucketCloneDetails.getErrorMessage());
+    assertEquals(privateSourceBucket.getGcpBucket().getMetadata().getName(),
+        privateBucketCloneDetails.getName());
+    assertEquals(privateSourceBucket.getGcpBucket().getMetadata().getDescription(),
+        privateBucketCloneDetails.getDescription());
 
     // Verify COPY_NOTHING bucket was skipped
     final ResourceCloneDetails copyNothingBucketCloneDetails = getOrFail(
@@ -248,6 +256,10 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(StewardshipType.CONTROLLED, copyNothingBucketCloneDetails.getStewardshipType());
     assertNull(copyNothingBucketCloneDetails.getDestinationResourceId());
     assertNull(copyNothingBucketCloneDetails.getErrorMessage());
+    assertEquals(sharedCopyNothingSourceBucket.getGcpBucket().getMetadata().getName(),
+        copyNothingBucketCloneDetails.getName());
+    assertEquals(sharedCopyNothingSourceBucket.getGcpBucket().getMetadata().getDescription(),
+        copyNothingBucketCloneDetails.getDescription());
 
     // verify COPY_DEFINITION bucket exists but is empty
     final ResourceCloneDetails copyDefinitionBucketDetails = getOrFail(
@@ -263,6 +275,10 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     final GcpGcsBucketResource clonedCopyDefinitionBucket = cloningUserResourceApi.getBucket(destinationWorkspaceId,
         copyDefinitionBucketDetails.getDestinationResourceId());
     assertEmptyBucket(clonedCopyDefinitionBucket.getAttributes().getBucketName(), destinationProjectId);
+    assertEquals(copyDefinitionSourceBucket.getGcpBucket().getMetadata().getName(),
+        copyDefinitionBucketDetails.getName());
+    assertEquals(copyDefinitionSourceBucket.getGcpBucket().getMetadata().getDescription(),
+        copyDefinitionBucketDetails.getDescription());
 
     // verify COPY_DEFINITION dataset exists but has no tables
     final ResourceCloneDetails copyDefinitionDatasetDetails = getOrFail(
@@ -276,6 +292,10 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(StewardshipType.CONTROLLED, copyDefinitionDatasetDetails.getStewardshipType());
     assertNotNull(copyDefinitionDatasetDetails.getDestinationResourceId());
     assertNull(copyDefinitionDatasetDetails.getErrorMessage());
+    assertEquals(copyDefinitionDataset.getMetadata().getName(),
+        copyDefinitionDatasetDetails.getName());
+    assertEquals(copyDefinitionDataset.getMetadata().getDescription(),
+        copyDefinitionDatasetDetails.getDescription());
 
     final BigQuery bigQueryClient = ClientTestUtils.getGcpBigQueryClient(cloningUser, destinationProjectId);
     assertDatasetHasNoTables(destinationProjectId, bigQueryClient, copyDefinitionDatasetName);

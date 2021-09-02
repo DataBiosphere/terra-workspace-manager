@@ -8,8 +8,6 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
-import java.util.HashMap;
 import java.util.UUID;
 
 /**
@@ -22,18 +20,18 @@ public class CreateIdsForFutureStepsStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     final FlightMap workingMap = context.getWorkingMap();
     workingMap.put(
-        ControlledResourceKeys.CREATE_CLOUD_CONTEXT_JOB_ID, context.getStairway().createFlightId());
+        ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID, context.getStairway().createFlightId());
     workingMap.put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.randomUUID());
     workingMap.put(
-        ControlledResourceKeys.WORKSPACE_CREATE_JOB_ID, context.getStairway().createFlightId());
+        ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID, context.getStairway().createFlightId());
     workingMap.put(
         ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID,
         context.getStairway().createFlightId());
     validateRequiredEntries(
         workingMap,
-        ControlledResourceKeys.CREATE_CLOUD_CONTEXT_JOB_ID,
+        ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID,
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-        ControlledResourceKeys.WORKSPACE_CREATE_JOB_ID,
+        ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID,
         ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID);
     return StepResult.getStepResultSuccess();
   }

@@ -34,7 +34,7 @@ public class LaunchWorkspaceCreateFlightStep implements Step {
     FlightUtils.validateRequiredEntries(
         workingMap,
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-        ControlledResourceKeys.WORKSPACE_CREATE_JOB_ID);
+        ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID);
 
     final var userRequest =
         context
@@ -49,7 +49,7 @@ public class LaunchWorkspaceCreateFlightStep implements Step {
     final var spendProfileId =
         context.getInputParameters().get(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, String.class);
     final var workspaceCreateJobId =
-        workingMap.get(ControlledResourceKeys.WORKSPACE_CREATE_JOB_ID, String.class);
+        workingMap.get(ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID, String.class);
 
     final var destinationWorkspaceId =
         context.getWorkingMap().get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
