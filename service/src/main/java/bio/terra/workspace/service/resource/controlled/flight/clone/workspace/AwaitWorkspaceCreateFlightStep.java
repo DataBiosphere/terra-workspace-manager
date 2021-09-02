@@ -26,7 +26,12 @@ public class AwaitWorkspaceCreateFlightStep implements Step {
             .get(ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID, String.class);
     try {
       final FlightState flightState =
-          context.getStairway().waitForFlight(workspaceCreateJobId, 10, 360);
+          context
+              .getStairway()
+              .waitForFlight(
+                  workspaceCreateJobId,
+                  FlightUtils.FLIGHT_POLL_SECONDS,
+                  FlightUtils.FLIGHT_POLL_CYCLES);
       if (FlightStatus.SUCCESS != flightState.getFlightStatus()) {
         // retrying this step won't help if the flight already failed
         return new StepResult(
@@ -36,6 +41,7 @@ public class AwaitWorkspaceCreateFlightStep implements Step {
                 .orElseGet(() -> new RuntimeException("No exception found for subflight.")));
       }
     } catch (DatabaseOperationException | FlightException e) {
+      // Retry for database issues or expired wait loop
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 

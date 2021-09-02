@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_CYCLES;
+import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_SECONDS;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
@@ -25,7 +28,8 @@ public class AwaitCreateGcpContextFlightStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID, String.class);
     try {
-      final FlightState subflightState = context.getStairway().waitForFlight(jobId, 10, 360);
+      final FlightState subflightState =
+          context.getStairway().waitForFlight(jobId, FLIGHT_POLL_SECONDS, FLIGHT_POLL_CYCLES);
       if (FlightStatus.SUCCESS != subflightState.getFlightStatus()) {
         // no point in retrying the await step
         return new StepResult(
@@ -40,6 +44,7 @@ public class AwaitCreateGcpContextFlightStep implements Step {
                                 subflightState.getFlightStatus()))));
       }
     } catch (DatabaseOperationException | FlightException e) {
+      // Retry for database issues or expired wait loop
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 

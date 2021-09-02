@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_CYCLES;
+import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_SECONDS;
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
@@ -43,7 +45,8 @@ public class AwaitCloneGcsBucketResourceFlightStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     // wait for the flight
     try {
-      final FlightState subflightState = context.getStairway().waitForFlight(subflightId, 10, 360);
+      final FlightState subflightState =
+          context.getStairway().waitForFlight(subflightId, FLIGHT_POLL_SECONDS, FLIGHT_POLL_CYCLES);
       final FlightStatus subflightStatus = subflightState.getFlightStatus();
       final WsmCloneResourceResult cloneResult =
           WorkspaceCloneUtils.flightStatusToCloneResult(subflightStatus, resource);
@@ -80,6 +83,7 @@ public class AwaitCloneGcsBucketResourceFlightStep implements Step {
           .put(ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT, resourceIdToResult);
 
     } catch (DatabaseOperationException | FlightException e) {
+      // Retry for database issues or expired wait loop
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     validateRequiredEntries(

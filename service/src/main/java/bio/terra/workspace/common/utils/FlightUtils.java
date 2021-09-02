@@ -12,6 +12,10 @@ import org.springframework.http.HttpStatus;
 
 /** Common methods for building flights */
 public final class FlightUtils {
+
+  public static final int FLIGHT_POLL_SECONDS = 10;
+  public static final int FLIGHT_POLL_CYCLES = 360;
+
   private FlightUtils() {}
 
   /**

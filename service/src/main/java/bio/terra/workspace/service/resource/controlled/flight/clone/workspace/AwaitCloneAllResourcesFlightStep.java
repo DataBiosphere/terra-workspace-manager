@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_CYCLES;
+import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_SECONDS;
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
@@ -48,7 +50,9 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
     try {
       //noinspection deprecation
       final FlightState subflightState =
-          context.getStairway().waitForFlight(cloneAllResourcesFlightId, 10, 360);
+          context
+              .getStairway()
+              .waitForFlight(cloneAllResourcesFlightId, FLIGHT_POLL_SECONDS, FLIGHT_POLL_CYCLES);
       if (FlightStatus.SUCCESS != subflightState.getFlightStatus()) {
         // no point in retrying the await step
         return new StepResult(
@@ -79,8 +83,10 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
               .map(WsmResourceCloneDetails::toApiModel)
               .collect(Collectors.toList());
       apiClonedWorkspace.setResources(resources);
+      // Set overall response for workspace clone flights
       FlightUtils.setResponse(context, apiClonedWorkspace, HttpStatus.OK);
     } catch (DatabaseOperationException | FlightException e) {
+      // Retry for database issues or expired wait loop
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     return StepResult.getStepResultSuccess();
