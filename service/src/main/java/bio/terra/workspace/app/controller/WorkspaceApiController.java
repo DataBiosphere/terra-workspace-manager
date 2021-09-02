@@ -168,7 +168,8 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   @Override
-  public ResponseEntity<ApiGetDeployment> getDeployment(@PathVariable("deploymentName") String deploymentName) {
+  public ResponseEntity<ApiGetDeployment> getDeployment(
+      @PathVariable("deploymentName") String deploymentName) {
     return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
   }
 

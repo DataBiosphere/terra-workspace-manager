@@ -7,7 +7,6 @@ import bio.terra.workspace.service.azurecompute.exceptions.DeploymentFailedExcep
 import bio.terra.workspace.service.azurecompute.model.CreateDeploymentRequest;
 import com.azure.resourcemanager.resources.fluentcore.model.Accepted;
 import com.azure.resourcemanager.resources.models.Deployment;
-import com.azure.resourcemanager.resources.models.DeploymentMode;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
