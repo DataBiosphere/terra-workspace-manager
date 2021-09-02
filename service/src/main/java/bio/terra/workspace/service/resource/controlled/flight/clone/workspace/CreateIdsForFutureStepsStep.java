@@ -20,7 +20,8 @@ public class CreateIdsForFutureStepsStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     final FlightMap workingMap = context.getWorkingMap();
     workingMap.put(
-        ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID, context.getStairway().createFlightId());
+        ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID,
+        context.getStairway().createFlightId());
     workingMap.put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.randomUUID());
     workingMap.put(
         ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID, context.getStairway().createFlightId());

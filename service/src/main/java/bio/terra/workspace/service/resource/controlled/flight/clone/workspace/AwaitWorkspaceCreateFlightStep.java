@@ -21,7 +21,9 @@ public class AwaitWorkspaceCreateFlightStep implements Step {
     FlightUtils.validateRequiredEntries(
         context.getWorkingMap(), ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID);
     final var workspaceCreateJobId =
-        context.getWorkingMap().get(ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID, String.class);
+        context
+            .getWorkingMap()
+            .get(ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID, String.class);
     try {
       final FlightState flightState =
           context.getStairway().waitForFlight(workspaceCreateJobId, 10, 360);
