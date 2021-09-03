@@ -55,7 +55,7 @@ public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements
           WorkspaceCloneUtils.flightStatusToCloneResult(subflightState.getFlightStatus(), resource);
       cloneDetails.setResult(cloneResult);
 
-      final FlightMap resultMap = FlightUtils.getResultMapRequired(subflightId, subflightState);
+      final FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
       final var clonedDataset =
           resultMap.get(
               JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpBigQueryDataset.class);

@@ -67,7 +67,7 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
                                 subflightState.getFlightStatus()))));
       }
       final FlightMap subflightResultMap =
-          FlightUtils.getResultMapRequired(cloneAllResourcesFlightId, subflightState);
+          FlightUtils.getResultMapRequired(subflightState);
       // build the response object from the resource ID to details map
       final var resourceIdToDetails =
           subflightResultMap.get(

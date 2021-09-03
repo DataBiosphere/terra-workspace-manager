@@ -64,7 +64,7 @@ public class AwaitCreateReferenceResourceFlightStep implements Step {
             WorkspaceCloneUtils.flightStatusToCloneResult(
                 subflightState.getFlightStatus(), sourceResource);
         cloneDetails.setResult(cloneResult);
-        final FlightMap resultMap = FlightUtils.getResultMapRequired(flightId, subflightState);
+        final FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
 
         // Input to the create flight
         final var destinationReferencedResource =

@@ -79,13 +79,13 @@ public final class FlightUtils {
     }
   }
 
-  public static FlightMap getResultMapRequired(String flightId, FlightState flightState) {
+  public static FlightMap getResultMapRequired(FlightState flightState) {
     return flightState
         .getResultMap()
         .orElseThrow(
             () ->
                 new MissingRequiredFieldsException(
-                    String.format("ResultMap is missing for flight %s", flightId)));
+                    String.format("ResultMap is missing for flight %s", flightState.getFlightId())));
   }
 
   /**

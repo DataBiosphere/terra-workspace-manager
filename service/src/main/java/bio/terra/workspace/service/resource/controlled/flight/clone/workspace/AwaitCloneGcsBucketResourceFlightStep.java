@@ -53,7 +53,7 @@ public class AwaitCloneGcsBucketResourceFlightStep implements Step {
 
       final var cloneDetails = new WsmResourceCloneDetails();
       cloneDetails.setResult(cloneResult);
-      final FlightMap resultMap = FlightUtils.getResultMapRequired(subflightId, subflightState);
+      final FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
       final var clonedBucket =
           resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpGcsBucket.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
