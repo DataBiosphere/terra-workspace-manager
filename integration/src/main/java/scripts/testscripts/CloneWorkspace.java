@@ -76,7 +76,6 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private String privateDatasetName;
   private String sharedBucketSourceResourceName;
   private String sourceProjectId;
-  private TestUserSpecification sourceOwnerUser;
   private TestUserSpecification cloningUser;
   private UUID destinationWorkspaceId;
   private WorkspaceApi cloningUserWorkspaceApi;
@@ -92,7 +91,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     // set up 2 users
     assertThat(testUsers, hasSize(2));
     // user creating the source resources
-    sourceOwnerUser = testUsers.get(0);
+    final TestUserSpecification sourceOwnerUser = testUsers.get(0);
     // user cloning the workspace
     cloningUser = testUsers.get(1);
 
@@ -118,24 +117,24 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     sharedBucketSourceResourceName = RESOURCE_PREFIX + nameSuffix;
     sharedSourceBucket = makeControlledGcsBucketUserShared(sourceOwnerResourceApi, getWorkspaceId(),
         sharedBucketSourceResourceName, CloningInstructionsEnum.RESOURCE);
-    addFileToBucket(sharedSourceBucket);
+    addFileToBucket(sharedSourceBucket, sourceOwnerUser);
 
     // create a private GCS bucket, which the non-creating user can't clone
     final PrivateResourceIamRoles privateRoles = new PrivateResourceIamRoles();
     privateRoles.addAll(PRIVATE_ROLES);
     privateSourceBucket = makeControlledGcsBucketUserPrivate(sourceOwnerResourceApi, getWorkspaceId(),
         UUID.randomUUID().toString(), sourceOwnerUser.userEmail, privateRoles, CloningInstructionsEnum.RESOURCE);
-    addFileToBucket(privateSourceBucket);
+    addFileToBucket(privateSourceBucket, sourceOwnerUser);
 
     // create a GCS bucket with data and COPY_NOTHING instruction
     sharedCopyNothingSourceBucket = makeControlledGcsBucketUserShared(sourceOwnerResourceApi, getWorkspaceId(),
         UUID.randomUUID().toString(), CloningInstructionsEnum.NOTHING);
-    addFileToBucket(sharedCopyNothingSourceBucket);
+    addFileToBucket(sharedCopyNothingSourceBucket, sourceOwnerUser);
 
     // create a GCS bucket with data and COPY_DEFINITION
     copyDefinitionSourceBucket = makeControlledGcsBucketUserShared(sourceOwnerResourceApi, getWorkspaceId(),
         UUID.randomUUID().toString(), CloningInstructionsEnum.DEFINITION);
-    addFileToBucket(copyDefinitionSourceBucket);
+    addFileToBucket(copyDefinitionSourceBucket, sourceOwnerUser);
 
     // Create a BigQuery Dataset with tables and COPY_DEFINITION
     copyDefinitionDatasetName = "copy_definition_" + nameSuffix.replace('-', '_');
@@ -385,7 +384,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(0, numRows);
   }
 
-  private Blob addFileToBucket(CreatedControlledGcpGcsBucket bucket) throws IOException {
+  private Blob addFileToBucket(CreatedControlledGcpGcsBucket bucket, TestUserSpecification sourceOwnerUser) throws IOException {
     final Storage sourceOwnerStorageClient = ClientTestUtils.getGcpStorageClient(sourceOwnerUser, sourceProjectId);
     final BlobId blobId = BlobId.of(bucket.getGcpBucket().getAttributes().getBucketName(), GCS_BLOB_NAME);
     final BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();

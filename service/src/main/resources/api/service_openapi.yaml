@@ -161,7 +161,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: Clone a workspace and its elligible resources
+      summary: Clone a workspace and its eligible resources
       operationId: cloneWorkspace
       tags: [Workspace]
       requestBody:

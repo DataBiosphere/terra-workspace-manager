@@ -85,7 +85,8 @@ public final class FlightUtils {
         .orElseThrow(
             () ->
                 new MissingRequiredFieldsException(
-                    String.format("ResultMap is missing for flight %s", flightState.getFlightId())));
+                    String.format(
+                        "ResultMap is missing for flight %s", flightState.getFlightId())));
   }
 
   /**

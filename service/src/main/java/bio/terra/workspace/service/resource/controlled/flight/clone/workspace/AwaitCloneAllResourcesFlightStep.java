@@ -66,8 +66,7 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
                                 "Subflight had unexpected status %s. No exception for subflight found.",
                                 subflightState.getFlightStatus()))));
       }
-      final FlightMap subflightResultMap =
-          FlightUtils.getResultMapRequired(subflightState);
+      final FlightMap subflightResultMap = FlightUtils.getResultMapRequired(subflightState);
       // build the response object from the resource ID to details map
       final var resourceIdToDetails =
           subflightResultMap.get(

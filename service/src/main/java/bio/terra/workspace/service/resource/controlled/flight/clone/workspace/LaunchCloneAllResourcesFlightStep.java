@@ -53,7 +53,7 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
     final var destinationWorkspaceId =
         context.getWorkingMap().get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     final Stairway stairway = context.getStairway();
-    // exit early if flight is already going
+
     final FlightMap subflightInputParameters = new FlightMap();
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     subflightInputParameters.put(ControlledResourceKeys.RESOURCES_TO_CLONE, resourcesAndFlightIds);
@@ -66,6 +66,7 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
       stairway.submit(
           cloneAllResourcesFlightId, CloneAllResourcesFlight.class, subflightInputParameters);
     } catch (DuplicateFlightIdSubmittedException e) {
+      // exit early if flight is already going
       return StepResult.getStepResultSuccess();
     } catch (StairwayException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
