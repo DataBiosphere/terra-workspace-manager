@@ -82,9 +82,8 @@ public class WorkspaceCloneUtils {
   }
 
   /**
-   * Create a clone of a reference, which is identical in all fields except workspace ID, resource
-   * ID, and (possibly) name and description. This method reuses the createReferenceResource()
-   * method on the ReferenceResourceService.
+   * Create an input object for the clone of a reference, which is identical in all fields except
+   * workspace ID, resource ID, and (possibly) name and description.
    *
    * @param sourceBucketResource - original resource to be cloned
    * @param destinationWorkspaceId - workspace ID for new reference

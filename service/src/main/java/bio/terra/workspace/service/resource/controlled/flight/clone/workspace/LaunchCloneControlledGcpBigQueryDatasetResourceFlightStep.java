@@ -49,7 +49,8 @@ public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implement
     final var location =
         context.getInputParameters().get(ControlledResourceKeys.LOCATION, String.class);
 
-    // build input parameter map. Leave out resource name, description, and dataset name.
+    // build input parameter map. Leave out resource name, description, and dataset name so that
+    // they will take values from the source dataset.
     final var subflightInputParameters = new FlightMap();
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     subflightInputParameters.put(

@@ -65,7 +65,12 @@ public class LaunchCreateGcpContextFlightStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  /** Destroy the created workspace and cloud context TODO: does this go here? */
+  /**
+   * Destroy the created workspace and cloud context. The only time we want to run the workspace
+   * delete is if the create workspace subflight succeeded, but a later step in the flight fails.
+   * The failure of the create workspace flight will have deleted the workspace on undo and we don't
+   * get here. But if we fail to create the flight context, we want to delete the workspace.
+   */
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     final var userRequest =
@@ -75,6 +80,7 @@ public class LaunchCreateGcpContextFlightStep implements Step {
     final var destinationWorkspaceId =
         context.getWorkingMap().get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     if (destinationWorkspaceId != null && userRequest != null) {
+      // delete workspace is idempotent, so it's safe to call it more than once
       workspaceService.deleteWorkspace(destinationWorkspaceId, userRequest);
     } // otherwise, if it never got created, that's fine too
     return StepResult.getStepResultSuccess();
