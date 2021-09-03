@@ -125,7 +125,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiWorkspaceDescriptionList> listWorkspaces(Integer offset, Integer limit) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info("Listgin workspaces for {}", userRequest.getEmail());
+    logger.info("Listing workspaces for {}", userRequest.getEmail());
     List<Workspace> workspaces = workspaceService.listWorkspaces(userRequest, offset, limit);
     var response =
         new ApiWorkspaceDescriptionList()
@@ -441,5 +441,13 @@ public class WorkspaceApiController implements WorkspaceApi {
     ControllerValidationUtils.validateCloudPlatform(cloudPlatform);
     workspaceService.deleteGcpCloudContext(id, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
+  public ResponseEntity<String> enablePet(UUID workspaceId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    String petSaEmail =
+        workspaceService.enablePetServiceAccountImpersonation(workspaceId, userRequest);
+    return new ResponseEntity<>(petSaEmail, HttpStatus.OK);
   }
 }

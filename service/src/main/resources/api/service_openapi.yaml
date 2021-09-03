@@ -157,6 +157,32 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  # TODO(zloery): This endpoint is exposed as a workaround to support the CLI's
+  # use of Nextflow. It will likely be removed in the future in favor of other
+  # cloud sync methods.
+  /api/workspaces/v1/{workspaceId}/gcp/enablepet:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Allow a user to impersonate their pet SA in a given workspace
+      description: |
+        This endpoint is exposed as a workaround to support calling Google
+        Pipelines API in a workspace. It will likely be removed in the future in
+        favor of other cloud sync methods.
+      operationId: enablePet
+      tags: [ Workspace ]
+      responses:
+        '200':
+          $ref: '#/components/responses/EnablePetSaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   ## DEPRECATED PATHS ##
   # TODO(PF-404): remove this in favor of reference-type specific objects.
   /api/workspaces/v1/{workspaceId}/datareferences:
@@ -2601,6 +2627,10 @@ components:
           description: Present if stewardship type is CONTROLLED
           $ref: '#/components/schemas/ControlledResourceMetadata'
 
+    PetServiceAccount:
+      description: The email identifier of a pet service account
+      type: string
+
     # Enumerations (related to resources) in alphabetical order.
     AccessScope:
       type: string
@@ -2655,6 +2685,13 @@ components:
           schema:
             $ref: '#/components/schemas/DataReferenceList'
     ### END OF DEPRECATED RESPONSES ###
+
+    EnablePetSaResponse:
+      description: Response to enablePet calls
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PetServiceAccount'
 
     CreatedWorkspaceResponse:
       description: Response to createWorkspace calls

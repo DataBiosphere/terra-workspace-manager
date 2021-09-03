@@ -735,6 +735,19 @@ public class SamService {
     }
   }
 
+  /**
+   * Fetch the email of a user's pet service account in a given project. This request to Sam will
+   * create the pet SA if it doesn't already exist.
+   */
+  public String getOrCreatePetSaEmail(String projectId, AuthenticatedUserRequest userRequest) {
+    GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
+    try {
+      return googleApi.getPetServiceAccount(projectId);
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error getting pet service account from Sam", apiException);
+    }
+  }
+
   /** Returns the Sam action for modifying a given IAM role. */
   private String samActionToModifyRole(WsmIamRole role) {
     return String.format("share_policy::%s", role.toSamRole());
