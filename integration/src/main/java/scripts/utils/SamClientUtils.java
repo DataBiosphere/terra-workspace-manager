@@ -1,6 +1,7 @@
 package scripts.utils;
 
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
+import bio.terra.testrunner.runner.config.ServerSpecification;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -20,7 +21,7 @@ public class SamClientUtils {
 
   private static final Logger logger = LoggerFactory.getLogger(SamClientUtils.class);
 
-  private static ApiClient getSamApiClient(TestUserSpecification testUser, String samUri) throws Exception {
+  private static ApiClient getSamApiClient(TestUserSpecification testUser, ServerSpecification server) throws Exception {
     AccessToken accessToken = null;
 
     // if no test user is specified, then return a client object without an access token set
@@ -29,25 +30,23 @@ public class SamClientUtils {
       logger.debug(
           "Fetching credentials and building Sam ApiClient object for test user: {}",
           testUser.name);
-      // TODO(PF-657): TestRunner caches delegated credentials by TestUser, ignoring scopes. This
-      //  should change, but for now I include all scopes we'll need on this user in the first call.
       GoogleCredentials userCredential =
           AuthenticationUtils
               .getDelegatedUserCredential(testUser, ClientTestUtils.TEST_USER_SCOPES);
       accessToken = AuthenticationUtils.getAccessToken(userCredential);
     }
-    return buildSamClient(accessToken, samUri);
+    return buildSamClient(accessToken, server);
   }
 
   private static ApiClient buildSamClient(
-      @Nullable AccessToken accessToken, String samUri) throws IOException {
-    if (Strings.isNullOrEmpty(samUri)) {
+      @Nullable AccessToken accessToken, ServerSpecification server) {
+    if (Strings.isNullOrEmpty(server.samUri)) {
       throw new IllegalArgumentException("Sam URI cannot be empty");
     }
 
     // build the client object
     ApiClient apiClient = new ApiClient();
-    apiClient.setBasePath(samUri);
+    apiClient.setBasePath(server.samUri);
 
     if (accessToken != null) {
       apiClient.setAccessToken(accessToken.getTokenValue());
@@ -55,8 +54,8 @@ public class SamClientUtils {
     return apiClient;
   }
 
-  public static GoogleApi samGoogleApi(TestUserSpecification testUser, String samUri) throws Exception {
-    return new GoogleApi(getSamApiClient(testUser, samUri));
+  public static GoogleApi samGoogleApi(TestUserSpecification testUser, ServerSpecification server) throws Exception {
+    return new GoogleApi(getSamApiClient(testUser, server));
   }
 
 }

@@ -11,7 +11,7 @@
       "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 1,
       "expectedTimeForEachUnit": "MINUTES",
-      "parameters": ["wm-default-spend-profile", "https://sam.dsde-dev.broadinstitute.org"]
+      "parameters": ["wm-default-spend-profile"]
     }
   ],
   "testUserFiles": ["elijah.json"]

@@ -1,5 +1,6 @@
 package scripts.testscripts;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -20,7 +21,6 @@ import scripts.utils.WorkspaceAllocateTestScriptBase;
 public class EnablePet extends WorkspaceAllocateTestScriptBase {
 
   private String projectId;
-  private String samUri;
 
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws Exception {
@@ -29,31 +29,19 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
   }
 
   @Override
-  public void setParameters(List<String> parameters) throws Exception {
-    super.setParameters(parameters);
-
-    if (parameters == null || parameters.size() < 2) {
-      throw new IllegalArgumentException(
-          "Must provide Sam URI as second parameter to this test");
-    } else {
-      samUri = parameters.get(1);
-    }
-  }
-
-  @Override
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi userWorkspaceApi)
       throws Exception {
     // Validate that the user cannot impersonate their pet before calling this endpoint.
-    GoogleApi samGoogleApi = SamClientUtils.samGoogleApi(testUser, samUri);
+    GoogleApi samGoogleApi = SamClientUtils.samGoogleApi(testUser, server);
     String petSaEmail = samGoogleApi.getPetServiceAccount(projectId);
     Iam userIamClient = ClientTestUtils.getGcpIamClient(testUser);
     // TODO(PF-765): This will fail until project level SA permissions are removed, as the user
     //   gets this permission at the project level.
-    // assertFalse(userCanImpersonateSa(userIamClient, petSaEmail));
+    // assertFalse(canImpersonateSa(userIamClient, petSaEmail));
 
     String returnedPetSaEmail = userWorkspaceApi.enablePet(getWorkspaceId());
     assertEquals(petSaEmail, returnedPetSaEmail);
-    assertTrue(userCanImpersonateSa(userIamClient, petSaEmail));
+    assertTrue(canImpersonateSa(userIamClient, petSaEmail));
 
     // Validate that calling this endpoint as the pet does not grant the pet permission to
     // impersonate itself.
@@ -65,10 +53,10 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
     Iam petIamClient = ClientTestUtils.getGcpIamClientFromToken(petSaToken);
     // TODO(PF-765): This will fail until project level SA permissions are removed, as the pet SA
     //   gets this permission at the project level.
-    // assertFalse(userCanImpersonateSa(petIamClient, petSaEmail));
+    // assertFalse(canImpersonateSa(petIamClient, petSaEmail));
   }
 
-  private boolean userCanImpersonateSa(Iam iamClient, String petSaEmail) throws Exception {
+  private boolean canImpersonateSa(Iam iamClient, String petSaEmail) throws Exception {
     String fullyQualifiedSaName = String.format("projects/%s/serviceAccounts/%s", projectId, petSaEmail);
     TestIamPermissionsRequest testIamRequest = new TestIamPermissionsRequest()
         .setPermissions(Collections.singletonList("iam.serviceAccounts.actAs"));

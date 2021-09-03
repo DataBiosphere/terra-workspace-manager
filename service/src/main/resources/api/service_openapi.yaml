@@ -166,9 +166,9 @@ paths:
     post:
       summary: Allow a user to impersonate their pet SA in a given workspace
       description: |
-        This endpoint is exposed as a workaround to support calling Nextflow in
-        a workspace. It will likely be removed in the future in favor of
-        other cloud sync methods.
+        This endpoint is exposed as a workaround to support calling Google
+        Pipelines API in a workspace. It will likely be removed in the future in
+        favor of other cloud sync methods.
       operationId: enablePet
       tags: [ Workspace ]
       responses:
