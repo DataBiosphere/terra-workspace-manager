@@ -81,11 +81,11 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     // user cloning the bucket resource
     cloningUser = testUsers.get(1);
 
+    // Create the source cloud context
     sourceProjectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), sourceOwnerWorkspaceApi);
     logger.info("Created source project {} in workspace {}", sourceProjectId, getWorkspaceId());
 
     // Create a source bucket
-    // Create the source cloud context
     final ControlledGcpResourceApi sourceOwnerResourceApi = ClientTestUtils
         .getControlledGcpResourceClient(sourceOwnerUser, server);
     cloningUserResourceApi = ClientTestUtils.getControlledGcpResourceClient(cloningUser, server);
@@ -93,7 +93,7 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     // create source bucket
     nameSuffix = UUID.randomUUID().toString();
     sourceResourceName = RESOURCE_PREFIX + nameSuffix;
-    sourceBucket = makeControlledGcsBucketUserShared(sourceOwnerResourceApi, getWorkspaceId(), sourceResourceName);
+    sourceBucket = makeControlledGcsBucketUserShared(sourceOwnerResourceApi, getWorkspaceId(), sourceResourceName, CloningInstructionsEnum.NOTHING);
     sourceBucketName = sourceBucket.getGcpBucket().getAttributes().getBucketName();
 
     // Make the cloning user a reader on the existing workspace

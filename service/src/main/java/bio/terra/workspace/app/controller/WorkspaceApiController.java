@@ -3,6 +3,9 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
+import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
+import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
+import bio.terra.workspace.generated.model.ApiClonedWorkspace;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
@@ -403,7 +406,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     String resultPath = ControllerUtils.getAsyncResultEndpoint(request, jobId);
 
     // For now, the cloud type is always GCP and that is guaranteed in the validate.
-    workspaceService.createGcpCloudContext(id, jobId, resultPath, userRequest);
+    workspaceService.createGcpCloudContext(id, jobId, userRequest, resultPath);
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
     return new ResponseEntity<>(
         response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
@@ -449,5 +452,55 @@ public class WorkspaceApiController implements WorkspaceApi {
     String petSaEmail =
         workspaceService.enablePetServiceAccountImpersonation(workspaceId, userRequest);
     return new ResponseEntity<>(petSaEmail, HttpStatus.OK);
+  }
+
+  /**
+   * Clone an entire workspace by creating a new workspace and cloning the workspace's resources
+   * into it.
+   *
+   * @param workspaceId - ID of source workspace
+   * @param body - request body
+   * @return - result structure for the overall clone operation with details for each resource
+   */
+  @Override
+  public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
+      UUID workspaceId, @Valid ApiCloneWorkspaceRequest body) {
+    final String jobId =
+        workspaceService.cloneWorkspace(
+            workspaceId,
+            getAuthenticatedInfo(),
+            body.getSpendProfile(),
+            body.getLocation(),
+            body.getDisplayName(),
+            body.getDescription());
+    final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, getAuthenticatedInfo());
+    return new ResponseEntity<>(
+        result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
+  }
+  /**
+   * Return the workspace clone result, including job result and error result.
+   *
+   * @param workspaceId - source workspace ID
+   * @param jobId - ID of flight
+   * @return - response with result
+   */
+  @Override
+  public ResponseEntity<ApiCloneWorkspaceResult> getCloneWorkspaceResult(
+      UUID workspaceId, String jobId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, userRequest);
+    return new ResponseEntity<>(
+        result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
+  }
+
+  // Retrieve the async result or progress for clone workspace.
+  private ApiCloneWorkspaceResult fetchCloneWorkspaceResult(
+      String jobId, AuthenticatedUserRequest userRequest) {
+    final AsyncJobResult<ApiClonedWorkspace> jobResult =
+        jobService.retrieveAsyncJobResult(jobId, ApiClonedWorkspace.class, userRequest);
+    return new ApiCloneWorkspaceResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .workspace(jobResult.getResult());
   }
 }

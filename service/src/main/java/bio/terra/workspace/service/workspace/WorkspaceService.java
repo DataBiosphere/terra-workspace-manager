@@ -10,6 +10,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneGcpWorkspaceFlight;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
@@ -23,6 +24,7 @@ import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
@@ -102,9 +104,9 @@ public class WorkspaceService {
         WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspaceRequest.workspaceStage().name());
 
     createJob.addParameter(
-        WorkspaceFlightMapKeys.DISPLAY_NAME_ID, workspaceRequest.displayName().orElse(""));
+        WorkspaceFlightMapKeys.DISPLAY_NAME, workspaceRequest.displayName().orElse(""));
     createJob.addParameter(
-        WorkspaceFlightMapKeys.DESCRIPTION_ID, workspaceRequest.description().orElse(""));
+        WorkspaceFlightMapKeys.DESCRIPTION, workspaceRequest.description().orElse(""));
     return createJob.submitAndWait(UUID.class);
   }
 
@@ -203,13 +205,16 @@ public class WorkspaceService {
    * Process the request to create a GCP cloud context
    *
    * @param workspaceId workspace in which to create the context
-   * @param jobId called-supplied job id of the async job
-   * @param resultPath endpoint where the result of the completed job can be retrieved
+   * @param jobId caller-supplied job id of the async job
    * @param userRequest user authentication info
+   * @param resultPath optional endpoint where the result of the completed job can be retrieved
    */
   @Traced
   public void createGcpCloudContext(
-      UUID workspaceId, String jobId, String resultPath, AuthenticatedUserRequest userRequest) {
+      UUID workspaceId,
+      String jobId,
+      AuthenticatedUserRequest userRequest,
+      @Nullable String resultPath) {
 
     if (!bufferServiceConfiguration.getEnabled()) {
       throw new BufferServiceDisabledException(
@@ -244,6 +249,41 @@ public class WorkspaceService {
         .addParameter(
             WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendProfile.billingAccountId().get())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .submit();
+  }
+
+  public void createGcpCloudContext(
+      UUID workspaceId, String jobId, AuthenticatedUserRequest userRequest) {
+    createGcpCloudContext(workspaceId, jobId, userRequest, null);
+  }
+
+  public String cloneWorkspace(
+      UUID sourceWorkspaceId,
+      AuthenticatedUserRequest userRequest,
+      String spendProfile,
+      @Nullable String location,
+      @Nullable String displayName,
+      @Nullable String description) {
+    final Workspace sourceWorkspace =
+        validateWorkspaceAndAction(
+            userRequest, sourceWorkspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    stageService.assertMcWorkspace(sourceWorkspace, "cloneGcpWorkspace");
+
+    return jobService
+        .newJob(
+            "Clone GCP Workspace " + sourceWorkspaceId.toString(),
+            UUID.randomUUID().toString(),
+            CloneGcpWorkspaceFlight.class,
+            null,
+            userRequest)
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, sourceWorkspaceId)
+        .addParameter(WorkspaceFlightMapKeys.DISPLAY_NAME, displayName)
+        .addParameter(WorkspaceFlightMapKeys.DESCRIPTION, description)
+        .addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfile)
+        .addParameter(
+            ControlledResourceKeys.SOURCE_WORKSPACE_ID,
+            sourceWorkspaceId) // TODO: remove this duplication
+        .addParameter(ControlledResourceKeys.LOCATION, location)
         .submit();
   }
 

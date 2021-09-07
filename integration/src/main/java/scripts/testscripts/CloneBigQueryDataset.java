@@ -23,22 +23,12 @@ import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
-import bio.terra.workspace.model.JobReport.StatusEnum;
 import bio.terra.workspace.model.ResourceMetadata;
 import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.Field;
 import com.google.cloud.bigquery.FieldValue;
 import com.google.cloud.bigquery.FieldValueList;
-import com.google.cloud.bigquery.InsertAllRequest;
-import com.google.cloud.bigquery.LegacySQLTypeName;
 import com.google.cloud.bigquery.QueryJobConfiguration;
-import com.google.cloud.bigquery.Schema;
-import com.google.cloud.bigquery.StandardTableDefinition;
-import com.google.cloud.bigquery.Table;
-import com.google.cloud.bigquery.TableId;
-import com.google.cloud.bigquery.TableInfo;
 import com.google.cloud.bigquery.TableResult;
-import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
@@ -47,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
+import scripts.utils.ResourceMaker;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
@@ -85,64 +76,7 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
     sourceDataset = makeControlledBigQueryDatasetUserShared(sourceOwnerResourceApi, getWorkspaceId(),
         sourceResourceName);
 
-    // Add tables to the source dataset
-    final BigQuery bigQueryClient = ClientTestUtils.getGcpBigQueryClient(sourceOwnerUser, sourceProjectId);
-
-    final Schema employeeSchema = Schema.of(
-        Field.of("employee_id", LegacySQLTypeName.INTEGER),
-        Field.of("name", LegacySQLTypeName.STRING));
-    final TableId employeeTableId = TableId.of(sourceProjectId, sourceDataset.getAttributes().getDatasetId(), "employee");
-
-    final TableInfo employeeTableInfo = TableInfo
-        .newBuilder(employeeTableId, StandardTableDefinition.of(employeeSchema))
-        .setFriendlyName("Employee")
-        .build();
-    final Table createdEmployeeTable = bigQueryClient.create(
-        employeeTableInfo);
-    logger.info("Employee Table: {}", createdEmployeeTable);
-
-    final Table createdDepartmentTable = bigQueryClient.create(
-        TableInfo.newBuilder(TableId.of(sourceProjectId, sourceDataset.getAttributes().getDatasetId(), "department"),
-        StandardTableDefinition.of(
-            Schema.of(
-                Field.of("department_id", LegacySQLTypeName.INTEGER),
-                Field.of("manager_id", LegacySQLTypeName.INTEGER),
-                Field.of("name", LegacySQLTypeName.STRING))))
-        .setFriendlyName("Department")
-        .build());
-    logger.info("Department Table: {}", createdDepartmentTable);
-
-    // Add rows to the tables
-
-    // Stream insert one row to check the error handling/warning. This row may not be copied. (If
-    // the stream happens after the DDL insert, sometimes it gets copied).
-    bigQueryClient.insertAll(InsertAllRequest.newBuilder(employeeTableInfo)
-        .addRow(ImmutableMap.of("employee_id", 103, "name", "Batman"))
-        .build());
-
-    // Use DDL to insert rows instead of InsertAllRequest so that data won't
-    // be in the streaming buffer where it's un-copyable for up to 90 minutes.
-    bigQueryClient.query(QueryJobConfiguration.newBuilder(
-        "INSERT INTO `" + sourceProjectId + "." + sourceDataset.getAttributes().getDatasetId()
-            + ".employee` (employee_id, name) VALUES("
-            + "101, 'Aquaman'), (102, 'Superman');")
-        .build());
-
-    bigQueryClient.query(QueryJobConfiguration.newBuilder(
-        "INSERT INTO `" + sourceProjectId + "." + sourceDataset.getAttributes().getDatasetId()
-            + ".department` (department_id, manager_id, name) "
-            + "VALUES(201, 101, 'ocean'), (202, 102, 'sky');")
-        .build());
-
-    // double-check the rows are there
-    final TableResult employeeTableResult = bigQueryClient.query(QueryJobConfiguration.newBuilder(
-        "SELECT * FROM `" +
-            sourceProjectId + "." +
-            sourceDataset.getAttributes().getDatasetId() + ".employee`;")
-        .build());
-    final long numRows = StreamSupport.stream(employeeTableResult.getValues().spliterator(), false)
-        .count();
-    assertThat(numRows, is(greaterThanOrEqualTo(2L)));
+    ResourceMaker.populateBigQueryDataset(sourceDataset, sourceOwnerUser, sourceProjectId);
 
     // Make the cloning user a reader on the existing workspace
     sourceOwnerWorkspaceApi.grantRole(

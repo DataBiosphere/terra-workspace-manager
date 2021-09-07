@@ -3,6 +3,7 @@ package scripts.utils;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
@@ -36,6 +37,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -335,5 +337,17 @@ public class ClientTestUtils {
         fail("Failed operation " + operation);
       }
     }
+  }
+
+  /**
+   * Check Optional's value is present and return it, or else fail an assertion.
+   * @param optional - Optional expression
+   * @param <T> - value type of optional
+   * @return - value of optional, if present
+   */
+  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+  public static <T> T getOrFail(Optional<T> optional) {
+    assertTrue(optional.isPresent(), "Optional value was empty.");
+    return optional.get();
   }
 }

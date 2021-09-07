@@ -52,7 +52,11 @@ public class CloudContextMaker {
         }
       }
     }
-    assertThat(contextResult.getJobReport().getStatus(), equalTo(JobReport.StatusEnum.SUCCEEDED));
+
+    ClientTestUtils.assertJobSuccess(
+        "Create Cloud Context",
+        contextResult.getJobReport(),
+        contextResult.getErrorReport());
     return contextResult.getGcpContext().getProjectId();
   }
 
