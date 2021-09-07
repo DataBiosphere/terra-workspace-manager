@@ -1,5 +1,7 @@
 package scripts.testscripts;
 
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -65,7 +67,8 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         testUsers != null && testUsers.size() > 2);
     this.resourceUser = testUsers.get(1);
     this.otherWorkspaceUser = testUsers.get(2);
-    assertNotEquals(resourceUser.userEmail, otherWorkspaceUser.userEmail);
+    assertNotEquals(resourceUser.userEmail, otherWorkspaceUser.userEmail,
+        "The two test users are distinct");
     this.instanceId = RandomStringUtils.randomAlphabetic(8).toLowerCase();
   }
 
@@ -103,11 +106,14 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
 
     GcpAiNotebookInstanceResource resource =
         resourceUserApi.getAiNotebookInstance(getWorkspaceId(), resourceId);
-    assertEquals(instanceId, resource.getAttributes().getInstanceId());
+    assertEquals(instanceId, resource.getAttributes().getInstanceId(),
+        "Notebook instance id is correct in GET response from WSM");
     assertEquals(instanceId,
-        creationResult.getAiNotebookInstance().getAttributes().getInstanceId());
+        creationResult.getAiNotebookInstance().getAttributes().getInstanceId(),
+        "Notebook instance id is correct in create response from WSM");
     assertEquals(resourceUser.userEmail,
-        resource.getMetadata().getControlledResourceMetadata().getPrivateResourceUser().getUserName());
+        resource.getMetadata().getControlledResourceMetadata().getPrivateResourceUser().getUserName(),
+        "User is the private user of the notebook");
 
     String instanceName = String
         .format("projects/%s/locations/%s/instances/%s", resource.getAttributes().getProjectId(),
@@ -127,7 +133,8 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     GoogleJsonResponseException directDeleteForbidden = assertThrows(
         GoogleJsonResponseException.class, () ->
             userNotebooks.projects().locations().instances().delete(instanceName).execute());
-    assertEquals(HttpStatus.SC_FORBIDDEN, directDeleteForbidden.getStatusCode());
+    assertEquals(HttpStatus.SC_FORBIDDEN, directDeleteForbidden.getStatusCode(),
+        "User may not delete notebook directly on GCP");
 
     // Delete the AI Notebook through WSM.
     DeleteControlledGcpAiNotebookInstanceResult deleteResult = resourceUserApi
@@ -146,14 +153,19 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     ApiException notebookIsMissing =
         assertThrows(
             ApiException.class,
-            () -> resourceUserApi.getAiNotebookInstance(getWorkspaceId(), resourceId));
-    assertEquals(HttpStatus.SC_NOT_FOUND, notebookIsMissing.getCode());
-
-    // Verify the notebook was deleted form GCP.
+            () -> resourceUserApi.getAiNotebookInstance(getWorkspaceId(), resourceId),
+            "Notebook is deleted from WSM");
+    assertEquals(HttpStatus.SC_NOT_FOUND, notebookIsMissing.getCode(), "Error from WSM is 404");
+    // Verify the notebook was deleted from GCP.
     GoogleJsonResponseException notebookNotFound =
         assertThrows(GoogleJsonResponseException.class, () ->
-            userNotebooks.projects().locations().instances().get(instanceName).execute());
-    assertEquals(HttpStatus.SC_NOT_FOUND, notebookNotFound.getStatusCode());
+            userNotebooks.projects().locations().instances().get(instanceName).execute(),
+            "Notebook is deleted from GCP");
+    // GCP may respond with either 403 or 404 depending on how quickly this is called after deleting
+    // the notebook. Either response is valid in this case.
+    assertThat("Error from GCP is 403 or 404",
+        notebookNotFound.getStatusCode(),
+        anyOf(equalTo(HttpStatus.SC_NOT_FOUND), equalTo(HttpStatus.SC_FORBIDDEN)));
   }
 
   private CreatedControlledGcpAiNotebookInstanceResult createPrivateNotebook(
@@ -202,13 +214,15 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
       String projectId) throws GeneralSecurityException, IOException {
     // Test that the user has access to the notebook with a service account through proxy mode.
     // git secrets gets a false positive if 'service_account' is double quoted.
-    assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
+    assertThat("Notebook has correct proxy mode access", instance.getMetadata(),
+        Matchers.hasEntry("proxy-mode", "service_" + "account"));
 
     // The user needs to have the actAs permission on the service account.
     String actAsPermission = "iam.serviceAccounts.actAs";
     String serviceAccountName = String
         .format("projects/%s/serviceAccounts/%s", projectId, instance.getServiceAccount());
-    assertThat(ClientTestUtils.getGcpIamClient(user)
+    assertThat("User may actAs notebook SA",
+        ClientTestUtils.getGcpIamClient(user)
             .projects()
             .serviceAccounts()
             .testIamPermissions(
