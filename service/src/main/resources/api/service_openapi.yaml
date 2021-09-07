@@ -181,9 +181,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/clone:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
+      summary: Clone a workspace and its eligible resources
+      operationId: cloneWorkspace
       tags: [Workspace]
       requestBody:
         description: Details of workspce clone operation

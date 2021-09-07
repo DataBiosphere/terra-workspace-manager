@@ -453,7 +453,7 @@ public class WorkspaceApiController implements WorkspaceApi {
         workspaceService.enablePetServiceAccountImpersonation(workspaceId, userRequest);
     return new ResponseEntity<>(petSaEmail, HttpStatus.OK);
   }
-  
+
   /**
    * Clone an entire workspace by creating a new workspace and cloning the workspace's resources
    * into it.
@@ -464,6 +464,7 @@ public class WorkspaceApiController implements WorkspaceApi {
    */
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
+      UUID workspaceId, @Valid ApiCloneWorkspaceRequest body) {
     final String jobId =
         workspaceService.cloneWorkspace(
             workspaceId,
@@ -476,7 +477,6 @@ public class WorkspaceApiController implements WorkspaceApi {
     return new ResponseEntity<>(
         result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
-
   /**
    * Return the workspace clone result, including job result and error result.
    *
@@ -487,7 +487,9 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> getCloneWorkspaceResult(
       UUID workspaceId, String jobId) {
-    String petSaEmail =
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, userRequest);
+    return new ResponseEntity<>(
         result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
 
