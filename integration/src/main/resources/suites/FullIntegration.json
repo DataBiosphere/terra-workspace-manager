@@ -13,6 +13,7 @@
     "integration/DataReferenceLifecycle.json",
     "integration/DeleteGcpContextWithControlledResource.json",
     "integration/DeleteWorkspaceWithControlledResource.json",
+    "integration/EnablePet.json",
     "integration/EnumerateDataReferences.json",
     "integration/EnumerateResources.json",
     "integration/GetRoles.json",

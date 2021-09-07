@@ -128,7 +128,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiWorkspaceDescriptionList> listWorkspaces(Integer offset, Integer limit) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info("Listgin workspaces for {}", userRequest.getEmail());
+    logger.info("Listing workspaces for {}", userRequest.getEmail());
     List<Workspace> workspaces = workspaceService.listWorkspaces(userRequest, offset, limit);
     var response =
         new ApiWorkspaceDescriptionList()
@@ -446,6 +446,14 @@ public class WorkspaceApiController implements WorkspaceApi {
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
+  @Override
+  public ResponseEntity<String> enablePet(UUID workspaceId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    String petSaEmail =
+        workspaceService.enablePetServiceAccountImpersonation(workspaceId, userRequest);
+    return new ResponseEntity<>(petSaEmail, HttpStatus.OK);
+  }
+  
   /**
    * Clone an entire workspace by creating a new workspace and cloning the workspace's resources
    * into it.
@@ -456,7 +464,6 @@ public class WorkspaceApiController implements WorkspaceApi {
    */
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
-      UUID workspaceId, @Valid ApiCloneWorkspaceRequest body) {
     final String jobId =
         workspaceService.cloneWorkspace(
             workspaceId,
@@ -480,9 +487,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> getCloneWorkspaceResult(
       UUID workspaceId, String jobId) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, userRequest);
-    return new ResponseEntity<>(
+    String petSaEmail =
         result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
 
