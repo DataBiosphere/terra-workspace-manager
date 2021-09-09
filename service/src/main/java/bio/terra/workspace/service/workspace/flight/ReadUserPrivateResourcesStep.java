@@ -6,22 +6,35 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public class ReadUserPrivateResourcesStep implements Step {
 
-  private final ResourceDao resourceDao;
   private final UUID workspaceId;
   private final String userEmail;
+  private final ResourceDao resourceDao;
+  private final SamService samService;
+  private final AuthenticatedUserRequest userRequest;
 
-  public ReadUserPrivateResourcesStep(UUID workspaceId, String userEmail, ResourceDao resourceDao) {
+  public ReadUserPrivateResourcesStep(
+      UUID workspaceId,
+      String userEmail,
+      ResourceDao resourceDao,
+      SamService samService,
+      AuthenticatedUserRequest userRequest) {
     this.resourceDao = resourceDao;
     this.workspaceId = workspaceId;
     this.userEmail = userEmail;
+    this.samService = samService;
+    this.userRequest = userRequest;
   }
 
   @Override
@@ -38,9 +51,19 @@ public class ReadUserPrivateResourcesStep implements Step {
     if (userStillInWorkspace) {
       return StepResult.getStepResultSuccess();
     }
+    // Read the list of resources this user owns from WSM's DB
     List<ControlledResource> userResources =
         resourceDao.listPrivateResourcesByUser(workspaceId, userEmail);
-    workingMap.put(ControlledResourceKeys.REVOCABLE_PRIVATE_RESOURCES, userResources);
+    // For each private resource, query Sam to find the roles the user has.
+    List<ResourceRolePair> resourceRolesToRemove = new ArrayList<>();
+    for (ControlledResource resource : userResources) {
+      List<ControlledResourceIamRole> userRoles =
+          samService.getUserRolesOnPrivateResource(resource, userEmail, userRequest);
+      for (ControlledResourceIamRole role : userRoles) {
+        resourceRolesToRemove.add(new ResourceRolePair(resource, role));
+      }
+    }
+    workingMap.put(ControlledResourceKeys.RESOURCE_ROLES_TO_REMOVE, resourceRolesToRemove);
     return StepResult.getStepResultSuccess();
   }
 

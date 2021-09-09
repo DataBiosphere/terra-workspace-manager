@@ -16,6 +16,7 @@ public class SamConstants {
 
   public static class SamControlledResourceActions {
     public static final String READ_ACTION = "read";
+    public static final String WRITE_ACTION = "write";
     public static final String EDIT_ACTION = "edit";
     public static final String DELETE_ACTION = "delete";
 

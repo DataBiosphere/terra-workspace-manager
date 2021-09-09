@@ -34,6 +34,7 @@ import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntry;
+import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntryV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
 import org.broadinstitute.dsde.workbench.client.sam.model.ResourceAndAccessPolicy;
@@ -496,6 +497,53 @@ public class SamService {
   }
 
   /**
+   * Wrapper around the Sam client to restore a role to a user on a controlled resource. This is
+   * only exposed to support undoing Stairway transactions which revoke access. It should not be
+   * called otherwise.
+   *
+   * <p>This call to Sam is made as the WSM SA, as users do not have permission to directly modify
+   * IAM on resources. This method still requires user credentials to validate as a safeguard, but
+   * they are not used in the role removal call.
+   */
+  @Traced
+  public void restoreResourceRole(
+      ControlledResource resource,
+      AuthenticatedUserRequest userRequest,
+      ControlledResourceIamRole role,
+      String email)
+      throws InterruptedException {
+    // Validate that the provided user credentials are an owner in the resource's workspace.
+    // Although the Sam call to revoke a resource role must use WSM SA credentials instead, this
+    // is a safeguard against accidentally invoking these credentials for unauthorized users.
+    checkAuthz(
+        userRequest,
+        SamConstants.SAM_WORKSPACE_RESOURCE,
+        resource.getWorkspaceId().toString(),
+        SamConstants.SAM_WORKSPACE_OWN_ACTION);
+
+    try {
+      ResourcesApi wsmSaResourceApi = samResourcesApi(getWsmServiceAccountToken());
+      SamRetry.retry(
+          () ->
+              wsmSaResourceApi.addUserToPolicyV2(
+                  resource.getCategory().getSamResourceName(),
+                  resource.getResourceId().toString(),
+                  role.toSamRole(),
+                  email));
+      logger.info(
+          "Restored role {} to user {} on resource {}",
+          role.toSamRole(),
+          email,
+          resource.getResourceId());
+    } catch (IOException credentialException) {
+      throw new InternalServerErrorException(
+          "Error restoring resource role in Sam", credentialException);
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error restoring resource role in Sam", apiException);
+    }
+  }
+
+  /**
    * Wrapper around Sam client to retrieve the full current permissions model of a workspace.
    *
    * <p>This operation is only available to MC_WORKSPACE stage workspaces, as Rawls manages
@@ -717,6 +765,44 @@ public class SamService {
         return;
       }
       throw SamExceptionFactory.create("Error deleting controlled resource in Sam", apiException);
+    }
+  }
+
+  /**
+   * Return the list of roles a user has directly on a private, user-managed controlled resource.
+   * This will not return roles that a user holds via group membership.
+   *
+   * <p>This call to Sam is made as the WSM SA, as users do not have permission to directly modify
+   * IAM on resources. This method still requires user credentials to validate as a safeguard, but
+   * they are not used in the role removal call.
+   */
+  public List<ControlledResourceIamRole> getUserRolesOnPrivateResource(
+      ControlledResource resource, String user, AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
+    // Validate that the provided user credentials are an owner in the resource's workspace.
+    // Although the Sam call to revoke a resource role must use WSM SA credentials instead, this
+    // is a safeguard against accidentally invoking these credentials for unauthorized users.
+    checkAuthz(
+        userRequest,
+        SamConstants.SAM_WORKSPACE_RESOURCE,
+        resource.getWorkspaceId().toString(),
+        SamConstants.SAM_WORKSPACE_OWN_ACTION);
+
+    try {
+      ResourcesApi wsmSaResourceApi = samResourcesApi(getWsmServiceAccountToken());
+      List<AccessPolicyResponseEntryV2> policyList =
+          wsmSaResourceApi.listResourcePoliciesV2(
+              resource.getCategory().getSamResourceName(), resource.getResourceId().toString());
+      return policyList.stream()
+          .filter(policyEntry -> policyEntry.getPolicy().getMemberEmails().contains(user))
+          .map(AccessPolicyResponseEntryV2::getPolicyName)
+          .map(ControlledResourceIamRole::fromSamRole)
+          .collect(Collectors.toList());
+    } catch (IOException credentialException) {
+      throw new InternalServerErrorException(
+          "Error reading private resource roles from Sam", credentialException);
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error removing resource role in Sam", apiException);
     }
   }
 

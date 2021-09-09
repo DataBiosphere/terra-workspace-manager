@@ -32,7 +32,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String RESOURCE_DESCRIPTION = "resourceDescription";
     public static final String PREVIOUS_RESOURCE_DESCRIPTION = "previousResourceDescription";
 
-    public static final String REVOCABLE_PRIVATE_RESOURCES = "revocablePrivateResources";
+    public static final String RESOURCE_ROLES_TO_REMOVE = "resourceRolesToRemove";
     public static final String REMOVED_USER_IS_WORKSPACE_MEMBER = "removedUserIsWorkspaceMember";
 
     // Notebooks keys
