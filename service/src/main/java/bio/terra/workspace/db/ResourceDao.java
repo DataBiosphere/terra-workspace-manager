@@ -241,16 +241,18 @@ public class ResourceDao {
         .collect(Collectors.toList());
   }
 
-  /** Returns a list of all private resources assigned to a user in a given workspace. */
+  /** Returns a list of all private controlled resources assigned to a user in a given workspace. */
   @ReadTransaction
   public List<ControlledResource> listPrivateResourcesByUser(UUID workspaceId, String userEmail) {
     String sql =
         RESOURCE_SELECT_SQL
+            + " AND stewardship_type = :controlled_resource"
             + " AND access_scope = :access_scope"
             + " AND assigned_user = :user_email";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
+            .addValue("controlled_resource", CONTROLLED.toSql())
             .addValue("access_scope", AccessScopeType.ACCESS_SCOPE_PRIVATE.toSql())
             .addValue("user_email", userEmail);
 

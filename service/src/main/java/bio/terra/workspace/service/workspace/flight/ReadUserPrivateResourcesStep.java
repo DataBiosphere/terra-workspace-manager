@@ -13,7 +13,6 @@ import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public class ReadUserPrivateResourcesStep implements Step {
@@ -41,10 +40,7 @@ public class ReadUserPrivateResourcesStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     FlightMap workingMap = context.getWorkingMap();
     boolean userStillInWorkspace =
-        Optional.ofNullable(
-                workingMap.get(
-                    ControlledResourceKeys.REMOVED_USER_IS_WORKSPACE_MEMBER, Boolean.class))
-            .orElse(false);
+        workingMap.get(ControlledResourceKeys.REMOVED_USER_IS_WORKSPACE_MEMBER, Boolean.class);
     // This flight is triggered whenever a user loses any role on a workspace. If they are still
     // a member of the workspace via a group or another role, we do not need to remove their access
     // to private resources.

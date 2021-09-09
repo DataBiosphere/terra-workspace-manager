@@ -377,7 +377,8 @@ public class WorkspaceApiController implements WorkspaceApi {
           "Users cannot remove role APPLICATION. Use application registration instead.");
     }
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.removeRole(id, WsmIamRole.fromApiModel(role), memberEmail, userRequest);
+    workspaceService.removeWorkspaceRoleFromUser(
+        id, WsmIamRole.fromApiModel(role), memberEmail, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

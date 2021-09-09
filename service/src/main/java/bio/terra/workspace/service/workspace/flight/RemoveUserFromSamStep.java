@@ -32,12 +32,16 @@ public class RemoveUserFromSamStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    // Sam returns a 204 regardless of whether the user was actually removed or not, so this step is
+    // always idempotent.
     samService.removeWorkspaceRole(workspaceId, userRequest, roleToRemove, userToRemoveEmail);
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
+    // Sam de-duplicates policy membership, so it's safe to restore roles that may not have been
+    // removed in the DO step.
     samService.grantWorkspaceRole(workspaceId, userRequest, roleToRemove, userToRemoveEmail);
     return StepResult.getStepResultSuccess();
   }

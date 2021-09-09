@@ -23,9 +23,9 @@ import com.google.api.services.iam.v1.model.Binding;
 import com.google.api.services.iam.v1.model.Policy;
 import com.google.api.services.iam.v1.model.SetIamPolicyRequest;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -113,7 +113,7 @@ public class ServiceAccountPolicyStep implements Step {
     String writerGroupEmail = resourceRoleGroupsMap.get(ControlledResourceIamRole.WRITER);
     return new Binding()
         .setRole(SERVICE_ACCOUNT_USER_ROLE)
-        .setMembers(ImmutableList.of("group:" + writerGroupEmail));
+        .setMembers(Collections.singletonList("group:" + writerGroupEmail));
   }
 
   /**

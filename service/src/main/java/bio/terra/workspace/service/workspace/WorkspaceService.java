@@ -393,22 +393,32 @@ public class WorkspaceService {
     }
   }
 
-  public void removeRole(
+  /**
+   * Remove a workspace role from a user. This will also remove a user from their private resources
+   * if they are no longer a member of the workspace (i.e. have no other roles) after role removal.
+   *
+   * @param workspaceId ID of the workspace user to remove user's role in
+   * @param role Role to remove
+   * @param userEmail Email identifier of user whose role is being removed
+   * @param userRequest User credentials to authenticate this removal. Must belong to a workspace
+   *     owner, and likely do not belong to {@code userEmail}.
+   */
+  public void removeWorkspaceRoleFromUser(
       UUID workspaceId, WsmIamRole role, String userEmail, AuthenticatedUserRequest userRequest) {
     Workspace workspace =
         validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
-    stageService.assertMcWorkspace(workspace, "deleteGcpCloudContext");
+    stageService.assertMcWorkspace(workspace, "removeWorkspaceRoleFromUser");
     // Before launching the flight, validate that the user being removed is a direct member of the
     // specified role. Users may also be added to a workspace via managed groups, but WSM does not
     // control membership of those groups, and so cannot remove them here.
     List<String> roleMembers =
-        samService.listWorkspacePolicyMembers(workspaceId, role, userRequest);
+        samService.listUsersWithWorkspaceRole(workspaceId, role, userRequest);
     if (!roleMembers.contains(userEmail)) {
       return;
     }
     jobService
         .newJob(
-            "Remove user from workspace " + workspaceId,
+            "Remove role from user in workspace " + workspaceId,
             UUID.randomUUID().toString(),
             RemoveUserFromWorkspaceFlight.class,
             /* request= */ null,

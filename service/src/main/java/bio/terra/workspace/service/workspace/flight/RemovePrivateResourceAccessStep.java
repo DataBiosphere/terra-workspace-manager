@@ -10,7 +10,6 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
-import java.util.Optional;
 
 public class RemovePrivateResourceAccessStep implements Step {
 
@@ -29,10 +28,7 @@ public class RemovePrivateResourceAccessStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     FlightMap workingMap = context.getWorkingMap();
     boolean userStillInWorkspace =
-        Optional.ofNullable(
-                workingMap.get(
-                    ControlledResourceKeys.REMOVED_USER_IS_WORKSPACE_MEMBER, Boolean.class))
-            .orElse(false);
+        workingMap.get(ControlledResourceKeys.REMOVED_USER_IS_WORKSPACE_MEMBER, Boolean.class);
     // This flight is triggered whenever a user loses any role on a workspace. If they are still
     // a member of the workspace via a group or another role, we do not need to remove their access
     // to private resources.
@@ -53,10 +49,7 @@ public class RemovePrivateResourceAccessStep implements Step {
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     FlightMap workingMap = context.getWorkingMap();
     boolean userStillInWorkspace =
-        Optional.ofNullable(
-                workingMap.get(
-                    ControlledResourceKeys.REMOVED_USER_IS_WORKSPACE_MEMBER, Boolean.class))
-            .orElse(false);
+        workingMap.get(ControlledResourceKeys.REMOVED_USER_IS_WORKSPACE_MEMBER, Boolean.class);
     // This flight is triggered whenever a user loses any role on a workspace. If they are still
     // a member of the workspace via a group or another role, we do not need to restore their access
     // to private resources here.
