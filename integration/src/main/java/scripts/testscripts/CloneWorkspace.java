@@ -117,24 +117,24 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     sharedBucketSourceResourceName = RESOURCE_PREFIX + nameSuffix;
     sharedSourceBucket = makeControlledGcsBucketUserShared(sourceOwnerResourceApi, getWorkspaceId(),
         sharedBucketSourceResourceName, CloningInstructionsEnum.RESOURCE);
-    addFileToBucket(sharedSourceBucket, sourceOwnerUser);
+    ResourceMaker.addFileToBucket(sharedSourceBucket, sourceOwnerUser, sourceProjectId);
 
     // create a private GCS bucket, which the non-creating user can't clone
     final PrivateResourceIamRoles privateRoles = new PrivateResourceIamRoles();
     privateRoles.addAll(PRIVATE_ROLES);
     privateSourceBucket = makeControlledGcsBucketUserPrivate(sourceOwnerResourceApi, getWorkspaceId(),
         UUID.randomUUID().toString(), sourceOwnerUser.userEmail, privateRoles, CloningInstructionsEnum.RESOURCE);
-    addFileToBucket(privateSourceBucket, sourceOwnerUser);
+    ResourceMaker.addFileToBucket(privateSourceBucket, sourceOwnerUser, sourceProjectId);
 
     // create a GCS bucket with data and COPY_NOTHING instruction
     sharedCopyNothingSourceBucket = makeControlledGcsBucketUserShared(sourceOwnerResourceApi, getWorkspaceId(),
         UUID.randomUUID().toString(), CloningInstructionsEnum.NOTHING);
-    addFileToBucket(sharedCopyNothingSourceBucket, sourceOwnerUser);
+    ResourceMaker.addFileToBucket(sharedCopyNothingSourceBucket, sourceOwnerUser, sourceProjectId);
 
     // create a GCS bucket with data and COPY_DEFINITION
     copyDefinitionSourceBucket = makeControlledGcsBucketUserShared(sourceOwnerResourceApi, getWorkspaceId(),
         UUID.randomUUID().toString(), CloningInstructionsEnum.DEFINITION);
-    addFileToBucket(copyDefinitionSourceBucket, sourceOwnerUser);
+    ResourceMaker.addFileToBucket(copyDefinitionSourceBucket, sourceOwnerUser, sourceProjectId);
 
     // Create a BigQuery Dataset with tables and COPY_DEFINITION
     copyDefinitionDatasetName = "copy_definition_" + nameSuffix.replace('-', '_');
@@ -224,7 +224,8 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     final WorkspaceDescription destinationWorkspace = cloningUserWorkspaceApi.getWorkspace(destinationWorkspaceId);
     final String destinationProjectId = destinationWorkspace.getGcpContext().getProjectId();
     final var clonedSharedBucket = cloningUserResourceApi.getBucket(destinationWorkspaceId, sharedBucketCloneDetails.getDestinationResourceId());
-    retrieveBucketFile(clonedSharedBucket.getAttributes().getBucketName(), destinationProjectId);
+    ResourceMaker.retrieveBucketFile(
+        clonedSharedBucket.getAttributes().getBucketName(), destinationProjectId, cloningUser);
 
     // Verify clone of private bucket fails
     final ResourceCloneDetails privateBucketCloneDetails = getOrFail(
@@ -382,23 +383,6 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     final long numRows = StreamSupport.stream(listTablesResult.getValues().spliterator(), false)
         .count();
     assertEquals(0, numRows);
-  }
-
-  private Blob addFileToBucket(CreatedControlledGcpGcsBucket bucket, TestUserSpecification sourceOwnerUser) throws IOException {
-    final Storage sourceOwnerStorageClient = ClientTestUtils.getGcpStorageClient(sourceOwnerUser, sourceProjectId);
-    final BlobId blobId = BlobId.of(bucket.getGcpBucket().getAttributes().getBucketName(), GCS_BLOB_NAME);
-    final BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
-    return sourceOwnerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
-  }
-
-  private Blob retrieveBucketFile(String bucketName, String destinationProjectId) throws IOException {
-    Storage cloningUserStorageClient = ClientTestUtils.getGcpStorageClient(cloningUser, destinationProjectId);
-    BlobId blobId = BlobId.of(bucketName, GCS_BLOB_NAME);
-
-    final Blob retrievedFile = cloningUserStorageClient.get(blobId);
-    assertNotNull(retrievedFile);
-    assertEquals(blobId.getName(), retrievedFile.getBlobId().getName());
-    return retrievedFile;
   }
 
   private void assertEmptyBucket(String bucketName, String destinationProjectId) throws IOException {

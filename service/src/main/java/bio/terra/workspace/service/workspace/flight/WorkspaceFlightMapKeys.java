@@ -10,6 +10,8 @@ public final class WorkspaceFlightMapKeys {
   public static final String RBS_RESOURCE_ID = "rbsResourceId";
   public static final String DISPLAY_NAME = "displayNameId";
   public static final String DESCRIPTION = "descriptionId";
+  public static final String USER_TO_REMOVE = "userToRemove";
+  public static final String ROLE_TO_REMOVE = "roleToRemove";
 
   private WorkspaceFlightMapKeys() {}
 
@@ -29,6 +31,9 @@ public final class WorkspaceFlightMapKeys {
     public static final String PREVIOUS_RESOURCE_NAME = "previousResourceName";
     public static final String RESOURCE_DESCRIPTION = "resourceDescription";
     public static final String PREVIOUS_RESOURCE_DESCRIPTION = "previousResourceDescription";
+
+    public static final String REVOCABLE_PRIVATE_RESOURCES = "revocablePrivateResources";
+    public static final String REMOVED_USER_IS_WORKSPACE_MEMBER = "removedUserIsWorkspaceMember";
 
     // Notebooks keys
     public static final String CREATE_NOTEBOOK_NETWORK_NAME = "createNotebookNetworkName";

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.iam;
 
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
@@ -314,6 +315,37 @@ public class SamService {
   }
 
   /**
+   * Check whether a user may perform an action on a Sam resource. Unlike {@code isAuthorized}, this
+   * method does not require that the calling user and the authenticating user are the same - e.g.
+   * user A may ask Sam whether user B has permission to perform an action.
+   *
+   * @param iamResourceType The type of the Sam resource to check
+   * @param resourceId The ID of the Sam resource to check
+   * @param action The action we're querying Sam for
+   * @param userToCheck The email of the principle whose permission we are checking
+   * @param userRequest Credentials for the call to Sam. These do not need to be from the same user
+   *     as userToCheck.
+   * @return True if userToCheck may perform the specified action on the specified resource. False
+   *     otherwise.
+   */
+  @Traced
+  public boolean userIsAuthorized(
+      String iamResourceType,
+      String resourceId,
+      String action,
+      String userToCheck,
+      AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
+    ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
+    try {
+      return SamRetry.retry(
+          () -> resourceApi.resourceActionV2(iamResourceType, resourceId, action, userToCheck));
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error checking resource permission in Sam", apiException);
+    }
+  }
+
+  /**
    * Wrapper around isAuthorized which throws an appropriate exception if a user does not have
    * access to a resource. The wrapped call will perform a check for the appropriate permission in
    * Sam. This call answers the question "does user X have permission to do action Y on resource Z".
@@ -416,7 +448,55 @@ public class SamService {
   }
 
   /**
-   * Wrapper around Sam client to retrieve the current permissions model of a workspace.
+   * Wrapper around the Sam client to remove a role from the provided user on a controlled resource.
+   *
+   * <p>Similar to {@removeWorkspaceRole}, but for controlled resources. This should only be
+   * necessary for private resources, as users do not have individual roles on shared resources.
+   *
+   * <p>This call to Sam is made as the WSM SA, as users do not have permission to directly modify
+   * IAM on resources. This method still requires user credentials to validate as a safeguard, but
+   * they are not used in the role removal call.
+   */
+  @Traced
+  public void removeResourceRole(
+      ControlledResource resource,
+      AuthenticatedUserRequest userRequest,
+      ControlledResourceIamRole role,
+      String email)
+      throws InterruptedException {
+    // Validate that the provided user credentials are an owner in the resource's workspace.
+    // Although the Sam call to revoke a resource role must use WSM SA credentials instead, this
+    // is a safeguard against accidentally invoking these credentials for unauthorized users.
+    checkAuthz(
+        userRequest,
+        SamConstants.SAM_WORKSPACE_RESOURCE,
+        resource.getWorkspaceId().toString(),
+        SamConstants.SAM_WORKSPACE_OWN_ACTION);
+
+    try {
+      ResourcesApi wsmSaResourceApi = samResourcesApi(getWsmServiceAccountToken());
+      SamRetry.retry(
+          () ->
+              wsmSaResourceApi.removeUserFromPolicyV2(
+                  resource.getCategory().getSamResourceName(),
+                  resource.getResourceId().toString(),
+                  role.toSamRole(),
+                  email));
+      logger.info(
+          "Removed role {} from user {} on resource {}",
+          role.toSamRole(),
+          email,
+          resource.getResourceId());
+    } catch (IOException credentialException) {
+      throw new InternalServerErrorException(
+          "Error removing resource role in Sam", credentialException);
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error removing resource role in Sam", apiException);
+    }
+  }
+
+  /**
+   * Wrapper around Sam client to retrieve the full current permissions model of a workspace.
    *
    * <p>This operation is only available to MC_WORKSPACE stage workspaces, as Rawls manages
    * permissions directly on other workspaces.
@@ -447,6 +527,21 @@ public class SamService {
           .collect(Collectors.toList());
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error listing role bindings in Sam", apiException);
+    }
+  }
+
+  /** Wrapper around Sam client to fetch the list of users with a specific role in a workspace. */
+  @Traced
+  public List<String> listWorkspacePolicyMembers(
+      UUID workspaceId, WsmIamRole role, AuthenticatedUserRequest userRequest) {
+    ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
+    try {
+      return resourcesApi
+          .getPolicyV2(
+              SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole())
+          .getMemberEmails();
+    } catch (ApiException e) {
+      throw SamExceptionFactory.create("Error retrieving workspace policy members from Sam", e);
     }
   }
 

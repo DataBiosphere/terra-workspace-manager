@@ -263,7 +263,6 @@ public class ClientTestUtils {
     Duration sleepDuration = Duration.ofSeconds(15);
     while (numTries > 0) {
       try {
-        // read blob as second user
         result = supplier.get();
         break;
       } catch (Exception e) {
@@ -277,6 +276,13 @@ public class ClientTestUtils {
       }
     }
     return result;
+  }
+
+  public static void runWithRetryOnException(Runnable fn) throws InterruptedException {
+    getWithRetryOnException(() -> {
+      fn.run();
+      return null;
+    });
   }
 
   /**
