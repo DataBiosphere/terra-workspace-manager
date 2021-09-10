@@ -369,7 +369,8 @@ public class WorkspaceService {
       Policy saPolicy =
           crlService.getIamCow().projects().serviceAccounts().getIamPolicy(petSaName).execute();
       // TODO(PF-991): In the future, the pet SA should not be included in this binding. This is a
-      //  workaround to support Nextflow and other applications which call Pipelines API.
+      //  workaround to support the CLI and other applications which call the GCP Pipelines API with
+      //  the pet SA's credentials.
       Binding saUserBinding =
           new Binding()
               .setRole(serviceAccountUserRole)
