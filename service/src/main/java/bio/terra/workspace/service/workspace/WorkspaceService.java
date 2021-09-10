@@ -31,10 +31,10 @@ import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import com.google.api.services.iam.v1.model.Binding;
 import com.google.api.services.iam.v1.model.Policy;
 import com.google.api.services.iam.v1.model.SetIamPolicyRequest;
+import com.google.common.collect.ImmutableList;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -367,10 +367,12 @@ public class WorkspaceService {
     try {
       Policy saPolicy =
           crlService.getIamCow().projects().serviceAccounts().getIamPolicy(petSaName).execute();
+      // TODO(PF-991): In the future, the pet SA should not be included in this binding. This is a
+      //  workaround to support Nextflow and other applications which call Pipelines API.
       Binding saUserBinding =
           new Binding()
               .setRole(serviceAccountUserRole)
-              .setMembers(Collections.singletonList("user:" + userEmail));
+              .setMembers(ImmutableList.of("user:" + userEmail, "serviceAccount:" + petSaEmail));
       // If no bindings exist, getBindings() returns null instead of an empty list.
       List<Binding> bindingList =
           Optional.ofNullable(saPolicy.getBindings()).orElse(new ArrayList<>());

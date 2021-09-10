@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -123,9 +124,8 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     Instance instance = userNotebooks.projects().locations().instances().get(instanceName)
         .execute();
 
-    // TODO(PF-765): Assert that the other user does not have proxy access once we don't have
-    // project level service account permissions.
     assertUserHasProxyAccess(resourceUser, instance, resource.getAttributes().getProjectId());
+    // assertFalse(ResourceModifier.userHasProxyAccess());
     // The user should be able to stop their notebook.
     userNotebooks.projects().locations().instances().stop(instanceName, new StopInstanceRequest());
 
