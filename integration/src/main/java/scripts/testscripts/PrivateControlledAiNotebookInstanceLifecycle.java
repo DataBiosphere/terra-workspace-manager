@@ -7,45 +7,33 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
-import bio.terra.workspace.model.AccessScope;
-import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.ControlledResourceCommonFields;
-import bio.terra.workspace.model.ControlledResourceIamRole;
-import bio.terra.workspace.model.CreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceRequest;
 import bio.terra.workspace.model.DeleteControlledGcpAiNotebookInstanceResult;
-import bio.terra.workspace.model.GcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.model.GcpAiNotebookInstanceResource;
-import bio.terra.workspace.model.GcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.JobControl;
-import bio.terra.workspace.model.ManagedBy;
-import bio.terra.workspace.model.PrivateResourceIamRoles;
-import bio.terra.workspace.model.PrivateResourceUser;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.services.iam.v1.model.TestIamPermissionsRequest;
 import com.google.api.services.notebooks.v1.AIPlatformNotebooks;
-import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.api.services.notebooks.v1.model.StopInstanceRequest;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpStatus;
-import org.hamcrest.Matchers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
+import scripts.utils.ResourceMaker;
+import scripts.utils.ResourceModifier;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAllocateTestScriptBase {
@@ -90,18 +78,8 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     ControlledGcpResourceApi resourceUserApi =
         ClientTestUtils.getControlledGcpResourceClient(resourceUser, server);
     CreatedControlledGcpAiNotebookInstanceResult creationResult =
-        createPrivateNotebook(resourceUser, resourceUserApi);
-    String creationJobId = creationResult.getJobReport().getId();
-    creationResult = ClientTestUtils.pollWhileRunning(
-        creationResult,
-        () -> resourceUserApi.getCreateAiNotebookInstanceResult(getWorkspaceId(), creationJobId),
-        CreatedControlledGcpAiNotebookInstanceResult::getJobReport,
-        Duration.ofSeconds(10));
-    ClientTestUtils.assertJobSuccess("create ai notebook",
-        creationResult.getJobReport(), creationResult.getErrorReport());
-    logger.info(
-        "Creation succeeded for instanceId {}",
-        creationResult.getAiNotebookInstance().getAttributes().getInstanceId());
+        ResourceMaker.makeControlledNotebookUserPrivate(
+            getWorkspaceId(), instanceId, resourceUser, resourceUserApi);
 
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
 
@@ -121,11 +99,13 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
             resource.getAttributes().getLocation(), resource.getAttributes().getInstanceId());
     AIPlatformNotebooks userNotebooks = ClientTestUtils.getAIPlatformNotebooksClient(resourceUser);
 
-    Instance instance = userNotebooks.projects().locations().instances().get(instanceName)
-        .execute();
+    assertTrue(ResourceModifier.userHasProxyAccess(
+        creationResult, resourceUser, resource.getAttributes().getProjectId()),
+        "Private resource user has access to their notebook");
+    assertFalse(ResourceModifier.userHasProxyAccess(
+        creationResult, otherWorkspaceUser, resource.getAttributes().getProjectId()),
+        "Other workspace user does not have access to a private notebook");
 
-    assertUserHasProxyAccess(resourceUser, instance, resource.getAttributes().getProjectId());
-    // assertFalse(ResourceModifier.userHasProxyAccess());
     // The user should be able to stop their notebook.
     userNotebooks.projects().locations().instances().stop(instanceName, new StopInstanceRequest());
 
@@ -166,70 +146,5 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     assertThat("Error from GCP is 403 or 404",
         notebookNotFound.getStatusCode(),
         anyOf(equalTo(HttpStatus.SC_NOT_FOUND), equalTo(HttpStatus.SC_FORBIDDEN)));
-  }
-
-  private CreatedControlledGcpAiNotebookInstanceResult createPrivateNotebook(
-      TestUserSpecification user, ControlledGcpResourceApi resourceApi)
-      throws ApiException, InterruptedException {
-    // Fill out the minimum required fields to arbitrary values.
-    var creationParameters =
-        new GcpAiNotebookInstanceCreationParameters()
-            .instanceId(instanceId)
-            .location("us-east1-b")
-            .machineType("e2-standard-2")
-            .vmImage(
-                new GcpAiNotebookInstanceVmImage()
-                    .projectId("deeplearning-platform-release")
-                    .imageFamily("r-latest-cpu-experimental"));
-
-    PrivateResourceIamRoles privateIamRoles = new PrivateResourceIamRoles();
-    privateIamRoles.add(ControlledResourceIamRole.EDITOR);
-    privateIamRoles.add(ControlledResourceIamRole.WRITER);
-    var commonParameters =
-        new ControlledResourceCommonFields()
-            .name(RandomStringUtils.randomAlphabetic(6))
-            .cloningInstructions(CloningInstructionsEnum.NOTHING)
-            .accessScope(AccessScope.PRIVATE_ACCESS)
-            .managedBy(ManagedBy.USER)
-            .privateResourceUser(
-                new PrivateResourceUser()
-                    .userName(user.userEmail)
-                    .privateResourceIamRoles(privateIamRoles));
-
-    var body =
-        new CreateControlledGcpAiNotebookInstanceRequestBody()
-            .aiNotebookInstance(creationParameters)
-            .common(commonParameters)
-            .jobControl(new JobControl().id(UUID.randomUUID().toString()));
-
-    return resourceApi.createAiNotebookInstance(body, getWorkspaceId());
-  }
-
-  /**
-   * Assert that the user has access to the Notebook through the proxy with a service account.
-   * <p>We can't directly test that we can go through the proxy to the Jupyter notebook without a
-   * real Google user auth flow, so we check the necessary ingredients instead.
-   */
-  private static void assertUserHasProxyAccess(TestUserSpecification user, Instance instance,
-      String projectId) throws GeneralSecurityException, IOException {
-    // Test that the user has access to the notebook with a service account through proxy mode.
-    // git secrets gets a false positive if 'service_account' is double quoted.
-    assertThat("Notebook has correct proxy mode access", instance.getMetadata(),
-        Matchers.hasEntry("proxy-mode", "service_" + "account"));
-
-    // The user needs to have the actAs permission on the service account.
-    String actAsPermission = "iam.serviceAccounts.actAs";
-    String serviceAccountName = String
-        .format("projects/%s/serviceAccounts/%s", projectId, instance.getServiceAccount());
-    assertThat("User may actAs notebook SA",
-        ClientTestUtils.getGcpIamClient(user)
-            .projects()
-            .serviceAccounts()
-            .testIamPermissions(
-                serviceAccountName,
-                new TestIamPermissionsRequest().setPermissions(List.of(actAsPermission)))
-            .execute()
-            .getPermissions(),
-        Matchers.contains(actAsPermission));
   }
 }

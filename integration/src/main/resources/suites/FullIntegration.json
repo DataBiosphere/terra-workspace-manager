@@ -19,6 +19,7 @@
     "integration/GetRoles.json",
     "integration/PrivateControlledAiNotebookInstanceLifecycle.json",
     "integration/PrivateControlledGcsBucketLifecycle.json",
+    "integration/RemoveUser.json",
     "integration/ValidateReferencedResources.json",
     "integration/WorkspaceLifecycle.json"
   ]
