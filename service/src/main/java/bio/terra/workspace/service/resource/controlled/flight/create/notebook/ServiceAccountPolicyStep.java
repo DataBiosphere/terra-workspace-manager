@@ -17,14 +17,17 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.iam.v1.model.Binding;
 import com.google.api.services.iam.v1.model.Policy;
 import com.google.api.services.iam.v1.model.SetIamPolicyRequest;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,11 +105,14 @@ public class ServiceAccountPolicyStep implements Step {
         privateIamRoles.stream().anyMatch(role -> role.equals(ControlledResourceIamRole.WRITER)),
         "A private, controlled AI Notebook instance must have the writer role or else it is not useful.");
 
-    // Assumes that the assigned user is the user requesting the resource creation.
-    String userEmail = samService.getRequestUserEmail(userRequest);
+    // Grant permission via private resource's Sam group so that access can be revoked via Sam.
+    Map<ControlledResourceIamRole, String> resourceRoleGroupsMap =
+        workingMap.get(
+            ControlledResourceKeys.IAM_RESOURCE_GROUP_EMAIL_MAP, new TypeReference<>() {});
+    String writerGroupEmail = resourceRoleGroupsMap.get(ControlledResourceIamRole.WRITER);
     return new Binding()
         .setRole(SERVICE_ACCOUNT_USER_ROLE)
-        .setMembers(ImmutableList.of("user:" + userEmail));
+        .setMembers(Collections.singletonList("group:" + writerGroupEmail));
   }
 
   /**

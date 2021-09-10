@@ -37,7 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
-import scripts.utils.ResourceMaker;
+import scripts.utils.ResourceModifier;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
@@ -76,7 +76,7 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
     sourceDataset = makeControlledBigQueryDatasetUserShared(sourceOwnerResourceApi, getWorkspaceId(),
         sourceResourceName);
 
-    ResourceMaker.populateBigQueryDataset(sourceDataset, sourceOwnerUser, sourceProjectId);
+    ResourceModifier.populateBigQueryDataset(sourceDataset, sourceOwnerUser, sourceProjectId);
 
     // Make the cloning user a reader on the existing workspace
     sourceOwnerWorkspaceApi.grantRole(

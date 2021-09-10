@@ -1,8 +1,5 @@
 package scripts.utils;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.is;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_PROJECT;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
@@ -16,16 +13,20 @@ import bio.terra.workspace.model.AccessScope;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.ControlledResourceCommonFields;
 import bio.terra.workspace.model.ControlledResourceIamRole;
+import bio.terra.workspace.model.CreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.model.CreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpGcsBucketReferenceRequestBody;
+import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.DataRepoSnapshotAttributes;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.DeleteControlledGcpGcsBucketRequest;
 import bio.terra.workspace.model.DeleteControlledGcpGcsBucketResult;
+import bio.terra.workspace.model.GcpAiNotebookInstanceCreationParameters;
+import bio.terra.workspace.model.GcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
@@ -33,10 +34,6 @@ import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.GcpGcsBucketCreationParameters;
 import bio.terra.workspace.model.GcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.model.GcpGcsBucketLifecycle;
-import bio.terra.workspace.model.GcpGcsBucketLifecycleRule;
-import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleAction;
-import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleActionType;
-import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
@@ -44,33 +41,19 @@ import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceIamRoles;
 import bio.terra.workspace.model.PrivateResourceUser;
 import bio.terra.workspace.model.ReferenceResourceCommonFields;
-import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.Field;
-import com.google.cloud.bigquery.InsertAllRequest;
-import com.google.cloud.bigquery.LegacySQLTypeName;
-import com.google.cloud.bigquery.QueryJobConfiguration;
-import com.google.cloud.bigquery.Schema;
-import com.google.cloud.bigquery.StandardTableDefinition;
-import com.google.cloud.bigquery.Table;
-import com.google.cloud.bigquery.TableId;
-import com.google.cloud.bigquery.TableInfo;
-import com.google.cloud.bigquery.TableResult;
-import com.google.common.collect.ImmutableMap;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+
+import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // Static methods to create resources
 public class ResourceMaker {
   private static final Logger logger = LoggerFactory.getLogger(ResourceMaker.class);
-  private static final long CREATE_BUCKET_POLL_SECONDS = 5;
   private static final long DELETE_BUCKET_POLL_SECONDS = 15;
 
   public static GcpBigQueryDatasetResource makeBigQueryReference(
@@ -269,78 +252,54 @@ public class ResourceMaker {
     logger.info("Creating dataset {} workspace {}", datasetId, workspaceId);
     return resourceApi.createBigQueryDataset(body, workspaceId).getBigQueryDataset();
   }
+
   /**
-   * Create two tables with multiple rows in them into the provided dataset.
-   * Uses a mixture of streaming and DDL insertion to demonstrate the difference
-   * in copy job behavior.
-   * @param dataset - empty BigQuery dataset
-   * @param ownerUser - User who owns the dataset
-   * @param projectId - project that owns the dataset
-   * @throws IOException
-   * @throws InterruptedException
+   * Create and return a private AI Platform Notebook controlled resource with constant values. This
+   * method calls the asynchronous creation endpoint and polls until the creation job completes.
    */
-  public static void populateBigQueryDataset(
-      GcpBigQueryDatasetResource dataset,
-      TestUserSpecification ownerUser,
-      String projectId)
-      throws IOException, InterruptedException {
-    // Add tables to the source dataset
-    final BigQuery bigQueryClient = ClientTestUtils.getGcpBigQueryClient(ownerUser, projectId);
+  public static CreatedControlledGcpAiNotebookInstanceResult makeControlledNotebookUserPrivate(
+      UUID workspaceId, String instanceId, TestUserSpecification user, ControlledGcpResourceApi resourceApi)
+      throws ApiException, InterruptedException {
+    // Fill out the minimum required fields to arbitrary values.
+    var creationParameters =
+        new GcpAiNotebookInstanceCreationParameters()
+            .instanceId(instanceId)
+            .location("us-east1-b")
+            .machineType("e2-standard-2")
+            .vmImage(
+                new GcpAiNotebookInstanceVmImage()
+                    .projectId("deeplearning-platform-release")
+                    .imageFamily("r-latest-cpu-experimental"));
 
-    final Schema employeeSchema = Schema.of(
-        Field.of("employee_id", LegacySQLTypeName.INTEGER),
-        Field.of("name", LegacySQLTypeName.STRING));
-    final TableId employeeTableId = TableId.of(projectId, dataset.getAttributes().getDatasetId(), "employee");
+    PrivateResourceIamRoles privateIamRoles = new PrivateResourceIamRoles();
+    privateIamRoles.add(ControlledResourceIamRole.EDITOR);
+    privateIamRoles.add(ControlledResourceIamRole.WRITER);
+    var commonParameters =
+        new ControlledResourceCommonFields()
+            .name(RandomStringUtils.randomAlphabetic(6))
+            .cloningInstructions(CloningInstructionsEnum.NOTHING)
+            .accessScope(AccessScope.PRIVATE_ACCESS)
+            .managedBy(ManagedBy.USER)
+            .privateResourceUser(
+                new PrivateResourceUser()
+                    .userName(user.userEmail)
+                    .privateResourceIamRoles(privateIamRoles));
 
-    final TableInfo employeeTableInfo = TableInfo
-        .newBuilder(employeeTableId, StandardTableDefinition.of(employeeSchema))
-        .setFriendlyName("Employee")
-        .build();
-    final Table createdEmployeeTable = bigQueryClient.create(
-        employeeTableInfo);
-    logger.debug("Employee Table: {}", createdEmployeeTable);
+    var body =
+        new CreateControlledGcpAiNotebookInstanceRequestBody()
+            .aiNotebookInstance(creationParameters)
+            .common(commonParameters)
+            .jobControl(new JobControl().id(UUID.randomUUID().toString()));
 
-    final Table createdDepartmentTable = bigQueryClient.create(
-        TableInfo.newBuilder(TableId.of(projectId, dataset.getAttributes().getDatasetId(), "department"),
-        StandardTableDefinition.of(
-            Schema.of(
-                Field.of("department_id", LegacySQLTypeName.INTEGER),
-                Field.of("manager_id", LegacySQLTypeName.INTEGER),
-                Field.of("name", LegacySQLTypeName.STRING))))
-        .setFriendlyName("Department")
-        .build());
-    logger.debug("Department Table: {}", createdDepartmentTable);
-
-    // Add rows to the tables
-
-    // Stream insert one row to check the error handling/warning. This row may not be copied. (If
-    // the stream happens after the DDL insert, sometimes it gets copied).
-    bigQueryClient.insertAll(InsertAllRequest.newBuilder(employeeTableInfo)
-        .addRow(ImmutableMap.of("employee_id", 103, "name", "Batman"))
-        .build());
-
-    // Use DDL to insert rows instead of InsertAllRequest so that data won't
-    // be in the streaming buffer where it's un-copyable for up to 90 minutes.
-    bigQueryClient.query(QueryJobConfiguration.newBuilder(
-        "INSERT INTO `" + projectId + "." + dataset.getAttributes().getDatasetId()
-            + ".employee` (employee_id, name) VALUES("
-            + "101, 'Aquaman'), (102, 'Superman');")
-        .build());
-
-    bigQueryClient.query(QueryJobConfiguration.newBuilder(
-        "INSERT INTO `" + projectId + "." + dataset.getAttributes().getDatasetId()
-            + ".department` (department_id, manager_id, name) "
-            + "VALUES(201, 101, 'ocean'), (202, 102, 'sky');")
-        .build());
-
-    // double-check the rows are there
-    final TableResult employeeTableResult = bigQueryClient.query(QueryJobConfiguration.newBuilder(
-        "SELECT * FROM `" +
-            projectId + "." +
-            dataset.getAttributes().getDatasetId() + ".employee`;")
-        .build());
-    final long numRows = StreamSupport.stream(employeeTableResult.getValues().spliterator(), false)
-        .count();
-    assertThat(numRows, is(greaterThanOrEqualTo(2L)));
+    var creationResult = resourceApi.createAiNotebookInstance(body, workspaceId);
+    String creationJobId = creationResult.getJobReport().getId();
+    creationResult = ClientTestUtils.pollWhileRunning(
+        creationResult,
+        () -> resourceApi.getCreateAiNotebookInstanceResult(workspaceId, creationJobId),
+        CreatedControlledGcpAiNotebookInstanceResult::getJobReport,
+        Duration.ofSeconds(10));
+    ClientTestUtils.assertJobSuccess("create ai notebook",
+        creationResult.getJobReport(), creationResult.getErrorReport());
+    return creationResult;
   }
 }

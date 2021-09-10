@@ -7,6 +7,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
@@ -21,6 +22,7 @@ import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileExcep
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
+import bio.terra.workspace.service.workspace.flight.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -389,5 +391,47 @@ public class WorkspaceService {
     } catch (IOException e) {
       throw new RuntimeException("Error enabling user's pet SA", e);
     }
+  }
+
+  /**
+   * Remove a workspace role from a user. This will also remove a user from their private resources
+   * if they are no longer a member of the workspace (i.e. have no other roles) after role removal.
+   *
+   * @param workspaceId ID of the workspace user to remove user's role in
+   * @param role Role to remove
+   * @param targetUserEmail Email identifier of user whose role is being removed
+   * @param executingUserRequest User credentials to authenticate this removal. Must belong to a
+   *     workspace owner, and likely do not belong to {@code userEmail}.
+   */
+  public void removeWorkspaceRoleFromUser(
+      UUID workspaceId,
+      WsmIamRole role,
+      String targetUserEmail,
+      AuthenticatedUserRequest executingUserRequest) {
+    Workspace workspace =
+        validateWorkspaceAndAction(
+            executingUserRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
+    stageService.assertMcWorkspace(workspace, "removeWorkspaceRoleFromUser");
+    // Before launching the flight, validate that the user being removed is a direct member of the
+    // specified role. Users may also be added to a workspace via managed groups, but WSM does not
+    // control membership of those groups, and so cannot remove them here.
+    List<String> roleMembers =
+        samService.listUsersWithWorkspaceRole(workspaceId, role, executingUserRequest);
+    if (!roleMembers.contains(targetUserEmail)) {
+      return;
+    }
+    jobService
+        .newJob(
+            String.format(
+                "Remove role %s from user %s in workspace %s",
+                role.name(), targetUserEmail, workspaceId),
+            UUID.randomUUID().toString(),
+            RemoveUserFromWorkspaceFlight.class,
+            /* request= */ null,
+            executingUserRequest)
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
+        .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, targetUserEmail)
+        .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role)
+        .submitAndWait(null);
   }
 }

@@ -43,6 +43,17 @@ public enum ControlledResourceIamRole {
                     + apiModel.toString()));
   }
 
+  public static ControlledResourceIamRole fromSamRole(String samRole) {
+    Optional<ControlledResourceIamRole> result =
+        Arrays.stream(ControlledResourceIamRole.values())
+            .filter(x -> x.samRole.equals(samRole))
+            .findFirst();
+    return result.orElseThrow(
+        () ->
+            new RuntimeException(
+                "No ControlledResourceIamRole enum found corresponding to Sam role " + samRole));
+  }
+
   public String toSamRole() {
     return samRole;
   }
