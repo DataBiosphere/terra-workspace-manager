@@ -399,32 +399,38 @@ public class WorkspaceService {
    *
    * @param workspaceId ID of the workspace user to remove user's role in
    * @param role Role to remove
-   * @param userEmail Email identifier of user whose role is being removed
-   * @param userRequest User credentials to authenticate this removal. Must belong to a workspace
-   *     owner, and likely do not belong to {@code userEmail}.
+   * @param targetUserEmail Email identifier of user whose role is being removed
+   * @param executingUserRequest User credentials to authenticate this removal. Must belong to a
+   *     workspace owner, and likely do not belong to {@code userEmail}.
    */
   public void removeWorkspaceRoleFromUser(
-      UUID workspaceId, WsmIamRole role, String userEmail, AuthenticatedUserRequest userRequest) {
+      UUID workspaceId,
+      WsmIamRole role,
+      String targetUserEmail,
+      AuthenticatedUserRequest executingUserRequest) {
     Workspace workspace =
-        validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
+        validateWorkspaceAndAction(
+            executingUserRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
     stageService.assertMcWorkspace(workspace, "removeWorkspaceRoleFromUser");
     // Before launching the flight, validate that the user being removed is a direct member of the
     // specified role. Users may also be added to a workspace via managed groups, but WSM does not
     // control membership of those groups, and so cannot remove them here.
     List<String> roleMembers =
-        samService.listUsersWithWorkspaceRole(workspaceId, role, userRequest);
-    if (!roleMembers.contains(userEmail)) {
+        samService.listUsersWithWorkspaceRole(workspaceId, role, executingUserRequest);
+    if (!roleMembers.contains(targetUserEmail)) {
       return;
     }
     jobService
         .newJob(
-            "Remove role from user in workspace " + workspaceId,
+            String.format(
+                "Remove role %s from user %s in workspace %s",
+                role.name(), targetUserEmail, workspaceId),
             UUID.randomUUID().toString(),
             RemoveUserFromWorkspaceFlight.class,
             /* request= */ null,
-            userRequest)
+            executingUserRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
-        .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, userEmail)
+        .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, targetUserEmail)
         .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role.name())
         .submitAndWait(null);
   }

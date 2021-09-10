@@ -29,6 +29,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.ResourceMaker;
+import scripts.utils.ResourceModifier;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class RemoveUser extends WorkspaceAllocateTestScriptBase {
@@ -80,7 +81,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     String sharedBucketName = BUCKET_PREFIX + UUID.randomUUID();
     sharedBucket = ResourceMaker.makeControlledGcsBucketUserShared(
         ownerResourceApi, getWorkspaceId(), sharedBucketName, CloningInstructionsEnum.NOTHING);
-    ResourceMaker.addFileToBucket(sharedBucket, workspaceOwner, projectId);
+    ResourceModifier.addFileToBucket(sharedBucket, workspaceOwner, projectId);
 
     // Create a private GCS bucket for privateResourceUser with one object inside.
     String privateBucketName = BUCKET_PREFIX + UUID.randomUUID();
@@ -91,14 +92,14 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     privateBucket = ResourceMaker.makeControlledGcsBucketUserPrivate(
         privateUserResourceApi, getWorkspaceId(), privateBucketName, privateResourceUser.userEmail,
         privateRoles);
-    ResourceMaker.addFileToBucket(privateBucket, privateResourceUser, projectId);
+    ResourceModifier.addFileToBucket(privateBucket, privateResourceUser, projectId);
 
     // Create a private BQ dataset for privateResourceUser and populate it.
     String datasetId = RandomStringUtils.randomAlphabetic(8).toLowerCase();
     privateDataset = ResourceMaker.makeControlledBigQueryDatasetUserPrivate(
         privateUserResourceApi, getWorkspaceId(), datasetId, privateResourceUser.userEmail,
         privateRoles, CloningInstructionsEnum.NOTHING);
-    ResourceMaker.populateBigQueryDataset(privateDataset, privateResourceUser, projectId);
+    ResourceModifier.populateBigQueryDataset(privateDataset, privateResourceUser, projectId);
     // Create a private notebook for privateResourceUser.
     String notebookInstanceId = RandomStringUtils.randomAlphabetic(8).toLowerCase();
     privateNotebook = ResourceMaker.makeControlledNotebookUserPrivate(
@@ -111,8 +112,8 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     String sharedBucketName = sharedBucket.getGcpBucket().getAttributes().getBucketName();
     String privateBucketName = privateBucket.getGcpBucket().getAttributes().getBucketName();
     // Validate that setup ran correctly and users have appropriate resource access.
-    ResourceMaker.retrieveBucketFile(sharedBucketName, projectId, sharedResourceUser);
-    ResourceMaker.retrieveBucketFile(privateBucketName, projectId, privateResourceUser);
+    ResourceModifier.retrieveBucketFile(sharedBucketName, projectId, sharedResourceUser);
+    ResourceModifier.retrieveBucketFile(privateBucketName, projectId, privateResourceUser);
 
     // Remove WRITER role from sharedResourceUser. This is their only role, so they are no longer
     // a member of this workspace.
@@ -124,17 +125,17 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
         () -> assertUserCannotReadBucket(sharedBucketName, sharedResourceUser));
 
     // privateResource user can still read the shared bucket.
-    ResourceMaker.retrieveBucketFile(sharedBucketName, projectId, privateResourceUser);
+    ResourceModifier.retrieveBucketFile(sharedBucketName, projectId, privateResourceUser);
 
     // Remove READER role from privateResourceUser. They are also a writer, so they should not lose
     // access to workspace resources because of this.
     ownerWorkspaceApi.removeRole(getWorkspaceId(), IamRole.READER, privateResourceUser.userEmail);
 
     // Validate privateResourceWriter still has access to all resources.
-    ResourceMaker.retrieveBucketFile(sharedBucketName, projectId, privateResourceUser);
-    ResourceMaker.retrieveBucketFile(privateBucketName, projectId, privateResourceUser);
-    ResourceMaker.readPopulatedBigQueryTable(privateDataset, privateResourceUser, projectId);
-    assertTrue(ResourceMaker.userHasProxyAccess(privateNotebook, privateResourceUser, projectId));
+    ResourceModifier.retrieveBucketFile(sharedBucketName, projectId, privateResourceUser);
+    ResourceModifier.retrieveBucketFile(privateBucketName, projectId, privateResourceUser);
+    ResourceModifier.readPopulatedBigQueryTable(privateDataset, privateResourceUser, projectId);
+    assertTrue(ResourceModifier.userHasProxyAccess(privateNotebook, privateResourceUser, projectId));
 
     // Remove WRITER role from privateResourceUser. This is their last role, so they are no longer
     // a member of this workspace.
@@ -157,7 +158,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
    */
   private void assertUserCannotReadBucket(String bucketName, TestUserSpecification testUser) {
     try {
-      ResourceMaker.retrieveBucketFile(bucketName, projectId, testUser);
+      ResourceModifier.retrieveBucketFile(bucketName, projectId, testUser);
       // If nothing is thrown, that's bad! The user actually can read the bucket.
       throw new RuntimeException(String
           .format("User %s is still able to access bucket %s", testUser.userEmail, bucketName));
@@ -177,7 +178,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
   private void assertUserCannotReadDataset(GcpBigQueryDatasetResource dataset,
       TestUserSpecification testUser) {
     try {
-      ResourceMaker.readPopulatedBigQueryTable(dataset, testUser, projectId);
+      ResourceModifier.readPopulatedBigQueryTable(dataset, testUser, projectId);
       // If nothing is thrown, that's bad! The user actually can read the dataset.
       throw new RuntimeException(String
           .format("User %s is still able to access dataset %s",
@@ -199,7 +200,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
       CreatedControlledGcpAiNotebookInstanceResult createdNotebook,
       TestUserSpecification testUser) {
     try {
-      if (ResourceMaker.userHasProxyAccess(createdNotebook, testUser, projectId)) {
+      if (ResourceModifier.userHasProxyAccess(createdNotebook, testUser, projectId)) {
         throw new RuntimeException(
             String.format("User %s is still able to access notebook %s",
                 testUser.userEmail,

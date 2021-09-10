@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.ResourceMaker;
+import scripts.utils.ResourceModifier;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAllocateTestScriptBase {
@@ -99,7 +100,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
 
     // TODO(PF-765): Assert that the other user does not have proxy access once we don't have
     // project level service account permissions.
-    assertTrue(ResourceMaker.userHasProxyAccess(
+    assertTrue(ResourceModifier.userHasProxyAccess(
         creationResult, resourceUser, resource.getAttributes().getProjectId()),
         "Private resource user has access to their notebook");
     // The user should be able to stop their notebook.

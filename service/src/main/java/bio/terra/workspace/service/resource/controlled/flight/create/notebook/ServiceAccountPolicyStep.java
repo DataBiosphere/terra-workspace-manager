@@ -17,7 +17,7 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.iam.v1.model.Binding;
 import com.google.api.services.iam.v1.model.Policy;
@@ -108,8 +108,7 @@ public class ServiceAccountPolicyStep implements Step {
     // Grant permission via private resource's Sam group so that access can be revoked via Sam.
     Map<ControlledResourceIamRole, String> resourceRoleGroupsMap =
         workingMap.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.IAM_RESOURCE_GROUP_EMAIL_MAP,
-            new TypeReference<>() {});
+            ControlledResourceKeys.IAM_RESOURCE_GROUP_EMAIL_MAP, new TypeReference<>() {});
     String writerGroupEmail = resourceRoleGroupsMap.get(ControlledResourceIamRole.WRITER);
     return new Binding()
         .setRole(SERVICE_ACCOUNT_USER_ROLE)

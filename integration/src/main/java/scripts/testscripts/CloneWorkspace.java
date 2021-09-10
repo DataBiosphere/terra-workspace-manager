@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static scripts.utils.ClientTestUtils.getOrFail;
-import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_CONTENT;
 import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_NAME;
 import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
 import static scripts.utils.ResourceMaker.makeControlledBigQueryDatasetUserPrivate;
@@ -39,9 +38,7 @@ import bio.terra.workspace.model.WorkspaceDescription;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.QueryJobConfiguration;
 import com.google.cloud.bigquery.TableResult;
-import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -54,8 +51,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
-import scripts.utils.DataRepoTestScriptBase;
 import scripts.utils.ResourceMaker;
+import scripts.utils.ResourceModifier;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
@@ -117,36 +114,36 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     sharedBucketSourceResourceName = RESOURCE_PREFIX + nameSuffix;
     sharedSourceBucket = makeControlledGcsBucketUserShared(sourceOwnerResourceApi, getWorkspaceId(),
         sharedBucketSourceResourceName, CloningInstructionsEnum.RESOURCE);
-    ResourceMaker.addFileToBucket(sharedSourceBucket, sourceOwnerUser, sourceProjectId);
+    ResourceModifier.addFileToBucket(sharedSourceBucket, sourceOwnerUser, sourceProjectId);
 
     // create a private GCS bucket, which the non-creating user can't clone
     final PrivateResourceIamRoles privateRoles = new PrivateResourceIamRoles();
     privateRoles.addAll(PRIVATE_ROLES);
     privateSourceBucket = makeControlledGcsBucketUserPrivate(sourceOwnerResourceApi, getWorkspaceId(),
         UUID.randomUUID().toString(), sourceOwnerUser.userEmail, privateRoles, CloningInstructionsEnum.RESOURCE);
-    ResourceMaker.addFileToBucket(privateSourceBucket, sourceOwnerUser, sourceProjectId);
+    ResourceModifier.addFileToBucket(privateSourceBucket, sourceOwnerUser, sourceProjectId);
 
     // create a GCS bucket with data and COPY_NOTHING instruction
     sharedCopyNothingSourceBucket = makeControlledGcsBucketUserShared(sourceOwnerResourceApi, getWorkspaceId(),
         UUID.randomUUID().toString(), CloningInstructionsEnum.NOTHING);
-    ResourceMaker.addFileToBucket(sharedCopyNothingSourceBucket, sourceOwnerUser, sourceProjectId);
+    ResourceModifier.addFileToBucket(sharedCopyNothingSourceBucket, sourceOwnerUser, sourceProjectId);
 
     // create a GCS bucket with data and COPY_DEFINITION
     copyDefinitionSourceBucket = makeControlledGcsBucketUserShared(sourceOwnerResourceApi, getWorkspaceId(),
         UUID.randomUUID().toString(), CloningInstructionsEnum.DEFINITION);
-    ResourceMaker.addFileToBucket(copyDefinitionSourceBucket, sourceOwnerUser, sourceProjectId);
+    ResourceModifier.addFileToBucket(copyDefinitionSourceBucket, sourceOwnerUser, sourceProjectId);
 
     // Create a BigQuery Dataset with tables and COPY_DEFINITION
     copyDefinitionDatasetName = "copy_definition_" + nameSuffix.replace('-', '_');
     copyDefinitionDataset = makeControlledBigQueryDatasetUserShared(sourceOwnerResourceApi, getWorkspaceId(),
         copyDefinitionDatasetName, CloningInstructionsEnum.DEFINITION);
-    ResourceMaker.populateBigQueryDataset(copyDefinitionDataset, sourceOwnerUser, sourceProjectId);
+    ResourceModifier.populateBigQueryDataset(copyDefinitionDataset, sourceOwnerUser, sourceProjectId);
 
     // Create a BigQuery dataset with tables and COPY_RESOURCE
     copyResourceDatasetName = "copy_resource_dataset";
     copyResourceDataset = makeControlledBigQueryDatasetUserShared(sourceOwnerResourceApi, getWorkspaceId(),
         copyResourceDatasetName, CloningInstructionsEnum.RESOURCE);
-    ResourceMaker.populateBigQueryDataset(copyResourceDataset, sourceOwnerUser, sourceProjectId);
+    ResourceModifier.populateBigQueryDataset(copyResourceDataset, sourceOwnerUser, sourceProjectId);
 
     // Create a private BQ dataset
     privateDatasetName = "private_dataset";
@@ -224,7 +221,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     final WorkspaceDescription destinationWorkspace = cloningUserWorkspaceApi.getWorkspace(destinationWorkspaceId);
     final String destinationProjectId = destinationWorkspace.getGcpContext().getProjectId();
     final var clonedSharedBucket = cloningUserResourceApi.getBucket(destinationWorkspaceId, sharedBucketCloneDetails.getDestinationResourceId());
-    ResourceMaker.retrieveBucketFile(
+    ResourceModifier.retrieveBucketFile(
         clonedSharedBucket.getAttributes().getBucketName(), destinationProjectId, cloningUser);
 
     // Verify clone of private bucket fails
