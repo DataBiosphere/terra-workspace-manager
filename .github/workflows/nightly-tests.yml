@@ -14,6 +14,18 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      # On the self-hosted runner we need to install postgres ourselves. The process is:
+      # Create the file repository configuration.
+      # Import the repository signing key.
+      # Update the package lists.
+      # Install the latest version of PostgreSQL. If you want a specific version, use 'postgresql-12' or similar instead of 'postgresql':
+      - name: Install the latest postgres
+        run: |
+            sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+            wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+            sudo apt-get update
+            sudo apt-get -y install postgresql
+
       - uses: actions/checkout@v2
 
       - name: Set up AdoptOpenJDK 11
