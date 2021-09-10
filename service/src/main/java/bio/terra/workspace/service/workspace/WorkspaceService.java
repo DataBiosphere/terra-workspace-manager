@@ -431,7 +431,7 @@ public class WorkspaceService {
             executingUserRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
         .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, targetUserEmail)
-        .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role.name())
+        .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, role)
         .submitAndWait(null);
   }
 }
