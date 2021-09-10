@@ -349,11 +349,10 @@ public class WorkspaceService {
   public String enablePetServiceAccountImpersonation(
       UUID workspaceId, AuthenticatedUserRequest userRequest) {
     final String serviceAccountUserRole = "roles/iam.serviceAccountUser";
-    // Validate that the user is at least a writer in this workspace, as only writers can run
-    // workflows.
+    // Validate that the user is a member of the workspace.
     Workspace workspace =
         validateWorkspaceAndAction(
-            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     stageService.assertMcWorkspace(workspace, "enablePet");
 
     // getEmailFromToken will always call Sam, which will return a user email even if the requesting
