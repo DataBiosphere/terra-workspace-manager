@@ -1,5 +1,5 @@
-# This workflow will build a Java project with Gradle
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
+# This workflow runs the WSM full regression tests, including perf, integration, and
+# resilience suites.
 
 name: Nightly Tests
 
@@ -11,7 +11,7 @@ on:
 jobs:
   nightly-tests:
 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - uses: actions/checkout@v2
@@ -53,6 +53,13 @@ jobs:
         with:
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
           target: wsmtest
+
+      - name: ArgoCD sync
+        run: |
+          curl --fail --silent --show-error --location --request POST \
+          'https://ap-argocd.dsp-devops.broadinstitute.org/api/v1/applications/workspacemanager-wsmtest/sync' \
+          --header "Authorization: Bearer ${{ secrets.WSMTEST_SYNC_ARGOCD_TOKEN }}" \
+          | jq .operation
 
       - name: clean databases before integration suite
         if: always()
