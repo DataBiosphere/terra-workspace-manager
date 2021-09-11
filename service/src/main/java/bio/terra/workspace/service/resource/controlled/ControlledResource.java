@@ -60,7 +60,6 @@ public abstract class ControlledResource extends WsmResource {
    *
    * @return user email address for assignee, if any
    */
-  @Deprecated
   public Optional<String> getAssignedUser() {
     return Optional.ofNullable(assignedUser);
   }

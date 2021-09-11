@@ -8,7 +8,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.DatabaseOperationException;
-import bio.terra.stairway.exception.DuplicateFlightIdSubmittedException;
+import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -68,7 +68,7 @@ public class LaunchCloneControlledGcpBigQueryDatasetResourceFlightStep implement
               subflightId,
               CloneControlledGcpBigQueryDatasetResourceFlight.class,
               subflightInputParameters);
-    } catch (DuplicateFlightIdSubmittedException unused) {
+    } catch (DuplicateFlightIdException unused) {
       return StepResult.getStepResultSuccess();
     } catch (DatabaseOperationException | StairwayExecutionException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
