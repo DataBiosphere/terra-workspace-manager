@@ -16,11 +16,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # On the self-hosted runner we need to install postgres ourselves. The process is:
-      # Create the file repository configuration.
-      # Import the repository signing key.
-      # Update the package lists.
-      # Install the latest version of PostgreSQL. If you want a specific version, use 'postgresql-12' or similar instead of 'postgresql':
+      # On the self-hosted runner we need to install additional software ourselves
+      - name: Install wget
+        run: apt-get install wget
+
+      # Install postgres:
+      # - Create the file repository configuration.
+      # - Import the repository signing key.
+      # - Update the package lists.
+      # - Install the latest version of PostgreSQL. If you want a specific version, use 'postgresql-12' or similar instead of 'postgresql':
       - name: Install the latest postgres
         run: |
             sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
