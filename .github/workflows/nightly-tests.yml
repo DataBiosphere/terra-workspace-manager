@@ -14,6 +14,8 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      - uses: actions/checkout@v2
+
       # On the self-hosted runner we need to install postgres ourselves. The process is:
       # Create the file repository configuration.
       # Import the repository signing key.
@@ -25,8 +27,6 @@ jobs:
             wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
             sudo apt-get update
             sudo apt-get -y install postgresql
-
-      - uses: actions/checkout@v2
 
       - name: Set up AdoptOpenJDK 11
         uses: joschi/setup-jdk@v2
