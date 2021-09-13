@@ -55,3 +55,15 @@ public class Foo {
   }
 }
 ```
+
+## Testing
+
+### Running Tests
+You can run the azure-specific tests like this:
+```shell script
+./gradlew :service:azureTest
+```
+
+### Developing Tests
+To add a test that will run as part of the `azureTest` gradle task, simply derive your
+test from `BaseAzureTest`.
