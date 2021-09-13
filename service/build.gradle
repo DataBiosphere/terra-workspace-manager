@@ -183,6 +183,13 @@ task connectedTest(type: Test) {
     outputs.upToDateWhen { false }
 }
 
+task azureTest(type: Test) {
+    useJUnitPlatform {
+        includeTags "azure"
+    }
+    outputs.upToDateWhen { false }
+}
+
 // Generate/clean the version properties file
 // This was being done by a plugin: https://github.com/palantir/gradle-git-version
 // but it does not work with Gradle 7.0. It was also very complicated for a
