@@ -48,7 +48,7 @@ public class RetrieveBigQueryDatasetCloudAttributesStep implements Step {
     // from the source dataset.
     final String projectId =
         workspaceService.getRequiredGcpProject(datasetResource.getWorkspaceId());
-    final BigQueryCow bigQueryCow = crlService.createBigQueryCow(userRequest);
+    final BigQueryCow bigQueryCow = crlService.createWsmSaBigQueryCow();
     try {
       final Dataset dataset =
           bigQueryCow.datasets().get(projectId, datasetResource.getDatasetName()).execute();
