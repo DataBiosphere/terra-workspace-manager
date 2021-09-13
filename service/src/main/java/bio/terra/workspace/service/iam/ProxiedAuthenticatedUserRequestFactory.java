@@ -1,26 +1,76 @@
 package bio.terra.workspace.service.iam;
 
+import bio.terra.workspace.app.configuration.external.AzureState;
+import java.util.Base64;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ProxiedAuthenticatedUserRequestFactory implements AuthenticatedUserRequestFactory {
 
-  // Method to build an AuthenticatedUserRequest from data available to the controller
+  private static final String BEARER = "Bearer ";
+  private static final String BASIC = "Basic ";
+  @Autowired AzureState azureState;
+
+  // Method to build an AuthenticatedUserRequest.
+  // We try three possible authentication methods. If none succeed, we return
+  // an empty AuthenticatedUserRequest object.
   public AuthenticatedUserRequest from(HttpServletRequest servletRequest) {
-    String token =
-        Optional.ofNullable(servletRequest.getHeader(AuthHeaderKeys.OIDC_ACCESS_TOKEN.getKeyName()))
-            .orElseGet(
-                () -> {
-                  String authHeader =
-                      servletRequest.getHeader(AuthHeaderKeys.AUTHORIZATION.getKeyName());
-                  return StringUtils.substring(authHeader, "Bearer:".length());
-                });
-    return new AuthenticatedUserRequest()
-        .email(servletRequest.getHeader(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName()))
-        .subjectId(servletRequest.getHeader(AuthHeaderKeys.OIDC_CLAIM_USER_ID.getKeyName()))
-        .token(Optional.ofNullable(token));
+    return fromOidc(servletRequest)
+        .orElse(
+            fromBearer(servletRequest)
+                .orElse(
+                    fromBasic(servletRequest)
+                        .orElse(new AuthenticatedUserRequest().token(Optional.empty()))));
+  }
+
+  private Optional<AuthenticatedUserRequest> fromOidc(HttpServletRequest servletRequest) {
+    Optional<String> token =
+        Optional.ofNullable(
+            servletRequest.getHeader(AuthHeaderKeys.OIDC_ACCESS_TOKEN.getKeyName()));
+    if (token.isEmpty()) {
+      return Optional.empty();
+    }
+
+    return Optional.of(
+        new AuthenticatedUserRequest()
+            .email(servletRequest.getHeader(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName()))
+            .subjectId(servletRequest.getHeader(AuthHeaderKeys.OIDC_CLAIM_USER_ID.getKeyName()))
+            .token(token));
+  }
+
+  private Optional<AuthenticatedUserRequest> fromBearer(HttpServletRequest servletRequest) {
+    String authHeader = servletRequest.getHeader(AuthHeaderKeys.AUTHORIZATION.getKeyName());
+    if (StringUtils.startsWith(authHeader, BEARER)) {
+      return Optional.of(
+          new AuthenticatedUserRequest()
+              .email(servletRequest.getHeader(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName()))
+              .subjectId(servletRequest.getHeader(AuthHeaderKeys.OIDC_CLAIM_USER_ID.getKeyName()))
+              .token(Optional.of(StringUtils.substring(authHeader, BEARER.length()))));
+    }
+
+    return Optional.empty();
+  }
+
+  private Optional<AuthenticatedUserRequest> fromBasic(HttpServletRequest servletRequest) {
+    // This is only used for the Azure PoC
+    if (azureState.isEnabled()) {
+      String authHeader = servletRequest.getHeader(AuthHeaderKeys.AUTHORIZATION.getKeyName());
+      if (StringUtils.startsWith(authHeader, BASIC)) {
+        String encodedInfo = StringUtils.substring(authHeader, BASIC.length());
+        String info = new String(Base64.getDecoder().decode(encodedInfo));
+        String[] values = StringUtils.split(info, ':');
+        return Optional.of(
+            new AuthenticatedUserRequest()
+                .email(values[0])
+                .subjectId(values[1])
+                .token(Optional.empty()));
+      }
+    }
+
+    return Optional.empty();
   }
 }
