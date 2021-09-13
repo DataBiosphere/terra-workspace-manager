@@ -3033,7 +3033,12 @@ components:
             openid: open id authorization
             email: email authorization
             profile: profile authorization
+    ## for AzurePoC - we do not do authn. Just accept the user email and objectId as user/pwd
+    basicAuth:
+      type: http
+      scheme: basic
 
 security:
   - bearerAuth: []
   - authorization: [openid, email, profile]
+  - basicAuth: []

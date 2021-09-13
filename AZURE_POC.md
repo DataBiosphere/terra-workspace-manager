@@ -24,12 +24,6 @@ or by setting the envvar:
 export SPRING_PROFILES_ACTIVE='azure'
 ```
 
-An alternative is to use `SPRING_PROFILES_INCLUDE` to include the profile without overriding
-other profiles that have been set. For example, my personal setup is:
-```shell script
-export SPRING_PROFILES_INCLUDE=dd,azure,human-readable-logging
-```
-
 ## Feature Control
 You can conditionally include Azure features by autowiring the `AzureState` component
 and then testing its `isEnabled()` method. The boolean response is determined based on
