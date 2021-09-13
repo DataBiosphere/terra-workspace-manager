@@ -1,0 +1,8 @@
+# Azure setup - we may not want a common setup here, but rather use envvars to supply these
+# in different environments
+workspace:
+  azure:
+    tenantId: TBD
+    managedResourceGroupId: TBD
+    clientId: TBD
+    clientSecret: TBD
