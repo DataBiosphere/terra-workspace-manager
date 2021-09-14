@@ -136,10 +136,9 @@ public class CrlService {
    * Create a vanilla Bigquery client object, for testing things that aren't in CRL yet.
    * TODO(jaycarlton): PF-942 implement needed endpoints in CRL and use them here
    *
-   * @param userRequest
    * @return
    */
-  public Bigquery createNakedBigQueryClient(AuthenticatedUserRequest userRequest) {
+  public Bigquery createNakedBigQueryClient() {
     assertCrlInUse();
     try {
       return new Bigquery(
