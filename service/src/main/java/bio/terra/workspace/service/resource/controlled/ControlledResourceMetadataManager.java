@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.resource.ValidationUtils;
@@ -79,7 +80,7 @@ public class ControlledResourceMetadataManager {
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId, String action) {
     WsmResource resource = resourceDao.getResource(workspaceId, resourceId);
     ControlledResource controlledResource = resource.castToControlledResource();
-    SamService.rethrowIfSamInterrupted(
+    SamRethrow.onInterrupted(
         () ->
             samService.checkAuthz(
                 userRequest,

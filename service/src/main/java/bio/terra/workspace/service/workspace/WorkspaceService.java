@@ -5,6 +5,7 @@ import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -135,7 +136,7 @@ public class WorkspaceService {
   public Workspace validateWorkspaceAndAction(
       AuthenticatedUserRequest userRequest, UUID workspaceId, String action) {
     Workspace workspace = workspaceDao.getWorkspace(workspaceId);
-    SamService.rethrowIfSamInterrupted(
+    SamRethrow.onInterrupted(
         () ->
             samService.checkAuthz(
                 userRequest, SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), action),
@@ -154,7 +155,7 @@ public class WorkspaceService {
   public List<Workspace> listWorkspaces(
       AuthenticatedUserRequest userRequest, int offset, int limit) {
     List<UUID> samWorkspaceIds =
-        SamService.rethrowIfSamInterrupted(
+        SamRethrow.onInterrupted(
             () -> samService.listWorkspaceIds(userRequest), "listWorkspaceIds");
     return workspaceDao.getWorkspacesMatchingList(samWorkspaceIds, offset, limit);
   }
@@ -360,9 +361,8 @@ public class WorkspaceService {
     // getEmailFromToken will always call Sam, which will return a user email even if the requesting
     // access token belongs to a pet SA.
     String userEmail =
-        SamService.rethrowIfSamInterrupted(
-            () -> samService.getEmailFromToken(userRequest.getRequiredToken()),
-            "getEmailFromToken");
+        SamRethrow.onInterrupted(
+            () -> samService.getRequestUserEmail(userRequest), "getRequestUserEmail");
     String projectId = getRequiredGcpProject(workspaceId);
     String petSaEmail = samService.getOrCreatePetSaEmail(projectId, userRequest);
     ServiceAccountName petSaName =

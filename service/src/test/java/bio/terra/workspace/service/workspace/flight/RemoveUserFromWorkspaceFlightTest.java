@@ -91,7 +91,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     // Validate with Sam that secondary user can read their private resource
     assertTrue(
         samService.isAuthorized(
-            userAccessUtils.secondUserAccessToken().getTokenValue(),
+            userAccessUtils.secondUserAuthRequest(),
             privateDataset.getCategory().getSamResourceName(),
             privateDataset.getResourceId().toString(),
             SamControlledResourceActions.WRITE_ACTION));
@@ -120,13 +120,13 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     // resource.
     assertTrue(
         samService.isAuthorized(
-            userAccessUtils.secondUserAccessToken().getTokenValue(),
+            userAccessUtils.secondUserAuthRequest(),
             SamConstants.SAM_WORKSPACE_RESOURCE,
             workspaceId.toString(),
             SamConstants.SAM_WORKSPACE_WRITE_ACTION));
     assertTrue(
         samService.isAuthorized(
-            userAccessUtils.secondUserAccessToken().getTokenValue(),
+            userAccessUtils.secondUserAuthRequest(),
             privateDataset.getCategory().getSamResourceName(),
             privateDataset.getResourceId().toString(),
             SamControlledResourceActions.WRITE_ACTION));
@@ -145,13 +145,13 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     // Verify the secondary user can no longer access the workspace or their private resource
     assertFalse(
         samService.isAuthorized(
-            userAccessUtils.secondUserAccessToken().getTokenValue(),
+            userAccessUtils.secondUserAuthRequest(),
             SamConstants.SAM_WORKSPACE_RESOURCE,
             workspaceId.toString(),
             SamConstants.SAM_WORKSPACE_WRITE_ACTION));
     assertFalse(
         samService.isAuthorized(
-            userAccessUtils.secondUserAccessToken().getTokenValue(),
+            userAccessUtils.secondUserAuthRequest(),
             privateDataset.getCategory().getSamResourceName(),
             privateDataset.getResourceId().toString(),
             SamControlledResourceActions.WRITE_ACTION));

@@ -33,6 +33,7 @@ import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDataset
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
@@ -547,7 +548,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         .map(ApiPrivateResourceUser::getUserName)
         .orElseGet(
             () ->
-                SamService.rethrowIfSamInterrupted(
+                SamRethrow.onInterrupted(
                     () -> samService.getRequestUserEmail(userRequest), "getRequestUserEmail"));
   }
 

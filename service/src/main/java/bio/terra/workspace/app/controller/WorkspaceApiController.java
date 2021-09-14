@@ -29,6 +29,7 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.exception.InvalidRoleException;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -358,7 +359,7 @@ public class WorkspaceApiController implements WorkspaceApi {
       throw new InvalidRoleException(
           "Users cannot grant role APPLICATION. Use application registration instead.");
     }
-    SamService.rethrowIfSamInterrupted(
+    SamRethrow.onInterrupted(
         () ->
             samService.grantWorkspaceRole(
                 id, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
@@ -385,7 +386,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiRoleBindingList> getRoles(@PathVariable("workspaceId") UUID id) {
     List<bio.terra.workspace.service.iam.model.RoleBinding> bindingList =
-        SamService.rethrowIfSamInterrupted(
+        SamRethrow.onInterrupted(
             () -> samService.listRoleBindings(id, getAuthenticatedInfo()), "listRoleBindings");
     ApiRoleBindingList responseList = new ApiRoleBindingList();
     for (bio.terra.workspace.service.iam.model.RoleBinding roleBinding : bindingList) {
