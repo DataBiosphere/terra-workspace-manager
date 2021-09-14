@@ -20,8 +20,10 @@ import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.WsmResourceCloneDetails;
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
@@ -67,11 +69,15 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
                                 subflightState.getFlightStatus()))));
       }
       final FlightMap subflightResultMap = FlightUtils.getResultMapRequired(subflightState);
-      // build the response object from the resource ID to details map
+      // Build the response object from the resource ID to details map. The map won't have been
+      // instantiated if there are no resources in the workspace, so just use an empty map in that
+      // case.
       final var resourceIdToDetails =
-          subflightResultMap.get(
-              ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
-              new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {});
+          Optional.ofNullable(
+                  subflightResultMap.get(
+                      ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
+                      new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
+              .orElse(Collections.emptyMap());
       final var apiClonedWorkspace = new ApiClonedWorkspace();
       apiClonedWorkspace.setDestinationWorkspaceId(destinationWorkspaceId);
       final var sourceWorkspaceId =
