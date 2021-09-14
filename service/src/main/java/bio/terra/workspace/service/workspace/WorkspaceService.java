@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
 import bio.terra.cloudres.google.iam.ServiceAccountName;
+import bio.terra.workspace.app.configuration.external.AzureState;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.crl.CrlService;
@@ -63,6 +64,7 @@ public class WorkspaceService {
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
   private final CrlService crlService;
+  private final AzureState azureState;
 
   @Autowired
   public WorkspaceService(
@@ -72,7 +74,8 @@ public class WorkspaceService {
       SpendProfileService spendProfileService,
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
-      CrlService crlService) {
+      CrlService crlService,
+      AzureState azureState) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
@@ -80,6 +83,7 @@ public class WorkspaceService {
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
     this.crlService = crlService;
+    this.azureState = azureState;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
@@ -88,6 +92,12 @@ public class WorkspaceService {
       WorkspaceRequest workspaceRequest, AuthenticatedUserRequest userRequest) {
 
     String description = "Create workspace " + workspaceRequest.workspaceId().toString();
+
+    // TODO: finish this. Just using it to test basic auth
+    if (azureState.isEnabled()) {
+      return UUID.randomUUID();
+    }
+
     JobBuilder createJob =
         jobService
             .newJob(
