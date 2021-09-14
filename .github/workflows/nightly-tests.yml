@@ -75,14 +75,14 @@ jobs:
       - name: ArgoCD sync
         run: |
           version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
-          echo "pre-sync wsmtest version: $version"
+          echo "$(date "+%Y-%m-%dT%H:%M:%S") pre-sync wsmtest version: $version"
           curl --fail --silent --show-error --location --request POST \
           'https://ap-argocd.dsp-devops.broadinstitute.org/api/v1/applications/workspacemanager-wsmtest/sync' \
           --header "Authorization: Bearer ${{ secrets.WSMTEST_SYNC_ARGOCD_TOKEN }}" \
           | jq .operation
-          sleep 30
+          sleep 120
           version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
-          echo "post-sync wsmtest version: $version"
+          echo "$(date "+%Y-%m-%dT%H:%M:%S") post-sync wsmtest version: $version"
 
       - name: clean databases before integration suite
         if: always()
