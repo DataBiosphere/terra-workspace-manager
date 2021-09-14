@@ -12,7 +12,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.DatabaseOperationException;
-import bio.terra.stairway.exception.FlightException;
+import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiClonedWorkspace;
@@ -84,7 +84,7 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
       apiClonedWorkspace.setResources(resources);
       // Set overall response for workspace clone flights
       FlightUtils.setResponse(context, apiClonedWorkspace, HttpStatus.OK);
-    } catch (DatabaseOperationException | FlightException e) {
+    } catch (DatabaseOperationException | FlightWaitTimedOutException e) {
       // Retry for database issues or expired wait loop
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }

@@ -6,7 +6,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.DatabaseOperationException;
-import bio.terra.stairway.exception.DuplicateFlightIdSubmittedException;
+import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.common.utils.FlightUtils;
@@ -77,7 +77,7 @@ public class LaunchCreateReferenceResourceFlightStep implements Step {
           .submit(subflightId, CreateReferenceResourceFlight.class, subflightInputParameters);
     } catch (DatabaseOperationException | StairwayExecutionException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-    } catch (DuplicateFlightIdSubmittedException unused) {
+    } catch (DuplicateFlightIdException unused) {
       // already submitted the flight - treat as success
       return StepResult.getStepResultSuccess();
     }

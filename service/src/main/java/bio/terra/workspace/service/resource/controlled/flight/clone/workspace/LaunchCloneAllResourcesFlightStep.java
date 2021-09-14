@@ -8,7 +8,7 @@ import bio.terra.stairway.Stairway;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
-import bio.terra.stairway.exception.DuplicateFlightIdSubmittedException;
+import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -65,7 +65,7 @@ public class LaunchCloneAllResourcesFlightStep implements Step {
     try {
       stairway.submit(
           cloneAllResourcesFlightId, CloneAllResourcesFlight.class, subflightInputParameters);
-    } catch (DuplicateFlightIdSubmittedException e) {
+    } catch (DuplicateFlightIdException e) {
       // exit early if flight is already going
       return StepResult.getStepResultSuccess();
     } catch (StairwayException e) {

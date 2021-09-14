@@ -12,7 +12,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.DatabaseOperationException;
-import bio.terra.stairway.exception.FlightException;
+import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
@@ -82,7 +82,7 @@ public class AwaitCloneGcsBucketResourceFlightStep implements Step {
           .getWorkingMap()
           .put(ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT, resourceIdToResult);
 
-    } catch (DatabaseOperationException | FlightException e) {
+    } catch (DatabaseOperationException | FlightWaitTimedOutException e) {
       // Retry for database issues or expired wait loop
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }

@@ -6,7 +6,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.DatabaseOperationException;
-import bio.terra.stairway.exception.DuplicateFlightIdSubmittedException;
+import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.common.utils.FlightUtils;
@@ -69,7 +69,7 @@ public class LaunchWorkspaceCreateFlightStep implements Step {
       context
           .getStairway()
           .submit(workspaceCreateJobId, WorkspaceCreateFlight.class, subflightInputParameters);
-    } catch (DuplicateFlightIdSubmittedException ignored) {
+    } catch (DuplicateFlightIdException ignored) {
       // this is a rerun, so it's benign
       return StepResult.getStepResultSuccess();
     } catch (DatabaseOperationException | StairwayExecutionException e) {
