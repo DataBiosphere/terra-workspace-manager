@@ -2,6 +2,7 @@ package bio.terra.workspace.service.spendprofile;
 
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
@@ -44,10 +45,10 @@ public class SpendProfileService {
    */
   public SpendProfile authorizeLinking(
       SpendProfileId spendProfileId, AuthenticatedUserRequest userRequest) {
-    if (!SamService.rethrowIfSamInterrupted(
+    if (!SamRethrow.onInterrupted(
         () ->
             samService.isAuthorized(
-                userRequest.getRequiredToken(),
+                userRequest,
                 SamConstants.SPEND_PROFILE_RESOURCE,
                 spendProfileId.id(),
                 SamConstants.SPEND_PROFILE_LINK_ACTION),

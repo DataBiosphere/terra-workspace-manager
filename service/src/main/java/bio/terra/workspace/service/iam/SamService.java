@@ -117,56 +117,6 @@ public class SamService {
   }
 
   /**
-   * For use with rethrowIfSamInterrupted.
-   *
-   * @param <R>
-   */
-  @FunctionalInterface
-  public interface InterruptedSupplier<R> {
-    R apply() throws InterruptedException;
-  }
-
-  /** For use with rethrowIfSamInterrupted. */
-  public interface VoidInterruptedSupplier {
-    void apply() throws InterruptedException;
-  }
-
-  /**
-   * Use this function outside of Flights. In that case, we do not expect SamRetry to be interrupted
-   * so the interruption is unexpected and should be surfaced all the way up as an unchecked
-   * exception, which this function does.
-   *
-   * <p>Usage: SamService.rethrowIfSamInterrupted(() -> samService.isAuthorized(...),
-   * "isAuthorized")) {
-   *
-   * @param function The SamService function to call.
-   * @param operation The name of the function to use in the error message.
-   * @param <T> The return type of the function to call.
-   * @return The return value of the function to call.
-   */
-  public static <T> T rethrowIfSamInterrupted(InterruptedSupplier<T> function, String operation) {
-    try {
-      return function.apply();
-    } catch (InterruptedException e) {
-      throw SamExceptionFactory.create("Interrupted during Sam operation " + operation, e);
-    }
-  }
-
-  /**
-   * Like above, but for functions that return void.
-   *
-   * @param function The SamService function to call.
-   * @param operation The name of the function to use in the error message.
-   */
-  public static void rethrowIfSamInterrupted(VoidInterruptedSupplier function, String operation) {
-    try {
-      function.apply();
-    } catch (InterruptedException e) {
-      throw SamExceptionFactory.create("Interrupted during Sam operation " + operation, e);
-    }
-  }
-
-  /**
    * Register WSM's service account as a user in Sam if it isn't already. This should only need to
    * register with Sam once per environment, so it is implemented lazily.
    */
@@ -282,7 +232,9 @@ public class SamService {
   }
 
   @Traced
-  public void deleteWorkspace(String authToken, UUID id) throws InterruptedException {
+  public void deleteWorkspace(AuthenticatedUserRequest userRequest, UUID id)
+      throws InterruptedException {
+    String authToken = userRequest.getRequiredToken();
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
       SamRetry.retry(
@@ -304,8 +256,12 @@ public class SamService {
 
   @Traced
   public boolean isAuthorized(
-      String accessToken, String iamResourceType, String resourceId, String action)
+      AuthenticatedUserRequest userRequest,
+      String iamResourceType,
+      String resourceId,
+      String action)
       throws InterruptedException {
+    String accessToken = userRequest.getRequiredToken();
     ResourcesApi resourceApi = samResourcesApi(accessToken);
     try {
       return SamRetry.retry(
@@ -360,8 +316,7 @@ public class SamService {
   public void checkAuthz(
       AuthenticatedUserRequest userRequest, String resourceType, String resourceId, String action)
       throws InterruptedException {
-    boolean isAuthorized =
-        isAuthorized(userRequest.getRequiredToken(), resourceType, resourceId, action);
+    boolean isAuthorized = isAuthorized(userRequest, resourceType, resourceId, action);
     final String userEmail = getEmailFromToken(userRequest.getRequiredToken());
     if (!isAuthorized)
       throw new UnauthorizedException(
@@ -924,7 +879,7 @@ public class SamService {
   }
 
   /** Fetch the email associated with an authToken from Sam. */
-  public String getEmailFromToken(String authToken) throws InterruptedException {
+  private String getEmailFromToken(String authToken) throws InterruptedException {
     UsersApi usersApi = samUsersApi(authToken);
     try {
       return SamRetry.retry(() -> usersApi.getUserStatusInfo().getUserEmail());
