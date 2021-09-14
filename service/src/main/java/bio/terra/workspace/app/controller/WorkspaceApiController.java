@@ -112,7 +112,11 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<ApiCreatedWorkspace> createWorkspace(
       @RequestBody ApiCreateWorkspaceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info("Creating workspace {} for {}", body.getId(), userRequest.getEmail());
+    logger.info(
+        "Creating workspace {} for {} subject {}",
+        body.getId(),
+        userRequest.getEmail(),
+        userRequest.getSubjectId());
 
     // Existing client libraries should not need to know about the stage, as they won't use any of
     // the features it gates. If stage isn't specified in a create request, we default to

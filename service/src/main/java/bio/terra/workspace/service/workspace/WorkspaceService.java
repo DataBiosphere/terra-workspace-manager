@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.workspace.app.configuration.external.AzureState;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -11,7 +12,6 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneGcpWorkspaceFlight;
-import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
 import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlight;
@@ -52,26 +52,26 @@ public class WorkspaceService {
   private final WorkspaceDao workspaceDao;
   private final GcpCloudContextService gcpCloudContextService;
   private final SamService samService;
-  private final SpendProfileService spendProfileService;
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
+  private final AzureState azureState;
 
   @Autowired
   public WorkspaceService(
       JobService jobService,
       WorkspaceDao workspaceDao,
       SamService samService,
-      SpendProfileService spendProfileService,
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
-      GcpCloudContextService gcpCloudContextService) {
+      GcpCloudContextService gcpCloudContextService,
+      AzureState azureState) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
-    this.spendProfileService = spendProfileService;
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
     this.gcpCloudContextService = gcpCloudContextService;
+    this.azureState = azureState;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
@@ -80,6 +80,12 @@ public class WorkspaceService {
       WorkspaceRequest workspaceRequest, AuthenticatedUserRequest userRequest) {
 
     String description = "Create workspace " + workspaceRequest.workspaceId().toString();
+
+    // TODO: finish this. Just using it to test basic auth
+    if (azureState.isEnabled()) {
+      return UUID.randomUUID();
+    }
+
     JobBuilder createJob =
         jobService
             .newJob(
