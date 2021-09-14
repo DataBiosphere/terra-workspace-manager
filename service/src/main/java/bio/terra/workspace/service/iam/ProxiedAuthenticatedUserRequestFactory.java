@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.iam;
 
 import bio.terra.workspace.app.configuration.external.AzureState;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest.AuthType;
 import java.util.Base64;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
@@ -24,7 +25,10 @@ public class ProxiedAuthenticatedUserRequestFactory implements AuthenticatedUser
             fromBearer(servletRequest)
                 .orElse(
                     fromBasic(servletRequest)
-                        .orElse(new AuthenticatedUserRequest().token(Optional.empty()))));
+                        .orElse(
+                            new AuthenticatedUserRequest()
+                                .token(Optional.empty())
+                                .authType(AuthType.NONE))));
   }
 
   private Optional<AuthenticatedUserRequest> fromOidc(HttpServletRequest servletRequest) {
@@ -39,7 +43,8 @@ public class ProxiedAuthenticatedUserRequestFactory implements AuthenticatedUser
         new AuthenticatedUserRequest()
             .email(servletRequest.getHeader(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName()))
             .subjectId(servletRequest.getHeader(AuthHeaderKeys.OIDC_CLAIM_USER_ID.getKeyName()))
-            .token(token));
+            .token(token)
+            .authType(AuthType.OIDC));
   }
 
   private Optional<AuthenticatedUserRequest> fromBearer(HttpServletRequest servletRequest) {
@@ -49,7 +54,8 @@ public class ProxiedAuthenticatedUserRequestFactory implements AuthenticatedUser
           new AuthenticatedUserRequest()
               .email(servletRequest.getHeader(AuthHeaderKeys.OIDC_CLAIM_EMAIL.getKeyName()))
               .subjectId(servletRequest.getHeader(AuthHeaderKeys.OIDC_CLAIM_USER_ID.getKeyName()))
-              .token(Optional.of(StringUtils.substring(authHeader, BEARER.length()))));
+              .token(Optional.of(StringUtils.substring(authHeader, BEARER.length())))
+              .authType(AuthType.BEARER));
     }
 
     return Optional.empty();
@@ -67,7 +73,8 @@ public class ProxiedAuthenticatedUserRequestFactory implements AuthenticatedUser
             new AuthenticatedUserRequest()
                 .email(values[0])
                 .subjectId(values[1])
-                .token(Optional.empty()));
+                .token(Optional.empty())
+                .authType(AuthType.BASIC));
       }
     }
 
