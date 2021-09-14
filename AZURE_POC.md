@@ -61,3 +61,23 @@ You can run the azure-specific tests like this:
 ### Developing Tests
 To add a test that will run as part of the `azureTest` gradle task, simply derive your
 test from `BaseAzureTest`.
+
+## Authentication
+I have the authentication setup so that OIDC and Bearer authentication use the existing
+authentication/authorization pat and use Sam. Basic
+authentication uses mock Sam. For Azure PoC, you must **only** use Basic authentication to
+get consistent results.
+
+I set it up this way so that existing tests will continue to run and give us some assurance
+that we have not broken things too badly.
+
+## Mock Sam
+
+### Database
+Two PoC tables in the WSM database:
+* `poc_user` holds the user's Azure objectId and the user's email
+* `poc_grant` has a row for each grant to a workspace: workspace id, role, user id
+
+All access checking will be based on lookups of workspace roles stored in the `poc_grant` table.
+ 
+

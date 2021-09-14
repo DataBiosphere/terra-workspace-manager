@@ -6,11 +6,18 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class AuthenticatedUserRequest {
+  public enum AuthType {
+    OIDC,
+    BEARER,
+    BASIC,
+    NONE
+  }
 
   private String email;
   private String subjectId;
   private Optional<String> token;
   private UUID reqId;
+  private AuthType authType;
 
   public AuthenticatedUserRequest() {
     this.reqId = UUID.randomUUID();
@@ -66,6 +73,7 @@ public class AuthenticatedUserRequest {
     return this;
   }
 
+
   @Override
   public String toString() {
     return String.format(
@@ -74,5 +82,13 @@ public class AuthenticatedUserRequest {
         Optional.ofNullable(getSubjectId()).orElse("null"),
         getToken().map(t -> "REDACTED (" + t.length() + " chars)").orElse("null"),
         Optional.ofNullable(reqId).map(UUID::toString).orElse("null"));
+
+  public AuthType getAuthType() {
+    return authType;
+  }
+
+  public AuthenticatedUserRequest authType(AuthType authType) {
+    this.authType = authType;
+    return this;
   }
 }
