@@ -17,17 +17,11 @@ current with ongoing WSM feature development.
 We use the `azure` profile to enable the PoC features. That can be enabled on the gradle
 command line like this:
 ```text
-./gradlew :service:bootRun --args='--spring.profiles.active=azure'
+./gradlew :service:bootRun --args='--spring.profiles.active=azure,human-readable-logging'
 ``` 
 or by setting the envvar:
 ```shell script
 export SPRING_PROFILES_ACTIVE='azure'
-```
-
-An alternative is to use `SPRING_PROFILES_INCLUDE` to include the profile without overriding
-other profiles that have been set. For example, my personal setup is:
-```shell script
-export SPRING_PROFILES_INCLUDE=dd,azure,human-readable-logging
 ```
 
 ## Feature Control

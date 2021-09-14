@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.workspace.app.configuration.external.AzureState;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -52,6 +53,7 @@ public class WorkspaceService {
   private final SamService samService;
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
+  private final AzureState azureState;
 
   @Autowired
   public WorkspaceService(
@@ -60,13 +62,15 @@ public class WorkspaceService {
       SamService samService,
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
-      GcpCloudContextService gcpCloudContextService) {
+      GcpCloudContextService gcpCloudContextService,
+      AzureState azureState) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
     this.gcpCloudContextService = gcpCloudContextService;
+    this.azureState = azureState;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
