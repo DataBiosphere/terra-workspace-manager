@@ -1,0 +1,57 @@
+# Temporary addition of tables for WSM Azure PoC
+databaseChangeLog:
+- changeSet:
+    id: azure poc tables
+    author: dd
+    changes:
+    - createTable:
+        tableName: poc_user
+        columns:
+          - column:
+              name: user_id
+              type: text
+              constraints:
+                primaryKey: true
+                nullable: false
+              remarks: |
+                Foreign key will cause cloud_context to be deleted when its associated
+                workspace is deleted.
+          - column:
+              name: email
+              type: text
+              constraints:
+                nullable: false
+              remarks: |
+                Email of the user
+
+    - createTable:
+        tableName: poc_grant
+        remarks: |
+          One row for grant of role to user on workspace resource
+        columns:
+          - column:
+              name: workspace_id
+              type: text
+              constraints:
+                nullable: false
+          - column:
+              name: iam_role
+              type: text
+              remarks: |
+                A Sam role string from WsmIamRole
+          - column:
+              name: user_id
+              type: text
+              constraints:
+                references: poc_user(user_id)
+                foreignKeyName: fk_grant_user
+                deleteCascade: true
+              remarks: |
+                The Azure objectId of the user that has the role
+
+    - addPrimaryKey:
+        columnNames: workspace_id, iam_role, user_id
+        tableName: poc_grant
+        constraintName: pk_grant
+        remarks: |
+          Define the multi-column PK

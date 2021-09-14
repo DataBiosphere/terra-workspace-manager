@@ -99,12 +99,6 @@ public class WorkspaceService {
       WorkspaceRequest workspaceRequest, AuthenticatedUserRequest userRequest) {
 
     String description = "Create workspace " + workspaceRequest.workspaceId().toString();
-
-    // TODO: finish this. Just using it to test basic auth
-    if (azureState.isEnabled()) {
-      return UUID.randomUUID();
-    }
-
     JobBuilder createJob =
         jobService
             .newJob(
