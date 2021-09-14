@@ -66,12 +66,23 @@ jobs:
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
           target: wsmtest
 
+      # The ArgoCD sync triggers the synchronization of the wsmtest cluster. Typically,
+      # the cluster is reset within a few seconds. However, it is possible for it to take
+      # minutes or hours. We have no way to check that the sync is complete. We sleep
+      # for a bit and just accept that in some crazy long cases, these tests will fail.
+      # The sync is bracketed by /version probes so we have the pre and post sync versions
+      # in the log.
       - name: ArgoCD sync
         run: |
+          version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
+          echo "pre-sync wsmtest version: $version"
           curl --fail --silent --show-error --location --request POST \
           'https://ap-argocd.dsp-devops.broadinstitute.org/api/v1/applications/workspacemanager-wsmtest/sync' \
           --header "Authorization: Bearer ${{ secrets.WSMTEST_SYNC_ARGOCD_TOKEN }}" \
           | jq .operation
+          sleep 30
+          version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
+          echo "post-sync wsmtest version: $version"
 
       - name: clean databases before integration suite
         if: always()
