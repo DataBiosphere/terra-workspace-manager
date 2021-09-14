@@ -12,7 +12,7 @@ public class SamRethrow {
   /**
    * For use with onInterrupted methods.
    *
-   * @param <R>
+   * @param <R> return parameter from the implementation
    */
   @FunctionalInterface
   public interface InterruptedSupplier<R> {
