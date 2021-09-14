@@ -138,7 +138,7 @@ public class CrlService {
    *
    * @return
    */
-  public Bigquery createNakedBigQueryClient() {
+  public Bigquery createWsmSaNakedBigQueryClient() {
     assertCrlInUse();
     try {
       return new Bigquery(
