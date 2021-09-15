@@ -162,7 +162,7 @@ class SamServiceTest extends BaseConnectedTest {
                 WsmIamRole.READER,
                 userAccessUtils.getSecondUserEmail()));
 
-    samService.deleteWorkspace(defaultUserRequest().getRequiredToken(), workspaceId);
+    samService.deleteWorkspace(defaultUserRequest(), workspaceId);
   }
 
   @Test
@@ -260,7 +260,7 @@ class SamServiceTest extends BaseConnectedTest {
     // Workspace reader should have read access on a user-shared resource via inheritance
     assertTrue(
         samService.isAuthorized(
-            secondaryUserRequest().getRequiredToken(),
+            secondaryUserRequest(),
             ControlledResourceCategory.USER_SHARED.getSamResourceName(),
             bucketResource.getResourceId().toString(),
             SamConstants.SAM_WORKSPACE_READ_ACTION));
@@ -289,14 +289,14 @@ class SamServiceTest extends BaseConnectedTest {
     // Workspace reader should not have read access on a private resource.
     assertFalse(
         samService.isAuthorized(
-            secondaryUserRequest().getRequiredToken(),
+            secondaryUserRequest(),
             ControlledResourceCategory.USER_PRIVATE.getSamResourceName(),
             bucketResource.getResourceId().toString(),
             SamConstants.SAM_WORKSPACE_READ_ACTION));
     // However, the assigned user should have read access.
     assertTrue(
         samService.isAuthorized(
-            defaultUserRequest().getRequiredToken(),
+            defaultUserRequest(),
             ControlledResourceCategory.USER_PRIVATE.getSamResourceName(),
             bucketResource.getResourceId().toString(),
             SamConstants.SAM_WORKSPACE_READ_ACTION));

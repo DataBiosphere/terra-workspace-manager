@@ -490,7 +490,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     Mockito.when(
             mockSamService.isAuthorized(
-                Mockito.eq(USER_REQUEST.getRequiredToken()),
+                Mockito.eq(USER_REQUEST),
                 Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
                 Mockito.any(),
                 Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))

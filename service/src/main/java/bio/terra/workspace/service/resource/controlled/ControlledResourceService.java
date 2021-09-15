@@ -10,6 +10,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
@@ -407,7 +408,7 @@ public class ControlledResourceService {
       return;
     }
     final String requestUserEmail =
-        SamService.rethrowIfSamInterrupted(
+        SamRethrow.onInterrupted(
             () -> samService.getRequestUserEmail(userRequest), "validateOnlySelfAssignment");
     // If there is no assigned user, this condition is satisfied.
     //noinspection deprecation

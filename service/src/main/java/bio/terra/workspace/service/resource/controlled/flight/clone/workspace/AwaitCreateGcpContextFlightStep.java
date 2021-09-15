@@ -10,7 +10,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.DatabaseOperationException;
-import bio.terra.stairway.exception.FlightException;
+import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -43,7 +43,7 @@ public class AwaitCreateGcpContextFlightStep implements Step {
                                 "Subflight had unexpected status %s. No exception for subflight found.",
                                 subflightState.getFlightStatus()))));
       }
-    } catch (DatabaseOperationException | FlightException e) {
+    } catch (DatabaseOperationException | FlightWaitTimedOutException e) {
       // Retry for database issues or expired wait loop
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }

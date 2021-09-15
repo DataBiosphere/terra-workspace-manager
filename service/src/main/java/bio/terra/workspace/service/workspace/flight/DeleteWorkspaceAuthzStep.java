@@ -26,7 +26,7 @@ public class DeleteWorkspaceAuthzStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws RetryException, InterruptedException {
-    samService.deleteWorkspace(userRequest.getRequiredToken(), workspaceId);
+    samService.deleteWorkspace(userRequest, workspaceId);
     return StepResult.getStepResultSuccess();
   }
 
