@@ -51,10 +51,7 @@ public class AuthenticatedUserRequest {
 
   @JsonIgnore
   public String getRequiredToken() {
-    if (token.isEmpty()) {
-      throw new ApiException("Token required");
-    }
-    return token.get();
+    return token.orElseThrow(() -> new ApiException("Token required"));
   }
 
   public UUID getReqId() {

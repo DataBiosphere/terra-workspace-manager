@@ -464,18 +464,22 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceId, @Valid ApiCloneWorkspaceRequest body) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest petRequest = samService.getAuthenticatedPetRequest(
+        workspaceService.getRequiredGcpProject(workspaceId), userRequest);
     final String jobId =
         workspaceService.cloneWorkspace(
             workspaceId,
-            getAuthenticatedInfo(),
+            petRequest,
             body.getSpendProfile(),
             body.getLocation(),
             body.getDisplayName(),
             body.getDescription());
-    final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, getAuthenticatedInfo());
+    final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId, petRequest);
     return new ResponseEntity<>(
         result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
+
   /**
    * Return the workspace clone result, including job result and error result.
    *
