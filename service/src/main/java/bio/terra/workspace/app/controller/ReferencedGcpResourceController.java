@@ -14,6 +14,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiUpdateDataReferenceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
@@ -41,6 +42,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final ResourceController resourceController;
   private final WorkspaceService workspaceService;
+  private final SamService samService;
   private final HttpServletRequest request;
   private final Logger logger = LoggerFactory.getLogger(ReferencedGcpResourceController.class);
 
@@ -50,11 +52,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       ResourceController resourceController,
       WorkspaceService workspaceService,
+      SamService samService,
       HttpServletRequest request) {
     this.referenceResourceService = referenceResourceService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.resourceController = resourceController;
     this.workspaceService = workspaceService;
+    this.samService = samService;
     this.request = request;
   }
 
@@ -250,10 +254,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<ApiCloneReferencedGcpGcsBucketResourceResult> cloneGcpGcsBucketReference(
       UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest petRequest = samService.getAuthenticatedPetRequest(
+        workspaceService.getRequiredGcpProject(workspaceId), getAuthenticatedInfo());
 
     final ReferencedResource sourceReferencedResource =
-        referenceResourceService.getReferenceResource(workspaceId, resourceId, userRequest);
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, petRequest);
 
     final CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
@@ -277,7 +282,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             body.getDestinationWorkspaceId(),
             body.getName(),
             body.getDescription(),
-            userRequest);
+            petRequest);
 
     // Build the correct response type
     final var result =
@@ -293,10 +298,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<ApiCloneReferencedGcpBigQueryDatasetResourceResult>
       cloneGcpBigQueryDatasetReference(
           UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest petRequest = samService.getAuthenticatedPetRequest(
+        workspaceService.getRequiredGcpProject(workspaceId), getAuthenticatedInfo());
 
     final ReferencedResource sourceReferencedResource =
-        referenceResourceService.getReferenceResource(workspaceId, resourceId, userRequest);
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, petRequest);
 
     final CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
@@ -320,7 +326,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             body.getDestinationWorkspaceId(),
             body.getName(),
             body.getDescription(),
-            userRequest);
+            petRequest);
 
     // Build the correct response type
     final var result =
@@ -336,10 +342,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<ApiCloneReferencedGcpDataRepoSnapshotResourceResult>
       cloneGcpDataRepoSnapshotReference(
           UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest petRequest = samService.getAuthenticatedPetRequest(
+        workspaceService.getRequiredGcpProject(workspaceId), getAuthenticatedInfo());
 
     final ReferencedResource sourceReferencedResource =
-        referenceResourceService.getReferenceResource(workspaceId, resourceId, userRequest);
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, petRequest);
 
     final CloningInstructions effectiveCloningInstructions =
         Optional.ofNullable(body.getCloningInstructions())
@@ -363,7 +370,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             body.getDestinationWorkspaceId(),
             body.getName(),
             body.getDescription(),
-            userRequest);
+            petRequest);
 
     // Build the correct response type
     final var result =

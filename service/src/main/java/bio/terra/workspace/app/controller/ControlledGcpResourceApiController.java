@@ -206,20 +206,22 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     logger.info("Cloning GCS bucket resourceId {} workspaceId {}", resourceId, workspaceId);
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest petRequest = samService.getAuthenticatedPetRequest(
+        workspaceService.getRequiredGcpProject(workspaceId), userRequest);
     final String jobId =
         controlledResourceService.cloneGcsBucket(
             workspaceId,
             resourceId,
             body.getDestinationWorkspaceId(),
             body.getJobControl(),
-            userRequest,
+            petRequest,
             body.getName(),
             body.getDescription(),
             body.getBucketName(),
             body.getLocation(),
             body.getCloningInstructions());
     final ApiCloneControlledGcpGcsBucketResult result =
-        fetchCloneGcsBucketResult(jobId, userRequest);
+        fetchCloneGcsBucketResult(jobId, petRequest);
     return new ResponseEntity<>(
         result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
@@ -494,21 +496,22 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   @Override
   public ResponseEntity<ApiCloneControlledGcpBigQueryDatasetResult> cloneBigQueryDataset(
       UUID workspaceId, UUID resourceId, @Valid ApiCloneControlledGcpBigQueryDatasetRequest body) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final AuthenticatedUserRequest petRequest = samService.getAuthenticatedPetRequest(
+        workspaceService.getRequiredGcpProject(workspaceId), getAuthenticatedInfo());
     final String jobId =
         controlledResourceService.cloneBigQueryDataset(
             workspaceId,
             resourceId,
             body.getDestinationWorkspaceId(),
             body.getJobControl(),
-            userRequest,
+            petRequest,
             body.getName(),
             body.getDescription(),
             body.getDestinationDatasetName(),
             body.getLocation(),
             body.getCloningInstructions());
     final ApiCloneControlledGcpBigQueryDatasetResult result =
-        fetchCloneBigQueryDatasetResult(jobId, userRequest);
+        fetchCloneBigQueryDatasetResult(jobId, petRequest);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
