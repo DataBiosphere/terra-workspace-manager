@@ -27,6 +27,13 @@ for resource_type in "controlled-user-shared-workspace-resource" "controlled-use
   curl -X GET "$sam_url/resources/v2/$resource_type" \
   -H "accept: application/json" -H "Authorization: Bearer $access_token" \
   | jq -r ".[] | .resourceId" >$resource_type.txt
+  # Prompt user for confirmation
+  num_resources="$(wc -l <$resource_type.txt)"
+  read -p "This will delete $num_resources resources of type $resource_type. Continue: y/N? " yn
+  if [ "$yn" == "${yn#[Yy]}" ] ;then
+    break
+  fi
+
   # For each ID, call Sam to delete the resource.
   while read -r resource_id; do
     echo "Deleting $resource_id"
