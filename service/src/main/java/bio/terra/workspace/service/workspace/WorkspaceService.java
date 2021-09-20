@@ -139,8 +139,11 @@ public class WorkspaceService {
   @Traced
   public Workspace validateWorkspaceAndAction(
       AuthenticatedUserRequest userRequest, UUID workspaceId, String action) {
-    logger.info("validateWorkspaceAndAction - userRequest: {}\nworkspaceId: {}\naction: {}",
-        userRequest, workspaceId, action);
+    logger.info(
+        "validateWorkspaceAndAction - userRequest: {}\nworkspaceId: {}\naction: {}",
+        userRequest,
+        workspaceId,
+        action);
     Workspace workspace = workspaceDao.getWorkspace(workspaceId);
     SamRethrow.onInterrupted(
         () ->

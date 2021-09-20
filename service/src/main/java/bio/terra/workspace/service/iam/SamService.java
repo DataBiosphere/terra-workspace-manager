@@ -882,10 +882,11 @@ public class SamService {
   }
 
   /** Fetch the email associated with an authToken from Sam. */
-  // todo: find the semantics of this call. does it always give me the user-user, or can I get the Pet?
+  // todo: find the semantics of this call. does it always give me the user-user, or can I get the
+  // Pet?
 
   private String getEmailFromToken(String authToken) throws InterruptedException {
-    logger.info("getEmailFromToken: Auth Token: {}", authToken);
+    logger.info("getEmailFromToken: Auth Token: REDACTED ({} chars)", authToken.length());
     UsersApi usersApi = samUsersApi(authToken);
     try {
       // NEVER GIVES ME THE PET
@@ -905,8 +906,11 @@ public class SamService {
     GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
     try {
       final String petEmail = googleApi.getPetServiceAccount(projectId);
-      logger.info("getOrCreatePetSaEmail - projectId = {}\nuserRequest = {}\npetEmail = {}",
-          projectId, userRequest, petEmail);
+      logger.info(
+          "getOrCreatePetSaEmail - projectId = {}\nuserRequest = {}\npetEmail = {}",
+          projectId,
+          userRequest,
+          petEmail);
       return petEmail;
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error getting pet service account from Sam", apiException);
