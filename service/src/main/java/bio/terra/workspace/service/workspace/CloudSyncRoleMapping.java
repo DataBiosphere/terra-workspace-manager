@@ -46,9 +46,6 @@ public class CloudSyncRoleMapping {
       new ImmutableList.Builder<String>()
           .addAll(PROJECT_READER_PERMISSIONS)
           .add(
-              // TODO(wchambers): Revise service account permissions when there are controlled
-              // resources for service accounts. (Also used by NextFlow)
-              "iam.serviceAccounts.actAs",
               "iam.serviceAccounts.get",
               "iam.serviceAccounts.list",
               "lifesciences.operations.cancel",
