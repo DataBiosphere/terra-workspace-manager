@@ -65,4 +65,12 @@ public class AuthenticatedUserRequest {
     this.reqId = reqId;
     return this;
   }
+
+  @Override
+  public String toString() {
+    return String.format("Email: %s\nSubject ID: %s\nToken: %s\n",
+        Optional.ofNullable(getEmail()).orElse("null"),
+        Optional.ofNullable(getSubjectId()).orElse("null"),
+        getToken().orElse("null"));
+  }
 }

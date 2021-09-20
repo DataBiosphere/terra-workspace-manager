@@ -43,6 +43,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -56,6 +58,8 @@ import org.springframework.stereotype.Component;
 @Lazy
 @Component
 public class WorkspaceService {
+
+  private static final Logger logger = LoggerFactory.getLogger(WorkspaceService.class);
 
   private final JobService jobService;
   private final WorkspaceDao workspaceDao;
@@ -135,6 +139,8 @@ public class WorkspaceService {
   @Traced
   public Workspace validateWorkspaceAndAction(
       AuthenticatedUserRequest userRequest, UUID workspaceId, String action) {
+    logger.info("validateWorkspaceAndAction - userRequest: {}\nworkspaceId: {}\naction: {}",
+        userRequest, workspaceId, action);
     Workspace workspace = workspaceDao.getWorkspace(workspaceId);
     SamRethrow.onInterrupted(
         () ->

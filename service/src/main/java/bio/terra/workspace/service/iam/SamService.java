@@ -316,6 +316,9 @@ public class SamService {
   public void checkAuthz(
       AuthenticatedUserRequest userRequest, String resourceType, String resourceId, String action)
       throws InterruptedException {
+    // TODO: CHECK THE PROXY - IT FINAGLES THE USER REQUEST IN WAYS THE LOCAL BUILD DOESN'T.
+    // WE COME IN WITH THE PET ACCT, BUT GET THE USER ACCT'S EMAIL
+
     boolean isAuthorized = isAuthorized(userRequest, resourceType, resourceId, action);
     final String userEmail = getEmailFromToken(userRequest.getRequiredToken());
     if (!isAuthorized)
@@ -879,10 +882,16 @@ public class SamService {
   }
 
   /** Fetch the email associated with an authToken from Sam. */
+  // todo: find the semantics of this call. does it always give me the user-user, or can I get the Pet?
+
   private String getEmailFromToken(String authToken) throws InterruptedException {
+    logger.info("getEmailFromToken: Auth Token: {}", authToken);
     UsersApi usersApi = samUsersApi(authToken);
     try {
-      return SamRetry.retry(() -> usersApi.getUserStatusInfo().getUserEmail());
+      // NEVER GIVES ME THE PET
+      final String userEmail = SamRetry.retry(() -> usersApi.getUserStatusInfo().getUserEmail());
+      logger.info("Email: {}", userEmail);
+      return userEmail;
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error getting user email from Sam", apiException);
     }
@@ -895,7 +904,10 @@ public class SamService {
   public String getOrCreatePetSaEmail(String projectId, AuthenticatedUserRequest userRequest) {
     GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
     try {
-      return googleApi.getPetServiceAccount(projectId);
+      final String petEmail = googleApi.getPetServiceAccount(projectId);
+      logger.info("getOrCreatePetSaEmail - projectId = {}\nuserRequest = {}\npetEmail = {}",
+          projectId, userRequest, petEmail);
+      return petEmail;
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error getting pet service account from Sam", apiException);
     }
