@@ -108,22 +108,17 @@ public class SamService {
    */
   public String getEmailFromRequestOrSam(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
-    Optional<String> emailMaybe = Optional.ofNullable(userRequest.getEmail());
-    if (emailMaybe.isPresent()) {
-      return emailMaybe.get();
-    } else {
-      return getEmailFromSam(userRequest);
-    }
+    return Optional.ofNullable(userRequest.getEmail()).orElse(getUserEmailFromSam(userRequest));
   }
 
   /**
-   * Fetch the email associated with user credentials directly from Sam. Unlike
-   * {@code getRequestUserEmail}, this will always call Sam to fetch an email and will never read
-   * it from the AuthenticatedUserRequest. This is important for calls made by pet service accounts,
-   * which will have a pet email in the AuthenticatedUserRequest, but Sam will return the owner's
-   * email.
-   * */
-  public String getEmailFromSam(AuthenticatedUserRequest userRequest) throws InterruptedException {
+   * Fetch the email associated with user credentials directly from Sam. Unlike {@code
+   * getRequestUserEmail}, this will always call Sam to fetch an email and will never read it from
+   * the AuthenticatedUserRequest. This is important for calls made by pet service accounts, which
+   * will have a pet email in the AuthenticatedUserRequest, but Sam will return the owner's email.
+   */
+  public String getUserEmailFromSam(AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
     UsersApi usersApi = samUsersApi(userRequest.getRequiredToken());
     try {
       return SamRetry.retry(() -> usersApi.getUserStatusInfo().getUserEmail());
@@ -201,8 +196,7 @@ public class SamService {
     // Sam will throw an error if no owner is specified, so the caller's email is required. It can
     // be looked up using the auth token if that's all the caller provides.
     String callerEmail =
-        userRequest.getEmail() == null ? getEmailFromSam(userRequest) : userRequest.getEmail();
-    String petSaEmail = getOrCreatePetSaEmail(projectId, userRequest);
+        Optional.ofNullable(userRequest.getEmail()).orElse(getUserEmailFromSam(userRequest));
     CreateResourceRequestV2 workspaceRequest =
         new CreateResourceRequestV2()
             .resourceId(id.toString())
@@ -331,10 +325,8 @@ public class SamService {
   public void checkAuthz(
       AuthenticatedUserRequest userRequest, String resourceType, String resourceId, String action)
       throws InterruptedException {
-    // TODO: CHECK THE PROXY - IT FINAGLES THE USER REQUEST IN WAYS THE LOCAL BUILD DOESN'T.
-    // WE COME IN WITH THE PET ACCT, BUT GET THE USER ACCT'S EMAIL.
     boolean isAuthorized = isAuthorized(userRequest, resourceType, resourceId, action);
-    final String userEmail = getEmailFromSam(userRequest);
+    final String userEmail = getUserEmailFromSam(userRequest);
     if (!isAuthorized)
       throw new UnauthorizedException(
           String.format(
@@ -847,7 +839,7 @@ public class SamService {
     try {
       AuthenticatedUserRequest wsmRequest =
           new AuthenticatedUserRequest().token(Optional.of(getWsmServiceAccountToken()));
-      String wsmSaEmail = getEmailFromSam(wsmRequest);
+      String wsmSaEmail = getUserEmailFromSam(wsmRequest);
       AccessPolicyMembershipV2 ownerPolicy =
           new AccessPolicyMembershipV2()
               .addRolesItem(ControlledResourceIamRole.OWNER.toSamRole())
@@ -902,28 +894,6 @@ public class SamService {
    * create the pet SA if it doesn't already exist.
    */
   public String getOrCreatePetSaEmail(String projectId, AuthenticatedUserRequest userRequest) {
-    GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
-    try {
-      final String petEmail = googleApi.getPetServiceAccount(projectId);
-      logger.info(
-          "getOrCreatePetSaEmail - projectId = {}\nuserRequest = {}\npetEmail = {}",
-          projectId,
-          userRequest,
-          petEmail);
-      return petEmail;
-    } catch (ApiException apiException) {
-      throw SamExceptionFactory.create("Error getting pet service account from Sam", apiException);
-    }
-  }
-
-  /**
-   * Get a pet service account token for a given project and user request
-   *
-   * @param projectId - GCP project ID
-   * @param userRequest - original user request
-   * @return - pet service account token
-   */
-  public String getOrCreatePetSaToken(String projectId, AuthenticatedUserRequest userRequest) {
     GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
     try {
       return googleApi.getPetServiceAccountToken(projectId, new ArrayList<>(SAM_OAUTH_SCOPES));

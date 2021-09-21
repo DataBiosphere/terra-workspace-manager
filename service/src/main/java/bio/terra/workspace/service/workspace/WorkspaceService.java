@@ -370,7 +370,7 @@ public class WorkspaceService {
     // access token belongs to a pet SA.
     String userEmail =
         SamRethrow.onInterrupted(
-            () -> samService.getEmailFromSam(userRequest), "getEmailFromSam");
+            () -> samService.getUserEmailFromSam(userRequest), "getEmailFromSam");
     String projectId = getRequiredGcpProject(workspaceId);
     String petSaEmail = samService.getOrCreatePetSaEmail(projectId, userRequest);
     ServiceAccountName petSaName =
