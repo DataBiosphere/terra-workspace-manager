@@ -32,8 +32,7 @@ public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
     TestUserSpecification nonWorkspaceUser = testUsers.get(1);
     secondUserApi = ClientTestUtils.getWorkspaceClient(nonWorkspaceUser, server);
 
-    // Set up the test fixture workspaces. This must happen after cleaning up a user's workspaces.
-    // First workspace is set up via test base.
+    // Set up the test fixture workspaces. The first workspace is set up via test base instead.
     workspaceId2 = UUID.randomUUID();
     createWorkspace(workspaceId2, getSpendProfileId(), firstUserApi);
     workspaceId3 = UUID.randomUUID();
@@ -60,8 +59,8 @@ public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
     // have 3 workspaces.
     WorkspaceDescriptionList workspaceList = firstUserApi.listWorkspaces(/*offset=*/0, /*limit=*/
         MAX_USER_WORKSPACES);
-    List<UUID> workspaceIdList = workspaceList.getWorkspaces().stream().map(WorkspaceDescription::getId).collect(
-        Collectors.toList());
+    List<UUID> workspaceIdList = workspaceList.getWorkspaces().stream()
+        .map(WorkspaceDescription::getId).collect(Collectors.toList());
     assertThat(workspaceIdList, hasItems(getWorkspaceId(), workspaceId2, workspaceId3));
 
     // Next, cover the same set of workspaces across 3 pages.
@@ -72,8 +71,8 @@ public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
     // pageSize may not be divisible by 3, so cover all remaining workspaces here instead.
     callResults.addAll(firstUserApi.listWorkspaces(/*offset=*/pageSize*2, /*limit=*/(
         MAX_USER_WORKSPACES - 2*pageSize)).getWorkspaces());
-    List<UUID> callResultIdList = workspaceList.getWorkspaces().stream().map(WorkspaceDescription::getId).collect(
-        Collectors.toList());
+    List<UUID> callResultIdList = callResults.stream()
+        .map(WorkspaceDescription::getId).collect(Collectors.toList());
     assertThat(callResultIdList, hasItems(getWorkspaceId(), workspaceId2, workspaceId3));
 
     // Validate that a different user will not see any of these workspaces.

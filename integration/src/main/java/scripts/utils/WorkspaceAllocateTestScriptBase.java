@@ -11,9 +11,6 @@ import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.WorkspaceStageModel;
 import java.util.List;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import scripts.testscripts.GetWorkspace;
 
 /**
  * Fixture for tests that use a single workspace as a fixture. The expectation is that the workspace
