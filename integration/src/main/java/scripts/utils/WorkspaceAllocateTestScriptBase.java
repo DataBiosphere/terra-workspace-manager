@@ -11,9 +11,6 @@ import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.WorkspaceStageModel;
 import java.util.List;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import scripts.testscripts.GetWorkspace;
 
 /**
  * Fixture for tests that use a single workspace as a fixture. The expectation is that the workspace
@@ -71,6 +68,14 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
     workspaceId = UUID.randomUUID();
+    createWorkspace(workspaceId, spendProfileId, workspaceApi);
+  }
+
+  /**
+   * Utility for making the WSM calls to create a workspace. Exposed as protected for test
+   * implementations which need to create additional workspaces.
+   */
+  protected CreatedWorkspace createWorkspace(UUID workspaceId, String spendProfileId, WorkspaceApi workspaceApi) throws Exception {
     final var requestBody =
         new CreateWorkspaceRequestBody()
             .id(workspaceId)
@@ -78,6 +83,7 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
             .stage(getStageModel());
     final CreatedWorkspace workspace = workspaceApi.createWorkspace(requestBody);
     assertThat(workspace.getId(), equalTo(workspaceId));
+    return workspace;
   }
 
   /**
