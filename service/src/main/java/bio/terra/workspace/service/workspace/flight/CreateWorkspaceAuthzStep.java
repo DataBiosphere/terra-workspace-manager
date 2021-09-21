@@ -48,13 +48,13 @@ public class CreateWorkspaceAuthzStep implements Step {
     FlightMap inputMap = flightContext.getInputParameters();
     UUID workspaceID =
         UUID.fromString(inputMap.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    samService.deleteWorkspace(userRequest.getRequiredToken(), workspaceID);
+    samService.deleteWorkspace(userRequest, workspaceID);
     return StepResult.getStepResultSuccess();
   }
 
   private boolean canReadExistingWorkspace(UUID workspaceID) throws InterruptedException {
     return samService.isAuthorized(
-        userRequest.getRequiredToken(),
+        userRequest,
         SamConstants.SAM_WORKSPACE_RESOURCE,
         workspaceID.toString(),
         SamConstants.SAM_WORKSPACE_READ_ACTION);

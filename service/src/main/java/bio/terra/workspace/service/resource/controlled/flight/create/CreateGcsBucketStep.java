@@ -56,6 +56,10 @@ public class CreateGcsBucketStep implements Step {
             .map(GcsApiConversions::toGcsApiRulesList)
             .orElse(Collections.emptyList()));
 
+    BucketInfo.IamConfiguration iamConfiguration =
+        BucketInfo.IamConfiguration.newBuilder().setIsUniformBucketLevelAccessEnabled(true).build();
+    bucketInfoBuilder.setIamConfiguration(iamConfiguration);
+
     StorageCow storageCow = crlService.createStorageCow(projectId);
 
     // Don't try to create it if it already exists. At this point the assumption is

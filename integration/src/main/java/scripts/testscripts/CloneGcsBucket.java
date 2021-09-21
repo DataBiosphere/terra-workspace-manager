@@ -18,6 +18,7 @@ import static scripts.utils.ResourceMaker.makeControlledGcsBucketUserShared;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
+import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloneControlledGcpGcsBucketRequest;
 import bio.terra.workspace.model.CloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.model.ClonedControlledGcpGcsBucket;
@@ -43,6 +44,7 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule.DeleteLifecycleAction;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.SetStorageClassLifecycleAction;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageClass;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
@@ -81,11 +83,11 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     // user cloning the bucket resource
     cloningUser = testUsers.get(1);
 
+    // Create the source cloud context
     sourceProjectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), sourceOwnerWorkspaceApi);
     logger.info("Created source project {} in workspace {}", sourceProjectId, getWorkspaceId());
 
     // Create a source bucket
-    // Create the source cloud context
     final ControlledGcpResourceApi sourceOwnerResourceApi = ClientTestUtils
         .getControlledGcpResourceClient(sourceOwnerUser, server);
     cloningUserResourceApi = ClientTestUtils.getControlledGcpResourceClient(cloningUser, server);
@@ -93,7 +95,7 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     // create source bucket
     nameSuffix = UUID.randomUUID().toString();
     sourceResourceName = RESOURCE_PREFIX + nameSuffix;
-    sourceBucket = makeControlledGcsBucketUserShared(sourceOwnerResourceApi, getWorkspaceId(), sourceResourceName);
+    sourceBucket = makeControlledGcsBucketUserShared(sourceOwnerResourceApi, getWorkspaceId(), sourceResourceName, CloningInstructionsEnum.NOTHING);
     sourceBucketName = sourceBucket.getGcpBucket().getAttributes().getBucketName();
 
     // Make the cloning user a reader on the existing workspace
@@ -226,5 +228,17 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
     final Blob retrievedFile = cloningUserStorageClient.get(blobId);
     assertNotNull(retrievedFile);
     assertEquals(blobId.getName(), retrievedFile.getBlobId().getName());
+  }
+
+  @Override
+  protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) {
+    if (destinationWorkspaceId != null) {
+      try {
+        final WorkspaceApi cloningUserWorkspaceApi = ClientTestUtils.getWorkspaceClient(cloningUser, server);
+        cloningUserWorkspaceApi.deleteWorkspace(destinationWorkspaceId);
+      } catch (ApiException | IOException e) {
+        logger.error("Failed to clean up destination workspace: {}", e.getMessage());
+      }
+    }
   }
 }

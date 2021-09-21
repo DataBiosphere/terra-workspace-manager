@@ -396,7 +396,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
     String jobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(
-        request.workspaceId(), jobId, "/fake/value", USER_REQUEST);
+        request.workspaceId(), jobId, USER_REQUEST, "/fake/value");
     jobService.waitForJob(jobId);
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
     Workspace workspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
@@ -426,7 +426,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     String jobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(
-        request.workspaceId(), jobId, "/fake/value", USER_REQUEST);
+        request.workspaceId(), jobId, USER_REQUEST, "/fake/value");
     jobService.waitForJob(jobId);
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
     Workspace workspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
@@ -459,7 +459,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         StageDisabledException.class,
         () ->
             workspaceService.createGcpCloudContext(
-                request.workspaceId(), jobId, "/fake/value", USER_REQUEST));
+                request.workspaceId(), jobId, USER_REQUEST, "/fake/value"));
   }
 
   @Test
@@ -475,7 +475,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         MissingSpendProfileException.class,
         () ->
             workspaceService.createGcpCloudContext(
-                request.workspaceId(), jobId, "/fake/value", USER_REQUEST));
+                request.workspaceId(), jobId, USER_REQUEST, "/fake/value"));
   }
 
   @Test
@@ -490,7 +490,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     Mockito.when(
             mockSamService.isAuthorized(
-                Mockito.eq(USER_REQUEST.getRequiredToken()),
+                Mockito.eq(USER_REQUEST),
                 Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
                 Mockito.any(),
                 Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
@@ -500,7 +500,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         SpendUnauthorizedException.class,
         () ->
             workspaceService.createGcpCloudContext(
-                request.workspaceId(), jobId, "/fake/value", USER_REQUEST));
+                request.workspaceId(), jobId, USER_REQUEST, "/fake/value"));
   }
 
   @Test
@@ -517,7 +517,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         NoBillingAccountException.class,
         () ->
             workspaceService.createGcpCloudContext(
-                request.workspaceId(), jobId, "/fake/value", USER_REQUEST));
+                request.workspaceId(), jobId, USER_REQUEST, "/fake/value"));
   }
 
   /**

@@ -26,6 +26,7 @@ import com.google.api.services.bigquery.model.TableReference;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,10 +100,13 @@ public class CreateTableCopyJobsStep implements Step {
                       ControlledResourceKeys.TABLE_TO_JOB_ID_MAP,
                       new TypeReference<Map<String, String>>() {}))
               .orElseGet(HashMap::new);
-      final List<Tables> tables = sourceTables.getTables();
+      final List<Tables> tables =
+          Optional.ofNullable(sourceTables.getTables()).orElse(Collections.emptyList());
       // Find the first table whose ID isn't a key in the map.
       final Optional<Tables> tableMaybe =
-          tables.stream().filter(t -> !tableToJobId.containsKey(t.getId())).findFirst();
+          tables.stream()
+              .filter(t -> null != t.getId() && !tableToJobId.containsKey(t.getId()))
+              .findFirst();
       if (tableMaybe.isPresent()) {
         final Tables table = tableMaybe.get();
         checkStreamingBuffer(sourceInputs, bigQueryCow, table);
@@ -117,6 +121,8 @@ public class CreateTableCopyJobsStep implements Step {
         return new StepResult(StepStatus.STEP_RESULT_RERUN);
       } else {
         // All tables have entries in the map, so all jobs are started.
+        workingMap.put(
+            ControlledResourceKeys.TABLE_TO_JOB_ID_MAP, tableToJobId); // in case it's empty
         return StepResult.getStepResultSuccess();
       }
     } catch (IOException e) {

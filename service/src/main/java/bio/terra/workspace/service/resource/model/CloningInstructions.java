@@ -4,6 +4,7 @@ import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.EnumBiMap;
 import com.google.common.collect.EnumHashBiMap;
+import javax.annotation.Nullable;
 
 /**
  * Enum describing how to treat a resource when its containing workspace is cloned. The values
@@ -42,7 +43,11 @@ public enum CloningInstructions {
     sqlMap.put(COPY_REFERENCE, "COPY_REFERENCE");
   }
 
-  public static CloningInstructions fromApiModel(ApiCloningInstructionsEnum modelEnum) {
+  @Nullable
+  public static CloningInstructions fromApiModel(@Nullable ApiCloningInstructionsEnum modelEnum) {
+    if (null == modelEnum) {
+      return null;
+    }
     return instructionMap.inverse().get(modelEnum);
   }
 

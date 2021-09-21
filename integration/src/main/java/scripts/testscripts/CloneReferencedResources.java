@@ -9,6 +9,7 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
+import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloneReferencedGcpDataRepoSnapshotResourceResult;
 import bio.terra.workspace.model.CloneReferencedGcpGcsBucketResourceResult;
 import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
@@ -21,6 +22,7 @@ import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -144,5 +146,16 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         cloneDataRepoSnapshotResult.getResource().getAttributes().getSnapshot());
     assertEquals(sourceDataRepoSnapshotReference.getAttributes().getInstanceName(),
         cloneDataRepoSnapshotResult.getResource().getAttributes().getInstanceName());
+  }
+
+  @Override
+  protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) {
+    if (destinationWorkspaceId != null) {
+      try {
+        workspaceApi.deleteWorkspace(destinationWorkspaceId);
+      } catch (ApiException e) {
+        logger.error("Failed to clean up destination workspace: {}", e.getMessage());
+      }
+    }
   }
 }

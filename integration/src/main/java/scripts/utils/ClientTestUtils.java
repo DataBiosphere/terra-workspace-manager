@@ -3,6 +3,7 @@ package scripts.utils;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
@@ -36,6 +37,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -52,7 +54,7 @@ public class ClientTestUtils {
   private static final Logger logger = LoggerFactory.getLogger(ClientTestUtils.class);
 
   // Required scopes for client tests include the usual login scopes and GCP scope.
-  private static final List<String> TEST_USER_SCOPES =
+  public static final List<String> TEST_USER_SCOPES =
       List.of("openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
 
   private ClientTestUtils() {}
@@ -104,8 +106,6 @@ public class ClientTestUtils {
       logger.debug(
           "Fetching credentials and building Workspace Manager ApiClient object for test user: {}",
           testUser.name);
-      // TODO(PF-657): TestRunner caches delegated credentials by TestUser, ignoring scopes. This
-      //  should change, but for now I include all scopes we'll need on this user in the first call.
       GoogleCredentials userCredential =
           AuthenticationUtils.getDelegatedUserCredential(testUser, TEST_USER_SCOPES);
       accessToken = AuthenticationUtils.getAccessToken(userCredential);
@@ -132,6 +132,14 @@ public class ClientTestUtils {
             AuthenticationUtils.getDelegatedUserCredential(testUser, TEST_USER_SCOPES)));
   }
 
+  public static Iam getGcpIamClientFromToken(AccessToken accessToken)
+      throws GeneralSecurityException, IOException {
+    return new Iam(
+        GoogleNetHttpTransport.newTrustedTransport(),
+        JacksonFactory.getDefaultInstance(),
+        new HttpCredentialsAdapter(new GoogleCredentials(accessToken)));
+  }
+
   public static Storage getGcpStorageClient(TestUserSpecification testUser, String projectId)
       throws IOException {
     GoogleCredentials userCredential =
@@ -153,6 +161,12 @@ public class ClientTestUtils {
   public static WorkspaceApi getWorkspaceClient(
       TestUserSpecification testUser, ServerSpecification server) throws IOException {
     final ApiClient apiClient = getClientForTestUser(testUser, server);
+    return new WorkspaceApi(apiClient);
+  }
+
+  public static WorkspaceApi getWorkspaceClientFromToken(
+      AccessToken accessToken, ServerSpecification server) throws IOException {
+    final ApiClient apiClient = buildClient(accessToken, server);
     return new WorkspaceApi(apiClient);
   }
 
@@ -249,7 +263,6 @@ public class ClientTestUtils {
     Duration sleepDuration = Duration.ofSeconds(15);
     while (numTries > 0) {
       try {
-        // read blob as second user
         result = supplier.get();
         break;
       } catch (Exception e) {
@@ -263,6 +276,13 @@ public class ClientTestUtils {
       }
     }
     return result;
+  }
+
+  public static void runWithRetryOnException(Runnable fn) throws InterruptedException {
+    getWithRetryOnException(() -> {
+      fn.run();
+      return null;
+    });
   }
 
   /**
@@ -323,5 +343,17 @@ public class ClientTestUtils {
         fail("Failed operation " + operation);
       }
     }
+  }
+
+  /**
+   * Check Optional's value is present and return it, or else fail an assertion.
+   * @param optional - Optional expression
+   * @param <T> - value type of optional
+   * @return - value of optional, if present
+   */
+  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+  public static <T> T getOrFail(Optional<T> optional) {
+    assertTrue(optional.isPresent(), "Optional value was empty.");
+    return optional.get();
   }
 }

@@ -18,6 +18,11 @@ Optionally, you can provide a branch of [terra-helm](https://github.com/broadins
 ./setup_local_env.sh <environment> [<terra-helm ref>] [<terra-helmfile ref>] [ssh|http]
 ```
 
+Ensure your `gcloud` state is pointing to the correct cluster:
+```
+gcloud container clusters get-credentials terra-integration --zone us-central1-a --project terra-kernel-k8s
+```
+
 You can now push to the specified environment by running
 
 ```

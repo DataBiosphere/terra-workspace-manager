@@ -84,34 +84,28 @@ class JobServiceTest extends BaseUnitTest {
     // The fids list should be in exactly the same order as the database ordered by submit time.
 
     List<String> jobIds = new ArrayList<>();
-    try {
-      for (int i = 0; i < 7; i++) {
-        String jobId = runFlight(makeDescription(i));
-        jobIds.add(jobId);
-      }
-
-      // Test single retrieval
-      testSingleRetrieval(jobIds);
-
-      // Test result retrieval - the body should be the description string
-      testResultRetrieval(jobIds);
-
-      // Retrieve everything
-      testEnumRange(jobIds, 0, 100);
-
-      // Retrieve the middle 3; offset means skip 2 rows
-      testEnumRange(jobIds, 2, 3);
-
-      // Retrieve from the end; should only get the last one back
-      testEnumCount(1, 6, 3);
-
-      // Retrieve past the end; should get nothing
-      testEnumCount(0, 22, 3);
-    } finally {
-      for (String jobId : jobIds) {
-        jobService.releaseJob(jobId, testUser);
-      }
+    for (int i = 0; i < 7; i++) {
+      String jobId = runFlight(makeDescription(i));
+      jobIds.add(jobId);
     }
+
+    // Test single retrieval
+    testSingleRetrieval(jobIds);
+
+    // Test result retrieval - the body should be the description string
+    testResultRetrieval(jobIds);
+
+    // Retrieve everything
+    testEnumRange(jobIds, 0, 100);
+
+    // Retrieve the middle 3; offset means skip 2 rows
+    testEnumRange(jobIds, 2, 3);
+
+    // Retrieve from the end; should only get the last one back
+    testEnumCount(1, 6, 3);
+
+    // Retrieve past the end; should get nothing
+    testEnumCount(0, 22, 3);
   }
 
   private void testSingleRetrieval(List<String> fids) {

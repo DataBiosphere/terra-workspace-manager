@@ -14,6 +14,7 @@ import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -170,7 +171,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
                     Function.identity(),
                     role ->
                         "group:"
-                            + SamService.rethrowIfSamInterrupted(
+                            + SamRethrow.onInterrupted(
                                 () ->
                                     samService.syncWorkspacePolicy(
                                         workspaceId,

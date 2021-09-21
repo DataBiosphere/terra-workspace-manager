@@ -11,7 +11,7 @@ import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Stairway;
 import bio.terra.stairway.exception.DatabaseOperationException;
-import bio.terra.stairway.exception.DuplicateFlightIdSubmittedException;
+import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.workspace.app.configuration.external.IngressConfiguration;
@@ -114,8 +114,8 @@ public class JobService {
           .get()
           .submitWithDebugInfo(
               jobId, flightClass, parameterMap, /* shouldQueue= */ false, flightDebugInfo);
-    } catch (DuplicateFlightIdSubmittedException ex) {
-      // DuplicateFlightIdSubmittedException is a more specific StairwayException, and so needs to
+    } catch (DuplicateFlightIdException ex) {
+      // DuplicateFlightIdException is a more specific StairwayException, and so needs to
       // be checked separately. Allowing duplicate FlightIds is useful for ensuring idempotent
       // behavior of flights.
       logger.warn("Received duplicate job ID: {}", jobId);
@@ -184,16 +184,6 @@ public class JobService {
             .addHook(mdcHook)
             .addHook(new TracingHook())
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
-  }
-
-  @Traced
-  public void releaseJob(String jobId, AuthenticatedUserRequest userRequest) {
-    try {
-      verifyUserAccess(jobId, userRequest); // jobId=flightId
-      stairwayComponent.get().deleteFlight(jobId, false);
-    } catch (StairwayException | InterruptedException stairwayEx) {
-      throw new InternalStairwayException(stairwayEx);
-    }
   }
 
   public ApiJobReport mapFlightStateToApiJobReport(FlightState flightState) {

@@ -156,6 +156,75 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+  # TODO(zloery): This endpoint is exposed as a workaround to support the CLI's
+  # use of Nextflow. It will likely be removed in the future in favor of other
+  # cloud sync methods.
+  /api/workspaces/v1/{workspaceId}/gcp/enablepet:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Allow a user to impersonate their pet SA in a given workspace
+      description: |
+        This endpoint is exposed as a workaround to support calling Google
+        Pipelines API in a workspace. It will likely be removed in the future in
+        favor of other cloud sync methods.
+      operationId: enablePet
+      tags: [ Workspace ]
+      responses:
+        '200':
+          $ref: '#/components/responses/EnablePetSaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/clone:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Clone a workspace and its eligible resources
+      operationId: cloneWorkspace
+      tags: [Workspace]
+      requestBody:
+        description: Details of workspce clone operation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/parameters/CloneWorkspaceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneWorkspaceResponse'
+        '202':
+          $ref: '#/components/responses/CloneWorkspaceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/clone-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a gcp bucket clone job.
+      operationId: getCloneWorkspaceResult
+      tags: [Workspace]
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneWorkspaceResponse'
+        '202':
+          $ref: '#/components/responses/CloneWorkspaceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
   ## DEPRECATED PATHS ##
   # TODO(PF-404): remove this in favor of reference-type specific objects.
@@ -2259,6 +2328,92 @@ components:
           format: uuid
         dataset:
           $ref: "#/components/schemas/GcpBigQueryDatasetResource"
+    CloneWorkspaceRequest:
+      description: >-
+        Request body for cloning an entire workspace. The stage is always MC. Cloning instructions
+        are taken from individual resources.
+      type: object
+      required:
+        - spendProfile
+      properties:
+        displayName:
+          description: The human readable name of the workspace
+          type: string
+        description:
+          description: A description of the cloned workspace
+          type: string
+        spendProfile:
+          description: ID of provided spend profile
+          type: string
+        location:
+          description: >-
+            GCP Location to use for cloud-based resources. If omitted, the location of the source
+            resource will be used.
+          type: string
+    CloneWorkspaceResult:
+      description: >-
+        Response for workspace clone, including details on each controlled or referenced resource
+        either cloned or attempted to be cloned.
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+        workspace:
+          $ref: '#/components/schemas/ClonedWorkspace'
+    ClonedWorkspace:
+      description: >-
+        Flight result class for workspace clone. Indicates status for each resource
+        cloned (or skipped).
+      type: object
+      properties:
+        sourceWorkspaceId:
+          type: string
+          format: uuid
+        destinationWorkspaceId:
+          type: string
+          format: uuid
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceCloneDetails'
+    ResourceCloneDetails:
+      description: >-
+        A structure to give provenance of a controlled or referenced resource clone
+      type: object
+      properties:
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        resourceType:
+          $ref: '#/components/schemas/ResourceType'
+        stewardshipType:
+          $ref: '#/components/schemas/StewardshipType'
+        sourceResourceId:
+          description: resource ID of the original resource
+          type: string
+          format: uuid
+        destinationResourceId:
+          description: resource ID of the cloned resource, or null if failed or skipped
+          type: string
+          format: uuid
+        result:
+          $ref: '#/components/schemas/CloneResourceResult'
+        errorMessage:
+          description: If result is FAILED, a short description of the cause, if available.
+          type: string
+        name:
+          description: name of the resource (same as source)
+          type: string
+        description:
+          description:  description of the destination resource (same as source)
+          type: string
+    CloneResourceResult:
+      type: string
+      enum:
+        - SUCCEEDED
+        - FAILED
+        - SKIPPED
     DeleteControlledGcpGcsBucketRequest:
       type: object
       required: [ jobControl ]
@@ -2601,6 +2756,10 @@ components:
           description: Present if stewardship type is CONTROLLED
           $ref: '#/components/schemas/ControlledResourceMetadata'
 
+    PetServiceAccount:
+      description: The email identifier of a pet service account
+      type: string
+
     # Enumerations (related to resources) in alphabetical order.
     AccessScope:
       type: string
@@ -2655,6 +2814,13 @@ components:
           schema:
             $ref: '#/components/schemas/DataReferenceList'
     ### END OF DEPRECATED RESPONSES ###
+
+    EnablePetSaResponse:
+      description: Response to enablePet calls
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PetServiceAccount'
 
     CreatedWorkspaceResponse:
       description: Response to createWorkspace calls
@@ -2816,6 +2982,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneControlledGcpBigQueryDatasetResult'
+    CloneWorkspaceResponse:
+      description: Response to clone workspace request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneWorkspaceResult'
     # Error Responses
     BadRequest:
       description: Bad request
