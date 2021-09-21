@@ -51,10 +51,6 @@ import com.google.cloud.storage.Storage.BucketField;
 import com.google.cloud.storage.Storage.BucketGetOption;
 import com.google.cloud.storage.StorageClass;
 import com.google.cloud.storage.StorageException;
-import java.time.Duration;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -62,7 +58,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
-import scripts.utils.GcsBucketTestFixtures;
 import scripts.utils.ResourceMaker;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
@@ -127,6 +122,10 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     Blob retrievedFile = ownerStorageClient.get(blobId);
     assertEquals(createdFile.getBlobId(), retrievedFile.getBlobId());
     logger.info("Read existing blob {} from bucket as owner", retrievedFile.getBlobId());
+
+    // Owner can update the object they created
+    retrievedFile.toBuilder().setContentType("text/html").build().update();
+    logger.info("Updated existing blob {} content type as owner", retrievedFile.getBlobId());
 
     // Second user has not yet been added to the workspace, so calls will be rejected.
     Storage readerStorageClient = ClientTestUtils.getGcpStorageClient(reader, projectId);
