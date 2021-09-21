@@ -366,11 +366,11 @@ public class WorkspaceService {
             userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     stageService.assertMcWorkspace(workspace, "enablePet");
 
-    // getEmailFromToken will always call Sam, which will return a user email even if the requesting
+    // getEmailFromSam will always call Sam, which will return a user email even if the requesting
     // access token belongs to a pet SA.
     String userEmail =
         SamRethrow.onInterrupted(
-            () -> samService.getRequestUserEmail(userRequest), "getRequestUserEmail");
+            () -> samService.getEmailFromSam(userRequest), "getEmailFromSam");
     String projectId = getRequiredGcpProject(workspaceId);
     String petSaEmail = samService.getOrCreatePetSaEmail(projectId, userRequest);
     ServiceAccountName petSaName =

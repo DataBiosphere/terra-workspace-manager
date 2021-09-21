@@ -106,13 +106,29 @@ public class SamService {
    * @param userRequest - request object for this user
    * @return - email address of user
    */
-  public String getRequestUserEmail(AuthenticatedUserRequest userRequest)
+  public String getEmailFromRequestOrSam(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     Optional<String> emailMaybe = Optional.ofNullable(userRequest.getEmail());
     if (emailMaybe.isPresent()) {
       return emailMaybe.get();
     } else {
-      return getEmailFromToken(userRequest.getRequiredToken());
+      return getEmailFromSam(userRequest);
+    }
+  }
+
+  /**
+   * Fetch the email associated with user credentials directly from Sam. Unlike
+   * {@code getRequestUserEmail}, this will always call Sam to fetch an email and will never read
+   * it from the AuthenticatedUserRequest. This is important for calls made by pet service accounts,
+   * which will have a pet email in the AuthenticatedUserRequest, but Sam will return the owner's
+   * email.
+   * */
+  public String getEmailFromSam(AuthenticatedUserRequest userRequest) throws InterruptedException {
+    UsersApi usersApi = samUsersApi(userRequest.getRequiredToken());
+    try {
+      return SamRetry.retry(() -> usersApi.getUserStatusInfo().getUserEmail());
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error getting user email from Sam", apiException);
     }
   }
 
@@ -185,9 +201,7 @@ public class SamService {
     // Sam will throw an error if no owner is specified, so the caller's email is required. It can
     // be looked up using the auth token if that's all the caller provides.
     String callerEmail =
-        userRequest.getEmail() == null
-            ? getEmailFromToken(userRequest.getRequiredToken())
-            : userRequest.getEmail();
+        userRequest.getEmail() == null ? getEmailFromSam(userRequest) : userRequest.getEmail();
     CreateResourceRequestV2 workspaceRequest =
         new CreateResourceRequestV2()
             .resourceId(id.toString())
@@ -317,10 +331,9 @@ public class SamService {
       AuthenticatedUserRequest userRequest, String resourceType, String resourceId, String action)
       throws InterruptedException {
     // TODO: CHECK THE PROXY - IT FINAGLES THE USER REQUEST IN WAYS THE LOCAL BUILD DOESN'T.
-    // WE COME IN WITH THE PET ACCT, BUT GET THE USER ACCT'S EMAIL
-
+    // WE COME IN WITH THE PET ACCT, BUT GET THE USER ACCT'S EMAIL.
     boolean isAuthorized = isAuthorized(userRequest, resourceType, resourceId, action);
-    final String userEmail = getEmailFromToken(userRequest.getRequiredToken());
+    final String userEmail = getEmailFromSam(userRequest);
     if (!isAuthorized)
       throw new UnauthorizedException(
           String.format(
@@ -685,7 +698,7 @@ public class SamService {
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
       // The assigned user is always the current user for private resources.
       addPrivateResourcePolicies(
-          resourceRequest, privateIamRoles, getRequestUserEmail(userRequest));
+          resourceRequest, privateIamRoles, getEmailFromRequestOrSam(userRequest));
     }
 
     try {
@@ -831,7 +844,9 @@ public class SamService {
   private void addWsmResourceOwnerPolicy(CreateResourceRequestV2 request)
       throws InterruptedException {
     try {
-      String wsmSaEmail = getEmailFromToken(getWsmServiceAccountToken());
+      AuthenticatedUserRequest wsmRequest =
+          new AuthenticatedUserRequest().token(Optional.of(getWsmServiceAccountToken()));
+      String wsmSaEmail = getEmailFromSam(wsmRequest);
       AccessPolicyMembershipV2 ownerPolicy =
           new AccessPolicyMembershipV2()
               .addRolesItem(ControlledResourceIamRole.OWNER.toSamRole())
@@ -879,23 +894,6 @@ public class SamService {
     request.putPoliciesItem(ControlledResourceIamRole.READER.toSamRole(), readerPolicy);
     request.putPoliciesItem(ControlledResourceIamRole.WRITER.toSamRole(), writerPolicy);
     request.putPoliciesItem(ControlledResourceIamRole.EDITOR.toSamRole(), editorPolicy);
-  }
-
-  /** Fetch the email associated with an authToken from Sam. */
-  // todo: find the semantics of this call. does it always give me the user-user, or can I get the
-  // Pet?
-
-  private String getEmailFromToken(String authToken) throws InterruptedException {
-    logger.info("getEmailFromToken: Auth Token: REDACTED ({} chars)", authToken.length());
-    UsersApi usersApi = samUsersApi(authToken);
-    try {
-      // NEVER GIVES ME THE PET
-      final String userEmail = SamRetry.retry(() -> usersApi.getUserStatusInfo().getUserEmail());
-      logger.info("Email: {}", userEmail);
-      return userEmail;
-    } catch (ApiException apiException) {
-      throw SamExceptionFactory.create("Error getting user email from Sam", apiException);
-    }
   }
 
   /**
