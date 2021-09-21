@@ -2241,15 +2241,14 @@ components:
         Dataset-specific properties to be set on creation. These are a subset of the
         values accepted by the BigQuery API.
       type: object
+      required: [datasetId, location]
       properties:
         datasetId:
           description: A valid dataset name per https://cloud.google.com/bigquery/docs/datasets#dataset-naming
           type: string
-          required: true
         location:
           description: A valid dataset location per https://cloud.google.com/bigquery/docs/locations.
           type: string
-          required: true
         defaultTableLifetime:
           description: Optional. Default lifetime (in seconds) for newly created tables.
           type: integer
@@ -2444,6 +2443,7 @@ components:
         AI Platform Notebook instance specific properties to be set on creation. These are a subset of the
         values accepted by the GCP AI Platforms API. See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances/create
       type: object
+      required: [instanceId, location, machineType]
       properties:
         instanceId:
           description: >-
@@ -2451,11 +2451,9 @@ components:
             case letters, numbers, and dashes. The first character must be a lower case letter,
             and the last character must not be a dash.
           type: string
-          required: true
         location:
           description: The canonical GCP id for this location. For example, \'us-east1\'.
           type: string
-          required: true
         postStartupScript:
           description: >-
             Path to a Bash script that automatically runs after a notebook instance fully boots up.
@@ -2467,7 +2465,6 @@ components:
           description: The Compute Engine machine type of this instance, see
             https://cloud.google.com/compute/docs/machine-types
           type: string
-          required: true
         acceleratorConfig:
           $ref: '#/components/schemas/GcpAiNotebookInstanceAcceleratorConfig'
         installGpuDriver:
@@ -2538,13 +2535,13 @@ components:
         directly on the VM. See
         https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/VmImage
       type: object
+      required: [projectId]
       properties:
         projectId:
           description: >-
             The name of the Google Cloud project that this VM image belongs to. Format:
             'projects/{project_id}'
           type: string
-          required: true
         imageName:
           description: >-
             Either this or imageFamily must be specified. Use VM image name to find the image.
@@ -2561,13 +2558,13 @@ components:
         notebook instance with the environment installed in a container. See
         https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/ContainerImage
       type: object
+      required: [repository]
       properties:
         repository:
           description: >-
             Required. The path to the container image repository. For example:
             'gcr.io/{project_id}/{imageName}'
           type: string
-          required: true
         tag:
           description: >-
             The tag of the container image. If not specified, this defaults to the latest tag.
