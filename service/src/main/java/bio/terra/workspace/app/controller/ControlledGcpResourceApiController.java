@@ -549,7 +549,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         .orElseGet(
             () ->
                 SamRethrow.onInterrupted(
-                    () -> samService.getEmailFromRequestOrSam(userRequest), "getRequestUserEmail"));
+                    () -> samService.getEmailFromRequestOrSam(userRequest),
+                    "getEmailFromRequestOrSam"));
   }
 
   /**
