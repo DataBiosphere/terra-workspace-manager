@@ -35,6 +35,7 @@ import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.StreamSupport;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
@@ -204,13 +205,15 @@ public class ResourceModifier {
     String actAsPermission = "iam.serviceAccounts.actAs";
     String serviceAccountName = String
         .format("projects/%s/serviceAccounts/%s", projectId, instance.getServiceAccount());
-    return ClientTestUtils.getGcpIamClient(user)
+    List<String> maybePermissionsList = ClientTestUtils.getGcpIamClient(user)
         .projects()
         .serviceAccounts()
         .testIamPermissions(
             serviceAccountName,
             new TestIamPermissionsRequest().setPermissions(List.of(actAsPermission)))
         .execute()
-        .getPermissions().contains(actAsPermission);
+        .getPermissions();
+    // GCP returns null rather than an empty list when a user does not have any permissions
+    return Optional.ofNullable(maybePermissionsList).map(list -> list.contains(actAsPermission)).orElse(false);
   }
 }

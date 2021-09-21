@@ -34,10 +34,10 @@ import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import com.google.api.services.iam.v1.model.Binding;
 import com.google.api.services.iam.v1.model.Policy;
 import com.google.api.services.iam.v1.model.SetIamPolicyRequest;
+import com.google.common.collect.ImmutableList;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -360,11 +360,10 @@ public class WorkspaceService {
   public String enablePetServiceAccountImpersonation(
       UUID workspaceId, AuthenticatedUserRequest userRequest) {
     final String serviceAccountUserRole = "roles/iam.serviceAccountUser";
-    // Validate that the user is at least a writer in this workspace, as only writers can run
-    // workflows.
+    // Validate that the user is a member of the workspace.
     Workspace workspace =
         validateWorkspaceAndAction(
-            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     stageService.assertMcWorkspace(workspace, "enablePet");
 
     // getEmailFromToken will always call Sam, which will return a user email even if the requesting
@@ -379,10 +378,13 @@ public class WorkspaceService {
     try {
       Policy saPolicy =
           crlService.getIamCow().projects().serviceAccounts().getIamPolicy(petSaName).execute();
+      // TODO(PF-991): In the future, the pet SA should not be included in this binding. This is a
+      //  workaround to support the CLI and other applications which call the GCP Pipelines API with
+      //  the pet SA's credentials.
       Binding saUserBinding =
           new Binding()
               .setRole(serviceAccountUserRole)
-              .setMembers(Collections.singletonList("user:" + userEmail));
+              .setMembers(ImmutableList.of("user:" + userEmail, "serviceAccount:" + petSaEmail));
       // If no bindings exist, getBindings() returns null instead of an empty list.
       List<Binding> bindingList =
           Optional.ofNullable(saPolicy.getBindings()).orElse(new ArrayList<>());

@@ -83,9 +83,9 @@ public class CreateTableCopyJobsStep implements Step {
         flightContext
             .getInputParameters()
             .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    final BigQueryCow bigQueryCow = crlService.createBigQueryCow(userRequest);
+    final BigQueryCow bigQueryCow = crlService.createWsmSaBigQueryCow();
     // TODO(jaycarlton):  remove usage of this client when it's all in CRL PF-942
-    final Bigquery bigQueryClient = crlService.createNakedBigQueryClient(userRequest);
+    final Bigquery bigQueryClient = crlService.createWsmSaNakedBigQueryClient();
     try {
       // Get a list of all tables in the source dataset
       final TableList sourceTables =

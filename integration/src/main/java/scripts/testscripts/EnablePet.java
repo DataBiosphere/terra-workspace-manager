@@ -35,9 +35,7 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
     GoogleApi samGoogleApi = SamClientUtils.samGoogleApi(testUser, server);
     String petSaEmail = samGoogleApi.getPetServiceAccount(projectId);
     Iam userIamClient = ClientTestUtils.getGcpIamClient(testUser);
-    // TODO(PF-765): This will fail until project level SA permissions are removed, as the user
-    //   gets this permission at the project level.
-    // assertFalse(canImpersonateSa(userIamClient, petSaEmail));
+    assertFalse(canImpersonateSa(userIamClient, petSaEmail));
 
     String returnedPetSaEmail = userWorkspaceApi.enablePet(getWorkspaceId());
     assertEquals(petSaEmail, returnedPetSaEmail);
@@ -51,8 +49,7 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
     String petEnableResult = petSaWorkspaceApi.enablePet(getWorkspaceId());
     assertEquals(petSaEmail, petEnableResult);
     Iam petIamClient = ClientTestUtils.getGcpIamClientFromToken(petSaToken);
-    // TODO(PF-765): This will fail until project level SA permissions are removed, as the pet SA
-    //   gets this permission at the project level.
+    // TODO(PF-991): This will fail until pet SA self-impersonation is fixed.
     // assertFalse(canImpersonateSa(petIamClient, petSaEmail));
   }
 

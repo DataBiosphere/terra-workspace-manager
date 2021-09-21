@@ -27,7 +27,7 @@ public class CustomGcpIamRoleMapping {
   static final ImmutableList<String> GCS_BUCKET_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
           .addAll(GCS_BUCKET_READER_PERMISSIONS)
-          .add("storage.objects.create", "storage.objects.delete")
+          .add("storage.objects.create", "storage.objects.delete", "storage.objects.update")
           .build();
 
   static final ImmutableList<String> GCS_BUCKET_EDITOR_PERMISSIONS =
