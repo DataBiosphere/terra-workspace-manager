@@ -194,7 +194,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/parameters/CloneWorkspaceRequest'
+              $ref: '#/components/schemas/CloneWorkspaceRequest'
       responses:
         '200':
           $ref: '#/components/responses/CloneWorkspaceResponse'
