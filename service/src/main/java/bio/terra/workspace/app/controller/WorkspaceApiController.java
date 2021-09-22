@@ -72,6 +72,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
   private final ReferencedResourceService referenceResourceService;
+  private final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
 
   @Autowired
   public WorkspaceApiController(
@@ -88,8 +89,6 @@ public class WorkspaceApiController implements WorkspaceApi {
     this.request = request;
     this.referenceResourceService = referenceResourceService;
   }
-
-  private final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
     return authenticatedUserRequestFactory.from(request);
@@ -142,9 +141,12 @@ public class WorkspaceApiController implements WorkspaceApi {
 
   private ApiWorkspaceDescription buildWorkspaceDescription(Workspace workspace) {
     ApiGcpContext gcpContext =
-        workspace.getGcpCloudContext().map(GcpCloudContext::toApi).orElse(null);
-    // Note projectId will be null here if no GCP cloud context exists.
+        workspaceService
+            .getGcpCloudContext(workspace.getWorkspaceId())
+            .map(GcpCloudContext::toApi)
+            .orElse(null);
     // When we have another cloud context, we will need to do a similar retrieval for it.
+
     return new ApiWorkspaceDescription()
         .id(workspace.getWorkspaceId())
         .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))

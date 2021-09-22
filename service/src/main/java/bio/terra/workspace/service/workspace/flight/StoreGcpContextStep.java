@@ -28,7 +28,8 @@ public class StoreGcpContextStep implements Step {
 
     // Create the cloud context; throws if the context already exists. We let
     // Stairway handle that.
-    workspaceDao.createGcpCloudContext(workspaceId, new GcpCloudContext(projectId));
+    workspaceDao.createGcpCloudContext(
+        workspaceId, new GcpCloudContext(projectId), flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 
@@ -36,8 +37,8 @@ public class StoreGcpContextStep implements Step {
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     String projectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
 
-    // Delete the cloud context, but only if it is the one with our project id
-    workspaceDao.deleteGcpCloudContextWithIdCheck(workspaceId, projectId);
+    // Delete the cloud context, but only if it is the one with our flight id
+    workspaceDao.deleteGcpCloudContextWithCheck(workspaceId, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 }

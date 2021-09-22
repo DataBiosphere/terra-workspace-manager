@@ -313,6 +313,36 @@ public class WorkspaceService {
   }
 
   /**
+   * Retrieve the optional GCP cloud context
+   *
+   * @param workspaceId workspace identifier of the cloud context
+   * @return optional GCP cloud context
+   */
+  public Optional<GcpCloudContext> getGcpCloudContext(UUID workspaceId) {
+    return workspaceDao.getGcpCloudContext(workspaceId);
+  }
+
+  /**
+   * Retrieve the optional GCP cloud context, providing a workspace This is a frequent usage, so we
+   * make a method for it to save coding the fetch of workspace id every time
+   */
+  public Optional<GcpCloudContext> getGcpCloudContext(Workspace workspace) {
+    return workspaceDao.getGcpCloudContext(workspace.getWorkspaceId());
+  }
+
+  /**
+   * Helper method for looking up the GCP project ID for a given workspace ID, if one exists. Unlike
+   * {@link #getRequiredGcpProject(UUID)}, this returns an empty Optional instead of throwing if the
+   * given workspace does not have a GCP cloud context.
+   *
+   * @param workspaceId workspace identifier of the cloud context
+   * @return optional GCP project from the cloud context
+   */
+  public Optional<String> getGcpProject(UUID workspaceId) {
+    return workspaceDao.getGcpCloudContext(workspaceId).map(GcpCloudContext::getGcpProjectId);
+  }
+
+  /**
    * Helper method used by other classes that require the GCP project to exist in the workspace. It
    * throws if the project (GCP cloud context) is not set up.
    *
@@ -320,25 +350,12 @@ public class WorkspaceService {
    * @return GCP project id
    */
   public String getRequiredGcpProject(UUID workspaceId) {
-    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
     GcpCloudContext gcpCloudContext =
-        workspace
-            .getGcpCloudContext()
+        workspaceDao
+            .getGcpCloudContext(workspaceId)
             .orElseThrow(
                 () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
     return gcpCloudContext.getGcpProjectId();
-  }
-
-  /**
-   * Helper method for looking up the GCP project ID for a given workspace ID, if one exists. Unlike
-   * {@link #getRequiredGcpProject(UUID)}, this returns an empty Optional instead of throwing if the
-   * given workspace does not have a GCP cloud context.
-   */
-  public Optional<String> getGcpProject(UUID workspaceId) {
-    return workspaceDao
-        .getWorkspace(workspaceId)
-        .getGcpCloudContext()
-        .map(GcpCloudContext::getGcpProjectId);
   }
 
   /**

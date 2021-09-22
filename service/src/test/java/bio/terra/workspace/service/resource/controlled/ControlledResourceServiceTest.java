@@ -46,6 +46,7 @@ import bio.terra.workspace.service.resource.controlled.flight.update.UpdateBigQu
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.model.Dataset;
@@ -87,6 +88,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Autowired private StairwayComponent stairwayComponent;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private WorkspaceConnectedTestUtils workspaceUtils;
+  @Autowired private WorkspaceService workspaceService;
 
   private static Workspace reusableWorkspace;
 
@@ -118,6 +120,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   public void createAiNotebookInstanceDo() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
+    UUID workspaceId = workspace.getWorkspaceId();
     String instanceId = "create-ai-notebook-instance-do";
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         ControlledResourceFixtures.defaultNotebookCreationParameters()
@@ -162,13 +165,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()));
 
     InstanceName instanceName =
-        resource.toInstanceName(workspace.getGcpCloudContext().get().getGcpProjectId());
+        resource.toInstanceName(workspaceService.getRequiredGcpProject(workspaceId));
     Instance instance =
-        crlService
-            .getAIPlatformNotebooksCow()
-            .instances()
-            .get(resource.toInstanceName(workspace.getGcpCloudContext().get().getGcpProjectId()))
-            .execute();
+        crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute();
 
     // Test that the user has permissions from WRITER roles on the notebooks instance. Only notebook
     // instance level permissions can be checked on the notebook instance test IAM permissions
@@ -283,7 +282,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(
         FlightStatus.ERROR, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
 
-    String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
+    String projectId = workspaceService.getRequiredGcpProject(workspace.getWorkspaceId());
     assertNotFound(resource.toInstanceName(projectId), crlService.getAIPlatformNotebooksCow());
 
     String serviceAccountId =
@@ -357,7 +356,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     ControlledAiNotebookInstanceResource resource =
         createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-do", user);
-    String projectId = reusableWorkspace(user).getGcpCloudContext().get().getGcpProjectId();
+    String projectId =
+        workspaceService.getRequiredGcpProject(reusableWorkspace(user).getWorkspaceId());
     InstanceName instanceName = resource.toInstanceName(projectId);
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
@@ -469,7 +469,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   public void createGetUpdateDeleteBqDataset() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
-
+    String projectId = workspaceService.getRequiredGcpProject(workspace.getWorkspaceId());
     String datasetId = "my_test_dataset";
     String location = "us-central1";
 
@@ -518,11 +518,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(newDescription, updatedResource.getDescription());
 
     Dataset updatedDatasetFromCloud =
-        crlService
-            .createWsmSaBigQueryCow()
-            .datasets()
-            .get(workspace.getGcpCloudContext().get().getGcpProjectId(), datasetId)
-            .execute();
+        crlService.createWsmSaBigQueryCow().datasets().get(projectId, datasetId).execute();
     assertEquals(
         newDefaultTableLifetime * 1000L, updatedDatasetFromCloud.getDefaultTableExpirationMs());
     assertEquals(
@@ -546,7 +542,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   public void createBqDatasetDo() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
-    String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
+    String projectId = workspaceService.getRequiredGcpProject(workspace.getWorkspaceId());
 
     String datasetId = uniqueDatasetId();
     String location = "us-central1";
@@ -600,7 +596,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   public void createBqDatasetUndo() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
-    String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
+    String projectId = workspaceService.getRequiredGcpProject(workspace.getWorkspaceId());
 
     String datasetId = uniqueDatasetId();
     String location = "us-central1";
@@ -657,7 +653,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   public void deleteBqDatasetDo() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
-    String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
+    String projectId = workspaceService.getRequiredGcpProject(workspace.getWorkspaceId());
 
     String datasetId = uniqueDatasetId();
     String location = "us-central1";
@@ -710,7 +706,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   public void deleteBqDatasetUndo() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
-    String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
+    String projectId = workspaceService.getRequiredGcpProject(workspace.getWorkspaceId());
 
     String datasetId = uniqueDatasetId();
     String location = "us-central1";
@@ -764,7 +760,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   public void updateBqDatasetDo() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
-    String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
+    String projectId = workspaceService.getRequiredGcpProject(workspace.getWorkspaceId());
 
     // create the dataset
     String datasetId = uniqueDatasetId();
@@ -829,7 +825,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   public void updateBqDatasetUndo() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
-    String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
+    String projectId = workspaceService.getRequiredGcpProject(workspace.getWorkspaceId());
 
     // create the dataset
     String datasetId = uniqueDatasetId();
@@ -910,7 +906,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   public void updateBqDatasetWithUndefinedExpirationTimes() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
-    String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
+    String projectId = workspaceService.getRequiredGcpProject(workspace.getWorkspaceId());
 
     // create the dataset, with expiration times initially defined
     String datasetId = uniqueDatasetId();
@@ -987,7 +983,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   public void updateBqDatasetWithInvalidExpirationTimes() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
-    String projectId = workspace.getGcpCloudContext().get().getGcpProjectId();
+    String projectId = workspaceService.getRequiredGcpProject(workspace.getWorkspaceId());
 
     // create the dataset, with expiration times initially undefined
     String datasetId = uniqueDatasetId();

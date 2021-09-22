@@ -42,7 +42,9 @@ public class ResourceDaoTest extends BaseUnitTest {
             .build();
     workspaceDao.createWorkspace(workspace);
     workspaceDao.createGcpCloudContext(
-        workspace.getWorkspaceId(), new GcpCloudContext("my-project-id"));
+        workspace.getWorkspaceId(),
+        new GcpCloudContext("my-project-id"),
+        "flight-creategcpworkspace");
     return workspace.getWorkspaceId();
   }
 

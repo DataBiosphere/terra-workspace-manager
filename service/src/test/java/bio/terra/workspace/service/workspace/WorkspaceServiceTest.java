@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -40,7 +39,6 @@ import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.flight.DeleteProjectStep;
 import bio.terra.workspace.service.workspace.flight.DeleteWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.DeleteWorkspaceStateStep;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -400,9 +398,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     jobService.waitForJob(jobId);
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
     Workspace workspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
-    String projectId =
-        workspace.getGcpCloudContext().map(GcpCloudContext::getGcpProjectId).orElse(null);
-    assertNotNull(projectId);
+    String projectId = workspaceService.getRequiredGcpProject(workspace.getWorkspaceId());
 
     // Verify project exists by retrieving it.
     crl.getCloudResourceManagerCow().projects().get(projectId).execute();
@@ -429,12 +425,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         request.workspaceId(), jobId, USER_REQUEST, "/fake/value");
     jobService.waitForJob(jobId);
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
-    Workspace workspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
-    assertTrue(workspace.getGcpCloudContext().isPresent());
+    assertTrue(workspaceService.getGcpCloudContext(request.workspaceId()).isPresent());
 
     workspaceService.deleteGcpCloudContext(request.workspaceId(), USER_REQUEST);
-    workspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
-    assertTrue(workspace.getGcpCloudContext().isEmpty());
+    assertTrue(workspaceService.getGcpCloudContext(request.workspaceId()).isEmpty());
   }
 
   @Test
