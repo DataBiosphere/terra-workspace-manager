@@ -313,7 +313,7 @@ public class WorkspaceService {
   }
 
   /**
-   * Retrieve the optional GCP cloud context
+   * Retrieve the optional GCP cloud context NOTE: no user auth validation
    *
    * @param workspaceId workspace identifier of the cloud context
    * @return optional GCP cloud context
@@ -324,7 +324,8 @@ public class WorkspaceService {
 
   /**
    * Retrieve the optional GCP cloud context, providing a workspace This is a frequent usage, so we
-   * make a method for it to save coding the fetch of workspace id every time
+   * make a method for it to save coding the fetch of workspace id every time NOTE: no user auth
+   * validation
    */
   public Optional<GcpCloudContext> getGcpCloudContext(Workspace workspace) {
     return workspaceDao.getGcpCloudContext(workspace.getWorkspaceId());
@@ -333,7 +334,7 @@ public class WorkspaceService {
   /**
    * Helper method for looking up the GCP project ID for a given workspace ID, if one exists. Unlike
    * {@link #getRequiredGcpProject(UUID)}, this returns an empty Optional instead of throwing if the
-   * given workspace does not have a GCP cloud context.
+   * given workspace does not have a GCP cloud context. NOTE: no user auth validation
    *
    * @param workspaceId workspace identifier of the cloud context
    * @return optional GCP project from the cloud context
@@ -344,7 +345,7 @@ public class WorkspaceService {
 
   /**
    * Helper method used by other classes that require the GCP project to exist in the workspace. It
-   * throws if the project (GCP cloud context) is not set up.
+   * throws if the project (GCP cloud context) is not set up. NOTE: no user auth validation
    *
    * @param workspaceId unique workspace id
    * @return GCP project id
@@ -356,6 +357,18 @@ public class WorkspaceService {
             .orElseThrow(
                 () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
     return gcpCloudContext.getGcpProjectId();
+  }
+
+  /**
+   * Get the GcpProject with authentication for use in controllers
+   *
+   * @param workspaceId unique workspace id
+   * @param userRequest authenticated user
+   * @return GCP project id
+   */
+  public String getRequiredGcpProject(UUID workspaceId, AuthenticatedUserRequest userRequest) {
+    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    return getRequiredGcpProject(workspaceId);
   }
 
   /**

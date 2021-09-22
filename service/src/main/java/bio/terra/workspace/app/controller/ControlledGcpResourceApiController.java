@@ -249,7 +249,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
   public ResponseEntity<ApiGcpBigQueryDatasetResource> getBigQueryDataset(
       UUID workspaceId, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    String projectId = workspaceService.getRequiredGcpProject(workspaceId);
+    String projectId = workspaceService.getRequiredGcpProject(workspaceId, userRequest);
     return getControlledResourceAsResponseEntity(
         workspaceId,
         resourceId,
@@ -278,7 +278,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
         body.getDescription());
 
     // Retrieve and cast response to UpdateControlledGcpBigQueryDatasetResponse
-    String projectId = workspaceService.getRequiredGcpProject(workspaceId);
+    String projectId = workspaceService.getRequiredGcpProject(workspaceId, userRequest);
     return getControlledResourceAsResponseEntity(
         workspaceId,
         resourceId,
@@ -320,7 +320,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       UUID workspaceId, ApiCreateControlledGcpBigQueryDatasetRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
-    String projectId = workspaceService.getRequiredGcpProject(workspaceId);
+    String projectId = workspaceService.getRequiredGcpProject(workspaceId, userRequest);
 
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
@@ -419,7 +419,8 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
     ApiGcpAiNotebookInstanceResource apiResource = null;
     if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
       ControlledAiNotebookInstanceResource resource = jobResult.getResult();
-      String workspaceProjectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+      String workspaceProjectId =
+          workspaceService.getRequiredGcpProject(resource.getWorkspaceId(), userRequest);
       apiResource = resource.toApiResource(workspaceProjectId);
     }
     return new ApiCreatedControlledGcpAiNotebookInstanceResult()
@@ -481,7 +482,7 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
       ApiGcpAiNotebookInstanceResource response =
           controlledResource
               .castToAiNotebookInstanceResource()
-              .toApiResource(workspaceService.getRequiredGcpProject(workspaceId));
+              .toApiResource(workspaceService.getRequiredGcpProject(workspaceId, userRequest));
       return new ResponseEntity<>(response, HttpStatus.OK);
     } catch (InvalidMetadataException ex) {
       throw new BadRequestException(
