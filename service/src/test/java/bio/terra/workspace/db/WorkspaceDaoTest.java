@@ -18,6 +18,7 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext.GcpCloudContextV1;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -276,7 +277,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
       final String json = "{\"version\":1,\"gcpProjectId\":\"foo\"}";
       GcpCloudContext.GcpCloudContextV1 gcpCloudContextV1 =
           persistenceObjectMapper.readValue(json, GcpCloudContext.GcpCloudContextV1.class);
-      assertEquals(GcpCloudContext.GCP_CLOUD_CONTEXT_DB_VERSION, gcpCloudContextV1.version);
+      assertEquals(GcpCloudContextV1.GCP_CLOUD_CONTEXT_DB_VERSION, gcpCloudContextV1.version);
       assertEquals("foo", gcpCloudContextV1.gcpProjectId);
 
       GcpCloudContext gcpCloudContext = GcpCloudContext.deserialize(json);

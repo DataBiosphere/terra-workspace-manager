@@ -351,7 +351,8 @@ public class WorkspaceService {
    * @return GCP project id
    */
   public String getRequiredGcpProject(UUID workspaceId) {
-    return getGcpProject(workspaceId).orElseThrow(
+    return getGcpProject(workspaceId)
+        .orElseThrow(
             () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
   }
 
