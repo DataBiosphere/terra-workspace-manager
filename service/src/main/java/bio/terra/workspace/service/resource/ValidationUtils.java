@@ -36,11 +36,26 @@ public class ValidationUtils {
   public static final Pattern AI_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN =
       Pattern.compile("(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)");
 
+
   public static void validateBucketName(String name) {
     if (StringUtils.isEmpty(name) || !BUCKET_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
       logger.warn("Invalid bucket name {}", name);
       throw new InvalidReferenceException(
           "Invalid GCS bucket name specified. Names must be 3-222 lowercase letters, numbers, dashes, and underscores. See Google documentation for the full specification.");
+    }
+  }
+
+  /**
+   * See https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+   * for azure resource rules
+    */
+  public static void validateIpName(String name) {
+    Pattern pattern = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-_.]{0,78}[a-zA-Z0-9_]$");
+
+    if (!pattern.matcher(name).matches()) {
+      logger.warn("Invalid ip name {}", name);
+      throw new InvalidReferenceException(
+              "Invalid Azure ip name specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
     }
   }
 

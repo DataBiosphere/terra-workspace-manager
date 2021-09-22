@@ -2,7 +2,8 @@
 # in different environments
 workspace:
   azure:
-    tenantId: TBD
     managedResourceGroupId: TBD
-    clientId: TBD
+    homeTenantId: fad90753-2022-4456-9b0a-c7e5b934e408
+    clientId: 51ef1ef2-b571-43b3-bcb3-ecaa3b49f0ed
     clientSecret: TBD
+

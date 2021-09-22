@@ -9,10 +9,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
-import bio.terra.workspace.api.ControlledGcpResourceApi;
-import bio.terra.workspace.api.ReferencedGcpResourceApi;
-import bio.terra.workspace.api.ResourceApi;
-import bio.terra.workspace.api.WorkspaceApi;
+import bio.terra.workspace.api.*;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.ErrorReport;
@@ -174,6 +171,11 @@ public class ClientTestUtils {
       TestUserSpecification testUser, ServerSpecification server) throws IOException {
     final ApiClient apiClient = getClientForTestUser(testUser, server);
     return new ControlledGcpResourceApi(apiClient);
+  }
+
+  public static ControlledAzureResourceApi getControlledAzureResourceClient() {
+    //TODO: proper api client specification
+    return new ControlledAzureResourceApi();
   }
 
   public static ReferencedGcpResourceApi getReferencedGpcResourceClient(

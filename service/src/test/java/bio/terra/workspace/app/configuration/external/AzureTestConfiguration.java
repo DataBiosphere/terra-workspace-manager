@@ -22,7 +22,6 @@ public class AzureTestConfiguration {
   private String tenantId;
   private String subscriptionId;
   private String managedResourceGroupId;
-
   // -- accessors --
 
   public String getDefaultUserEmail() {

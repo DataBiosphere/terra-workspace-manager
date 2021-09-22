@@ -24,3 +24,8 @@ workspace:
     subscription-id: 19a55c49-f0c9-4149-bb96-5c08781d0cdf
     # MRG: mrg-dd-1-preview-20210927180234
     managed-resource-group-id: mrg-dd-1-preview-20210927180234
+
+    client-id:
+
+
+
