@@ -195,12 +195,16 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     // Sam will throw an error if no owner is specified, so the caller's email is required. It can
     // be looked up using the auth token if that's all the caller provides.
-    String callerEmail =
-        Optional.ofNullable(userRequest.getEmail()).orElse(getUserEmailFromSam(userRequest));
+
+    // If we called WSM as the pet SA and went through the proxy, this becomes the pet SA's email if
+    // we use the pet email. That caused an issue where the human user wasn't recognized on the
+    // workspace.
+
+    String humanUserEmail = getUserEmailFromSam(userRequest);
     CreateResourceRequestV2 workspaceRequest =
         new CreateResourceRequestV2()
             .resourceId(id.toString())
-            .policies(defaultWorkspacePolicies(callerEmail));
+            .policies(defaultWorkspacePolicies(humanUserEmail));
     try {
       SamRetry.retry(
           () ->
@@ -896,24 +900,10 @@ public class SamService {
   public String getOrCreatePetSaEmail(String projectId, AuthenticatedUserRequest userRequest) {
     GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
     try {
-      return googleApi.getPetServiceAccountToken(projectId, new ArrayList<>(SAM_OAUTH_SCOPES));
+      return googleApi.getPetServiceAccount(projectId);
     } catch (ApiException apiException) {
-      throw SamExceptionFactory.create(
-          "Error getting pet service account token from Sam", apiException);
+      throw SamExceptionFactory.create("Error getting pet service account from Sam", apiException);
     }
-  }
-
-  /**
-   * Get an AuthenticatedUserRequest object for the pet SA of this user.
-   * @param projectId - GCP project ID
-   * @param userRequest - User's own AuthenticatedUserRequest. May contain null email and/or subjectID
-   * @return AuthenticatedUserRequest with the token replaced by the pet token
-   */
-  public AuthenticatedUserRequest getAuthenticatedPetRequest(String projectId,
-      AuthenticatedUserRequest userRequest) {
-    final String petToken = getOrCreatePetSaToken(projectId, userRequest);
-    return new AuthenticatedUserRequest(
-        userRequest.getEmail(), userRequest.getSubjectId(), Optional.of(petToken));
   }
 
   /** Returns the Sam action for modifying a given IAM role. */
