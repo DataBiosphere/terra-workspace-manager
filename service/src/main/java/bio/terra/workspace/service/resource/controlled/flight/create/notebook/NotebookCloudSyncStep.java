@@ -14,7 +14,7 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.GcpPolicyBuilder;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.notebooks.v1.model.Binding;
@@ -34,21 +34,21 @@ public class NotebookCloudSyncStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(NotebookCloudSyncStep.class);
   private final CrlService crlService;
   private final ControlledAiNotebookInstanceResource resource;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
 
   public NotebookCloudSyncStep(
       CrlService crlService,
       ControlledAiNotebookInstanceResource resource,
-      WorkspaceService workspaceService) {
+      GcpCloudContextService gcpCloudContextService) {
     this.crlService = crlService;
     this.resource = resource;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     List<Binding> newBindings = createBindings(projectId, flightContext.getWorkingMap());
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();

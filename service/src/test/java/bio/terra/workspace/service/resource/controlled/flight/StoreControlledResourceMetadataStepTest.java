@@ -17,6 +17,7 @@ import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.StoreMetadataStep;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -27,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
   @Autowired private WorkspaceDao workspaceDao;
+  @Autowired private GcpCloudContextService gcpCloudContextService;
   @Autowired private ResourceDao resourceDao;
 
   @Mock private FlightContext mockFlightContext;
@@ -42,7 +44,7 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
             .workspaceId(workspaceId)
             .build();
     workspaceDao.createWorkspace(workspace);
-    workspaceDao.createGcpCloudContext(
+    gcpCloudContextService.createGcpCloudContext(
         workspaceId, new GcpCloudContext("fake-project"), "flight-testentersinfo");
 
     StoreMetadataStep storeGoogleBucketMetadataStep = new StoreMetadataStep(resourceDao);

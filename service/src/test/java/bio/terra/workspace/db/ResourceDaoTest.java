@@ -14,6 +14,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDataset
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -26,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class ResourceDaoTest extends BaseUnitTest {
   @Autowired ResourceDao resourceDao;
   @Autowired WorkspaceDao workspaceDao;
+  @Autowired GcpCloudContextService gcpCloudContextService;
 
   /**
    * Creates a workspaces with a GCP cloud context and stores it in the database. Returns the
@@ -41,7 +43,7 @@ public class ResourceDaoTest extends BaseUnitTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     workspaceDao.createWorkspace(workspace);
-    workspaceDao.createGcpCloudContext(
+    gcpCloudContextService.createGcpCloudContext(
         workspace.getWorkspaceId(),
         new GcpCloudContext("my-project-id"),
         "flight-creategcpworkspace");

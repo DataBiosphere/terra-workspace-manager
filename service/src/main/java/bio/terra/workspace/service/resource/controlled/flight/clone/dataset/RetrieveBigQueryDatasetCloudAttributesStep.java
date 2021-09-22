@@ -9,7 +9,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.client.util.Strings;
 import com.google.api.services.bigquery.model.Dataset;
@@ -20,17 +20,17 @@ public class RetrieveBigQueryDatasetCloudAttributesStep implements Step {
 
   private final ControlledBigQueryDatasetResource datasetResource;
   private final CrlService crlService;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
   private final AuthenticatedUserRequest userRequest;
 
   public RetrieveBigQueryDatasetCloudAttributesStep(
       ControlledBigQueryDatasetResource datasetResource,
       CrlService crlService,
-      WorkspaceService workspaceService,
+      GcpCloudContextService gcpCloudContextService,
       AuthenticatedUserRequest userRequest) {
     this.datasetResource = datasetResource;
     this.crlService = crlService;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
     this.userRequest = userRequest;
   }
 
@@ -47,7 +47,7 @@ public class RetrieveBigQueryDatasetCloudAttributesStep implements Step {
     // Since no location was specified, we need to find the original one
     // from the source dataset.
     final String projectId =
-        workspaceService.getRequiredGcpProject(datasetResource.getWorkspaceId());
+        gcpCloudContextService.getRequiredGcpProject(datasetResource.getWorkspaceId());
     final BigQueryCow bigQueryCow = crlService.createWsmSaBigQueryCow();
     try {
       final Dataset dataset =

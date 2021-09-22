@@ -11,7 +11,7 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -25,23 +25,23 @@ public class GcsBucketCloudSyncStep implements Step {
 
   private final CrlService crlService;
   private final ControlledGcsBucketResource resource;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
   private final Logger logger = LoggerFactory.getLogger(GcsBucketCloudSyncStep.class);
 
   public GcsBucketCloudSyncStep(
       CrlService crlService,
       ControlledGcsBucketResource resource,
-      WorkspaceService workspaceService) {
+      GcpCloudContextService gcpCloudContextService) {
     this.crlService = crlService;
     this.resource = resource;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     final FlightMap workingMap = flightContext.getWorkingMap();
-    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     // Users do not have read or write access to IAM policies, so requests are executed via
     // WSM's service account.
     StorageCow wsmSaStorageCow = crlService.createStorageCow(projectId);

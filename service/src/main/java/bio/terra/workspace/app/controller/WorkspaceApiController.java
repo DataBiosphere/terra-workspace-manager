@@ -43,6 +43,7 @@ import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -72,6 +73,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
   private final ReferencedResourceService referenceResourceService;
+  private final GcpCloudContextService gcpCloudContextService;
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
 
   @Autowired
@@ -81,13 +83,15 @@ public class WorkspaceApiController implements WorkspaceApi {
       SamService samService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
-      ReferencedResourceService referenceResourceService) {
+      ReferencedResourceService referenceResourceService,
+      GcpCloudContextService gcpCloudContextService) {
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.samService = samService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
     this.referenceResourceService = referenceResourceService;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
@@ -140,8 +144,12 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   private ApiWorkspaceDescription buildWorkspaceDescription(Workspace workspace) {
+    // This is a special case use of GcpCloudContextService. That service does not
+    // do authorization checking, so it is not normally called from controllers.
+    // However, the caller has already done the auth check, so it is safe in this
+    // context.
     ApiGcpContext gcpContext =
-        workspaceService
+        gcpCloudContextService
             .getGcpCloudContext(workspace.getWorkspaceId())
             .map(GcpCloudContext::toApi)
             .orElse(null);

@@ -16,7 +16,7 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.BigQueryApiConversions;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -47,17 +47,17 @@ public class CreateBigQueryDatasetStep implements Step {
 
   private final CrlService crlService;
   private final ControlledBigQueryDatasetResource resource;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
 
   private final Logger logger = LoggerFactory.getLogger(CreateBigQueryDatasetStep.class);
 
   public CreateBigQueryDatasetStep(
       CrlService crlService,
       ControlledBigQueryDatasetResource resource,
-      WorkspaceService workspaceService) {
+      GcpCloudContextService gcpCloudContextService) {
     this.crlService = crlService;
     this.resource = resource;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
@@ -67,7 +67,7 @@ public class CreateBigQueryDatasetStep implements Step {
     FlightMap workingMap = flightContext.getWorkingMap();
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         inputMap.get(CREATION_PARAMETERS, ApiGcpBigQueryDatasetCreationParameters.class);
-    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
 
     List<Access> accessConfiguration = buildDatasetAccessConfiguration(workingMap, projectId);
     DatasetReference datasetId =
@@ -159,7 +159,7 @@ public class CreateBigQueryDatasetStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
 
     try {

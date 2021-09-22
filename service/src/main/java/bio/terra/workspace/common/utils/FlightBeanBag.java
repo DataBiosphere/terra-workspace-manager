@@ -10,6 +10,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadat
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesComponent;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -31,6 +32,7 @@ public class FlightBeanBag {
   private final ControlledResourceService controlledResourceService;
   private final CrlService crlService;
   private final DataRepoService dataRepoService;
+  private final GcpCloudContextService gcpCloudContextService;
   private final ReferencedResourceService referencedResourceService;
   private final ResourceDao resourceDao;
   private final SamService samService;
@@ -46,6 +48,7 @@ public class FlightBeanBag {
       ControlledResourceService controlledResourceService,
       CrlService crlService,
       DataRepoService dataRepoService,
+      GcpCloudContextService gcpCloudContextService,
       ReferencedResourceService referencedResourceService,
       ResourceDao resourceDao,
       SamService samService,
@@ -57,6 +60,7 @@ public class FlightBeanBag {
     this.controlledResourceService = controlledResourceService;
     this.crlService = crlService;
     this.dataRepoService = dataRepoService;
+    this.gcpCloudContextService = gcpCloudContextService;
     this.referencedResourceService = referencedResourceService;
     this.resourceDao = resourceDao;
     this.samService = samService;
@@ -90,6 +94,10 @@ public class FlightBeanBag {
 
   public DataRepoService getDataRepoService() {
     return dataRepoService;
+  }
+
+  public GcpCloudContextService getGcpCloudContextService() {
+    return gcpCloudContextService;
   }
 
   public ReferencedResourceService getReferencedResourceService() {

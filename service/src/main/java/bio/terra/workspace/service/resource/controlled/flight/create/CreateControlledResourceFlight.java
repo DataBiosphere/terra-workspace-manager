@@ -69,12 +69,12 @@ public class CreateControlledResourceFlight extends Flight {
             new CreateGcsBucketStep(
                 flightBeanBag.getCrlService(),
                 resource.castToGcsBucketResource(),
-                flightBeanBag.getWorkspaceService()));
+                flightBeanBag.getGcpCloudContextService()));
         addStep(
             new GcsBucketCloudSyncStep(
                 flightBeanBag.getCrlService(),
                 resource.castToGcsBucketResource(),
-                flightBeanBag.getWorkspaceService()));
+                flightBeanBag.getGcpCloudContextService()));
         break;
       case AI_NOTEBOOK_INSTANCE:
         addNotebookSteps(
@@ -90,7 +90,7 @@ public class CreateControlledResourceFlight extends Flight {
             new CreateBigQueryDatasetStep(
                 flightBeanBag.getCrlService(),
                 resource.castToBigQueryDatasetResource(),
-                flightBeanBag.getWorkspaceService()),
+                flightBeanBag.getGcpCloudContextService()),
             gcpRetryRule);
         break;
       default:
@@ -108,12 +108,12 @@ public class CreateControlledResourceFlight extends Flight {
       List<ControlledResourceIamRole> privateResourceIamRoles) {
     addStep(
         new RetrieveNetworkNameStep(
-            flightBeanBag.getCrlService(), resource, flightBeanBag.getWorkspaceService()),
+            flightBeanBag.getCrlService(), resource, flightBeanBag.getGcpCloudContextService()),
         gcpRetryRule);
     addStep(new GenerateServiceAccountIdStep());
     addStep(
         new CreateServiceAccountStep(
-            flightBeanBag.getCrlService(), flightBeanBag.getWorkspaceService(), resource),
+            flightBeanBag.getCrlService(), flightBeanBag.getGcpCloudContextService(), resource),
         gcpRetryRule);
     addStep(
         new ServiceAccountPolicyStep(
@@ -121,16 +121,16 @@ public class CreateControlledResourceFlight extends Flight {
             flightBeanBag.getCrlService(),
             resource,
             flightBeanBag.getSamService(),
-            flightBeanBag.getWorkspaceService(),
+            flightBeanBag.getGcpCloudContextService(),
             privateResourceIamRoles),
         gcpRetryRule);
     addStep(
         new CreateAiNotebookInstanceStep(
-            flightBeanBag.getCrlService(), resource, flightBeanBag.getWorkspaceService()),
+            flightBeanBag.getCrlService(), resource, flightBeanBag.getGcpCloudContextService()),
         gcpRetryRule);
     addStep(
         new NotebookCloudSyncStep(
-            flightBeanBag.getCrlService(), resource, flightBeanBag.getWorkspaceService()),
+            flightBeanBag.getCrlService(), resource, flightBeanBag.getGcpCloudContextService()),
         gcpRetryRule);
   }
 }

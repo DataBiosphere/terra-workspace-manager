@@ -8,7 +8,6 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.List;
@@ -36,13 +35,10 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class WorkspaceDao {
-  private final Logger logger = LoggerFactory.getLogger(WorkspaceDao.class);
-  private final NamedParameterJdbcTemplate jdbcTemplate;
-
-  /** SQL query for reading a workspace, including its cloud context. */
+  /** SQL query for reading a workspace */
   private static final String WORKSPACE_SELECT_SQL =
       "SELECT workspace_id, display_name, description, spend_profile, properties, workspace_stage"
-          + " FROM workspace W ";
+          + " FROM workspace";
 
   private static final RowMapper<Workspace> WORKSPACE_ROW_MAPPER =
       (rs, rowNum) ->
@@ -60,6 +56,8 @@ public class WorkspaceDao {
                       .orElse(null))
               .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
               .build();
+  private final Logger logger = LoggerFactory.getLogger(WorkspaceDao.class);
+  private final NamedParameterJdbcTemplate jdbcTemplate;
 
   @Autowired
   public WorkspaceDao(NamedParameterJdbcTemplate jdbcTemplate) {
@@ -138,7 +136,7 @@ public class WorkspaceDao {
     if (id == null) {
       throw new MissingRequiredFieldException("Valid workspace id is required");
     }
-    String sql = WORKSPACE_SELECT_SQL + " WHERE W.workspace_id = :id";
+    String sql = WORKSPACE_SELECT_SQL + " WHERE workspace_id = :id";
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id.toString());
     try {
       Workspace result =
@@ -212,7 +210,7 @@ public class WorkspaceDao {
   public List<Workspace> getWorkspacesMatchingList(List<UUID> idList, int offset, int limit) {
     String sql =
         WORKSPACE_SELECT_SQL
-            + " WHERE W.workspace_id IN (:workspace_ids) ORDER BY W.workspace_id OFFSET :offset LIMIT :limit";
+            + " WHERE workspace_id IN (:workspace_ids) ORDER BY workspace_id OFFSET :offset LIMIT :limit";
     var params =
         new MapSqlParameterSource()
             .addValue(
@@ -223,51 +221,7 @@ public class WorkspaceDao {
   }
 
   /**
-   * Retrieves the GCP cloud context of the workspace.
-   *
-   * @param workspaceId unique id of workspace
-   * @return optional GCP cloud context
-   */
-  @ReadTransaction
-  public Optional<GcpCloudContext> getGcpCloudContext(UUID workspaceId) {
-    return getCloudContextWorker(workspaceId, CloudPlatform.GCP).map(GcpCloudContext::deserialize);
-  }
-
-  /**
-   * Create the GCP cloud context of the workspace
-   *
-   * @param workspaceId unique id of the workspace
-   * @param cloudContext the GCP cloud context to create
-   */
-  @WriteTransaction
-  public void createGcpCloudContext(
-      UUID workspaceId, GcpCloudContext cloudContext, String flightId) {
-    createCloudContextWorker(workspaceId, CloudPlatform.GCP, cloudContext.serialize(), flightId);
-  }
-
-  /**
-   * Delete the GCP cloud context for a workspace
-   *
-   * @param workspaceId workspace of the cloud context
-   */
-  @WriteTransaction
-  public void deleteGcpCloudContext(UUID workspaceId) {
-    deleteCloudContextWorker(workspaceId, CloudPlatform.GCP, null);
-  }
-
-  /**
-   * Delete a cloud context for the workspace validating the flight id
-   *
-   * @param workspaceId workspace of the cloud context
-   * @param flightId flight id making the delete request
-   */
-  @WriteTransaction
-  public void deleteGcpCloudContextWithCheck(UUID workspaceId, String flightId) {
-    deleteCloudContextWorker(workspaceId, CloudPlatform.GCP, flightId);
-  }
-
-  /**
-   * Common method for cloud context creates
+   * Create cloud context
    *
    * @param workspaceId unique id of the workspace
    * @param cloudPlatform cloud platform enum
@@ -275,7 +229,8 @@ public class WorkspaceDao {
    * @param flightId calling flight id. Used to ensure that we do not delete a good context while
    *     undoing from trying to create a conflicting context.
    */
-  private void createCloudContextWorker(
+  @WriteTransaction
+  public void createCloudContext(
       UUID workspaceId, CloudPlatform cloudPlatform, String context, String flightId) {
     final String platform = cloudPlatform.toSql();
     final String sql =
@@ -299,27 +254,31 @@ public class WorkspaceDao {
   }
 
   /**
-   * Common worker for retrieving cloud context
+   * Delete a cloud context for the workspace validating the flight id. This is for use by the cloud
+   * context create flight. We compare the incoming flight id with the creating_flight of the cloud
+   * context. We will only delete if they match. That makes sure that undoing a create does not
+   * delete a valid cloud context.
    *
-   * @param workspaceId workspace of the context
-   * @param cloudPlatform platform context to retrieve
-   * @return empty or the serialized cloud context info
+   * @param workspaceId workspace of the cloud context
+   * @param cloudPlatform cloud platform of the cloud context
+   * @param flightId flight id making the delete request
    */
-  private Optional<String> getCloudContextWorker(UUID workspaceId, CloudPlatform cloudPlatform) {
-    String sql =
-        "SELECT context FROM cloud_context "
-            + "WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
-    MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
-            .addValue("cloud_platform", cloudPlatform.toSql());
-    try {
-      return Optional.ofNullable(
-          DataAccessUtils.singleResult(
-              jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("context"))));
-    } catch (EmptyResultDataAccessException e) {
-      return Optional.empty();
-    }
+  @WriteTransaction
+  public void deleteCloudContextWithCheck(
+      UUID workspaceId, CloudPlatform cloudPlatform, String flightId) {
+    deleteCloudContextWorker(workspaceId, cloudPlatform, flightId);
+  }
+
+  /**
+   * Delete the GCP cloud context for a workspace This is intended for the cloud context delete
+   * flight, where we do not have idempotency issues on undo.
+   *
+   * @param workspaceId workspace of the cloud context
+   * @param cloudPlatform cloud platform of the cloud context
+   */
+  @WriteTransaction
+  public void deleteCloudContext(UUID workspaceId, CloudPlatform cloudPlatform) {
+    deleteCloudContextWorker(workspaceId, cloudPlatform, null);
   }
 
   /**
@@ -356,5 +315,27 @@ public class WorkspaceDao {
       logger.info(
           "No record to delete for {} cloud context for workspace {}", platform, workspaceId);
     }
+  }
+
+  /**
+   * Retrieve the serialized cloud context
+   *
+   * @param workspaceId workspace of the context
+   * @param cloudPlatform platform context to retrieve
+   * @return empty or the serialized cloud context info
+   */
+  @ReadTransaction
+  public Optional<String> getCloudContext(UUID workspaceId, CloudPlatform cloudPlatform) {
+    String sql =
+        "SELECT context FROM cloud_context "
+            + "WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("cloud_platform", cloudPlatform.toSql());
+
+    return Optional.ofNullable(
+        DataAccessUtils.singleResult(
+            jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("context"))));
   }
 }

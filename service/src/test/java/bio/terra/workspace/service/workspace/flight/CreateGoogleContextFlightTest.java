@@ -62,7 +62,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
-    assertTrue(workspaceService.getGcpCloudContext(workspaceId).isEmpty());
+    assertTrue(workspaceService.getGcpCloudContext(workspaceId, userRequest).isEmpty());
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
@@ -76,9 +76,9 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     String projectId =
         flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
 
-    assertTrue(workspaceService.getGcpCloudContext(workspaceId).isPresent());
+    assertTrue(workspaceService.getGcpCloudContext(workspaceId, userRequest).isPresent());
 
-    String contextProjectId = workspaceService.getRequiredGcpProject(workspaceId);
+    String contextProjectId = workspaceService.getRequiredGcpProject(workspaceId, userRequest);
     assertEquals(projectId, contextProjectId);
 
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
@@ -97,7 +97,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   void errorRevertsChanges() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    assertTrue(workspaceService.getGcpCloudContext(workspaceId).isEmpty());
+    assertTrue(workspaceService.getGcpCloudContext(workspaceId, userRequest).isEmpty());
 
     // Submit a flight class that always errors.
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
@@ -109,7 +109,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
             STAIRWAY_FLIGHT_TIMEOUT,
             debugInfo);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
-    assertTrue(workspaceService.getGcpCloudContext(workspaceId).isEmpty());
+    assertTrue(workspaceService.getGcpCloudContext(workspaceId, userRequest).isEmpty());
 
     String projectId =
         flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);

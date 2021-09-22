@@ -14,6 +14,7 @@ import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfigura
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -42,6 +43,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
   @Autowired private WorkspaceDatabaseConfiguration workspaceDatabaseConfiguration;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
   @Autowired private WorkspaceDao workspaceDao;
+  @Autowired private GcpCloudContextService gcpCloudContextService;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private ObjectMapper persistenceObjectMapper;
 
@@ -224,48 +226,48 @@ class WorkspaceDaoTest extends BaseUnitTest {
       String projectId = "my-project1";
       String flightId = "flight-createdeletegcpcloudcontext";
       GcpCloudContext gcpCloudContext = new GcpCloudContext(projectId);
-      workspaceDao.createGcpCloudContext(workspaceId, gcpCloudContext, flightId);
+      gcpCloudContextService.createGcpCloudContext(workspaceId, gcpCloudContext, flightId);
 
       Workspace workspace = workspaceDao.getWorkspace(workspaceId);
-      Optional<GcpCloudContext> cloudContext = workspaceService.getGcpCloudContext(workspace);
+      Optional<GcpCloudContext> cloudContext = gcpCloudContextService.getGcpCloudContext(workspace);
       assertTrue(cloudContext.isPresent());
       assertEquals(projectId, cloudContext.get().getGcpProjectId());
 
       // Make sure service and dao get the same answer
-      cloudContext = workspaceDao.getGcpCloudContext(workspaceId);
+      cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceId);
       assertTrue(cloudContext.isPresent());
       assertEquals(projectId, cloudContext.get().getGcpProjectId());
 
       // delete with mismatched flight id - it should not delete
-      workspaceDao.deleteGcpCloudContextWithCheck(workspaceId, "mismatched-flight-id");
+      gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceId, "mismatched-flight-id");
 
       // Make sure the contxt is still there
-      cloudContext = workspaceDao.getGcpCloudContext(workspaceId);
+      cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceId);
       assertTrue(cloudContext.isPresent());
       assertEquals(projectId, cloudContext.get().getGcpProjectId());
 
       // delete with no check - should delete
-      workspaceDao.deleteGcpCloudContext(workspaceId);
-      cloudContext = workspaceDao.getGcpCloudContext(workspaceId);
+      gcpCloudContextService.deleteGcpCloudContext(workspaceId);
+      cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceId);
       assertTrue(cloudContext.isEmpty());
     }
 
     @Test
     void noSetCloudContextIsNone() {
-      assertTrue(workspaceService.getGcpCloudContext(workspaceId).isEmpty());
+      assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId).isEmpty());
     }
 
     @Test
     void deleteWorkspaceWithCloudContext() {
       String projectId = "my-project1";
       GcpCloudContext gcpCloudContext = new GcpCloudContext(projectId);
-      workspaceDao.createGcpCloudContext(
+      gcpCloudContextService.createGcpCloudContext(
           workspaceId, gcpCloudContext, "flight-deleteworkspacewithcloudcontext");
 
       assertTrue(workspaceDao.deleteWorkspace(workspaceId));
       assertThrows(WorkspaceNotFoundException.class, () -> workspaceDao.getWorkspace(workspaceId));
 
-      assertTrue(workspaceDao.getGcpCloudContext(workspaceId).isEmpty());
+      assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId).isEmpty());
     }
 
     /**

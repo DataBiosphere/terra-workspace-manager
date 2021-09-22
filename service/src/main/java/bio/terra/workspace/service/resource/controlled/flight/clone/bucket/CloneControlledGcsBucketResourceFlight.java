@@ -42,7 +42,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
         new RetrieveGcsBucketCloudAttributesStep(
             sourceBucket,
             flightBeanBag.getCrlService(),
-            flightBeanBag.getWorkspaceService(),
+            flightBeanBag.getGcpCloudContextService(),
             RetrievalMode.CREATION_PARAMETERS));
     addStep(
         new CopyGcsBucketDefinitionStep(
@@ -50,7 +50,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
     addStep(
         new SetBucketRolesStep(
             sourceBucket,
-            flightBeanBag.getWorkspaceService(),
+            flightBeanBag.getGcpCloudContextService(),
             flightBeanBag.getBucketCloneRolesComponent()));
     addStep(new CreateStorageTransferServiceJobStep());
     addStep(new CompleteTransferOperationStep());

@@ -22,7 +22,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.BigQueryApiConversions;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateBigQueryDatasetStep;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.services.bigquery.model.Dataset;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -41,7 +41,7 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
   @Mock private CrlService mockCrlService;
   @Mock private FlightContext mockFlightContext;
   @Mock private BigQueryCow mockBigQueryCow;
-  @Mock private WorkspaceService mockWorkspaceService;
+  @Mock private GcpCloudContextService mockGcpCloudContextService;
   Dataset mockExistingDataset = new Dataset();
 
   @Captor private ArgumentCaptor<Dataset> datasetCaptor;
@@ -75,11 +75,11 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
     final ControlledBigQueryDatasetResource datasetResource =
         makeDefaultControlledBigQueryDatasetResource().build();
     doReturn(PROJECT_ID)
-        .when(mockWorkspaceService)
+        .when(mockGcpCloudContextService)
         .getRequiredGcpProject(datasetResource.getWorkspaceId());
 
     updateBigQueryDatasetStep =
-        new UpdateBigQueryDatasetStep(datasetResource, mockCrlService, mockWorkspaceService);
+        new UpdateBigQueryDatasetStep(datasetResource, mockCrlService, mockGcpCloudContextService);
   }
 
   @Test

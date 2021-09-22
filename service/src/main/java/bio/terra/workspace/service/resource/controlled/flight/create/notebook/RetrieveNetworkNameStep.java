@@ -15,7 +15,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.compute.model.Subnetwork;
 import com.google.api.services.compute.model.SubnetworkList;
@@ -31,21 +31,21 @@ public class RetrieveNetworkNameStep implements Step {
 
   private final CrlService crlService;
   private final ControlledAiNotebookInstanceResource resource;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
 
   public RetrieveNetworkNameStep(
       CrlService crlService,
       ControlledAiNotebookInstanceResource resource,
-      WorkspaceService workspaceService) {
+      GcpCloudContextService gcpCloudContextService) {
     this.crlService = crlService;
     this.resource = resource;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     CloudComputeCow compute = crlService.getCloudComputeCow();
     SubnetworkList subnetworks;
     try {

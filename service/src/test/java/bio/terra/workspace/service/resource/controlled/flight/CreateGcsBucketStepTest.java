@@ -25,7 +25,7 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateGcsBucketStep;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
@@ -46,7 +46,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
   @Mock private FlightContext mockFlightContext;
   @Mock private CrlService mockCrlService;
   @Mock private StorageCow mockStorageCow;
-  @Mock private WorkspaceService mockWorkspaceService;
+  @Mock private GcpCloudContextService mockGcpCloudContextService;
   @Mock private BucketCow mockBucketCow;
 
   @Captor private ArgumentCaptor<BucketInfo> bucketInfoCaptor;
@@ -56,7 +56,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
   @BeforeEach
   public void setup() {
     doReturn(mockStorageCow).when(mockCrlService).createStorageCow(any(String.class));
-    when(mockWorkspaceService.getRequiredGcpProject(any())).thenReturn(FAKE_PROJECT_ID);
+    when(mockGcpCloudContextService.getRequiredGcpProject(any())).thenReturn(FAKE_PROJECT_ID);
     when(mockStorageCow.create(bucketInfoCaptor.capture())).thenReturn(mockBucketCow);
   }
 
@@ -69,7 +69,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
         new CreateGcsBucketStep(
             mockCrlService,
             ControlledResourceFixtures.getBucketResource(creationParameters.getName()),
-            mockWorkspaceService);
+            mockGcpCloudContextService);
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(
@@ -122,7 +122,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
         new CreateGcsBucketStep(
             mockCrlService,
             ControlledResourceFixtures.getBucketResource(bucketName),
-            mockWorkspaceService);
+            mockGcpCloudContextService);
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(

@@ -41,7 +41,8 @@ public class CreateGcpContextFlight extends Flight {
 
     addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()));
     addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), retryRule);
-    addStep(new StoreGcpContextStep(appContext.getWorkspaceDao(), workspaceId), retryRule);
+    addStep(
+        new StoreGcpContextStep(appContext.getGcpCloudContextService(), workspaceId), retryRule);
     addStep(new SyncSamGroupsStep(appContext.getSamService(), workspaceId, userRequest), retryRule);
     addStep(new GcpCloudSyncStep(crl.getCloudResourceManagerCow()), retryRule);
     addStep(new SetGcpContextOutputStep());

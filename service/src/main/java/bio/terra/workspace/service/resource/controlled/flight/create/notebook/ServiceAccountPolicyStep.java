@@ -16,7 +16,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.iam.v1.model.Binding;
@@ -49,7 +49,7 @@ public class ServiceAccountPolicyStep implements Step {
   private final CrlService crlService;
   private final ControlledAiNotebookInstanceResource resource;
   private final SamService samService;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
   private final List<ControlledResourceIamRole> privateIamRoles;
 
   public ServiceAccountPolicyStep(
@@ -57,13 +57,13 @@ public class ServiceAccountPolicyStep implements Step {
       CrlService crlService,
       ControlledAiNotebookInstanceResource resource,
       SamService samService,
-      WorkspaceService workspaceService,
+      GcpCloudContextService gcpCloudContextService,
       List<ControlledResourceIamRole> privateIamRoles) {
     this.userRequest = userRequest;
     this.crlService = crlService;
     this.resource = resource;
     this.samService = samService;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
     this.privateIamRoles = privateIamRoles;
   }
 
@@ -73,7 +73,7 @@ public class ServiceAccountPolicyStep implements Step {
     List<Binding> newBindings = new ArrayList<>();
     newBindings.add(createWriterBinding(flightContext.getWorkingMap()));
 
-    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     IamCow iam = crlService.getIamCow();
 
     String serviceAccountEmail =
