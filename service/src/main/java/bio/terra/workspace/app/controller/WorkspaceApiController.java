@@ -72,7 +72,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
   private final ReferencedResourceService referenceResourceService;
-  private final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
+  private static final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
 
   @Autowired
   public WorkspaceApiController(

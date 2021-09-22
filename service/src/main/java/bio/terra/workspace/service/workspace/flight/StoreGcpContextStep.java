@@ -35,8 +35,6 @@ public class StoreGcpContextStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    String projectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
-
     // Delete the cloud context, but only if it is the one with our flight id
     workspaceDao.deleteGcpCloudContextWithCheck(workspaceId, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();

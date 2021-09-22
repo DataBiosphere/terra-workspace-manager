@@ -119,8 +119,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   public void createAiNotebookInstanceDo() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
-    Workspace workspace = reusableWorkspace(user);
-    UUID workspaceId = workspace.getWorkspaceId();
+    UUID workspaceId = reusableWorkspace(user).getWorkspaceId();
     String instanceId = "create-ai-notebook-instance-do";
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         ControlledResourceFixtures.defaultNotebookCreationParameters()
@@ -128,7 +127,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource.Builder resourceBuilder =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
-            .workspaceId(workspace.getWorkspaceId())
+            .workspaceId(workspaceId)
             .name(instanceId)
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
@@ -162,7 +161,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(
         resource,
         controlledResourceService.getControlledResource(
-            workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()));
+            workspaceId, resource.getResourceId(), user.getAuthenticatedRequest()));
 
     InstanceName instanceName =
         resource.toInstanceName(workspaceService.getRequiredGcpProject(workspaceId));
