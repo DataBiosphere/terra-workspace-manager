@@ -36,7 +36,7 @@ import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceExcept
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
-import bio.terra.workspace.service.workspace.flight.DeleteProjectStep;
+import bio.terra.workspace.service.workspace.flight.DeleteGcpProjectStep;
 import bio.terra.workspace.service.workspace.flight.DeleteWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.DeleteWorkspaceStateStep;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -285,7 +285,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, USER_REQUEST);
 
     Map<String, StepStatus> doFailures = new HashMap<>();
-    doFailures.put(DeleteProjectStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    doFailures.put(DeleteGcpProjectStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(DeleteWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(DeleteWorkspaceStateStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();
@@ -399,7 +399,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
     Workspace workspace = workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST);
     String projectId =
-        workspaceService.getRequiredGcpProject(workspace.getWorkspaceId(), USER_REQUEST);
+        workspaceService.getAuthorizedRequiredGcpProject(workspace.getWorkspaceId(), USER_REQUEST);
 
     // Verify project exists by retrieving it.
     crl.getCloudResourceManagerCow().projects().get(projectId).execute();
@@ -427,10 +427,15 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     jobService.waitForJob(jobId);
     assertNull(jobService.retrieveJobResult(jobId, Object.class, USER_REQUEST).getException());
     assertTrue(
-        workspaceService.getGcpCloudContext(request.workspaceId(), USER_REQUEST).isPresent());
+        workspaceService
+            .getAuthorizedGcpCloudContext(request.workspaceId(), USER_REQUEST)
+            .isPresent());
 
     workspaceService.deleteGcpCloudContext(request.workspaceId(), USER_REQUEST);
-    assertTrue(workspaceService.getGcpCloudContext(request.workspaceId(), USER_REQUEST).isEmpty());
+    assertTrue(
+        workspaceService
+            .getAuthorizedGcpCloudContext(request.workspaceId(), USER_REQUEST)
+            .isEmpty());
   }
 
   @Test

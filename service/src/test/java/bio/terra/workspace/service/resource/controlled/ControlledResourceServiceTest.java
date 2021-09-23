@@ -182,7 +182,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     InstanceName instanceName =
         resource.toInstanceName(
-            workspaceService.getRequiredGcpProject(workspaceId, user.getAuthenticatedRequest()));
+            workspaceService.getAuthorizedRequiredGcpProject(
+                workspaceId, user.getAuthenticatedRequest()));
     Instance instance =
         crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute();
 
@@ -300,7 +301,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         FlightStatus.ERROR, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
 
     String projectId =
-        workspaceService.getRequiredGcpProject(
+        workspaceService.getAuthorizedRequiredGcpProject(
             workspace.getWorkspaceId(), user.getAuthenticatedRequest());
     assertNotFound(resource.toInstanceName(projectId), crlService.getAIPlatformNotebooksCow());
 
@@ -376,7 +377,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     ControlledAiNotebookInstanceResource resource =
         createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-do", user);
     String projectId =
-        workspaceService.getRequiredGcpProject(
+        workspaceService.getAuthorizedRequiredGcpProject(
             reusableWorkspace(user).getWorkspaceId(), user.getAuthenticatedRequest());
     InstanceName instanceName = resource.toInstanceName(projectId);
 
@@ -474,7 +475,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
-        workspaceService.getRequiredGcpProject(
+        workspaceService.getAuthorizedRequiredGcpProject(
             workspace.getWorkspaceId(), user.getAuthenticatedRequest());
     String datasetId = "my_test_dataset";
     String location = "us-central1";
@@ -549,7 +550,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
-        workspaceService.getRequiredGcpProject(
+        workspaceService.getAuthorizedRequiredGcpProject(
             workspace.getWorkspaceId(), user.getAuthenticatedRequest());
 
     String datasetId = uniqueDatasetId();
@@ -605,7 +606,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
-        workspaceService.getRequiredGcpProject(
+        workspaceService.getAuthorizedRequiredGcpProject(
             workspace.getWorkspaceId(), user.getAuthenticatedRequest());
 
     String datasetId = uniqueDatasetId();
@@ -664,7 +665,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
-        workspaceService.getRequiredGcpProject(
+        workspaceService.getAuthorizedRequiredGcpProject(
             workspace.getWorkspaceId(), user.getAuthenticatedRequest());
 
     String datasetId = uniqueDatasetId();
@@ -719,7 +720,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
-        workspaceService.getRequiredGcpProject(
+        workspaceService.getAuthorizedRequiredGcpProject(
             workspace.getWorkspaceId(), user.getAuthenticatedRequest());
 
     String datasetId = uniqueDatasetId();
@@ -775,7 +776,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
-        workspaceService.getRequiredGcpProject(
+        workspaceService.getAuthorizedRequiredGcpProject(
             workspace.getWorkspaceId(), user.getAuthenticatedRequest());
 
     // create the dataset
@@ -842,7 +843,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
-        workspaceService.getRequiredGcpProject(
+        workspaceService.getAuthorizedRequiredGcpProject(
             workspace.getWorkspaceId(), user.getAuthenticatedRequest());
 
     // create the dataset
@@ -925,7 +926,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
-        workspaceService.getRequiredGcpProject(
+        workspaceService.getAuthorizedRequiredGcpProject(
             workspace.getWorkspaceId(), user.getAuthenticatedRequest());
 
     // create the dataset, with expiration times initially defined
@@ -1004,7 +1005,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
-        workspaceService.getRequiredGcpProject(
+        workspaceService.getAuthorizedRequiredGcpProject(
             workspace.getWorkspaceId(), user.getAuthenticatedRequest());
 
     // create the dataset, with expiration times initially undefined

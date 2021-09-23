@@ -42,7 +42,8 @@ public class DeleteGcpContextFlight extends Flight {
             appContext.getResourceDao(), workspaceId, CLOUD_PLATFORM),
         retryRule);
     addStep(
-        new DeleteProjectStep(appContext.getCrlService(), appContext.getGcpCloudContextService()),
+        new DeleteGcpProjectStep(
+            appContext.getCrlService(), appContext.getGcpCloudContextService()),
         retryRule);
     addStep(
         new DeleteGcpContextStep(appContext.getGcpCloudContextService(), workspaceId), retryRule);

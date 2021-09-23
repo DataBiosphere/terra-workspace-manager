@@ -241,7 +241,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
       // delete with mismatched flight id - it should not delete
       gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceId, "mismatched-flight-id");
 
-      // Make sure the contxt is still there
+      // Make sure the context is still there
       cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceId);
       assertTrue(cloudContext.isPresent());
       assertEquals(projectId, cloudContext.get().getGcpProjectId());

@@ -24,12 +24,12 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Undo always fails for this step.
  */
-public class DeleteProjectStep implements Step {
+public class DeleteGcpProjectStep implements Step {
   private final CrlService crl;
   private final GcpCloudContextService gcpCloudContextService;
-  private final Logger logger = LoggerFactory.getLogger(DeleteProjectStep.class);
+  private final Logger logger = LoggerFactory.getLogger(DeleteGcpProjectStep.class);
 
-  public DeleteProjectStep(CrlService crl, GcpCloudContextService gcpCloudContextService) {
+  public DeleteGcpProjectStep(CrlService crl, GcpCloudContextService gcpCloudContextService) {
     this.crl = crl;
     this.gcpCloudContextService = gcpCloudContextService;
   }

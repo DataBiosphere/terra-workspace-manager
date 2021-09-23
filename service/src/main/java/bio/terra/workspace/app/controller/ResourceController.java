@@ -89,7 +89,8 @@ public class ResourceController implements ResourceApi {
             userRequest);
 
     // projectId
-    String gcpProjectId = workspaceService.getGcpProject(workspaceId, userRequest).orElse(null);
+    String gcpProjectId =
+        workspaceService.getAuthorizedGcpProject(workspaceId, userRequest).orElse(null);
 
     List<ApiResourceDescription> apiResourceDescriptionList =
         wsmResources.stream()

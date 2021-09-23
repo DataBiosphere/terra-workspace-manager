@@ -314,33 +314,44 @@ public class WorkspaceService {
         .submitAndWait(null);
   }
 
-  /** Get an optional cloud context */
-  public Optional<GcpCloudContext> getGcpCloudContext(
+  /**
+   * We ensure that the workspace exists and the user has read access. If so, we lookup the GCP
+   * cloud context, if any.
+   *
+   * @param workspaceId id of the workspace whose cloud context we want to get
+   * @param userRequest auth of user to test for read access
+   * @return optional GCP cloud context
+   */
+  public Optional<GcpCloudContext> getAuthorizedGcpCloudContext(
       UUID workspaceId, AuthenticatedUserRequest userRequest) {
     validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return gcpCloudContextService.getGcpCloudContext(workspaceId);
   }
 
   /**
-   * Get an option project id from an optional GCP cloud context
+   * We ensure that the workspace exists and the user has read access. If so, we lookup the GCP
+   * project id, if any.
    *
-   * @param workspaceId unique workspace id
-   * @param userRequest authenticated user
+   * @param workspaceId id of the workspace whose GCP project id we want to get
+   * @param userRequest auth of user to test for read access
    * @return optional project id
    */
-  public Optional<String> getGcpProject(UUID workspaceId, AuthenticatedUserRequest userRequest) {
+  public Optional<String> getAuthorizedGcpProject(
+      UUID workspaceId, AuthenticatedUserRequest userRequest) {
     validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return gcpCloudContextService.getGcpProject(workspaceId);
   }
 
   /**
-   * Get the GcpProject or throw
+   * We ensure that the workspace exists and the user has read access. If so, we lookup the GCP
+   * project id. If it does not exist, an exception is thrown.
    *
-   * @param workspaceId unique workspace id
-   * @param userRequest authenticated user
-   * @return GCP project id
+   * @param workspaceId id of the workspace whose GCP project id we want to get
+   * @param userRequest auth of user to test for read access
+   * @return project id
    */
-  public String getRequiredGcpProject(UUID workspaceId, AuthenticatedUserRequest userRequest) {
+  public String getAuthorizedRequiredGcpProject(
+      UUID workspaceId, AuthenticatedUserRequest userRequest) {
     validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     return gcpCloudContextService.getRequiredGcpProject(workspaceId);
   }

@@ -10,6 +10,7 @@ import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceExcept
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -208,6 +209,11 @@ public class WorkspaceDao {
    */
   @ReadTransaction
   public List<Workspace> getWorkspacesMatchingList(List<UUID> idList, int offset, int limit) {
+    // If the incoming list is empty, the caller does not have permission to see any
+    // workspaces, so we return an empty list.
+    if (idList.isEmpty()) {
+      return Collections.emptyList();
+    }
     String sql =
         WORKSPACE_SELECT_SQL
             + " WHERE workspace_id IN (:workspace_ids) ORDER BY workspace_id OFFSET :offset LIMIT :limit";
