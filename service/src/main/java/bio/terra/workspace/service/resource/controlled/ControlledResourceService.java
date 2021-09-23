@@ -409,7 +409,7 @@ public class ControlledResourceService {
     }
     final String requestUserEmail =
         SamRethrow.onInterrupted(
-            () -> samService.getEmailFromRequestOrSam(userRequest), "getEmailFromRequestOrSam");
+            () -> samService.getUserEmailFromSam(userRequest), "getUserEmailFromSam");
     // If there is no assigned user, this condition is satisfied.
     //noinspection deprecation
     final boolean isAllowed =

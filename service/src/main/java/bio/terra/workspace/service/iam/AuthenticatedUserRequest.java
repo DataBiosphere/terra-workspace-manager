@@ -65,4 +65,14 @@ public class AuthenticatedUserRequest {
     this.reqId = reqId;
     return this;
   }
+
+  @Override
+  public String toString() {
+    return String.format(
+        "AuthenticatedUserRequest\n\tEmail: %s\n\tSubject ID: %s\n\tToken: %s\n\tRequest ID: %s\n",
+        Optional.ofNullable(getEmail()).orElse("null"),
+        Optional.ofNullable(getSubjectId()).orElse("null"),
+        getToken().map(t -> "REDACTED (" + t.length() + " chars)").orElse("null"),
+        Optional.ofNullable(reqId).map(UUID::toString).orElse("null"));
+  }
 }

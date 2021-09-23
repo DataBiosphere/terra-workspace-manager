@@ -99,19 +99,6 @@ public class SamService {
   }
 
   /**
-   * Obtain the user email address from an AuthenticatedUserRequest either by the easy way (directly
-   * calling getEmail()), or the harder way, calling Sam. The hard way throws a checked exception,
-   * which we want to convert to an unchecked exception here.
-   *
-   * @param userRequest - request object for this user
-   * @return - email address of user
-   */
-  public String getEmailFromRequestOrSam(AuthenticatedUserRequest userRequest)
-      throws InterruptedException {
-    return Optional.ofNullable(userRequest.getEmail()).orElse(getUserEmailFromSam(userRequest));
-  }
-
-  /**
    * Fetch the email associated with user credentials directly from Sam. Unlike {@code
    * getRequestUserEmail}, this will always call Sam to fetch an email and will never read it from
    * the AuthenticatedUserRequest. This is important for calls made by pet service accounts, which
@@ -195,12 +182,16 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     // Sam will throw an error if no owner is specified, so the caller's email is required. It can
     // be looked up using the auth token if that's all the caller provides.
-    String callerEmail =
-        Optional.ofNullable(userRequest.getEmail()).orElse(getUserEmailFromSam(userRequest));
+
+    // If we called WSM as the pet SA and went through the proxy, this becomes the pet SA's email if
+    // we use the request email. That caused an issue where the human user wasn't recognized on the
+    // workspace.
+
+    String humanUserEmail = getUserEmailFromSam(userRequest);
     CreateResourceRequestV2 workspaceRequest =
         new CreateResourceRequestV2()
             .resourceId(id.toString())
-            .policies(defaultWorkspacePolicies(callerEmail));
+            .policies(defaultWorkspacePolicies(humanUserEmail));
     try {
       SamRetry.retry(
           () ->
@@ -675,7 +666,7 @@ public class SamService {
     // Set up the master OWNER user in Sam for all controlled resources, if it's not already.
     initializeWsmServiceAccount();
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
-    FullyQualifiedResourceId workspaceParentFqId =
+    FullyQualifiedResourceId  workspaceParentFqId =
         new FullyQualifiedResourceId()
             .resourceId(resource.getWorkspaceId().toString())
             .resourceTypeName(SamConstants.SAM_WORKSPACE_RESOURCE);
@@ -691,7 +682,7 @@ public class SamService {
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
       // The assigned user is always the current user for private resources.
       addPrivateResourcePolicies(
-          resourceRequest, privateIamRoles, getEmailFromRequestOrSam(userRequest));
+          resourceRequest, privateIamRoles, getUserEmailFromSam(userRequest));
     }
 
     try {
