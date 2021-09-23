@@ -16,7 +16,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.StorageClass;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -32,15 +32,15 @@ public class UpdateGcsBucketStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(UpdateGcsBucketStep.class);
   private final ControlledGcsBucketResource bucketResource;
   private final CrlService crlService;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
 
   public UpdateGcsBucketStep(
       ControlledGcsBucketResource bucketResource,
       CrlService crlService,
-      WorkspaceService workspaceService) {
+      GcpCloudContextService gcpCloudContextService) {
     this.bucketResource = bucketResource;
     this.crlService = crlService;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
@@ -70,7 +70,7 @@ public class UpdateGcsBucketStep implements Step {
       return StepResult.getStepResultSuccess();
     }
     final String projectId =
-        workspaceService.getRequiredGcpProject(bucketResource.getWorkspaceId());
+        gcpCloudContextService.getRequiredGcpProject(bucketResource.getWorkspaceId());
     final StorageCow storageCow = crlService.createStorageCow(projectId);
 
     final BucketCow existingBucketCow = storageCow.get(bucketResource.getBucketName());

@@ -7,8 +7,8 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.GcpUtils;
-import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import java.io.IOException;
 import java.util.Optional;
@@ -24,14 +24,14 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Undo always fails for this step.
  */
-public class DeleteProjectStep implements Step {
+public class DeleteGcpProjectStep implements Step {
   private final CrlService crl;
-  private final WorkspaceDao workspaceDao;
-  private final Logger logger = LoggerFactory.getLogger(DeleteProjectStep.class);
+  private final GcpCloudContextService gcpCloudContextService;
+  private final Logger logger = LoggerFactory.getLogger(DeleteGcpProjectStep.class);
 
-  public DeleteProjectStep(CrlService crl, WorkspaceDao workspaceDao) {
+  public DeleteGcpProjectStep(CrlService crl, GcpCloudContextService gcpCloudContextService) {
     this.crl = crl;
-    this.workspaceDao = workspaceDao;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
@@ -72,6 +72,6 @@ public class DeleteProjectStep implements Step {
             flightContext
                 .getInputParameters()
                 .get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    return workspaceDao.getGcpCloudContext(workspaceId);
+    return gcpCloudContextService.getGcpCloudContext(workspaceId);
   }
 }

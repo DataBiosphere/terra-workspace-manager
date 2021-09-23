@@ -11,7 +11,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.iam.v1.model.CreateServiceAccountRequest;
 import com.google.api.services.iam.v1.model.ServiceAccount;
@@ -35,22 +35,22 @@ public class CreateServiceAccountStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(CreateServiceAccountStep.class);
 
   private final CrlService crlService;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
   private final ControlledAiNotebookInstanceResource resource;
 
   public CreateServiceAccountStep(
       CrlService crlService,
-      WorkspaceService workspaceService,
+      GcpCloudContextService gcpCloudContextService,
       ControlledAiNotebookInstanceResource resource) {
     this.crlService = crlService;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
     this.resource = resource;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     IamCow iam = crlService.getIamCow();
     String serviceAccountId =
         flightContext.getWorkingMap().get(CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID, String.class);
@@ -84,7 +84,7 @@ public class CreateServiceAccountStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     IamCow iam = crlService.getIamCow();
     String serviceAccountEmail =
         ServiceAccountName.emailFromAccountId(

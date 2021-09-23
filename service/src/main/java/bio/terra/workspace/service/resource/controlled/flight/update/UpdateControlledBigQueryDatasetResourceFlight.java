@@ -37,7 +37,7 @@ public class UpdateControlledBigQueryDatasetResourceFlight extends Flight {
         new RetrieveBigQueryDatasetCloudAttributesStep(
             resource.castToBigQueryDatasetResource(),
             flightBeanBag.getCrlService(),
-            flightBeanBag.getWorkspaceService()),
+            flightBeanBag.getGcpCloudContextService()),
         gcpRetryRule);
 
     // Update the dataset's cloud attributes
@@ -45,7 +45,7 @@ public class UpdateControlledBigQueryDatasetResourceFlight extends Flight {
         new UpdateBigQueryDatasetStep(
             resource.castToBigQueryDatasetResource(),
             flightBeanBag.getCrlService(),
-            flightBeanBag.getWorkspaceService()),
+            flightBeanBag.getGcpCloudContextService()),
         gcpRetryRule);
   }
 }

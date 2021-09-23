@@ -34,7 +34,7 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
         new RetrieveGcsBucketCloudAttributesStep(
             resource.castToGcsBucketResource(),
             flightBeanBag.getCrlService(),
-            flightBeanBag.getWorkspaceService(),
+            flightBeanBag.getGcpCloudContextService(),
             RetrievalMode.UPDATE_PARAMETERS));
 
     // Update the bucket's cloud attributes
@@ -42,6 +42,6 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
         new UpdateGcsBucketStep(
             resource.castToGcsBucketResource(),
             flightBeanBag.getCrlService(),
-            flightBeanBag.getWorkspaceService()));
+            flightBeanBag.getGcpCloudContextService()));
   }
 }

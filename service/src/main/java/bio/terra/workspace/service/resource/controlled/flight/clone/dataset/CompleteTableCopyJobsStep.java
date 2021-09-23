@@ -7,8 +7,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -43,10 +41,7 @@ public class CompleteTableCopyJobsStep implements Step {
     }
     final Map<String, String> tableToJobId =
         workingMap.get(ControlledResourceKeys.TABLE_TO_JOB_ID_MAP, new TypeReference<>() {});
-    final AuthenticatedUserRequest userRequest =
-        flightContext
-            .getInputParameters()
-            .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+
     // TODO(jaycarlton): PF-942 implement needed endpoints in CRL and use them here
     final Bigquery bigQueryClient = crlService.createWsmSaNakedBigQueryClient();
     try {

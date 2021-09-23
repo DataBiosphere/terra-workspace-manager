@@ -13,7 +13,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.GcsApiConversions;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.cloud.storage.BucketInfo;
 import java.util.Collections;
 import java.util.Optional;
@@ -24,15 +24,15 @@ public class CreateGcsBucketStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(CreateGcsBucketStep.class);
   private final CrlService crlService;
   private final ControlledGcsBucketResource resource;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
 
   public CreateGcsBucketStep(
       CrlService crlService,
       ControlledGcsBucketResource resource,
-      WorkspaceService workspaceService) {
+      GcpCloudContextService gcpCloudContextService) {
     this.crlService = crlService;
     this.resource = resource;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
@@ -41,7 +41,7 @@ public class CreateGcsBucketStep implements Step {
     FlightMap inputMap = flightContext.getInputParameters();
     ApiGcpGcsBucketCreationParameters creationParameters =
         inputMap.get(CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
-    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     BucketInfo.Builder bucketInfoBuilder =
         BucketInfo.newBuilder(resource.getBucketName())
             .setLocation(creationParameters.getLocation());
@@ -76,7 +76,7 @@ public class CreateGcsBucketStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     final StorageCow storageCow = crlService.createStorageCow(projectId);
     storageCow.delete(resource.getBucketName());
     return StepResult.getStepResultSuccess();

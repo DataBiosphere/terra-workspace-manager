@@ -24,7 +24,6 @@ import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRole
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.v3.model.Binding;
@@ -62,8 +61,8 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   void successCreatesProjectAndContext() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    Workspace workspace = workspaceService.getWorkspace(workspaceId, userRequest);
-    assertTrue(workspace.getGcpCloudContext().isEmpty());
+
+    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
@@ -77,10 +76,10 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     String projectId =
         flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
 
-    workspace = workspaceService.getWorkspace(workspaceId, userRequest);
-    assertTrue(workspace.getGcpCloudContext().isPresent());
+    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isPresent());
 
-    String contextProjectId = workspace.getGcpCloudContext().get().getGcpProjectId();
+    String contextProjectId =
+        workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
     assertEquals(projectId, contextProjectId);
 
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
@@ -99,8 +98,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   void errorRevertsChanges() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    Workspace workspace = workspaceService.getWorkspace(workspaceId, userRequest);
-    assertTrue(workspace.getGcpCloudContext().isEmpty());
+    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
 
     // Submit a flight class that always errors.
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
@@ -112,9 +110,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
             STAIRWAY_FLIGHT_TIMEOUT,
             debugInfo);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
-
-    workspace = workspaceService.getWorkspace(workspaceId, userRequest);
-    assertTrue(workspace.getGcpCloudContext().isEmpty());
+    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
 
     String projectId =
         flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);

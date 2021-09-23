@@ -64,7 +64,7 @@ public class DeleteControlledResourceFlight extends Flight {
             new DeleteGcsBucketStep(
                 flightBeanBag.getCrlService(),
                 flightBeanBag.getResourceDao(),
-                flightBeanBag.getWorkspaceService(),
+                flightBeanBag.getGcpCloudContextService(),
                 workspaceId,
                 resourceId));
         break;
@@ -73,7 +73,7 @@ public class DeleteControlledResourceFlight extends Flight {
             new DeleteBigQueryDatasetStep(
                 resource.castToBigQueryDatasetResource(),
                 flightBeanBag.getCrlService(),
-                flightBeanBag.getWorkspaceService()),
+                flightBeanBag.getGcpCloudContextService()),
             gcpRetryRule);
         break;
       case AI_NOTEBOOK_INSTANCE:
@@ -81,19 +81,19 @@ public class DeleteControlledResourceFlight extends Flight {
             new RetrieveNotebookServiceAccountStep(
                 resource.castToAiNotebookInstanceResource(),
                 flightBeanBag.getCrlService(),
-                flightBeanBag.getWorkspaceService()),
+                flightBeanBag.getGcpCloudContextService()),
             gcpRetryRule);
         addStep(
             new DeleteAiNotebookInstanceStep(
                 resource.castToAiNotebookInstanceResource(),
                 flightBeanBag.getCrlService(),
-                flightBeanBag.getWorkspaceService()),
+                flightBeanBag.getGcpCloudContextService()),
             gcpRetryRule);
         addStep(
             new DeleteServiceAccountStep(
                 resource.castToAiNotebookInstanceResource(),
                 flightBeanBag.getCrlService(),
-                flightBeanBag.getWorkspaceService()),
+                flightBeanBag.getGcpCloudContextService()),
             gcpRetryRule);
         break;
       default:

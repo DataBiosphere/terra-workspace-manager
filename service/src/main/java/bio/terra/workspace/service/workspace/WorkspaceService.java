@@ -18,7 +18,6 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
-import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlight;
@@ -59,6 +58,7 @@ public class WorkspaceService {
 
   private final JobService jobService;
   private final WorkspaceDao workspaceDao;
+  private final GcpCloudContextService gcpCloudContextService;
   private final SamService samService;
   private final SpendProfileService spendProfileService;
   private final BufferServiceConfiguration bufferServiceConfiguration;
@@ -73,7 +73,8 @@ public class WorkspaceService {
       SpendProfileService spendProfileService,
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
-      CrlService crlService) {
+      CrlService crlService,
+      GcpCloudContextService gcpCloudContextService) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
@@ -81,6 +82,7 @@ public class WorkspaceService {
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
     this.crlService = crlService;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
@@ -313,32 +315,45 @@ public class WorkspaceService {
   }
 
   /**
-   * Helper method used by other classes that require the GCP project to exist in the workspace. It
-   * throws if the project (GCP cloud context) is not set up.
+   * We ensure that the workspace exists and the user has read access. If so, we lookup the GCP
+   * cloud context, if any.
    *
-   * @param workspaceId unique workspace id
-   * @return GCP project id
+   * @param workspaceId id of the workspace whose cloud context we want to get
+   * @param userRequest auth of user to test for read access
+   * @return optional GCP cloud context
    */
-  public String getRequiredGcpProject(UUID workspaceId) {
-    Workspace workspace = workspaceDao.getWorkspace(workspaceId);
-    GcpCloudContext gcpCloudContext =
-        workspace
-            .getGcpCloudContext()
-            .orElseThrow(
-                () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
-    return gcpCloudContext.getGcpProjectId();
+  public Optional<GcpCloudContext> getAuthorizedGcpCloudContext(
+      UUID workspaceId, AuthenticatedUserRequest userRequest) {
+    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    return gcpCloudContextService.getGcpCloudContext(workspaceId);
   }
 
   /**
-   * Helper method for looking up the GCP project ID for a given workspace ID, if one exists. Unlike
-   * {@link #getRequiredGcpProject(UUID)}, this returns an empty Optional instead of throwing if the
-   * given workspace does not have a GCP cloud context.
+   * We ensure that the workspace exists and the user has read access. If so, we lookup the GCP
+   * project id, if any.
+   *
+   * @param workspaceId id of the workspace whose GCP project id we want to get
+   * @param userRequest auth of user to test for read access
+   * @return optional project id
    */
-  public Optional<String> getGcpProject(UUID workspaceId) {
-    return workspaceDao
-        .getWorkspace(workspaceId)
-        .getGcpCloudContext()
-        .map(GcpCloudContext::getGcpProjectId);
+  public Optional<String> getAuthorizedGcpProject(
+      UUID workspaceId, AuthenticatedUserRequest userRequest) {
+    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    return gcpCloudContextService.getGcpProject(workspaceId);
+  }
+
+  /**
+   * We ensure that the workspace exists and the user has read access. If so, we lookup the GCP
+   * project id. If it does not exist, an exception is thrown.
+   *
+   * @param workspaceId id of the workspace whose GCP project id we want to get
+   * @param userRequest auth of user to test for read access
+   * @return project id
+   */
+  public String getAuthorizedRequiredGcpProject(
+      UUID workspaceId, AuthenticatedUserRequest userRequest) {
+    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    return gcpCloudContextService.getRequiredGcpProject(workspaceId);
   }
 
   /**
@@ -362,7 +377,7 @@ public class WorkspaceService {
     String userEmail =
         SamRethrow.onInterrupted(
             () -> samService.getUserEmailFromSam(userRequest), "getEmailFromSam");
-    String projectId = getRequiredGcpProject(workspaceId);
+    String projectId = gcpCloudContextService.getRequiredGcpProject(workspace.getWorkspaceId());
     String petSaEmail = samService.getOrCreatePetSaEmail(projectId, userRequest);
     ServiceAccountName petSaName =
         ServiceAccountName.builder().email(petSaEmail).projectId(projectId).build();

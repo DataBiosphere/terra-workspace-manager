@@ -9,7 +9,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
 import java.io.IOException;
@@ -30,15 +30,15 @@ public class SetBucketRolesStep implements Step {
           .collect(Collectors.toList());
 
   private final ControlledGcsBucketResource sourceBucket;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
   private final BucketCloneRolesComponent bucketCloneRolesService;
 
   public SetBucketRolesStep(
       ControlledGcsBucketResource sourceBucket,
-      WorkspaceService workspaceService,
+      GcpCloudContextService gcpCloudContextService,
       BucketCloneRolesComponent bucketCloneRolesService) {
     this.sourceBucket = sourceBucket;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
     this.bucketCloneRolesService = bucketCloneRolesService;
   }
 
@@ -101,7 +101,7 @@ public class SetBucketRolesStep implements Step {
 
   private BucketCloneInputs getSourceInputs() {
     final String sourceProjectId =
-        workspaceService.getRequiredGcpProject(sourceBucket.getWorkspaceId());
+        gcpCloudContextService.getRequiredGcpProject(sourceBucket.getWorkspaceId());
     final String sourceBucketName = sourceBucket.getBucketName();
     return new BucketCloneInputs(
         sourceBucket.getWorkspaceId(), sourceProjectId, sourceBucketName, SOURCE_BUCKET_ROLE_NAMES);
@@ -117,7 +117,7 @@ public class SetBucketRolesStep implements Step {
         flightContext
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    final String projectId = workspaceService.getRequiredGcpProject(workspaceId);
+    final String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
     final String bucketName =
         flightContext
             .getWorkingMap()

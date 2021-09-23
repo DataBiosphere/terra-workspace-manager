@@ -11,7 +11,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.api.services.notebooks.v1.model.Instance;
 import java.io.IOException;
 
@@ -26,21 +26,21 @@ import java.io.IOException;
 public class RetrieveNotebookServiceAccountStep implements Step {
   private final ControlledAiNotebookInstanceResource resource;
   private final CrlService crlService;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
 
   public RetrieveNotebookServiceAccountStep(
       ControlledAiNotebookInstanceResource resource,
       CrlService crlService,
-      WorkspaceService workspaceService) {
+      GcpCloudContextService gcpCloudContextService) {
     this.resource = resource;
     this.crlService = crlService;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    String projectId = workspaceService.getRequiredGcpProject(resource.getWorkspaceId());
+    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     InstanceName instanceName =
         InstanceName.builder()
             .projectId(projectId)

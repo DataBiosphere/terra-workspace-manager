@@ -14,7 +14,7 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.List;
 import java.util.Optional;
@@ -26,17 +26,17 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
   private final ControlledBigQueryDatasetResource sourceDataset;
   private final ControlledResourceService controlledResourceService;
   private final AuthenticatedUserRequest userRequest;
-  private final WorkspaceService workspaceService;
+  private final GcpCloudContextService gcpCloudContextService;
 
   public CopyBigQueryDatasetDefinitionStep(
       ControlledBigQueryDatasetResource sourceDataset,
       ControlledResourceService controlledResourceService,
       AuthenticatedUserRequest userRequest,
-      WorkspaceService workspaceService) {
+      GcpCloudContextService gcpCloudContextService) {
     this.sourceDataset = sourceDataset;
     this.controlledResourceService = controlledResourceService;
     this.userRequest = userRequest;
-    this.workspaceService = workspaceService;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Override
@@ -109,7 +109,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
 
     workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedResource);
     final String destinationProjectId =
-        workspaceService.getRequiredGcpProject(destinationWorkspaceId);
+        gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
     final ApiClonedControlledGcpBigQueryDataset apiResult =
         new ApiClonedControlledGcpBigQueryDataset()
             .dataset(clonedResource.toApiResource(destinationProjectId))

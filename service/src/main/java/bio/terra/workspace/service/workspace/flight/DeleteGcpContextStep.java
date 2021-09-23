@@ -3,7 +3,7 @@ package bio.terra.workspace.service.workspace.flight;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,17 +11,17 @@ import org.slf4j.LoggerFactory;
 /** Deletes a workspace's Google cloud context from the DAO. */
 public class DeleteGcpContextStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(DeleteGcpContextStep.class);
-  private final WorkspaceDao workspaceDao;
+  private final GcpCloudContextService gcpCloudContextService;
   private final UUID workspaceId;
 
-  protected DeleteGcpContextStep(WorkspaceDao workspaceDao, UUID workspaceId) {
-    this.workspaceDao = workspaceDao;
+  protected DeleteGcpContextStep(GcpCloudContextService gcpCloudContextService, UUID workspaceId) {
+    this.gcpCloudContextService = gcpCloudContextService;
     this.workspaceId = workspaceId;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-    workspaceDao.deleteGcpCloudContext(workspaceId);
+    gcpCloudContextService.deleteGcpCloudContext(workspaceId);
     return StepResult.getStepResultSuccess();
   }
 

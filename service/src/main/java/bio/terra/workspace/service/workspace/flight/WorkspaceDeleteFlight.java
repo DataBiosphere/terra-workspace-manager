@@ -46,7 +46,9 @@ public class WorkspaceDeleteFlight extends Flight {
             userRequest),
         retryRule);
     addStep(
-        new DeleteProjectStep(appContext.getCrlService(), appContext.getWorkspaceDao()), retryRule);
+        new DeleteGcpProjectStep(
+            appContext.getCrlService(), appContext.getGcpCloudContextService()),
+        retryRule);
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
     // resource or not, as indicated by the workspace stage enum.
     switch (workspaceStage) {

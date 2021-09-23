@@ -25,7 +25,7 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateGcsBucketStep;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.DeleteLifecycleAction;
@@ -51,7 +51,7 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
   @Mock private CrlService mockCrlService;
   @Mock private FlightContext mockFlightContext;
   @Mock private StorageCow mockStorageCow;
-  @Mock private WorkspaceService mockWorkspaceService;
+  @Mock private GcpCloudContextService mockGcpCloudContextService;
 
   @Captor private ArgumentCaptor<List<LifecycleRule>> lifecycleRulesCaptor;
   @Captor private ArgumentCaptor<StorageClass> storageClassCaptor;
@@ -83,11 +83,11 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
     final ControlledGcsBucketResource bucketResource =
         makeDefaultControlledGcsBucketResource().build();
     doReturn(PROJECT_ID)
-        .when(mockWorkspaceService)
+        .when(mockGcpCloudContextService)
         .getRequiredGcpProject(bucketResource.getWorkspaceId());
 
     updateGcsBucketStep =
-        new UpdateGcsBucketStep(bucketResource, mockCrlService, mockWorkspaceService);
+        new UpdateGcsBucketStep(bucketResource, mockCrlService, mockGcpCloudContextService);
   }
 
   @Test

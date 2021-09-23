@@ -34,8 +34,6 @@ public class LaunchCreateGcpContextFlightStep implements Step {
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         ControlledResourceKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID);
 
-    final var sourceWorkspaceId =
-        context.getInputParameters().get(ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
     final var userRequest =
         context
             .getInputParameters()
