@@ -73,6 +73,14 @@ public class AuthenticatedUserRequest {
     return this;
   }
 
+  public AuthType getAuthType() {
+    return authType;
+  }
+
+  public AuthenticatedUserRequest authType(AuthType authType) {
+    this.authType = authType;
+    return this;
+  }
 
   @Override
   public String toString() {
@@ -82,13 +90,5 @@ public class AuthenticatedUserRequest {
         Optional.ofNullable(getSubjectId()).orElse("null"),
         getToken().map(t -> "REDACTED (" + t.length() + " chars)").orElse("null"),
         Optional.ofNullable(reqId).map(UUID::toString).orElse("null"));
-
-  public AuthType getAuthType() {
-    return authType;
-  }
-
-  public AuthenticatedUserRequest authType(AuthType authType) {
-    this.authType = authType;
-    return this;
   }
 }

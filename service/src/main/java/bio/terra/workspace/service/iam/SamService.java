@@ -717,7 +717,6 @@ public class SamService {
       throws InterruptedException {
     // We need the WSM SA for setting controlled resource policies
     initializeWsmServiceAccount();
-
     FullyQualifiedResourceId workspaceParentFqId =
         new FullyQualifiedResourceId()
             .resourceId(resource.getWorkspaceId().toString())
