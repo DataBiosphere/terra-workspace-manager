@@ -666,7 +666,7 @@ public class SamService {
     // Set up the master OWNER user in Sam for all controlled resources, if it's not already.
     initializeWsmServiceAccount();
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
-    FullyQualifiedResourceId  workspaceParentFqId =
+    FullyQualifiedResourceId workspaceParentFqId =
         new FullyQualifiedResourceId()
             .resourceId(resource.getWorkspaceId().toString())
             .resourceTypeName(SamConstants.SAM_WORKSPACE_RESOURCE);
