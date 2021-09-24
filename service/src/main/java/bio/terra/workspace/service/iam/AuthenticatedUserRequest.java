@@ -21,6 +21,7 @@ public class AuthenticatedUserRequest {
 
   public AuthenticatedUserRequest() {
     this.reqId = UUID.randomUUID();
+    this.token = Optional.empty();
   }
 
   public AuthenticatedUserRequest(String email, String subjectId, Optional<String> token) {
@@ -85,7 +86,7 @@ public class AuthenticatedUserRequest {
   @Override
   public String toString() {
     return String.format(
-        "AuthenticatedUserRequest\n\tEmail: %s\n\tSubject ID: %s\n\tToken: %s\n\tRequest ID: %s\n",
+        "AuthenticatedUserRequest%n\tEmail: %s%n\tSubject ID: %s%n\tToken: %s%n\tRequest ID: %s%n",
         Optional.ofNullable(getEmail()).orElse("null"),
         Optional.ofNullable(getSubjectId()).orElse("null"),
         getToken().map(t -> "REDACTED (" + t.length() + " chars)").orElse("null"),

@@ -1,0 +1,14 @@
+workspace:
+  azure-test:
+    # TODO: this config will only work for initial testing. Next is to create a real testing point.
+    default-user-email: fred@notonmicrosoft.com
+    default-user-object-id: fred-object-id
+    second-user-email: wilma@notonmicrosoft.com
+    second-user-object-id: wilma-object-id
+
+    tenant-id: the-tenant-id
+    subscription-id: the-subscription-id
+    managed-resource-group-id: the-mrg-id
+
+    client-id: app-id
+    client-secret: app-secret

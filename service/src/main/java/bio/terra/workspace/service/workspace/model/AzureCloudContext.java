@@ -6,6 +6,8 @@ import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersion
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 public class AzureCloudContext {
   /**
@@ -54,7 +56,35 @@ public class AzureCloudContext {
         azureContext.getResourceGroupId());
   }
 
-  // -- serdes for the GcpCloudContext --
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    AzureCloudContext that = (AzureCloudContext) o;
+
+    return new EqualsBuilder()
+        .append(azureTenantId, that.azureTenantId)
+        .append(azureSubscriptionId, that.azureSubscriptionId)
+        .append(azureResourceGroupId, that.azureResourceGroupId)
+        .isEquals();
+  }
+
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder(17, 37)
+        .append(azureTenantId)
+        .append(azureSubscriptionId)
+        .append(azureResourceGroupId)
+        .toHashCode();
+  }
+
+  // -- serdes for the AzureCloudContext --
 
   public String serialize() {
     AzureCloudContextV100 dbContext =
