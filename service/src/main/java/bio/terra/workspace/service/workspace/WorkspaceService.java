@@ -80,7 +80,7 @@ public class WorkspaceService {
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
       CrlService crlService,
-      GcpCloudContextService gcpCloudContextService),
+      GcpCloudContextService gcpCloudContextService,
       AzureState azureState) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
