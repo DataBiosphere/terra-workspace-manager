@@ -10,6 +10,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadat
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesComponent;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
+import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class FlightBeanBag {
 
+  private final AzureCloudContextService azureCloudContextService;
   private final BucketCloneRolesComponent bucketCloneRolesComponent;
   private final BufferService bufferService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
@@ -42,6 +44,7 @@ public class FlightBeanBag {
   @Lazy
   @Autowired
   public FlightBeanBag(
+      AzureCloudContextService azureCloudContextService,
       BucketCloneRolesComponent bucketCloneRolesComponent,
       BufferService bufferService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
@@ -54,6 +57,7 @@ public class FlightBeanBag {
       SamService samService,
       WorkspaceDao workspaceDao,
       WorkspaceService workspaceService) {
+    this.azureCloudContextService = azureCloudContextService;
     this.bucketCloneRolesComponent = bucketCloneRolesComponent;
     this.bufferService = bufferService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
@@ -70,6 +74,10 @@ public class FlightBeanBag {
 
   public static FlightBeanBag getFromObject(Object object) {
     return (FlightBeanBag) object;
+  }
+
+  public AzureCloudContextService getAzureCloudContextService() {
+    return azureCloudContextService;
   }
 
   public BucketCloneRolesComponent getBucketCloneRolesComponent() {
