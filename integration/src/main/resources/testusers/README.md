@@ -25,8 +25,8 @@ doesn't currently exist, consider minting a new test user.
 
 Currently, users have the following access permissions, replicated across environments:
 
-|                                           | TDR Snapshot       | `wm-default-spend-profile` | `terra_wsm_test_dataset` | `terra_wsm_test_resource` |
+|                                           | TDR Snapshot       | `wm-default-spend-profile` | BQ Dataset `terra_wsm_test_dataset` | Bucket `terra_wsm_test_resource` |
 | ----------------------------------------- | ------------------ | -------------------------- | ------------------------ | ------------------------- |
-| **bella.redwalker@test.firecloud.org**    | :white_check_mark: | :white_check_mark:         | :white_check_mark:       | :white_check_mark:        |
-| **elijah.thunderlord@test.firecloud.org** | :x:                | :white_check_mark:         | :x:                      | :white_check_mark:        |
-| **liam.dragonmaw@test.firecloud.org**     | :x:                | :x:                        | :x:                      | :x:                       |
+| **bella.redwalker**    | :white_check_mark: | :white_check_mark:         | :white_check_mark:       | :white_check_mark:        |
+| **elijah.thunderlord** | :x:                | :white_check_mark:         | :x:                      | :white_check_mark:        |
+| **liam.dragonmaw**     | :x:                | :x:                        | :x:                      | :x:                       |
