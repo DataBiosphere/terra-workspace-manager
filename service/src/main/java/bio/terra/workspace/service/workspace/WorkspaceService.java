@@ -28,6 +28,8 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
@@ -63,6 +65,7 @@ public class WorkspaceService {
 
   private final JobService jobService;
   private final WorkspaceDao workspaceDao;
+  private final AzureCloudContextService azureCloudContextService;
   private final GcpCloudContextService gcpCloudContextService;
   private final SamService samService;
   private final SpendProfileService spendProfileService;
@@ -80,6 +83,7 @@ public class WorkspaceService {
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
       CrlService crlService,
+      AzureCloudContextService azureCloudContextService,
       GcpCloudContextService gcpCloudContextService,
       AzureState azureState) {
     this.jobService = jobService;
@@ -89,6 +93,7 @@ public class WorkspaceService {
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
     this.crlService = crlService;
+    this.azureCloudContextService = azureCloudContextService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.azureState = azureState;
   }
@@ -221,6 +226,40 @@ public class WorkspaceService {
   }
 
   /**
+   * Process the request to create a Azure cloud context
+   *
+   * @param workspaceId workspace in which to create the context
+   * @param jobId caller-supplied job id of the async job
+   * @param userRequest user authentication info
+   * @param resultPath optional endpoint where the result of the completed job can be retrieved
+   * @param azureContext azure context information
+   */
+  @Traced
+  public void createAzureCloudContext(
+      UUID workspaceId,
+      String jobId,
+      AuthenticatedUserRequest userRequest,
+      @Nullable String resultPath,
+      AzureCloudContext azureContext) {
+
+    Workspace workspace =
+        validateWorkspaceAndAction(
+            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+    stageService.assertMcWorkspace(workspace, "createCloudContext");
+
+    jobService
+        .newJob(
+            "Create Azure Cloud Context " + workspaceId,
+            jobId,
+            CreateAzureContextFlight.class,
+            azureContext,
+            userRequest)
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .submit();
+  }
+
+  /**
    * Process the request to create a GCP cloud context
    *
    * @param workspaceId workspace in which to create the context
@@ -325,6 +364,20 @@ public class WorkspaceService {
             userRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
         .submitAndWait(null);
+  }
+
+  /**
+   * We ensure that the workspace exists and the user has read access. If so, we lookup the Azure
+   * cloud context, if any.
+   *
+   * @param workspaceId id of the workspace whose cloud context we want to get
+   * @param userRequest auth of user to test for read access
+   * @return optional Azure cloud context
+   */
+  public Optional<AzureCloudContext> getAuthorizedAzureCloudContext(
+      UUID workspaceId, AuthenticatedUserRequest userRequest) {
+    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    return azureCloudContextService.getAzureCloudContext(workspaceId);
   }
 
   /**

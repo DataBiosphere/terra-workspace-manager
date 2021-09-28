@@ -7,4 +7,8 @@ public class CloudContextRequiredException extends BadRequestException {
   public CloudContextRequiredException(String message) {
     super(message);
   }
+
+  public CloudContextRequiredException(String message, Throwable throwable) {
+    super(message, throwable);
+  }
 }

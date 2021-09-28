@@ -58,14 +58,17 @@ public class SamService {
 
   private final SamConfiguration samConfig;
   private final StageService stageService;
+  private final MockSamService mockSamService;
 
   private final Set<String> SAM_OAUTH_SCOPES = ImmutableSet.of("openid", "email", "profile");
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(SamConfiguration samConfig, StageService stageService) {
+  public SamService(
+      SamConfiguration samConfig, StageService stageService, MockSamService mockSamService) {
     this.samConfig = samConfig;
     this.stageService = stageService;
+    this.mockSamService = mockSamService;
     this.wsmServiceAccountInitialized = false;
   }
 
@@ -106,6 +109,10 @@ public class SamService {
    */
   public String getUserEmailFromSam(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
+    if (mockSamService.useMock(userRequest)) {
+      return userRequest.getEmail();
+    }
+
     UsersApi usersApi = samUsersApi(userRequest.getRequiredToken());
     try {
       return SamRetry.retry(() -> usersApi.getUserStatusInfo().getUserEmail());
@@ -179,6 +186,10 @@ public class SamService {
   @Traced
   public void createWorkspaceWithDefaults(AuthenticatedUserRequest userRequest, UUID id)
       throws InterruptedException {
+    if (mockSamService.useMock(userRequest)) {
+      mockSamService.createWorkspaceWithDefaults(userRequest, id);
+      return;
+    }
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     // Sam will throw an error if no owner is specified, so the caller's email is required. It can
     // be looked up using the auth token if that's all the caller provides.
@@ -209,6 +220,10 @@ public class SamService {
   @Traced
   public List<UUID> listWorkspaceIds(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
+    if (mockSamService.useMock(userRequest)) {
+      return mockSamService.listWorkspaceIds(userRequest);
+    }
+
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     List<UUID> workspaceIds = new ArrayList<>();
     try {
@@ -234,6 +249,11 @@ public class SamService {
   @Traced
   public void deleteWorkspace(AuthenticatedUserRequest userRequest, UUID id)
       throws InterruptedException {
+    if (mockSamService.useMock(userRequest)) {
+      mockSamService.deleteWorkspace(userRequest, id);
+      return;
+    }
+
     String authToken = userRequest.getRequiredToken();
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
@@ -261,6 +281,10 @@ public class SamService {
       String resourceId,
       String action)
       throws InterruptedException {
+    if (mockSamService.useMock(userRequest)) {
+      return mockSamService.isAuthorized(userRequest, iamResourceType, resourceId, action);
+    }
+
     String accessToken = userRequest.getRequiredToken();
     ResourcesApi resourceApi = samResourcesApi(accessToken);
     try {
@@ -354,6 +378,12 @@ public class SamService {
         SamConstants.SAM_WORKSPACE_RESOURCE,
         workspaceId.toString(),
         samActionToModifyRole(role));
+
+    if (mockSamService.useMock(userRequest)) {
+      mockSamService.grantWorkspaceRole(workspaceId, userRequest, role, email);
+      return;
+    }
+
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       SamRetry.retry(
@@ -387,6 +417,12 @@ public class SamService {
         SamConstants.SAM_WORKSPACE_RESOURCE,
         workspaceId.toString(),
         samActionToModifyRole(role));
+
+    if (mockSamService.useMock(userRequest)) {
+      mockSamService.removeWorkspaceRole(workspaceId, userRequest, role, email);
+      return;
+    }
+
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       SamRetry.retry(
@@ -525,6 +561,11 @@ public class SamService {
         SamConstants.SAM_WORKSPACE_RESOURCE,
         workspaceId.toString(),
         SamConstants.SAM_WORKSPACE_READ_IAM_ACTION);
+
+    if (mockSamService.useMock(userRequest)) {
+      return mockSamService.listRoleBindings(workspaceId);
+    }
+
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       List<AccessPolicyResponseEntry> samResult =
@@ -712,6 +753,11 @@ public class SamService {
   public void deleteControlledResource(
       ControlledResource resource, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
+    if (mockSamService.useMock(userRequest)) {
+      mockSamService.deleteControlledResource(resource, userRequest);
+      return;
+    }
+
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       SamRetry.retry(

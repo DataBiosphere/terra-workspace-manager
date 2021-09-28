@@ -5,7 +5,7 @@ import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateDataReferenceRequestBody;
 import bio.terra.workspace.service.resource.controlled.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
-import bio.terra.workspace.service.workspace.exceptions.AzureNotImplementedException;
+import bio.terra.workspace.service.workspace.exceptions.CloudPlatformNotImplementedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -76,9 +76,13 @@ public final class ControllerValidationUtils {
 
   /** Validate that a user is requesting a valid cloud for adding workspace context. */
   public static void validateCloudPlatform(ApiCloudPlatform platform) {
-    if (platform != ApiCloudPlatform.GCP) {
-      throw new AzureNotImplementedException(
-          "Invalid cloud platform. Currently, only GCP is supported.");
+    switch (platform) {
+      case GCP:
+      case AZURE:
+        break;
+      default:
+        throw new CloudPlatformNotImplementedException(
+            "Invalid cloud platform. Currently, only AZURE and GCP are supported.");
     }
   }
 }
