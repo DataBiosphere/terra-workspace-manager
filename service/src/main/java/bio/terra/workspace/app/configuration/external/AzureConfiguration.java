@@ -2,55 +2,38 @@ package bio.terra.workspace.app.configuration.external;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.context.annotation.Configuration;
 
-/** Azure POC code */
+@Configuration
 @EnableConfigurationProperties
-@EnableTransactionManagement
 @ConfigurationProperties(prefix = "workspace.azure")
 public class AzureConfiguration {
+  // Managed app authenticationn
+  private String managedAppClientId;
+  private String managedAppClientSecret;
+  private String managedAppTenantId;
 
-  /** tenant where WSM managed app is deployed */
-  private String tenantId;
-
-  /** MRG id */
-  private String managedResourceGroupId;
-
-  /** clientId for access to the MRG */
-  private String clientId;
-
-  /** clientSecret for access to the MRG */
-  private String clientSecret;
-
-  public String getTenantId() {
-    return tenantId;
+  public String getManagedAppClientId() {
+    return managedAppClientId;
   }
 
-  public void setTenantId(String tenantId) {
-    this.tenantId = tenantId;
+  public void setManagedAppClientId(String managedAppClientId) {
+    this.managedAppClientId = managedAppClientId;
   }
 
-  public String getManagedResourceGroupId() {
-    return managedResourceGroupId;
+  public String getManagedAppClientSecret() {
+    return managedAppClientSecret;
   }
 
-  public void setManagedResourceGroupId(String managedResourceGroupId) {
-    this.managedResourceGroupId = managedResourceGroupId;
+  public void setManagedAppClientSecret(String managedAppClientSecret) {
+    this.managedAppClientSecret = managedAppClientSecret;
   }
 
-  public String getClientId() {
-    return clientId;
+  public String getManagedAppTenantId() {
+    return managedAppTenantId;
   }
 
-  public void setClientId(String clientId) {
-    this.clientId = clientId;
-  }
-
-  public String getClientSecret() {
-    return clientSecret;
-  }
-
-  public void setClientSecret(String clientSecret) {
-    this.clientSecret = clientSecret;
+  public void setManagedAppTenantId(String managedAppTenantId) {
+    this.managedAppTenantId = managedAppTenantId;
   }
 }

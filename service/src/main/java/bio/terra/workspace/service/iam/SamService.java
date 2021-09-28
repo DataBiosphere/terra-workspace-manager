@@ -11,6 +11,7 @@ import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceCategory;
@@ -60,10 +61,10 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class SamService {
-
   private final SamConfiguration samConfig;
   private final StageService stageService;
   private final OkHttpClient commonHttpClient;
+  private final MockSamService mockSamService;
 
   private final Set<String> SAM_OAUTH_SCOPES = ImmutableSet.of("openid", "email", "profile");
   private final List<String> PET_SA_OAUTH_SCOPES =
@@ -73,9 +74,11 @@ public class SamService {
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(SamConfiguration samConfig, StageService stageService) {
+  public SamService(
+      SamConfiguration samConfig, StageService stageService, MockSamService mockSamService) {
     this.samConfig = samConfig;
     this.stageService = stageService;
+    this.mockSamService = mockSamService;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient = new ApiClient().getHttpClient();
   }
@@ -122,6 +125,10 @@ public class SamService {
    */
   public String getUserEmailFromSam(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
+    if (mockSamService.useMock(userRequest)) {
+      return userRequest.getEmail();
+    }
+
     UsersApi usersApi = samUsersApi(userRequest.getRequiredToken());
     try {
       return SamRetry.retry(() -> usersApi.getUserStatusInfo().getUserEmail());
@@ -195,6 +202,10 @@ public class SamService {
   @Traced
   public void createWorkspaceWithDefaults(AuthenticatedUserRequest userRequest, UUID id)
       throws InterruptedException {
+    if (mockSamService.useMock(userRequest)) {
+      mockSamService.createWorkspaceWithDefaults(userRequest, id);
+      return;
+    }
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     // Sam will throw an error if no owner is specified, so the caller's email is required. It can
     // be looked up using the auth token if that's all the caller provides.
@@ -226,6 +237,10 @@ public class SamService {
   @Traced
   public List<UUID> listWorkspaceIds(AuthenticatedUserRequest userRequest)
       throws InterruptedException {
+    if (mockSamService.useMock(userRequest)) {
+      return mockSamService.listWorkspaceIds(userRequest);
+    }
+
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     List<UUID> workspaceIds = new ArrayList<>();
     try {
@@ -251,6 +266,11 @@ public class SamService {
   @Traced
   public void deleteWorkspace(AuthenticatedUserRequest userRequest, UUID id)
       throws InterruptedException {
+    if (mockSamService.useMock(userRequest)) {
+      mockSamService.deleteWorkspace(userRequest, id);
+      return;
+    }
+
     String authToken = userRequest.getRequiredToken();
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
@@ -278,6 +298,10 @@ public class SamService {
       String resourceId,
       String action)
       throws InterruptedException {
+    if (mockSamService.useMock(userRequest)) {
+      return mockSamService.isAuthorized(userRequest, iamResourceType, resourceId, action);
+    }
+
     String accessToken = userRequest.getRequiredToken();
     ResourcesApi resourceApi = samResourcesApi(accessToken);
     try {
@@ -385,6 +409,12 @@ public class SamService {
         SamConstants.SamResource.WORKSPACE,
         workspaceId.toString(),
         samActionToModifyRole(role));
+
+    if (mockSamService.useMock(userRequest)) {
+      mockSamService.grantWorkspaceRole(workspaceId, userRequest, role, email);
+      return;
+    }
+
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       // GCP always uses lowercase email identifiers, so we do the same here for consistency.
@@ -419,6 +449,12 @@ public class SamService {
         SamConstants.SamResource.WORKSPACE,
         workspaceId.toString(),
         samActionToModifyRole(role));
+
+    if (mockSamService.useMock(userRequest)) {
+      mockSamService.removeWorkspaceRole(workspaceId, userRequest, role, email);
+      return;
+    }
+
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       SamRetry.retry(
@@ -552,7 +588,12 @@ public class SamService {
         userRequest,
         SamConstants.SamResource.WORKSPACE,
         workspaceId.toString(),
-        SamConstants.SamWorkspaceAction.READ_IAM);
+        SamWorkspaceAction.READ_IAM);
+
+    if (mockSamService.useMock(userRequest)) {
+      return mockSamService.listRoleBindings(workspaceId);
+    }
+
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       List<AccessPolicyResponseEntry> samResult =
@@ -823,6 +864,7 @@ public class SamService {
   @Traced
   public void deleteControlledResource(ControlledResource resource, String token)
       throws InterruptedException {
+
     ResourcesApi resourceApi = samResourcesApi(token);
     try {
       SamRetry.retry(
@@ -857,6 +899,12 @@ public class SamService {
   public void deleteControlledResource(
       ControlledResource resource, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
+
+    if (mockSamService.useMock(userRequest)) {
+      mockSamService.deleteControlledResource(resource, userRequest);
+      return;
+    }
+
     deleteControlledResource(resource, userRequest.getRequiredToken());
   }
 

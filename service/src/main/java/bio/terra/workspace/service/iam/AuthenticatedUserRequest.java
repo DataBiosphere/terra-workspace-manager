@@ -21,6 +21,7 @@ public class AuthenticatedUserRequest {
 
   public AuthenticatedUserRequest() {
     this.reqId = UUID.randomUUID();
+    this.token = Optional.empty();
   }
 
   public AuthenticatedUserRequest(String email, String subjectId, Optional<String> token) {
