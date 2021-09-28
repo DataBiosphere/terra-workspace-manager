@@ -3,6 +3,7 @@ package bio.terra.workspace.app.controller;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
+import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiClonedWorkspace;
@@ -46,9 +47,12 @@ import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
+import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
@@ -78,6 +82,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
   private final ReferencedResourceService referenceResourceService;
+  private final AzureCloudContextService azureCloudContextService;
   private final GcpCloudContextService gcpCloudContextService;
   private final PetSaService petSaService;
   private final WsmApplicationService appService;
@@ -92,13 +97,15 @@ public class WorkspaceApiController implements WorkspaceApi {
       ReferencedResourceService referenceResourceService,
       GcpCloudContextService gcpCloudContextService,
       PetSaService petSaService,
-      WsmApplicationService appService) {
+      WsmApplicationService appService,
+      AzureCloudContextService azureCloudContextService) {
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.samService = samService;
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
     this.referenceResourceService = referenceResourceService;
+    this.azureCloudContextService = azureCloudContextService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.petSaService = petSaService;
     this.appService = appService;
@@ -159,22 +166,23 @@ public class WorkspaceApiController implements WorkspaceApi {
   }
 
   private ApiWorkspaceDescription buildWorkspaceDescription(Workspace workspace) {
-    // This is a special case use of GcpCloudContextService. That service does not
-    // do authorization checking, so it is not normally called from controllers.
-    // However, the caller has already done the auth check, so it is safe in this
-    // context.
     ApiGcpContext gcpContext =
         gcpCloudContextService
             .getGcpCloudContext(workspace.getWorkspaceId())
             .map(GcpCloudContext::toApi)
             .orElse(null);
-    // When we have another cloud context, we will need to do a similar retrieval for it.
+    ApiAzureContext azureContext =
+        azureCloudContextService
+            .getAzureCloudContext(workspace.getWorkspaceId())
+            .map(AzureCloudContext::toApi)
+            .orElse(null);
 
     return new ApiWorkspaceDescription()
         .id(workspace.getWorkspaceId())
         .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::id).orElse(null))
         .stage(workspace.getWorkspaceStage().toApiModel())
         .gcpContext(gcpContext)
+        .azureContext(azureContext)
         .displayName(workspace.getDisplayName().orElse(null))
         .description(workspace.getDescription().orElse(null));
   }
@@ -429,8 +437,19 @@ public class WorkspaceApiController implements WorkspaceApi {
     String jobId = body.getJobControl().getId();
     String resultPath = ControllerUtils.getAsyncResultEndpoint(request, jobId);
 
-    // For now, the cloud type is always GCP and that is guaranteed in the validate.
-    workspaceService.createGcpCloudContext(id, jobId, userRequest, resultPath);
+    if (body.getCloudPlatform() == ApiCloudPlatform.AZURE) {
+      ApiAzureContext azureContext =
+          Optional.ofNullable(body.getAzureContext())
+              .orElseThrow(
+                  () ->
+                      new CloudContextRequiredException(
+                          "AzureContext is required when creating an azure cloud context for a workspace"));
+      workspaceService.createAzureCloudContext(
+          id, jobId, userRequest, resultPath, AzureCloudContext.fromApi(azureContext));
+    } else {
+      workspaceService.createGcpCloudContext(id, jobId, userRequest, resultPath);
+    }
+
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId, userRequest);
     return new ResponseEntity<>(
         response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));

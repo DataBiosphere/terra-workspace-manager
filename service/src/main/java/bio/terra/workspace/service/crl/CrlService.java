@@ -12,12 +12,20 @@ import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.app.configuration.external.AzureState;
 import bio.terra.workspace.app.configuration.external.CrlConfiguration;
 import bio.terra.workspace.service.crl.exception.CrlInternalException;
 import bio.terra.workspace.service.crl.exception.CrlNotInUseException;
 import bio.terra.workspace.service.crl.exception.CrlSecurityException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.azure.core.credential.TokenCredential;
+import com.azure.core.management.AzureEnvironment;
+import com.azure.core.management.profile.AzureProfile;
+import com.azure.identity.ClientSecretCredentialBuilder;
+import com.azure.resourcemanager.AzureResourceManager;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.Bigquery;
 import com.google.api.services.bigquery.BigqueryScopes;
@@ -52,6 +60,8 @@ public class CrlService {
   /** How long to keep the resource before Janitor does the cleanup. */
   private static final Duration TEST_RESOURCE_TIME_TO_LIVE = Duration.ofHours(1);
 
+  private final AzureConfiguration azureConfiguration;
+  private final AzureState azureState;
   private final ClientConfig clientConfig;
   private final CrlConfiguration crlConfig;
   private final AIPlatformNotebooksCow crlNotebooksCow;
@@ -62,8 +72,11 @@ public class CrlService {
   private final ServiceUsageCow crlServiceUsageCow;
 
   @Autowired
-  public CrlService(CrlConfiguration crlConfig) {
+  public CrlService(
+      CrlConfiguration crlConfig, AzureState azureState, AzureConfiguration azureConfiguration) {
     this.crlConfig = crlConfig;
+    this.azureConfiguration = azureConfiguration;
+    this.azureState = azureState;
 
     if (crlConfig.getUseCrl()) {
       GoogleCredentials creds = getApplicationCredentials();
@@ -422,5 +435,30 @@ public class CrlService {
     if (!crlConfig.getUseCrl()) {
       throw new CrlNotInUseException("Attempt to use CRL when it is set not to be used");
     }
+  }
+
+  // -- Azure Support --
+  // TODO: this is not in CRL, but it will be, so this is a convenient place to dump the
+  //  utility methods we need.
+  public TokenCredential getManagedAppCredentials() {
+    return new ClientSecretCredentialBuilder()
+        .clientId(azureConfiguration.getManagedAppClientId())
+        .clientSecret(azureConfiguration.getManagedAppClientSecret())
+        .tenantId(azureConfiguration.getManagedAppTenantId())
+        .build();
+  }
+
+  /**
+   * Get a resource manager pointed at the MRG subscription
+   *
+   * @param azureCloudContext target cloud context
+   * @return azure resource manager
+   */
+  public AzureResourceManager getResourceManager(AzureCloudContext azureCloudContext) {
+    AzureProfile profile = new AzureProfile(AzureEnvironment.AZURE);
+    TokenCredential credential = getManagedAppCredentials();
+    return AzureResourceManager.authenticate(credential, profile)
+        .withTenantId(azureCloudContext.getAzureTenantId())
+        .withSubscription(azureCloudContext.getAzureSubscriptionId());
   }
 }
