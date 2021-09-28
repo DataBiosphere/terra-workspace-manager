@@ -2277,13 +2277,14 @@ components:
           type: string
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
+        properties:
+          $ref: '#/components/schemas/Properties'
         gcpContext:
           description: GCP context, if one exists
           $ref: '#/components/schemas/GcpContext'
-        # When we have an Azure context, we can put it right here.
-        # No point making a complex structure when there will be only a few of these
-        properties:
-          $ref: '#/components/schemas/Properties'
+        azureContext:
+          description: Azure context, if one exists
+          $ref: '#/components/schemas/AzureContext'
 
     UpdateWorkspaceRequestBody:
       type: object
@@ -2314,11 +2315,31 @@ components:
       description: |
         Request body for asynchronously creating a cloud context for a workspace.
         Contains the CloudPlatform for the context and the JobControl object.
+        For GCP, a project is created to contain the cloud resources of the context.
+        For Azure, a managed resource group (MRG) is created outside of WSM within a tenant
+        and a subscription. The MRG may provide the cloud context for multiple workspaces.
+        Therefore, the location of the MRG is provided as input to the context creation.
       properties:
         cloudPlatform:
           $ref: '#/components/schemas/CloudPlatform'
         jobControl:
           $ref: '#/components/schemas/JobControl'
+        azureContext:
+          $ref: '#/components/schemas/AzureContext'
+
+    AzureContext:
+      type: object
+      description: The azure cloud context associated with a workspace.
+      properties:
+        tenantId:
+          description: The ID of Azure tenant associated with the workspace.
+          type: string
+        subscriptionId:
+          description: The ID of Azure subscription associated with the workspace.
+          type: string
+        resourceGroupId:
+          description: The ID of Azure resource group associated with the workspace.
+          type: string
 
     GcpContext:
       type: object
@@ -3470,7 +3491,7 @@ components:
     CloudPlatform:
       type: string
       description: Enum representing a cloud platform type.
-      enum: ['GCP']
+      enum: ['AZURE', 'GCP']
 
     CloningInstructionsEnum:
       type: string

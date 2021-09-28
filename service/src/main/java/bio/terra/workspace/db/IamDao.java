@@ -4,8 +4,10 @@ import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +52,26 @@ public class IamDao {
   }
 
   /**
+   * Support for isAuthorized. Get the workspace id from the resource id via the resource table.
+   *
+   * @param resourceId string of resource id
+   * @return optional UUID of workspace id
+   */
+  @ReadTransaction
+  public Optional<UUID> getWorkspaceIdFromResourceId(String resourceId) {
+    final String sql = "SELECT workspace_id FROM resource WHERE resource_id = :resource_id";
+    MapSqlParameterSource params = new MapSqlParameterSource().addValue("resource_id", resourceId);
+    try {
+      return Optional.ofNullable(
+          DataAccessUtils.singleResult(
+              jdbcTemplate.query(
+                  sql, params, (rs, rowNum) -> UUID.fromString(rs.getString("workspace_id")))));
+    } catch (EmptyResultDataAccessException e) {
+      return Optional.empty();
+    }
+  }
+
+  /**
    * grantRole - adds the user to the poc_user table if it doesn't exist; validates matching user
    * info if it does exist. - inserts the entry in the poc_grant table. It is not an error to run
    * this twice. We log that the workspace is there, but consider that a success.
@@ -87,6 +109,19 @@ public class IamDao {
     }
   }
 
+  @ReadTransaction
+  public List<UUID> listAccessible(PocUser pocUser) {
+    final String sql = "SELECT DISTINCT workspace_id FROM poc_grant" + " WHERE user_id = :user_id ";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("user_id", pocUser.getUserId());
+    return jdbcTemplate.query(
+        sql,
+        params,
+        (rs, rowNum) -> {
+          return UUID.fromString(rs.getString("workspace_id"));
+        });
+  }
+
   /**
    * Revoke a role from a user on a workspace. Note that we do not do any special checks for owner.
    * It is possible to remove the last owner on a workspace. Don't do that.
@@ -119,27 +154,43 @@ public class IamDao {
 
   /**
    * @param workspaceId workspace the grant is for
-   * @param role the Iam role to grant
-   * @param userId user id to revoke
+   * @param roles the Iam roles to check
+   * @param userId user id to check
+   * @return true if the user has the role; false otherwise
+   */
+  @ReadTransaction
+  public boolean roleCheck(UUID workspaceId, List<WsmIamRole> roles, String userId) {
+    return roleCheckWorker(workspaceId, roles, userId);
+  }
+
+  /**
+   * @param workspaceId workspace the grant is for
+   * @param role the Iam role to check
+   * @param userId user id to check
    * @return true if the user has the role; false otherwise
    */
   @ReadTransaction
   public boolean roleCheck(UUID workspaceId, WsmIamRole role, String userId) {
+    return roleCheckWorker(workspaceId, List.of(role), userId);
+  }
+
+  private boolean roleCheckWorker(UUID workspaceId, List<WsmIamRole> roles, String userId) {
     final String sql =
         "SELECT COUNT(*) FROM poc_grant"
-            + " WHERE workspace_id = :workspace_id AND iam_role = :iam_role AND user_id = :user_id";
+            + " WHERE workspace_id = :workspace_id AND user_id = :user_id AND iam_role IN (:iam_roles)";
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
-            .addValue("iam_role", role.toSamRole())
+            .addValue(
+                "iam_roles", roles.stream().map(WsmIamRole::toSamRole).collect(Collectors.toList()))
             .addValue("user_id", userId);
 
     Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
     return (count != null && count > 0);
   }
 
-  private void addUser(PocUser pocUser) {
+  public void addUser(PocUser pocUser) {
     Optional<PocUser> optionalPocUser = getUser(pocUser.getUserId());
     if (optionalPocUser.isPresent()) {
       if ((StringUtils.equalsIgnoreCase(optionalPocUser.get().email, pocUser.getEmail()))) {
@@ -159,10 +210,34 @@ public class IamDao {
     jdbcTemplate.update(sql, params);
   }
 
+  // Return the emails of users with the requested role
+  public List<String> listRoleUsers(UUID workspaceId, WsmIamRole role) {
+    final String sql =
+        "SELECT poc_user.email FROM poc_user INNER JOIN poc_grant USING (user_id)"
+            + " WHERE poc_grant.workspace_id = :workspace_id"
+            + " AND poc_grant.iam_role = :role";
+
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("role", role.toSamRole());
+
+    return jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("email"));
+  }
+
+  public Optional<PocUser> getUserFromEmail(String email) {
+    final String sql = "SELECT user_id, email FROM poc_user WHERE email = :email";
+    MapSqlParameterSource params = new MapSqlParameterSource().addValue("email", email);
+    return getUserWorker(sql, params);
+  }
+
   private Optional<PocUser> getUser(String userId) {
     final String sql = "SELECT user_id, email FROM poc_user WHERE user_id = :user_id";
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("user_id", userId);
+    return getUserWorker(sql, params);
+  }
 
+  private Optional<PocUser> getUserWorker(String sql, MapSqlParameterSource params) {
     try {
       return Optional.ofNullable(
           DataAccessUtils.singleResult(
