@@ -23,10 +23,6 @@ public class AzureTestConfiguration {
   private String subscriptionId;
   private String managedResourceGroupId;
 
-  // Managed app authn
-  private String clientId;
-  private String clientSecret;
-
   // -- accessors --
 
   public String getDefaultUserEmail() {
@@ -83,21 +79,5 @@ public class AzureTestConfiguration {
 
   public void setManagedResourceGroupId(String managedResourceGroupId) {
     this.managedResourceGroupId = managedResourceGroupId;
-  }
-
-  public String getClientId() {
-    return clientId;
-  }
-
-  public void setClientId(String clientId) {
-    this.clientId = clientId;
-  }
-
-  public String getClientSecret() {
-    return clientSecret;
-  }
-
-  public void setClientSecret(String clientSecret) {
-    this.clientSecret = clientSecret;
   }
 }

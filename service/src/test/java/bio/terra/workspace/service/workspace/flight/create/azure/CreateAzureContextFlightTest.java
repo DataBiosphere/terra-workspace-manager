@@ -30,7 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 class CreateAzureContextFlightTest extends BaseAzureTest {
   /** How long to wait for a Stairway flight to complete before timing out the test. */
-  private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(3);
+  private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(10);
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private CrlService crl;

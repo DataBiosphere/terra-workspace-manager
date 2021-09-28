@@ -27,7 +27,8 @@ public class CreateAzureContextFlight extends Flight {
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     // 1. validate the MRG
-    // TODO: actually do this!
+    // TODO: retry?
+    addStep(new ValidateMRGStep(appContext.getCrlService()));
 
     // 2. store the context
     RetryRule retryRule = RetryRules.shortExponential();
