@@ -10,12 +10,6 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 public class AzureCloudContext {
-  /**
-   * Format version for serialized form of Azure cloud context - deliberately chosen to be different
-   * from the GCP cloud context version.
-   */
-  @VisibleForTesting public static final long AZURE_CLOUD_CONTEXT_DB_VERSION = 100;
-
   private final String azureTenantId;
   private final String azureSubscriptionId;
   private final String azureResourceGroupId;
@@ -95,7 +89,7 @@ public class AzureCloudContext {
 
   public static AzureCloudContext deserialize(String json) {
     AzureCloudContextV100 result = DbSerDes.fromJson(json, AzureCloudContextV100.class);
-    if (result.version != AZURE_CLOUD_CONTEXT_DB_VERSION) {
+    if (result.version != AzureCloudContextV100.AZURE_CLOUD_CONTEXT_DB_VERSION) {
       throw new InvalidSerializedVersionException("Invalid serialized version");
     }
     return new AzureCloudContext(
@@ -104,6 +98,12 @@ public class AzureCloudContext {
 
   @VisibleForTesting
   public static class AzureCloudContextV100 {
+    /**
+     * Format version for serialized form of Azure cloud context - deliberately chosen to be
+     * different from the GCP cloud context version.
+     */
+    public static final long AZURE_CLOUD_CONTEXT_DB_VERSION = 100;
+
     /** Version marker to store in the db so that we can update the format later if we need to. */
     @JsonProperty public final long version = AZURE_CLOUD_CONTEXT_DB_VERSION;
 
