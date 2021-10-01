@@ -2,15 +2,11 @@ buildscript {
     ext {
         springBootVersion = '2.4.0'
     }
-    apply from: "../common.gradle"
 }
 
 plugins {
-    id "idea"
-    id "java"
-    id 'jacoco'
+    id 'terra-workspace-manager.java-conventions'
 
-    id "com.diffplug.spotless" version "5.12.4"
     id "com.github.ben-manes.versions" version "0.36.0"
     id "com.google.cloud.tools.jib" version "3.0.0"
     id "de.undercouch.download" version "4.1.1"
@@ -33,10 +29,6 @@ idea {
         generatedSourceDirs = [file("${openapiOutputDir}/src/main/java")]
         downloadJavadoc = true
     }
-}
-
-jacoco {
-    toolVersion = '0.8.2'
 }
 
 dependencies {
@@ -108,14 +100,6 @@ dependencies {
     annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor", version: "2.4.0"
 }
 
-// for scans
-if (hasProperty("buildScan")) {
-    buildScan {
-        termsOfServiceUrl = "https://gradle.com/terms-of-service"
-        termsOfServiceAgree = "yes"
-    }
-}
-
 // Download and extract the Cloud Profiler Java Agent
 ext {
     // where to place the Cloud Profiler agent in the container
@@ -178,22 +162,6 @@ tasks.withType(Test) {
     }
 }
 
-jacocoTestReport {
-    reports {
-        xml.enabled = true
-        xml.destination = file("$buildDir/reports/jacoco/test/jacoco.xml")
-    }
-    dependsOn test
-}
-
- // default test to unit tests so the build target succeeds
-test {
-    useJUnitPlatform {
-        includeTags "unit"
-    }
-    outputs.upToDateWhen { false }
-}
-
 task unitTest(type: Test) {
     useJUnitPlatform {
         includeTags "unit"
@@ -208,13 +176,6 @@ task connectedTest(type: Test) {
         includeTags "connected"
     }
     outputs.upToDateWhen { false }
-}
-
-spotless {
-    java {
-        googleJavaFormat()
-        target 'src/*/java/**/*.java'
-    }
 }
 
 // Generate/clean the version properties file
@@ -256,7 +217,7 @@ jib {
 
 sourceSets.main.java.srcDir "${openapiOutputDir}/src/main/java"
 
-compileJava.dependsOn swaggerSources.server.code, spotlessApply, generateVersionProperties
+compileJava.dependsOn swaggerSources.server.code, generateVersionProperties
 tasks.jib.dependsOn extractProfilerAgent
 tasks.jibDockerBuild.dependsOn extractProfilerAgent
 tasks.jibBuildTar.dependsOn extractProfilerAgent

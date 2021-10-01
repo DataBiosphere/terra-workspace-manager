@@ -1,0 +1,87 @@
+// Java conventions common for all of the code
+plugins {
+    id 'idea'
+    id 'java'
+    id 'jacoco'
+    id 'com.diffplug.spotless'
+    id 'com.github.spotbugs'
+}
+
+def useMavenLocal = false
+repositories {
+    if (useMavenLocal) {
+        mavenLocal()
+    }
+    maven {
+        // Terra proxy for maven central
+        url "https://broadinstitute.jfrog.io/broadinstitute/maven-central/"
+    }
+    mavenCentral()
+    maven {
+        url "https://broadinstitute.jfrog.io/broadinstitute/libs-release/"
+    }
+    maven {
+        url "https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/"
+    }
+}
+
+dependencyLocking {
+    lockAllConfigurations()
+    lockMode = LockMode.STRICT
+}
+
+jacoco {
+    toolVersion = '0.8.2'
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        xml.destination = file("$buildDir/reports/jacoco/test/jacoco.xml")
+    }
+    dependsOn test
+}
+
+// Spotless configuration
+spotless {
+    java {
+        googleJavaFormat()
+        targetExclude "${buildDir}/**"
+    }
+}
+build.dependsOn spotlessApply
+
+
+// for scans
+if (hasProperty("buildScan")) {
+    buildScan {
+        termsOfServiceUrl = "https://gradle.com/terms-of-service"
+        termsOfServiceAgree = "yes"
+    }
+}
+
+// Spotbugs configuration
+spotbugs {
+    effort = 'max'
+    // This makes the "html" reports come out in plain text so you can just open the file in IntelliJ
+    // and look at your bugs instead of having to switch to a browser.
+    extraArgs = [ '-emacs']
+}
+spotbugsMain {
+    reports {
+        html {
+            enabled = true
+            destination = file("$buildDir/reports/spotbugs/main.txt")
+            stylesheet = 'fancy.xsl'
+        }
+    }
+}
+spotbugsTest {
+    reports {
+        html {
+            enabled = true
+            destination = file("$buildDir/reports/spotbugs/test.txt")
+            stylesheet = 'fancy.xsl'
+        }
+    }
+}

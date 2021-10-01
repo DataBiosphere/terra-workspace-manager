@@ -1,14 +1,7 @@
-buildscript {
-    apply from: "../common.gradle"
-}
-
 plugins {
-    id 'java'
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
-    // TODO: for some reason the spotless plugin does not work in the integration project, but it works
-    //  fine in the service project.
-    // id "com.diffplug.spotless" version "5.12.4"
+    id 'terra-workspace-manager.java-conventions'
     // Terra Test Runner Plugin
     id 'bio.terra.test-runner-plugin' version '0.0.8-SNAPSHOT'
 }
@@ -78,14 +71,3 @@ dependencies {
 
 version = gradle.wsmVersion
 sourceCompatibility = JavaVersion.VERSION_11
-
-/*
-spotless {
-    java {
-        googleJavaFormat()
-        targetExclude "${buildDir}/**"
-    }
-}
-
-compileJava.dependsOn spotlessApply
-*/
