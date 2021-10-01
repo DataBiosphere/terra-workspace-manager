@@ -16,10 +16,6 @@ plugins {
     id 'ru.vyarus.quality' version '4.5.0'
 }
 
-group = 'bio.terra'
-version = gradle.wsmVersion
-sourceCompatibility = JavaVersion.VERSION_11
-
 def artifactGroup = "${group}.workspace"
 def openapiOutputDir = "${buildDir}/openapi"
 def resourceDir = "${projectDir}/src/main/resources"

@@ -1,9 +1,8 @@
 plugins {
     id 'terra-workspace-manager.library-conventions'
+
     id "org.hidetake.swagger.generator" version "2.18.2"
 }
-
-version = gradle.wsmVersion
 
 dependencies {
     ext {

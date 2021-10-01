@@ -1,7 +1,8 @@
 plugins {
+    id 'terra-workspace-manager.java-conventions'
+
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
-    id 'terra-workspace-manager.java-conventions'
     // Terra Test Runner Plugin
     id 'bio.terra.test-runner-plugin' version '0.0.8-SNAPSHOT'
 }
@@ -68,6 +69,3 @@ dependencies {
     implementation "bio.terra:terra-test-runner:${testRunnerVersion}"
 
 }
-
-version = gradle.wsmVersion
-sourceCompatibility = JavaVersion.VERSION_11
