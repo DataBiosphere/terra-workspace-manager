@@ -67,21 +67,23 @@ See [settings.gradle](settings.gradle) for the latest version information.
 ## Build Structure
 
 We use [gradle](https://gradle.org/) as our build tool. The repository is organized as a
-composite build. There are three mostly independent projects:
+composite build, with common build logic pulled into [convention plugins](https://docs.gradle.org/current/samples/sample_convention_plugins.html).
+There are three mostly independent projects:
 - _service_ - the Workspace Manager Service
 - _client_ - the OpenAPI-generated client
 - _integration_ - the TestRunner-based integration test project
-
-They all share a top-level `settings.gradle` file allowing them to be worked on as a
-single unit; for example, IntelliJ will index the entire code set.
 
 The build structure is:
 ```
 terra-workspace-manager
   |
   + settings.gradle
-  + build.gradle (only used by spotless)
-  + common.gradle
+  + build.gradle
+  |
+  +-- buildSrc/src/main/groovy (convention plugins)
+  |    |
+  |    + terra-workspace-manager.java-conventions.gradle
+  |    + terra-workspace-manager.library-conventions.gradle
   |
   +-- service
   |    |
