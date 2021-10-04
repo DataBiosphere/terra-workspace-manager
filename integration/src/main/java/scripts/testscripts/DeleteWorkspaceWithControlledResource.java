@@ -19,8 +19,8 @@ import scripts.utils.ResourceMaker;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTestScriptBase {
-  private static final Logger logger = LoggerFactory.getLogger(DeleteGcpContextWithControlledResource.class);
-
+  private static final Logger logger =
+      LoggerFactory.getLogger(DeleteGcpContextWithControlledResource.class);
 
   private static final String DATASET_NAME = "wsmtest_dataset";
 
@@ -35,25 +35,29 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
     logger.info("Created project {}", projectId);
 
     // Create a shared BigQuery dataset
-    GcpBigQueryDatasetResource createdDataset = ResourceMaker
-        .makeControlledBigQueryDatasetUserShared(resourceApi, getWorkspaceId(), DATASET_NAME);
+    GcpBigQueryDatasetResource createdDataset =
+        ResourceMaker.makeControlledBigQueryDatasetUserShared(
+            resourceApi, getWorkspaceId(), DATASET_NAME);
     UUID resourceId = createdDataset.getMetadata().getResourceId();
     logger.info("Created controlled dataset {}", resourceId);
 
     // Confirm the dataset was created in WSM
-    GcpBigQueryDatasetResource fetchedDataset = resourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
+    GcpBigQueryDatasetResource fetchedDataset =
+        resourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
     assertEquals(createdDataset, fetchedDataset);
 
     // Delete the workspace, which should delete the included context and resource
     workspaceApi.deleteWorkspace(getWorkspaceId());
 
     // Confirm the workspace is deleted
-    var workspaceMissingException = assertThrows(ApiException.class, () -> workspaceApi.getWorkspace(getWorkspaceId()));
+    var workspaceMissingException =
+        assertThrows(ApiException.class, () -> workspaceApi.getWorkspace(getWorkspaceId()));
     assertEquals(HttpStatus.SC_NOT_FOUND, workspaceMissingException.getCode());
 
     // Confirm the controlled resource was deleted
-    var resourceMissingException = assertThrows(
-        ApiException.class, () -> resourceApi.getBigQueryDataset(getWorkspaceId(), resourceId));
+    var resourceMissingException =
+        assertThrows(
+            ApiException.class, () -> resourceApi.getBigQueryDataset(getWorkspaceId(), resourceId));
     assertEquals(HttpStatus.SC_NOT_FOUND, resourceMissingException.getCode());
   }
 
@@ -62,7 +66,8 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
    * "not found" exception should not be considered an error here.
    */
   @Override
-  public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws Exception{
+  public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
+      throws Exception {
     try {
       workspaceApi.deleteWorkspace(getWorkspaceId());
     } catch (ApiException e) {

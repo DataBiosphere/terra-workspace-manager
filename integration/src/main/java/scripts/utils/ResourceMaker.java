@@ -41,7 +41,6 @@ import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceIamRoles;
 import bio.terra.workspace.model.PrivateResourceUser;
 import bio.terra.workspace.model.ReferenceResourceCommonFields;
-
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
@@ -98,14 +97,19 @@ public class ResourceMaker {
   }
 
   public static GcpGcsBucketResource makeGcsBucketReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name,
-      @Nullable CloningInstructionsEnum cloningInstructions) throws ApiException {
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      @Nullable CloningInstructionsEnum cloningInstructions)
+      throws ApiException {
 
     var body =
         new CreateGcpGcsBucketReferenceRequestBody()
             .metadata(
                 new ReferenceResourceCommonFields()
-                    .cloningInstructions(Optional.ofNullable(cloningInstructions).orElse(CloningInstructionsEnum.NOTHING))
+                    .cloningInstructions(
+                        Optional.ofNullable(cloningInstructions)
+                            .orElse(CloningInstructionsEnum.NOTHING))
                     .description("Description of " + name)
                     .name(name))
             .bucket(new GcpGcsBucketAttributes().bucketName(TEST_BUCKET_NAME));
@@ -119,8 +123,11 @@ public class ResourceMaker {
   }
 
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucketUserShared(
-      ControlledGcpResourceApi resourceApi, UUID workspaceId, String name,
-      CloningInstructionsEnum cloningInstructions) throws Exception {
+      ControlledGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      CloningInstructionsEnum cloningInstructions)
+      throws Exception {
 
     String bucketName = ClientTestUtils.generateCloudResourceName();
     var body =
@@ -144,18 +151,23 @@ public class ResourceMaker {
   }
 
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucketUserPrivate(
-      ControlledGcpResourceApi resourceApi, UUID workspaceId, String name,
-      String privateResourceUserEmail, PrivateResourceIamRoles privateResourceRoles,
-      CloningInstructionsEnum cloningInstructions) throws Exception {
+      ControlledGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      String privateResourceUserEmail,
+      PrivateResourceIamRoles privateResourceRoles,
+      CloningInstructionsEnum cloningInstructions)
+      throws Exception {
     String bucketName = ClientTestUtils.generateCloudResourceName();
     var body =
         new CreateControlledGcpGcsBucketRequestBody()
             .common(
                 new ControlledResourceCommonFields()
                     .accessScope(AccessScope.PRIVATE_ACCESS)
-                    .privateResourceUser(new PrivateResourceUser()
-                      .userName(privateResourceUserEmail)
-                      .privateResourceIamRoles(privateResourceRoles))
+                    .privateResourceUser(
+                        new PrivateResourceUser()
+                            .userName(privateResourceUserEmail)
+                            .privateResourceIamRoles(privateResourceRoles))
                     .managedBy(ManagedBy.USER)
                     .cloningInstructions(cloningInstructions)
                     .description("Description of " + name)
@@ -172,10 +184,19 @@ public class ResourceMaker {
   }
 
   public static CreatedControlledGcpGcsBucket makeControlledGcsBucketUserPrivate(
-      ControlledGcpResourceApi resourceApi, UUID workspaceId, String name,
-      String privateResourceUserEmail, PrivateResourceIamRoles privateResourceRoles) throws Exception {
-    return  makeControlledGcsBucketUserPrivate(
-         resourceApi,  workspaceId, name, privateResourceUserEmail, privateResourceRoles, CloningInstructionsEnum.NOTHING);
+      ControlledGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      String privateResourceUserEmail,
+      PrivateResourceIamRoles privateResourceRoles)
+      throws Exception {
+    return makeControlledGcsBucketUserPrivate(
+        resourceApi,
+        workspaceId,
+        name,
+        privateResourceUserEmail,
+        privateResourceRoles,
+        CloningInstructionsEnum.NOTHING);
   }
 
   public static void deleteControlledGcsBucket(
@@ -201,8 +222,11 @@ public class ResourceMaker {
    * given datasetID as both the WSM resource name and the actual BigQuery dataset ID.
    */
   public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetUserShared(
-      ControlledGcpResourceApi resourceApi, UUID workspaceId, String datasetId,
-      @Nullable CloningInstructionsEnum cloningInstructions) throws Exception {
+      ControlledGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String datasetId,
+      @Nullable CloningInstructionsEnum cloningInstructions)
+      throws Exception {
 
     var body =
         new CreateControlledGcpBigQueryDatasetRequestBody()
@@ -210,7 +234,9 @@ public class ResourceMaker {
                 new ControlledResourceCommonFields()
                     .accessScope(AccessScope.SHARED_ACCESS)
                     .managedBy(ManagedBy.USER)
-                    .cloningInstructions(Optional.ofNullable(cloningInstructions).orElse(CloningInstructionsEnum.NOTHING))
+                    .cloningInstructions(
+                        Optional.ofNullable(cloningInstructions)
+                            .orElse(CloningInstructionsEnum.NOTHING))
                     .description("Description of " + datasetId)
                     .name(datasetId))
             .dataset(
@@ -228,9 +254,13 @@ public class ResourceMaker {
   }
 
   public static GcpBigQueryDatasetResource makeControlledBigQueryDatasetUserPrivate(
-      ControlledGcpResourceApi resourceApi, UUID workspaceId, String datasetId,
-      String privateResourceUserEmail, PrivateResourceIamRoles iamRoles,
-      @Nullable CloningInstructionsEnum cloningInstructions) throws Exception {
+      ControlledGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String datasetId,
+      String privateResourceUserEmail,
+      PrivateResourceIamRoles iamRoles,
+      @Nullable CloningInstructionsEnum cloningInstructions)
+      throws Exception {
 
     var body =
         new CreateControlledGcpBigQueryDatasetRequestBody()
@@ -238,10 +268,13 @@ public class ResourceMaker {
                 new ControlledResourceCommonFields()
                     .accessScope(AccessScope.PRIVATE_ACCESS)
                     .managedBy(ManagedBy.USER)
-                    .privateResourceUser(new PrivateResourceUser()
-                        .userName(privateResourceUserEmail)
-                        .privateResourceIamRoles(iamRoles))
-                    .cloningInstructions(Optional.ofNullable(cloningInstructions).orElse(CloningInstructionsEnum.NOTHING))
+                    .privateResourceUser(
+                        new PrivateResourceUser()
+                            .userName(privateResourceUserEmail)
+                            .privateResourceIamRoles(iamRoles))
+                    .cloningInstructions(
+                        Optional.ofNullable(cloningInstructions)
+                            .orElse(CloningInstructionsEnum.NOTHING))
                     .description("Description of " + datasetId)
                     .name(datasetId))
             .dataset(
@@ -258,7 +291,10 @@ public class ResourceMaker {
    * method calls the asynchronous creation endpoint and polls until the creation job completes.
    */
   public static CreatedControlledGcpAiNotebookInstanceResult makeControlledNotebookUserPrivate(
-      UUID workspaceId, String instanceId, TestUserSpecification user, ControlledGcpResourceApi resourceApi)
+      UUID workspaceId,
+      String instanceId,
+      TestUserSpecification user,
+      ControlledGcpResourceApi resourceApi)
       throws ApiException, InterruptedException {
     // Fill out the minimum required fields to arbitrary values.
     var creationParameters =
@@ -293,13 +329,14 @@ public class ResourceMaker {
 
     var creationResult = resourceApi.createAiNotebookInstance(body, workspaceId);
     String creationJobId = creationResult.getJobReport().getId();
-    creationResult = ClientTestUtils.pollWhileRunning(
-        creationResult,
-        () -> resourceApi.getCreateAiNotebookInstanceResult(workspaceId, creationJobId),
-        CreatedControlledGcpAiNotebookInstanceResult::getJobReport,
-        Duration.ofSeconds(10));
-    ClientTestUtils.assertJobSuccess("create ai notebook",
-        creationResult.getJobReport(), creationResult.getErrorReport());
+    creationResult =
+        ClientTestUtils.pollWhileRunning(
+            creationResult,
+            () -> resourceApi.getCreateAiNotebookInstanceResult(workspaceId, creationJobId),
+            CreatedControlledGcpAiNotebookInstanceResult::getJobReport,
+            Duration.ofSeconds(10));
+    ClientTestUtils.assertJobSuccess(
+        "create ai notebook", creationResult.getJobReport(), creationResult.getErrorReport());
     return creationResult;
   }
 }

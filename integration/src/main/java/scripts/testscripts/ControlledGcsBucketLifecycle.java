@@ -108,7 +108,8 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     logger.info("Retrieving bucket resource id {}", resourceId.toString());
     GcpGcsBucketResource gotBucket = resourceApi.getBucket(getWorkspaceId(), resourceId);
     assertEquals(
-        bucket.getGcpBucket().getAttributes().getBucketName(), gotBucket.getAttributes().getBucketName());
+        bucket.getGcpBucket().getAttributes().getBucketName(),
+        gotBucket.getAttributes().getBucketName());
     assertEquals(bucketName, gotBucket.getAttributes().getBucketName());
 
     Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, projectId);
@@ -146,8 +147,8 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
         new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceId(), IamRole.READER);
     logger.info("Added {} as a reader to workspace {}", reader.userEmail, getWorkspaceId());
 
-    Blob readerRetrievedFile = ClientTestUtils
-        .getWithRetryOnException(() -> readerStorageClient.get(blobId));
+    Blob readerRetrievedFile =
+        ClientTestUtils.getWithRetryOnException(() -> readerStorageClient.get(blobId));
     assertNotNull(readerRetrievedFile);
     assertEquals(createdFile.getBlobId(), readerRetrievedFile.getBlobId());
     logger.info("Read existing blob {} from bucket as reader", retrievedFile.getBlobId());
@@ -178,40 +179,54 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     logger.info("Owner successfully deleted blob {}", blobId.getName());
 
     // Update the bucket
-    final GcpGcsBucketResource resource = updateBucketAttempt(resourceApi, resourceId, UPDATED_RESOURCE_NAME, UPDATED_DESCRIPTION,
-        UPDATE_PARAMETERS_1);
-    logger.info("Updated resource name to {} and description to {}",
-        resource.getMetadata().getName(), resource.getMetadata().getDescription());
+    final GcpGcsBucketResource resource =
+        updateBucketAttempt(
+            resourceApi,
+            resourceId,
+            UPDATED_RESOURCE_NAME,
+            UPDATED_DESCRIPTION,
+            UPDATE_PARAMETERS_1);
+    logger.info(
+        "Updated resource name to {} and description to {}",
+        resource.getMetadata().getName(),
+        resource.getMetadata().getDescription());
     assertEquals(UPDATED_RESOURCE_NAME, resource.getMetadata().getName());
     assertEquals(UPDATED_DESCRIPTION, resource.getMetadata().getDescription());
-    final Bucket retrievedUpdatedBucket = ownerStorageClient.get(bucketName, BucketGetOption.fields(BucketField.LIFECYCLE, BucketField.STORAGE_CLASS));
+    final Bucket retrievedUpdatedBucket =
+        ownerStorageClient.get(
+            bucketName, BucketGetOption.fields(BucketField.LIFECYCLE, BucketField.STORAGE_CLASS));
     logger.info("Retrieved bucket {}", retrievedUpdatedBucket.toString());
     assertEquals(StorageClass.NEARLINE, retrievedUpdatedBucket.getStorageClass());
     final List<? extends LifecycleRule> lifecycleRules = retrievedUpdatedBucket.getLifecycleRules();
-    lifecycleRules
-        .forEach(r -> logger.info("Lifecycle rule: {}", r.toString()));
+    lifecycleRules.forEach(r -> logger.info("Lifecycle rule: {}", r.toString()));
     assertThat(lifecycleRules, hasSize(1));
 
     verifyLifecycleRules(lifecycleRules);
 
-    final GcpGcsBucketResource resource2 = updateBucketAttempt(resourceApi, resourceId, null, null,
-        UPDATE_PARAMETERS_2);
+    final GcpGcsBucketResource resource2 =
+        updateBucketAttempt(resourceApi, resourceId, null, null, UPDATE_PARAMETERS_2);
 
-    final Bucket retrievedUpdatedBucket2 = ownerStorageClient.get(bucketName, BucketGetOption.fields(BucketField.LIFECYCLE, BucketField.STORAGE_CLASS));
+    final Bucket retrievedUpdatedBucket2 =
+        ownerStorageClient.get(
+            bucketName, BucketGetOption.fields(BucketField.LIFECYCLE, BucketField.STORAGE_CLASS));
     assertEquals(StorageClass.COLDLINE, retrievedUpdatedBucket2.getStorageClass());
     assertEquals(UPDATED_RESOURCE_NAME, resource2.getMetadata().getName()); // no change
     assertEquals(UPDATED_DESCRIPTION, resource2.getMetadata().getDescription()); // no change
     verifyLifecycleRules(retrievedUpdatedBucket2.getLifecycleRules()); // no change
 
     // test without UpdateParameters
-    final GcpGcsBucketResource resource3 = updateBucketAttempt(resourceApi, resourceId, UPDATED_RESOURCE_NAME_2, null, null);
-    final Bucket retrievedUpdatedBucket3 = ownerStorageClient.get(bucketName, BucketGetOption.fields(BucketField.LIFECYCLE, BucketField.STORAGE_CLASS));
+    final GcpGcsBucketResource resource3 =
+        updateBucketAttempt(resourceApi, resourceId, UPDATED_RESOURCE_NAME_2, null, null);
+    final Bucket retrievedUpdatedBucket3 =
+        ownerStorageClient.get(
+            bucketName, BucketGetOption.fields(BucketField.LIFECYCLE, BucketField.STORAGE_CLASS));
     assertEquals(UPDATED_RESOURCE_NAME_2, resource3.getMetadata().getName());
     assertEquals(UPDATED_DESCRIPTION, resource3.getMetadata().getDescription()); // no change
     assertEquals(StorageClass.COLDLINE, retrievedUpdatedBucket3.getStorageClass()); // no change
     verifyLifecycleRules(retrievedUpdatedBucket3.getLifecycleRules()); // no change
 
-    // additional details must be verified with gsutil or in the cloud console, as we don't return them
+    // additional details must be verified with gsutil or in the cloud console, as we don't return
+    // them
     logger.info("About to try to delete the bucket with a reader.");
     // Reader cannot delete the bucket directly
     StorageException readerCannotDeleteBucket =
@@ -256,7 +271,8 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
   private void verifyLifecycleRules(List<? extends LifecycleRule> lifecycleRules) {
     final LifecycleRule rule = lifecycleRules.get(0);
     assertEquals(SetStorageClassLifecycleAction.TYPE, rule.getAction().getActionType());
-    final SetStorageClassLifecycleAction setStorageClassLifecycleAction = (SetStorageClassLifecycleAction) rule.getAction();
+    final SetStorageClassLifecycleAction setStorageClassLifecycleAction =
+        (SetStorageClassLifecycleAction) rule.getAction();
     assertEquals(StorageClass.ARCHIVE, setStorageClassLifecycleAction.getStorageClass());
     final LifecycleCondition condition = rule.getCondition();
     assertEquals(30, condition.getAge());
@@ -294,14 +310,23 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     return resourceApi.createBucket(body, getWorkspaceId());
   }
 
-  private GcpGcsBucketResource updateBucketAttempt(ControlledGcpResourceApi resourceApi, UUID resourceId,
-      @Nullable String updatedResourceName, @Nullable String updatedDescription, GcpGcsBucketUpdateParameters updateParameters)
-    throws ApiException {
-    var body = new UpdateControlledGcpGcsBucketRequestBody()
-        .name(updatedResourceName)
-        .description(updatedDescription)
-        .updateParameters(updateParameters);
-    logger.info("Attempting to update bucket {} resource ID {} workspace {}", bucketName, resourceId, getWorkspaceId());
+  private GcpGcsBucketResource updateBucketAttempt(
+      ControlledGcpResourceApi resourceApi,
+      UUID resourceId,
+      @Nullable String updatedResourceName,
+      @Nullable String updatedDescription,
+      GcpGcsBucketUpdateParameters updateParameters)
+      throws ApiException {
+    var body =
+        new UpdateControlledGcpGcsBucketRequestBody()
+            .name(updatedResourceName)
+            .description(updatedDescription)
+            .updateParameters(updateParameters);
+    logger.info(
+        "Attempting to update bucket {} resource ID {} workspace {}",
+        bucketName,
+        resourceId,
+        getWorkspaceId());
     return resourceApi.updateGcsBucket(body, getWorkspaceId(), resourceId);
   }
 

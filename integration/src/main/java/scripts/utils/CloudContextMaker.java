@@ -1,15 +1,11 @@
 package scripts.utils;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.model.CloudPlatform;
 import bio.terra.workspace.model.CreateCloudContextRequest;
 import bio.terra.workspace.model.CreateCloudContextResult;
 import bio.terra.workspace.model.ErrorReport;
 import bio.terra.workspace.model.JobControl;
-import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.JobReport.StatusEnum;
 import java.time.Duration;
 import java.util.UUID;
@@ -54,9 +50,7 @@ public class CloudContextMaker {
     }
 
     ClientTestUtils.assertJobSuccess(
-        "Create Cloud Context",
-        contextResult.getJobReport(),
-        contextResult.getErrorReport());
+        "Create Cloud Context", contextResult.getJobReport(), contextResult.getErrorReport());
     return contextResult.getGcpContext().getProjectId();
   }
 

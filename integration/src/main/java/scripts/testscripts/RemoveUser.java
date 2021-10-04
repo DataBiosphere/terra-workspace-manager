@@ -55,7 +55,9 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     TestUserSpecification workspaceOwner = testUsers.get(0);
     this.privateResourceUser = testUsers.get(1);
     this.sharedResourceUser = testUsers.get(2);
-    assertNotEquals(privateResourceUser.userEmail, sharedResourceUser.userEmail,
+    assertNotEquals(
+        privateResourceUser.userEmail,
+        sharedResourceUser.userEmail,
         "The two test users are distinct");
 
     // Add one user as a reader, and one as both a reader and writer.
@@ -76,11 +78,12 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), ownerWorkspaceApi);
 
     // Create a shared GCS bucket with one object inside.
-    ControlledGcpResourceApi ownerResourceApi = ClientTestUtils
-        .getControlledGcpResourceClient(workspaceOwner, server);
+    ControlledGcpResourceApi ownerResourceApi =
+        ClientTestUtils.getControlledGcpResourceClient(workspaceOwner, server);
     String sharedBucketName = BUCKET_PREFIX + UUID.randomUUID();
-    sharedBucket = ResourceMaker.makeControlledGcsBucketUserShared(
-        ownerResourceApi, getWorkspaceId(), sharedBucketName, CloningInstructionsEnum.NOTHING);
+    sharedBucket =
+        ResourceMaker.makeControlledGcsBucketUserShared(
+            ownerResourceApi, getWorkspaceId(), sharedBucketName, CloningInstructionsEnum.NOTHING);
     ResourceModifier.addFileToBucket(sharedBucket, workspaceOwner, projectId);
 
     // Create a private GCS bucket for privateResourceUser with one object inside.
@@ -89,21 +92,31 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     privateRoles.addAll(PRIVATE_ROLES);
     ControlledGcpResourceApi privateUserResourceApi =
         ClientTestUtils.getControlledGcpResourceClient(privateResourceUser, server);
-    privateBucket = ResourceMaker.makeControlledGcsBucketUserPrivate(
-        privateUserResourceApi, getWorkspaceId(), privateBucketName, privateResourceUser.userEmail,
-        privateRoles);
+    privateBucket =
+        ResourceMaker.makeControlledGcsBucketUserPrivate(
+            privateUserResourceApi,
+            getWorkspaceId(),
+            privateBucketName,
+            privateResourceUser.userEmail,
+            privateRoles);
     ResourceModifier.addFileToBucket(privateBucket, privateResourceUser, projectId);
 
     // Create a private BQ dataset for privateResourceUser and populate it.
     String datasetId = RandomStringUtils.randomAlphabetic(8).toLowerCase();
-    privateDataset = ResourceMaker.makeControlledBigQueryDatasetUserPrivate(
-        privateUserResourceApi, getWorkspaceId(), datasetId, privateResourceUser.userEmail,
-        privateRoles, CloningInstructionsEnum.NOTHING);
+    privateDataset =
+        ResourceMaker.makeControlledBigQueryDatasetUserPrivate(
+            privateUserResourceApi,
+            getWorkspaceId(),
+            datasetId,
+            privateResourceUser.userEmail,
+            privateRoles,
+            CloningInstructionsEnum.NOTHING);
     ResourceModifier.populateBigQueryDataset(privateDataset, privateResourceUser, projectId);
     // Create a private notebook for privateResourceUser.
     String notebookInstanceId = RandomStringUtils.randomAlphabetic(8).toLowerCase();
-    privateNotebook = ResourceMaker.makeControlledNotebookUserPrivate(
-        getWorkspaceId(), notebookInstanceId, privateResourceUser, privateUserResourceApi);
+    privateNotebook =
+        ResourceMaker.makeControlledNotebookUserPrivate(
+            getWorkspaceId(), notebookInstanceId, privateResourceUser, privateUserResourceApi);
   }
 
   @Override
@@ -135,7 +148,8 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     ResourceModifier.retrieveBucketFile(sharedBucketName, projectId, privateResourceUser);
     ResourceModifier.retrieveBucketFile(privateBucketName, projectId, privateResourceUser);
     ResourceModifier.readPopulatedBigQueryTable(privateDataset, privateResourceUser, projectId);
-    assertTrue(ResourceModifier.userHasProxyAccess(privateNotebook, privateResourceUser, projectId));
+    assertTrue(
+        ResourceModifier.userHasProxyAccess(privateNotebook, privateResourceUser, projectId));
 
     // Remove WRITER role from privateResourceUser. This is their last role, so they are no longer
     // a member of this workspace.
@@ -160,8 +174,9 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     try {
       ResourceModifier.retrieveBucketFile(bucketName, projectId, testUser);
       // If nothing is thrown, that's bad! The user actually can read the bucket.
-      throw new RuntimeException(String
-          .format("User %s is still able to access bucket %s", testUser.userEmail, bucketName));
+      throw new RuntimeException(
+          String.format(
+              "User %s is still able to access bucket %s", testUser.userEmail, bucketName));
     } catch (StorageException googleError) {
       // If this is a 403 error, the user was successfully removed from the bucket.
       assertEquals(SC_FORBIDDEN, googleError.getCode());
@@ -175,13 +190,14 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
    * An assertion that the given user cannot read from the given dataset. This is pulled into a
    * separate function to make retrying simpler.
    */
-  private void assertUserCannotReadDataset(GcpBigQueryDatasetResource dataset,
-      TestUserSpecification testUser) {
+  private void assertUserCannotReadDataset(
+      GcpBigQueryDatasetResource dataset, TestUserSpecification testUser) {
     try {
       ResourceModifier.readPopulatedBigQueryTable(dataset, testUser, projectId);
       // If nothing is thrown, that's bad! The user actually can read the dataset.
-      throw new RuntimeException(String
-          .format("User %s is still able to access dataset %s",
+      throw new RuntimeException(
+          String.format(
+              "User %s is still able to access dataset %s",
               testUser.userEmail, dataset.getMetadata().getResourceId()));
     } catch (BigQueryException googleError) {
       // If this is a 403 error, the user was successfully removed from the dataset.
@@ -202,7 +218,8 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     try {
       if (ResourceModifier.userHasProxyAccess(createdNotebook, testUser, projectId)) {
         throw new RuntimeException(
-            String.format("User %s is still able to access notebook %s",
+            String.format(
+                "User %s is still able to access notebook %s",
                 testUser.userEmail,
                 createdNotebook.getAiNotebookInstance().getMetadata().getResourceId()));
       }

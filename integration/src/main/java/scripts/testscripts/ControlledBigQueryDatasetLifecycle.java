@@ -91,8 +91,9 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     logger.info("Created project {}", projectId);
 
     // Create a shared BigQuery dataset
-    GcpBigQueryDatasetResource createdDataset = ResourceMaker
-        .makeControlledBigQueryDatasetUserShared(ownerResourceApi, getWorkspaceId(), DATASET_NAME);
+    GcpBigQueryDatasetResource createdDataset =
+        ResourceMaker.makeControlledBigQueryDatasetUserShared(
+            ownerResourceApi, getWorkspaceId(), DATASET_NAME);
     UUID resourceId = createdDataset.getMetadata().getResourceId();
 
     // Retrieve the dataset resource
@@ -112,8 +113,8 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     // Workspace reader can read the table
     // This is the reader's first use of cloud APIs after being added to the workspace, so we
     // retry this operation until cloud IAM has properly synced.
-    var readTable = ClientTestUtils.getWithRetryOnException(() ->
-        readerBqClient.getTable(table.getTableId()));
+    var readTable =
+        ClientTestUtils.getWithRetryOnException(() -> readerBqClient.getTable(table.getTableId()));
     assertEquals(table, readTable);
     logger.info("Read table {} as workspace reader", tableName);
 
@@ -152,8 +153,11 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     String resourceDescription = "a description for WSM";
     Integer defaultTableLifetimeSec = 5400;
     var updateDatasetRequest =
-        new UpdateControlledGcpBigQueryDatasetRequestBody().description(resourceDescription)
-                .updateParameters(new GcpBigQueryDatasetUpdateParameters().defaultTableLifetime(defaultTableLifetimeSec));
+        new UpdateControlledGcpBigQueryDatasetRequestBody()
+            .description(resourceDescription)
+            .updateParameters(
+                new GcpBigQueryDatasetUpdateParameters()
+                    .defaultTableLifetime(defaultTableLifetimeSec));
     ownerResourceApi.updateBigQueryDataset(updateDatasetRequest, getWorkspaceId(), resourceId);
     var datasetAfterUpdate = ownerResourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
     assertEquals(datasetAfterUpdate.getMetadata().getDescription(), resourceDescription);
@@ -170,10 +174,12 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
         writerBqClient.delete(TableId.of(projectId, DATASET_NAME, table.getTableId().getTable())));
 
     // Workspace writer cannot delete the dataset directly
-    var writerCannotDeleteException = assertThrows(BigQueryException.class, () -> writerBqClient.delete(DATASET_NAME));
+    var writerCannotDeleteException =
+        assertThrows(BigQueryException.class, () -> writerBqClient.delete(DATASET_NAME));
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, writerCannotDeleteException.getCode());
     // Workspace owner cannot delete the dataset directly
-    var ownerCannotDeleteException = assertThrows(BigQueryException.class, () -> ownerBqClient.delete(DATASET_NAME));
+    var ownerCannotDeleteException =
+        assertThrows(BigQueryException.class, () -> ownerBqClient.delete(DATASET_NAME));
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, ownerCannotDeleteException.getCode());
 
     // Workspace owner can delete the dataset through WSM
