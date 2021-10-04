@@ -23,10 +23,10 @@ jobs:
       # - Install the latest version of PostgreSQL. If you want a specific version, use 'postgresql-12' or similar instead of 'postgresql':
       - name: Install the latest postgres
         run: |
-            sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-            curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
-            apt-get update
-            apt-get -y install postgresql
+            sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+            sudo sh -c 'curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - '
+            sudo apt-get update
+            sudo apt-get -y install postgresql
 
       - name: Set up AdoptOpenJDK 11
         uses: joschi/setup-jdk@v2
