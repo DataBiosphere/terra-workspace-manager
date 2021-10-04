@@ -1,18 +1,8 @@
-buildscript {
-    apply from: "../common.gradle"
-}
-
 plugins {
-    id "java-library"
-    id "maven-publish"
+    id 'terra-workspace-manager.library-conventions'
 
-    id "com.jfrog.artifactory" version "4.18.2"
     id "org.hidetake.swagger.generator" version "2.18.2"
 }
-
-group = 'bio.terra'
-version = gradle.wsmVersion
-sourceCompatibility = JavaVersion.VERSION_11
 
 dependencies {
     ext {
@@ -54,57 +44,6 @@ swaggerSources {
                       "modelDocs=false," +
                       "dateLibrary=java8"
             ]
-        }
-    }
-}
-
-// Publishing
-
-// This and the test below makes sure the build will fail reasonably if you try
-// to publish without the environment variables defined.
-def artifactory_username = System.getenv("ARTIFACTORY_USERNAME")
-def artifactory_password = System.getenv("ARTIFACTORY_PASSWORD")
-
-gradle.taskGraph.whenReady { taskGraph ->
-    if (taskGraph.hasTask(artifactoryPublish) &&
-            (artifactory_username == null || artifactory_password == null)) {
-        throw new GradleException("Set env vars ARTIFACTORY_USERNAME and ARTIFACTORY_PASSWORD to publish")
-    }
-}
-
-java {
-    // Builds sources into the published package as part of the 'assemble' task.
-    withSourcesJar()
-}
-
-publishing {
-    publications {
-        workspaceManagerClientLibrary(MavenPublication) {
-            artifactId = "workspace-manager-client"
-            from components.java
-            versionMapping {
-                usage("java-runtime") {
-                    fromResolutionResult()
-                }
-            }
-        }
-    }
-}
-
-artifactory {
-    publish {
-        contextUrl = "https://broadinstitute.jfrog.io/broadinstitute/"
-        repository {
-            repoKey = "libs-snapshot-local" // The Artifactory repository key to publish to
-            username = "${artifactory_username}" // The publisher user name
-            password = "${artifactory_password}" // The publisher password
-        }
-        defaults {
-            // This is how we tell the Artifactory Plugin which artifacts should be published to Artifactory.
-            // Reference to Gradle publications defined in the build script.
-            publications("workspaceManagerClientLibrary")
-            publishArtifacts = true
-            publishPom = true
         }
     }
 }
