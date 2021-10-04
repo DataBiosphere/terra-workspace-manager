@@ -103,19 +103,26 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     // Create a private bucket, which privateResourceUser assigns to themself.
     // Cloud IAM permissions may take several minutes to sync, so we retry this operation until
     // it succeeds.
-    CreatedControlledGcpGcsBucket bucket = ClientTestUtils.getWithRetryOnException(() ->
-        createPrivateBucket(privateUserResourceApi));
+    CreatedControlledGcpGcsBucket bucket =
+        ClientTestUtils.getWithRetryOnException(() -> createPrivateBucket(privateUserResourceApi));
     UUID resourceId = bucket.getResourceId();
 
     // Retrieve the bucket resource from WSM
     logger.info("Retrieving bucket resource id {}", resourceId.toString());
     GcpGcsBucketResource gotBucket = privateUserResourceApi.getBucket(getWorkspaceId(), resourceId);
-    assertEquals(bucket.getGcpBucket().getAttributes().getBucketName(), gotBucket.getAttributes().getBucketName());
+    assertEquals(
+        bucket.getGcpBucket().getAttributes().getBucketName(),
+        gotBucket.getAttributes().getBucketName());
     assertEquals(bucketName, gotBucket.getAttributes().getBucketName());
     // Assert the bucket is assigned to privateResourceUser, even though resource user was
     // not specified
-    assertEquals(privateResourceUser.userEmail,
-        gotBucket.getMetadata().getControlledResourceMetadata().getPrivateResourceUser().getUserName());
+    assertEquals(
+        privateResourceUser.userEmail,
+        gotBucket
+            .getMetadata()
+            .getControlledResourceMetadata()
+            .getPrivateResourceUser()
+            .getUserName());
 
     Storage ownerStorageClient = ClientTestUtils.getGcpStorageClient(testUser, projectId);
     Storage privateUserStorageClient =
@@ -177,8 +184,10 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
     // Workspace owner can delete the bucket through WSM
     var ownerDeleteResult = deleteBucket(workspaceOwnerResourceApi, resourceId);
-    ClientTestUtils.assertJobSuccess("owner delete bucket",
-        ownerDeleteResult.getJobReport(), ownerDeleteResult.getErrorReport());
+    ClientTestUtils.assertJobSuccess(
+        "owner delete bucket",
+        ownerDeleteResult.getJobReport(),
+        ownerDeleteResult.getErrorReport());
 
     // verify the bucket was deleted from WSM metadata
     ApiException bucketIsMissing =
@@ -209,9 +218,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
             .name(resourceName)
             .cloningInstructions(CloningInstructionsEnum.NOTHING)
             .accessScope(AccessScope.PRIVATE_ACCESS)
-            .privateResourceUser(
-                new PrivateResourceUser()
-                    .privateResourceIamRoles(privateUser))
+            .privateResourceUser(new PrivateResourceUser().privateResourceIamRoles(privateUser))
             .managedBy(ManagedBy.USER);
 
     var body =

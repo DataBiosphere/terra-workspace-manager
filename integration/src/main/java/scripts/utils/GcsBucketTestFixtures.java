@@ -12,13 +12,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Bucket parameters for integration testing. This class has no methods.
- */
+/** Bucket parameters for integration testing. This class has no methods. */
 public class GcsBucketTestFixtures {
 
-  private GcsBucketTestFixtures() {
-  }
+  private GcsBucketTestFixtures() {}
 
   public static final int LIFECYCLE_RULE_1_CONDITION_AGE = 64;
   public static final boolean LIFECYCLE_RULE_1_CONDITION_LIVE = true;
@@ -61,18 +58,25 @@ public class GcsBucketTestFixtures {
   public static final GcpGcsBucketUpdateParameters UPDATE_PARAMETERS_1 =
       new GcpGcsBucketUpdateParameters()
           .defaultStorageClass(GcpGcsBucketDefaultStorageClass.NEARLINE)
-          .lifecycle(new GcpGcsBucketLifecycle()
-              .addRulesItem(new GcpGcsBucketLifecycleRule()
-                  .action(new GcpGcsBucketLifecycleRuleAction()
-                      .type(GcpGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS)
-                      .storageClass(GcpGcsBucketDefaultStorageClass.ARCHIVE))
-                  .condition(new GcpGcsBucketLifecycleRuleCondition()
-                      .age(30)
-                      .createdBefore(OffsetDateTime
-                          .parse("1981-04-20T21:15:30-05:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME))
-                      .live(true)
-                      .numNewerVersions(3)
-                      .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.ARCHIVE))));
+          .lifecycle(
+              new GcpGcsBucketLifecycle()
+                  .addRulesItem(
+                      new GcpGcsBucketLifecycleRule()
+                          .action(
+                              new GcpGcsBucketLifecycleRuleAction()
+                                  .type(GcpGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS)
+                                  .storageClass(GcpGcsBucketDefaultStorageClass.ARCHIVE))
+                          .condition(
+                              new GcpGcsBucketLifecycleRuleCondition()
+                                  .age(30)
+                                  .createdBefore(
+                                      OffsetDateTime.parse(
+                                          "1981-04-20T21:15:30-05:00",
+                                          DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+                                  .live(true)
+                                  .numNewerVersions(3)
+                                  .addMatchesStorageClassItem(
+                                      GcpGcsBucketDefaultStorageClass.ARCHIVE))));
   public static final GcpGcsBucketUpdateParameters UPDATE_PARAMETERS_2 =
       new GcpGcsBucketUpdateParameters()
           .defaultStorageClass(GcpGcsBucketDefaultStorageClass.COLDLINE);

@@ -89,7 +89,11 @@ public class EnumerateResources extends DataRepoTestScriptBase {
     // create the resources for the test
     logger.info("Creating {} resources", RESOURCE_COUNT);
     resourceList =
-        makeResources(ownerReferencedGcpResourceApi, ownerControlledGcpResourceApi, getWorkspaceId(), workspaceOwner.userEmail);
+        makeResources(
+            ownerReferencedGcpResourceApi,
+            ownerControlledGcpResourceApi,
+            getWorkspaceId(),
+            workspaceOwner.userEmail);
     logger.info("Created {} resources", resourceList.size());
   }
 
@@ -98,8 +102,10 @@ public class EnumerateResources extends DataRepoTestScriptBase {
       throws Exception {
 
     // Add second user to the workspace as a reader
-    workspaceApi.grantRole(new GrantRoleRequestBody().memberEmail(workspaceReader.userEmail),
-        getWorkspaceId(),IamRole.READER);
+    workspaceApi.grantRole(
+        new GrantRoleRequestBody().memberEmail(workspaceReader.userEmail),
+        getWorkspaceId(),
+        IamRole.READER);
 
     // Case 1: fetch all
     ResourceList enumList =
@@ -111,8 +117,11 @@ public class EnumerateResources extends DataRepoTestScriptBase {
     // Repeat case 1 as the workspace reader.
     // As this is the first operation after modifying workspace IAM groups, retry here to compensate
     // for the delay in GCP IAM propagation.
-    ResourceList readerEnumList = ClientTestUtils.getWithRetryOnException(
-        () -> readerResourceApi.enumerateResources(getWorkspaceId(), 0, RESOURCE_COUNT, null, null));
+    ResourceList readerEnumList =
+        ClientTestUtils.getWithRetryOnException(
+            () ->
+                readerResourceApi.enumerateResources(
+                    getWorkspaceId(), 0, RESOURCE_COUNT, null, null));
     logResult("fetchall reader", readerEnumList);
     matchFullResourceList(readerEnumList.getResources());
 
@@ -138,7 +147,8 @@ public class EnumerateResources extends DataRepoTestScriptBase {
 
     // Case 3: no results if offset is too high
     ResourceList enumEmptyList =
-        ownerResourceApi.enumerateResources(getWorkspaceId(), 10 * PAGE_SIZE, PAGE_SIZE, null, null);
+        ownerResourceApi.enumerateResources(
+            getWorkspaceId(), 10 * PAGE_SIZE, PAGE_SIZE, null, null);
     assertThat(enumEmptyList.getResources().size(), equalTo(0));
 
     // Case 4: filter by resource type
@@ -309,8 +319,8 @@ public class EnumerateResources extends DataRepoTestScriptBase {
             privateRoles.addAll(PRIVATE_ROLES);
             GcpGcsBucketResource resource =
                 ResourceMaker.makeControlledGcsBucketUserPrivate(
-                    controlledGcpResourceApi, workspaceId, name, testUserEmail, privateRoles)
-                .getGcpBucket();
+                        controlledGcpResourceApi, workspaceId, name, testUserEmail, privateRoles)
+                    .getGcpBucket();
             resourceList.add(resource.getMetadata());
             break;
           }

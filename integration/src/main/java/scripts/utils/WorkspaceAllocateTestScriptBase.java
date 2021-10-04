@@ -75,7 +75,8 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
    * Utility for making the WSM calls to create a workspace. Exposed as protected for test
    * implementations which need to create additional workspaces.
    */
-  protected CreatedWorkspace createWorkspace(UUID workspaceId, String spendProfileId, WorkspaceApi workspaceApi) throws Exception {
+  protected CreatedWorkspace createWorkspace(
+      UUID workspaceId, String spendProfileId, WorkspaceApi workspaceApi) throws Exception {
     final var requestBody =
         new CreateWorkspaceRequestBody()
             .id(workspaceId)

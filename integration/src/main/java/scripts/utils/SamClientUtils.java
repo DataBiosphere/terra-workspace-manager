@@ -6,7 +6,6 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
-import java.io.IOException;
 import javax.annotation.Nullable;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
@@ -21,7 +20,8 @@ public class SamClientUtils {
 
   private static final Logger logger = LoggerFactory.getLogger(SamClientUtils.class);
 
-  private static ApiClient getSamApiClient(TestUserSpecification testUser, ServerSpecification server) throws Exception {
+  private static ApiClient getSamApiClient(
+      TestUserSpecification testUser, ServerSpecification server) throws Exception {
     AccessToken accessToken = null;
 
     // if no test user is specified, then return a client object without an access token set
@@ -31,8 +31,8 @@ public class SamClientUtils {
           "Fetching credentials and building Sam ApiClient object for test user: {}",
           testUser.name);
       GoogleCredentials userCredential =
-          AuthenticationUtils
-              .getDelegatedUserCredential(testUser, ClientTestUtils.TEST_USER_SCOPES);
+          AuthenticationUtils.getDelegatedUserCredential(
+              testUser, ClientTestUtils.TEST_USER_SCOPES);
       accessToken = AuthenticationUtils.getAccessToken(userCredential);
     }
     return buildSamClient(accessToken, server);
@@ -54,8 +54,8 @@ public class SamClientUtils {
     return apiClient;
   }
 
-  public static GoogleApi samGoogleApi(TestUserSpecification testUser, ServerSpecification server) throws Exception {
+  public static GoogleApi samGoogleApi(TestUserSpecification testUser, ServerSpecification server)
+      throws Exception {
     return new GoogleApi(getSamApiClient(testUser, server));
   }
-
 }

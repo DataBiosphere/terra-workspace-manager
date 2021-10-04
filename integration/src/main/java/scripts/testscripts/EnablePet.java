@@ -1,7 +1,7 @@
 package scripts.testscripts;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
@@ -23,7 +23,8 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
   private String projectId;
 
   @Override
-  protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) throws Exception {
+  protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
+      throws Exception {
     super.doSetup(testUsers, workspaceApi);
     projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
   }
@@ -43,9 +44,11 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
 
     // Validate that calling this endpoint as the pet does not grant the pet permission to
     // impersonate itself.
-    String rawPetSaToken = samGoogleApi.getPetServiceAccountToken(projectId, ClientTestUtils.TEST_USER_SCOPES);
+    String rawPetSaToken =
+        samGoogleApi.getPetServiceAccountToken(projectId, ClientTestUtils.TEST_USER_SCOPES);
     AccessToken petSaToken = new AccessToken(rawPetSaToken, null);
-    WorkspaceApi petSaWorkspaceApi = ClientTestUtils.getWorkspaceClientFromToken(petSaToken, server);
+    WorkspaceApi petSaWorkspaceApi =
+        ClientTestUtils.getWorkspaceClientFromToken(petSaToken, server);
     String petEnableResult = petSaWorkspaceApi.enablePet(getWorkspaceId());
     assertEquals(petSaEmail, petEnableResult);
     Iam petIamClient = ClientTestUtils.getGcpIamClientFromToken(petSaToken);
@@ -54,13 +57,20 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
   }
 
   private boolean canImpersonateSa(Iam iamClient, String petSaEmail) throws Exception {
-    String fullyQualifiedSaName = String.format("projects/%s/serviceAccounts/%s", projectId, petSaEmail);
-    TestIamPermissionsRequest testIamRequest = new TestIamPermissionsRequest()
-        .setPermissions(Collections.singletonList("iam.serviceAccounts.actAs"));
-    TestIamPermissionsResponse response = iamClient.projects().serviceAccounts()
-        .testIamPermissions(fullyQualifiedSaName, testIamRequest).execute();
+    String fullyQualifiedSaName =
+        String.format("projects/%s/serviceAccounts/%s", projectId, petSaEmail);
+    TestIamPermissionsRequest testIamRequest =
+        new TestIamPermissionsRequest()
+            .setPermissions(Collections.singletonList("iam.serviceAccounts.actAs"));
+    TestIamPermissionsResponse response =
+        iamClient
+            .projects()
+            .serviceAccounts()
+            .testIamPermissions(fullyQualifiedSaName, testIamRequest)
+            .execute();
     // When no permissions are active, the permissions field of the response is null instead of an
     // empty list. This is a quirk of the GCP client library.
-    return response.getPermissions() != null && response.getPermissions().contains("iam.serviceAccounts.actAs");
+    return response.getPermissions() != null
+        && response.getPermissions().contains("iam.serviceAccounts.actAs");
   }
 }

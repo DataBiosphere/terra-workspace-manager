@@ -247,17 +247,18 @@ public class ClientTestUtils {
   }
 
   /**
-   * Get a result from a call that might throw an exception. Treat the exception as retryable,
-   * sleep for 15 seconds, and retry up to 40 times. This structure is useful for situations where
-   * we are waiting on a cloud IAM permission change to take effect.
+   * Get a result from a call that might throw an exception. Treat the exception as retryable, sleep
+   * for 15 seconds, and retry up to 40 times. This structure is useful for situations where we are
+   * waiting on a cloud IAM permission change to take effect.
+   *
    * @param supplier - code returning the result or throwing an exception
    * @param <T> - type of result
    * @return - result from supplier, the first time it doesn't throw, or null if all tries have been
    *     exhausted
    * @throws InterruptedException
    */
-  public static @Nullable <T> T getWithRetryOnException(
-      SupplierWithException<T> supplier) throws InterruptedException {
+  public static @Nullable <T> T getWithRetryOnException(SupplierWithException<T> supplier)
+      throws InterruptedException {
     T result = null;
     int numTries = 40;
     Duration sleepDuration = Duration.ofSeconds(15);
@@ -279,15 +280,14 @@ public class ClientTestUtils {
   }
 
   public static void runWithRetryOnException(Runnable fn) throws InterruptedException {
-    getWithRetryOnException(() -> {
-      fn.run();
-      return null;
-    });
+    getWithRetryOnException(
+        () -> {
+          fn.run();
+          return null;
+        });
   }
 
-  /**
-   * An interface for an arbitrary workspace operation that throws an {@link ApiException}.
-   */
+  /** An interface for an arbitrary workspace operation that throws an {@link ApiException}. */
   @FunctionalInterface
   public interface WorkspaceOperation<T> {
 
@@ -297,17 +297,18 @@ public class ClientTestUtils {
   /**
    * Polls a workspace API operation as long as the job is running.
    *
-   * @param <T>                the result type of the async operation.
-   * @param initialValue       the first result to use to poll
-   * @param operation          a function for the workspace async operation to execute
+   * @param <T> the result type of the async operation.
+   * @param initialValue the first result to use to poll
+   * @param operation a function for the workspace async operation to execute
    * @param jobReportExtractor a function for getting the {@link JobReport} from the result
-   * @param pollInterval       how long to sleep between polls.
+   * @param pollInterval how long to sleep between polls.
    */
   public static <T> T pollWhileRunning(
       T initialValue,
       WorkspaceOperation<T> operation,
       Function<T, JobReport> jobReportExtractor,
-      Duration pollInterval) throws InterruptedException, ApiException {
+      Duration pollInterval)
+      throws InterruptedException, ApiException {
     T result = initialValue;
     while (jobIsRunning(jobReportExtractor.apply(result))) {
       Thread.sleep(pollInterval.toMillis());
@@ -331,7 +332,8 @@ public class ClientTestUtils {
    * @param jobReport jobReport from the operation result
    * @param errorReport errorReport from the operation result - may be null if no error
    */
-  public static void assertJobSuccess(String operation, JobReport jobReport, @Nullable ErrorReport errorReport) {
+  public static void assertJobSuccess(
+      String operation, JobReport jobReport, @Nullable ErrorReport errorReport) {
     if (jobReport.getStatus() == StatusEnum.SUCCEEDED) {
       assertNull(errorReport);
       logger.info("Operation {} succeeded", operation);
@@ -347,6 +349,7 @@ public class ClientTestUtils {
 
   /**
    * Check Optional's value is present and return it, or else fail an assertion.
+   *
    * @param optional - Optional expression
    * @param <T> - value type of optional
    * @return - value of optional, if present

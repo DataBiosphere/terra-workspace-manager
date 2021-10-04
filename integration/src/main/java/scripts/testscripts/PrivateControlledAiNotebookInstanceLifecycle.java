@@ -56,8 +56,8 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         testUsers != null && testUsers.size() > 2);
     this.resourceUser = testUsers.get(1);
     this.otherWorkspaceUser = testUsers.get(2);
-    assertNotEquals(resourceUser.userEmail, otherWorkspaceUser.userEmail,
-        "The two test users are distinct");
+    assertNotEquals(
+        resourceUser.userEmail, otherWorkspaceUser.userEmail, "The two test users are distinct");
     this.instanceId = RandomStringUtils.randomAlphabetic(8).toLowerCase();
   }
 
@@ -85,49 +85,70 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
 
     GcpAiNotebookInstanceResource resource =
         resourceUserApi.getAiNotebookInstance(getWorkspaceId(), resourceId);
-    assertEquals(instanceId, resource.getAttributes().getInstanceId(),
+    assertEquals(
+        instanceId,
+        resource.getAttributes().getInstanceId(),
         "Notebook instance id is correct in GET response from WSM");
-    assertEquals(instanceId,
+    assertEquals(
+        instanceId,
         creationResult.getAiNotebookInstance().getAttributes().getInstanceId(),
         "Notebook instance id is correct in create response from WSM");
-    assertEquals(resourceUser.userEmail,
-        resource.getMetadata().getControlledResourceMetadata().getPrivateResourceUser().getUserName(),
+    assertEquals(
+        resourceUser.userEmail,
+        resource
+            .getMetadata()
+            .getControlledResourceMetadata()
+            .getPrivateResourceUser()
+            .getUserName(),
         "User is the private user of the notebook");
 
-    String instanceName = String
-        .format("projects/%s/locations/%s/instances/%s", resource.getAttributes().getProjectId(),
-            resource.getAttributes().getLocation(), resource.getAttributes().getInstanceId());
+    String instanceName =
+        String.format(
+            "projects/%s/locations/%s/instances/%s",
+            resource.getAttributes().getProjectId(),
+            resource.getAttributes().getLocation(),
+            resource.getAttributes().getInstanceId());
     AIPlatformNotebooks userNotebooks = ClientTestUtils.getAIPlatformNotebooksClient(resourceUser);
 
-    assertTrue(ResourceModifier.userHasProxyAccess(
-        creationResult, resourceUser, resource.getAttributes().getProjectId()),
+    assertTrue(
+        ResourceModifier.userHasProxyAccess(
+            creationResult, resourceUser, resource.getAttributes().getProjectId()),
         "Private resource user has access to their notebook");
-    assertFalse(ResourceModifier.userHasProxyAccess(
-        creationResult, otherWorkspaceUser, resource.getAttributes().getProjectId()),
+    assertFalse(
+        ResourceModifier.userHasProxyAccess(
+            creationResult, otherWorkspaceUser, resource.getAttributes().getProjectId()),
         "Other workspace user does not have access to a private notebook");
 
     // The user should be able to stop their notebook.
     userNotebooks.projects().locations().instances().stop(instanceName, new StopInstanceRequest());
 
     // The user should not be able to directly delete their notebook.
-    GoogleJsonResponseException directDeleteForbidden = assertThrows(
-        GoogleJsonResponseException.class, () ->
-            userNotebooks.projects().locations().instances().delete(instanceName).execute());
-    assertEquals(HttpStatus.SC_FORBIDDEN, directDeleteForbidden.getStatusCode(),
+    GoogleJsonResponseException directDeleteForbidden =
+        assertThrows(
+            GoogleJsonResponseException.class,
+            () -> userNotebooks.projects().locations().instances().delete(instanceName).execute());
+    assertEquals(
+        HttpStatus.SC_FORBIDDEN,
+        directDeleteForbidden.getStatusCode(),
         "User may not delete notebook directly on GCP");
 
     // Delete the AI Notebook through WSM.
-    DeleteControlledGcpAiNotebookInstanceResult deleteResult = resourceUserApi
-        .deleteAiNotebookInstance(new DeleteControlledGcpAiNotebookInstanceRequest()
-                .jobControl(new JobControl().id(UUID.randomUUID().toString())), getWorkspaceId(),
+    DeleteControlledGcpAiNotebookInstanceResult deleteResult =
+        resourceUserApi.deleteAiNotebookInstance(
+            new DeleteControlledGcpAiNotebookInstanceRequest()
+                .jobControl(new JobControl().id(UUID.randomUUID().toString())),
+            getWorkspaceId(),
             resourceId);
     String deleteJobId = deleteResult.getJobReport().getId();
-    deleteResult = ClientTestUtils.pollWhileRunning(deleteResult,
-        () -> resourceUserApi.getDeleteAiNotebookInstanceResult(getWorkspaceId(), deleteJobId),
-        DeleteControlledGcpAiNotebookInstanceResult::getJobReport,
-        Duration.ofSeconds(10));
+    deleteResult =
+        ClientTestUtils.pollWhileRunning(
+            deleteResult,
+            () -> resourceUserApi.getDeleteAiNotebookInstanceResult(getWorkspaceId(), deleteJobId),
+            DeleteControlledGcpAiNotebookInstanceResult::getJobReport,
+            Duration.ofSeconds(10));
 
-    ClientTestUtils.assertJobSuccess("delete ai notebook", deleteResult.getJobReport(), deleteResult.getErrorReport());
+    ClientTestUtils.assertJobSuccess(
+        "delete ai notebook", deleteResult.getJobReport(), deleteResult.getErrorReport());
 
     // Verify the notebook was deleted from WSM metadata.
     ApiException notebookIsMissing =
@@ -138,12 +159,14 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     assertEquals(HttpStatus.SC_NOT_FOUND, notebookIsMissing.getCode(), "Error from WSM is 404");
     // Verify the notebook was deleted from GCP.
     GoogleJsonResponseException notebookNotFound =
-        assertThrows(GoogleJsonResponseException.class, () ->
-            userNotebooks.projects().locations().instances().get(instanceName).execute(),
+        assertThrows(
+            GoogleJsonResponseException.class,
+            () -> userNotebooks.projects().locations().instances().get(instanceName).execute(),
             "Notebook is deleted from GCP");
     // GCP may respond with either 403 or 404 depending on how quickly this is called after deleting
     // the notebook. Either response is valid in this case.
-    assertThat("Error from GCP is 403 or 404",
+    assertThat(
+        "Error from GCP is 403 or 404",
         notebookNotFound.getStatusCode(),
         anyOf(equalTo(HttpStatus.SC_NOT_FOUND), equalTo(HttpStatus.SC_FORBIDDEN)));
   }

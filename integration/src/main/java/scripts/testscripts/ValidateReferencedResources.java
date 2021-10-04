@@ -41,26 +41,37 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
     ReferencedGcpResourceApi referencedGcpResourceApi = new ReferencedGcpResourceApi(apiClient);
     String bqReferenceName = RandomStringUtils.random(6, true, false);
     GcpBigQueryDatasetResource bqReference =
-        ResourceMaker.makeBigQueryReference(referencedGcpResourceApi, getWorkspaceId(), bqReferenceName);
+        ResourceMaker.makeBigQueryReference(
+            referencedGcpResourceApi, getWorkspaceId(), bqReferenceName);
     bqResourceId = bqReference.getMetadata().getResourceId();
     String bucketReferenceName = RandomStringUtils.random(6, true, false);
     GcpGcsBucketResource bucketReference =
-        ResourceMaker.makeGcsBucketReference(referencedGcpResourceApi, getWorkspaceId(), bucketReferenceName);
+        ResourceMaker.makeGcsBucketReference(
+            referencedGcpResourceApi, getWorkspaceId(), bucketReferenceName);
     bucketResourceId = bucketReference.getMetadata().getResourceId();
     String snapshotReferenceName = RandomStringUtils.random(6, true, false);
     DataRepoSnapshotResource snapshotReference =
-        ResourceMaker.makeDataRepoSnapshotReference(referencedGcpResourceApi, getWorkspaceId(), snapshotReferenceName, getDataRepoSnapshotId(), getDataRepoInstanceName());
+        ResourceMaker.makeDataRepoSnapshotReference(
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            snapshotReferenceName,
+            getDataRepoSnapshotId(),
+            getDataRepoInstanceName());
     snapshotResourceId = snapshotReference.getMetadata().getResourceId();
   }
+
   @Override
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
     ResourceApi ownerApi = new ResourceApi(ClientTestUtils.getClientForTestUser(testUser, server));
-    ResourceApi secondUserApi = new ResourceApi(ClientTestUtils.getClientForTestUser(secondUser, server));
+    ResourceApi secondUserApi =
+        new ResourceApi(ClientTestUtils.getClientForTestUser(secondUser, server));
 
     // Add second user as workspace reader, though this will not affect permissions on referenced
     // external objects.
-    workspaceApi.grantRole(new GrantRoleRequestBody().memberEmail(secondUser.userEmail), getWorkspaceId(),
+    workspaceApi.grantRole(
+        new GrantRoleRequestBody().memberEmail(secondUser.userEmail),
+        getWorkspaceId(),
         IamRole.READER);
 
     // Check that our main test user has access

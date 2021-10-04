@@ -1,7 +1,5 @@
 package scripts.testscripts;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
 
@@ -14,25 +12,20 @@ import bio.terra.workspace.model.CloneReferencedGcpDataRepoSnapshotResourceResul
 import bio.terra.workspace.model.CloneReferencedGcpGcsBucketResourceResult;
 import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
 import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.CreateWorkspaceRequestBody;
-import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
-import scripts.utils.CloudContextMaker;
 import scripts.utils.DataRepoTestScriptBase;
 import scripts.utils.ResourceMaker;
-import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class CloneReferencedResources extends DataRepoTestScriptBase {
 
@@ -57,17 +50,23 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
     String bucketReferenceName = RandomStringUtils.random(16, true, false);
     // create reference to existing test bucket
     sourceBucketReference =
-        ResourceMaker
-            .makeGcsBucketReference(referencedGcpResourceApi, getWorkspaceId(), bucketReferenceName);
+        ResourceMaker.makeGcsBucketReference(
+            referencedGcpResourceApi, getWorkspaceId(), bucketReferenceName);
 
-    sourceBigQueryDatasetReference = ResourceMaker.makeBigQueryReference(referencedGcpResourceApi, getWorkspaceId(),
-        DATASET_RESOURCE_NAME);
+    sourceBigQueryDatasetReference =
+        ResourceMaker.makeBigQueryReference(
+            referencedGcpResourceApi, getWorkspaceId(), DATASET_RESOURCE_NAME);
 
     final String snapshotReferenceName = RandomStringUtils.random(6, true, false);
 
     // Create a data repo snapshot reference
-    sourceDataRepoSnapshotReference = ResourceMaker.makeDataRepoSnapshotReference(referencedGcpResourceApi,
-        getWorkspaceId(), snapshotReferenceName, getDataRepoSnapshotId(), getDataRepoInstanceName());
+    sourceDataRepoSnapshotReference =
+        ResourceMaker.makeDataRepoSnapshotReference(
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            snapshotReferenceName,
+            getDataRepoSnapshotId(),
+            getDataRepoInstanceName());
 
     // create a new workspace with cloud context
     destinationWorkspaceId = UUID.randomUUID();
@@ -78,73 +77,108 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
     // clone source reference to destination
-    final var cloneBucketReferenceRequestBody = new CloneReferencedResourceRequestBody()
-        .cloningInstructions(CloningInstructionsEnum.REFERENCE)
-        .name(CLONED_BUCKET_RESOURCE_NAME)
-        .destinationWorkspaceId(destinationWorkspaceId);
-    logger.info("Cloning GCS Bucket Reference\n\tworkspaceId: {}\n\tresourceId: {}\ninto\n\tworkspaceId: {}",
+    final var cloneBucketReferenceRequestBody =
+        new CloneReferencedResourceRequestBody()
+            .cloningInstructions(CloningInstructionsEnum.REFERENCE)
+            .name(CLONED_BUCKET_RESOURCE_NAME)
+            .destinationWorkspaceId(destinationWorkspaceId);
+    logger.info(
+        "Cloning GCS Bucket Reference\n\tworkspaceId: {}\n\tresourceId: {}\ninto\n\tworkspaceId: {}",
         sourceBucketReference.getMetadata().getWorkspaceId(),
         sourceBucketReference.getMetadata().getResourceId(),
         destinationWorkspaceId);
-    final CloneReferencedGcpGcsBucketResourceResult cloneBucketReferenceResult = referencedGcpResourceApi.cloneGcpGcsBucketReference(cloneBucketReferenceRequestBody,
-        getWorkspaceId(),
-        sourceBucketReference.getMetadata().getResourceId());
+    final CloneReferencedGcpGcsBucketResourceResult cloneBucketReferenceResult =
+        referencedGcpResourceApi.cloneGcpGcsBucketReference(
+            cloneBucketReferenceRequestBody,
+            getWorkspaceId(),
+            sourceBucketReference.getMetadata().getResourceId());
     assertEquals(getWorkspaceId(), cloneBucketReferenceResult.getSourceWorkspaceId());
-    assertEquals(StewardshipType.REFERENCED, cloneBucketReferenceResult.getResource().getMetadata().getStewardshipType());
-    assertEquals(ResourceType.GCS_BUCKET, cloneBucketReferenceResult.getResource().getMetadata().getResourceType());
-    assertEquals(sourceBucketReference.getMetadata().getResourceId(), cloneBucketReferenceResult.getSourceResourceId());
-    assertEquals(sourceBucketReference.getMetadata().getDescription(), cloneBucketReferenceResult.getResource().getMetadata().getDescription());
-    assertEquals(CLONED_BUCKET_RESOURCE_NAME, cloneBucketReferenceResult.getResource().getMetadata().getName());
-    assertEquals(TEST_BUCKET_NAME,
-        cloneBucketReferenceResult.getResource().getAttributes().getBucketName());
+    assertEquals(
+        StewardshipType.REFERENCED,
+        cloneBucketReferenceResult.getResource().getMetadata().getStewardshipType());
+    assertEquals(
+        ResourceType.GCS_BUCKET,
+        cloneBucketReferenceResult.getResource().getMetadata().getResourceType());
+    assertEquals(
+        sourceBucketReference.getMetadata().getResourceId(),
+        cloneBucketReferenceResult.getSourceResourceId());
+    assertEquals(
+        sourceBucketReference.getMetadata().getDescription(),
+        cloneBucketReferenceResult.getResource().getMetadata().getDescription());
+    assertEquals(
+        CLONED_BUCKET_RESOURCE_NAME,
+        cloneBucketReferenceResult.getResource().getMetadata().getName());
+    assertEquals(
+        TEST_BUCKET_NAME, cloneBucketReferenceResult.getResource().getAttributes().getBucketName());
 
-    final var cloneBigQueryDatasetRequestBody = new CloneReferencedResourceRequestBody()
-        .cloningInstructions(CloningInstructionsEnum.REFERENCE)
-        .name(CLONED_DATASET_RESOURCE_NAME)
-        .description(CLONED_DATASET_DESCRIPTION)
-        .destinationWorkspaceId(destinationWorkspaceId);
+    final var cloneBigQueryDatasetRequestBody =
+        new CloneReferencedResourceRequestBody()
+            .cloningInstructions(CloningInstructionsEnum.REFERENCE)
+            .name(CLONED_DATASET_RESOURCE_NAME)
+            .description(CLONED_DATASET_DESCRIPTION)
+            .destinationWorkspaceId(destinationWorkspaceId);
 
-    logger.info("Cloning BigQuery Dataset Reference\n\tworkspaceId: {}\n\tresourceId: {}\ninto\n\tworkspaceId: {}",
+    logger.info(
+        "Cloning BigQuery Dataset Reference\n\tworkspaceId: {}\n\tresourceId: {}\ninto\n\tworkspaceId: {}",
         sourceBigQueryDatasetReference.getMetadata().getWorkspaceId(),
         sourceBigQueryDatasetReference.getMetadata().getResourceId(),
         destinationWorkspaceId);
 
     final var cloneDatasetReferenceResult =
-        referencedGcpResourceApi.cloneGcpBigQueryDatasetReference(cloneBigQueryDatasetRequestBody,
-        getWorkspaceId(),
-        sourceBigQueryDatasetReference.getMetadata().getResourceId());
+        referencedGcpResourceApi.cloneGcpBigQueryDatasetReference(
+            cloneBigQueryDatasetRequestBody,
+            getWorkspaceId(),
+            sourceBigQueryDatasetReference.getMetadata().getResourceId());
     assertEquals(getWorkspaceId(), cloneDatasetReferenceResult.getSourceWorkspaceId());
-    final ResourceMetadata clonedDatasetResourceMetadata = cloneDatasetReferenceResult.getResource().getMetadata();
+    final ResourceMetadata clonedDatasetResourceMetadata =
+        cloneDatasetReferenceResult.getResource().getMetadata();
     assertEquals(StewardshipType.REFERENCED, clonedDatasetResourceMetadata.getStewardshipType());
     assertEquals(ResourceType.BIG_QUERY_DATASET, clonedDatasetResourceMetadata.getResourceType());
-    assertEquals(sourceBigQueryDatasetReference.getMetadata().getResourceId(), cloneDatasetReferenceResult.getSourceResourceId());
+    assertEquals(
+        sourceBigQueryDatasetReference.getMetadata().getResourceId(),
+        cloneDatasetReferenceResult.getSourceResourceId());
     assertEquals(CLONED_DATASET_RESOURCE_NAME, clonedDatasetResourceMetadata.getName());
     assertEquals(CLONED_DATASET_DESCRIPTION, clonedDatasetResourceMetadata.getDescription());
-    assertEquals(sourceBigQueryDatasetReference.getAttributes().getProjectId(),
+    assertEquals(
+        sourceBigQueryDatasetReference.getAttributes().getProjectId(),
         cloneDatasetReferenceResult.getResource().getAttributes().getProjectId());
 
-    final var cloneDataRepoSnapshotReferenceRequestBody = new CloneReferencedResourceRequestBody()
-        .cloningInstructions(CloningInstructionsEnum.REFERENCE)
-        .destinationWorkspaceId(destinationWorkspaceId);
-    logger.info("Cloning Data Repo Snapshot Reference\n\tworkspaceId: {}\n\tresourceId: {}\ninto\n\tworkspaceId: {}",
+    final var cloneDataRepoSnapshotReferenceRequestBody =
+        new CloneReferencedResourceRequestBody()
+            .cloningInstructions(CloningInstructionsEnum.REFERENCE)
+            .destinationWorkspaceId(destinationWorkspaceId);
+    logger.info(
+        "Cloning Data Repo Snapshot Reference\n\tworkspaceId: {}\n\tresourceId: {}\ninto\n\tworkspaceId: {}",
         sourceDataRepoSnapshotReference.getMetadata().getWorkspaceId(),
         sourceDataRepoSnapshotReference.getMetadata().getResourceId(),
         destinationWorkspaceId);
 
     final CloneReferencedGcpDataRepoSnapshotResourceResult cloneDataRepoSnapshotResult =
-        referencedGcpResourceApi.cloneGcpDataRepoSnapshotReference(cloneDataRepoSnapshotReferenceRequestBody,
+        referencedGcpResourceApi.cloneGcpDataRepoSnapshotReference(
+            cloneDataRepoSnapshotReferenceRequestBody,
             sourceDataRepoSnapshotReference.getMetadata().getWorkspaceId(),
             sourceDataRepoSnapshotReference.getMetadata().getResourceId());
     assertEquals(getWorkspaceId(), cloneDataRepoSnapshotResult.getSourceWorkspaceId());
-    final ResourceMetadata clonedDataRepoSnapshotResourceMetadata = cloneDataRepoSnapshotResult.getResource().getMetadata();
-    assertEquals(StewardshipType.REFERENCED, clonedDataRepoSnapshotResourceMetadata.getStewardshipType());
-    assertEquals(ResourceType.DATA_REPO_SNAPSHOT, clonedDataRepoSnapshotResourceMetadata.getResourceType());
-    assertEquals(sourceDataRepoSnapshotReference.getMetadata().getResourceId(), cloneDataRepoSnapshotResult.getSourceResourceId());
-    assertEquals(sourceDataRepoSnapshotReference.getMetadata().getName(), clonedDataRepoSnapshotResourceMetadata.getName());
-    assertEquals(sourceDataRepoSnapshotReference.getMetadata().getDescription(), clonedDataRepoSnapshotResourceMetadata.getDescription());
-    assertEquals(sourceDataRepoSnapshotReference.getAttributes().getSnapshot(),
+    final ResourceMetadata clonedDataRepoSnapshotResourceMetadata =
+        cloneDataRepoSnapshotResult.getResource().getMetadata();
+    assertEquals(
+        StewardshipType.REFERENCED, clonedDataRepoSnapshotResourceMetadata.getStewardshipType());
+    assertEquals(
+        ResourceType.DATA_REPO_SNAPSHOT, clonedDataRepoSnapshotResourceMetadata.getResourceType());
+    assertEquals(
+        sourceDataRepoSnapshotReference.getMetadata().getResourceId(),
+        cloneDataRepoSnapshotResult.getSourceResourceId());
+    assertEquals(
+        sourceDataRepoSnapshotReference.getMetadata().getName(),
+        clonedDataRepoSnapshotResourceMetadata.getName());
+    assertEquals(
+        sourceDataRepoSnapshotReference.getMetadata().getDescription(),
+        clonedDataRepoSnapshotResourceMetadata.getDescription());
+    assertEquals(
+        sourceDataRepoSnapshotReference.getAttributes().getSnapshot(),
         cloneDataRepoSnapshotResult.getResource().getAttributes().getSnapshot());
-    assertEquals(sourceDataRepoSnapshotReference.getAttributes().getInstanceName(),
+    assertEquals(
+        sourceDataRepoSnapshotReference.getAttributes().getInstanceName(),
         cloneDataRepoSnapshotResult.getResource().getAttributes().getInstanceName());
   }
 
