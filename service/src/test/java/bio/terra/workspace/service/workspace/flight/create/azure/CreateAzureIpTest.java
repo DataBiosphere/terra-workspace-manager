@@ -105,7 +105,7 @@ public class CreateAzureIpTest extends BaseAzureTest {
     // This test will error out if any of the underlying azure APIs has an error
   }
 
-  // TODO: mock SAM complains about this
+  // TODO: this does not work, mock SAM complains about it
   // TODO: wire up the appropriate azure config to the components beneath controlledResourceService
   // in callstack
   @Test

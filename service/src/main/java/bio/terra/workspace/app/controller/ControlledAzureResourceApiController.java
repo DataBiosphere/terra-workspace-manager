@@ -5,14 +5,26 @@ import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
-import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.generated.model.ApiAccessScope;
+import bio.terra.workspace.generated.model.ApiAzureIpResource;
+import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
+import bio.terra.workspace.generated.model.ApiCreatedControlledAzureIp;
+import bio.terra.workspace.generated.model.ApiDeleteControlledAzureIpRequest;
+import bio.terra.workspace.generated.model.ApiDeleteControlledAzureIpResult;
+import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.*;
+import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.azure.core.management.Region;
@@ -140,7 +152,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
    * this resource to the requesting user" and should be populated here.
    */
   private String assignedUserFromBodyOrToken(
-      ApiControlledResourceCommonFields commonFields, AuthenticatedUserRequest userRequest) {
+        ApiControlledResourceCommonFields commonFields, AuthenticatedUserRequest userRequest) {
     if (commonFields.getAccessScope() != ApiAccessScope.PRIVATE_ACCESS) {
       return null;
     }
