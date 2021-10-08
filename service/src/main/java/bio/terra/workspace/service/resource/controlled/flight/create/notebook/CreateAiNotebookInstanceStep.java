@@ -21,8 +21,7 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImag
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -54,23 +53,20 @@ public class CreateAiNotebookInstanceStep implements Step {
   private static final String PROXY_MODE_SA_VALUE = "service_" + "account";
 
   private final Logger logger = LoggerFactory.getLogger(CreateAiNotebookInstanceStep.class);
-  private final CrlService crlService;
   private final ControlledAiNotebookInstanceResource resource;
+  private final UserWithPetSa userAndPet;
+  private final CrlService crlService;
   private final GcpCloudContextService gcpCloudContextService;
-  private final SamService samService;
-  private final AuthenticatedUserRequest userRequest;
 
   public CreateAiNotebookInstanceStep(
-      CrlService crlService,
       ControlledAiNotebookInstanceResource resource,
-      GcpCloudContextService gcpCloudContextService,
-      SamService samService,
-      AuthenticatedUserRequest userRequest) {
-    this.crlService = crlService;
+      UserWithPetSa userAndPet,
+      CrlService crlService,
+      GcpCloudContextService gcpCloudContextService) {
+    this.userAndPet = userAndPet;
     this.resource = resource;
+    this.crlService = crlService;
     this.gcpCloudContextService = gcpCloudContextService;
-    this.samService = samService;
-    this.userRequest = userRequest;
   }
 
   @Override
@@ -78,8 +74,7 @@ public class CreateAiNotebookInstanceStep implements Step {
       throws InterruptedException, RetryException {
     String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     InstanceName instanceName = resource.toInstanceName(projectId);
-    String serviceAccountEmail = samService.getOrCreatePetSaEmail(projectId, userRequest);
-    Instance instance = createInstanceModel(flightContext, projectId, serviceAccountEmail);
+    Instance instance = createInstanceModel(flightContext, projectId, userAndPet.getPetEmail());
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {

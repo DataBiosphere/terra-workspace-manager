@@ -59,10 +59,14 @@ public class PetSaService {
     // is always nonempty.
     return enablePetServiceAccountImpersonationWithEtag(workspaceId, userAndPet, null).get();
   }
+
   /**
    * Grant a user permission to impersonate their pet service account in a given workspace. Unlike
    * other operations, this does not run as a flight because it only requires one write operation.
    * This operation is idempotent.
+   *
+   * <p>This method requires a user's pet service account email as input. As a transitive
+   * dependency, this also means the provided workspace must have a GCP context.
    *
    * <p>This method does not authenticate that the user should have access to impersonate their pet
    * SA, callers should validate this first.
@@ -139,6 +143,9 @@ public class PetSaService {
    *
    * <p>This method requires a user's pet service account email as input. As a transitive
    * dependency, this also means the provided workspace must have a GCP context.
+   *
+   * <p>This method does not authenticate that the user should have access to impersonate their pet
+   * SA, callers should validate this first.
    *
    * @param workspaceId ID of the workspace to disable pet SA in
    * @param userAndPet The user and pet pair losing access to the pet SA

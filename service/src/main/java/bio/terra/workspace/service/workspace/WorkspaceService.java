@@ -51,7 +51,6 @@ import org.springframework.stereotype.Component;
 public class WorkspaceService {
 
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceService.class);
-  private static final String SERVICE_ACCOUNT_USER_ROLE = "roles/iam.serviceAccountUser";
 
   private final JobService jobService;
   private final WorkspaceDao workspaceDao;

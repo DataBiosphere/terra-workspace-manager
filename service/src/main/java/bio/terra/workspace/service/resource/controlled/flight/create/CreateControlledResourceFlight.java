@@ -80,8 +80,7 @@ public class CreateControlledResourceFlight extends Flight {
                 flightBeanBag.getGcpCloudContextService()));
         break;
       case AI_NOTEBOOK_INSTANCE:
-        addNotebookSteps(
-            userAndPet, userRequest, flightBeanBag, resource.castToAiNotebookInstanceResource());
+        addNotebookSteps(userAndPet, flightBeanBag, resource.castToAiNotebookInstanceResource());
         break;
       case BIG_QUERY_DATASET:
         // Unlike other resources, BigQuery datasets set IAM permissions at creation time to avoid
@@ -103,7 +102,6 @@ public class CreateControlledResourceFlight extends Flight {
 
   private void addNotebookSteps(
       UserWithPetSa userAndPet,
-      AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag,
       ControlledAiNotebookInstanceResource resource) {
     addStep(
@@ -116,11 +114,10 @@ public class CreateControlledResourceFlight extends Flight {
         gcpRetryRule);
     addStep(
         new CreateAiNotebookInstanceStep(
-            flightBeanBag.getCrlService(),
             resource,
-            flightBeanBag.getGcpCloudContextService(),
-            flightBeanBag.getSamService(),
-            userRequest),
+            userAndPet,
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getGcpCloudContextService()),
         gcpRetryRule);
     addStep(
         new NotebookCloudSyncStep(
