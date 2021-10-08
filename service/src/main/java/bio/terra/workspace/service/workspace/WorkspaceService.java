@@ -2,7 +2,6 @@ package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -59,7 +58,6 @@ public class WorkspaceService {
   private final SpendProfileService spendProfileService;
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
-  private final CrlService crlService;
 
   @Autowired
   public WorkspaceService(
@@ -69,7 +67,6 @@ public class WorkspaceService {
       SpendProfileService spendProfileService,
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
-      CrlService crlService,
       GcpCloudContextService gcpCloudContextService) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
@@ -77,7 +74,6 @@ public class WorkspaceService {
     this.spendProfileService = spendProfileService;
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
-    this.crlService = crlService;
     this.gcpCloudContextService = gcpCloudContextService;
   }
 
