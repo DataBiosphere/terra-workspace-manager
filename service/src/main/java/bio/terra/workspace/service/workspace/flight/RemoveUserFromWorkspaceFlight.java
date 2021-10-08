@@ -52,6 +52,10 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
         new RemovePrivateResourceAccessStep(userToRemove, appContext.getSamService(), userRequest));
     addStep(
         new RevokePetUsagePermissionStep(
-            workspaceId, userToRemove, appContext.getPetSaService(), userRequest));
+            workspaceId,
+            userToRemove,
+            appContext.getPetSaService(),
+            appContext.getGcpCloudContextService(),
+            userRequest));
   }
 }

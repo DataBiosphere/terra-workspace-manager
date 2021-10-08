@@ -885,7 +885,8 @@ public class SamService {
    * Fetch the email of a user's pet service account in a given project. This request to Sam will
    * create the pet SA if it doesn't already exist.
    */
-  public String getOrCreatePetSaEmail(String projectId, AuthenticatedUserRequest userRequest) throws InterruptedException {
+  public String getOrCreatePetSaEmail(String projectId, AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
     GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
     try {
       return SamRetry.retry(() -> googleApi.getPetServiceAccount(projectId));
@@ -909,7 +910,8 @@ public class SamService {
     try {
       String subjectId = usersApi.getUserIds(userEmail).getUserSubjectId();
       String saEmail = String.format("pet-%s@%s.iam.gserviceaccount.com", subjectId, projectId);
-      return SamRetry.retry(() -> ServiceAccountName.builder().email(saEmail).projectId(projectId).build());
+      return SamRetry.retry(
+          () -> ServiceAccountName.builder().email(saEmail).projectId(projectId).build());
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error getting user subject ID from Sam", apiException);
     }

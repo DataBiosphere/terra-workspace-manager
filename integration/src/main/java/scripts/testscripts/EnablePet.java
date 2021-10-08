@@ -87,7 +87,9 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
     // Remove second user from workspace. This should revoke their permission to impersonate their
     // pet.
     userWorkspaceApi.removeRole(getWorkspaceId(), IamRole.READER, secondUser.userEmail);
-    assertTrue(ClientTestUtils.getWithRetryOnException(() -> assertCannotImpersonateSa(secondUserIamClient, secondUserPetSaEmail)));
+    assertTrue(
+        ClientTestUtils.getWithRetryOnException(
+            () -> assertCannotImpersonateSa(secondUserIamClient, secondUserPetSaEmail)));
   }
 
   private boolean canImpersonateSa(Iam iamClient, String petSaEmail) throws Exception {

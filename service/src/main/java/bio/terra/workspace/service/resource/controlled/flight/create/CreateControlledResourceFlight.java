@@ -8,6 +8,7 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -39,6 +40,10 @@ public class CreateControlledResourceFlight extends Flight {
     @SuppressWarnings("unchecked")
     final List<ControlledResourceIamRole> privateResourceIamRoles =
         inputParameters.get(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, List.class);
+    // This value is currently only populated for AI Platform Notebooks, as other resources do not
+    // interact with service accounts.
+    final UserWithPetSa userAndPet =
+        inputParameters.get(ControlledResourceKeys.NOTEBOOK_USER_AND_PET, UserWithPetSa.class);
 
     // store the resource metadata in the WSM database
     addStep(new StoreMetadataStep(flightBeanBag.getResourceDao()));
@@ -75,7 +80,8 @@ public class CreateControlledResourceFlight extends Flight {
                 flightBeanBag.getGcpCloudContextService()));
         break;
       case AI_NOTEBOOK_INSTANCE:
-        addNotebookSteps(userRequest, flightBeanBag, resource.castToAiNotebookInstanceResource());
+        addNotebookSteps(
+            userAndPet, userRequest, flightBeanBag, resource.castToAiNotebookInstanceResource());
         break;
       case BIG_QUERY_DATASET:
         // Unlike other resources, BigQuery datasets set IAM permissions at creation time to avoid
@@ -96,6 +102,7 @@ public class CreateControlledResourceFlight extends Flight {
   }
 
   private void addNotebookSteps(
+      UserWithPetSa userAndPet,
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag,
       ControlledAiNotebookInstanceResource resource) {
@@ -105,10 +112,7 @@ public class CreateControlledResourceFlight extends Flight {
         gcpRetryRule);
     addStep(
         new GrantPetUsagePermissionStep(
-            resource.getWorkspaceId(),
-            flightBeanBag.getPetSaService(),
-            flightBeanBag.getSamService(),
-            userRequest),
+            resource.getWorkspaceId(), userAndPet, flightBeanBag.getPetSaService()),
         gcpRetryRule);
     addStep(
         new CreateAiNotebookInstanceStep(

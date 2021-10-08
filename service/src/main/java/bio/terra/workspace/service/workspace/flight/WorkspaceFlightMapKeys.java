@@ -42,6 +42,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
     public static final String DELETE_NOTEBOOK_SERVICE_ACCOUNT_EMAIL =
         "deleteNotebookServiceAccountEmail";
+    public static final String NOTEBOOK_USER_AND_PET = "notebookUserAndPet";
 
     // Cloning Keys
     public static final String CLONE_ALL_RESOURCES_FLIGHT_ID = "cloneAllResourcesFlightId";

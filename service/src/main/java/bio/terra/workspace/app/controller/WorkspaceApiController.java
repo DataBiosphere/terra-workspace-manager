@@ -32,10 +32,12 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.exception.InvalidRoleException;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
+import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -51,7 +53,6 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -467,12 +468,21 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<String> enablePet(UUID workspaceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    // TODO(PF-1007): This would be a nice use for an authorized workspace ID.
+    // Validate that the user is a workspace member, as enablePetServiceAccountImpersonation does
+    // not authenticate.
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
     String userEmail =
         SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
-    petSaService.enablePetServiceAccountImpersonation(workspaceId, userEmail, userRequest);
     String petSaEmail =
-        SamRethrow.onInterrupted(() -> samService.getOrCreatePetSaEmail(
-            gcpCloudContextService.getRequiredGcpProject(workspaceId), userRequest), "enablePet");
+        SamRethrow.onInterrupted(
+            () ->
+                samService.getOrCreatePetSaEmail(
+                    gcpCloudContextService.getRequiredGcpProject(workspaceId), userRequest),
+            "enablePet");
+    UserWithPetSa userAndPet = new UserWithPetSa(userEmail, petSaEmail);
+    petSaService.enablePetServiceAccountImpersonation(workspaceId, userAndPet);
     return new ResponseEntity<>(petSaEmail, HttpStatus.OK);
   }
 

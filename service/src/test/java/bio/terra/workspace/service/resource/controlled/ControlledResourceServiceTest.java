@@ -32,6 +32,7 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
+import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.GrantPetUsagePermissionStep;
@@ -63,7 +64,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.hamcrest.Matchers;
@@ -134,10 +134,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     return actAsResponse.getPermissions() != null;
   }
 
-  /**
-   * Retryable wrapper for {@code canImpersonateSa}.
-   */
-  private static void throwIfImpersonateSa(ServiceAccountName serviceAccountName, IamCow iam) throws IOException{
+  /** Retryable wrapper for {@code canImpersonateSa}. */
+  private static void throwIfImpersonateSa(ServiceAccountName serviceAccountName, IamCow iam)
+      throws IOException {
     if (canImpersonateSa(serviceAccountName, iam)) {
       throw new RuntimeException("User can still impersonate SA");
     }
@@ -336,16 +335,17 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             workspace.getWorkspaceId(), user.getAuthenticatedRequest());
     // Revoke user's Pet SA access, if they have it. Because these tests re-use a common workspace,
     // the user may have pet SA access enabled prior to this test.
-    petSaService.disablePetServiceAccountImpersonation(
-        workspace.getWorkspaceId(), user.getEmail(), user.getAuthenticatedRequest());
     String serviceAccountEmail =
         samService.getOrCreatePetSaEmail(projectId, user.getAuthenticatedRequest());
+    UserWithPetSa userAndPet = new UserWithPetSa(user.getEmail(), serviceAccountEmail);
+    petSaService.disablePetServiceAccountImpersonation(workspace.getWorkspaceId(), userAndPet);
     IamCow userIamCow = crlService.getIamCow(user.getAuthenticatedRequest());
     // Assert the user does not have access to their pet SA before the flight
     // Note this uses user credentials for the IAM cow to validate the user's access.
-    assertFalse(canImpersonateSa(
-        ServiceAccountName.builder().projectId(projectId).email(serviceAccountEmail).build(),
-        userIamCow));
+    assertFalse(
+        canImpersonateSa(
+            ServiceAccountName.builder().projectId(projectId).email(serviceAccountEmail).build(),
+            userIamCow));
     jobService.waitForJob(jobId);
     assertEquals(
         FlightStatus.ERROR, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
@@ -359,9 +359,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 resource.getResourceId(),
                 user.getAuthenticatedRequest()));
     // This check relies on cloud IAM propagation and is sometimes delayed.
-    CloudUtils.runWithRetryOnException(() -> throwIfImpersonateSa(
-          ServiceAccountName.builder().projectId(projectId).email(serviceAccountEmail).build(),
-          userIamCow));
+    CloudUtils.runWithRetryOnException(
+        () ->
+            throwIfImpersonateSa(
+                ServiceAccountName.builder()
+                    .projectId(projectId)
+                    .email(serviceAccountEmail)
+                    .build(),
+                userIamCow));
   }
 
   @Test

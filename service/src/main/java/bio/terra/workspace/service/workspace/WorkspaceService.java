@@ -33,7 +33,6 @@ import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -381,7 +380,8 @@ public class WorkspaceService {
     // Before launching the flight, validate that the user being removed is a direct member of the
     // specified role. Users may also be added to a workspace via managed groups, but WSM does not
     // control membership of those groups, and so cannot remove them here.
-    List<String> roleMembers = samService.listUsersWithWorkspaceRole(workspaceId, role, executingUserRequest);
+    List<String> roleMembers =
+        samService.listUsersWithWorkspaceRole(workspaceId, role, executingUserRequest);
     if (!roleMembers.contains(targetUserEmail)) {
       return;
     }

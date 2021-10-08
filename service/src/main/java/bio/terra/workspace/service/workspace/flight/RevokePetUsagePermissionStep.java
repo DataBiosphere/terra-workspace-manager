@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace.flight;
 
+import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -7,9 +8,12 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
+import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.PetSaKeys;
 import com.google.api.services.iam.v1.model.Policy;
+import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,50 +30,51 @@ public class RevokePetUsagePermissionStep implements Step {
   private final UUID workspaceId;
   private final String userEmailToRemove;
   private final PetSaService petSaService;
+  private final GcpCloudContextService gcpCloudContextService;
   private final AuthenticatedUserRequest userRequest;
 
   public RevokePetUsagePermissionStep(
       UUID workspaceId,
       String userEmailToRemove,
       PetSaService petSaService,
+      GcpCloudContextService gcpCloudContextService,
       AuthenticatedUserRequest userRequest) {
     this.workspaceId = workspaceId;
     this.userEmailToRemove = userEmailToRemove;
     this.petSaService = petSaService;
+    this.gcpCloudContextService = gcpCloudContextService;
     this.userRequest = userRequest;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     FlightMap workingMap = context.getWorkingMap();
-    boolean userStillInWorkspace =
-        workingMap.get(ControlledResourceKeys.REMOVED_USER_IS_WORKSPACE_MEMBER, Boolean.class);
-    // This flight is triggered whenever a user loses any role on a workspace. If they are still
-    // a member of the workspace via a group or another role, we do not need to remove their access
-    // to their pet SA.
-    if (userStillInWorkspace) {
+    Optional<String> validatedPetEmail = getAndValidatePet(workingMap);
+    // No need to revoke pet access if the user does not have a pet in this workspace context, or
+    // is not fully removed from the workspace.
+    if (validatedPetEmail.isEmpty()) {
       return StepResult.getStepResultSuccess();
     }
-    String eTag =
+    UserWithPetSa userAndPet = new UserWithPetSa(userEmailToRemove, validatedPetEmail.get());
+    String updatedPolicyEtag =
         petSaService
-            .disablePetServiceAccountImpersonation(workspaceId, userEmailToRemove, userRequest)
+            .disablePetServiceAccountImpersonation(workspaceId, userAndPet)
             .map(Policy::getEtag)
             .orElse(null);
-    workingMap.put(PetSaKeys.MODIFIED_PET_SA_POLICY_ETAG, eTag);
+    workingMap.put(PetSaKeys.MODIFIED_PET_SA_POLICY_ETAG, updatedPolicyEtag);
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     FlightMap workingMap = context.getWorkingMap();
-    boolean userStillInWorkspace =
-        workingMap.get(ControlledResourceKeys.REMOVED_USER_IS_WORKSPACE_MEMBER, Boolean.class);
-    // This flight is triggered whenever a user loses any role on a workspace. If they are still
-    // a member of the workspace via a group or another role, we do not need to remove their access
-    // to their pet SA.
-    if (userStillInWorkspace) {
+    Optional<String> validatedPetEmail = getAndValidatePet(workingMap);
+    // No need to revoke pet access if the user does not have a pet in this workspace context, or
+    // is not fully removed from the workspace.
+    if (validatedPetEmail.isEmpty()) {
       return StepResult.getStepResultSuccess();
     }
+    UserWithPetSa userAndPet = new UserWithPetSa(userEmailToRemove, validatedPetEmail.get());
     String expectedEtag = workingMap.get(PetSaKeys.MODIFIED_PET_SA_POLICY_ETAG, String.class);
     if (expectedEtag == null) {
       // If the do step did not finish, we cannot guarantee we aren't undoing something we didn't do
@@ -80,7 +85,40 @@ public class RevokePetUsagePermissionStep implements Step {
       return StepResult.getStepResultSuccess();
     }
     petSaService.enablePetServiceAccountImpersonationWithEtag(
-        workspaceId, userEmailToRemove, expectedEtag, userRequest);
+        workspaceId, userAndPet, expectedEtag);
     return StepResult.getStepResultSuccess();
+  }
+
+  /**
+   * This flight is run any time a user loses a role in workspace, but this step only needs to do
+   * anything under specific circumstances. Those conditions are: 1. The user has been fully removed
+   * from the workspace 2. The workspace has a GCP context 3. The user has a pet SA in the workspace
+   * GCP context.
+   *
+   * @return The email of the user's pet SA if the above conditions are met, empty otherwise.
+   */
+  private Optional<String> getAndValidatePet(FlightMap workingMap) {
+    boolean userStillInWorkspace =
+        workingMap.get(ControlledResourceKeys.REMOVED_USER_IS_WORKSPACE_MEMBER, Boolean.class);
+    // This flight is triggered whenever a user loses any role on a workspace. If they are still
+    // a member of the workspace via a group or another role, we do not need to remove their access
+    // to their pet SA.
+    if (userStillInWorkspace) {
+      return Optional.empty();
+    }
+    // Pet service accounts only live in a GCP context. If this workspace does not have a GCP
+    // context, this step does not need to do anything.
+    Optional<String> maybeProjectId = gcpCloudContextService.getGcpProject(workspaceId);
+    if (maybeProjectId.isEmpty()) {
+      return Optional.empty();
+    }
+    // This user may not have a pet SA in this workspace. If they do not, this step does not need
+    // to do anything.
+    Optional<ServiceAccountName> maybePet =
+        petSaService.getArbitrarySa(maybeProjectId.get(), userEmailToRemove, userRequest);
+    if (maybePet.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(maybePet.get().email());
   }
 }

@@ -6,9 +6,7 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Static utility functions useful for working with cloud objects.
- */
+/** Static utility functions useful for working with cloud objects. */
 public class CloudUtils {
 
   private static final Logger logger = LoggerFactory.getLogger(CloudUtils.class);
@@ -34,8 +32,7 @@ public class CloudUtils {
    *     exhausted
    * @throws InterruptedException
    */
-  public static @Nullable
-  <T> T getWithRetryOnException(SupplierWithException<T> supplier)
+  public static @Nullable <T> T getWithRetryOnException(SupplierWithException<T> supplier)
       throws InterruptedException {
     T result = null;
     int numTries = 40;
@@ -57,13 +54,12 @@ public class CloudUtils {
     return result;
   }
 
-  public static boolean runWithRetryOnException(RunnableWithException fn) throws InterruptedException {
+  public static boolean runWithRetryOnException(RunnableWithException fn)
+      throws InterruptedException {
     return getWithRetryOnException(
         () -> {
           fn.run();
           return true;
         });
-
   }
-
 }

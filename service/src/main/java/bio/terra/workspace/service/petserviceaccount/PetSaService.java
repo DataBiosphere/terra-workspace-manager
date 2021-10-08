@@ -6,11 +6,8 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.SamConstants;
-import bio.terra.workspace.service.stage.StageService;
+import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
-import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.iam.v1.model.Binding;
 import com.google.api.services.iam.v1.model.Policy;
@@ -40,21 +37,13 @@ public class PetSaService {
   private static final Logger logger = LoggerFactory.getLogger(PetSaService.class);
   private static final String SERVICE_ACCOUNT_USER_ROLE = "roles/iam.serviceAccountUser";
 
-  private final WorkspaceService workspaceService;
-  private final StageService stageService;
   private final SamService samService;
   private final GcpCloudContextService gcpCloudContextService;
   private final CrlService crlService;
 
   @Autowired
   public PetSaService(
-      WorkspaceService workspaceService,
-      StageService stageService,
-      SamService samService,
-      GcpCloudContextService gcpCloudContextService,
-      CrlService crlService) {
-    this.workspaceService = workspaceService;
-    this.stageService = stageService;
+      SamService samService, GcpCloudContextService gcpCloudContextService, CrlService crlService) {
     this.samService = samService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.crlService = crlService;
@@ -64,41 +53,31 @@ public class PetSaService {
    * Wrapper around {@code enablePetServiceAccountImpersonationWithEtag} without requiring a
    * particular GCP eTag value.
    */
-  public Policy enablePetServiceAccountImpersonation(
-      UUID workspaceId, String userEmailToDisable, AuthenticatedUserRequest userRequest) {
+  public Policy enablePetServiceAccountImpersonation(UUID workspaceId, UserWithPetSa userAndPet) {
     // enablePetServiceAccountImpersonationWithEtag will only return an empty optional if the
     // provided eTag does not match current policy. Because we do not use eTag checking here, this
     // is always nonempty.
-    return enablePetServiceAccountImpersonationWithEtag(
-            workspaceId, userEmailToDisable, null, userRequest)
-        .get();
+    return enablePetServiceAccountImpersonationWithEtag(workspaceId, userAndPet, null).get();
   }
   /**
    * Grant a user permission to impersonate their pet service account in a given workspace. Unlike
    * other operations, this does not run as a flight because it only requires one write operation.
    * This operation is idempotent.
    *
+   * <p>This method does not authenticate that the user should have access to impersonate their pet
+   * SA, callers should validate this first.
+   *
    * @param workspaceId ID of the workspace to enable pet SA in
-   * @param userEmailToEnable The user whose pet SA access is being granted
+   * @param userAndPet The user and the pet SA the user is being granted permission to
    * @param eTag GCP eTag which must match the pet SA's current policy. If null, this is ignored.
-   * @param userRequest User credentials authorizing this call. These do not necessarily belong to
-   *     the same user as userEmailToDisable, but must be owner credentials if they do not.
    * @return The new IAM policy on the user's pet service account, or empty if the eTag value
    *     provided is non-null and does not match current IAM policy on the pet SA.
    */
   public Optional<Policy> enablePetServiceAccountImpersonationWithEtag(
-      UUID workspaceId,
-      String userEmailToEnable,
-      @Nullable String eTag,
-      AuthenticatedUserRequest userRequest) {
-    // Validate that the user is a member of the workspace.
-    Workspace workspace = validateUserModification(workspaceId, userEmailToEnable, userRequest);
-    stageService.assertMcWorkspace(workspace, "enablePet");
-
+      UUID workspaceId, UserWithPetSa userAndPet, @Nullable String eTag) {
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
-    String petSaEmail = SamRethrow.onInterrupted(() -> samService.getOrCreatePetSaEmail(projectId, userRequest), "enablePetServiceAccountImpersonationWithEtag");
     ServiceAccountName petSaName =
-        ServiceAccountName.builder().email(petSaEmail).projectId(projectId).build();
+        ServiceAccountName.builder().email(userAndPet.getPetEmail()).projectId(projectId).build();
     try {
       Policy saPolicy =
           crlService.getIamCow().projects().serviceAccounts().getIamPolicy(petSaName).execute();
@@ -108,7 +87,7 @@ public class PetSaService {
       if (eTag != null && !saPolicy.getEtag().equals(eTag)) {
         logger.warn(
             "GCP IAM policy eTag did not match expected value when granting pet SA access for user {} in workspace {}.",
-            userEmailToEnable,
+            userAndPet.getUserEmail(),
             workspaceId);
         return Optional.empty();
       }
@@ -119,7 +98,9 @@ public class PetSaService {
           new Binding()
               .setRole(SERVICE_ACCOUNT_USER_ROLE)
               .setMembers(
-                  ImmutableList.of("user:" + userEmailToEnable, "serviceAccount:" + petSaEmail));
+                  ImmutableList.of(
+                      "user:" + userAndPet.getUserEmail(),
+                      "serviceAccount:" + userAndPet.getPetEmail()));
       // If no bindings exist, getBindings() returns null instead of an empty list.
       List<Binding> bindingList =
           Optional.ofNullable(saPolicy.getBindings()).orElse(new ArrayList<>());
@@ -147,9 +128,8 @@ public class PetSaService {
    * particular GCP eTag value.
    */
   public Optional<Policy> disablePetServiceAccountImpersonation(
-      UUID workspaceId, String userEmailToDisable, AuthenticatedUserRequest userRequest) {
-    return disablePetServiceAccountImpersonationWithEtag(
-        workspaceId, userEmailToDisable, null, userRequest);
+      UUID workspaceId, UserWithPetSa userAndPet) {
+    return disablePetServiceAccountImpersonationWithEtag(workspaceId, userAndPet, null);
   }
 
   /**
@@ -157,29 +137,19 @@ public class PetSaService {
    * enablePetServiceAccountImpersonation}. Unlike other operations, this does not run in a flight
    * because it only requires one write operation. This operation is idempotent.
    *
+   * <p>This method requires a user's pet service account email as input. As a transitive
+   * dependency, this also means the provided workspace must have a GCP context.
+   *
    * @param workspaceId ID of the workspace to disable pet SA in
-   * @param userEmailToDisable The user whose pet SA access is being revoked
+   * @param userAndPet The user and pet pair losing access to the pet SA
    * @param eTag GCP eTag which must match the pet SA's current policy. If null, this is ignored.
-   * @param userRequest User credentials authorizing this call. These do not necessarily belong to
-   *     the same user as userEmailToDisable, but must be owner credentials if they do not.
    */
   public Optional<Policy> disablePetServiceAccountImpersonationWithEtag(
-      UUID workspaceId,
-      String userEmailToDisable,
-      @Nullable String eTag,
-      AuthenticatedUserRequest userRequest) {
-    Workspace workspace = validateUserModification(workspaceId, userEmailToDisable, userRequest);
-    stageService.assertMcWorkspace(workspace, "disablePet");
+      UUID workspaceId, UserWithPetSa userAndPet, @Nullable String eTag) {
 
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
-    Optional<ServiceAccountName> maybePetSaName =
-        getArbitrarySa(projectId, userEmailToDisable, userRequest);
-    // The pet service account for this user may not exist in this project, in which case there is
-    // no need to disable its use.
-    if (maybePetSaName.isEmpty()) {
-      return Optional.empty();
-    }
-    ServiceAccountName petServiceAccount = maybePetSaName.get();
+    ServiceAccountName petServiceAccount =
+        ServiceAccountName.builder().email(userAndPet.getPetEmail()).projectId(projectId).build();
     try {
       Policy saPolicy =
           crlService
@@ -194,7 +164,7 @@ public class PetSaService {
       if (eTag != null && !saPolicy.getEtag().equals(eTag)) {
         logger.warn(
             "GCP IAM policy eTag did not match expected value when revoking pet SA access for user {} in workspace {}.",
-            userEmailToDisable,
+            userAndPet.getUserEmail(),
             workspaceId);
         return Optional.empty();
       }
@@ -205,7 +175,8 @@ public class PetSaService {
               .setRole(SERVICE_ACCOUNT_USER_ROLE)
               .setMembers(
                   ImmutableList.of(
-                      "user:" + userEmailToDisable, "serviceAccount:" + petServiceAccount.email()));
+                      "user:" + userAndPet.getUserEmail(),
+                      "serviceAccount:" + petServiceAccount.email()));
       // If no bindings exist, getBindings() returns null instead of an empty list. If there are
       // no policies, there is nothing to revoke, so this method is finished.
       List<Binding> oldBindingList = saPolicy.getBindings();
@@ -215,35 +186,17 @@ public class PetSaService {
       List<Binding> newBindingsList = removeBinding(oldBindingList, bindingToRemove);
       saPolicy.setBindings(newBindingsList);
       SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(saPolicy);
-      return Optional.of(crlService
-          .getIamCow()
-          .projects()
-          .serviceAccounts()
-          .setIamPolicy(petServiceAccount, request)
-          .execute());
+      return Optional.of(
+          crlService
+              .getIamCow()
+              .projects()
+              .serviceAccounts()
+              .setIamPolicy(petServiceAccount, request)
+              .execute());
     } catch (GoogleJsonResponseException googleEx) {
       throw new GcpException(googleEx);
     } catch (IOException e) {
       throw new RuntimeException("Error disabling user's pet SA", e);
-    }
-  }
-
-  /**
-   * Check whether a user specified via an AuthenticatedUserRequest has permission to enable/disable
-   * another user's usage of their pet service account. All users may enable/disable their own pet
-   * SA usage, but only owners may enable/disable other users' pet SA usage.
-   */
-  private Workspace validateUserModification(
-      UUID workspaceId, String userEmailToModify, AuthenticatedUserRequest userRequest) {
-    String callerEmail =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(userRequest), "validateUserAccess");
-    if (callerEmail.equals(userEmailToModify)) {
-      return workspaceService.validateWorkspaceAndAction(
-          userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
-    } else {
-      return workspaceService.validateWorkspaceAndAction(
-          userRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
     }
   }
 
@@ -267,10 +220,12 @@ public class PetSaService {
    * Returns the pet service account of a provided user in a provided project if it exists in GCP,
    * or an empty Optional if it does not.
    */
-  private Optional<ServiceAccountName> getArbitrarySa(
+  public Optional<ServiceAccountName> getArbitrarySa(
       String projectId, String userEmail, AuthenticatedUserRequest userRequest) {
     ServiceAccountName constructedSa =
-        SamRethrow.onInterrupted(() -> samService.constructArbitraryUserPetSaEmail(projectId, userEmail, userRequest), "getArbitrarySa");
+        SamRethrow.onInterrupted(
+            () -> samService.constructArbitraryUserPetSaEmail(projectId, userEmail, userRequest),
+            "getArbitrarySa");
     return serviceAccountExists(constructedSa) ? Optional.of(constructedSa) : Optional.empty();
   }
 

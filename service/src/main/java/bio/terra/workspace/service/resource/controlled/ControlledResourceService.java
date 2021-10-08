@@ -17,6 +17,7 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceA
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -25,6 +26,7 @@ import bio.terra.workspace.service.resource.controlled.flight.update.UpdateContr
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.stage.StageService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -45,6 +47,7 @@ public class ControlledResourceService {
   private final ResourceDao resourceDao;
   private final StageService stageService;
   private final SamService samService;
+  private final GcpCloudContextService gcpCloudContextService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
 
   @Autowired
@@ -54,12 +57,14 @@ public class ControlledResourceService {
       ResourceDao resourceDao,
       StageService stageService,
       SamService samService,
+      GcpCloudContextService gcpCloudContextService,
       ControlledResourceMetadataManager controlledResourceMetadataManager) {
     this.jobService = jobService;
     this.workspaceService = workspaceService;
     this.resourceDao = resourceDao;
     this.stageService = stageService;
     this.samService = samService;
+    this.gcpCloudContextService = gcpCloudContextService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
   }
 
@@ -303,7 +308,18 @@ public class ControlledResourceService {
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
             resource, privateResourceIamRoles, jobControl, resultPath, userRequest);
+    String userEmail =
+        SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
+    String petSaEmail =
+        SamRethrow.onInterrupted(
+            () ->
+                samService.getOrCreatePetSaEmail(
+                    gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId()),
+                    userRequest),
+            "enablePet");
+    UserWithPetSa userAndPet = new UserWithPetSa(userEmail, petSaEmail);
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
+    jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_USER_AND_PET, userAndPet);
     return jobBuilder.submit();
   }
 
