@@ -3,9 +3,15 @@ package bio.terra.workspace.service.workspace;
 import bio.terra.workspace.app.configuration.external.WsmApplicationConfiguration;
 import bio.terra.workspace.app.configuration.external.WsmApplicationConfiguration.App;
 import bio.terra.workspace.db.ApplicationDao;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
+import bio.terra.workspace.service.workspace.flight.disable.application.DisableApplicationFlight;
+import bio.terra.workspace.service.workspace.flight.disable.application.DisableApplicationKeys;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import bio.terra.workspace.service.workspace.model.WsmApplicationState;
+import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,14 +34,78 @@ public class WsmApplicationService {
   private static final Logger logger = LoggerFactory.getLogger(WsmApplicationService.class);
 
   private final ApplicationDao applicationDao;
+  private final JobService jobService;
   private final WsmApplicationConfiguration wsmApplicationConfiguration;
+  private final WorkspaceService workspaceService;
+  // -- Testing Support --
+  // Unlike most code, the configuration code runs at startup time and does not have any output
+  // beyond writing to the log. In order to test it, we introduce a test mode and wrap the error
+  // logging. When test mode is enabled, the wrapper saves a string array of log messages in
+  // addition to calling the logger.
+  private boolean testMode = false;
+  private List<String> errorList;
 
   @Autowired
   public WsmApplicationService(
-      ApplicationDao applicationDao, WsmApplicationConfiguration wsmApplicationConfiguration) {
+      ApplicationDao applicationDao,
+      JobService jobService,
+      WsmApplicationConfiguration wsmApplicationConfiguration,
+      WorkspaceService workspaceService) {
     this.applicationDao = applicationDao;
+    this.jobService = jobService;
     this.wsmApplicationConfiguration = wsmApplicationConfiguration;
+    this.workspaceService = workspaceService;
   }
+
+  // -- REST API Methods -- //
+
+  public void disableWorkspaceApplication(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      UUID applicationId,
+      String resultPath,
+      String jobId) {
+
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
+
+    jobService
+        .newJob(
+            "Disable application " + applicationId + " from workspace " + workspaceId,
+            jobId,
+            DisableApplicationFlight.class,
+            null,
+            userRequest)
+        .addParameter(DisableApplicationKeys.WORKSPACE_ID, workspaceId.toString())
+        .addParameter(DisableApplicationKeys.APPLICATION_ID, applicationId.toString())
+        .submit();
+  }
+
+  public WsmWorkspaceApplication enableWorkspaceApplication(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID applicationId) {
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
+
+    return applicationDao.enableWorkspaceApplication(workspaceId, applicationId);
+  }
+
+  public WsmWorkspaceApplication getWorkspaceApplication(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID applicationId) {
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+
+    return applicationDao.getWorkspaceApplication(workspaceId, applicationId);
+  }
+
+  public List<WsmWorkspaceApplication> listWorkspaceApplications(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, int offset, int limit) {
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+
+    return applicationDao.listWorkspaceApplications(workspaceId, offset, limit);
+  }
+
+  // -- Configuration Processing Methods -- //
 
   /**
    * Configure applications mapping from the incoming configuration to the current database context.
@@ -190,38 +260,6 @@ public class WsmApplicationService {
     return Optional.empty();
   }
 
-  // A map of these are used to easily match incoming config with the database config
-  @VisibleForTesting
-  static class WsmDbApplication {
-    private final WsmApplication wsmApplication;
-    private boolean matched; // set true if the configuration matches this database entry
-
-    WsmDbApplication(WsmApplication app) {
-      wsmApplication = app;
-      matched = false;
-    }
-
-    public WsmApplication getWsmApplication() {
-      return wsmApplication;
-    }
-
-    public boolean isMatched() {
-      return matched;
-    }
-
-    public void setMatched(boolean matched) {
-      this.matched = matched;
-    }
-  }
-
-  // -- Testing Support --
-  // Unlike most code, the configuration code runs at startup time and does not have any output
-  // beyond writing to the log. In order to test it, we introduce a test mode and wrap the error
-  // logging. When test mode is enabled, the wrapper saves a string array of log messages in
-  // addition to calling the logger.
-  private boolean testMode = false;
-  private List<String> errorList;
-
   @VisibleForTesting
   void enableTestMode() {
     this.testMode = true;
@@ -252,5 +290,29 @@ public class WsmApplicationService {
       errorList.add(s);
     }
     logger.info(s);
+  }
+
+  // A map of these are used to easily match incoming config with the database config
+  @VisibleForTesting
+  static class WsmDbApplication {
+    private final WsmApplication wsmApplication;
+    private boolean matched; // set true if the configuration matches this database entry
+
+    WsmDbApplication(WsmApplication app) {
+      wsmApplication = app;
+      matched = false;
+    }
+
+    public WsmApplication getWsmApplication() {
+      return wsmApplication;
+    }
+
+    public boolean isMatched() {
+      return matched;
+    }
+
+    public void setMatched(boolean matched) {
+      this.matched = matched;
+    }
   }
 }
