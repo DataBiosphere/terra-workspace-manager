@@ -39,8 +39,6 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_NOTEBOOK_NETWORK_NAME = "createNotebookNetworkName";
     public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
     public static final String CREATE_NOTEBOOK_REGION = "createNotebookRegion";
-    public static final String CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID =
-        "createNotebookServiceAccountId";
     public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
     public static final String DELETE_NOTEBOOK_SERVICE_ACCOUNT_EMAIL =
         "deleteNotebookServiceAccountEmail";
@@ -74,5 +72,12 @@ public final class WorkspaceFlightMapKeys {
     public static final String RESOURCE_TYPE = "resourceType";
 
     private ResourceKeys() {}
+  }
+
+  /** Pet SA keys */
+  public static class PetSaKeys {
+    public static final String MODIFIED_PET_SA_POLICY_ETAG = "modifiedPetSaPolicyEtag";
+
+    private PetSaKeys() {}
   }
 }

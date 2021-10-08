@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.workspace;
 
-import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.crl.CrlService;
@@ -30,13 +29,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
-import com.google.api.services.iam.v1.model.Binding;
-import com.google.api.services.iam.v1.model.Policy;
-import com.google.api.services.iam.v1.model.SetIamPolicyRequest;
-import com.google.common.collect.ImmutableList;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -59,6 +52,7 @@ import org.springframework.stereotype.Component;
 public class WorkspaceService {
 
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceService.class);
+  private static final String SERVICE_ACCOUNT_USER_ROLE = "roles/iam.serviceAccountUser";
 
   private final JobService jobService;
   private final WorkspaceDao workspaceDao;
@@ -366,61 +360,6 @@ public class WorkspaceService {
   }
 
   /**
-   * Grant a user permission to impersonate their pet service account in a given workspace. Unlike
-   * other operations, this does not run in a flight because it only requires one write operation.
-   * This operation is idempotent.
-   *
-   * @return The email identifier of the user's pet SA in the given workspace.
-   */
-  public String enablePetServiceAccountImpersonation(
-      UUID workspaceId, AuthenticatedUserRequest userRequest) {
-    final String serviceAccountUserRole = "roles/iam.serviceAccountUser";
-    // Validate that the user is a member of the workspace.
-    Workspace workspace =
-        validateWorkspaceAndAction(
-            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
-    stageService.assertMcWorkspace(workspace, "enablePet");
-
-    // getEmailFromSam will always call Sam, which will return a user email even if the requesting
-    // access token belongs to a pet SA.
-    String userEmail =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(userRequest), "getEmailFromSam");
-    String projectId = gcpCloudContextService.getRequiredGcpProject(workspace.getWorkspaceId());
-    String petSaEmail = samService.getOrCreatePetSaEmail(projectId, userRequest);
-    ServiceAccountName petSaName =
-        ServiceAccountName.builder().email(petSaEmail).projectId(projectId).build();
-    try {
-      Policy saPolicy =
-          crlService.getIamCow().projects().serviceAccounts().getIamPolicy(petSaName).execute();
-      // TODO(PF-991): In the future, the pet SA should not be included in this binding. This is a
-      //  workaround to support the CLI and other applications which call the GCP Pipelines API with
-      //  the pet SA's credentials.
-      Binding saUserBinding =
-          new Binding()
-              .setRole(serviceAccountUserRole)
-              .setMembers(ImmutableList.of("user:" + userEmail, "serviceAccount:" + petSaEmail));
-      // If no bindings exist, getBindings() returns null instead of an empty list.
-      List<Binding> bindingList =
-          Optional.ofNullable(saPolicy.getBindings()).orElse(new ArrayList<>());
-      // GCP automatically de-duplicates bindings, so this will have no effect if the user already
-      // has permission to use their pet service account.
-      bindingList.add(saUserBinding);
-      saPolicy.setBindings(bindingList);
-      SetIamPolicyRequest request = new SetIamPolicyRequest().setPolicy(saPolicy);
-      crlService
-          .getIamCow()
-          .projects()
-          .serviceAccounts()
-          .setIamPolicy(petSaName, request)
-          .execute();
-      return petSaEmail;
-    } catch (IOException e) {
-      throw new RuntimeException("Error enabling user's pet SA", e);
-    }
-  }
-
-  /**
    * Remove a workspace role from a user. This will also remove a user from their private resources
    * if they are no longer a member of the workspace (i.e. have no other roles) after role removal.
    *
@@ -442,12 +381,8 @@ public class WorkspaceService {
     // Before launching the flight, validate that the user being removed is a direct member of the
     // specified role. Users may also be added to a workspace via managed groups, but WSM does not
     // control membership of those groups, and so cannot remove them here.
-    // All emails are compared as lowercase strings.
-    List<String> roleMembers =
-        samService.listUsersWithWorkspaceRole(workspaceId, role, executingUserRequest).stream()
-            .map(String::toLowerCase)
-            .collect(Collectors.toList());
-    if (!roleMembers.contains(targetUserEmail.toLowerCase())) {
+    List<String> roleMembers = samService.listUsersWithWorkspaceRole(workspaceId, role, executingUserRequest);
+    if (!roleMembers.contains(targetUserEmail)) {
       return;
     }
     jobService

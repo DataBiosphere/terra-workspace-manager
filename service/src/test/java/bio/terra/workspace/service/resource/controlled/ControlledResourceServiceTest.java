@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -18,6 +18,7 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.CloudUtils;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -26,15 +27,16 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParamete
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
+import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateAiNotebookInstanceStep;
-import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateServiceAccountStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.notebook.GrantPetUsagePermissionStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.NotebookCloudSyncStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.RetrieveNetworkNameStep;
-import bio.terra.workspace.service.resource.controlled.flight.create.notebook.ServiceAccountPolicyStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteSamResourceStep;
@@ -52,6 +54,7 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.model.Dataset;
 import com.google.api.services.iam.v1.model.TestIamPermissionsRequest;
+import com.google.api.services.iam.v1.model.TestIamPermissionsResponse;
 import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -60,6 +63,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.hamcrest.Matchers;
@@ -85,6 +89,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private ControlledResourceMetadataManager controlledResourceMetadataManager;
   @Autowired private CrlService crlService;
+  @Autowired private SamService samService;
+  @Autowired private PetSaService petSaService;
   @Autowired private JobService jobService;
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private StairwayComponent stairwayComponent;
@@ -107,6 +113,34 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             GoogleJsonResponseException.class,
             () -> iam.projects().serviceAccounts().get(serviceAccountName).execute());
     assertEquals(HttpStatus.NOT_FOUND.value(), exception.getStatusCode());
+  }
+
+  /**
+   * Checks whether the provided IamCow (with credentials) has permission to impersonate a provided
+   * service account (via iam.serviceAccounts.actAs permission).
+   */
+  private static boolean canImpersonateSa(ServiceAccountName serviceAccountName, IamCow iam)
+      throws IOException {
+    TestIamPermissionsRequest actAsRequest =
+        new TestIamPermissionsRequest()
+            .setPermissions(Collections.singletonList("iam.serviceAccounts.actAs"));
+    TestIamPermissionsResponse actAsResponse =
+        iam.projects()
+            .serviceAccounts()
+            .testIamPermissions(serviceAccountName, actAsRequest)
+            .execute();
+    // If the result of the TestIamPermissions call has no permissions, the permissions field of the
+    // response is null instead of an empty list. This is a quirk of GCP.
+    return actAsResponse.getPermissions() != null;
+  }
+
+  /**
+   * Retryable wrapper for {@code canImpersonateSa}.
+   */
+  private static void throwIfImpersonateSa(ServiceAccountName serviceAccountName, IamCow iam) throws IOException{
+    if (canImpersonateSa(serviceAccountName, iam)) {
+      throw new RuntimeException("User can still impersonate SA");
+    }
   }
 
   /**
@@ -155,8 +189,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // Test idempotency of steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(RetrieveNetworkNameStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(CreateServiceAccountStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(ServiceAccountPolicyStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        GrantPetUsagePermissionStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         CreateAiNotebookInstanceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(NotebookCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -278,7 +312,8 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // Test idempotency of undo steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(CreateServiceAccountStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        GrantPetUsagePermissionStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         CreateAiNotebookInstanceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
@@ -296,29 +331,26 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             new ApiJobControl().id(UUID.randomUUID().toString()),
             "fakeResultPath",
             user.getAuthenticatedRequest());
+    String projectId =
+        workspaceService.getAuthorizedRequiredGcpProject(
+            workspace.getWorkspaceId(), user.getAuthenticatedRequest());
+    // Revoke user's Pet SA access, if they have it. Because these tests re-use a common workspace,
+    // the user may have pet SA access enabled prior to this test.
+    petSaService.disablePetServiceAccountImpersonation(
+        workspace.getWorkspaceId(), user.getEmail(), user.getAuthenticatedRequest());
+    String serviceAccountEmail =
+        samService.getOrCreatePetSaEmail(projectId, user.getAuthenticatedRequest());
+    IamCow userIamCow = crlService.getIamCow(user.getAuthenticatedRequest());
+    // Assert the user does not have access to their pet SA before the flight
+    // Note this uses user credentials for the IAM cow to validate the user's access.
+    assertFalse(canImpersonateSa(
+        ServiceAccountName.builder().projectId(projectId).email(serviceAccountEmail).build(),
+        userIamCow));
     jobService.waitForJob(jobId);
     assertEquals(
         FlightStatus.ERROR, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
 
-    String projectId =
-        workspaceService.getAuthorizedRequiredGcpProject(
-            workspace.getWorkspaceId(), user.getAuthenticatedRequest());
     assertNotFound(resource.toInstanceName(projectId), crlService.getAIPlatformNotebooksCow());
-
-    String serviceAccountId =
-        stairwayComponent
-            .get()
-            .getFlightState(jobId)
-            .getResultMap()
-            .get()
-            .get(CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID, String.class);
-    assertNotFound(
-        ServiceAccountName.builder()
-            .projectId(projectId)
-            .email(ServiceAccountName.emailFromAccountId(serviceAccountId, projectId))
-            .build(),
-        crlService.getIamCow());
-
     assertThrows(
         ResourceNotFoundException.class,
         () ->
@@ -326,6 +358,10 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 resource.getWorkspaceId(),
                 resource.getResourceId(),
                 user.getAuthenticatedRequest()));
+    // This check relies on cloud IAM propagation and is sometimes delayed.
+    CloudUtils.runWithRetryOnException(() -> throwIfImpersonateSa(
+          ServiceAccountName.builder().projectId(projectId).email(serviceAccountEmail).build(),
+          userIamCow));
   }
 
   @Test

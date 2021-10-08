@@ -35,6 +35,7 @@ import bio.terra.workspace.service.iam.exception.InvalidRoleException;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
+import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -50,6 +51,7 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -74,6 +76,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   private final HttpServletRequest request;
   private final ReferencedResourceService referenceResourceService;
   private final GcpCloudContextService gcpCloudContextService;
+  private final PetSaService petSaService;
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
 
   @Autowired
@@ -84,7 +87,8 @@ public class WorkspaceApiController implements WorkspaceApi {
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       ReferencedResourceService referenceResourceService,
-      GcpCloudContextService gcpCloudContextService) {
+      GcpCloudContextService gcpCloudContextService,
+      PetSaService petSaService) {
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.samService = samService;
@@ -92,6 +96,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     this.request = request;
     this.referenceResourceService = referenceResourceService;
     this.gcpCloudContextService = gcpCloudContextService;
+    this.petSaService = petSaService;
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
@@ -365,6 +370,8 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("role") ApiIamRole role,
       @RequestBody ApiGrantRoleRequestBody body) {
     ControllerValidationUtils.validateEmail(body.getMemberEmail());
+    // Sam and GCP always use lowercase email identifiers, so we do the same here for consistency.
+    String memberEmail = body.getMemberEmail().toLowerCase();
     if (role == ApiIamRole.APPLICATION) {
       throw new InvalidRoleException(
           "Users cannot grant role APPLICATION. Use application registration instead.");
@@ -372,7 +379,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     SamRethrow.onInterrupted(
         () ->
             samService.grantWorkspaceRole(
-                id, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
+                id, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), memberEmail),
         "grantWorkspaceRole");
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -383,6 +390,8 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("role") ApiIamRole role,
       @PathVariable("memberEmail") String memberEmail) {
     ControllerValidationUtils.validateEmail(memberEmail);
+    // Sam and GCP always use lowercase emails, so we do the same here.
+    memberEmail = memberEmail.toLowerCase();
     if (role == ApiIamRole.APPLICATION) {
       throw new InvalidRoleException(
           "Users cannot remove role APPLICATION. Use application registration instead.");
@@ -458,8 +467,12 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<String> enablePet(UUID workspaceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    String userEmail =
+        SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
+    petSaService.enablePetServiceAccountImpersonation(workspaceId, userEmail, userRequest);
     String petSaEmail =
-        workspaceService.enablePetServiceAccountImpersonation(workspaceId, userRequest);
+        SamRethrow.onInterrupted(() -> samService.getOrCreatePetSaEmail(
+            gcpCloudContextService.getRequiredGcpProject(workspaceId), userRequest), "enablePet");
     return new ResponseEntity<>(petSaEmail, HttpStatus.OK);
   }
 

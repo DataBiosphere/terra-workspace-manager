@@ -9,10 +9,10 @@
       "name": "EnablePet",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 1,
-      "expectedTimeForEach": 1,
+      "expectedTimeForEach": 3,
       "expectedTimeForEachUnit": "MINUTES",
       "parameters": ["wm-default-spend-profile"]
     }
   ],
-  "testUserFiles": ["elijah.json"]
+  "testUserFiles": ["elijah.json", "bella.json"]
 }

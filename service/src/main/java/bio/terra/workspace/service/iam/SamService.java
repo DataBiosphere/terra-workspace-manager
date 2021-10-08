@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.iam;
 
+import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.sam.SamRetry;
@@ -884,12 +885,33 @@ public class SamService {
    * Fetch the email of a user's pet service account in a given project. This request to Sam will
    * create the pet SA if it doesn't already exist.
    */
-  public String getOrCreatePetSaEmail(String projectId, AuthenticatedUserRequest userRequest) {
+  public String getOrCreatePetSaEmail(String projectId, AuthenticatedUserRequest userRequest) throws InterruptedException {
     GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
     try {
-      return googleApi.getPetServiceAccount(projectId);
+      return SamRetry.retry(() -> googleApi.getPetServiceAccount(projectId));
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error getting pet service account from Sam", apiException);
+    }
+  }
+
+  // TODO(PF-991): This is a temporary workaround to support disabling pet service account
+  //  self-impersonation without having user credentials available. When we stop granting this
+  //  permission directly to users and their pets, this method should be deleted.
+  /**
+   * Construct the email of an arbitrary user's pet service account in a given project. Unlike
+   * {@code getOrCreatePetSaEmail}, this will not create the underlying service account. It may
+   * return the email of a service account which does not exist.
+   */
+  public ServiceAccountName constructArbitraryUserPetSaEmail(
+      String projectId, String userEmail, AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
+    UsersApi usersApi = samUsersApi(userRequest.getRequiredToken());
+    try {
+      String subjectId = usersApi.getUserIds(userEmail).getUserSubjectId();
+      String saEmail = String.format("pet-%s@%s.iam.gserviceaccount.com", subjectId, projectId);
+      return SamRetry.retry(() -> ServiceAccountName.builder().email(saEmail).projectId(projectId).build());
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error getting user subject ID from Sam", apiException);
     }
   }
 
