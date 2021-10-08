@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.utils;
 
+import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.buffer.BufferService;
@@ -25,7 +26,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class FlightBeanBag {
-
+  private final ApplicationDao applicationDao;
   private final BucketCloneRolesComponent bucketCloneRolesComponent;
   private final BufferService bufferService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
@@ -42,6 +43,7 @@ public class FlightBeanBag {
   @Lazy
   @Autowired
   public FlightBeanBag(
+      ApplicationDao applicationDao,
       BucketCloneRolesComponent bucketCloneRolesComponent,
       BufferService bufferService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
@@ -54,6 +56,7 @@ public class FlightBeanBag {
       SamService samService,
       WorkspaceDao workspaceDao,
       WorkspaceService workspaceService) {
+    this.applicationDao = applicationDao;
     this.bucketCloneRolesComponent = bucketCloneRolesComponent;
     this.bufferService = bufferService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
@@ -70,6 +73,10 @@ public class FlightBeanBag {
 
   public static FlightBeanBag getFromObject(Object object) {
     return (FlightBeanBag) object;
+  }
+
+  public ApplicationDao getApplicationDao() {
+    return applicationDao;
   }
 
   public BucketCloneRolesComponent getBucketCloneRolesComponent() {

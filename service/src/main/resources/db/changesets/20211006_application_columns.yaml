@@ -1,0 +1,13 @@
+databaseChangeLog:
+- changeSet:
+    id: add flight id to cloud context for flight idempotency
+    author: dd
+    changes:
+    - addColumn:
+        tableName: application
+        columns:
+          - column:
+              name: state
+              type: text
+              remarks: |
+                From WsmApplicationState: disabled, enabled, decommissioned

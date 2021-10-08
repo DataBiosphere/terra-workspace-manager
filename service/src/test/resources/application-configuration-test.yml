@@ -1,0 +1,15 @@
+workspace:
+  application:
+    configurations:
+      -
+        identifier: 4BD1D59D-5827-4375-A41D-BBC65919F269
+        name: Leo
+        description: application execution framework
+        service-account: leo@terra-dev.iam.gserviceaccount.com
+        state: enabled
+      -
+        identifier: EB9D37F5-BAD7-4951-AE9A-86B3F03F4DD7
+        name: Carmen
+        description: musical performance framework
+        service-account: carmen@terra-dev.iam.gserviceaccount.com
+        state: disabled
