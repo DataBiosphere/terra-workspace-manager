@@ -108,9 +108,9 @@ public class WsmApplicationService {
     }
 
     // Something changed, so we need to update the config. Make sure the state change is legal.
-    // There are two checks to make. First, if we are moving from (enabled, disabled) to
+    // There are two checks to make. First, if we are moving from (operating, deprecated) to
     // decommissioned, then we need to make sure there are no resources owned by the application.
-    // Second, it is invalid to move from decommissioned to (enabled, disabled).
+    // Second, it is invalid to move from decommissioned to (operating, deprecated).
     if (dbApp.getWsmApplication().getState() != WsmApplicationState.DECOMMISSIONED
         && configApp.getState() == WsmApplicationState.DECOMMISSIONED) {
       if (applicationDao.applicationInUse(configApp.getApplicationId())) {
@@ -182,7 +182,7 @@ public class WsmApplicationService {
       logError("Invalid application configuration: invalid UUID format", e);
     } catch (InvalidApplicationConfigException e) {
       logError(
-          "Invalid application configuration: state must be enabled, disabled, or decommissioned",
+          "Invalid application configuration: state must be operating, deprecated, or decommissioned",
           e);
     }
     return Optional.empty();

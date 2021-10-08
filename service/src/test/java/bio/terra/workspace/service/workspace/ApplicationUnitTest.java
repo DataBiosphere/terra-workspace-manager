@@ -33,7 +33,7 @@ public class ApplicationUnitTest extends BaseUnitTest {
   private static final String ERROR_BAD_EMAIL =
       "Invalid application configuration: service account is not a valid email address";
   private static final String ERROR_BAD_STATE =
-      "Invalid application configuration: state must be enabled, disabled, or decommissioned";
+      "Invalid application configuration: state must be operating, deprecated, or decommissioned";
 
   private static final String INFO_CREATED = "Created application";
   private static final String INFO_NOCHANGE = "No change to application configuration";
@@ -49,7 +49,7 @@ public class ApplicationUnitTest extends BaseUnitTest {
   private static final String GOOD_UUID_STRING = "4BD1D59D-5827-4375-A41D-BBC65919F269";
   private static final UUID GOOD_UUID = UUID.fromString(GOOD_UUID_STRING);
   private static final String GOOD_EMAIL = "foo@kripalu.yoga";
-  private static final String GOOD_STATE = WsmApplicationState.ENABLED.name();
+  private static final String GOOD_STATE = WsmApplicationState.OPERATING.name();
   private static final String GOOD_NAME = "BestApplication";
   private static final String GOOD_DESC = "The Best of All Possible Applications";
   private static final String BAD_DATA = "xyzzy";
@@ -146,19 +146,19 @@ public class ApplicationUnitTest extends BaseUnitTest {
     assertMessage(0, INFO_UPDATED);
 
     // -- 4th pass -- State transition to disabled
-    stateTransition(WsmApplicationState.DISABLED, INFO_UPDATED);
+    stateTransition(WsmApplicationState.DEPRECATED, INFO_UPDATED);
 
     // -- 5th pass -- State transition bak to enabled
-    stateTransition(WsmApplicationState.ENABLED, INFO_UPDATED);
+    stateTransition(WsmApplicationState.OPERATING, INFO_UPDATED);
 
     // -- 6th pass -- State transition to decommissioned
     stateTransition(WsmApplicationState.DECOMMISSIONED, INFO_UPDATED);
 
     // -- 7th pass -- Cannot transition from decommissioned
-    stateTransition(WsmApplicationState.ENABLED, ERROR_DECOMMISSIONED);
+    stateTransition(WsmApplicationState.OPERATING, ERROR_DECOMMISSIONED);
 
     // -- 8th pass -- Cannot transition from decommissioned
-    stateTransition(WsmApplicationState.DISABLED, ERROR_DECOMMISSIONED);
+    stateTransition(WsmApplicationState.DEPRECATED, ERROR_DECOMMISSIONED);
   }
 
   // This test writes to the database, so conflicts with the processAppTest
@@ -176,7 +176,7 @@ public class ApplicationUnitTest extends BaseUnitTest {
         new WsmApplication()
             .applicationId(UUID.fromString("EF580D18-5CB4-4BEF-A5C9-DB5F30EBE368"))
             .serviceAccount("bar@kripalu.yoga")
-            .state(WsmApplicationState.ENABLED);
+            .state(WsmApplicationState.OPERATING);
     appService.processApp(wsmApp2, dbAppMap);
     assertMessage(1, INFO_CREATED);
 
@@ -199,7 +199,7 @@ public class ApplicationUnitTest extends BaseUnitTest {
     return new WsmApplication()
         .applicationId(GOOD_UUID)
         .serviceAccount(GOOD_EMAIL)
-        .state(WsmApplicationState.ENABLED);
+        .state(WsmApplicationState.OPERATING);
   }
 
   private void assertMessage(int index, String prefix) {

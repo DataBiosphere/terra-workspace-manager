@@ -48,13 +48,13 @@ public class ApplicationConfigurationTest extends BaseTest {
     assertEquals(leoApp.getDisplayName(), "Leo");
     assertEquals(leoApp.getDescription(), "application execution framework");
     assertEquals(leoApp.getServiceAccount(), "leo@terra-dev.iam.gserviceaccount.com");
-    assertEquals(leoApp.getState(), WsmApplicationState.ENABLED);
+    assertEquals(leoApp.getState(), WsmApplicationState.OPERATING);
   }
 
   private void checkCarmen(WsmApplication leoApp) {
     assertEquals(leoApp.getDisplayName(), "Carmen");
     assertEquals(leoApp.getDescription(), "musical performance framework");
     assertEquals(leoApp.getServiceAccount(), "carmen@terra-dev.iam.gserviceaccount.com");
-    assertEquals(leoApp.getState(), WsmApplicationState.DISABLED);
+    assertEquals(leoApp.getState(), WsmApplicationState.DEPRECATED);
   }
 }

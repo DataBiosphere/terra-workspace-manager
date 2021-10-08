@@ -6,8 +6,8 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 
 public enum WsmApplicationState {
-  ENABLED,
-  DISABLED,
+  OPERATING,
+  DEPRECATED,
   DECOMMISSIONED;
 
   public static WsmApplicationState fromString(@Nullable String state) {

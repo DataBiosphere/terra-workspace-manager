@@ -6,10 +6,10 @@ workspace:
         name: Leo
         description: application execution framework
         service-account: leo@terra-dev.iam.gserviceaccount.com
-        state: enabled
+        state: operating
       -
         identifier: EB9D37F5-BAD7-4951-AE9A-86B3F03F4DD7
         name: Carmen
         description: musical performance framework
         service-account: carmen@terra-dev.iam.gserviceaccount.com
-        state: disabled
+        state: deprecated
