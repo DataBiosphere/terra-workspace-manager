@@ -421,12 +421,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     InstanceName instanceName = resource.toInstanceName(projectId);
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
-    Instance instance = notebooks.instances().get(instanceName).execute();
-    ServiceAccountName serviceAccountName =
-        ServiceAccountName.builder()
-            .projectId(projectId)
-            .email(instance.getServiceAccount())
-            .build();
 
     // Test idempotency of steps by retrying them once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -438,7 +432,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     controlledResourceService.deleteControlledResourceSync(
         resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
     assertNotFound(instanceName, notebooks);
-    assertNotFound(serviceAccountName, crlService.getIamCow());
     assertThrows(
         ResourceNotFoundException.class,
         () ->

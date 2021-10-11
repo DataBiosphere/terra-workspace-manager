@@ -41,8 +41,6 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
     public static final String CREATE_NOTEBOOK_REGION = "createNotebookRegion";
     public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
-    public static final String DELETE_NOTEBOOK_SERVICE_ACCOUNT_EMAIL =
-        "deleteNotebookServiceAccountEmail";
     public static final String NOTEBOOK_PET_SERVICE_ACCOUNT = "notebookPetServiceAccount";
 
     // Cloning Keys
