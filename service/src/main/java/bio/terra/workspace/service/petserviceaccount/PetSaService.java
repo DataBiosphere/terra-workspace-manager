@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.petserviceaccount;
 
 import bio.terra.cloudres.google.iam.ServiceAccountName;
-import bio.terra.workspace.common.exception.GcpException;
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -120,10 +120,8 @@ public class PetSaService {
               .serviceAccounts()
               .setIamPolicy(petSaName, request)
               .execute());
-    } catch (GoogleJsonResponseException googleEx) {
-      throw new GcpException(googleEx);
     } catch (IOException e) {
-      throw new RuntimeException("Error enabling user's pet SA", e);
+      throw new InternalServerErrorException("Error enabling user's pet SA", e);
     }
   }
 
@@ -200,10 +198,8 @@ public class PetSaService {
               .serviceAccounts()
               .setIamPolicy(petServiceAccount, request)
               .execute());
-    } catch (GoogleJsonResponseException googleEx) {
-      throw new GcpException(googleEx);
     } catch (IOException e) {
-      throw new RuntimeException("Error disabling user's pet SA", e);
+      throw new InternalServerErrorException("Error disabling user's pet SA", e);
     }
   }
 
@@ -250,9 +246,9 @@ public class PetSaService {
       if (googleException.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
         return false;
       }
-      throw new GcpException(googleException);
+      throw new InternalServerErrorException("Unexpected error from GCP while checking SA", googleException);
     } catch (IOException e) {
-      throw new RuntimeException("Unexpected error from GCP while checking SA", e);
+      throw new InternalServerErrorException("Unexpected error from GCP while checking SA", e);
     }
   }
 }

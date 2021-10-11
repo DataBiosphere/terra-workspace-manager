@@ -357,13 +357,14 @@ public class SamService {
         samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
+      // Sam and GCP always use lowercase email identifiers, so we do the same here for consistency.
       SamRetry.retry(
           () ->
               resourceApi.addUserToPolicy(
                   SamConstants.SAM_WORKSPACE_RESOURCE,
                   workspaceId.toString(),
                   role.toSamRole(),
-                  email));
+                  email.toLowerCase()));
       logger.info(
           "Granted role {} to user {} in workspace {}", role.toSamRole(), email, workspaceId);
     } catch (ApiException apiException) {

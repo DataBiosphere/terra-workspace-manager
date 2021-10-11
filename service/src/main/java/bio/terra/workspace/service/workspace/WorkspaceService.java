@@ -359,19 +359,21 @@ public class WorkspaceService {
    *
    * @param workspaceId ID of the workspace user to remove user's role in
    * @param role Role to remove
-   * @param targetUserEmail Email identifier of user whose role is being removed
+   * @param rawUserEmail Email identifier of user whose role is being removed
    * @param executingUserRequest User credentials to authenticate this removal. Must belong to a
    *     workspace owner, and likely do not belong to {@code userEmail}.
    */
   public void removeWorkspaceRoleFromUser(
       UUID workspaceId,
       WsmIamRole role,
-      String targetUserEmail,
+      String rawUserEmail,
       AuthenticatedUserRequest executingUserRequest) {
     Workspace workspace =
         validateWorkspaceAndAction(
             executingUserRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
     stageService.assertMcWorkspace(workspace, "removeWorkspaceRoleFromUser");
+    // Sam and GCP always use lowercase email identifiers, so we do the same here.
+    String targetUserEmail = rawUserEmail.toLowerCase();
     // Before launching the flight, validate that the user being removed is a direct member of the
     // specified role. Users may also be added to a workspace via managed groups, but WSM does not
     // control membership of those groups, and so cannot remove them here.

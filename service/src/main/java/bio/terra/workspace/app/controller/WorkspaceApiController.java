@@ -371,8 +371,6 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("role") ApiIamRole role,
       @RequestBody ApiGrantRoleRequestBody body) {
     ControllerValidationUtils.validateEmail(body.getMemberEmail());
-    // Sam and GCP always use lowercase email identifiers, so we do the same here for consistency.
-    String memberEmail = body.getMemberEmail().toLowerCase();
     if (role == ApiIamRole.APPLICATION) {
       throw new InvalidRoleException(
           "Users cannot grant role APPLICATION. Use application registration instead.");
@@ -380,7 +378,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     SamRethrow.onInterrupted(
         () ->
             samService.grantWorkspaceRole(
-                id, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), memberEmail),
+                id, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
         "grantWorkspaceRole");
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -391,8 +389,6 @@ public class WorkspaceApiController implements WorkspaceApi {
       @PathVariable("role") ApiIamRole role,
       @PathVariable("memberEmail") String memberEmail) {
     ControllerValidationUtils.validateEmail(memberEmail);
-    // Sam and GCP always use lowercase emails, so we do the same here.
-    memberEmail = memberEmail.toLowerCase();
     if (role == ApiIamRole.APPLICATION) {
       throw new InvalidRoleException(
           "Users cannot remove role APPLICATION. Use application registration instead.");
