@@ -33,8 +33,8 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
     //  resources, and can skip the rest of the flight.
     // 3. If the user is fully removed from the workspace, build a list of their private resources
     //  by reading WSM's DB.
-    // 4. Remove the user from all roles on those private resources. Because WSM does not track
-    //  which roles users have on private resources, this cannot be undone.
+    // 4. Remove the user from all roles on those private resources.
+    // 5. Revoke the user's permission to use their pet SA in this workspace.
     addStep(
         new RemoveUserFromSamStep(
             workspaceId, roleToRemove, userToRemove, appContext.getSamService(), userRequest));
@@ -50,5 +50,12 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
             userRequest));
     addStep(
         new RemovePrivateResourceAccessStep(userToRemove, appContext.getSamService(), userRequest));
+    addStep(
+        new RevokePetUsagePermissionStep(
+            workspaceId,
+            userToRemove,
+            appContext.getPetSaService(),
+            appContext.getGcpCloudContextService(),
+            userRequest));
   }
 }

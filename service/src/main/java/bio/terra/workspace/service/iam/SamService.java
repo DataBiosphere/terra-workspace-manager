@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.iam;
 
+import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.sam.SamRetry;
@@ -26,6 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
@@ -356,13 +358,14 @@ public class SamService {
         samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
+      // Sam and GCP always use lowercase email identifiers, so we do the same here for consistency.
       SamRetry.retry(
           () ->
               resourceApi.addUserToPolicy(
                   SamConstants.SAM_WORKSPACE_RESOURCE,
                   workspaceId.toString(),
                   role.toSamRole(),
-                  email));
+                  email.toLowerCase()));
       logger.info(
           "Granted role {} to user {} in workspace {}", role.toSamRole(), email, workspaceId);
     } catch (ApiException apiException) {
@@ -655,12 +658,15 @@ public class SamService {
    * @param resource The WSM representation of the resource to create.
    * @param privateIamRoles The IAM role(s) to grant a private user. Required for private resources,
    *     should be null otherwise.
+   * @param assignedUserEmail Email identifier of the assigned user of this resource. Required for
+   *     private resources, should be null otherwise.
    * @param userRequest Credentials to use for talking to Sam.
    */
   @Traced
   public void createControlledResource(
       ControlledResource resource,
-      List<ControlledResourceIamRole> privateIamRoles,
+      @Nullable List<ControlledResourceIamRole> privateIamRoles,
+      @Nullable String assignedUserEmail,
       AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     // Set up the master OWNER user in Sam for all controlled resources, if it's not already.
@@ -681,8 +687,7 @@ public class SamService {
     // applications in the future.
     if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
       // The assigned user is always the current user for private resources.
-      addPrivateResourcePolicies(
-          resourceRequest, privateIamRoles, getUserEmailFromSam(userRequest));
+      addPrivateResourcePolicies(resourceRequest, privateIamRoles, assignedUserEmail);
     }
 
     try {
@@ -884,12 +889,34 @@ public class SamService {
    * Fetch the email of a user's pet service account in a given project. This request to Sam will
    * create the pet SA if it doesn't already exist.
    */
-  public String getOrCreatePetSaEmail(String projectId, AuthenticatedUserRequest userRequest) {
+  public String getOrCreatePetSaEmail(String projectId, AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
     GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
     try {
-      return googleApi.getPetServiceAccount(projectId);
+      return SamRetry.retry(() -> googleApi.getPetServiceAccount(projectId));
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error getting pet service account from Sam", apiException);
+    }
+  }
+
+  // TODO(PF-991): This is a temporary workaround to support disabling pet service account
+  //  self-impersonation without having user credentials available. When we stop granting this
+  //  permission directly to users and their pets, this method should be deleted.
+  /**
+   * Construct the email of an arbitrary user's pet service account in a given project. Unlike
+   * {@code getOrCreatePetSaEmail}, this will not create the underlying service account. It may
+   * return the email of a service account which does not exist.
+   */
+  public ServiceAccountName constructUserPetSaEmail(
+      String projectId, String userEmail, AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
+    UsersApi usersApi = samUsersApi(userRequest.getRequiredToken());
+    try {
+      String subjectId = SamRetry.retry(() -> usersApi.getUserIds(userEmail).getUserSubjectId());
+      String saEmail = String.format("pet-%s@%s.iam.gserviceaccount.com", subjectId, projectId);
+      return ServiceAccountName.builder().email(saEmail).projectId(projectId).build();
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error getting user subject ID from Sam", apiException);
     }
   }
 

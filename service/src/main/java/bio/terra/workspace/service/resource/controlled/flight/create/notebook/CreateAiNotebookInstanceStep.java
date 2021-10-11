@@ -3,11 +3,9 @@ package bio.terra.workspace.service.resource.controlled.flight.create.notebook;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_NETWORK_NAME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_REGION;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_SUBNETWORK_NAME;
 
 import bio.terra.cloudres.google.api.services.common.OperationCow;
-import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.common.exception.BadRequestException;
@@ -23,6 +21,7 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImag
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -54,16 +53,19 @@ public class CreateAiNotebookInstanceStep implements Step {
   private static final String PROXY_MODE_SA_VALUE = "service_" + "account";
 
   private final Logger logger = LoggerFactory.getLogger(CreateAiNotebookInstanceStep.class);
-  private final CrlService crlService;
   private final ControlledAiNotebookInstanceResource resource;
+  private final UserWithPetSa userAndPet;
+  private final CrlService crlService;
   private final GcpCloudContextService gcpCloudContextService;
 
   public CreateAiNotebookInstanceStep(
-      CrlService crlService,
       ControlledAiNotebookInstanceResource resource,
+      UserWithPetSa userAndPet,
+      CrlService crlService,
       GcpCloudContextService gcpCloudContextService) {
-    this.crlService = crlService;
+    this.userAndPet = userAndPet;
     this.resource = resource;
+    this.crlService = crlService;
     this.gcpCloudContextService = gcpCloudContextService;
   }
 
@@ -72,7 +74,7 @@ public class CreateAiNotebookInstanceStep implements Step {
       throws InterruptedException, RetryException {
     String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     InstanceName instanceName = resource.toInstanceName(projectId);
-    Instance instance = createInstanceModel(flightContext, projectId);
+    Instance instance = createInstanceModel(flightContext, projectId, userAndPet.getPetEmail());
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
@@ -102,16 +104,13 @@ public class CreateAiNotebookInstanceStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private static Instance createInstanceModel(FlightContext flightContext, String projectId) {
+  private static Instance createInstanceModel(
+      FlightContext flightContext, String projectId, String serviceAccountEmail) {
     Instance instance = new Instance();
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         flightContext
             .getInputParameters()
             .get(CREATE_NOTEBOOK_PARAMETERS, ApiGcpAiNotebookInstanceCreationParameters.class);
-    String serviceAccountEmail =
-        ServiceAccountName.emailFromAccountId(
-            flightContext.getWorkingMap().get(CREATE_NOTEBOOK_SERVICE_ACCOUNT_ID, String.class),
-            projectId);
     setFields(creationParameters, serviceAccountEmail, instance);
     setNetworks(instance, projectId, flightContext.getWorkingMap());
     return instance;

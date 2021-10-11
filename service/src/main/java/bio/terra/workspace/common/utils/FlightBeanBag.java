@@ -7,6 +7,7 @@ import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesComponent;
@@ -34,6 +35,7 @@ public class FlightBeanBag {
   private final CrlService crlService;
   private final DataRepoService dataRepoService;
   private final GcpCloudContextService gcpCloudContextService;
+  private final PetSaService petSaService;
   private final ReferencedResourceService referencedResourceService;
   private final ResourceDao resourceDao;
   private final SamService samService;
@@ -51,6 +53,7 @@ public class FlightBeanBag {
       CrlService crlService,
       DataRepoService dataRepoService,
       GcpCloudContextService gcpCloudContextService,
+      PetSaService petSaService,
       ReferencedResourceService referencedResourceService,
       ResourceDao resourceDao,
       SamService samService,
@@ -64,6 +67,7 @@ public class FlightBeanBag {
     this.crlService = crlService;
     this.dataRepoService = dataRepoService;
     this.gcpCloudContextService = gcpCloudContextService;
+    this.petSaService = petSaService;
     this.referencedResourceService = referencedResourceService;
     this.resourceDao = resourceDao;
     this.samService = samService;
@@ -105,6 +109,10 @@ public class FlightBeanBag {
 
   public GcpCloudContextService getGcpCloudContextService() {
     return gcpCloudContextService;
+  }
+
+  public PetSaService getPetSaService() {
+    return petSaService;
   }
 
   public ReferencedResourceService getReferencedResourceService() {

@@ -1,11 +1,14 @@
 package scripts.testscripts;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
+import bio.terra.workspace.model.GrantRoleRequestBody;
+import bio.terra.workspace.model.IamRole;
 import com.google.api.services.iam.v1.Iam;
 import com.google.api.services.iam.v1.model.TestIamPermissionsRequest;
 import com.google.api.services.iam.v1.model.TestIamPermissionsResponse;
@@ -21,11 +24,17 @@ import scripts.utils.WorkspaceAllocateTestScriptBase;
 public class EnablePet extends WorkspaceAllocateTestScriptBase {
 
   private String projectId;
+  private TestUserSpecification secondUser;
 
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
     super.doSetup(testUsers, workspaceApi);
+    // Note the 0th user is the owner of the workspace, pulled out in the super class.
+    assertThat(
+        "There must be at least two test users defined for this test.",
+        testUsers != null && testUsers.size() > 1);
+    secondUser = testUsers.get(1);
     projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
   }
 
@@ -54,6 +63,33 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
     Iam petIamClient = ClientTestUtils.getGcpIamClientFromToken(petSaToken);
     // TODO(PF-991): This will fail until pet SA self-impersonation is fixed.
     // assertFalse(canImpersonateSa(petIamClient, petSaEmail));
+
+    // Add second user to the workspace as a reader.
+    userWorkspaceApi.grantRole(
+        new GrantRoleRequestBody().memberEmail(secondUser.userEmail),
+        getWorkspaceId(),
+        IamRole.READER);
+    // Validate the second user cannot impersonate either user's pet.
+    GoogleApi secondUserSamGoogleApi = SamClientUtils.samGoogleApi(secondUser, server);
+    String secondUserPetSaEmail = secondUserSamGoogleApi.getPetServiceAccount(projectId);
+    Iam secondUserIamClient = ClientTestUtils.getGcpIamClient(secondUser);
+    assertFalse(canImpersonateSa(secondUserIamClient, secondUserPetSaEmail));
+    assertFalse(canImpersonateSa(secondUserIamClient, petSaEmail));
+
+    // Enable the second user to impersonate their pet
+    WorkspaceApi secondUserWorkspaceApi = ClientTestUtils.getWorkspaceClient(secondUser, server);
+    String returnedSecondUserPetEmail = secondUserWorkspaceApi.enablePet(getWorkspaceId());
+    assertEquals(secondUserPetSaEmail, returnedSecondUserPetEmail);
+    assertTrue(canImpersonateSa(secondUserIamClient, secondUserPetSaEmail));
+    // Second user still cannot impersonate first user's pet
+    assertFalse(canImpersonateSa(secondUserIamClient, petSaEmail));
+
+    // Remove second user from workspace. This should revoke their permission to impersonate their
+    // pet.
+    userWorkspaceApi.removeRole(getWorkspaceId(), IamRole.READER, secondUser.userEmail);
+    assertTrue(
+        ClientTestUtils.getWithRetryOnException(
+            () -> assertCannotImpersonateSa(secondUserIamClient, secondUserPetSaEmail)));
   }
 
   private boolean canImpersonateSa(Iam iamClient, String petSaEmail) throws Exception {
@@ -72,5 +108,12 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
     // empty list. This is a quirk of the GCP client library.
     return response.getPermissions() != null
         && response.getPermissions().contains("iam.serviceAccounts.actAs");
+  }
+
+  private boolean assertCannotImpersonateSa(Iam iamClient, String petSaEmail) throws Exception {
+    if (canImpersonateSa(iamClient, petSaEmail)) {
+      throw new RuntimeException("User can still impersonate pet SA");
+    }
+    return true;
   }
 }

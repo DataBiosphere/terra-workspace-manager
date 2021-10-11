@@ -25,6 +25,7 @@ import bio.terra.workspace.service.resource.controlled.flight.update.UpdateContr
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.stage.StageService;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -45,6 +46,7 @@ public class ControlledResourceService {
   private final ResourceDao resourceDao;
   private final StageService stageService;
   private final SamService samService;
+  private final GcpCloudContextService gcpCloudContextService;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
 
   @Autowired
@@ -54,12 +56,14 @@ public class ControlledResourceService {
       ResourceDao resourceDao,
       StageService stageService,
       SamService samService,
+      GcpCloudContextService gcpCloudContextService,
       ControlledResourceMetadataManager controlledResourceMetadataManager) {
     this.jobService = jobService;
     this.workspaceService = workspaceService;
     this.resourceDao = resourceDao;
     this.stageService = stageService;
     this.samService = samService;
+    this.gcpCloudContextService = gcpCloudContextService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
   }
 
@@ -303,7 +307,15 @@ public class ControlledResourceService {
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
             resource, privateResourceIamRoles, jobControl, resultPath, userRequest);
+    String petSaEmail =
+        SamRethrow.onInterrupted(
+            () ->
+                samService.getOrCreatePetSaEmail(
+                    gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId()),
+                    userRequest),
+            "enablePet");
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
+    jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, petSaEmail);
     return jobBuilder.submit();
   }
 
@@ -314,8 +326,11 @@ public class ControlledResourceService {
       ApiJobControl jobControl,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
+    String userEmail =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserEmailFromSam(userRequest), "commonCreationJobBuilder");
     // Pre-flight assertions
-    validateCreateFlightPrerequisites(resource, userRequest);
+    validateCreateFlightPrerequisites(resource, userEmail, userRequest);
 
     final String jobDescription =
         String.format(
@@ -330,17 +345,18 @@ public class ControlledResourceService {
             resource,
             userRequest)
         .addParameter(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, privateResourceIamRoles)
+        .addParameter(ControlledResourceKeys.PRIVATE_RESOURCE_USER_EMAIL, userEmail)
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
   }
 
   private void validateCreateFlightPrerequisites(
-      ControlledResource resource, AuthenticatedUserRequest userRequest) {
+      ControlledResource resource, String userEmail, AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
     workspaceService.validateWorkspaceAndAction(
         userRequest,
         resource.getWorkspaceId(),
         resource.getCategory().getSamCreateResourceAction());
-    validateOnlySelfAssignment(resource, userRequest);
+    validateOnlySelfAssignment(resource, userEmail);
   }
 
   public ControlledResource getControlledResource(
@@ -401,23 +417,19 @@ public class ControlledResourceService {
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
   }
 
-  private void validateOnlySelfAssignment(
-      ControlledResource controlledResource, AuthenticatedUserRequest userRequest) {
+  private void validateOnlySelfAssignment(ControlledResource controlledResource, String userEmail) {
     if (!controlledResource.getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
       // No need to handle SHARED resources
       return;
     }
-    final String requestUserEmail =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(userRequest), "getUserEmailFromSam");
     // If there is no assigned user, this condition is satisfied.
     //noinspection deprecation
     final boolean isAllowed =
-        controlledResource.getAssignedUser().map(requestUserEmail::equalsIgnoreCase).orElse(true);
+        controlledResource.getAssignedUser().map(userEmail::equalsIgnoreCase).orElse(true);
     if (!isAllowed) {
       throw new BadRequestException(
           "User ("
-              + requestUserEmail
+              + userEmail
               + ") may only assign a private controlled resource to themselves ("
               + controlledResource.getAssignedUser().orElse("")
               + ").");

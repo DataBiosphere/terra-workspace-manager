@@ -110,10 +110,21 @@ public class CrlService {
     return crlComputeCow;
   }
 
-  /** Returns the CRL {@link IamCow} which wraps Google IAM API. */
+  /** Returns the CRL {@link IamCow} which wraps Google IAM API using WSM SA credentials */
   public IamCow getIamCow() {
     assertCrlInUse();
     return crlIamCow;
+  }
+
+  /** @return CRL {@link IamCow} which wraps Google IAM API using user credentials. */
+  @VisibleForTesting
+  public IamCow getIamCow(AuthenticatedUserRequest userRequest) {
+    assertCrlInUse();
+    try {
+      return IamCow.create(clientConfig, googleCredentialsFromUserReq(userRequest));
+    } catch (GeneralSecurityException | IOException e) {
+      throw new CrlInternalException("Error creating IAM API wrapper", e);
+    }
   }
 
   /** Returns the CRL {@link ServiceUsageCow} which wraps Google Cloud ServiceUsage API. */

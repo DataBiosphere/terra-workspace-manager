@@ -32,9 +32,12 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.exception.InvalidRoleException;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.AsyncJobResult;
+import bio.terra.workspace.service.petserviceaccount.PetSaService;
+import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -74,6 +77,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   private final HttpServletRequest request;
   private final ReferencedResourceService referenceResourceService;
   private final GcpCloudContextService gcpCloudContextService;
+  private final PetSaService petSaService;
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
 
   @Autowired
@@ -84,7 +88,8 @@ public class WorkspaceApiController implements WorkspaceApi {
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       ReferencedResourceService referenceResourceService,
-      GcpCloudContextService gcpCloudContextService) {
+      GcpCloudContextService gcpCloudContextService,
+      PetSaService petSaService) {
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.samService = samService;
@@ -92,6 +97,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     this.request = request;
     this.referenceResourceService = referenceResourceService;
     this.gcpCloudContextService = gcpCloudContextService;
+    this.petSaService = petSaService;
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {
@@ -458,8 +464,21 @@ public class WorkspaceApiController implements WorkspaceApi {
   @Override
   public ResponseEntity<String> enablePet(UUID workspaceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    // TODO(PF-1007): This would be a nice use for an authorized workspace ID.
+    // Validate that the user is a workspace member, as enablePetServiceAccountImpersonation does
+    // not authenticate.
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    String userEmail =
+        SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
     String petSaEmail =
-        workspaceService.enablePetServiceAccountImpersonation(workspaceId, userRequest);
+        SamRethrow.onInterrupted(
+            () ->
+                samService.getOrCreatePetSaEmail(
+                    gcpCloudContextService.getRequiredGcpProject(workspaceId), userRequest),
+            "enablePet");
+    UserWithPetSa userAndPet = new UserWithPetSa(userEmail, petSaEmail);
+    petSaService.enablePetServiceAccountImpersonation(workspaceId, userAndPet);
     return new ResponseEntity<>(petSaEmail, HttpStatus.OK);
   }
 
