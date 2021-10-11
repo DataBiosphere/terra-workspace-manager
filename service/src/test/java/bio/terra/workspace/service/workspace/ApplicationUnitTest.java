@@ -145,10 +145,10 @@ public class ApplicationUnitTest extends BaseUnitTest {
     appService.processApp(wsmApp, dbAppMap);
     assertMessage(0, INFO_UPDATED);
 
-    // -- 4th pass -- State transition to disabled
+    // -- 4th pass -- State transition to deprecated
     stateTransition(WsmApplicationState.DEPRECATED, INFO_UPDATED);
 
-    // -- 5th pass -- State transition bak to enabled
+    // -- 5th pass -- State transition back to operating
     stateTransition(WsmApplicationState.OPERATING, INFO_UPDATED);
 
     // -- 6th pass -- State transition to decommissioned

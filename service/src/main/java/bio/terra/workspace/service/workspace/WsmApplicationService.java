@@ -108,9 +108,10 @@ public class WsmApplicationService {
     }
 
     // Something changed, so we need to update the config. Make sure the state change is legal.
-    // There are two checks to make. First, if we are moving from (operating, deprecated) to
-    // decommissioned, then we need to make sure there are no resources owned by the application.
-    // Second, it is invalid to move from decommissioned to (operating, deprecated).
+    // There are two checks to make.
+
+    // Check 1: if we are moving from (operating, deprecated) to decommissioned, then we need
+    // to make sure there are no resources owned by the application.
     if (dbApp.getWsmApplication().getState() != WsmApplicationState.DECOMMISSIONED
         && configApp.getState() == WsmApplicationState.DECOMMISSIONED) {
       if (applicationDao.applicationInUse(configApp.getApplicationId())) {
@@ -122,6 +123,7 @@ public class WsmApplicationService {
       }
     }
 
+    // Check 2: it is invalid to move from decommissioned to (operating, deprecated).
     if (dbApp.getWsmApplication().getState() == WsmApplicationState.DECOMMISSIONED
         && configApp.getState() != WsmApplicationState.DECOMMISSIONED) {
       logError("Invalid application configuration: application has been decommissioned");
