@@ -912,10 +912,9 @@ public class SamService {
       throws InterruptedException {
     UsersApi usersApi = samUsersApi(userRequest.getRequiredToken());
     try {
-      String subjectId = usersApi.getUserIds(userEmail).getUserSubjectId();
+      String subjectId = SamRetry.retry(() -> usersApi.getUserIds(userEmail).getUserSubjectId());
       String saEmail = String.format("pet-%s@%s.iam.gserviceaccount.com", subjectId, projectId);
-      return SamRetry.retry(
-          () -> ServiceAccountName.builder().email(saEmail).projectId(projectId).build());
+      return ServiceAccountName.builder().email(saEmail).projectId(projectId).build();
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error getting user subject ID from Sam", apiException);
     }
