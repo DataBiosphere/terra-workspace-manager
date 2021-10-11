@@ -18,6 +18,11 @@ import org.slf4j.LoggerFactory;
  * pet service account, and only users with the 'iam.serviceAccounts.actAs' permission on the pet
  * are allowed through the proxy. GCP automatically de-deduplicates IAM bindings so this step is
  * idempotent, even across flights.
+ *
+ * <p>There is a small window where this step may fail to undo: specifically if the do step modifies
+ * the pet SA's IAM policy but fails before storing the updated eTag in the working map. This is
+ * indistinguishable from a simultaneous modification by another flight, so in that case we log a
+ * warning and do not undo the flight to prevent potentially clobbering another flight's changes.
  */
 public class GrantPetUsagePermissionStep implements Step {
 

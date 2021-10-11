@@ -22,6 +22,11 @@ import org.slf4j.LoggerFactory;
  * A step for removing a user's permission to use their pet service account in a workspace. WSM uses
  * pet service accounts to run controlled Notebook resources, so revoking access here ensures users
  * lose notebook access when they are removed from a workspace.
+ *
+ * <p>There is a small window where this step may fail to undo: specifically if the do step modifies
+ * the pet SA's IAM policy but fails before storing the updated eTag in the working map. This is
+ * indistinguishable from a simultaneous modification by another flight, so in that case we log a
+ * warning and do not undo the flight to prevent potentially clobbering another flight's changes.
  */
 public class RevokePetUsagePermissionStep implements Step {
 
@@ -115,7 +120,7 @@ public class RevokePetUsagePermissionStep implements Step {
     // This user may not have a pet SA in this workspace. If they do not, this step does not need
     // to do anything.
     Optional<ServiceAccountName> maybePet =
-        petSaService.getArbitrarySa(maybeProjectId.get(), userEmailToRemove, userRequest);
+        petSaService.getUserPetSa(maybeProjectId.get(), userEmailToRemove, userRequest);
     if (maybePet.isEmpty()) {
       return Optional.empty();
     }

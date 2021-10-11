@@ -90,7 +90,7 @@ public class PetSaService {
       // clobbering other changes.
       if (eTag != null && !saPolicy.getEtag().equals(eTag)) {
         logger.warn(
-            "GCP IAM policy eTag did not match expected value when granting pet SA access for user {} in workspace {}.",
+            "GCP IAM policy eTag did not match expected value when granting pet SA access for user {} in workspace {}. This is normal for Step retries.",
             userAndPet.getUserEmail(),
             workspaceId);
         return Optional.empty();
@@ -168,7 +168,7 @@ public class PetSaService {
       // clobbering other changes.
       if (eTag != null && !saPolicy.getEtag().equals(eTag)) {
         logger.warn(
-            "GCP IAM policy eTag did not match expected value when revoking pet SA access for user {} in workspace {}.",
+            "GCP IAM policy eTag did not match expected value when revoking pet SA access for user {} in workspace {}. This is normal for Step retries.",
             userAndPet.getUserEmail(),
             workspaceId);
         return Optional.empty();
@@ -223,12 +223,12 @@ public class PetSaService {
    * Returns the pet service account of a provided user in a provided project if it exists in GCP,
    * or an empty Optional if it does not.
    */
-  public Optional<ServiceAccountName> getArbitrarySa(
+  public Optional<ServiceAccountName> getUserPetSa(
       String projectId, String userEmail, AuthenticatedUserRequest userRequest) {
     ServiceAccountName constructedSa =
         SamRethrow.onInterrupted(
-            () -> samService.constructArbitraryUserPetSaEmail(projectId, userEmail, userRequest),
-            "getArbitrarySa");
+            () -> samService.constructUserPetSaEmail(projectId, userEmail, userRequest),
+            "getUserPetSa");
     return serviceAccountExists(constructedSa) ? Optional.of(constructedSa) : Optional.empty();
   }
 
@@ -246,7 +246,8 @@ public class PetSaService {
       if (googleException.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
         return false;
       }
-      throw new InternalServerErrorException("Unexpected error from GCP while checking SA", googleException);
+      throw new InternalServerErrorException(
+          "Unexpected error from GCP while checking SA", googleException);
     } catch (IOException e) {
       throw new InternalServerErrorException("Unexpected error from GCP while checking SA", e);
     }

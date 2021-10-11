@@ -10,9 +10,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.exception.ControlledResourceNotImplementedException;
-import bio.terra.workspace.service.resource.controlled.flight.delete.notebook.DeleteAiNotebookInstanceStep;
-import bio.terra.workspace.service.resource.controlled.flight.delete.notebook.DeleteServiceAccountStep;
-import bio.terra.workspace.service.resource.controlled.flight.delete.notebook.RetrieveNotebookServiceAccountStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.UUID;
 
@@ -78,19 +75,7 @@ public class DeleteControlledResourceFlight extends Flight {
         break;
       case AI_NOTEBOOK_INSTANCE:
         addStep(
-            new RetrieveNotebookServiceAccountStep(
-                resource.castToAiNotebookInstanceResource(),
-                flightBeanBag.getCrlService(),
-                flightBeanBag.getGcpCloudContextService()),
-            gcpRetryRule);
-        addStep(
             new DeleteAiNotebookInstanceStep(
-                resource.castToAiNotebookInstanceResource(),
-                flightBeanBag.getCrlService(),
-                flightBeanBag.getGcpCloudContextService()),
-            gcpRetryRule);
-        addStep(
-            new DeleteServiceAccountStep(
                 resource.castToAiNotebookInstanceResource(),
                 flightBeanBag.getCrlService(),
                 flightBeanBag.getGcpCloudContextService()),

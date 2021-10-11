@@ -255,7 +255,7 @@ class SamServiceTest extends BaseConnectedTest {
         workspaceId, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
 
     ControlledResource bucketResource = defaultBucket(workspaceId).build();
-    samService.createControlledResource(bucketResource, null, defaultUserRequest());
+    samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
 
     // Workspace reader should have read access on a user-shared resource via inheritance
     assertTrue(
@@ -284,7 +284,10 @@ class SamServiceTest extends BaseConnectedTest {
     List<ControlledResourceIamRole> privateResourceIamRoles =
         ImmutableList.of(ControlledResourceIamRole.READER, ControlledResourceIamRole.EDITOR);
     samService.createControlledResource(
-        bucketResource, privateResourceIamRoles, defaultUserRequest());
+        bucketResource,
+        privateResourceIamRoles,
+        userAccessUtils.getDefaultUserEmail(),
+        defaultUserRequest());
 
     // Workspace reader should not have read access on a private resource.
     assertFalse(
@@ -309,9 +312,9 @@ class SamServiceTest extends BaseConnectedTest {
     UUID workspaceId = createWorkspaceDefaultUser();
 
     ControlledResource bucketResource = defaultBucket(workspaceId).build();
-    samService.createControlledResource(bucketResource, null, defaultUserRequest());
+    samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
     // This duplicate call should complete without throwing.
-    samService.createControlledResource(bucketResource, null, defaultUserRequest());
+    samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
   }
 
   @Test
@@ -319,7 +322,7 @@ class SamServiceTest extends BaseConnectedTest {
     UUID workspaceId = createWorkspaceDefaultUser();
 
     ControlledResource bucketResource = defaultBucket(workspaceId).build();
-    samService.createControlledResource(bucketResource, null, defaultUserRequest());
+    samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
 
     samService.deleteControlledResource(bucketResource, defaultUserRequest());
     samService.deleteControlledResource(bucketResource, defaultUserRequest());

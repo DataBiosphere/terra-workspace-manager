@@ -22,6 +22,7 @@ public final class WorkspaceFlightMapKeys {
 
     public static final String CREATION_PARAMETERS = "creationParameters";
     public static final String PRIVATE_RESOURCE_IAM_ROLES = "iamRoles";
+    public static final String PRIVATE_RESOURCE_USER_EMAIL = "privateResourceUserEmail";
     public static final String IAM_RESOURCE_GROUP_EMAIL_MAP = "iamResourceGroupEmailMap";
 
     public static final String UPDATE_PARAMETERS = "updateParameters";
@@ -42,7 +43,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
     public static final String DELETE_NOTEBOOK_SERVICE_ACCOUNT_EMAIL =
         "deleteNotebookServiceAccountEmail";
-    public static final String NOTEBOOK_USER_AND_PET = "notebookUserAndPet";
+    public static final String NOTEBOOK_PET_SERVICE_ACCOUNT = "notebookPetServiceAccount";
 
     // Cloning Keys
     public static final String CLONE_ALL_RESOURCES_FLIGHT_ID = "cloneAllResourcesFlightId";

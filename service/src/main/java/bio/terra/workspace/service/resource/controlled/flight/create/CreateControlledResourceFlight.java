@@ -40,10 +40,13 @@ public class CreateControlledResourceFlight extends Flight {
     @SuppressWarnings("unchecked")
     final List<ControlledResourceIamRole> privateResourceIamRoles =
         inputParameters.get(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, List.class);
+    final String assignedUserEmail =
+        inputParameters.get(ControlledResourceKeys.PRIVATE_RESOURCE_USER_EMAIL, String.class);
     // This value is currently only populated for AI Platform Notebooks, as other resources do not
     // interact with service accounts.
-    final UserWithPetSa userAndPet =
-        inputParameters.get(ControlledResourceKeys.NOTEBOOK_USER_AND_PET, UserWithPetSa.class);
+    final String notebookPetSaEmail =
+        inputParameters.get(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, String.class);
+    final UserWithPetSa userAndPet = new UserWithPetSa(assignedUserEmail, notebookPetSaEmail);
 
     // store the resource metadata in the WSM database
     addStep(new StoreMetadataStep(flightBeanBag.getResourceDao()));
@@ -51,7 +54,11 @@ public class CreateControlledResourceFlight extends Flight {
     // create the Sam resource associated with the resource
     addStep(
         new CreateSamResourceStep(
-            flightBeanBag.getSamService(), resource, privateResourceIamRoles, userRequest));
+            flightBeanBag.getSamService(),
+            resource,
+            privateResourceIamRoles,
+            assignedUserEmail,
+            userRequest));
 
     // get google group names for workspace roles from Sam and store them in the working map
     addStep(

@@ -17,7 +17,6 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceA
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -308,8 +307,6 @@ public class ControlledResourceService {
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
             resource, privateResourceIamRoles, jobControl, resultPath, userRequest);
-    String userEmail =
-        SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
     String petSaEmail =
         SamRethrow.onInterrupted(
             () ->
@@ -317,9 +314,8 @@ public class ControlledResourceService {
                     gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId()),
                     userRequest),
             "enablePet");
-    UserWithPetSa userAndPet = new UserWithPetSa(userEmail, petSaEmail);
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
-    jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_USER_AND_PET, userAndPet);
+    jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, petSaEmail);
     return jobBuilder.submit();
   }
 
@@ -330,8 +326,11 @@ public class ControlledResourceService {
       ApiJobControl jobControl,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
+    String userEmail =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserEmailFromSam(userRequest), "commonCreationJobBuilder");
     // Pre-flight assertions
-    validateCreateFlightPrerequisites(resource, userRequest);
+    validateCreateFlightPrerequisites(resource, userEmail, userRequest);
 
     final String jobDescription =
         String.format(
@@ -346,17 +345,18 @@ public class ControlledResourceService {
             resource,
             userRequest)
         .addParameter(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, privateResourceIamRoles)
+        .addParameter(ControlledResourceKeys.PRIVATE_RESOURCE_USER_EMAIL, userEmail)
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
   }
 
   private void validateCreateFlightPrerequisites(
-      ControlledResource resource, AuthenticatedUserRequest userRequest) {
+      ControlledResource resource, String userEmail, AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
     workspaceService.validateWorkspaceAndAction(
         userRequest,
         resource.getWorkspaceId(),
         resource.getCategory().getSamCreateResourceAction());
-    validateOnlySelfAssignment(resource, userRequest);
+    validateOnlySelfAssignment(resource, userEmail);
   }
 
   public ControlledResource getControlledResource(
@@ -417,23 +417,19 @@ public class ControlledResourceService {
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
   }
 
-  private void validateOnlySelfAssignment(
-      ControlledResource controlledResource, AuthenticatedUserRequest userRequest) {
+  private void validateOnlySelfAssignment(ControlledResource controlledResource, String userEmail) {
     if (!controlledResource.getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
       // No need to handle SHARED resources
       return;
     }
-    final String requestUserEmail =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(userRequest), "getUserEmailFromSam");
     // If there is no assigned user, this condition is satisfied.
     //noinspection deprecation
     final boolean isAllowed =
-        controlledResource.getAssignedUser().map(requestUserEmail::equalsIgnoreCase).orElse(true);
+        controlledResource.getAssignedUser().map(userEmail::equalsIgnoreCase).orElse(true);
     if (!isAllowed) {
       throw new BadRequestException(
           "User ("
-              + requestUserEmail
+              + userEmail
               + ") may only assign a private controlled resource to themselves ("
               + controlledResource.getAssignedUser().orElse("")
               + ").");
