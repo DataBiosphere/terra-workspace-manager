@@ -372,13 +372,16 @@ public class WorkspaceService {
         validateWorkspaceAndAction(
             executingUserRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
     stageService.assertMcWorkspace(workspace, "removeWorkspaceRoleFromUser");
-    // Sam and GCP always use lowercase email identifiers, so we do the same here.
+    // GCP always uses lowercase email identifiers, so we do the same here.
     String targetUserEmail = rawUserEmail.toLowerCase();
     // Before launching the flight, validate that the user being removed is a direct member of the
     // specified role. Users may also be added to a workspace via managed groups, but WSM does not
     // control membership of those groups, and so cannot remove them here.
     List<String> roleMembers =
-        samService.listUsersWithWorkspaceRole(workspaceId, role, executingUserRequest);
+            samService.listUsersWithWorkspaceRole(workspaceId, role, executingUserRequest).stream()
+                    // SAM does not always use lowercase emails, so lowercase everything here before the contains check below
+                    .map(String::toLowerCase)
+                    .collect(Collectors.toList());
     if (!roleMembers.contains(targetUserEmail)) {
       return;
     }
