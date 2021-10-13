@@ -4,7 +4,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import bio.terra.cloudres.azure.resourcemanager.compute.data.CreatePublicIpRequestData;
 import bio.terra.stairway.FlightContext;
@@ -17,6 +19,8 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateAzureIpStep;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.Region;
+import com.azure.core.management.exception.ManagementError;
+import com.azure.core.management.exception.ManagementException;
 import com.azure.core.util.Context;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.network.NetworkManager;
@@ -46,6 +50,7 @@ public class CreateAzureIpStepTest extends BaseAzureTest {
   @Mock private PublicIpAddress.DefinitionStages.Blank mockIpStage1;
   @Mock private PublicIpAddress.DefinitionStages.WithGroup mockIpStage2;
   @Mock private PublicIpAddress.DefinitionStages.WithCreate mockIpStage3;
+  @Mock private ManagementException mockException;
 
   private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
 
@@ -58,7 +63,7 @@ public class CreateAzureIpStepTest extends BaseAzureTest {
     when(mockComputeManager.networkManager()).thenReturn(mockNetworkManager);
     when(mockNetworkManager.publicIpAddresses()).thenReturn(mockPublicIpAddresses);
 
-    // creation mocks
+    // Creation stages mocks
     when(mockPublicIpAddresses.define(anyString())).thenReturn(mockIpStage1);
     when(mockIpStage1.withRegion(anyString())).thenReturn(mockIpStage2);
     when(mockIpStage2.withExistingResourceGroup(anyString())).thenReturn(mockIpStage3);
@@ -66,8 +71,12 @@ public class CreateAzureIpStepTest extends BaseAzureTest {
     when(mockIpStage3.withTag(anyString(), anyString())).thenReturn(mockIpStage3);
     when(mockIpStage3.create(any(Context.class))).thenReturn(mockPublicIpAddress);
 
-    // deletion mocks
+    // Deletion mocks
     doNothing().when(mockPublicIpAddresses).deleteByResourceGroup(anyString(), anyString());
+
+    // Exception mock
+    when(mockException.getValue())
+        .thenReturn(new ManagementError("Conflict", "Resource already exists."));
   }
 
   @Test
@@ -110,7 +119,29 @@ public class CreateAzureIpStepTest extends BaseAzureTest {
   }
 
   @Test
-  void deleteIp() throws InterruptedException {
+  public void createIp_alreadyExists() throws InterruptedException {
+    final ApiAzureIpCreationParameters creationParameters =
+        ControlledResourceFixtures.getAzureIpCreationParameters();
+
+    CreateAzureIpStep createAzureIpStep =
+        new CreateAzureIpStep(
+            mockAzureConfig,
+            mockAzureCloudContext,
+            mockCrlService,
+            ControlledResourceFixtures.getAzureIp(
+                creationParameters.getName(), creationParameters.getRegion()));
+
+    // Stub creation to throw Conflict exception.
+    when(mockIpStage3.create(any(Context.class))).thenThrow(mockException);
+
+    final StepResult stepResult = createAzureIpStep.doStep(mockFlightContext);
+
+    // Verify step still returns success
+    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
+  }
+
+  @Test
+  public void deleteIp() throws InterruptedException {
     final ApiAzureIpCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureIpCreationParameters();
 
