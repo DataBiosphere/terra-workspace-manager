@@ -1,26 +1,8 @@
 package bio.terra.workspace.common.fixtures;
 
-import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRule;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleAction;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleActionType;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
-import bio.terra.workspace.service.resource.controlled.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.ManagedByType;
+import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.service.resource.controlled.*;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import com.azure.core.management.Region;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.bigquery.model.Dataset;
 import com.google.cloud.storage.BucketInfo;
@@ -141,7 +123,7 @@ public class ControlledResourceFixtures {
         bucketName);
   }
 
-  public static ControlledAzureIpResource getAzureIp(String ipName) {
+  public static ControlledAzureIpResource getAzureIp(String ipName, String region) {
     return new ControlledAzureIpResource(
         WORKSPACE_ID,
         RESOURCE_ID,
@@ -153,7 +135,7 @@ public class ControlledResourceFixtures {
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_USER,
         ipName,
-        Region.US_CENTRAL);
+        region);
   }
 
   private ControlledResourceFixtures() {}

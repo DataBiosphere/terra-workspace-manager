@@ -95,15 +95,24 @@ public class CreateControlledResourceFlight extends Flight {
         break;
       case AZURE_IP:
         addStep(
+            new GetAzureIpStep(
+                flightBeanBag.getAzureConfig(),
+                flightBeanBag
+                    .getAzureCloudContextService()
+                    .getAzureCloudContext(resource.getWorkspaceId())
+                    .get(),
+                flightBeanBag.getCrlService(),
+                resource.castToAzureIpResource()),
+            RetryRules.cloud());
+        addStep(
             new CreateAzureIpStep(
                 flightBeanBag.getAzureConfig(),
                 flightBeanBag
                     .getAzureCloudContextService()
                     .getAzureCloudContext(resource.getWorkspaceId())
-                    .get(), // TODO: should we handle this optional differently?
+                    .get(),
                 flightBeanBag.getCrlService(),
-                resource.castToAzureIpResource(),
-                flightBeanBag.getWorkspaceService()),
+                resource.castToAzureIpResource()),
             RetryRules.cloud());
         break;
       default:

@@ -9,14 +9,13 @@ import bio.terra.workspace.generated.model.ApiAzureIpResource;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import com.azure.core.management.Region;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
 
 public class ControlledAzureIpResource extends ControlledResource {
   private final String ipName;
-  private final Region region;
+  private final String region;
 
   @JsonCreator
   public ControlledAzureIpResource(
@@ -29,7 +28,7 @@ public class ControlledAzureIpResource extends ControlledResource {
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("ipName") String ipName,
-      @JsonProperty("region") Region region) {
+      @JsonProperty("region") String region) {
 
     super(
         workspaceId,
@@ -58,7 +57,7 @@ public class ControlledAzureIpResource extends ControlledResource {
     return ipName;
   }
 
-  public Region getRegion() {
+  public String getRegion() {
     return region;
   }
 
@@ -129,7 +128,7 @@ public class ControlledAzureIpResource extends ControlledResource {
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
     private String ipName;
-    private Region region;
+    private String region;
 
     public ControlledAzureIpResource.Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
@@ -162,7 +161,7 @@ public class ControlledAzureIpResource extends ControlledResource {
       return this;
     }
 
-    public ControlledAzureIpResource.Builder region(Region region) {
+    public ControlledAzureIpResource.Builder region(String region) {
       this.region = region;
       return this;
     }

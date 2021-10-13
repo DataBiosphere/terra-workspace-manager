@@ -59,7 +59,7 @@ dependencies {
     implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
 
     // Cloud Resource Library
-    implementation platform('bio.terra.cloud-resource-lib:platform:0.2.0')
+    implementation platform('bio.terra.cloud-resource-lib:platform:0.3.0')
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-billing'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager'

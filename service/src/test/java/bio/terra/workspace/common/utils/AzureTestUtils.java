@@ -5,9 +5,10 @@ import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest.AuthType;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.create.azure.CreateAzureContextFlight;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -34,11 +35,21 @@ public class AzureTestUtils {
     return workspaceService.createWorkspace(request, defaultUserAuthRequest());
   }
 
-  /** Create the FlightMap input parameters required for the {@link CreateGcpContextFlight}. */
-  public FlightMap createInputParameters(UUID workspaceId, AuthenticatedUserRequest userRequest) {
+  /** Create the FlightMap input parameters required for the {@link CreateAzureContextFlight}. */
+  public FlightMap createAzureContextInputParameters(
+      UUID workspaceId, AuthenticatedUserRequest userRequest) {
     AzureCloudContext azureCloudContext = getAzureCloudContext();
     FlightMap inputs = new FlightMap();
     inputs.put(JobMapKeys.REQUEST.getKeyName(), azureCloudContext);
+    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
+    inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+    return inputs;
+  }
+
+  public FlightMap createControlledResourceInputParameters(
+      UUID workspaceId, AuthenticatedUserRequest userRequest, ControlledResource resource) {
+    FlightMap inputs = new FlightMap();
+    inputs.put(JobMapKeys.REQUEST.getKeyName(), resource);
     inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     return inputs;

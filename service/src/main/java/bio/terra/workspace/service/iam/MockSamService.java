@@ -50,6 +50,11 @@ public class MockSamService {
     // Mock does not maintain any state for controlled resources
   }
 
+  public void createControlledResource(
+      ControlledResource resource, AuthenticatedUserRequest userRequest) {
+    // Mock does not maintain any state for controlled resources
+  }
+
   public void deleteWorkspace(AuthenticatedUserRequest userRequest, UUID id) {
     // I don't think we need an access check here. There is one in the logic already.
     iamDao.deleteWorkspace(id);
@@ -103,12 +108,14 @@ public class MockSamService {
           return iamDao.roleCheck(workspaceId, List.of(WsmIamRole.OWNER), userId);
 
           // workspace owner or writer actions
-          // TODO: Why do we have actions for referenced resources, but no actions
-          //  for controlled resources? Or are those not in the constants file?
         case SamConstants.SAM_WORKSPACE_WRITE_ACTION:
         case SamConstants.SAM_CREATE_REFERENCED_RESOURCE:
         case SamConstants.SAM_UPDATE_REFERENCED_RESOURCE:
         case SamConstants.SAM_DELETE_REFERENCED_RESOURCE:
+        case SamConstants.SAM_CREATE_CONTROLLED_USER_SHARED_RESOURCE:
+        case SamConstants.SAM_CREATE_CONTROLLED_APPLICATION_SHARED_RESOURCE:
+        case SamConstants.SAM_CREATE_CONTROLLED_USER_PRIVATE_RESOURCE:
+        case SamConstants.SAM_CREATE_CONTROLLED_APPLICATION_PRIVATE_RESOURCE:
           return iamDao.roleCheck(
               workspaceId, List.of(WsmIamRole.OWNER, WsmIamRole.WRITER), userId);
 
@@ -172,5 +179,13 @@ public class MockSamService {
     return iamDao
         .getUserFromEmail(email)
         .orElseThrow(() -> new SamBadRequestException("User not found: " + email));
+  }
+
+  public String syncPolicyOnObject(
+      String resourceTypeName,
+      String resourceId,
+      String policyName,
+      AuthenticatedUserRequest userRequest) {
+    return "mock-group";
   }
 }

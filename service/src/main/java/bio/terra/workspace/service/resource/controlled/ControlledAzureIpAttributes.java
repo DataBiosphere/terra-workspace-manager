@@ -1,16 +1,15 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import com.azure.core.management.Region;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ControlledAzureIpAttributes {
   private final String ipName;
-  private final Region region;
+  private final String region;
 
   @JsonCreator
   public ControlledAzureIpAttributes(
-      @JsonProperty("ipName") String ipName, @JsonProperty("region") Region region) {
+      @JsonProperty("ipName") String ipName, @JsonProperty("region") String region) {
     this.ipName = ipName;
     this.region = region;
   }
@@ -19,7 +18,7 @@ public class ControlledAzureIpAttributes {
     return ipName;
   }
 
-  public Region getRegion() {
+  public String getRegion() {
     return region;
   }
 }

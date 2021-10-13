@@ -14,12 +14,6 @@ public class AzureConfiguration {
   private String managedAppClientSecret;
   private String managedAppTenantId;
 
-  /** clientId for access to the MRG */
-  private String clientId;
-
-  /** clientSecret for access to the MRG */
-  private String clientSecret;
-
   public void setManagedAppClientId(String managedAppClientId) {
     this.managedAppClientId = managedAppClientId;
   }

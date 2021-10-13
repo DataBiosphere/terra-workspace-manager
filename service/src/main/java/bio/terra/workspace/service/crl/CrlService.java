@@ -25,8 +25,8 @@ import com.azure.core.credential.TokenCredential;
 import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
-import com.azure.resourcemanager.AzureResourceManager;
 import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.resources.ResourceManager;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.Bigquery;
 import com.google.api.services.bigquery.BigqueryScopes;
@@ -142,6 +142,12 @@ public class CrlService {
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
     return buildComputeManager(azureCloudContext, azureConfig);
+  }
+
+  public ResourceManager getResourceManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    return buildResourceManager(azureCloudContext, azureConfig);
   }
 
   /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
@@ -375,12 +381,24 @@ public class CrlService {
    * @param azureCloudContext target cloud context
    * @return azure resource manager
    */
-  public AzureResourceManager getResourceManager(AzureCloudContext azureCloudContext) {
-    AzureProfile profile = new AzureProfile(AzureEnvironment.AZURE);
-    TokenCredential credential = getManagedAppCredentials();
-    return AzureResourceManager.authenticate(credential, profile)
-        .withTenantId(azureCloudContext.getAzureTenantId())
-        .withSubscription(azureCloudContext.getAzureSubscriptionId());
+  public ResourceManager buildResourceManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    TokenCredential azureCreds = getManagedAppCredentials(azureConfig);
+
+    AzureProfile azureProfile =
+        new AzureProfile(
+            azureCloudContext.getAzureTenantId(),
+            azureCloudContext.getAzureSubscriptionId(),
+            AzureEnvironment.AZURE);
+
+    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
+    ResourceManager manager =
+        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, ResourceManager.configure())
+            .authenticate(azureCreds, azureProfile)
+            .withSubscription(azureCloudContext.getAzureSubscriptionId());
+
+    return manager;
   }
 
   private ComputeManager buildComputeManager(
