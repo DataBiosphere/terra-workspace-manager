@@ -83,10 +83,22 @@ public class CreateAzureIpStep implements Step {
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
 
-    computeManager
-        .networkManager()
-        .publicIpAddresses()
-        .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getIpName());
+    try {
+      computeManager
+          .networkManager()
+          .publicIpAddresses()
+          .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getIpName());
+    } catch (ManagementException e) {
+      // Stairway steps may run multiple times, so we may already have deleted this resource.
+      if (StringUtils.equals(e.getValue().getCode(), "ResourceNotFound")) {
+        logger.info(
+            "Azure IP {} in managed resource group {} already deleted",
+            resource.getIpName(),
+            azureCloudContext.getAzureResourceGroupId());
+        return StepResult.getStepResultSuccess();
+      }
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    }
     return StepResult.getStepResultSuccess();
   }
 }
