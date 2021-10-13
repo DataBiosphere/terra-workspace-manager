@@ -10,6 +10,7 @@ import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
+import bio.terra.workspace.api.JobsApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
@@ -186,6 +187,12 @@ public class ClientTestUtils {
       TestUserSpecification testUser, ServerSpecification server) throws IOException {
     final ApiClient apiClient = getClientForTestUser(testUser, server);
     return new ResourceApi(apiClient);
+  }
+
+  public static JobsApi getJobsClient(TestUserSpecification testUser, ServerSpecification server)
+      throws IOException {
+    final ApiClient apiClient = getClientForTestUser(testUser, server);
+    return new JobsApi(apiClient);
   }
 
   /**

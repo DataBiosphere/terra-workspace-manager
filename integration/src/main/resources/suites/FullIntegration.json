@@ -17,6 +17,7 @@
     "integration/EnumerateDataReferences.json",
     "integration/EnumerateResources.json",
     "integration/GetRoles.json",
+    "integration/Jobs.json",
     "integration/ListWorkspaces.json",
     "integration/PrivateControlledAiNotebookInstanceLifecycle.json",
     "integration/PrivateControlledGcsBucketLifecycle.json",
