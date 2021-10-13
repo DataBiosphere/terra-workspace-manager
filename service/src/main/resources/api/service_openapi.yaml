@@ -24,6 +24,7 @@
 # provides the common metadata, as described above and then a union structure with an entry
 # for the metadata for each cloud resource type. It is a bit clumsy, but provides complete
 # description for a resource.
+#
 
 openapi: 3.0.3
 info:
@@ -83,8 +84,8 @@ paths:
           $ref: '#/components/responses/NotFound'
     get:
       parameters:
-        - $ref: '#/components/parameters/Offset'
-        - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      - $ref: '#/components/parameters/Limit'
       summary: List all workspaces a user can read.
       operationId: listWorkspaces
       tags: [ Workspace ]
@@ -378,8 +379,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/{resourceId}/access:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Check a user's access to a referenced resource
       operationId: checkReferenceAccess
@@ -398,7 +399,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new data repo snapshot reference in a workspace.
       operationId: createDataRepoSnapshotReference
@@ -423,8 +424,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots/{resourceId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Gets a reference to a snapshot from a workspace.
       operationId: getDataRepoSnapshotReference
@@ -498,8 +499,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/datarepo/snapshots/name/{name}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/Name'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Name'
     get:
       summary: Gets a reference to a snapshot by name.
       operationId: getDataRepoSnapshotReferenceByName
@@ -516,7 +517,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/buckets:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new GCS bucket reference in a workspace.
       operationId: createBucketReference
@@ -541,8 +542,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/buckets/{resourceId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Gets a reference to a bucket from a workspace.
       operationId: getBucketReference
@@ -615,8 +616,8 @@ paths:
           $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/buckets/name/{name}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/Name'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Name'
     get:
       summary: Gets a reference to a Gcp bucket by name.
       operationId: getBucketReferenceByName
@@ -633,7 +634,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new BigQuery dataset reference in a workspace.
       operationId: createBigQueryDatasetReference
@@ -658,8 +659,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets/{resourceId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Gets a reference to a BigQuery dataset from a workspace.
       operationId: getBigQueryDatasetReference
@@ -733,8 +734,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets/name/{name}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/Name'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Name'
     get:
       summary: Gets a reference to a BigQuery dataset by name.
       operationId: getBigQueryDatasetReferenceByName
@@ -751,7 +752,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/cloudcontexts:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a cloud context for the workspace.
       operationId: createCloudContext
@@ -778,8 +779,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/cloudcontexts/result/{jobId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/JobId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/JobId'
     get:
       summary: Get the result of a async job to create a cloud context.
       operationId: getCreateCloudContextResult
@@ -802,8 +803,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/cloudcontexts/{cloudContext}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/CloudContext'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/CloudContext'
     delete:
       summary: Deletes a cloud context and all of its data from a workspace.
       operationId: deleteCloudContext
@@ -820,7 +821,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/roles:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/WorkspaceId'
     get:
       summary: Read all IAM roles and their members in a workspace.
       operationId: getRoles
@@ -837,8 +838,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/roles/{role}/members:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/Role'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Role'
     post:
       summary: Grant an IAM role to a user or group.
       operationId: grantRole
@@ -860,9 +861,9 @@ paths:
           $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{workspaceId}/roles/{role}/members/{memberEmail}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/Role'
-      - $ref: '#/components/parameters/MemberEmail'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Role'
+    - $ref: '#/components/parameters/MemberEmail'
     delete:
       summary: Remove an IAM role from a user or group.
       operationId: removeRole
@@ -880,10 +881,10 @@ paths:
 
   /api/job/v1/jobs/{jobId}:
     parameters:
-      - $ref: '#/components/parameters/JobId'
+    - $ref: '#/components/parameters/JobId'
     get:
       tags:
-        - jobs
+      - jobs
       operationId: retrieveJob
       responses:
         200:
@@ -1133,7 +1134,7 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: Create a new controlled BigQuery dataset
       operationId: createBigQueryDataset
@@ -1154,8 +1155,8 @@ paths:
 
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets/{resourceId}:
     parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
     get:
       summary: Get a controlled BigQuery dataset resource
       operationId: getBigQueryDataset

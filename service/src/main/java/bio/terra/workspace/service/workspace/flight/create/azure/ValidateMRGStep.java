@@ -10,15 +10,12 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.resources.ResourceManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Stores the previously generated Google Project Id in the {@link WorkspaceDao} as the Google cloud
  * context for the workspace.
  */
 public class ValidateMRGStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(ValidateMRGStep.class);
   private final CrlService crlService;
   private final AzureConfiguration azureConfig;
 

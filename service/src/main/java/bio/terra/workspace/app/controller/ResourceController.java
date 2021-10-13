@@ -177,6 +177,7 @@ public class ResourceController implements ResourceApi {
             {
               ControlledAzureIpResource resource = controlledResource.castToAzureIpResource();
               union.azureIp(resource.toApiAttributes());
+              break;
             }
           case DATA_REPO_SNAPSHOT: // there is a use case for this, but low priority
             throw new InternalLogicException(

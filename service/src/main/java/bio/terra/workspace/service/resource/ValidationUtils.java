@@ -53,9 +53,9 @@ public class ValidationUtils {
     Pattern pattern = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-_.]{0,78}[a-zA-Z0-9_]$");
 
     if (!pattern.matcher(name).matches()) {
-      logger.warn("Invalid ip name {}", name);
+      logger.warn("Invalid IP name {}", name);
       throw new InvalidReferenceException(
-          "Invalid Azure ip name specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
+          "Invalid Azure IP name specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
     }
   }
 

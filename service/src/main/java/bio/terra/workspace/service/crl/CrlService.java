@@ -137,13 +137,14 @@ public class CrlService {
     return crlServiceUsageCow;
   }
 
-  /** Returns the CRL {@link ComputeManager} which wraps Azure Compute API. */
+  /** Returns an Azure {@link ComputeManager} configured for use with CRL. */
   public ComputeManager getComputeManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
     return buildComputeManager(azureCloudContext, azureConfig);
   }
 
+  /** Returns an Azure {@link ResourceManager} configured for use with CRL. */
   public ResourceManager getResourceManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
@@ -359,13 +360,6 @@ public class CrlService {
   }
 
   //  Azure Support
-  public TokenCredential getManagedAppCredentials() {
-    return new ClientSecretCredentialBuilder()
-        .clientId(azureConfig.getManagedAppClientId())
-        .clientSecret(azureConfig.getManagedAppClientSecret())
-        .tenantId(azureConfig.getManagedAppTenantId())
-        .build();
-  }
 
   public TokenCredential getManagedAppCredentials(AzureConfiguration azureConfig) {
     return new ClientSecretCredentialBuilder()
