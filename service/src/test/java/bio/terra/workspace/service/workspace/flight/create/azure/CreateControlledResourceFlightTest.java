@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.workspace.flight.create.azure;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseAzureTest;
@@ -15,13 +17,10 @@ import bio.terra.workspace.service.resource.controlled.*;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.time.Duration;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class CreateControlledResourceFlightTest extends BaseAzureTest {
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(10);
@@ -30,7 +29,7 @@ public class CreateControlledResourceFlightTest extends BaseAzureTest {
   @Autowired private JobService jobService;
   @Autowired private AzureTestUtils azureTestUtils;
   @Autowired private ControlledResourceService controlledResourceService;
-  
+
   @Test
   public void createAzureIpControlledResource() throws InterruptedException {
     UUID workspaceId = azureTestUtils.createWorkspace(workspaceService);

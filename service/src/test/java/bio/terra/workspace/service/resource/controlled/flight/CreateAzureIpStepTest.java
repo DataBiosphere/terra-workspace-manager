@@ -60,7 +60,7 @@ public class CreateAzureIpStepTest extends BaseAzureTest {
 
     // creation mocks
     when(mockPublicIpAddresses.define(anyString())).thenReturn(mockIpStage1);
-    when(mockIpStage1.withRegion(any(Region.class))).thenReturn(mockIpStage2);
+    when(mockIpStage1.withRegion(anyString())).thenReturn(mockIpStage2);
     when(mockIpStage2.withExistingResourceGroup(anyString())).thenReturn(mockIpStage3);
     when(mockIpStage3.withDynamicIP()).thenReturn(mockIpStage3);
     when(mockIpStage3.withTag(anyString(), anyString())).thenReturn(mockIpStage3);

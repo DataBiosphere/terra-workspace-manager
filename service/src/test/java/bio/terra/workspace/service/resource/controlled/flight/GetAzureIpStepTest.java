@@ -16,6 +16,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.flight.create.GetAzureIpStep;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.azure.core.management.exception.ManagementError;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.network.NetworkManager;
@@ -39,6 +40,7 @@ public class GetAzureIpStepTest extends BaseAzureTest {
   @Mock private NetworkManager mockNetworkManager;
   @Mock private PublicIpAddresses mockPublicIpAddresses;
   @Mock private PublicIpAddress mockPublicIpAddress;
+  @Mock private ManagementException mockException;
 
   @BeforeEach
   public void setup() {
@@ -48,6 +50,8 @@ public class GetAzureIpStepTest extends BaseAzureTest {
         .thenReturn(mockComputeManager);
     when(mockComputeManager.networkManager()).thenReturn(mockNetworkManager);
     when(mockNetworkManager.publicIpAddresses()).thenReturn(mockPublicIpAddresses);
+    when(mockException.getValue())
+        .thenReturn(new ManagementError("ResourceNotFound", "Resource was not found."));
   }
 
   @Test
@@ -65,7 +69,7 @@ public class GetAzureIpStepTest extends BaseAzureTest {
 
     when(mockPublicIpAddresses.getByResourceGroup(
             mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getName()))
-        .thenThrow(new ManagementException("IP does not exist", null));
+        .thenThrow(mockException);
 
     final StepResult stepResult = getAzureIpStep.doStep(mockFlightContext);
 
