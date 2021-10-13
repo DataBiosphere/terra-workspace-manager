@@ -159,6 +159,13 @@ tasks.withType(Test) {
     }
 }
 
+test {
+    useJUnitPlatform {
+        includeTags "unit"
+    }
+    outputs.upToDateWhen { false }
+}
+
 task unitTest(type: Test) {
     useJUnitPlatform {
         includeTags "unit"

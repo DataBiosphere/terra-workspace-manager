@@ -165,7 +165,7 @@ paths:
         - $ref: '#/components/parameters/Limit'
       summary: List all applications and whether they are enabled on a workspace
       operationId: listWorkspaceApplications
-      tags: [ Workspace ]
+      tags: [WorkspaceApplication]
       responses:
         '200':
           description: OK
@@ -187,7 +187,7 @@ paths:
     get:
       summary: Get an application and its state in this workspace
       operationId: getWorkspaceApplication
-      tags: [Workspace]
+      tags: [WorkspaceApplication]
       responses:
         '200':
           description: OK
@@ -207,62 +207,9 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ApplicationId'
     put:
-      summary: Disable an application in a workspace - async because this can take a really long time
+      summary: Disable an application in a workspace
       operationId: disableWorkspaceApplication
-      tags: [Workspace]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DisableApplicationRequest'
-      responses:
-        '200':
-          $ref: '#/components/responses/DisableApplicationResultResponse'
-        '202':
-          $ref: '#/components/responses/DisableApplicationResultResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/ServerError'
-
-  /api/workspaces/v1/{workspaceId}/applications/{applicationId}/disable/result/{jobId}:
-    parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/ApplicationId'
-      - $ref: '#/components/parameters/JobId'
-    get:
-      summary: Get the result of a async job to disable the application.
-      operationId: getDisableWorkspaceApplicationResult
-      tags: [Workspace]
-      responses:
-        '200':
-          $ref: '#/components/responses/DisableApplicationResultResponse'
-        '202':
-          $ref: '#/components/responses/DisableApplicationResultResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/ServerError'
-
-  /api/workspaces/v1/{workspaceId}/applications/{applicationId}/enable:
-    parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/ApplicationId'
-    put:
-      summary: Enable an application in a workspace
-      operationId: enableWorkspaceApplication
-      tags: [Workspace]
+      tags: [WorkspaceApplication]
       responses:
         '200':
           description: OK
@@ -277,6 +224,27 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/applications/{applicationId}/enable:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ApplicationId'
+    put:
+      summary: Enable an application in a workspace
+      operationId: enableWorkspaceApplication
+      tags: [WorkspaceApplication]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceApplicationDescription'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
   /api/workspaces/v1/{workspaceId}/clone:
     parameters:
@@ -1856,9 +1824,9 @@ components:
 
     WorkspaceApplicationDescription:
       type: object
-      required: [ id ]
+      required: [ workspaceId, applicationId ]
       properties:
-        id:
+        workspaceId:
           description: The ID of the workspace
           type: string
           format: uuid
@@ -1872,9 +1840,9 @@ components:
         description:
           description: A description of the application
           type: string
-        applicationstate:
+        applicationState:
           $ref: '#/components/schemas/ApplicationState'
-        workspaceApplicationstate:
+        workspaceApplicationState:
           $ref: '#/components/schemas/WorkspaceApplicationState'
 
     WorkspaceApplicationDescriptionList:
@@ -1886,30 +1854,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/WorkspaceApplicationDescription'
-
-    DisableApplicationRequest:
-      type: object
-      required: [jobControl]
-      description: |
-        Request body for asynchronously disabling an application for a workspace.
-      properties:
-        jobControl:
-          $ref: '#/components/schemas/JobControl'
-
-    DisableApplicationResult:
-      type: object
-      description: |
-        The result of a call to disable create an application for a workspace. Contains
-        a JobReport detailing the async operation and either a WorkspaceApplicationDescription
-        or an ErrorReport detailing an error.
-      required: [jobReport]
-      properties:
-        jobReport:
-          $ref: '#/components/schemas/JobReport'
-        workspaceApplicationDescription:
-          $ref: '#/components/schemas/WorkspaceApplicationDescription'
-        errorReport:
-          $ref: '#/components/schemas/ErrorReport'
 
     WorkspaceDescription:
       type: object

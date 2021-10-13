@@ -1,8 +1,9 @@
 package bio.terra.workspace.service.workspace;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.ApplicationDao;
@@ -47,7 +48,6 @@ public class ApplicationServiceTest extends BaseUnitTest {
   private static final UUID NORM_UUID = UUID.fromString("DB186A44-2881-4CD6-9D1B-65441574C3B1");
   private static final UUID UNKNOWN_UUID = UUID.fromString("DB186A44-2881-4CD6-9D1B-65441574C3B2");
 
-
   private static final WsmApplication LEO_APP =
       new WsmApplication()
           .applicationId(LEO_UUID)
@@ -88,28 +88,25 @@ public class ApplicationServiceTest extends BaseUnitTest {
   @MockBean private SamService mockSamService;
 
   private UUID workspaceId;
+  private UUID workspaceId2;
 
   @BeforeEach
   void setup() throws Exception {
     // Set up so all spend profile and workspace checks are successful
     Mockito.when(
-        mockSamService.isAuthorized(
-            Mockito.any(),
-            Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
-            Mockito.any(),
-            Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
+            mockSamService.isAuthorized(
+                Mockito.any(),
+                Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
+                Mockito.any(),
+                Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
         .thenReturn(true);
     Mockito.when(
-        mockSamService.isAuthorized(
-            Mockito.any(),
-            Mockito.eq(SamConstants.SAM_WORKSPACE_RESOURCE),
-            Mockito.any(),
-            Mockito.any()))
+            mockSamService.isAuthorized(
+                Mockito.any(),
+                Mockito.eq(SamConstants.SAM_WORKSPACE_RESOURCE),
+                Mockito.any(),
+                Mockito.any()))
         .thenReturn(true);
-
-    // Return a valid google group for cloud sync, as Google validates groups added to GCP projects.
-    Mockito.when(mockSamService.syncWorkspacePolicy(any(), any(), any()))
-        .thenReturn("terra-workspace-manager-test-group@googlegroups.com");
 
     // Populate the applications - this should be idempotent since we are
     // re-creating the same configuration every time.
@@ -118,19 +115,26 @@ public class ApplicationServiceTest extends BaseUnitTest {
     appService.processApp(CARMEN_APP, dbAppMap);
     appService.processApp(NORM_APP, dbAppMap);
 
-    // Create a workspace
+    // Create two workspaces
     workspaceId = UUID.randomUUID();
-    var request = WorkspaceRequest.builder()
-        .workspaceId(workspaceId)
-        .spendProfileId(Optional.empty())
-        .workspaceStage(WorkspaceStage.MC_WORKSPACE).build();
+    var request =
+        WorkspaceRequest.builder()
+            .workspaceId(workspaceId)
+            .spendProfileId(Optional.empty())
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
 
     workspaceService.createWorkspace(request, USER_REQUEST);
+
+    workspaceId2 = UUID.randomUUID();
+    request =
+        WorkspaceRequest.builder()
+            .workspaceId(workspaceId2)
+            .spendProfileId(Optional.empty())
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .build();
+    workspaceService.createWorkspace(request, USER_REQUEST);
   }
-
-  // test bad app
-  // test bad workspace
-
 
   @Test
   public void applicationEnableTest() {
@@ -141,11 +145,13 @@ public class ApplicationServiceTest extends BaseUnitTest {
     appService.enableWorkspaceApplication(USER_REQUEST, workspaceId, LEO_UUID);
 
     // enable carmen - should fail - deprecated
-    assertThrows(InvalidApplicationStateException.class,
+    assertThrows(
+        InvalidApplicationStateException.class,
         () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceId, CARMEN_UUID));
 
     // enable norm - should fail - decommissioned
-    assertThrows(InvalidApplicationStateException.class,
+    assertThrows(
+        InvalidApplicationStateException.class,
         () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceId, NORM_UUID));
 
     enumerateCheck(true, false, false);
@@ -155,32 +161,38 @@ public class ApplicationServiceTest extends BaseUnitTest {
     enumerateCheck(true, true, false);
 
     // test the argument checking
-    assertThrows(ApplicationNotFoundException.class,
+    assertThrows(
+        ApplicationNotFoundException.class,
         () -> appService.enableWorkspaceApplication(USER_REQUEST, workspaceId, UNKNOWN_UUID));
-    assertThrows(WorkspaceNotFoundException.class,
+    assertThrows(
+        WorkspaceNotFoundException.class,
         () -> appService.enableWorkspaceApplication(USER_REQUEST, UNKNOWN_UUID, LEO_UUID));
 
     // explicit get
-    WsmWorkspaceApplication wsmApp = appService.getWorkspaceApplication(USER_REQUEST, workspaceId, LEO_UUID);
+    WsmWorkspaceApplication wsmApp =
+        appService.getWorkspaceApplication(USER_REQUEST, workspaceId, LEO_UUID);
     assertEquals(wsmApp.getApplication(), LEO_APP);
+    assertTrue(wsmApp.isEnabled());
+
+    // get from workspace2
+    wsmApp = appService.getWorkspaceApplication(USER_REQUEST, workspaceId2, LEO_UUID);
+    assertEquals(wsmApp.getApplication(), LEO_APP);
+    assertFalse(wsmApp.isEnabled());
+
+    // enable Leo in workspace2
+    appService.enableWorkspaceApplication(USER_REQUEST, workspaceId2, LEO_UUID);
 
     // do the disables...
-    disableApplication(LEO_UUID);
+    appService.disableWorkspaceApplication(USER_REQUEST, workspaceId, LEO_UUID);
     enumerateCheck(false, true, false);
 
-    disableApplication(CARMEN_UUID);
+    appService.disableWorkspaceApplication(USER_REQUEST, workspaceId, CARMEN_UUID);
     enumerateCheck(false, false, false);
-  }
 
-  private void disableApplication(UUID applicationId) {
-    String jobId = UUID.randomUUID().toString();
-    appService.disableWorkspaceApplication(
-        USER_REQUEST,
-        workspaceId,
-        applicationId,
-        null,
-        jobId);
-    jobService.waitForJob(jobId);
+    // make sure Leo is still enabled in workspace2
+    wsmApp = appService.getWorkspaceApplication(USER_REQUEST, workspaceId2, LEO_UUID);
+    assertEquals(wsmApp.getApplication(), LEO_APP);
+    assertTrue(wsmApp.isEnabled());
   }
 
   private void enumerateCheck(boolean leoEnabled, boolean carmenEnabled, boolean normEnabled) {
@@ -197,5 +209,4 @@ public class ApplicationServiceTest extends BaseUnitTest {
       }
     }
   }
-
 }

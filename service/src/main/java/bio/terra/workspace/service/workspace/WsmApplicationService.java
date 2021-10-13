@@ -5,10 +5,9 @@ import bio.terra.workspace.app.configuration.external.WsmApplicationConfiguratio
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
-import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
-import bio.terra.workspace.service.workspace.flight.disable.application.DisableApplicationFlight;
-import bio.terra.workspace.service.workspace.flight.disable.application.DisableApplicationKeys;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import bio.terra.workspace.service.workspace.model.WsmApplicationState;
 import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
@@ -34,7 +33,7 @@ public class WsmApplicationService {
   private static final Logger logger = LoggerFactory.getLogger(WsmApplicationService.class);
 
   private final ApplicationDao applicationDao;
-  private final JobService jobService;
+  private final StageService stageService;
   private final WsmApplicationConfiguration wsmApplicationConfiguration;
   private final WorkspaceService workspaceService;
   // -- Testing Support --
@@ -48,60 +47,50 @@ public class WsmApplicationService {
   @Autowired
   public WsmApplicationService(
       ApplicationDao applicationDao,
-      JobService jobService,
+      StageService stageService,
       WsmApplicationConfiguration wsmApplicationConfiguration,
       WorkspaceService workspaceService) {
     this.applicationDao = applicationDao;
-    this.jobService = jobService;
+    this.stageService = stageService;
     this.wsmApplicationConfiguration = wsmApplicationConfiguration;
     this.workspaceService = workspaceService;
   }
 
   // -- REST API Methods -- //
 
-  public void disableWorkspaceApplication(
-      AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
-      UUID applicationId,
-      String resultPath,
-      String jobId) {
-
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
-
-    jobService
-        .newJob(
-            "Disable application " + applicationId + " from workspace " + workspaceId,
-            jobId,
-            DisableApplicationFlight.class,
-            null,
-            userRequest)
-        .addParameter(DisableApplicationKeys.WORKSPACE_ID, workspaceId.toString())
-        .addParameter(DisableApplicationKeys.APPLICATION_ID, applicationId.toString())
-        .submit();
+  public WsmWorkspaceApplication disableWorkspaceApplication(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID applicationId) {
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
+    stageService.assertMcWorkspace(workspace, "disableWorkspaceApplication");
+    return applicationDao.disableWorkspaceApplication(workspaceId, applicationId);
   }
 
   public WsmWorkspaceApplication enableWorkspaceApplication(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID applicationId) {
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
-
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
+    stageService.assertMcWorkspace(workspace, "enableWorkspaceApplication");
     return applicationDao.enableWorkspaceApplication(workspaceId, applicationId);
   }
 
   public WsmWorkspaceApplication getWorkspaceApplication(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID applicationId) {
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
-
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    stageService.assertMcWorkspace(workspace, "getWorkspaceApplication");
     return applicationDao.getWorkspaceApplication(workspaceId, applicationId);
   }
 
   public List<WsmWorkspaceApplication> listWorkspaceApplications(
       AuthenticatedUserRequest userRequest, UUID workspaceId, int offset, int limit) {
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
-
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    stageService.assertMcWorkspace(workspace, "listWorkspaceApplication");
     return applicationDao.listWorkspaceApplications(workspaceId, offset, limit);
   }
 

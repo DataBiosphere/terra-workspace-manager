@@ -15,8 +15,6 @@ import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiDataReferenceDescription;
 import bio.terra.workspace.generated.model.ApiDataReferenceList;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshot;
-import bio.terra.workspace.generated.model.ApiDisableApplicationRequest;
-import bio.terra.workspace.generated.model.ApiDisableApplicationResult;
 import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiIamRole;
@@ -26,9 +24,6 @@ import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
 import bio.terra.workspace.generated.model.ApiUpdateDataReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.ApiWorkspaceApplicationDescription;
-import bio.terra.workspace.generated.model.ApiWorkspaceApplicationDescriptionList;
-import bio.terra.workspace.generated.model.ApiWorkspaceApplicationState;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
@@ -58,14 +53,12 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -217,100 +210,6 @@ public class WorkspaceApiController implements WorkspaceApi {
     logger.info("Deleted workspace {} for {}", id, userRequest.getEmail());
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-  }
-
-  @Override
-  public ResponseEntity<ApiDisableApplicationResult> disableWorkspaceApplication(
-      @PathVariable("workspaceId") UUID workspaceId,
-      @PathVariable("applicationId") UUID applicationId,
-      @Valid ApiDisableApplicationRequest body) {
-
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    String jobId = body.getJobControl().getId();
-    String resultPath = ControllerUtils.getAsyncResultEndpoint(request, jobId);
-
-    appService.disableWorkspaceApplication(
-        userRequest, workspaceId, applicationId, resultPath, jobId);
-    ApiDisableApplicationResult response = fetchDisableApplicationResult(jobId, userRequest);
-    return new ResponseEntity<>(
-        response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
-  }
-
-  @Override
-  public ResponseEntity<ApiDisableApplicationResult> getDisableWorkspaceApplicationResult(
-      UUID workspaceId, UUID applicationId, String jobId) {
-
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ApiDisableApplicationResult response = fetchDisableApplicationResult(jobId, userRequest);
-    return new ResponseEntity<>(
-        response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
-  }
-
-  private ApiDisableApplicationResult fetchDisableApplicationResult(
-      String jobId, AuthenticatedUserRequest userRequest) {
-    final AsyncJobResult<WsmWorkspaceApplication> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, WsmWorkspaceApplication.class, userRequest);
-
-    ApiWorkspaceApplicationDescription wsmAppDesc = null;
-    if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
-      wsmAppDesc = makeApiWorkspaceApplication(jobResult.getResult());
-    }
-
-    return new ApiDisableApplicationResult()
-        .jobReport(jobResult.getJobReport())
-        .errorReport(jobResult.getApiErrorReport())
-        .workspaceApplicationDescription(wsmAppDesc);
-  }
-
-  @Override
-  public ResponseEntity<ApiWorkspaceApplicationDescription> enableWorkspaceApplication(
-      @PathVariable("workspaceId") UUID workspaceId,
-      @PathVariable("applicationId") UUID applicationId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    WsmWorkspaceApplication wsmApp =
-        appService.enableWorkspaceApplication(userRequest, workspaceId, applicationId);
-    ApiWorkspaceApplicationDescription response = makeApiWorkspaceApplication(wsmApp);
-    return new ResponseEntity<>(response, HttpStatus.OK);
-  }
-
-  @Override
-  public ResponseEntity<ApiWorkspaceApplicationDescription> getWorkspaceApplication(
-      @PathVariable("workspaceId") UUID workspaceId,
-      @PathVariable("applicationId") UUID applicationId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    WsmWorkspaceApplication wsmApp =
-        appService.getWorkspaceApplication(userRequest, workspaceId, applicationId);
-    ApiWorkspaceApplicationDescription response = makeApiWorkspaceApplication(wsmApp);
-    return new ResponseEntity<>(response, HttpStatus.OK);
-  }
-
-  @Override
-  public ResponseEntity<ApiWorkspaceApplicationDescriptionList> listWorkspaceApplications(
-      @PathVariable("workspaceId") UUID workspaceId,
-      @Min(0) @Valid Integer offset,
-      @Min(1) @Valid Integer limit) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    List<WsmWorkspaceApplication> wsmApps =
-        appService.listWorkspaceApplications(userRequest, workspaceId, offset, limit);
-    var response = new ApiWorkspaceApplicationDescriptionList();
-    for (WsmWorkspaceApplication wsmApp : wsmApps) {
-      response.addApplicationsItem(makeApiWorkspaceApplication(wsmApp));
-    }
-    return new ResponseEntity<>(response, HttpStatus.OK);
-  }
-
-  private ApiWorkspaceApplicationDescription makeApiWorkspaceApplication(
-      WsmWorkspaceApplication wsmApp) {
-    return new ApiWorkspaceApplicationDescription()
-        .id(wsmApp.getWorkspaceId())
-        .applicationId(wsmApp.getApplication().getApplicationId())
-        .displayName(wsmApp.getApplication().getDisplayName())
-        .description(wsmApp.getApplication().getDescription())
-        .applicationstate(wsmApp.getApplication().getState().toApi())
-        .workspaceApplicationstate(
-            (wsmApp.isEnabled()
-                ? ApiWorkspaceApplicationState.ENABLED
-                : ApiWorkspaceApplicationState.DISABLED));
   }
 
   // TODO(PF-404): the following DataReference endpoints are deprecated and will go away

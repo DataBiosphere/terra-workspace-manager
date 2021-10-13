@@ -2,8 +2,7 @@ package bio.terra.workspace.db;
 
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
-import bio.terra.workspace.service.workspace.model.WsmApplication;
-import bio.terra.workspace.service.workspace.model.WsmApplicationState;
+import bio.terra.workspace.db.exception.ApplicationInUseException;
 import bio.terra.workspace.db.exception.ApplicationNotFoundException;
 import bio.terra.workspace.db.exception.InvalidApplicationStateException;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
@@ -118,17 +117,29 @@ public class ApplicationDao {
   @WriteTransaction
   public WsmWorkspaceApplication disableWorkspaceApplication(UUID workspaceId, UUID applicationId) {
 
-    // Validate that the application exists
+    // Validate that the application exists; workspace is validated in layers above this
     getApplication(applicationId);
 
-    final String sql =
-        "DELETE FROM enabled_application"
-            + " WHERE workspace_id = workspace_id AND application_id = :application_id";
+    // It is an error to have application resources in the workspace if we are disabling it.
+    final String countAppUsesSql =
+        "SELECT COUNT(*) FROM resource"
+            + " WHERE associated_app = :application_id AND workspace_id = :workspace_id";
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("application_id", applicationId.toString());
+
+    Integer count = jdbcTemplate.queryForObject(countAppUsesSql, params, Integer.class);
+    if (count != null && count > 0) {
+      throw new ApplicationInUseException(
+          String.format("Application %s in use in workspace %s", applicationId, workspaceId));
+    }
+
+    // No uses, so we disable
+    final String sql =
+        "DELETE FROM enabled_application"
+            + " WHERE workspace_id = :workspace_id AND application_id = :application_id";
 
     int rowCount = jdbcTemplate.update(sql, params);
     if (rowCount > 0) {
