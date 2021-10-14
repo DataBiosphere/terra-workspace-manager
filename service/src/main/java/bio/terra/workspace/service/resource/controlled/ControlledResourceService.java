@@ -4,6 +4,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
@@ -77,6 +78,23 @@ public class ControlledResourceService {
     this.samService = samService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
+  }
+
+  public ControlledAzureIpResource createIp(
+      ControlledAzureIpResource resource,
+      ApiAzureIpCreationParameters creationParameters,
+      ControlledResourceIamRole privateResourceIamRole,
+      AuthenticatedUserRequest userRequest) {
+
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(
+                resource,
+                privateResourceIamRole,
+                new ApiJobControl().id(UUID.randomUUID().toString()),
+                null,
+                userRequest)
+            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    return jobBuilder.submitAndWait(ControlledAzureIpResource.class);
   }
 
   /** Starts a create controlled bucket resource, blocking until its job is finished. */

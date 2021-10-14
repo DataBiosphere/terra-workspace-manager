@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -53,7 +54,13 @@ public enum WsmResourceType {
       "BIG_QUERY_DATA_TABLE",
       ApiResourceType.BIG_QUERY_DATA_TABLE,
       ReferencedBigQueryDataTableResource.class,
-      null);
+      null),
+  AZURE_IP(
+      CloudPlatform.AZURE,
+      "AZURE_IP",
+      ApiResourceType.AZURE_IP,
+      null,
+      ControlledAzureIpResource.class);
 
   private final CloudPlatform cloudPlatform;
   private final String dbString; // serialized form of the resource type

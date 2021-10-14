@@ -25,6 +25,7 @@
 # for the metadata for each cloud resource type. It is a bit clumsy, but provides complete
 # description for a resource.
 #
+
 openapi: 3.0.3
 info:
   title: Workspace Manager API
@@ -1476,6 +1477,84 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/ip:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure IP
+      operationId: createAzureIp
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureIpRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureIpResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/ip/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled Azure IP resource
+      operationId: getAzureIp
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAzureIpResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete an azure IP
+      operationId: deleteAzureIp
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAzureIpRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureIpResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureIpResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/ip/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an azure ip deletion job.
+      operationId: getDeleteAzureIpResult
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureIpResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureIpResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
@@ -2457,6 +2536,15 @@ components:
         memberEmail:
           type: string
 
+    CreateControlledAzureIpRequestBody:
+      description: Payload for requesting a new controlled Azure IP resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureIp:
+          $ref: '#/components/schemas/AzureIpCreationParameters'
+
     CreateControlledGcpGcsBucketRequestBody:
       description: Payload for requesting a new controlled GCS bucket resource.
       type: object
@@ -2610,6 +2698,33 @@ components:
         bigQueryDataset:
           $ref: '#/components/schemas/GcpBigQueryDatasetResource'
 
+    AzureIpCreationParameters:
+      description: >-
+        IP-specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [name, region]
+      properties:
+        name:
+          description: A valid ip name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+          type: string
+        region:
+          description: |
+            A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
+            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
+          type: string
+
+    CreatedControlledAzureIp:
+      description: Response payload for requesting a new azure IP
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureIp:
+          $ref: '#/components/schemas/AzureIpResource'
+
     GcpGcsBucketCreationParameters:
       description: >-
         Bucket-specific properties to be set on creation. These are a subset of the
@@ -2724,7 +2839,7 @@ components:
           type: boolean
         matchesStorageClass:
           description: >-
-            Objects having any of the storage classes specified by this condition will be matched. 
+            Objects having any of the storage classes specified by this condition will be matched.
             Values include "STANDARD", "NEARLINE", "COLDLINE", "ARCHIVE", "MULTI_REGIONAL",
             "REGIONAL", and "DURABLE_REDUCED_AVAILABILITY".
           type: array
@@ -3087,6 +3202,21 @@ components:
         jobControl:
           $ref: '#/components/schemas/JobControl'
 
+    DeleteControlledAzureIpRequest:
+      type: object
+      required: [ jobControl ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    DeleteControlledAzureIpResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
     DeleteControlledGcpGcsBucketResult:
       type: object
       properties:
@@ -3362,6 +3492,18 @@ components:
         attributes:
           $ref: '#/components/schemas/GcpGcsObjectAttributes'
 
+    AzureIpAttributes:
+      description: >-
+        IP properties included in post-creation get and update. Others must be retrieved from Azure using the name.
+      type: object
+      properties:
+        ipName:
+          description: Name of created ip (not the resource name).
+          type: string
+        region:
+          description: Azure region of created ip
+          type: string
+
     GcpGcsBucketAttributes:
       description: >-
         Bucket properties included in post-creation, get, and update. Others must be
@@ -3383,6 +3525,17 @@ components:
           $ref: '#/components/schemas/ResourceMetadata'
         attributes:
           $ref: '#/components/schemas/GcpGcsBucketAttributes'
+
+    AzureIpResource:
+      type: object
+      description: Description of an Azure Ip
+      required: [metadata, attributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AzureIpAttributes'
 
     GcpAiNotebookInstanceAttributes:
       description: >-
@@ -3431,6 +3584,8 @@ components:
           $ref: '#/components/schemas/GcpGcsObjectAttributes'
         gcpAiNotebookInstance:
           $ref: '#/components/schemas/GcpAiNotebookInstanceAttributes'
+        azureIp:
+          $ref: '#/components/schemas/AzureIpAttributes'
 
     ResourceDescription:
       type: object
@@ -3514,6 +3669,7 @@ components:
         - DATA_REPO_SNAPSHOT
         - GCS_BUCKET
         - GCS_OBJECT
+        - AZURE_IP
 
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration
@@ -3594,6 +3750,27 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/RoleBindingList'
+
+    CreateControlledAzureIpResponse:
+      description: Response to create controlled azure ip
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAzureIp'
+
+    DeleteControlledAzureIpResponse:
+      description: Response Payload for deleting an azure ip
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteControlledAzureIpResult'
+
+    GetControlledAzureIpResponse:
+      description: Response to get ip
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AzureIpResource'
 
     CreatedControlledGcpGcsBucketResponse:
       description: Response to Create controlled Gcs bucket

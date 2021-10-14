@@ -13,6 +13,7 @@ import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -516,6 +517,9 @@ public class ResourceDao {
         validateUniqueBigQueryDataset(controlledResource.castToBigQueryDatasetResource());
         break;
       case DATA_REPO_SNAPSHOT:
+      case AZURE_IP:
+        validateUniqueAzureIp(controlledResource.castToAzureIpResource());
+        break;
       default:
         throw new IllegalArgumentException(
             String.format(
@@ -629,6 +633,25 @@ public class ResourceDao {
     }
   }
 
+  private void validateUniqueAzureIp(ControlledAzureIpResource ipResource) {
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND workspace_id = :workspace_id"
+            + " AND attributes->>'ipName' = :ip_name";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AZURE_IP.toSql())
+            .addValue("workspace_id", ipResource.getWorkspaceId().toString())
+            .addValue("ip_name", ipResource.getIpName());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format("An Azure IP with ID %s already exists", ipResource.getIpName()));
+    }
+  }
+
   private void storeResource(WsmResource resource) {
 
     // TODO: add resource locking to fix this
@@ -738,6 +761,8 @@ public class ResourceDao {
             return new ControlledAiNotebookInstanceResource(dbResource);
           case BIG_QUERY_DATASET:
             return new ControlledBigQueryDatasetResource(dbResource);
+          case AZURE_IP:
+            return new ControlledAzureIpResource(dbResource);
           default:
             throw new InvalidMetadataException(
                 "Invalid controlled resource type" + dbResource.getResourceType().toString());
