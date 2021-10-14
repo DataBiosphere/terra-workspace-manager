@@ -1,320 +1,171 @@
-// package bio.terra.workspace.service.resource.controlled.flight;
-//
-// import bio.terra.cloudres.azure.resourcemanager.compute.data.CreatePublicIpRequestData;
-// import bio.terra.stairway.FlightContext;
-// import bio.terra.stairway.StepResult;
-// import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-// import bio.terra.workspace.common.BaseAzureTest;
-// import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-// import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
-// import bio.terra.workspace.service.crl.CrlService;
-// import bio.terra.workspace.service.resource.controlled.flight.create.CreateAzureIpStep;
-// import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-// import com.azure.core.management.Region;
-// import com.azure.core.management.exception.ManagementError;
-// import com.azure.core.management.exception.ManagementException;
-// import com.azure.core.util.Context;
-// import com.azure.resourcemanager.compute.ComputeManager;
-// import com.azure.resourcemanager.compute.models.Disks;
-// import com.azure.resourcemanager.network.models.IpAllocationMethod;
-// import com.azure.resourcemanager.network.models.PublicIpAddress;
-// import org.junit.jupiter.api.BeforeEach;
-// import org.junit.jupiter.api.Test;
-// import org.mockito.ArgumentCaptor;
-// import org.mockito.Mock;
-// import org.springframework.test.context.ActiveProfiles;
-//
-// import java.util.Optional;
-//
-// import static org.hamcrest.MatcherAssert.assertThat;
-// import static org.hamcrest.Matchers.equalTo;
-// import static org.mockito.ArgumentMatchers.any;
-// import static org.mockito.ArgumentMatchers.anyString;
-// import static org.mockito.Mockito.*;
-//
-// @ActiveProfiles("azure")
-// public class CreateAzureDiskStepTest extends BaseAzureTest {
-//
-//  private static final String STUB_STRING_RETURN = "stubbed-return";
-//
-//  @Mock private FlightContext mockFlightContext;
-//  @Mock private CrlService mockCrlService;
-//  @Mock private AzureConfiguration mockAzureConfig;
-//  @Mock private AzureCloudContext mockAzureCloudContext;
-//  @Mock private PublicIpAddress mockPublicIpAddress;
-//  @Mock private ComputeManager mockComputeManager;
-//  @Mock private Disks mockDisks;
-//  @Mock private PublicIpAddress.DefinitionStages.Blank mockIpStage1;
-//  @Mock private PublicIpAddress.DefinitionStages.WithGroup mockIpStage2;
-//  @Mock private PublicIpAddress.DefinitionStages.WithCreate mockIpStage3;
-//  @Mock private ManagementException mockException;
-//
-//  private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
-//
-//  @BeforeEach
-//  public void setup() {
-//    // PublicIpAddresses mocks
-//    when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
-//    when(mockCrlService.getComputeManager(mockAzureCloudContext, mockAzureConfig))
-//        .thenReturn(mockComputeManager);
-//    when(mockComputeManager.disks()).thenReturn(mockDisks);
-//
-//    // Creation stages mocks
-//    when(mockIpStage1.withRegion(anyString())).thenReturn(mockIpStage2);
-//    when(mockIpStage2.withExistingResourceGroup(anyString())).thenReturn(mockIpStage3);
-//    when(mockIpStage3.withDynamicIP()).thenReturn(mockIpStage3);
-//    when(mockIpStage3.withTag(anyString(), anyString())).thenReturn(mockIpStage3);
-//    when(mockIpStage3.create(any(Context.class))).thenReturn(mockPublicIpAddress);
-//
-//    // Deletion mocks
-//
-//    // Exception mock
-//    when(mockException.getValue())
-//        .thenReturn(new ManagementError("Conflict", "Resource already exists."));
-//  }
-//
-//  @Test
-//  void createIp() throws InterruptedException {
-//    final ApiAzureIpCreationParameters creationParameters =
-//        ControlledResourceFixtures.getAzureIpCreationParameters();
-//
-//    CreateAzureIpStep createAzureIpStep =
-//        new CreateAzureIpStep(
-//            mockAzureConfig,
-//            mockAzureCloudContext,
-//            mockCrlService,
-//            ControlledResourceFixtures.getAzureIp(
-//                creationParameters.getName(), creationParameters.getRegion()));
-//
-//    final StepResult stepResult = createAzureIpStep.doStep(mockFlightContext);
-//
-//    // Verify step returns success
-//    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
-//
-//    // Verify Azure create call was made correctly
-//    verify(mockIpStage3).create(contextCaptor.capture());
-//    Context context = contextCaptor.getValue();
-//
-//    Optional<CreatePublicIpRequestData> publicIpRequestDataOpt =
-//        context.getValues().values().stream()
-//            .filter(CreatePublicIpRequestData.class::isInstance)
-//            .map(CreatePublicIpRequestData.class::cast)
-//            .findFirst();
-//
-//    CreatePublicIpRequestData expected =
-//        CreatePublicIpRequestData.builder()
-//            .setName(creationParameters.getName())
-//            .setRegion(Region.fromName(creationParameters.getRegion()))
-//            .setIpAllocationMethod(IpAllocationMethod.DYNAMIC)
-//            .setResourceGroupName(mockAzureCloudContext.getAzureResourceGroupId())
-//            .build();
-//
-//    assertThat(publicIpRequestDataOpt, equalTo(Optional.of(expected)));
-//  }
-//
-//  @Test
-//  public void createIp_alreadyExists() throws InterruptedException {
-//    final ApiAzureIpCreationParameters creationParameters =
-//        ControlledResourceFixtures.getAzureIpCreationParameters();
-//
-//    CreateAzureIpStep createAzureIpStep =
-//        new CreateAzureIpStep(
-//            mockAzureConfig,
-//            mockAzureCloudContext,
-//            mockCrlService,
-//            ControlledResourceFixtures.getAzureIp(
-//                creationParameters.getName(), creationParameters.getRegion()));
-//
-//    // Stub creation to throw Conflict exception.
-//    when(mockIpStage3.create(any(Context.class))).thenThrow(mockException);
-//
-//    final StepResult stepResult = createAzureIpStep.doStep(mockFlightContext);
-//
-//    // Verify step still returns success
-//    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
-//  }
-//
-//  @Test
-//  public void deleteIp() throws InterruptedException {
-//    final ApiAzureIpCreationParameters creationParameters =
-//        ControlledResourceFixtures.getAzureIpCreationParameters();
-//
-//    CreateAzureIpStep createAzureIpStep =
-//        new CreateAzureIpStep(
-//            mockAzureConfig,
-//            mockAzureCloudContext,
-//            mockCrlService,
-//            ControlledResourceFixtures.getAzureIp(
-//                creationParameters.getName(), creationParameters.getRegion()));
-//
-//    final StepResult stepResult = createAzureIpStep.undoStep(mockFlightContext);
-//
-//    // Verify step returns success
-//    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
-//
-//    // Verify Azure deletion was called
-//    verify(mockPublicIpAddresses)
-//        .deleteByResourceGroup(
-//            mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getName());
-//  }
-// }
-// package bio.terra.workspace.service.resource.controlled.flight;
-//
-// import bio.terra.cloudres.azure.resourcemanager.compute.data.CreatePublicIpRequestData;
-// import bio.terra.stairway.FlightContext;
-// import bio.terra.stairway.StepResult;
-// import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-// import bio.terra.workspace.common.BaseAzureTest;
-// import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-// import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
-// import bio.terra.workspace.service.crl.CrlService;
-// import bio.terra.workspace.service.resource.controlled.flight.create.CreateAzureIpStep;
-// import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-// import com.azure.core.management.Region;
-// import com.azure.core.management.exception.ManagementError;
-// import com.azure.core.management.exception.ManagementException;
-// import com.azure.core.util.Context;
-// import com.azure.resourcemanager.compute.ComputeManager;
-// import com.azure.resourcemanager.compute.models.Disks;
-// import com.azure.resourcemanager.network.models.IpAllocationMethod;
-// import com.azure.resourcemanager.network.models.PublicIpAddress;
-// import org.junit.jupiter.api.BeforeEach;
-// import org.junit.jupiter.api.Test;
-// import org.mockito.ArgumentCaptor;
-// import org.mockito.Mock;
-// import org.springframework.test.context.ActiveProfiles;
-//
-// import java.util.Optional;
-//
-// import static org.hamcrest.MatcherAssert.assertThat;
-// import static org.hamcrest.Matchers.equalTo;
-// import static org.mockito.ArgumentMatchers.any;
-// import static org.mockito.ArgumentMatchers.anyString;
-// import static org.mockito.Mockito.*;
-//
-// @ActiveProfiles("azure")
-// public class CreateAzureDiskStepTest extends BaseAzureTest {
-//
-//  private static final String STUB_STRING_RETURN = "stubbed-return";
-//
-//  @Mock private FlightContext mockFlightContext;
-//  @Mock private CrlService mockCrlService;
-//  @Mock private AzureConfiguration mockAzureConfig;
-//  @Mock private AzureCloudContext mockAzureCloudContext;
-//  @Mock private PublicIpAddress mockPublicIpAddress;
-//  @Mock private ComputeManager mockComputeManager;
-//  @Mock private Disks mockDisks;
-//  @Mock private PublicIpAddress.DefinitionStages.Blank mockIpStage1;
-//  @Mock private PublicIpAddress.DefinitionStages.WithGroup mockIpStage2;
-//  @Mock private PublicIpAddress.DefinitionStages.WithCreate mockIpStage3;
-//  @Mock private ManagementException mockException;
-//
-//  private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
-//
-//  @BeforeEach
-//  public void setup() {
-//    // PublicIpAddresses mocks
-//    when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
-//    when(mockCrlService.getComputeManager(mockAzureCloudContext, mockAzureConfig))
-//        .thenReturn(mockComputeManager);
-//    when(mockComputeManager.disks()).thenReturn(mockDisks);
-//
-//    // Creation stages mocks
-//    when(mockIpStage1.withRegion(anyString())).thenReturn(mockIpStage2);
-//    when(mockIpStage2.withExistingResourceGroup(anyString())).thenReturn(mockIpStage3);
-//    when(mockIpStage3.withDynamicIP()).thenReturn(mockIpStage3);
-//    when(mockIpStage3.withTag(anyString(), anyString())).thenReturn(mockIpStage3);
-//    when(mockIpStage3.create(any(Context.class))).thenReturn(mockPublicIpAddress);
-//
-//    // Deletion mocks
-//
-//    // Exception mock
-//    when(mockException.getValue())
-//        .thenReturn(new ManagementError("Conflict", "Resource already exists."));
-//  }
-//
-//  @Test
-//  void createIp() throws InterruptedException {
-//    final ApiAzureIpCreationParameters creationParameters =
-//        ControlledResourceFixtures.getAzureIpCreationParameters();
-//
-//    CreateAzureIpStep createAzureIpStep =
-//        new CreateAzureIpStep(
-//            mockAzureConfig,
-//            mockAzureCloudContext,
-//            mockCrlService,
-//            ControlledResourceFixtures.getAzureIp(
-//                creationParameters.getName(), creationParameters.getRegion()));
-//
-//    final StepResult stepResult = createAzureIpStep.doStep(mockFlightContext);
-//
-//    // Verify step returns success
-//    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
-//
-//    // Verify Azure create call was made correctly
-//    verify(mockIpStage3).create(contextCaptor.capture());
-//    Context context = contextCaptor.getValue();
-//
-//    Optional<CreatePublicIpRequestData> publicIpRequestDataOpt =
-//        context.getValues().values().stream()
-//            .filter(CreatePublicIpRequestData.class::isInstance)
-//            .map(CreatePublicIpRequestData.class::cast)
-//            .findFirst();
-//
-//    CreatePublicIpRequestData expected =
-//        CreatePublicIpRequestData.builder()
-//            .setName(creationParameters.getName())
-//            .setRegion(Region.fromName(creationParameters.getRegion()))
-//            .setIpAllocationMethod(IpAllocationMethod.DYNAMIC)
-//            .setResourceGroupName(mockAzureCloudContext.getAzureResourceGroupId())
-//            .build();
-//
-//    assertThat(publicIpRequestDataOpt, equalTo(Optional.of(expected)));
-//  }
-//
-//  @Test
-//  public void createIp_alreadyExists() throws InterruptedException {
-//    final ApiAzureIpCreationParameters creationParameters =
-//        ControlledResourceFixtures.getAzureIpCreationParameters();
-//
-//    CreateAzureIpStep createAzureIpStep =
-//        new CreateAzureIpStep(
-//            mockAzureConfig,
-//            mockAzureCloudContext,
-//            mockCrlService,
-//            ControlledResourceFixtures.getAzureIp(
-//                creationParameters.getName(), creationParameters.getRegion()));
-//
-//    // Stub creation to throw Conflict exception.
-//    when(mockIpStage3.create(any(Context.class))).thenThrow(mockException);
-//
-//    final StepResult stepResult = createAzureIpStep.doStep(mockFlightContext);
-//
-//    // Verify step still returns success
-//    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
-//  }
-//
-//  @Test
-//  public void deleteIp() throws InterruptedException {
-//    final ApiAzureIpCreationParameters creationParameters =
-//        ControlledResourceFixtures.getAzureIpCreationParameters();
-//
-//    CreateAzureIpStep createAzureIpStep =
-//        new CreateAzureIpStep(
-//            mockAzureConfig,
-//            mockAzureCloudContext,
-//            mockCrlService,
-//            ControlledResourceFixtures.getAzureIp(
-//                creationParameters.getName(), creationParameters.getRegion()));
-//
-//    final StepResult stepResult = createAzureIpStep.undoStep(mockFlightContext);
-//
-//    // Verify step returns success
-//    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
-//
-//    // Verify Azure deletion was called
-//    verify(mockPublicIpAddresses)
-//        .deleteByResourceGroup(
-//            mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getName());
-//  }
-// }
+package bio.terra.workspace.service.resource.controlled.flight;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
+import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateDiskRequestData;
+import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.StepResult;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.BaseAzureTest;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
+import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.flight.create.CreateAzureDiskStep;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.azure.core.management.Region;
+import com.azure.core.management.exception.ManagementError;
+import com.azure.core.management.exception.ManagementException;
+import com.azure.core.util.Context;
+import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.compute.models.Disk;
+import com.azure.resourcemanager.compute.models.Disks;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.springframework.test.context.ActiveProfiles;
+
+@ActiveProfiles("azure")
+public class CreateAzureDiskStepTest extends BaseAzureTest {
+
+  private static final String STUB_STRING_RETURN = "stubbed-return";
+
+  @Mock private FlightContext mockFlightContext;
+  @Mock private CrlService mockCrlService;
+  @Mock private AzureConfiguration mockAzureConfig;
+  @Mock private AzureCloudContext mockAzureCloudContext;
+  @Mock private ComputeManager mockComputeManager;
+  @Mock private Disks mockDisks;
+  @Mock private Disk mockDisk;
+  @Mock private Disk.DefinitionStages.Blank mockDiskStage1;
+  @Mock private Disk.DefinitionStages.WithGroup mockDiskStage2;
+  @Mock private Disk.DefinitionStages.WithDiskSource mockDiskStage3;
+  @Mock private Disk.DefinitionStages.WithDataDiskSource mockDiskStage4;
+  @Mock private Disk.DefinitionStages.WithCreate mockDiskStage5;
+  @Mock private Disk.DefinitionStages.WithCreate mockDiskStage6;
+  @Mock private Disk.DefinitionStages.WithCreate mockDiskStage7;
+  @Mock private ManagementException mockException;
+
+  private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+
+  @BeforeEach
+  public void setup() {
+    // PublicIpAddresses mocks
+    when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
+    when(mockCrlService.getComputeManager(mockAzureCloudContext, mockAzureConfig))
+        .thenReturn(mockComputeManager);
+    when(mockComputeManager.disks()).thenReturn(mockDisks);
+
+    // Creation stages mocks
+    when(mockDisks.define(anyString())).thenReturn(mockDiskStage1);
+    when(mockDiskStage1.withRegion(anyString())).thenReturn(mockDiskStage2);
+    when(mockDiskStage2.withExistingResourceGroup(anyString())).thenReturn(mockDiskStage3);
+    when(mockDiskStage3.withData()).thenReturn(mockDiskStage4);
+    when(mockDiskStage4.withSizeInGB(anyInt())).thenReturn(mockDiskStage5);
+    when(mockDiskStage5.withTag(anyString(), anyString())).thenReturn(mockDiskStage6);
+    when(mockDiskStage6.withTag(anyString(), anyString())).thenReturn(mockDiskStage7);
+    when(mockDiskStage7.create(any(Context.class))).thenReturn(mockDisk);
+
+    // Deletion mocks
+
+    // Exception mock
+    when(mockException.getValue())
+        .thenReturn(new ManagementError("Conflict", "Resource already exists."));
+  }
+
+  @Test
+  void createDisk() throws InterruptedException {
+    final ApiAzureDiskCreationParameters creationParameters =
+        ControlledResourceFixtures.getAzureDiskCreationParameters();
+
+    var createAzureDiskStep =
+        new CreateAzureDiskStep(
+            mockAzureConfig,
+            mockAzureCloudContext,
+            mockCrlService,
+            ControlledResourceFixtures.getAzureDisk(
+                creationParameters.getName(),
+                creationParameters.getRegion(),
+                creationParameters.getSize()));
+
+    final StepResult stepResult = createAzureDiskStep.doStep(mockFlightContext);
+
+    // Verify step returns success
+    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
+
+    // Verify Azure create call was made correctly
+    verify(mockDiskStage7).create(contextCaptor.capture());
+    Context context = contextCaptor.getValue();
+
+    Optional<CreateDiskRequestData> requestDataOpt =
+        context.getValues().values().stream()
+            .filter(CreateDiskRequestData.class::isInstance)
+            .map(CreateDiskRequestData.class::cast)
+            .findFirst();
+
+    CreateDiskRequestData expected =
+        CreateDiskRequestData.builder()
+            .setName(creationParameters.getName())
+            .setRegion(Region.fromName(creationParameters.getRegion()))
+            .setSize(50)
+            .setResourceGroupName(mockAzureCloudContext.getAzureResourceGroupId())
+            .build();
+
+    assertThat(requestDataOpt, equalTo(Optional.of(expected)));
+  }
+
+  @Test
+  public void createDisk_alreadyExists() throws InterruptedException {
+    final ApiAzureDiskCreationParameters creationParameters =
+        ControlledResourceFixtures.getAzureDiskCreationParameters();
+
+    CreateAzureDiskStep createAzureDiskStep =
+        new CreateAzureDiskStep(
+            mockAzureConfig,
+            mockAzureCloudContext,
+            mockCrlService,
+            ControlledResourceFixtures.getAzureDisk(
+                creationParameters.getName(),
+                creationParameters.getRegion(),
+                creationParameters.getSize()));
+
+    // Stub creation to throw Conflict exception.
+    when(mockDiskStage7.create(any(Context.class))).thenThrow(mockException);
+
+    final StepResult stepResult = createAzureDiskStep.doStep(mockFlightContext);
+
+    // Verify step still returns success
+    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
+  }
+
+  @Test
+  public void deleteDisk() throws InterruptedException {
+    final ApiAzureDiskCreationParameters creationParameters =
+        ControlledResourceFixtures.getAzureDiskCreationParameters();
+
+    CreateAzureDiskStep createAzureDiskStep =
+        new CreateAzureDiskStep(
+            mockAzureConfig,
+            mockAzureCloudContext,
+            mockCrlService,
+            ControlledResourceFixtures.getAzureDisk(
+                creationParameters.getName(),
+                creationParameters.getRegion(),
+                creationParameters.getSize()));
+
+    final StepResult stepResult = createAzureDiskStep.undoStep(mockFlightContext);
+
+    // Verify step returns success
+    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
+
+    // Verify Azure deletion was called
+    verify(mockDisks)
+        .deleteByResourceGroup(
+            mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getName());
+  }
+}
