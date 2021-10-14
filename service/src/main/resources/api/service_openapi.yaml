@@ -1132,6 +1132,27 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disk:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure Disk
+      operationId: createAzureDisk
+      tags: [ ControlledAzureResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureDiskRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureDiskResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
@@ -1965,6 +1986,15 @@ components:
         azureIp:
           $ref: '#/components/schemas/AzureIpCreationParameters'
 
+    CreateControlledAzureDiskRequestBody:
+      description: Payload for requesting a new controlled Azure Disk resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureDisk:
+          $ref: '#/components/schemas/AzureDiskCreationParameters'
+
     CreateControlledGcpGcsBucketRequestBody:
       description: Payload for requesting a new controlled GCS bucket resource.
       type: object
@@ -2102,6 +2132,22 @@ components:
         accepted by the azure resource API
       type: object
       required: [name, region]
+      properties:
+        name:
+          description: A valid ip name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+          type: string
+        region:
+          description: |
+            A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
+            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
+          type: string
+
+    AzureDiskCreationParameters:
+      description: >-
+        Disk-specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [ name, region, size ]
       properties:
         name:
           description: A valid ip name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
