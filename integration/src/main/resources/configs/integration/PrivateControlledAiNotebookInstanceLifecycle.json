@@ -1,14 +1,14 @@
 {
   "name": "PrivateControlledAiNotebookInstanceLifecycle",
   "description": "CRUD user-private GCS AI Platform Notebook instance tests.",
-  "serverSpecificationFile": "workspace-dev.json",
+  "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
     {
       "name": "PrivateControlledAiNotebookInstanceLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
-      "userJourneyThreadPoolSize": 2,
+      "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 16,
       "expectedTimeForEachUnit": "MINUTES",
       "parameters": ["wm-default-spend-profile"]

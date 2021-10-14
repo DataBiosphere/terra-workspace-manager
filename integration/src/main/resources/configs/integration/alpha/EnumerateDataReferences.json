@@ -8,7 +8,7 @@
     {
       "name": "EnumerateDataReferences",
       "numberOfUserJourneyThreadsToRun": 1,
-      "userJourneyThreadPoolSize": 2,
+      "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 5,
       "expectedTimeForEachUnit": "SECONDS",
       "parameters": ["wm-default-spend-profile", "d56f4db5-b6c6-4a7e-8be2-ff6aa21c4fa6", "terra"]

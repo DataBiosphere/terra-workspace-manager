@@ -8,7 +8,7 @@
     {
       "name": "CloneReferencedResources",
       "numberOfUserJourneyThreadsToRun": 1,
-      "userJourneyThreadPoolSize": 2,
+      "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 5,
       "expectedTimeForEachUnit": "MINUTES",
       "parameters": ["wm-default-spend-profile", "97b5559a-2f8f-4df3-89ae-5a249173ee0c", "terra"]
