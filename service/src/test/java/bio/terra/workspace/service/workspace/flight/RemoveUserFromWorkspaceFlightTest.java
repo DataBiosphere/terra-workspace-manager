@@ -9,6 +9,7 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
+import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -34,7 +35,9 @@ import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.common.collect.ImmutableList;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -96,8 +99,20 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             privateDataset.getResourceId().toString(),
             SamControlledResourceActions.WRITE_ACTION));
 
-    // Run the "removeUser" flight to the very end, then undo it
-    FlightDebugInfo failingDebugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
+    // Run the "removeUser" flight to the very end, then undo it, retrying steps along the way.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(RemoveUserFromSamStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        CheckUserStillInWorkspaceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        ReadUserPrivateResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        RemovePrivateResourceAccessStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        RevokePetUsagePermissionStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    FlightDebugInfo failingDebugInfo =
+        FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build();
+
     FlightMap inputParameters = new FlightMap();
     inputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
     inputParameters.put(
@@ -131,8 +146,9 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             privateDataset.getResourceId().toString(),
             SamControlledResourceActions.WRITE_ACTION));
 
-    // Run the flight again, this time to success.
-    FlightDebugInfo passingDebugInfo = FlightDebugInfo.newBuilder().build();
+    // Run the flight again, this time to success. Retry each do step once.
+    FlightDebugInfo passingDebugInfo =
+        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
     FlightState passingFlightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),

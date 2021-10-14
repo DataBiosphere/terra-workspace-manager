@@ -61,9 +61,10 @@ public class DeleteGcsBucketStep implements Step {
     ControlledGcsBucketResource resource =
         wsmResource.castToControlledResource().castToGcsBucketResource();
     final StorageCow storageCow = crlService.createStorageCow(projectId);
+    // If the bucket is already deleted (e.g. this step is being retried), storageCow.get() will
+    // return null.
     BucketCow bucket = storageCow.get(resource.getBucketName());
-
-    boolean bucketExists = true;
+    boolean bucketExists = bucket != null;
     while (bucketExists) {
       // We always replace the lifecycle rules. This covers the case where the step is rerun
       // and covers the case where the rules are changed out of band of this operation.

@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -12,6 +13,7 @@ import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
+import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.stairway.FlightDebugInfo;
@@ -25,6 +27,7 @@ import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
@@ -34,16 +37,23 @@ import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateBigQueryDatasetStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.CreateGcsBucketStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.GcsBucketCloudSyncStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.CreateAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.GrantPetUsagePermissionStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.NotebookCloudSyncStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.notebook.RetrieveNetworkNameStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteAiNotebookInstanceStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteBigQueryDatasetStep;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteGcsBucketStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteSamResourceStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveBigQueryDatasetCloudAttributesStep;
+import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
+import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveGcsBucketCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateBigQueryDatasetStep;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceMetadataStep;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateGcsBucketStep;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
@@ -55,6 +65,7 @@ import com.google.api.services.bigquery.model.Dataset;
 import com.google.api.services.iam.v1.model.TestIamPermissionsRequest;
 import com.google.api.services.iam.v1.model.TestIamPermissionsResponse;
 import com.google.api.services.notebooks.v1.model.Instance;
+import com.google.cloud.storage.BucketInfo;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.Collections;
@@ -165,7 +176,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  public void createAiNotebookInstanceDo() throws Exception {
+  void createAiNotebookInstanceDo() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     UUID workspaceId = reusableWorkspace(user).getWorkspaceId();
     String instanceId = "create-ai-notebook-instance-do";
@@ -288,7 +299,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  public void createAiNotebookInstanceUndo() throws Exception {
+  void createAiNotebookInstanceUndo() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String instanceId = "create-ai-notebook-instance-undo";
@@ -369,7 +380,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  public void createAiNotebookInstanceNoWriterRoleThrowsBadRequest() throws Exception {
+  void createAiNotebookInstanceNoWriterRoleThrowsBadRequest() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String instanceId = "create-ai-notebook-instance-shared";
@@ -411,7 +422,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  public void deleteAiNotebookInstanceDo() throws Exception {
+  void deleteAiNotebookInstanceDo() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     ControlledAiNotebookInstanceResource resource =
         createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-do", user);
@@ -443,7 +454,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  public void deleteAiNotebookInstanceUndoIsDismalFailure() throws Exception {
+  void deleteAiNotebookInstanceUndoIsDismalFailure() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     ControlledAiNotebookInstanceResource resource =
         createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-undo", user);
@@ -500,7 +511,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  public void createGetUpdateDeleteBqDataset() throws Exception {
+  void createGetUpdateDeleteBqDataset() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
@@ -575,7 +586,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  public void createBqDatasetDo() throws Exception {
+  void createBqDatasetDo() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
@@ -631,7 +642,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  public void createBqDatasetUndo() throws Exception {
+  void createBqDatasetUndo() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
@@ -690,7 +701,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  public void deleteBqDatasetDo() throws Exception {
+  void deleteBqDatasetDo() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
@@ -745,7 +756,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  public void deleteBqDatasetUndo() throws Exception {
+  void deleteBqDatasetUndo() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
@@ -801,7 +812,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  public void updateBqDatasetDo() throws Exception {
+  void updateBqDatasetDo() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
@@ -868,7 +879,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  public void updateBqDatasetUndo() throws Exception {
+  void updateBqDatasetUndo() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
@@ -951,7 +962,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  public void updateBqDatasetWithUndefinedExpirationTimes() throws Exception {
+  void updateBqDatasetWithUndefinedExpirationTimes() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
@@ -1030,7 +1041,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  public void updateBqDatasetWithInvalidExpirationTimes() throws Exception {
+  void updateBqDatasetWithInvalidExpirationTimes() throws Exception {
     UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
     Workspace workspace = reusableWorkspace(user);
     String projectId =
@@ -1084,6 +1095,275 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     // failed
     validateBigQueryDatasetCloudMetadata(
         projectId, createdDataset.getDatasetName(), location, null, null);
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  void createGcsBucketDo() throws Exception {
+    UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
+    Workspace workspace = reusableWorkspace(user);
+    String projectId =
+        workspaceService.getAuthorizedRequiredGcpProject(
+            workspace.getWorkspaceId(), user.getAuthenticatedRequest());
+
+    ControlledGcsBucketResource resource =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
+            .workspaceId(workspace.getWorkspaceId())
+            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .build();
+
+    // Test idempotency of bucket-specific steps by retrying them once.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(CreateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(GcsBucketCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+    ControlledGcsBucketResource createdBucket =
+        controlledResourceService.createBucket(
+            resource,
+            ControlledResourceFixtures.getGoogleBucketCreationParameters(),
+            Collections.emptyList(),
+            user.getAuthenticatedRequest());
+    assertEquals(resource, createdBucket);
+
+    StorageCow storageCow = crlService.createStorageCow(projectId);
+    BucketInfo cloudBucket = storageCow.get(resource.getBucketName()).getBucketInfo();
+    assertEquals(ControlledResourceFixtures.RESOURCE_LOCATION, cloudBucket.getLocation());
+    assertEquals(
+        resource,
+        controlledResourceService.getControlledResource(
+            workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()));
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  void createGcsBucketUndo() throws Exception {
+    UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
+    Workspace workspace = reusableWorkspace(user);
+    String projectId =
+        workspaceService.getAuthorizedRequiredGcpProject(
+            workspace.getWorkspaceId(), user.getAuthenticatedRequest());
+
+    String location = "us-central1";
+    ControlledGcsBucketResource resource =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
+            .workspaceId(workspace.getWorkspaceId())
+            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .build();
+
+    // Test idempotency of bucket-specific undo steps by retrying them once. Fail at the end of
+    // the flight to ensure undo steps work properly.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(CreateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(GcsBucketCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build());
+    // JobService throws a InvalidResultStateException when a synchronous flight fails without an
+    // exception, which occurs when a flight fails via debugInfo.
+    assertThrows(
+        InvalidResultStateException.class,
+        () ->
+            controlledResourceService.createBucket(
+                resource,
+                ControlledResourceFixtures.getGoogleBucketCreationParameters(),
+                Collections.emptyList(),
+                user.getAuthenticatedRequest()));
+
+    // Validate the bucket does not exist.
+    StorageCow storageCow = crlService.createStorageCow(projectId);
+    assertNull(storageCow.get(resource.getBucketName()));
+
+    assertThrows(
+        ResourceNotFoundException.class,
+        () ->
+            controlledResourceService.getControlledResource(
+                workspace.getWorkspaceId(),
+                resource.getResourceId(),
+                user.getAuthenticatedRequest()));
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  void deleteGcsBucketDo() throws Exception {
+    UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
+    Workspace workspace = reusableWorkspace(user);
+    String projectId =
+        workspaceService.getAuthorizedRequiredGcpProject(
+            workspace.getWorkspaceId(), user.getAuthenticatedRequest());
+
+    ControlledGcsBucketResource resource =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
+            .workspaceId(workspace.getWorkspaceId())
+            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .build();
+
+    ControlledGcsBucketResource createdBucket =
+        controlledResourceService.createBucket(
+            resource,
+            ControlledResourceFixtures.getGoogleBucketCreationParameters(),
+            Collections.emptyList(),
+            user.getAuthenticatedRequest());
+    assertEquals(resource, createdBucket);
+
+    // Test idempotency of bucket-specific delete step by retrying it once.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(DeleteGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+
+    String jobId =
+        controlledResourceService.deleteControlledResourceAsync(
+            new ApiJobControl().id(UUID.randomUUID().toString()),
+            workspace.getWorkspaceId(),
+            resource.getResourceId(),
+            "fake result path",
+            user.getAuthenticatedRequest());
+    jobService.waitForJob(jobId);
+    assertEquals(
+        FlightStatus.SUCCESS, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
+
+    // Validate the bucket does not exist.
+    StorageCow storageCow = crlService.createStorageCow(projectId);
+    assertNull(storageCow.get(resource.getBucketName()));
+
+    assertThrows(
+        ResourceNotFoundException.class,
+        () ->
+            controlledResourceService.getControlledResource(
+                workspace.getWorkspaceId(),
+                resource.getResourceId(),
+                user.getAuthenticatedRequest()));
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  void updateGcsBucketDo() throws Exception {
+    UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
+    Workspace workspace = reusableWorkspace(user);
+
+    ControlledGcsBucketResource resource =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
+            .workspaceId(workspace.getWorkspaceId())
+            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .build();
+
+    ControlledGcsBucketResource createdBucket =
+        controlledResourceService.createBucket(
+            resource,
+            ControlledResourceFixtures.getGoogleBucketCreationParameters(),
+            Collections.emptyList(),
+            user.getAuthenticatedRequest());
+    assertEquals(resource, createdBucket);
+
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(
+        RetrieveControlledResourceMetadataStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        RetrieveGcsBucketCloudAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(UpdateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+
+    // update the bucket
+    String newName = "NEW_bucketname";
+    String newDescription = "new resource description";
+    controlledResourceService.updateGcsBucket(
+        resource,
+        ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2,
+        user.getAuthenticatedRequest(),
+        newName,
+        newDescription);
+
+    // check the properties stored in WSM were updated
+    ControlledGcsBucketResource fetchedResource =
+        controlledResourceService
+            .getControlledResource(
+                workspace.getWorkspaceId(),
+                resource.getResourceId(),
+                user.getAuthenticatedRequest())
+            .castToGcsBucketResource();
+    assertEquals(newName, fetchedResource.getName());
+    assertEquals(newDescription, fetchedResource.getDescription());
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  void updateGcsBucketUndo() throws Exception {
+    UserAccessUtils.TestUser user = userAccessUtils.defaultUser();
+    Workspace workspace = reusableWorkspace(user);
+    String projectId =
+        workspaceService.getAuthorizedRequiredGcpProject(
+            workspace.getWorkspaceId(), user.getAuthenticatedRequest());
+
+    ControlledGcsBucketResource originalResource =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
+            .workspaceId(workspace.getWorkspaceId())
+            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .build();
+
+    ControlledGcsBucketResource createdBucket =
+        controlledResourceService.createBucket(
+            originalResource,
+            ControlledResourceFixtures.getGoogleBucketCreationParameters(),
+            Collections.emptyList(),
+            user.getAuthenticatedRequest());
+    assertEquals(originalResource, createdBucket);
+
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(
+        RetrieveControlledResourceMetadataStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        UpdateControlledResourceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
+        RetrieveGcsBucketCloudAttributesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(UpdateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build());
+
+    // update the bucket
+    String newName = "NEW_bucketname";
+    String newDescription = "new resource description";
+    // JobService throws a InvalidResultStateException when a synchronous flight fails without an
+    // exception, which occurs when a flight fails via debugInfo.
+    assertThrows(
+        InvalidResultStateException.class,
+        () ->
+            controlledResourceService.updateGcsBucket(
+                originalResource,
+                ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2,
+                user.getAuthenticatedRequest(),
+                newName,
+                newDescription));
+
+    // check the properties stored on the cloud were not updated
+    BucketInfo updatedBucket =
+        crlService
+            .createStorageCow(projectId)
+            .get(originalResource.getBucketName())
+            .getBucketInfo();
+    ApiGcpGcsBucketUpdateParameters cloudParameters =
+        GcsApiConversions.toUpdateParameters(updatedBucket);
+    assertNotEquals(ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2, cloudParameters);
+
+    // check the properties stored in WSM were not updated
+    ControlledGcsBucketResource fetchedResource =
+        controlledResourceService
+            .getControlledResource(
+                workspace.getWorkspaceId(),
+                originalResource.getResourceId(),
+                user.getAuthenticatedRequest())
+            .castToGcsBucketResource();
+    assertEquals(originalResource.getName(), fetchedResource.getName());
+    assertEquals(originalResource.getDescription(), fetchedResource.getDescription());
   }
 
   /**

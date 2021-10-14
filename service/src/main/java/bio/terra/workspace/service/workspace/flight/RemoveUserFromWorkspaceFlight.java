@@ -2,7 +2,9 @@ package bio.terra.workspace.service.workspace.flight;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -35,27 +37,34 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
     //  by reading WSM's DB.
     // 4. Remove the user from all roles on those private resources.
     // 5. Revoke the user's permission to use their pet SA in this workspace.
+    RetryRule samRetry = RetryRules.shortExponential();
+    RetryRule dbRetry = RetryRules.immediate();
     addStep(
         new RemoveUserFromSamStep(
-            workspaceId, roleToRemove, userToRemove, appContext.getSamService(), userRequest));
+            workspaceId, roleToRemove, userToRemove, appContext.getSamService(), userRequest),
+        samRetry);
     addStep(
         new CheckUserStillInWorkspaceStep(
-            workspaceId, userToRemove, appContext.getSamService(), userRequest));
+            workspaceId, userToRemove, appContext.getSamService(), userRequest),
+        samRetry);
     addStep(
         new ReadUserPrivateResourcesStep(
             workspaceId,
             userToRemove,
             appContext.getResourceDao(),
             appContext.getSamService(),
-            userRequest));
+            userRequest),
+        samRetry);
     addStep(
-        new RemovePrivateResourceAccessStep(userToRemove, appContext.getSamService(), userRequest));
+        new RemovePrivateResourceAccessStep(userToRemove, appContext.getSamService(), userRequest),
+        samRetry);
     addStep(
         new RevokePetUsagePermissionStep(
             workspaceId,
             userToRemove,
             appContext.getPetSaService(),
             appContext.getGcpCloudContextService(),
-            userRequest));
+            userRequest),
+        RetryRules.cloud());
   }
 }

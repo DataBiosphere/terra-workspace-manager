@@ -69,6 +69,10 @@ public class GcpCloudContextService {
         .map(GcpCloudContext::deserialize);
   }
 
+  public Optional<String> getGcpCloudContextFlightId(UUID workspaceId) {
+    return workspaceDao.getCloudContextFlightId(workspaceId, CloudPlatform.GCP);
+  }
+
   /**
    * Retrieve the optional GCP cloud context, providing a workspace This is a frequent usage, so we
    * make a method for it to save coding the fetch of workspace id every time

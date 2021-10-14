@@ -2,12 +2,15 @@ package bio.terra.workspace.service.resource.referenced;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.stairway.FlightDebugInfo;
+import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -16,6 +19,8 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
@@ -23,11 +28,15 @@ import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceMetadataStep;
+import bio.terra.workspace.service.resource.referenced.flight.create.ValidateReferenceStep;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -56,6 +65,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private WorkspaceDao workspaceDao;
   @Autowired private ReferencedResourceService referenceResourceService;
+  @Autowired private JobService jobService;
   /** Mock SamService does nothing for all calls that would throw if unauthorized. */
   @MockBean private SamService mockSamService;
 
@@ -74,6 +84,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
   @AfterEach
   void teardown() throws InterruptedException {
+    jobService.setFlightDebugInfoForTest(null);
     if (referenceResource != null) {
       try {
         referenceResourceService.deleteReferenceResource(
@@ -140,6 +151,55 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
             .build();
     return workspaceService.createWorkspace(request, USER_REQUEST);
+  }
+
+  @Nested
+  class FlightChecks {
+    // Test idempotency of stairway steps
+    @Test
+    void createReferencedResourceDo() {
+      Map<String, StepStatus> retrySteps = new HashMap<>();
+      retrySteps.put(ValidateReferenceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+      retrySteps.put(
+          CreateReferenceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+      FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
+      jobService.setFlightDebugInfoForTest(debugInfo);
+      referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
+      ReferencedResource createdResource =
+          referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
+      assertEquals(referenceResource, createdResource);
+    }
+
+    @Test
+    void createReferencedResourceUndo() {
+      Map<String, StepStatus> retrySteps = new HashMap<>();
+      retrySteps.put(ValidateReferenceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+      retrySteps.put(
+          CreateReferenceMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+      FlightDebugInfo debugInfo =
+          FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build();
+      jobService.setFlightDebugInfoForTest(debugInfo);
+      UUID resourceId = UUID.randomUUID();
+      referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
+      new ReferencedDataRepoSnapshotResource(
+          workspaceId,
+          resourceId,
+          "aname",
+          "some description",
+          CloningInstructions.COPY_NOTHING,
+          DATA_REPO_INSTANCE_NAME,
+          "polaroid");
+      // JobService throws a InvalidResultStateException when a synchronous flight fails without an
+      // exception, which occurs when a flight fails via debugInfo.
+      assertThrows(
+          InvalidResultStateException.class,
+          () -> referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST));
+      // The flight should be undone, so the resource should not exist.
+      assertThrows(
+          ResourceNotFoundException.class,
+          () ->
+              referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST));
+    }
   }
 
   @Nested

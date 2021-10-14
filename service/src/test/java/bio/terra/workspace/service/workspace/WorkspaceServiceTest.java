@@ -36,9 +36,9 @@ import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceExcept
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
-import bio.terra.workspace.service.workspace.flight.DeleteGcpProjectStep;
-import bio.terra.workspace.service.workspace.flight.DeleteWorkspaceAuthzStep;
-import bio.terra.workspace.service.workspace.flight.DeleteWorkspaceStateStep;
+import bio.terra.workspace.service.workspace.flight.CheckSamWorkspaceAuthzStep;
+import bio.terra.workspace.service.workspace.flight.CreateWorkspaceAuthzStep;
+import bio.terra.workspace.service.workspace.flight.CreateWorkspaceStep;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -156,7 +156,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   void duplicateWorkspaceIdRequestsRejected() {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     workspaceService.createWorkspace(request, USER_REQUEST);
-    WorkspaceRequest duplicateWorkspace = defaultRequestBuilder(request.workspaceId()).build();
+    WorkspaceRequest duplicateWorkspace =
+        defaultRequestBuilder(request.workspaceId())
+            .description(Optional.of("slightly different workspace"))
+            .build();
     assertThrows(
         DuplicateWorkspaceException.class,
         () -> workspaceService.createWorkspace(duplicateWorkspace, USER_REQUEST));
@@ -277,46 +280,53 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void deleteMcWorkspaceDoSteps() {
-    WorkspaceRequest request =
-        defaultRequestBuilder(UUID.randomUUID())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
-    workspaceService.createWorkspace(request, USER_REQUEST);
-
-    Map<String, StepStatus> doFailures = new HashMap<>();
-    doFailures.put(DeleteGcpProjectStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    doFailures.put(DeleteWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    doFailures.put(DeleteWorkspaceStateStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();
+  void createMcWorkspaceDoSteps() {
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(CreateWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(CreateWorkspaceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
     jobService.setFlightDebugInfoForTest(debugInfo);
 
-    workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST);
-    assertThrows(
-        WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST));
+    UUID createdId = workspaceService.createWorkspace(request, USER_REQUEST);
+    assertEquals(createdId, request.workspaceId());
   }
 
   @Test
-  void deleteWorkspaceUndoFailure() {
+  void createRawlsWorkspaceDoSteps() throws InterruptedException {
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
-    workspaceService.createWorkspace(request, USER_REQUEST);
-
-    // Test "undo" flight with lastStepFailure. Because deletion cannot be undone, this workspace
-    // will still be deleted after "undoing" the flight.
-    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
+    // Ensure the auth check in CheckSamWorkspaceAuthzStep always succeeds.
+    doReturn(true).when(mockSamService).isAuthorized(any(), any(), any(), any());
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(
+        CheckSamWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(CreateWorkspaceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
     jobService.setFlightDebugInfoForTest(debugInfo);
 
-    // When a flight fails with no error message (e.g. because of debugInfo), Stairway will return
-    // an InvalidResultStateException.
+    UUID createdId = workspaceService.createWorkspace(request, USER_REQUEST);
+    assertEquals(createdId, request.workspaceId());
+  }
+
+  @Test
+  void createWorkspaceUndoSteps() {
+    WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
+    // Retry undo steps once and fail at the end of the flight.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(CreateWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(CreateWorkspaceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    FlightDebugInfo debugInfo =
+        FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build();
+    jobService.setFlightDebugInfoForTest(debugInfo);
+
+    // JobService throws a InvalidResultStateException when a synchronous flight fails without an
+    // exception, which occurs when a flight fails via debugInfo.
     assertThrows(
         InvalidResultStateException.class,
-        () -> workspaceService.deleteWorkspace(request.workspaceId(), USER_REQUEST));
-
-    // Even though the "undo" ran for this flight, the workspace should still be deleted.
+        () -> workspaceService.createWorkspace(request, USER_REQUEST));
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> workspaceService.getWorkspace(request.workspaceId(), USER_REQUEST));

@@ -63,7 +63,8 @@ public class DeleteControlledResourceFlight extends Flight {
                 flightBeanBag.getResourceDao(),
                 flightBeanBag.getGcpCloudContextService(),
                 workspaceId,
-                resourceId));
+                resourceId),
+            gcpRetryRule);
         break;
       case BIG_QUERY_DATASET:
         addStep(
@@ -86,8 +87,7 @@ public class DeleteControlledResourceFlight extends Flight {
             "Delete not yet implemented for resource type " + resource.getResourceType());
     }
 
-    final RetryRule immediateRetryRule =
-        new RetryRuleFixedInterval(/*intervalSeconds= */ 0, /* maxCount= */ 2);
+    final RetryRule immediateRetryRule = RetryRules.immediate();
     addStep(
         new DeleteMetadataStep(flightBeanBag.getResourceDao(), workspaceId, resourceId),
         immediateRetryRule);

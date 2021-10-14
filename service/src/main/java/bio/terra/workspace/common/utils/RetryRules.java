@@ -41,4 +41,12 @@ public class RetryRules {
   public static RetryRule buffer() {
     return new RetryRuleExponentialBackoff(1, 5 * 60, 15 * 60);
   }
+
+  /**
+   * Use for operations that can be retried immediately, e.g. database operations which may have
+   * failed due to transaction conflicts.
+   */
+  public static RetryRule immediate() {
+    return new RetryRuleFixedInterval(/*intervalSeconds= */ 0, /* maxCount= */ 2);
+  }
 }

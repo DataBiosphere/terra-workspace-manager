@@ -74,17 +74,18 @@ public class CreateControlledResourceFlight extends Flight {
     // create the cloud resource and grant IAM roles via CRL
     switch (resource.getResourceType()) {
       case GCS_BUCKET:
-        // TODO(PF-589): apply gcpRetryRule to these steps once they are idempotent.
         addStep(
             new CreateGcsBucketStep(
                 flightBeanBag.getCrlService(),
                 resource.castToGcsBucketResource(),
-                flightBeanBag.getGcpCloudContextService()));
+                flightBeanBag.getGcpCloudContextService()),
+            gcpRetryRule);
         addStep(
             new GcsBucketCloudSyncStep(
                 flightBeanBag.getCrlService(),
                 resource.castToGcsBucketResource(),
-                flightBeanBag.getGcpCloudContextService()));
+                flightBeanBag.getGcpCloudContextService()),
+            gcpRetryRule);
         break;
       case AI_NOTEBOOK_INSTANCE:
         addNotebookSteps(userAndPet, flightBeanBag, resource.castToAiNotebookInstanceResource());
