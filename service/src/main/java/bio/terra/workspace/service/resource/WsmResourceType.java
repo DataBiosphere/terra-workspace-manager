@@ -2,11 +2,7 @@ package bio.terra.workspace.service.resource;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiResourceType;
-import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.*;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
@@ -46,7 +42,13 @@ public enum WsmResourceType {
       "AZURE_IP",
       ApiResourceType.AZURE_IP,
       null,
-      ControlledAzureIpResource.class);
+      ControlledAzureIpResource.class),
+  AZURE_DISK(
+      CloudPlatform.AZURE,
+      "AZURE_DISK",
+      ApiResourceType.AZURE_DISK,
+      null,
+      ControlledAzureDiskResource.class);
 
   private final CloudPlatform cloudPlatform;
   private final String dbString; // serialized form of the resource type

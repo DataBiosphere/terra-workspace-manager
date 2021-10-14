@@ -1,24 +1,7 @@
 package bio.terra.workspace.common.fixtures;
 
-import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRule;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleAction;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleActionType;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
-import bio.terra.workspace.service.resource.controlled.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.ManagedByType;
+import bio.terra.workspace.generated.model.*;
+import bio.terra.workspace.service.resource.controlled.*;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.bigquery.model.Dataset;
@@ -74,6 +57,7 @@ public class ControlledResourceFixtures {
   public static final String RESOURCE_LOCATION = "US-CENTRAL1";
   public static final String AZURE_NAME_PREFIX = "azure";
   public static final String AZURE_IP_NAME_PREFIX = "ip";
+  public static final String AZURE_DISK_NAME_PREFIX = "disk";
 
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
       new ApiGcpGcsBucketCreationParameters()
@@ -94,6 +78,14 @@ public class ControlledResourceFixtures {
     return new ApiAzureIpCreationParameters()
         .name(uniqueAzureName(AZURE_IP_NAME_PREFIX))
         .region("eastus");
+  }
+
+  /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
+  public static ApiAzureDiskCreationParameters getAzureDiskCreationParameters() {
+    return new ApiAzureDiskCreationParameters()
+        .name(uniqueAzureName(AZURE_DISK_NAME_PREFIX))
+        .region("eastus")
+        .size(50);
   }
 
   public static String uniqueBucketName() {
@@ -153,6 +145,22 @@ public class ControlledResourceFixtures {
         ManagedByType.MANAGED_BY_USER,
         ipName,
         region);
+  }
+
+  public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {
+    return new ControlledAzureDiskResource(
+        WORKSPACE_ID,
+        RESOURCE_ID,
+        RESOURCE_NAME,
+        RESOURCE_DESCRIPTION,
+        CLONING_INSTRUCTIONS,
+        OWNER_EMAIL,
+        // TODO: these should be changed when we group the resources
+        AccessScopeType.ACCESS_SCOPE_PRIVATE,
+        ManagedByType.MANAGED_BY_USER,
+        diskName,
+        region,
+        size);
   }
 
   private ControlledResourceFixtures() {}

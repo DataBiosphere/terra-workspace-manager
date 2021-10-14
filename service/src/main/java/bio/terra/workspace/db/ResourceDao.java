@@ -11,13 +11,7 @@ import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
-import bio.terra.workspace.service.resource.controlled.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.*;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -435,6 +429,9 @@ public class ResourceDao {
       case AZURE_IP:
         validateUniqueAzureIp(controlledResource.castToAzureIpResource());
         break;
+      case AZURE_DISK:
+        validateUniqueAzureDisk(controlledResource.castToAzureDiskResource());
+        break;
       default:
         throw new IllegalArgumentException(
             String.format(
@@ -527,6 +524,25 @@ public class ResourceDao {
     if (matchingCount != null && matchingCount > 0) {
       throw new DuplicateResourceException(
           String.format("An Azure IP with ID %s already exists", ipResource.getIpName()));
+    }
+  }
+
+  private void validateUniqueAzureDisk(ControlledAzureDiskResource resource) {
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND workspace_id = :workspace_id"
+            + " AND attributes->>'diskName' = :disk_name";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AZURE_DISK.toSql())
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
+            .addValue("disk_name", resource.getDiskName());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format("An Azure IP with ID %s already exists", resource.getDiskName()));
     }
   }
 
@@ -661,6 +677,8 @@ public class ResourceDao {
             return new ControlledBigQueryDatasetResource(dbResource);
           case AZURE_IP:
             return new ControlledAzureIpResource(dbResource);
+          case AZURE_DISK:
+            return new ControlledAzureDiskResource(dbResource);
           default:
             throw new InvalidMetadataException(
                 "Invalid controlled resource type" + dbResource.getResourceType().toString());

@@ -12,11 +12,7 @@ import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.AccessScopeType;
-import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
-import bio.terra.workspace.service.resource.controlled.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.*;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Collections;
@@ -61,34 +57,36 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
   }
 
   @Override
-  public ResponseEntity<ApiCreatedControlledAzureDisk> createAzureDisk(UUID workspaceId, ApiCreateControlledAzureDiskRequestBody body) {
+  public ResponseEntity<ApiCreatedControlledAzureDisk> createAzureDisk(
+      UUID workspaceId, ApiCreateControlledAzureDiskRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     ControlledAzureDiskResource resource =
-            ControlledAzureDiskResource.builder()
-                    .workspaceId(workspaceId)
-                    .resourceId(UUID.randomUUID())
-                    .name(body.getCommon().getName())
-                    .description(body.getCommon().getDescription())
-                    .cloningInstructions(
-                            CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-                    .assignedUser(assignedUserFromBodyOrToken(body.getCommon(), userRequest))
-                    .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
-                    .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
-                    .ipName(body.getAzureIp().getName())
-                    .region(body.getAzureIp().getRegion())
-                    .build();
+        ControlledAzureDiskResource.builder()
+            .workspaceId(workspaceId)
+            .resourceId(UUID.randomUUID())
+            .name(body.getCommon().getName())
+            .description(body.getCommon().getDescription())
+            .cloningInstructions(
+                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
+            .assignedUser(assignedUserFromBodyOrToken(body.getCommon(), userRequest))
+            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
+            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .diskName(body.getAzureDisk().getName())
+            .region(body.getAzureDisk().getRegion())
+            .size(body.getAzureDisk().getSize())
+            .build();
 
     List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
 
-    final ControlledAzureIpResource createdIp =
-            controlledResourceService.createIp(resource, body.getAzureIp(), privateRoles, userRequest);
+    final var createdDisk =
+        controlledResourceService.createDisk(
+            resource, body.getAzureDisk(), privateRoles, userRequest);
     var response =
-            new ApiCreatedControlledAzureIp()
-                    .resourceId(createdIp.getResourceId())
-                    .azureIp(createdIp.toApiResource());
+        new ApiCreatedControlledAzureDisk()
+            .resourceId(createdDisk.getResourceId())
+            .azureDisk(createdDisk.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
-
   }
 
   @Override

@@ -4,14 +4,13 @@ import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.generated.model.ApiAzureIpAttributes;
-import bio.terra.workspace.generated.model.ApiAzureIpResource;
+import bio.terra.workspace.generated.model.ApiAzureDiskAttributes;
+import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.UUID;
 
 public class ControlledAzureDiskResource extends ControlledResource {
@@ -29,8 +28,9 @@ public class ControlledAzureDiskResource extends ControlledResource {
       @JsonProperty("assignedUser") String assignedUser,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
-      @JsonProperty("diskName") String ipName,
-      @JsonProperty("region") String region) {
+      @JsonProperty("diskName") String diskName,
+      @JsonProperty("region") String region,
+      @JsonProperty("size") int size) {
 
     super(
         workspaceId,
@@ -41,17 +41,19 @@ public class ControlledAzureDiskResource extends ControlledResource {
         assignedUser,
         accessScope,
         managedBy);
-    this.diskName = ipName;
+    this.diskName = diskName;
     this.region = region;
+    this.size = size;
     validate();
   }
 
   public ControlledAzureDiskResource(DbResource dbResource) {
     super(dbResource);
-    ControlledAzureIpAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureIpAttributes.class);
-    this.diskName = attributes.getIpName();
+    ControlledAzureDiskAttributes attributes =
+        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureDiskAttributes.class);
+    this.diskName = attributes.getDiskName();
     this.region = attributes.getRegion();
+    this.size = attributes.getSize();
     validate();
   }
 
@@ -63,12 +65,16 @@ public class ControlledAzureDiskResource extends ControlledResource {
     return region;
   }
 
+  public int getSize() {
+    return size;
+  }
+
   public ApiAzureDiskAttributes toApiAttributes() {
     return new ApiAzureDiskAttributes().diskName(getDiskName()).region(region.toString());
   }
 
-  public ApiAzureIpResource toApiResource() {
-    return new ApiAzureIpResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
+  public ApiAzureDiskResource toApiResource() {
+    return new ApiAzureDiskResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
   }
 
   @Override
@@ -78,7 +84,8 @@ public class ControlledAzureDiskResource extends ControlledResource {
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ControlledAzureIpAttributes(getIpName(), getRegion()));
+    return DbSerDes.toJson(
+        new ControlledAzureDiskAttributes(getDiskName(), getRegion(), getSize()));
   }
 
   @Override
@@ -87,15 +94,15 @@ public class ControlledAzureDiskResource extends ControlledResource {
     if (getResourceType() != WsmResourceType.AZURE_IP) {
       throw new InconsistentFieldsException("Expected AZURE_IP");
     }
-    if (getIpName() == null) {
+    if (getDiskName() == null) {
       throw new MissingRequiredFieldException(
-          "Missing required ipName field for ControlledAzureIP.");
+          "Missing required diskName field for ControlledAzureIP.");
     }
     if (getRegion() == null) {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureIP.");
     }
-    ValidationUtils.validateIpName(getIpName());
+    ValidationUtils.validateIpName(getDiskName());
   }
 
   @Override
@@ -106,13 +113,13 @@ public class ControlledAzureDiskResource extends ControlledResource {
 
     ControlledAzureDiskResource that = (ControlledAzureDiskResource) o;
 
-    return ipName.equals(that.getIpName());
+    return diskName.equals(that.getDiskName());
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + ipName.hashCode();
+    result = 31 * result + diskName.hashCode();
     return result;
   }
 
@@ -129,8 +136,9 @@ public class ControlledAzureDiskResource extends ControlledResource {
     private String assignedUser;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
-    private String ipName;
+    private String diskName;
     private String region;
+    private int size;
 
     public ControlledAzureDiskResource.Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
@@ -158,13 +166,18 @@ public class ControlledAzureDiskResource extends ControlledResource {
       return this;
     }
 
-    public ControlledAzureDiskResource.Builder ipName(String ipName) {
-      this.ipName = ipName;
+    public ControlledAzureDiskResource.Builder diskName(String diskName) {
+      this.diskName = diskName;
       return this;
     }
 
     public ControlledAzureDiskResource.Builder region(String region) {
       this.region = region;
+      return this;
+    }
+
+    public ControlledAzureDiskResource.Builder size(int size) {
+      this.size = size;
       return this;
     }
 
@@ -193,8 +206,9 @@ public class ControlledAzureDiskResource extends ControlledResource {
           assignedUser,
           accessScope,
           managedBy,
-          ipName,
-          region);
+          diskName,
+          region,
+          size);
     }
   }
 }

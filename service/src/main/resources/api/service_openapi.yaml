@@ -3047,6 +3047,7 @@ components:
         - DATA_REPO_SNAPSHOT
         - GCS_BUCKET
         - AZURE_IP
+        - AZURE_DISK
 
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration
