@@ -2150,16 +2150,20 @@ components:
       required: [ name, region, size ]
       properties:
         name:
-          description: A valid ip name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+          description: A valid disk name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
           type: string
         region:
           description: |
             A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
             It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
           type: string
+        size:
+          description: |
+            A valid size in GB integer representation
+          type: integer
 
     CreatedControlledAzureIp:
-      description: Response payload for requesting a new azure IP
+      description: Response payload for requesting a new Azure IP
       type: object
       properties:
         resourceId:
@@ -2168,6 +2172,17 @@ components:
           format: uuid
         azureIp:
           $ref: '#/components/schemas/AzureIpResource'
+
+    CreatedControlledAzureDisk:
+      description: Response payload for requesting a new Azure disk
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureDisk:
+          $ref: '#/components/schemas/AzureDiskResource'
 
     GcpGcsBucketCreationParameters:
       description: >-
@@ -2842,7 +2857,7 @@ components:
 
     AzureIpAttributes:
       description: >-
-        IP properties included in post-creation get and update. Others must be retrieved from Azure using the name.
+        IP properties included in post-creation get. Others must be retrieved from Azure using the name.
       type: object
       properties:
         ipName:
@@ -2850,6 +2865,18 @@ components:
           type: string
         region:
           description: Azure region of created ip
+          type: string
+
+    AzureDiskAttributes:
+      description: >-
+        Disk properties included in post-creation get and update. Others must be retrieved from Azure using the name.
+      type: object
+      properties:
+        diskName:
+          description: Name of created disk (not the resource name).
+          type: string
+        region:
+          description: Azure region of created disk
           type: string
 
     GcpGcsBucketAttributes:
@@ -2883,6 +2910,17 @@ components:
           $ref: '#/components/schemas/ResourceMetadata'
         attributes:
           $ref: '#/components/schemas/AzureIpAttributes'
+
+    AzureDiskResource:
+      type: object
+      description: Description of an Azure disk
+      required: [metadata, attributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AzureDiskAttributes'
 
     GcpAiNotebookInstanceAttributes:
       description: >-
@@ -3082,6 +3120,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreatedControlledAzureIp'
+
+    CreateControlledAzureDiskResponse:
+      description: Response to create controlled Azure disk
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAzureDisk'
 
     DeleteControlledAzureIpResponse:
       description: Response Payload for deleting an azure ip

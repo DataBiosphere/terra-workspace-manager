@@ -5,15 +5,7 @@ import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
-import bio.terra.workspace.generated.model.ApiAccessScope;
-import bio.terra.workspace.generated.model.ApiAzureIpResource;
-import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureIp;
-import bio.terra.workspace.generated.model.ApiDeleteControlledAzureIpRequest;
-import bio.terra.workspace.generated.model.ApiDeleteControlledAzureIpResult;
-import bio.terra.workspace.generated.model.ApiJobControl;
-import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamRethrow;
@@ -66,6 +58,37 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     this.workspaceService = workspaceService;
     this.request = request;
     this.jobService = jobService;
+  }
+
+  @Override
+  public ResponseEntity<ApiCreatedControlledAzureDisk> createAzureDisk(UUID workspaceId, ApiCreateControlledAzureDiskRequestBody body) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
+    ControlledAzureDiskResource resource =
+            ControlledAzureDiskResource.builder()
+                    .workspaceId(workspaceId)
+                    .resourceId(UUID.randomUUID())
+                    .name(body.getCommon().getName())
+                    .description(body.getCommon().getDescription())
+                    .cloningInstructions(
+                            CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
+                    .assignedUser(assignedUserFromBodyOrToken(body.getCommon(), userRequest))
+                    .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
+                    .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+                    .ipName(body.getAzureIp().getName())
+                    .region(body.getAzureIp().getRegion())
+                    .build();
+
+    List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
+
+    final ControlledAzureIpResource createdIp =
+            controlledResourceService.createIp(resource, body.getAzureIp(), privateRoles, userRequest);
+    var response =
+            new ApiCreatedControlledAzureIp()
+                    .resourceId(createdIp.getResourceId())
+                    .azureIp(createdIp.toApiResource());
+    return new ResponseEntity<>(response, HttpStatus.OK);
+
   }
 
   @Override
