@@ -25,7 +25,8 @@ import com.azure.core.credential.TokenCredential;
 import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
-import com.azure.resourcemanager.AzureResourceManager;
+import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.resources.ResourceManager;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.Bigquery;
 import com.google.api.services.bigquery.BigqueryScopes;
@@ -57,7 +58,7 @@ public class CrlService {
   /** How long to keep the resource before Janitor does the cleanup. */
   private static final Duration TEST_RESOURCE_TIME_TO_LIVE = Duration.ofHours(1);
 
-  private final AzureConfiguration azureConfiguration;
+  private final AzureConfiguration azureConfig;
   private final AzureState azureState;
   private final ClientConfig clientConfig;
   private final CrlConfiguration crlConfig;
@@ -70,9 +71,9 @@ public class CrlService {
 
   @Autowired
   public CrlService(
-      CrlConfiguration crlConfig, AzureState azureState, AzureConfiguration azureConfiguration) {
+      CrlConfiguration crlConfig, AzureState azureState, AzureConfiguration azureConfig) {
     this.crlConfig = crlConfig;
-    this.azureConfiguration = azureConfiguration;
+    this.azureConfig = azureConfig;
     this.azureState = azureState;
 
     if (crlConfig.getUseCrl()) {
@@ -99,6 +100,7 @@ public class CrlService {
       crlServiceUsageCow = null;
     }
   }
+
   /** @return CRL {@link AIPlatformNotebooksCow} which wraps Google AI Platform Notebooks API */
   public AIPlatformNotebooksCow getAIPlatformNotebooksCow() {
     assertCrlInUse();
@@ -133,6 +135,20 @@ public class CrlService {
   public ServiceUsageCow getServiceUsageCow() {
     assertCrlInUse();
     return crlServiceUsageCow;
+  }
+
+  /** Returns an Azure {@link ComputeManager} configured for use with CRL. */
+  public ComputeManager getComputeManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    return buildComputeManager(azureCloudContext, azureConfig);
+  }
+
+  /** Returns an Azure {@link ResourceManager} configured for use with CRL. */
+  public ResourceManager getResourceManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    return buildResourceManager(azureCloudContext, azureConfig);
   }
 
   /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
@@ -343,6 +359,61 @@ public class CrlService {
     return builder.build();
   }
 
+  //  Azure Support
+
+  public TokenCredential getManagedAppCredentials(AzureConfiguration azureConfig) {
+    return new ClientSecretCredentialBuilder()
+        .clientId(azureConfig.getManagedAppClientId())
+        .clientSecret(azureConfig.getManagedAppClientSecret())
+        .tenantId(azureConfig.getManagedAppTenantId())
+        .build();
+  }
+
+  /**
+   * Get a resource manager pointed at the MRG subscription
+   *
+   * @param azureCloudContext target cloud context
+   * @return azure resource manager
+   */
+  public ResourceManager buildResourceManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    TokenCredential azureCreds = getManagedAppCredentials(azureConfig);
+
+    AzureProfile azureProfile =
+        new AzureProfile(
+            azureCloudContext.getAzureTenantId(),
+            azureCloudContext.getAzureSubscriptionId(),
+            AzureEnvironment.AZURE);
+
+    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
+    ResourceManager manager =
+        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, ResourceManager.configure())
+            .authenticate(azureCreds, azureProfile)
+            .withSubscription(azureCloudContext.getAzureSubscriptionId());
+
+    return manager;
+  }
+
+  private ComputeManager buildComputeManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    TokenCredential azureCreds = getManagedAppCredentials(azureConfig);
+
+    AzureProfile azureProfile =
+        new AzureProfile(
+            azureCloudContext.getAzureTenantId(),
+            azureCloudContext.getAzureSubscriptionId(),
+            AzureEnvironment.AZURE);
+
+    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
+    ComputeManager manager =
+        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, ComputeManager.configure())
+            .authenticate(azureCreds, azureProfile);
+
+    return manager;
+  }
+
   @VisibleForTesting
   public ClientConfig getClientConfig() {
     assertCrlInUse();
@@ -355,28 +426,7 @@ public class CrlService {
     }
   }
 
-  // -- Azure Support --
-  // TODO: this is not in CRL, but it will be, so this is a convenient place to dump the
-  //  utility methods we need.
-  public TokenCredential getManagedAppCredentials() {
-    return new ClientSecretCredentialBuilder()
-        .clientId(azureConfiguration.getManagedAppClientId())
-        .clientSecret(azureConfiguration.getManagedAppClientSecret())
-        .tenantId(azureConfiguration.getManagedAppTenantId())
-        .build();
-  }
-
-  /**
-   * Get a resource manager pointed at the MRG subscription
-   *
-   * @param azureCloudContext target cloud context
-   * @return azure resource manager
-   */
-  public AzureResourceManager getResourceManager(AzureCloudContext azureCloudContext) {
-    AzureProfile profile = new AzureProfile(AzureEnvironment.AZURE);
-    TokenCredential credential = getManagedAppCredentials();
-    return AzureResourceManager.authenticate(credential, profile)
-        .withTenantId(azureCloudContext.getAzureTenantId())
-        .withSubscription(azureCloudContext.getAzureSubscriptionId());
+  public boolean canCreateAzureIp(String ipName, AuthenticatedUserRequest userRequest) {
+    return true; // TODO: check azure acls?
   }
 }

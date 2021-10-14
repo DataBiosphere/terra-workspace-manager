@@ -59,7 +59,7 @@ dependencies {
     implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
 
     // Cloud Resource Library
-    implementation platform('bio.terra.cloud-resource-lib:platform:0.2.0')
+    implementation platform('bio.terra.cloud-resource-lib:platform:0.3.0')
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-bigquery'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-billing'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-cloudresourcemanager'
@@ -68,6 +68,8 @@ dependencies {
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-notebooks'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-serviceusage'
     implementation group: 'bio.terra.cloud-resource-lib', name: 'google-storage'
+    implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-compute'
+    implementation group: 'bio.terra.cloud-resource-lib', name: 'azure-resourcemanager-common'
 
     // Storage transfer service
     implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20210602-1.31.5'
@@ -109,6 +111,8 @@ dependencies {
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
     }
+    // Allows us to mock final classes
+    testImplementation 'org.mockito:mockito-inline:2.13.0'
 
     annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
     annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor", version: "2.4.0"

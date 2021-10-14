@@ -13,6 +13,7 @@ import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -170,6 +171,12 @@ public class ResourceController implements ResourceApi {
               ControlledBigQueryDatasetResource resource =
                   controlledResource.castToBigQueryDatasetResource();
               union.gcpBqDataset(resource.toApiAttributes(gcpProjectId));
+              break;
+            }
+          case AZURE_IP:
+            {
+              ControlledAzureIpResource resource = controlledResource.castToAzureIpResource();
+              union.azureIp(resource.toApiAttributes());
               break;
             }
           case DATA_REPO_SNAPSHOT: // there is a use case for this, but low priority

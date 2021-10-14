@@ -678,6 +678,10 @@ public class SamService {
       String policyName,
       AuthenticatedUserRequest userRequest)
       throws InterruptedException {
+    if (mockSamService.useMock(userRequest)) {
+      return mockSamService.syncPolicyOnObject(
+          resourceTypeName, resourceId, policyName, userRequest);
+    }
     GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
     try {
       // Sam makes no guarantees about what values are returned from the POST call, so we instead
@@ -704,6 +708,11 @@ public class SamService {
       List<ControlledResourceIamRole> privateIamRoles,
       AuthenticatedUserRequest userRequest)
       throws InterruptedException {
+    if (mockSamService.useMock(userRequest)) {
+      mockSamService.createControlledResource(resource, userRequest);
+      return;
+    }
+
     // Set up the master OWNER user in Sam for all controlled resources, if it's not already.
     initializeWsmServiceAccount();
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());

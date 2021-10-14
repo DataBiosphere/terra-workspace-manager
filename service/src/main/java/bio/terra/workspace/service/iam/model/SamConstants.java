@@ -13,6 +13,14 @@ public class SamConstants {
   public static final String SAM_DELETE_REFERENCED_RESOURCE = "delete_referenced_resource";
   public static final String SPEND_PROFILE_RESOURCE = "spend-profile";
   public static final String SPEND_PROFILE_LINK_ACTION = "link";
+  public static final String SAM_CREATE_CONTROLLED_USER_SHARED_RESOURCE =
+      "create_controlled_user_shared";
+  public static final String SAM_CREATE_CONTROLLED_APPLICATION_SHARED_RESOURCE =
+      "create_controlled_application_shared";
+  public static final String SAM_CREATE_CONTROLLED_USER_PRIVATE_RESOURCE =
+      "create_controlled_user_private";
+  public static final String SAM_CREATE_CONTROLLED_APPLICATION_PRIVATE_RESOURCE =
+      "create_controlled_application_private";
 
   public static class SamControlledResourceActions {
     public static final String READ_ACTION = "read";
