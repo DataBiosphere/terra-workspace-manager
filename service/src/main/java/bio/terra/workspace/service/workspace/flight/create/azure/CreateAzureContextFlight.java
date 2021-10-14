@@ -28,7 +28,7 @@ public class CreateAzureContextFlight extends Flight {
 
     // 1. validate the MRG
     // TODO: retry?
-    addStep(new ValidateMRGStep(appContext.getCrlService()));
+    addStep(new ValidateMRGStep(appContext.getCrlService(), appContext.getAzureConfig()));
 
     // 2. store the context
     RetryRule retryRule = RetryRules.shortExponential();

@@ -727,6 +727,10 @@ public class SamService {
       String policyName,
       AuthenticatedUserRequest userRequest)
       throws InterruptedException {
+    if (mockSamService.useMock(userRequest)) {
+      return mockSamService.syncPolicyOnObject(
+          resourceTypeName, resourceId, policyName, userRequest);
+    }
     GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
     try {
       // Sam makes no guarantees about what values are returned from the POST call, so we instead
@@ -756,6 +760,12 @@ public class SamService {
       @Nullable String assignedUserEmail,
       AuthenticatedUserRequest userRequest)
       throws InterruptedException {
+
+    if (mockSamService.useMock(userRequest)) {
+      mockSamService.createControlledResource(resource, userRequest);
+      return;
+    }
+
     // We need the WSM SA for setting controlled resource policies
     initializeWsmServiceAccount();
     FullyQualifiedResourceId workspaceParentFqId =

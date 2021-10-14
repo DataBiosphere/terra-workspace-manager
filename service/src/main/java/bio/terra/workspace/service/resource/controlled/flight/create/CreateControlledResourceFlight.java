@@ -98,6 +98,28 @@ public class CreateControlledResourceFlight extends Flight {
                 userRequest),
             gcpRetryRule);
         break;
+      case AZURE_IP:
+        addStep(
+            new GetAzureIpStep(
+                flightBeanBag.getAzureConfig(),
+                flightBeanBag
+                    .getAzureCloudContextService()
+                    .getAzureCloudContext(resource.getWorkspaceId())
+                    .get(),
+                flightBeanBag.getCrlService(),
+                resource.castToAzureIpResource()),
+            RetryRules.cloud());
+        addStep(
+            new CreateAzureIpStep(
+                flightBeanBag.getAzureConfig(),
+                flightBeanBag
+                    .getAzureCloudContextService()
+                    .getAzureCloudContext(resource.getWorkspaceId())
+                    .get(),
+                flightBeanBag.getCrlService(),
+                resource.castToAzureIpResource()),
+            RetryRules.cloud());
+        break;
       default:
         throw new IllegalStateException(
             String.format("Unrecognized resource type %s", resource.getResourceType()));

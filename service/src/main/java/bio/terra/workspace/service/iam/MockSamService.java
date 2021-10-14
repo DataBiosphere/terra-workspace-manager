@@ -7,8 +7,9 @@ import bio.terra.workspace.db.IamDao;
 import bio.terra.workspace.db.IamDao.PocUser;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest.AuthType;
 import bio.terra.workspace.service.iam.model.RoleBinding;
-import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
+import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceCategory;
@@ -46,6 +47,11 @@ public class MockSamService {
   }
 
   public void deleteControlledResource(
+      ControlledResource resource, AuthenticatedUserRequest userRequest) {
+    // Mock does not maintain any state for controlled resources
+  }
+
+  public void createControlledResource(
       ControlledResource resource, AuthenticatedUserRequest userRequest) {
     // Mock does not maintain any state for controlled resources
   }
@@ -88,32 +94,34 @@ public class MockSamService {
     String userId = userRequest.getSubjectId();
 
     // SpendProfile - everyone has access. Wheeeee!
-    if (StringUtils.equals(iamResourceType, SamConstants.SPEND_PROFILE_RESOURCE)) {
+    if (StringUtils.equals(iamResourceType, SamResource.SPEND_PROFILE)) {
       return true;
     }
 
     // Workspace - map action to role checks in the database
-    if (StringUtils.equals(iamResourceType, SamConstants.SAM_WORKSPACE_RESOURCE)) {
+    if (StringUtils.equals(iamResourceType, SamResource.WORKSPACE)) {
       UUID workspaceId = UUID.fromString(resourceId);
       switch (action) {
           // workspace owner actions
-        case SamConstants.SAM_WORKSPACE_OWN_ACTION:
-        case SamConstants.SAM_WORKSPACE_READ_IAM_ACTION:
-        case SamConstants.SAM_WORKSPACE_DELETE_ACTION:
+        case SamWorkspaceAction.OWN:
+        case SamWorkspaceAction.READ_IAM:
+        case SamWorkspaceAction.DELETE:
           return iamDao.roleCheck(workspaceId, List.of(WsmIamRole.OWNER), userId);
 
           // workspace owner or writer actions
-          // TODO: Why do we have actions for referenced resources, but no actions
-          //  for controlled resources? Or are those not in the constants file?
-        case SamConstants.SAM_WORKSPACE_WRITE_ACTION:
-        case SamConstants.SAM_CREATE_REFERENCED_RESOURCE:
-        case SamConstants.SAM_UPDATE_REFERENCED_RESOURCE:
-        case SamConstants.SAM_DELETE_REFERENCED_RESOURCE:
+        case SamWorkspaceAction.WRITE:
+        case SamWorkspaceAction.CREATE_REFERENCE:
+        case SamWorkspaceAction.UPDATE_REFERENCE:
+        case SamWorkspaceAction.DELETE_REFERENCE:
+        case SamWorkspaceAction.CREATE_CONTROLLED_USER_SHARED:
+        case SamWorkspaceAction.CREATE_CONTROLLED_APPLICATION_SHARED:
+        case SamWorkspaceAction.CREATE_CONTROLLED_USER_PRIVATE:
+        case SamWorkspaceAction.CREATE_CONTROLLED_APPLICATION_PRIVATE:
           return iamDao.roleCheck(
               workspaceId, List.of(WsmIamRole.OWNER, WsmIamRole.WRITER), userId);
 
           // workspace reader actions
-        case SamConstants.SAM_WORKSPACE_READ_ACTION:
+        case SamWorkspaceAction.READ:
           return iamDao.roleCheck(
               workspaceId, List.of(WsmIamRole.OWNER, WsmIamRole.WRITER, WsmIamRole.READER), userId);
 
@@ -172,5 +180,13 @@ public class MockSamService {
     return iamDao
         .getUserFromEmail(email)
         .orElseThrow(() -> new SamBadRequestException("User not found: " + email));
+  }
+
+  public String syncPolicyOnObject(
+      String resourceTypeName,
+      String resourceId,
+      String policyName,
+      AuthenticatedUserRequest userRequest) {
+    return "mock-group";
   }
 }

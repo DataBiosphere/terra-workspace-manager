@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.fixtures;
 
+import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
@@ -14,6 +15,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
@@ -70,6 +72,8 @@ public class ControlledResourceFixtures {
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
   public static final String BUCKET_NAME_PREFIX = "my-bucket";
   public static final String RESOURCE_LOCATION = "US-CENTRAL1";
+  public static final String AZURE_NAME_PREFIX = "azure";
+  public static final String AZURE_IP_NAME_PREFIX = "ip";
 
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
       new ApiGcpGcsBucketCreationParameters()
@@ -85,8 +89,19 @@ public class ControlledResourceFixtures {
         .lifecycle(new ApiGcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
   }
 
+  /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
+  public static ApiAzureIpCreationParameters getAzureIpCreationParameters() {
+    return new ApiAzureIpCreationParameters()
+        .name(uniqueAzureName(AZURE_IP_NAME_PREFIX))
+        .region("eastus");
+  }
+
   public static String uniqueBucketName() {
     return uniqueName(BUCKET_NAME_PREFIX);
+  }
+
+  public static String uniqueAzureName(String resourcePrefix) {
+    return uniqueName(AZURE_NAME_PREFIX + "-" + AZURE_NAME_PREFIX);
   }
 
   public static ApiGcpAiNotebookInstanceCreationParameters defaultNotebookCreationParameters() {
@@ -124,6 +139,21 @@ public class ControlledResourceFixtures {
         ManagedByType.MANAGED_BY_USER,
         null,
         bucketName);
+  }
+
+  public static ControlledAzureIpResource getAzureIp(String ipName, String region) {
+    return new ControlledAzureIpResource(
+        WORKSPACE_ID,
+        RESOURCE_ID,
+        RESOURCE_NAME,
+        RESOURCE_DESCRIPTION,
+        CLONING_INSTRUCTIONS,
+        OWNER_EMAIL,
+        // TODO: these should be changed when we group the resources
+        AccessScopeType.ACCESS_SCOPE_PRIVATE,
+        ManagedByType.MANAGED_BY_USER,
+        ipName,
+        region);
   }
 
   private ControlledResourceFixtures() {}

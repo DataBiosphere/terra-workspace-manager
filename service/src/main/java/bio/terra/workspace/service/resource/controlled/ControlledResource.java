@@ -122,6 +122,11 @@ public abstract class ControlledResource extends WsmResource {
     return (ControlledGcsBucketResource) this;
   }
 
+  public ControlledAzureIpResource castToAzureIpResource() {
+    validateSubclass(WsmResourceType.AZURE_IP);
+    return (ControlledAzureIpResource) this;
+  }
+
   public ControlledAiNotebookInstanceResource castToAiNotebookInstanceResource() {
     validateSubclass(WsmResourceType.AI_NOTEBOOK_INSTANCE);
     return (ControlledAiNotebookInstanceResource) this;
