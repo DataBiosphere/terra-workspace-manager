@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApplicationApi;
 import bio.terra.workspace.generated.model.ApiWorkspaceApplicationDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceApplicationDescriptionList;
@@ -12,7 +13,6 @@ import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class WorkspaceApplicationApiController implements WorkspaceApplicationApi {
@@ -79,9 +80,11 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescriptionList> listWorkspaceApplications(
       @PathVariable("workspaceId") UUID workspaceId,
-      @Min(0) @Valid Integer offset,
-      @Min(1) @Valid Integer limit) {
+      @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
+      @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControllerValidationUtils.validatePaginationParams(offset, limit);
+
     List<WsmWorkspaceApplication> wsmApps =
         appService.listWorkspaceApplications(userRequest, workspaceId, offset, limit);
     var response = new ApiWorkspaceApplicationDescriptionList();

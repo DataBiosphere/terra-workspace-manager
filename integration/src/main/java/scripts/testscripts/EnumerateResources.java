@@ -1,9 +1,11 @@
 package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThan;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
@@ -11,6 +13,7 @@ import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
+import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.ControlledResourceMetadata;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
@@ -197,6 +200,21 @@ public class EnumerateResources extends DataRepoTestScriptBase {
     logger.info("Counted {} controlled buckets created", expectedControlledBuckets);
     long actualControlledBuckets = controlledBucketList.getResources().size();
     assertThat(actualControlledBuckets, equalTo(expectedControlledBuckets));
+
+    // Case 7: validate error on invalid pagination params
+    ApiException invalidPaginationException =
+        assertThrows(
+            ApiException.class,
+            () -> ownerResourceApi.enumerateResources(
+                    getWorkspaceId(), -11, 2, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED));
+    assertThat(invalidPaginationException.getMessage(), containsString("Invalid pagination"));
+
+    invalidPaginationException =
+        assertThrows(
+            ApiException.class,
+            () -> ownerResourceApi.enumerateResources(
+                getWorkspaceId(), 0, 0, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED));
+    assertThat(invalidPaginationException.getMessage(), containsString("Invalid pagination"));
   }
 
   @Override

@@ -8,6 +8,7 @@ import bio.terra.workspace.db.exception.InvalidApplicationStateException;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import bio.terra.workspace.service.workspace.model.WsmApplicationState;
 import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -118,7 +119,7 @@ public class ApplicationDao {
   public WsmWorkspaceApplication disableWorkspaceApplication(UUID workspaceId, UUID applicationId) {
 
     // Validate that the application exists; workspace is validated in layers above this
-    getApplication(applicationId);
+    getApplicationOrThrow(applicationId);
 
     // It is an error to have application resources in the workspace if we are disabling it.
     final String countAppUsesSql =
@@ -166,18 +167,18 @@ public class ApplicationDao {
   @WriteTransaction
   public WsmWorkspaceApplication enableWorkspaceApplication(UUID workspaceId, UUID applicationId) {
 
-    WsmApplication application = getApplication(applicationId);
+    WsmApplication application = getApplicationOrThrow(applicationId);
     if (application.getState() != WsmApplicationState.OPERATING) {
       throw new InvalidApplicationStateException(
-          "Applications is DEPRECATED or DECOMMISSIONED and cannot be enabled");
+          "Applications is " + application.getState().toApi() + " and cannot be enabled");
     }
 
     return enableWorkspaceApplicationWorker(workspaceId, applicationId);
   }
 
   /**
-   * Enable an application in a workspace - do not perform the application state check. This is used
-   * to restore an application if the disable application flight fails.
+   * Enable an application in a workspace - do not perform the application state check.
+   * This is only used in testing.
    *
    * <p>It is not an error to enable an already enabled application.
    *
@@ -185,6 +186,7 @@ public class ApplicationDao {
    * @param applicationId application of interest
    * @return workspace-application object
    */
+  @VisibleForTesting
   @WriteTransaction
   public WsmWorkspaceApplication enableWorkspaceApplicationNoCheck(
       UUID workspaceId, UUID applicationId) {
@@ -274,7 +276,7 @@ public class ApplicationDao {
   }
 
   // internal application lookup
-  private WsmApplication getApplication(UUID applicationId) {
+  private WsmApplication getApplicationOrThrow(UUID applicationId) {
     final String sql = APPLICATION_QUERY + " WHERE application_id = :application_id";
 
     var params = new MapSqlParameterSource().addValue("application_id", applicationId.toString());
