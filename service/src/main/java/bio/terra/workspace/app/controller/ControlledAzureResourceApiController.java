@@ -121,8 +121,8 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
   }
 
   @Override
-  public ResponseEntity<ApiDeleteControlledAzureIpResult> deleteAzureIp(
-      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureIpRequest body) {
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureIp(
+      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ApiJobControl jobControl = body.getJobControl();
     logger.info("deleteIp workspace {} resource {}", workspaceId.toString(), resourceId.toString());
@@ -133,7 +133,24 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             resourceId,
             ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
             userRequest);
-    return getDeleteResult(jobId, userRequest);
+    return getDeleteIpResult(jobId, userRequest);
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureDisk(
+      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final ApiJobControl jobControl = body.getJobControl();
+    logger.info(
+        "deleteDisk workspace {} resource {}", workspaceId.toString(), resourceId.toString());
+    final String jobId =
+        controlledResourceService.deleteControlledResourceAsync(
+            jobControl,
+            workspaceId,
+            resourceId,
+            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
+            userRequest);
+    return getDeleteIpResult(jobId, userRequest);
   }
 
   @Override
@@ -147,17 +164,45 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     } catch (InvalidMetadataException ex) {
       throw new BadRequestException(
           String.format(
-              "Resource %s in workspace %s is not a controlled GCS bucket.",
+              "Resource %s in workspace %s is not a controlled Azure Ip.",
               resourceId, workspaceId));
     }
   }
 
-  private ResponseEntity<ApiDeleteControlledAzureIpResult> getDeleteResult(
+  @Override
+  public ResponseEntity<ApiAzureDiskResource> getAzureDisk(UUID workspaceId, UUID resourceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledResource controlledResource =
+        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+    try {
+      var response = controlledResource.castToAzureDiskResource().toApiResource();
+      return new ResponseEntity<>(response, HttpStatus.OK);
+    } catch (InvalidMetadataException ex) {
+      throw new BadRequestException(
+          String.format(
+              "Resource %s in workspace %s is not a controlled Azure Ip.",
+              resourceId, workspaceId));
+    }
+  }
+
+  private ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteIpResult(
       String jobId, AuthenticatedUserRequest userRequest) {
     final JobService.AsyncJobResult<Void> jobResult =
         jobService.retrieveAsyncJobResult(jobId, Void.class, userRequest);
     var response =
-        new ApiDeleteControlledAzureIpResult()
+        new ApiDeleteControlledAzureResourceResult()
+            .jobReport(jobResult.getJobReport())
+            .errorReport(jobResult.getApiErrorReport());
+    return new ResponseEntity<>(
+        response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
+  }
+
+  private ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteDiskResult(
+      String jobId, AuthenticatedUserRequest userRequest) {
+    final JobService.AsyncJobResult<Void> jobResult =
+        jobService.retrieveAsyncJobResult(jobId, Void.class, userRequest);
+    var response =
+        new ApiDeleteControlledAzureResourceResult()
             .jobReport(jobResult.getJobReport())
             .errorReport(jobResult.getApiErrorReport());
     return new ResponseEntity<>(

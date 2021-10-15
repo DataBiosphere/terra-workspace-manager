@@ -1103,12 +1103,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteControlledAzureIpRequest'
+              $ref: '#/components/schemas/DeleteControlledAzureResourceRequest'
       responses:
         '200':
-          $ref: '#/components/responses/DeleteControlledAzureIpResponse'
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
         '202':
-          $ref: '#/components/responses/DeleteControlledAzureIpResponse'
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -1124,15 +1124,15 @@ paths:
       tags: [ControlledAzureResource]
       responses:
         '200':
-          $ref: '#/components/responses/DeleteControlledAzureIpResponse'
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
         '202':
-          $ref: '#/components/responses/DeleteControlledAzureIpResponse'
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disk:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
@@ -1148,6 +1148,44 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/CreateControlledAzureDiskResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled Azure Disk resource
+      operationId: getAzureDisk
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAzureDiskResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete an azure Disk
+      operationId: deleteAzureDisk
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAzureResourceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -2616,14 +2654,14 @@ components:
         jobControl:
           $ref: '#/components/schemas/JobControl'
 
-    DeleteControlledAzureIpRequest:
+    DeleteControlledAzureResourceRequest:
       type: object
       required: [ jobControl ]
       properties:
         jobControl:
           $ref: '#/components/schemas/JobControl'
 
-    DeleteControlledAzureIpResult:
+    DeleteControlledAzureResourceResult:
       type: object
       properties:
         jobReport:
@@ -3129,12 +3167,12 @@ components:
           schema:
             $ref: '#/components/schemas/CreatedControlledAzureDisk'
 
-    DeleteControlledAzureIpResponse:
+    DeleteControlledAzureResourceResponse:
       description: Response Payload for deleting an azure ip
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/DeleteControlledAzureIpResult'
+            $ref: '#/components/schemas/DeleteControlledAzureResourceResult'
 
     GetControlledAzureIpResponse:
       description: Response to get ip
@@ -3142,6 +3180,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AzureIpResource'
+
+    GetControlledAzureDiskResponse:
+      description: Response to get disk
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AzureDiskResource'
 
     CreatedControlledGcpGcsBucketResponse:
       description: Response to Create controlled Gcs bucket
