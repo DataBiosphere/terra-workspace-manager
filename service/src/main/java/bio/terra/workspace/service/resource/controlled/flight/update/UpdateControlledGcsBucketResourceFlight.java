@@ -19,7 +19,7 @@ public class UpdateControlledGcsBucketResourceFlight extends Flight {
         inputParameters.get(JobMapKeys.REQUEST.getKeyName(), ControlledResource.class);
 
     // get copy of existing metadata
-    RetryRule dbRetry = RetryRules.immediate();
+    RetryRule dbRetry = RetryRules.shortDatabase();
     addStep(
         new RetrieveControlledResourceMetadataStep(
             flightBeanBag.getResourceDao(), resource.getWorkspaceId(), resource.getResourceId()),

@@ -189,8 +189,9 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
           CloningInstructions.COPY_NOTHING,
           DATA_REPO_INSTANCE_NAME,
           "polaroid");
-      // JobService throws a InvalidResultStateException when a synchronous flight fails without an
-      // exception, which occurs when a flight fails via debugInfo.
+      // Service methods which wait for a flight to complete will throw an
+      // InvalidResultStateException when that flight fails without a cause, which occurs when a
+      // flight fails via debugInfo.
       assertThrows(
           InvalidResultStateException.class,
           () -> referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST));

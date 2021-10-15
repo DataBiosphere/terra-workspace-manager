@@ -38,7 +38,6 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
     // 4. Remove the user from all roles on those private resources.
     // 5. Revoke the user's permission to use their pet SA in this workspace.
     RetryRule samRetry = RetryRules.shortExponential();
-    RetryRule dbRetry = RetryRules.immediate();
     addStep(
         new RemoveUserFromSamStep(
             workspaceId, roleToRemove, userToRemove, appContext.getSamService(), userRequest),

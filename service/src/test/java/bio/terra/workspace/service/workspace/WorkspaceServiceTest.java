@@ -312,7 +312,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void createWorkspaceUndoSteps() {
+  void createMcWorkspaceUndoSteps() {
     WorkspaceRequest request = defaultRequestBuilder(UUID.randomUUID()).build();
     // Retry undo steps once and fail at the end of the flight.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -322,8 +322,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build();
     jobService.setFlightDebugInfoForTest(debugInfo);
 
-    // JobService throws a InvalidResultStateException when a synchronous flight fails without an
-    // exception, which occurs when a flight fails via debugInfo.
+    // Service methods which wait for a flight to complete will throw an
+    // InvalidResultStateException when that flight fails without a cause, which occurs when a
+    // flight fails via debugInfo.
     assertThrows(
         InvalidResultStateException.class,
         () -> workspaceService.createWorkspace(request, USER_REQUEST));

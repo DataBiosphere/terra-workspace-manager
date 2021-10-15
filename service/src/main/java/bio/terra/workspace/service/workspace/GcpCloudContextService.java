@@ -69,6 +69,10 @@ public class GcpCloudContextService {
         .map(GcpCloudContext::deserialize);
   }
 
+  /**
+   * Retrieve the flight ID that created the GCP cloud context for a given workspace, if that cloud
+   * context exists.
+   */
   public Optional<String> getGcpCloudContextFlightId(UUID workspaceId) {
     return workspaceDao.getCloudContextFlightId(workspaceId, CloudPlatform.GCP);
   }
