@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.referenced.flight.create;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 
 public class CreateReferenceResourceFlight extends Flight {
 
@@ -12,9 +13,10 @@ public class CreateReferenceResourceFlight extends Flight {
     FlightBeanBag appContext = FlightBeanBag.getFromObject(beanBag);
 
     // Perform access verification
-    addStep(new ValidateReferenceStep(appContext));
+    addStep(new ValidateReferenceStep(appContext), RetryRules.cloud());
 
     // If all is well, then store the reference metadata
-    addStep(new CreateReferenceMetadataStep(appContext.getResourceDao()));
+    addStep(
+        new CreateReferenceMetadataStep(appContext.getResourceDao()), RetryRules.shortDatabase());
   }
 }

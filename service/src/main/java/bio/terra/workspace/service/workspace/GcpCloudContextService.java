@@ -70,6 +70,14 @@ public class GcpCloudContextService {
   }
 
   /**
+   * Retrieve the flight ID that created the GCP cloud context for a given workspace, if that cloud
+   * context exists.
+   */
+  public Optional<String> getGcpCloudContextFlightId(UUID workspaceId) {
+    return workspaceDao.getCloudContextFlightId(workspaceId, CloudPlatform.GCP);
+  }
+
+  /**
    * Retrieve the optional GCP cloud context, providing a workspace This is a frequent usage, so we
    * make a method for it to save coding the fetch of workspace id every time
    */

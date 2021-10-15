@@ -3,6 +3,7 @@ package bio.terra.workspace.service.workspace.flight;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
@@ -26,15 +27,19 @@ public class WorkspaceCreateFlight extends Flight {
     // resource or not, as indicated by the workspace stage enum.
     switch (workspaceStage) {
       case MC_WORKSPACE:
-        addStep(new CreateWorkspaceAuthzStep(appContext.getSamService(), userRequest));
+        addStep(
+            new CreateWorkspaceAuthzStep(appContext.getSamService(), userRequest),
+            RetryRules.shortExponential());
         break;
       case RAWLS_WORKSPACE:
-        addStep(new CheckSamWorkspaceAuthzStep(appContext.getSamService(), userRequest));
+        addStep(
+            new CheckSamWorkspaceAuthzStep(appContext.getSamService(), userRequest),
+            RetryRules.shortExponential());
         break;
       default:
         throw new InternalLogicException(
             "Unknown workspace stage during creation: " + workspaceStage.name());
     }
-    addStep(new CreateWorkspaceStep(appContext.getWorkspaceDao()));
+    addStep(new CreateWorkspaceStep(appContext.getWorkspaceDao()), RetryRules.shortDatabase());
   }
 }

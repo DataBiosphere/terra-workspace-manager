@@ -344,4 +344,18 @@ public class WorkspaceDao {
         DataAccessUtils.singleResult(
             jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("context"))));
   }
+
+  /** Retrieve the flight ID which created the cloud context for a workspace, if one exists. */
+  @ReadTransaction
+  public Optional<String> getCloudContextFlightId(UUID workspaceId, CloudPlatform cloudPlatform) {
+    String sql =
+        "SELECT creating_flight FROM cloud_context WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("cloud_platform", cloudPlatform.toSql());
+    return Optional.ofNullable(
+        DataAccessUtils.singleResult(
+            jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("creating_flight"))));
+  }
 }

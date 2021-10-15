@@ -6,7 +6,8 @@ import bio.terra.stairway.RetryRuleFixedInterval;
 
 /**
  * A selection of retry rule instantiators for use with Stairway flight steps. Each static method
- * creates a new object each time to prevent leakage across flights.
+ * creates a new object each time to prevent leakage across flights. Note that RetryRules can be
+ * re-used within but not across Flight instances.
  */
 public class RetryRules {
 
@@ -14,8 +15,7 @@ public class RetryRules {
 
   /**
    * Retry rule for steps interacting with GCP. If GCP is down, we don't know when it will be back,
-   * so don't wait forever. Note that RetryRules can be re-used within but not across Flight
-   * instances.
+   * so don't wait forever.
    */
   public static RetryRule cloud() {
     return new RetryRuleFixedInterval(10, 10);
@@ -40,5 +40,10 @@ public class RetryRules {
    */
   public static RetryRule buffer() {
     return new RetryRuleExponentialBackoff(1, 5 * 60, 15 * 60);
+  }
+
+  /** Use for short database operations which may fail due to transaction conflicts. */
+  public static RetryRule shortDatabase() {
+    return new RetryRuleFixedInterval(/*intervalSeconds= */ 1, /* maxCount= */ 5);
   }
 }

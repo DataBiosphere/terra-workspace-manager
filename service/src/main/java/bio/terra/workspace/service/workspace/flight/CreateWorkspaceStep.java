@@ -8,6 +8,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Optional;
@@ -53,7 +54,16 @@ public class CreateWorkspaceStep implements Step {
             .description(description)
             .build();
 
-    workspaceDao.createWorkspace(workspaceToCreate);
+    try {
+      workspaceDao.createWorkspace(workspaceToCreate);
+    } catch (DuplicateWorkspaceException ex) {
+      // This might be the result of a step re-running, or it might be an ID conflict. We can ignore
+      // this if the existing workspace matches the one we were about to create, otherwise rethrow.
+      Workspace existingWorkspace = workspaceDao.getWorkspace(workspaceId);
+      if (!workspaceToCreate.equals(existingWorkspace)) {
+        throw ex;
+      }
+    }
 
     FlightUtils.setResponse(flightContext, workspaceId, HttpStatus.OK);
     logger.info("Workspace created with id {}", workspaceId);
