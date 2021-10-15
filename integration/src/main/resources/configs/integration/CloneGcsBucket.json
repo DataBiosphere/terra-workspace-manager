@@ -8,7 +8,7 @@
     {
       "name": "CloneGcsBucket",
       "numberOfUserJourneyThreadsToRun": 1,
-      "userJourneyThreadPoolSize": 2,
+      "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 15,
       "expectedTimeForEachUnit": "MINUTES",
       "parameters": ["wm-default-spend-profile"]

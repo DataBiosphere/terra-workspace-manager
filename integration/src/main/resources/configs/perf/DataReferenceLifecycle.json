@@ -1,7 +1,7 @@
 {
   "name": "DataReferenceLifecycle",
   "description": "CRUD data reference tests.",
-  "serverSpecificationFile": "workspace-dev.json",
+  "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [

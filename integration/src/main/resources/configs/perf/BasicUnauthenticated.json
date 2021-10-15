@@ -1,7 +1,7 @@
 {
   "name": "BasicUnauthenticated",
   "description": "Check the service status repeatedly, concurrently. No authentication required.",
-  "serverSpecificationFile": "workspace-dev.json",
+  "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [

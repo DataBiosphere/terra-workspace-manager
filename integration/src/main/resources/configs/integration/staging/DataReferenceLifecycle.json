@@ -8,7 +8,7 @@
     {
       "name": "DataReferenceLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
-      "userJourneyThreadPoolSize": 2,
+      "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 5,
       "expectedTimeForEachUnit": "SECONDS",
       "parameters": ["wm-default-spend-profile", "3e858a77-ea11-4f55-96f4-e6e45b71b7bf", "terra"]

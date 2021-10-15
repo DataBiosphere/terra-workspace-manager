@@ -1,7 +1,7 @@
 {
   "name": "WorkspaceLifecycle",
   "description": "CRUD workspace tests.",
-  "serverSpecificationFile": "workspace-dev.json",
+  "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [

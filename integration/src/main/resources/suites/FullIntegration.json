@@ -1,7 +1,7 @@
 {
   "name": "FullIntegration",
   "description": "All integration tests - to be run on a K8s environment",
-  "serverSpecificationFile": "workspace-wsmtest.json",
+  "serverSpecificationFile": "workspace-local.json",
   "testConfigurationFiles": [
     "integration/BasicAuthenticated.json",
     "integration/BasicUnauthenticated.json",

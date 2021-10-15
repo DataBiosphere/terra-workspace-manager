@@ -1,7 +1,7 @@
 {
   "name": "GetRoles",
   "description": "CRUD for roles",
-  "serverSpecificationFile": "workspace-dev.json",
+  "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
