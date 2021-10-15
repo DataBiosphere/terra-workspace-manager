@@ -133,7 +133,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             resourceId,
             ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
             userRequest);
-    return getDeleteIpResult(jobId, userRequest);
+    return getJobDeleteResult(jobId, userRequest);
   }
 
   @Override
@@ -150,7 +150,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             resourceId,
             ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
             userRequest);
-    return getDeleteIpResult(jobId, userRequest);
+    return getJobDeleteResult(jobId, userRequest);
   }
 
   @Override
@@ -185,19 +185,21 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     }
   }
 
-  private ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteIpResult(
-      String jobId, AuthenticatedUserRequest userRequest) {
-    final JobService.AsyncJobResult<Void> jobResult =
-        jobService.retrieveAsyncJobResult(jobId, Void.class, userRequest);
-    var response =
-        new ApiDeleteControlledAzureResourceResult()
-            .jobReport(jobResult.getJobReport())
-            .errorReport(jobResult.getApiErrorReport());
-    return new ResponseEntity<>(
-        response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureDiskResult(
+      UUID workspaceId, String jobId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    return getJobDeleteResult(jobId, userRequest);
   }
 
-  private ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteDiskResult(
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureIpResult(
+      UUID workspaceId, String jobId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    return getJobDeleteResult(jobId, userRequest);
+  }
+
+  private ResponseEntity<ApiDeleteControlledAzureResourceResult> getJobDeleteResult(
       String jobId, AuthenticatedUserRequest userRequest) {
     final JobService.AsyncJobResult<Void> jobResult =
         jobService.retrieveAsyncJobResult(jobId, Void.class, userRequest);
