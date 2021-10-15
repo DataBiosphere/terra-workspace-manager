@@ -48,6 +48,7 @@ import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenc
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.WsmApplicationService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
@@ -70,6 +71,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class WorkspaceApiController implements WorkspaceApi {
+  private static final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
   private final WorkspaceService workspaceService;
   private final JobService jobService;
   private final SamService samService;
@@ -78,7 +80,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   private final ReferencedResourceService referenceResourceService;
   private final GcpCloudContextService gcpCloudContextService;
   private final PetSaService petSaService;
-  private static final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
+  private final WsmApplicationService appService;
 
   @Autowired
   public WorkspaceApiController(
@@ -89,7 +91,8 @@ public class WorkspaceApiController implements WorkspaceApi {
       HttpServletRequest request,
       ReferencedResourceService referenceResourceService,
       GcpCloudContextService gcpCloudContextService,
-      PetSaService petSaService) {
+      PetSaService petSaService,
+      WsmApplicationService appService) {
     this.workspaceService = workspaceService;
     this.jobService = jobService;
     this.samService = samService;
@@ -98,6 +101,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     this.referenceResourceService = referenceResourceService;
     this.gcpCloudContextService = gcpCloudContextService;
     this.petSaService = petSaService;
+    this.appService = appService;
   }
 
   private AuthenticatedUserRequest getAuthenticatedInfo() {

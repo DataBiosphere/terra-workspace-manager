@@ -2,13 +2,21 @@ package bio.terra.workspace.db;
 
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
+import bio.terra.workspace.db.exception.ApplicationInUseException;
+import bio.terra.workspace.db.exception.ApplicationNotFoundException;
+import bio.terra.workspace.db.exception.InvalidApplicationStateException;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import bio.terra.workspace.service.workspace.model.WsmApplicationState;
+import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -34,6 +42,29 @@ public class ApplicationDao {
               .description(rs.getString("description"))
               .serviceAccount(rs.getString(SERVICE_ACCOUNT))
               .state(WsmApplicationState.fromDb(rs.getString("state")));
+
+  private static final String APPLICATION_QUERY =
+      "SELECT application_id, display_name, description, service_account, state"
+          + " FROM application";
+
+  private static final RowMapper<WsmWorkspaceApplication> WORKSPACE_APPLICATION_ROW_MAPPER =
+      (rs, rowNum) -> {
+        var wsmApp =
+            new WsmApplication()
+                .applicationId(UUID.fromString(rs.getString("application_id")))
+                .displayName(rs.getString("display_name"))
+                .description(rs.getString("description"))
+                .serviceAccount(rs.getString(SERVICE_ACCOUNT))
+                .state(WsmApplicationState.fromDb(rs.getString("state")));
+        return new WsmWorkspaceApplication().application(wsmApp).enabled(rs.getInt("ecount") > 0);
+      };
+
+  private static final String WORKSPACE_APPLICATION_QUERY =
+      "SELECT A.application_id, A.display_name, A.description, A.service_account, A.state,"
+          + " (SELECT COUNT(*)"
+          + "  FROM enabled_application W"
+          + "  WHERE W.application_id = A.application_id AND workspace_id = :workspace_id) AS ecount"
+          + " FROM application A";
 
   @Autowired
   public ApplicationDao(NamedParameterJdbcTemplate jdbcTemplate) {
@@ -74,6 +105,189 @@ public class ApplicationDao {
             .addValue("state", app.getState().toDb());
 
     jdbcTemplate.update(sql, params);
+  }
+
+  /**
+   * Disable an application in a workspace. It is not an error to disable an already disabled
+   * application.
+   *
+   * @param workspaceId workspace of interest
+   * @param applicationId application of interest
+   * @return workspace-application object
+   */
+  @WriteTransaction
+  public WsmWorkspaceApplication disableWorkspaceApplication(UUID workspaceId, UUID applicationId) {
+
+    // Validate that the application exists; workspace is validated in layers above this
+    getApplicationOrThrow(applicationId);
+
+    // It is an error to have application resources in the workspace if we are disabling it.
+    final String countAppUsesSql =
+        "SELECT COUNT(*) FROM resource"
+            + " WHERE associated_app = :application_id AND workspace_id = :workspace_id";
+
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("application_id", applicationId.toString());
+
+    Integer count = jdbcTemplate.queryForObject(countAppUsesSql, params, Integer.class);
+    if (count != null && count > 0) {
+      throw new ApplicationInUseException(
+          String.format("Application %s in use in workspace %s", applicationId, workspaceId));
+    }
+
+    // No uses, so we disable
+    final String sql =
+        "DELETE FROM enabled_application"
+            + " WHERE workspace_id = :workspace_id AND application_id = :application_id";
+
+    int rowCount = jdbcTemplate.update(sql, params);
+    if (rowCount > 0) {
+      logger.info(
+          "Deleted record enabling application {} for workspace {}", applicationId, workspaceId);
+    } else {
+      logger.info(
+          "Ignoring duplicate disabling of application {} for workspace {}",
+          applicationId,
+          workspaceId);
+    }
+
+    return getWorkspaceApplicationWorker(workspaceId, applicationId);
+  }
+
+  /**
+   * Enable an application in a workspace. It is not an error to enable an already enabled
+   * application.
+   *
+   * @param workspaceId workspace of interest
+   * @param applicationId application of interest
+   * @return workspace-application object
+   */
+  @WriteTransaction
+  public WsmWorkspaceApplication enableWorkspaceApplication(UUID workspaceId, UUID applicationId) {
+
+    WsmApplication application = getApplicationOrThrow(applicationId);
+    if (application.getState() != WsmApplicationState.OPERATING) {
+      throw new InvalidApplicationStateException(
+          "Applications is " + application.getState().toApi() + " and cannot be enabled");
+    }
+
+    return enableWorkspaceApplicationWorker(workspaceId, applicationId);
+  }
+
+  /**
+   * Enable an application in a workspace - do not perform the application state check.
+   * This is only used in testing.
+   *
+   * <p>It is not an error to enable an already enabled application.
+   *
+   * @param workspaceId workspace of interest
+   * @param applicationId application of interest
+   * @return workspace-application object
+   */
+  @VisibleForTesting
+  @WriteTransaction
+  public WsmWorkspaceApplication enableWorkspaceApplicationNoCheck(
+      UUID workspaceId, UUID applicationId) {
+
+    return enableWorkspaceApplicationWorker(workspaceId, applicationId);
+  }
+
+  private WsmWorkspaceApplication enableWorkspaceApplicationWorker(
+      UUID workspaceId, UUID applicationId) {
+
+    final String sql =
+        "INSERT INTO enabled_application (workspace_id, application_id)"
+            + " VALUES (:workspace_id, :application_id)";
+
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("application_id", applicationId.toString());
+
+    try {
+      jdbcTemplate.update(sql, params);
+      logger.info(
+          "Inserted record enabling application {} for workspace {}", applicationId, workspaceId);
+    } catch (DuplicateKeyException e) {
+      logger.info(
+          "Ignoring duplicate enabling application {} for workspace {}",
+          applicationId,
+          workspaceId);
+    }
+
+    return getWorkspaceApplicationWorker(workspaceId, applicationId);
+  }
+
+  /**
+   * Return the state of a specific application viz a workspace
+   *
+   * @param workspaceId workspace of interest
+   * @param applicationId application of interest
+   * @return workspace-application object
+   */
+  @ReadTransaction
+  public WsmWorkspaceApplication getWorkspaceApplication(UUID workspaceId, UUID applicationId) {
+    return getWorkspaceApplicationWorker(workspaceId, applicationId);
+  }
+
+  @ReadTransaction
+  public List<WsmWorkspaceApplication> listWorkspaceApplications(
+      UUID workspaceId, int offset, int limit) {
+
+    final String sql = WORKSPACE_APPLICATION_QUERY + " OFFSET :offset LIMIT :limit";
+
+    var params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("offset", offset)
+            .addValue("limit", limit);
+
+    List<WsmWorkspaceApplication> resultList =
+        jdbcTemplate.query(sql, params, WORKSPACE_APPLICATION_ROW_MAPPER);
+
+    for (WsmWorkspaceApplication result : resultList) {
+      result.workspaceId(workspaceId);
+    }
+    return resultList;
+  }
+
+  // internal workspace application lookup
+  private WsmWorkspaceApplication getWorkspaceApplicationWorker(
+      UUID workspaceId, UUID applicationId) {
+    final String sql = WORKSPACE_APPLICATION_QUERY + " WHERE A.application_id = :application_id";
+
+    var params =
+        new MapSqlParameterSource()
+            .addValue("application_id", applicationId.toString())
+            .addValue("workspace_id", workspaceId.toString());
+
+    try {
+      WsmWorkspaceApplication result =
+          DataAccessUtils.requiredSingleResult(
+              jdbcTemplate.query(sql, params, WORKSPACE_APPLICATION_ROW_MAPPER));
+      result.workspaceId(workspaceId);
+      return result;
+    } catch (EmptyResultDataAccessException e) {
+      throw new ApplicationNotFoundException(
+          String.format("Application %s not found.", applicationId.toString()));
+    }
+  }
+
+  // internal application lookup
+  private WsmApplication getApplicationOrThrow(UUID applicationId) {
+    final String sql = APPLICATION_QUERY + " WHERE application_id = :application_id";
+
+    var params = new MapSqlParameterSource().addValue("application_id", applicationId.toString());
+
+    try {
+      return DataAccessUtils.requiredSingleResult(
+          jdbcTemplate.query(sql, params, APPLICATION_ROW_MAPPER));
+    } catch (EmptyResultDataAccessException e) {
+      throw new ApplicationNotFoundException(
+          String.format("Application %s not found.", applicationId.toString()));
+    }
   }
 
   /** @return List of all applications in the database */

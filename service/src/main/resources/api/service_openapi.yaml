@@ -156,31 +156,96 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-  # TODO(zloery): This endpoint is exposed as a workaround to support the CLI's
-  # use of Nextflow. It will likely be removed in the future in favor of other
-  # cloud sync methods.
-  /api/workspaces/v1/{workspaceId}/gcp/enablepet:
-    parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-    post:
-      summary: Allow a user to impersonate their pet SA in a given workspace
-      description: |
-        This endpoint is exposed as a workaround to support calling Google
-        Pipelines API in a workspace. It will likely be removed in the future in
-        favor of other cloud sync methods.
-      operationId: enablePet
-      tags: [ Workspace ]
+
+  /api/workspaces/v1/{workspaceId}/applications:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceId'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      summary: List all applications and whether they are enabled on a workspace
+      operationId: listWorkspaceApplications
+      tags: [WorkspaceApplication]
       responses:
         '200':
-          $ref: '#/components/responses/EnablePetSaResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceApplicationDescriptionList'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/applications/{applicationId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ApplicationId'
+    get:
+      summary: Get an application and its state in this workspace
+      operationId: getWorkspaceApplication
+      tags: [WorkspaceApplication]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceApplicationDescription'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/applications/{applicationId}/disable:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ApplicationId'
+    put:
+      summary: Disable an application in a workspace
+      operationId: disableWorkspaceApplication
+      tags: [WorkspaceApplication]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceApplicationDescription'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/applications/{applicationId}/enable:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ApplicationId'
+    put:
+      summary: Enable an application in a workspace
+      operationId: enableWorkspaceApplication
+      tags: [WorkspaceApplication]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceApplicationDescription'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/clone:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -208,6 +273,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/clone-result/{jobId}:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -225,6 +291,7 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
+
 
   ## DEPRECATED PATHS ##
   # TODO(PF-404): remove this in favor of reference-type specific objects.
@@ -349,6 +416,32 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
   ## END OF DEPRECATED PATHS ##
+
+  # TODO(zloery): This endpoint is exposed as a workaround to support the CLI's
+  # use of Nextflow. It will likely be removed in the future in favor of other
+  # cloud sync methods.
+  /api/workspaces/v1/{workspaceId}/gcp/enablepet:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Allow a user to impersonate their pet SA in a given workspace
+      description: |
+        This endpoint is exposed as a workaround to support calling Google
+        Pipelines API in a workspace. It will likely be removed in the future in
+        favor of other cloud sync methods.
+      operationId: enablePet
+      tags: [ Workspace ]
+      responses:
+        '200':
+          $ref: '#/components/responses/EnablePetSaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
   /api/workspaces/v1/{workspaceId}/resources:
     parameters:
@@ -1295,10 +1388,19 @@ components:
         $ref: '#/components/schemas/ReferenceTypeEnum'
     ## END OF DEPRECATED PARAMETERS ##
 
+    ApplicationId:
+      name: applicationId
+      in: path
+      description: A UUID to used to identify an application in the workspace manager
+      required: true
+      schema:
+        type: string
+        format: uuid
+
     WorkspaceId:
       name: workspaceId
       in: path
-      description: A UUID to used to identify an object in the workspace manager
+      description: A UUID to used to identify a workspace in the workspace manager
       required: true
       schema:
         type: string
@@ -1704,6 +1806,54 @@ components:
           description: UUID of a newly-created workspace
           type: string
           format: uuid
+
+    ApplicationState:
+      description: State of an application
+      type: string
+      enum:
+        - OPERATING
+        - DEPRECATED
+        - DECOMMISSIONED
+
+    WorkspaceApplicationState:
+      description: State of the application in the workspace.
+      type: string
+      enum:
+        - ENABLED
+        - DISABLED
+
+    WorkspaceApplicationDescription:
+      type: object
+      required: [ workspaceId, applicationId ]
+      properties:
+        workspaceId:
+          description: The ID of the workspace
+          type: string
+          format: uuid
+        applicationId:
+          description: The ID of the application
+          type: string
+          format: uuid
+        displayName:
+          description: The human readable name of the application
+          type: string
+        description:
+          description: A description of the application
+          type: string
+        applicationState:
+          $ref: '#/components/schemas/ApplicationState'
+        workspaceApplicationState:
+          $ref: '#/components/schemas/WorkspaceApplicationState'
+
+    WorkspaceApplicationDescriptionList:
+      type: object
+      required: [ workspaces ]
+      properties:
+        applications:
+          description: A list of known applications and their relationship to the workspace
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkspaceApplicationDescription'
 
     WorkspaceDescription:
       type: object
@@ -2946,6 +3096,14 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneReferencedGcpDataRepoSnapshotResourceResult'
+
+    DisableApplicationResultResponse:
+      description: Response holding the disable application result
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DisableApplicationResult'
+
     JobReportResponse:
       description: A response containing a JobReport object. Returned for running jobs.
       headers:

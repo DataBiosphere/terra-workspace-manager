@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ResourceApi;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceDescription;
@@ -31,13 +32,13 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestParam;
 
 // TODO: GENERAL - add request validation
 
@@ -73,11 +74,12 @@ public class ResourceController implements ResourceApi {
   @Override
   public ResponseEntity<ApiResourceList> enumerateResources(
       UUID workspaceId,
-      @Min(0) @Valid Integer offset,
-      @Min(1) @Valid Integer limit,
+      @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
+      @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
       @Valid ApiResourceType resource,
       @Valid ApiStewardshipType stewardship) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControllerValidationUtils.validatePaginationParams(offset, limit);
 
     List<WsmResource> wsmResources =
         resourceService.enumerateResources(
