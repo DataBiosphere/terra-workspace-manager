@@ -79,7 +79,7 @@ public class ControlledAzureDiskResource extends ControlledResource {
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.AZURE_IP;
+    return WsmResourceType.AZURE_DISK;
   }
 
   @Override
@@ -91,18 +91,18 @@ public class ControlledAzureDiskResource extends ControlledResource {
   @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.AZURE_IP) {
-      throw new InconsistentFieldsException("Expected AZURE_IP");
+    if (getResourceType() != WsmResourceType.AZURE_DISK) {
+      throw new InconsistentFieldsException("Expected AZURE_DISK");
     }
     if (getDiskName() == null) {
       throw new MissingRequiredFieldException(
-          "Missing required diskName field for ControlledAzureIP.");
+          "Missing required diskName field for ControlledAzureDisk.");
     }
     if (getRegion() == null) {
       throw new MissingRequiredFieldException(
-          "Missing required region field for ControlledAzureIP.");
+          "Missing required region field for ControlledAzureDisk.");
     }
-    ValidationUtils.validateIpName(getDiskName());
+    ValidationUtils.validateAzureResourceName(getDiskName());
   }
 
   @Override
