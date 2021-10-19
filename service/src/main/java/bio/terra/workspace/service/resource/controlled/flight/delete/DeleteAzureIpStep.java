@@ -17,15 +17,8 @@ import java.util.UUID;
 
 /**
  * A step for deleting a controlled Azure IP resource. This step uses the following process to
- * actually delete the Azure IP: a. Set the lifecycle on the Azure IP to delete immediately b. Try
- * deleting the Azure IP c. If delete succeeds, finish step d. If delete fails, sleep one hour; goto
- * (either a or b; maybe a for belts and suspenders)
- *
- * <p>As this may take hours to days to complete, this step should never run as part of a
- * synchronous flight.
+ * actually delete the Azure IP
  */
-// TODO: when Stairway implements timed waits, we can use those and not sit on a thread sleeping
-//  for three days.
 public class DeleteAzureIpStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(CreateAzureIpStep.class);
   private final AzureConfiguration azureConfig;

@@ -17,15 +17,9 @@ import java.util.UUID;
 
 /**
  * A step for deleting a controlled Azure Disk resource. This step uses the following process to
- * actually delete the Azure Disk: a. Set the lifecycle on the Azure Disk to delete immediately b.
- * Try deleting the Azure Disk c. If delete succeeds, finish step d. If delete fails, sleep one
- * hour; goto (either a or b; maybe a for belts and suspenders)
+ * actually delete the Azure Disk.
  *
- * <p>As this may take hours to days to complete, this step should never run as part of a
- * synchronous flight.
  */
-// TODO: when Stairway implements timed waits, we can use those and not sit on a thread sleeping
-//  for three days.
 public class DeleteAzureDiskStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(CreateAzureDiskStep.class);
   private final AzureConfiguration azureConfig;
