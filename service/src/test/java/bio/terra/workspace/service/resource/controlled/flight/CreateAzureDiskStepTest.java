@@ -3,8 +3,10 @@ package bio.terra.workspace.service.resource.controlled.flight;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateDiskRequestData;
 import bio.terra.stairway.FlightContext;

@@ -1,9 +1,5 @@
 package bio.terra.workspace.service.workspace.flight.create.azure;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseAzureTest;
@@ -16,14 +12,24 @@ import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.*;
+import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import java.time.Duration;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.time.Duration;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class CreateControlledResourceFlightTest extends BaseAzureTest {
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(10);
