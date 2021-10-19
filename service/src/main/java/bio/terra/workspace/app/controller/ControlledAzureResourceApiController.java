@@ -12,7 +12,19 @@ import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.*;
+import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.generated.model.ApiAccessScope;
+import bio.terra.workspace.generated.model.ApiAzureIpResource;
+import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
+import bio.terra.workspace.generated.model.ApiCreatedControlledAzureIp;
+import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
+import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Collections;
@@ -79,6 +91,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
 
     List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
 
+    //TODO: make createDisk call async once we have things working e2e
     final var createdDisk =
         controlledResourceService.createDisk(
             resource, body.getAzureDisk(), privateRoles, userRequest);
@@ -180,7 +193,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     } catch (InvalidMetadataException ex) {
       throw new BadRequestException(
           String.format(
-              "Resource %s in workspace %s is not a controlled Azure Ip.",
+              "Resource %s in workspace %s is not a controlled Azure Disk.",
               resourceId, workspaceId));
     }
   }

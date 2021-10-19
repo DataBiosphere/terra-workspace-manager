@@ -542,7 +542,7 @@ public class ResourceDao {
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
     if (matchingCount != null && matchingCount > 0) {
       throw new DuplicateResourceException(
-          String.format("An Azure IP with ID %s already exists", resource.getDiskName()));
+          String.format("An Azure Disk with ID %s already exists", resource.getDiskName()));
     }
   }
 

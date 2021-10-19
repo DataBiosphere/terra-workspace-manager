@@ -18,7 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Creates an Azure IP address. Designed to run directly after {@link GetAzureIpStep}. */
+/** Creates an Azure Disk. Designed to run directly after {@link GetAzureDiskStep}. */
 public class CreateAzureDiskStep implements Step {
 
   private static final Logger logger = LoggerFactory.getLogger(CreateAzureDiskStep.class);
