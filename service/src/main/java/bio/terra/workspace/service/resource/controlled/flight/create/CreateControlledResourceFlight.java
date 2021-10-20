@@ -108,6 +108,29 @@ public class CreateControlledResourceFlight extends Flight {
                 userRequest),
             gcpRetryRule);
         break;
+
+      case AZURE_DISK:
+        addStep(
+            new GetAzureDiskStep(
+                flightBeanBag.getAzureConfig(),
+                flightBeanBag
+                    .getAzureCloudContextService()
+                    .getAzureCloudContext(resource.getWorkspaceId())
+                    .get(),
+                flightBeanBag.getCrlService(),
+                resource.castToAzureDiskResource()),
+            RetryRules.cloud());
+        addStep(
+            new CreateAzureDiskStep(
+                flightBeanBag.getAzureConfig(),
+                flightBeanBag
+                    .getAzureCloudContextService()
+                    .getAzureCloudContext(resource.getWorkspaceId())
+                    .get(),
+                flightBeanBag.getCrlService(),
+                resource.castToAzureDiskResource()),
+            RetryRules.cloud());
+        break;
       case AZURE_IP:
         addStep(
             new GetAzureIpStep(
