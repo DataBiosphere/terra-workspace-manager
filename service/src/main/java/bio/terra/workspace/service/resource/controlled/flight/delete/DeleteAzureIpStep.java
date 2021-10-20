@@ -10,10 +10,9 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateAzureIpStep;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.compute.ComputeManager;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.UUID;
 
 /**
  * A step for deleting a controlled Azure IP resource. This step uses the following process to
@@ -51,11 +50,11 @@ public class DeleteAzureIpStep implements Step {
 
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
     var azureResourceId =
-            String.format(
-                    "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/publicIPAddresses/%s",
-                    azureCloudContext.getAzureSubscriptionId(),
-                    azureCloudContext.getAzureResourceGroupId(),
-                    ip.getIpName());
+        String.format(
+            "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/publicIPAddresses/%s",
+            azureCloudContext.getAzureSubscriptionId(),
+            azureCloudContext.getAzureResourceGroupId(),
+            ip.getIpName());
 
     try {
       logger.info("Attempting to delete IP " + azureResourceId);
@@ -63,7 +62,7 @@ public class DeleteAzureIpStep implements Step {
       return StepResult.getStepResultSuccess();
     } catch (Exception ex) {
       logger.info("Attempt to delete Azure IP failed on this try: " + azureResourceId, ex);
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL,ex);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
     }
   }
 

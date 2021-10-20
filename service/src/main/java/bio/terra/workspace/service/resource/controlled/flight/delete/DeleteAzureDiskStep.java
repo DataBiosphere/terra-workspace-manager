@@ -10,15 +10,13 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateAzureDiskStep;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.compute.ComputeManager;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.UUID;
 
 /**
  * A step for deleting a controlled Azure Disk resource. This step uses the following process to
  * actually delete the Azure Disk.
- *
  */
 public class DeleteAzureDiskStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(CreateAzureDiskStep.class);
@@ -52,11 +50,11 @@ public class DeleteAzureDiskStep implements Step {
 
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
     var azureResourceId =
-            String.format(
-                    "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/disks/%s",
-                    azureCloudContext.getAzureSubscriptionId(),
-                    azureCloudContext.getAzureResourceGroupId(),
-                    disk.getDiskName());
+        String.format(
+            "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/disks/%s",
+            azureCloudContext.getAzureSubscriptionId(),
+            azureCloudContext.getAzureResourceGroupId(),
+            disk.getDiskName());
     try {
       logger.info("Attempting to delete disk " + azureResourceId);
 
@@ -64,7 +62,7 @@ public class DeleteAzureDiskStep implements Step {
       return StepResult.getStepResultSuccess();
     } catch (Exception ex) {
       logger.info("Attempt to delete Azure disk failed on this try: " + azureResourceId, ex);
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL,ex);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
     }
   }
 

@@ -13,10 +13,9 @@ import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapsho
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;
-
-import javax.annotation.Nullable;
 
 public enum WsmResourceType {
   AI_NOTEBOOK_INSTANCE(

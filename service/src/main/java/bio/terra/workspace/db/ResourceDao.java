@@ -1,5 +1,13 @@
 package bio.terra.workspace.db;
 
+import static bio.terra.workspace.service.resource.WsmResourceType.AI_NOTEBOOK_INSTANCE;
+import static bio.terra.workspace.service.resource.WsmResourceType.BIG_QUERY_DATASET;
+import static bio.terra.workspace.service.resource.WsmResourceType.GCS_BUCKET;
+import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
+import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCED;
+import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
+import static java.util.stream.Collectors.toList;
+
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
@@ -24,6 +32,12 @@ import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResour
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,21 +47,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.Nullable;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static bio.terra.workspace.service.resource.WsmResourceType.AI_NOTEBOOK_INSTANCE;
-import static bio.terra.workspace.service.resource.WsmResourceType.BIG_QUERY_DATASET;
-import static bio.terra.workspace.service.resource.WsmResourceType.GCS_BUCKET;
-import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
-import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCED;
-import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
-import static java.util.stream.Collectors.toList;
 
 /** Data access object for interacting with resources in the database. */
 @Component

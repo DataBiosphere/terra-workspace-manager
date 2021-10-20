@@ -15,8 +15,8 @@ import com.azure.resourcemanager.compute.ComputeManager;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * Gets an Azure Disk, and fails if it already exists. This step is designed to run immediately before
- * {@link CreateAzureDiskStep} to ensure idempotency of the create operation.
+ * Gets an Azure Disk, and fails if it already exists. This step is designed to run immediately
+ * before {@link CreateAzureDiskStep} to ensure idempotency of the create operation.
  */
 public class GetAzureDiskStep implements Step {
   private final AzureConfiguration azureConfig;
