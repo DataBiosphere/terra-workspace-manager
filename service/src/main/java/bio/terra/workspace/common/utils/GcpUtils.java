@@ -86,7 +86,10 @@ public class GcpUtils {
                     "Could not determine default GCP control plane project ID."));
   }
 
-  /** Read the application default credentials and use Sam to find the corresponding email. */
+  /**
+   * Returns the email of the application default credentials, which should represent a service
+   * account in all WSM deployments.
+   */
   public static String getWsmSaEmail(GoogleCredentials wsmCredentials) {
     // WSM always runs as a service account, but credentials for that SA may come from different
     // sources depending on whether it is running in GCP or locally.
