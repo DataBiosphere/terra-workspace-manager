@@ -8,6 +8,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
+import com.google.auth.ServiceAccountSigner;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
@@ -93,10 +94,8 @@ public class GcpUtils {
   public static String getWsmSaEmail(GoogleCredentials wsmCredentials) {
     // WSM always runs as a service account, but credentials for that SA may come from different
     // sources depending on whether it is running in GCP or locally.
-    if (wsmCredentials instanceof ComputeEngineCredentials) {
-      return ((ComputeEngineCredentials) wsmCredentials).getAccount();
-    } else if (wsmCredentials instanceof ServiceAccountCredentials) {
-      return ((ServiceAccountCredentials) wsmCredentials).getAccount();
+    if (wsmCredentials instanceof ServiceAccountSigner) {
+      return ((ServiceAccountSigner) wsmCredentials).getAccount();
     } else {
       throw new SaCredentialsMissingException(
           "Unable to find WSM service account credentials. Ensure WSM is actually running as a service account");
