@@ -312,7 +312,7 @@ public class CrlService {
     }
   }
 
-  private GoogleCredentials getApplicationCredentials() {
+  public GoogleCredentials getApplicationCredentials() {
     try {
       return GoogleCredentials.getApplicationDefault();
     } catch (IOException e) {

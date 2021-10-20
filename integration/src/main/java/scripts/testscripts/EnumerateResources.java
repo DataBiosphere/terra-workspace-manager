@@ -205,15 +205,17 @@ public class EnumerateResources extends DataRepoTestScriptBase {
     ApiException invalidPaginationException =
         assertThrows(
             ApiException.class,
-            () -> ownerResourceApi.enumerateResources(
+            () ->
+                ownerResourceApi.enumerateResources(
                     getWorkspaceId(), -11, 2, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED));
     assertThat(invalidPaginationException.getMessage(), containsString("Invalid pagination"));
 
     invalidPaginationException =
         assertThrows(
             ApiException.class,
-            () -> ownerResourceApi.enumerateResources(
-                getWorkspaceId(), 0, 0, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED));
+            () ->
+                ownerResourceApi.enumerateResources(
+                    getWorkspaceId(), 0, 0, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED));
     assertThat(invalidPaginationException.getMessage(), containsString("Invalid pagination"));
   }
 

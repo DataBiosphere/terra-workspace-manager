@@ -70,6 +70,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(PullProjectFromPoolStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(SetProjectBillingStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(GrantWsmRoleAdminStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(CreateCustomGcpRolesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(StoreGcpContextStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(SyncSamGroupsStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
