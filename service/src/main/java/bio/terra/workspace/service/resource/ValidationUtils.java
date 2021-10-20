@@ -134,13 +134,13 @@ public class ValidationUtils {
    * https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
    * for azure resource rules
    */
-  public static void validateIpName(String name) {
+  public static void validateAzureResourceName(String name) {
     Pattern pattern = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-_.]{0,78}[a-zA-Z0-9_]$");
 
     if (!pattern.matcher(name).matches()) {
-      logger.warn("Invalid IP name {}", name);
+      logger.warn("Invalid Azure resource name {}", name);
       throw new InvalidReferenceException(
-          "Invalid Azure IP name specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
+          "Invalid Azure resource name specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
     }
   }
 

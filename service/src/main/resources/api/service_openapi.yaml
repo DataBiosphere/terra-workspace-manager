@@ -1426,12 +1426,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteControlledAzureIpRequest'
+              $ref: '#/components/schemas/DeleteControlledAzureResourceRequest'
       responses:
         '200':
-          $ref: '#/components/responses/DeleteControlledAzureIpResponse'
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
         '202':
-          $ref: '#/components/responses/DeleteControlledAzureIpResponse'
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -1447,9 +1447,87 @@ paths:
       tags: [ControlledAzureResource]
       responses:
         '200':
-          $ref: '#/components/responses/DeleteControlledAzureIpResponse'
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
         '202':
-          $ref: '#/components/responses/DeleteControlledAzureIpResponse'
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure Disk
+      operationId: createAzureDisk
+      tags: [ ControlledAzureResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureDiskRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureDiskResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled Azure Disk resource
+      operationId: getAzureDisk
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAzureDiskResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete an azure Disk
+      operationId: deleteAzureDisk
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAzureResourceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an azure ip deletion job.
+      operationId: getDeleteAzureDiskResult
+      tags: [ControlledAzureResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -2364,6 +2442,15 @@ components:
         azureIp:
           $ref: '#/components/schemas/AzureIpCreationParameters'
 
+    CreateControlledAzureDiskRequestBody:
+      description: Payload for requesting a new controlled Azure Disk resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureDisk:
+          $ref: '#/components/schemas/AzureDiskCreationParameters'
+
     CreateControlledGcpGcsBucketRequestBody:
       description: Payload for requesting a new controlled GCS bucket resource.
       type: object
@@ -2522,8 +2609,28 @@ components:
             It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
           type: string
 
+    AzureDiskCreationParameters:
+      description: >-
+        Disk-specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [ name, region, size ]
+      properties:
+        name:
+          description: A valid disk name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+          type: string
+        region:
+          description: |
+            A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
+            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
+          type: string
+        size:
+          description: |
+            A valid size in GB integer representation
+          type: integer
+
     CreatedControlledAzureIp:
-      description: Response payload for requesting a new azure IP
+      description: Response payload for requesting a new Azure IP
       type: object
       properties:
         resourceId:
@@ -2532,6 +2639,17 @@ components:
           format: uuid
         azureIp:
           $ref: '#/components/schemas/AzureIpResource'
+
+    CreatedControlledAzureDisk:
+      description: Response payload for requesting a new Azure disk
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureDisk:
+          $ref: '#/components/schemas/AzureDiskResource'
 
     GcpGcsBucketCreationParameters:
       description: >-
@@ -3007,14 +3125,14 @@ components:
         jobControl:
           $ref: '#/components/schemas/JobControl'
 
-    DeleteControlledAzureIpRequest:
+    DeleteControlledAzureResourceRequest:
       type: object
       required: [ jobControl ]
       properties:
         jobControl:
           $ref: '#/components/schemas/JobControl'
 
-    DeleteControlledAzureIpResult:
+    DeleteControlledAzureResourceResult:
       type: object
       properties:
         jobReport:
@@ -3297,7 +3415,7 @@ components:
 
     AzureIpAttributes:
       description: >-
-        IP properties included in post-creation get and update. Others must be retrieved from Azure using the name.
+        IP properties included in post-creation get. Others must be retrieved from Azure using the name.
       type: object
       properties:
         ipName:
@@ -3305,6 +3423,18 @@ components:
           type: string
         region:
           description: Azure region of created ip
+          type: string
+
+    AzureDiskAttributes:
+      description: >-
+        Disk properties included in post-creation get and update. Others must be retrieved from Azure using the name.
+      type: object
+      properties:
+        diskName:
+          description: Name of created disk (not the resource name).
+          type: string
+        region:
+          description: Azure region of created disk
           type: string
 
     GcpGcsBucketAttributes:
@@ -3339,6 +3469,17 @@ components:
           $ref: '#/components/schemas/ResourceMetadata'
         attributes:
           $ref: '#/components/schemas/AzureIpAttributes'
+
+    AzureDiskResource:
+      type: object
+      description: Description of an Azure disk
+      required: [metadata, attributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AzureDiskAttributes'
 
     GcpAiNotebookInstanceAttributes:
       description: >-
@@ -3473,6 +3614,7 @@ components:
         - GCS_BUCKET
         - GCS_OBJECT
         - AZURE_IP
+        - AZURE_DISK
 
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration
@@ -3561,12 +3703,19 @@ components:
           schema:
             $ref: '#/components/schemas/CreatedControlledAzureIp'
 
-    DeleteControlledAzureIpResponse:
+    CreateControlledAzureDiskResponse:
+      description: Response to create controlled Azure disk
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAzureDisk'
+
+    DeleteControlledAzureResourceResponse:
       description: Response Payload for deleting an azure ip
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/DeleteControlledAzureIpResult'
+            $ref: '#/components/schemas/DeleteControlledAzureResourceResult'
 
     GetControlledAzureIpResponse:
       description: Response to get ip
@@ -3574,6 +3723,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AzureIpResource'
+
+    GetControlledAzureDiskResponse:
+      description: Response to get disk
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AzureDiskResource'
 
     CreatedControlledGcpGcsBucketResponse:
       description: Response to Create controlled Gcs bucket
