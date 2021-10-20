@@ -95,7 +95,7 @@ public class ControlledAzureIpResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureIP.");
     }
-    ValidationUtils.validateIpName(getIpName());
+    ValidationUtils.validateAzureResourceName(getIpName());
   }
 
   @Override

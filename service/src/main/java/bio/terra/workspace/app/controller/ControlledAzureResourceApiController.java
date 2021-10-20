@@ -6,12 +6,15 @@ import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
 import bio.terra.workspace.generated.model.ApiAccessScope;
+import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
+import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDisk;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureIp;
-import bio.terra.workspace.generated.model.ApiDeleteControlledAzureIpRequest;
-import bio.terra.workspace.generated.model.ApiDeleteControlledAzureIpResult;
+import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceRequest;
+import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceResult;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -21,6 +24,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -70,6 +74,40 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
   }
 
   @Override
+  public ResponseEntity<ApiCreatedControlledAzureDisk> createAzureDisk(
+      UUID workspaceId, ApiCreateControlledAzureDiskRequestBody body) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
+    ControlledAzureDiskResource resource =
+        ControlledAzureDiskResource.builder()
+            .workspaceId(workspaceId)
+            .resourceId(UUID.randomUUID())
+            .name(body.getCommon().getName())
+            .description(body.getCommon().getDescription())
+            .cloningInstructions(
+                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
+            .assignedUser(assignedUserFromBodyOrToken(body.getCommon(), userRequest))
+            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
+            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .diskName(body.getAzureDisk().getName())
+            .region(body.getAzureDisk().getRegion())
+            .size(body.getAzureDisk().getSize())
+            .build();
+
+    List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
+
+    // TODO: make createDisk call async once we have things working e2e
+    final var createdDisk =
+        controlledResourceService.createDisk(
+            resource, body.getAzureDisk(), privateRoles, userRequest);
+    var response =
+        new ApiCreatedControlledAzureDisk()
+            .resourceId(createdDisk.getResourceId())
+            .azureDisk(createdDisk.toApiResource());
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
   public ResponseEntity<ApiCreatedControlledAzureIp> createAzureIp(
       UUID workspaceId, @Valid ApiCreateControlledAzureIpRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -102,8 +140,8 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
   }
 
   @Override
-  public ResponseEntity<ApiDeleteControlledAzureIpResult> deleteAzureIp(
-      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureIpRequest body) {
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureIp(
+      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     final ApiJobControl jobControl = body.getJobControl();
     logger.info("deleteIp workspace {} resource {}", workspaceId.toString(), resourceId.toString());
@@ -114,7 +152,24 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             resourceId,
             ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
             userRequest);
-    return getDeleteResult(jobId, userRequest);
+    return getJobDeleteResult(jobId, userRequest);
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureDisk(
+      UUID workspaceId, UUID resourceId, @Valid ApiDeleteControlledAzureResourceRequest body) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final ApiJobControl jobControl = body.getJobControl();
+    logger.info(
+        "deleteDisk workspace {} resource {}", workspaceId.toString(), resourceId.toString());
+    final String jobId =
+        controlledResourceService.deleteControlledResourceAsync(
+            jobControl,
+            workspaceId,
+            resourceId,
+            ControllerUtils.getAsyncResultEndpoint(request, jobControl.getId(), "delete-result"),
+            userRequest);
+    return getJobDeleteResult(jobId, userRequest);
   }
 
   @Override
@@ -128,17 +183,47 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     } catch (InvalidMetadataException ex) {
       throw new BadRequestException(
           String.format(
-              "Resource %s in workspace %s is not a controlled GCS bucket.",
+              "Resource %s in workspace %s is not a controlled Azure Ip.",
               resourceId, workspaceId));
     }
   }
 
-  private ResponseEntity<ApiDeleteControlledAzureIpResult> getDeleteResult(
+  @Override
+  public ResponseEntity<ApiAzureDiskResource> getAzureDisk(UUID workspaceId, UUID resourceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledResource controlledResource =
+        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+    try {
+      var response = controlledResource.castToAzureDiskResource().toApiResource();
+      return new ResponseEntity<>(response, HttpStatus.OK);
+    } catch (InvalidMetadataException ex) {
+      throw new BadRequestException(
+          String.format(
+              "Resource %s in workspace %s is not a controlled Azure Disk.",
+              resourceId, workspaceId));
+    }
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureDiskResult(
+      UUID workspaceId, String jobId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    return getJobDeleteResult(jobId, userRequest);
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureIpResult(
+      UUID workspaceId, String jobId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    return getJobDeleteResult(jobId, userRequest);
+  }
+
+  private ResponseEntity<ApiDeleteControlledAzureResourceResult> getJobDeleteResult(
       String jobId, AuthenticatedUserRequest userRequest) {
     final JobService.AsyncJobResult<Void> jobResult =
         jobService.retrieveAsyncJobResult(jobId, Void.class, userRequest);
     var response =
-        new ApiDeleteControlledAzureIpResult()
+        new ApiDeleteControlledAzureResourceResult()
             .jobReport(jobResult.getJobReport())
             .errorReport(jobResult.getApiErrorReport());
     return new ResponseEntity<>(
