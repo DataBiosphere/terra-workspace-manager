@@ -177,8 +177,8 @@ public class ApplicationDao {
   }
 
   /**
-   * Enable an application in a workspace - do not perform the application state check.
-   * This is only used in testing.
+   * Enable an application in a workspace - do not perform the application state check. This is only
+   * used in testing.
    *
    * <p>It is not an error to enable an already enabled application.
    *
