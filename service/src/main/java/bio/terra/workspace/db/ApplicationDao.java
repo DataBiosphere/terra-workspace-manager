@@ -11,6 +11,7 @@ import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -299,6 +300,19 @@ public class ApplicationDao {
     } catch (EmptyResultDataAccessException e) {
       throw new ApplicationNotFoundException(
           String.format("Application %s not found.", applicationId.toString()));
+    }
+  }
+
+  @ReadTransaction
+  public WsmApplication getApplicationByEmail(String email) {
+    final String sql = APPLICATION_QUERY + " WHERE service_account = :email";
+    var params = new MapSqlParameterSource().addValue("email", StringUtils.lowerCase(email));
+
+    try {
+      return DataAccessUtils.requiredSingleResult(
+          jdbcTemplate.query(sql, params, APPLICATION_ROW_MAPPER));
+    } catch (EmptyResultDataAccessException e) {
+      throw new ApplicationNotFoundException("Requester is not a configured application: " + email);
     }
   }
 

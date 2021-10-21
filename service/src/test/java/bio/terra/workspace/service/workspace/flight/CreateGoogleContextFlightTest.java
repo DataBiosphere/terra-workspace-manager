@@ -19,7 +19,8 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
+import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
@@ -77,9 +78,9 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     Mockito.when(
             mockSamService.isAuthorized(
                 Mockito.any(),
-                Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
+                Mockito.eq(SamResource.SPEND_PROFILE),
                 Mockito.any(),
-                Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
+                Mockito.eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
     // Return a valid google group for cloud sync, as Google validates groups added to GCP projects.
     Mockito.when(mockSamService.syncWorkspacePolicy(any(), any(), any()))
@@ -180,9 +181,9 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     Mockito.when(
             mockSamService.isAuthorized(
                 Mockito.any(),
-                Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
+                Mockito.eq(SamResource.SPEND_PROFILE),
                 Mockito.any(),
-                Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
+                Mockito.eq(SamSpendProfileAction.LINK)))
         .thenReturn(false);
     UUID workspaceId = createWorkspace(spendUtils.defaultSpendId());
     AuthenticatedUserRequest unauthorizedUserRequest = userAccessUtils.secondUserAuthRequest();

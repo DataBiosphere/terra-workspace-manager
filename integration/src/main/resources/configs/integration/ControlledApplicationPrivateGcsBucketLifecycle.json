@@ -1,12 +1,12 @@
 {
-  "name": "ControlledApplicationLifecycle",
-  "description": "Controlled application resource tests.",
+  "name": "ControlledApplicationPrivateGcsBucketLifecycle",
+  "description": "Controlled application private GCS bucket tests.",
   "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
     {
-      "name": "ControlledApplicationResourceLifecycle",
+      "name": "ControlledApplicationPrivateGcsBucketLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 1,
       "expectedTimeForEach": 10,

@@ -22,7 +22,7 @@ public final class WorkspaceFlightMapKeys {
     private ControlledResourceKeys() {}
 
     public static final String CREATION_PARAMETERS = "creationParameters";
-    public static final String PRIVATE_RESOURCE_IAM_ROLES = "iamRoles";
+    public static final String PRIVATE_RESOURCE_IAM_ROLE = "privateResourceIamRole";
     public static final String PRIVATE_RESOURCE_USER_EMAIL = "privateResourceUserEmail";
     public static final String IAM_RESOURCE_GROUP_EMAIL_MAP = "iamResourceGroupEmailMap";
 

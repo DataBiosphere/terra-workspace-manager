@@ -122,6 +122,7 @@ public class ControlledResourceFixtures {
         OWNER_EMAIL,
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_USER,
+        null,
         bucketName);
   }
 
@@ -199,7 +200,7 @@ public class ControlledResourceFixtures {
         .name("my-notebook")
         .description("my notebook description")
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
-        .assignedUser(null)
+        .assignedUser("myusername@mydomain.mine")
         .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
         .managedBy(ManagedByType.MANAGED_BY_USER)
         .instanceId("my-instance-id")

@@ -14,7 +14,8 @@ import bio.terra.workspace.db.exception.InvalidApplicationStateException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
+import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.WsmApplicationService.WsmDbApplication;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
@@ -98,16 +99,13 @@ public class ApplicationServiceTest extends BaseUnitTest {
     Mockito.when(
             mockSamService.isAuthorized(
                 Mockito.any(),
-                Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
+                Mockito.eq(SamResource.SPEND_PROFILE),
                 Mockito.any(),
-                Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
+                Mockito.eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
     Mockito.when(
             mockSamService.isAuthorized(
-                Mockito.any(),
-                Mockito.eq(SamConstants.SAM_WORKSPACE_RESOURCE),
-                Mockito.any(),
-                Mockito.any()))
+                Mockito.any(), Mockito.eq(SamResource.WORKSPACE), Mockito.any(), Mockito.any()))
         .thenReturn(true);
 
     // Populate the applications - this should be idempotent since we are

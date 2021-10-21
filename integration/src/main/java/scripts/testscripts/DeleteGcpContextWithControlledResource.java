@@ -40,7 +40,7 @@ public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTes
     // Create a controlled BigQuery dataset
     GcpBigQueryDatasetResource controlledDataset =
         ResourceMaker.makeControlledBigQueryDatasetUserShared(
-            controlledResourceApi, getWorkspaceId(), DATASET_NAME);
+            controlledResourceApi, getWorkspaceId(), DATASET_NAME, null);
     UUID controlledResourceId = controlledDataset.getMetadata().getResourceId();
     logger.info("Created controlled dataset {}", controlledResourceId);
 

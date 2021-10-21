@@ -20,6 +20,7 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
@@ -35,7 +36,6 @@ import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import com.google.common.collect.ImmutableList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -261,7 +261,7 @@ class SamServiceTest extends BaseConnectedTest {
             secondaryUserRequest(),
             ControlledResourceCategory.USER_SHARED.getSamResourceName(),
             bucketResource.getResourceId().toString(),
-            SamConstants.SAM_WORKSPACE_READ_ACTION));
+            SamWorkspaceAction.READ));
 
     samService.deleteControlledResource(bucketResource, defaultUserRequest());
   }
@@ -278,11 +278,9 @@ class SamServiceTest extends BaseConnectedTest {
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .assignedUser(userAccessUtils.getDefaultUserEmail())
             .build();
-    List<ControlledResourceIamRole> privateResourceIamRoles =
-        ImmutableList.of(ControlledResourceIamRole.READER, ControlledResourceIamRole.EDITOR);
     samService.createControlledResource(
         bucketResource,
-        privateResourceIamRoles,
+        ControlledResourceIamRole.EDITOR,
         userAccessUtils.getDefaultUserEmail(),
         defaultUserRequest());
 
@@ -292,14 +290,14 @@ class SamServiceTest extends BaseConnectedTest {
             secondaryUserRequest(),
             ControlledResourceCategory.USER_PRIVATE.getSamResourceName(),
             bucketResource.getResourceId().toString(),
-            SamConstants.SAM_WORKSPACE_READ_ACTION));
+            SamConstants.SamWorkspaceAction.READ));
     // However, the assigned user should have read access.
     assertTrue(
         samService.isAuthorized(
             defaultUserRequest(),
             ControlledResourceCategory.USER_PRIVATE.getSamResourceName(),
             bucketResource.getResourceId().toString(),
-            SamConstants.SAM_WORKSPACE_READ_ACTION));
+            SamConstants.SamWorkspaceAction.READ));
 
     samService.deleteControlledResource(bucketResource, defaultUserRequest());
   }

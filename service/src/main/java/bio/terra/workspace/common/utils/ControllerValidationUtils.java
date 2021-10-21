@@ -68,9 +68,14 @@ public final class ControllerValidationUtils {
    * from, etc.
    */
   public static void validateEmail(String email) {
+    // matcher does not support null, so explicitly defend against that case
+    if (email == null) {
+      logger.warn("User provided null email");
+      throw new ValidationException("Missing required email");
+    }
     if (!EMAIL_VALIDATION_PATTERN.matcher(email).matches()) {
       logger.warn("User provided invalid email for group or user: " + email);
-      throw new ValidationException("Invalid user or group email provided");
+      throw new ValidationException("Invalid email provided");
     }
   }
 

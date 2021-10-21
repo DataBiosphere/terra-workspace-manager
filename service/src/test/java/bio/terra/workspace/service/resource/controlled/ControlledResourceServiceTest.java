@@ -55,6 +55,7 @@ import bio.terra.workspace.service.resource.controlled.flight.update.UpdateContr
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateGcsBucketStep;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -72,8 +73,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -90,13 +89,7 @@ import org.springframework.http.HttpStatus;
 @TestInstance(Lifecycle.PER_CLASS)
 public class ControlledResourceServiceTest extends BaseConnectedTest {
   /** The default roles to use when creating user private AI notebook instance resources */
-  private static final List<ControlledResourceIamRole> DEFAULT_ROLES =
-      // Need to be careful about what subclass of List gets put in a FlightMap.
-      Stream.of(
-              ControlledResourceIamRole.OWNER,
-              ControlledResourceIamRole.WRITER,
-              ControlledResourceIamRole.EDITOR)
-          .collect(Collectors.toList());
+  private static final ControlledResourceIamRole DEFAULT_ROLE = ControlledResourceIamRole.WRITER;
   /** The default GCP location to create notebooks for this test. */
   private static final String DEFAULT_NOTEBOOK_LOCATION = "us-east1-b";
 
@@ -205,12 +198,15 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         ControlledResourceFixtures.defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
+
     ControlledAiNotebookInstanceResource.Builder resourceBuilder =
         ControlledResourceFixtures.makeDefaultAiNotebookInstance()
             .workspaceId(workspaceId)
             .name(instanceId)
+            .cloningInstructions(CloningInstructions.COPY_NOTHING)
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
+            .assignedUser(user.getEmail())
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource = resourceBuilder.build();
@@ -230,7 +226,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         controlledResourceService.createAiNotebookInstance(
             resource,
             creationParameters,
-            DEFAULT_ROLES,
+            DEFAULT_ROLE,
             new ApiJobControl().id(UUID.randomUUID().toString()),
             "fakeResultPath",
             user.getAuthenticatedRequest());
@@ -304,7 +300,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         controlledResourceService.createAiNotebookInstance(
             duplicateResource,
             creationParameters,
-            DEFAULT_ROLES,
+            DEFAULT_ROLE,
             new ApiJobControl().id(UUID.randomUUID().toString()),
             "fakeResultPath",
             user.getAuthenticatedRequest());
@@ -333,6 +329,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .name(instanceId)
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
+            .assignedUser(user.getEmail())
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION)
             .build();
@@ -354,7 +351,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         controlledResourceService.createAiNotebookInstance(
             resource,
             creationParameters,
-            DEFAULT_ROLES,
+            DEFAULT_ROLE,
             new ApiJobControl().id(UUID.randomUUID().toString()),
             "fakeResultPath",
             user.getAuthenticatedRequest());
@@ -409,15 +406,14 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .name(instanceId)
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
+            .assignedUser(user.getEmail())
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION)
             .build();
 
     // Shared notebooks not yet implemented.
     // Private IAM roles must include writer role.
-    List<ControlledResourceIamRole> noWriterRoles =
-        // Need to be careful about what subclass of List gets put in a FlightMap.
-        Stream.of(ControlledResourceIamRole.READER).collect(Collectors.toList());
+    ControlledResourceIamRole notWriter = ControlledResourceIamRole.READER;
     BadRequestException noWriterException =
         assertThrows(
             BadRequestException.class,
@@ -425,12 +421,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 controlledResourceService.createAiNotebookInstance(
                     resource,
                     creationParameters,
-                    noWriterRoles,
+                    notWriter,
                     new ApiJobControl().id(UUID.randomUUID().toString()),
                     "fakeResultPath",
                     user.getAuthenticatedRequest()));
     assertEquals(
-        "A private, controlled AI Notebook instance must have the writer role or else it is not useful.",
+        "A private, controlled AI Notebook instance must have the writer or editor role or else it is not useful.",
         noWriterException.getMessage());
   }
 
@@ -494,6 +490,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .workspaceId(workspace.getWorkspaceId())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
+            .assignedUser(user.getEmail())
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION)
             .build();
@@ -502,7 +499,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         controlledResourceService.createAiNotebookInstance(
             resource,
             creationParameters,
-            DEFAULT_ROLES,
+            DEFAULT_ROLE,
             new ApiJobControl().id(UUID.randomUUID().toString()),
             null,
             user.getAuthenticatedRequest());
@@ -535,7 +532,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .build();
     ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService.createBigQueryDataset(
-            resource, creationParameters, Collections.emptyList(), user.getAuthenticatedRequest());
+            resource, creationParameters, null, user.getAuthenticatedRequest());
     assertEquals(resource, createdDataset);
 
     ControlledBigQueryDatasetResource fetchedDataset =
@@ -616,7 +613,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
     ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService.createBigQueryDataset(
-            resource, creationParameters, Collections.emptyList(), user.getAuthenticatedRequest());
+            resource, creationParameters, null, user.getAuthenticatedRequest());
     assertEquals(resource, createdDataset);
 
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
@@ -671,10 +668,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         InvalidResultStateException.class,
         () ->
             controlledResourceService.createBigQueryDataset(
-                resource,
-                creationParameters,
-                Collections.emptyList(),
-                user.getAuthenticatedRequest()));
+                resource, creationParameters, null, user.getAuthenticatedRequest()));
 
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     GoogleJsonResponseException getException =
@@ -710,7 +704,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService.createBigQueryDataset(
-            resource, creationParameters, Collections.emptyList(), user.getAuthenticatedRequest());
+            resource, creationParameters, null, user.getAuthenticatedRequest());
     assertEquals(resource, createdDataset);
 
     // Test idempotency of delete by retrying steps once.
@@ -758,7 +752,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService.createBigQueryDataset(
-            resource, creationParameters, Collections.emptyList(), user.getAuthenticatedRequest());
+            resource, creationParameters, null, user.getAuthenticatedRequest());
     assertEquals(resource, createdDataset);
 
     // None of the steps on this flight are undoable, so even with lastStepFailure set to true we
@@ -807,7 +801,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .build();
     ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService.createBigQueryDataset(
-            resource, creationParameters, Collections.emptyList(), user.getAuthenticatedRequest());
+            resource, creationParameters, null, user.getAuthenticatedRequest());
     assertEquals(resource, createdDataset);
 
     // Test idempotency of dataset-specific steps by retrying them once.
@@ -874,7 +868,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .build();
     ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService.createBigQueryDataset(
-            resource, creationParameters, Collections.emptyList(), user.getAuthenticatedRequest());
+            resource, creationParameters, null, user.getAuthenticatedRequest());
     assertEquals(resource, createdDataset);
 
     // Test idempotency of dataset-specific steps by retrying them once.
@@ -952,7 +946,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .build();
     ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService.createBigQueryDataset(
-            resource, creationParameters, Collections.emptyList(), user.getAuthenticatedRequest());
+            resource, creationParameters, null, user.getAuthenticatedRequest());
 
     // check the expiration times stored on the cloud are defined
     validateBigQueryDatasetCloudMetadata(
@@ -1019,7 +1013,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .build();
     ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService.createBigQueryDataset(
-            resource, creationParameters, Collections.emptyList(), user.getAuthenticatedRequest());
+            resource, creationParameters, null, user.getAuthenticatedRequest());
 
     // make an update request to set the table expiration time to an invalid value (<3600)
     final ApiGcpBigQueryDatasetUpdateParameters updateParameters =
@@ -1074,7 +1068,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         controlledResourceService.createBucket(
             resource,
             ControlledResourceFixtures.getGoogleBucketCreationParameters(),
-            Collections.emptyList(),
+            null,
             user.getAuthenticatedRequest());
     assertEquals(resource, createdBucket);
 
@@ -1104,7 +1098,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             controlledResourceService.createBucket(
                 resource,
                 ControlledResourceFixtures.getGoogleBucketCreationParameters(),
-                Collections.emptyList(),
+                null,
                 user.getAuthenticatedRequest()));
   }
 
@@ -1134,7 +1128,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             controlledResourceService.createBucket(
                 resource,
                 ControlledResourceFixtures.getGoogleBucketCreationParameters(),
-                Collections.emptyList(),
+                null,
                 user.getAuthenticatedRequest()));
 
     // Validate the bucket does not exist.
@@ -1294,7 +1288,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         controlledResourceService.createBucket(
             originalResource,
             ControlledResourceFixtures.getGoogleBucketCreationParameters(),
-            Collections.emptyList(),
+            null,
             user.getAuthenticatedRequest());
     assertEquals(originalResource, createdBucket);
     return createdBucket;

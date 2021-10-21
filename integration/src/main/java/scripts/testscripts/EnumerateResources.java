@@ -14,6 +14,7 @@ import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
+import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.ControlledResourceMetadata;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
@@ -22,7 +23,6 @@ import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
-import bio.terra.workspace.model.PrivateResourceIamRoles;
 import bio.terra.workspace.model.ResourceDescription;
 import bio.terra.workspace.model.ResourceList;
 import bio.terra.workspace.model.ResourceMetadata;
@@ -338,11 +338,12 @@ public class EnumerateResources extends DataRepoTestScriptBase {
 
         case 3:
           {
-            PrivateResourceIamRoles privateRoles = new PrivateResourceIamRoles();
-            privateRoles.addAll(PRIVATE_ROLES);
             GcpGcsBucketResource resource =
                 ResourceMaker.makeControlledGcsBucketUserPrivate(
-                        controlledGcpResourceApi, workspaceId, name, testUserEmail, privateRoles)
+                        controlledGcpResourceApi,
+                        workspaceId,
+                        name,
+                        CloningInstructionsEnum.NOTHING)
                     .getGcpBucket();
             resourceList.add(resource.getMetadata());
             break;
@@ -352,7 +353,7 @@ public class EnumerateResources extends DataRepoTestScriptBase {
           {
             GcpBigQueryDatasetResource resource =
                 ResourceMaker.makeControlledBigQueryDatasetUserShared(
-                    controlledGcpResourceApi, workspaceId, name);
+                    controlledGcpResourceApi, workspaceId, name, CloningInstructionsEnum.NOTHING);
             resourceList.add(resource.getMetadata());
             break;
           }

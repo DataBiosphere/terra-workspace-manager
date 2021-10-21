@@ -3,11 +3,11 @@ package bio.terra.workspace.service.workspace.flight;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
 
@@ -42,8 +42,7 @@ public class WorkspaceDeleteFlight extends Flight {
             appContext.getSamService(),
             appContext.getResourceDao(),
             workspaceId,
-            /* cloudPlatform= */ null,
-            userRequest),
+            /* cloudPlatform= */ null),
         retryRule);
     addStep(
         new DeleteGcpProjectStep(

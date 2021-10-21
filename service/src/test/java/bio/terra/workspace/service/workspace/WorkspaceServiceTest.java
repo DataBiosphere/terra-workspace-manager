@@ -22,7 +22,9 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
+import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -80,9 +82,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Mockito.when(
             mockSamService.isAuthorized(
                 Mockito.any(),
-                Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
+                Mockito.eq(SamResource.SPEND_PROFILE),
                 Mockito.any(),
-                Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
+                Mockito.eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
     // Return a valid google group for cloud sync, as Google validates groups added to GCP projects.
     Mockito.when(mockSamService.syncWorkspacePolicy(any(), any(), any()))
@@ -454,9 +456,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Mockito.when(
             mockSamService.isAuthorized(
                 Mockito.any(),
-                Mockito.eq(SamConstants.SAM_WORKSPACE_RESOURCE),
+                Mockito.eq(SamResource.WORKSPACE),
                 Mockito.any(),
-                Mockito.eq(SamConstants.SAM_WORKSPACE_READ_ACTION)))
+                Mockito.eq(SamWorkspaceAction.READ)))
         .thenReturn(true);
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())

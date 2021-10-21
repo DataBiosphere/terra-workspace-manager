@@ -73,7 +73,7 @@ public class CloneBigQueryDataset extends WorkspaceAllocateTestScriptBase {
     final String sourceResourceName = (RESOURCE_PREFIX + nameSuffix).replace('-', '_');
     sourceDataset =
         makeControlledBigQueryDatasetUserShared(
-            sourceOwnerResourceApi, getWorkspaceId(), sourceResourceName);
+            sourceOwnerResourceApi, getWorkspaceId(), sourceResourceName, null);
 
     ResourceModifier.populateBigQueryDataset(sourceDataset, sourceOwnerUser, sourceProjectId);
 

@@ -23,7 +23,6 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -56,8 +55,7 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
     var creationParameters =
         ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
-    controlledResourceService.createBigQueryDataset(
-        dataset, creationParameters, Collections.emptyList(), userRequest);
+    controlledResourceService.createBigQueryDataset(dataset, creationParameters, null, userRequest);
 
     ControlledResource gotResource =
         controlledResourceService.getControlledResource(
@@ -113,8 +111,7 @@ public class WorkspaceDeleteFlightTest extends BaseConnectedTest {
     var creationParameters =
         ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
-    controlledResourceService.createBigQueryDataset(
-        dataset, creationParameters, Collections.emptyList(), userRequest);
+    controlledResourceService.createBigQueryDataset(dataset, creationParameters, null, userRequest);
 
     ControlledResource gotResource =
         controlledResourceService.getControlledResource(

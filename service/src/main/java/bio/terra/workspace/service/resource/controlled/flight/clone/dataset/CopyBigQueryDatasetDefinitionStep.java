@@ -16,7 +16,6 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceService
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -100,12 +99,12 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
 
     final ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetName).location(location);
-    final List<ControlledResourceIamRole> iamRoles =
-        IamRoleUtils.getIamRolesForAccessScope(destinationResource.getAccessScope());
+    final ControlledResourceIamRole iamRole =
+        IamRoleUtils.getIamRoleForAccessScope(destinationResource.getAccessScope());
 
     final ControlledBigQueryDatasetResource clonedResource =
         controlledResourceService.createBigQueryDataset(
-            destinationResource, creationParameters, iamRoles, userRequest);
+            destinationResource, creationParameters, iamRole, userRequest);
 
     workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedResource);
     final String destinationProjectId =

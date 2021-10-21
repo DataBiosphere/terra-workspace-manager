@@ -65,6 +65,8 @@ public class ResourceModifier {
     final BlobId blobId =
         BlobId.of(bucket.getGcpBucket().getAttributes().getBucketName(), GCS_BLOB_NAME);
     final BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
+
+    // There can be IAM propagation delays, so be a patient with the creation
     return ClientTestUtils.getWithRetryOnException(
         () ->
             sourceOwnerStorageClient.create(
@@ -114,6 +116,8 @@ public class ResourceModifier {
         TableInfo.newBuilder(employeeTableId, StandardTableDefinition.of(employeeSchema))
             .setFriendlyName("Employee")
             .build();
+
+    // Wrap the first operation in a wait to allow the IAM permissions to propagate
     final Table createdEmployeeTable =
         ClientTestUtils.getWithRetryOnException(() -> bigQueryClient.create(employeeTableInfo));
     logger.debug("Employee Table: {}", createdEmployeeTable);

@@ -21,9 +21,9 @@ public final class FlightUtils {
   /**
    * Build an error model and set it as the response
    *
-   * @param context
-   * @param message
-   * @param responseStatus
+   * @param context flight context
+   * @param message error message
+   * @param responseStatus status
    */
   public static void setErrorResponse(
       FlightContext context, String message, HttpStatus responseStatus) {

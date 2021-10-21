@@ -3,15 +3,17 @@ package bio.terra.workspace.service.workspace.model;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.annotation.Nullable;
 
 public class GcpCloudContext {
-  private final String gcpProjectId;
+  private String gcpProjectId;
 
-  @JsonCreator
-  public GcpCloudContext(@JsonProperty String gcpProjectId) {
+  // Constructor for Jackson
+  public GcpCloudContext() {}
+
+  // Constructor for WSM
+  public GcpCloudContext(String gcpProjectId) {
     this.gcpProjectId = gcpProjectId;
   }
 

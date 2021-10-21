@@ -16,7 +16,6 @@ import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResour
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -90,18 +89,19 @@ public class CopyGcsBucketDefinitionStep implements Step {
             sourceBucket.getAssignedUser().orElse(null),
             sourceBucket.getAccessScope(),
             sourceBucket.getManagedBy(),
+            sourceBucket.getApplicationId(),
             bucketName);
 
     final ApiGcpGcsBucketCreationParameters destinationCreationParameters =
         getDestinationCreationParameters(inputParameters, workingMap);
 
-    final List<ControlledResourceIamRole> iamRoles =
-        IamRoleUtils.getIamRolesForAccessScope(sourceBucket.getAccessScope());
+    final ControlledResourceIamRole iamRole =
+        IamRoleUtils.getIamRoleForAccessScope(sourceBucket.getAccessScope());
 
     // Launch a CreateControlledResourcesFlight to make the destination bucket
     final ControlledGcsBucketResource clonedBucket =
         controlledResourceService.createBucket(
-            destinationBucketResource, destinationCreationParameters, iamRoles, userRequest);
+            destinationBucketResource, destinationCreationParameters, iamRole, userRequest);
     workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedBucket);
     // TODO: create new type & use it here
     final ApiCreatedControlledGcpGcsBucket apiCreatedBucket =

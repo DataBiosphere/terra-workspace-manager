@@ -39,7 +39,7 @@ public class WsmResourceService {
     // First, we check if the caller has read action on the workspace. If not, we are done. They see
     // nothing!
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
 
     return resourceDao.enumerateResources(
         workspaceId, resourceType, stewardshipType, offset, limit);

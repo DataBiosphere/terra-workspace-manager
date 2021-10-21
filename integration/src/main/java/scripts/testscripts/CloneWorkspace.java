@@ -32,7 +32,6 @@ import bio.terra.workspace.model.GcpGcsBucketFileResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
-import bio.terra.workspace.model.PrivateResourceIamRoles;
 import bio.terra.workspace.model.ResourceCloneDetails;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
@@ -126,15 +125,11 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     ResourceModifier.addFileToBucket(sharedSourceBucket, sourceOwnerUser, sourceProjectId);
 
     // create a private GCS bucket, which the non-creating user can't clone
-    final PrivateResourceIamRoles privateRoles = new PrivateResourceIamRoles();
-    privateRoles.addAll(PRIVATE_ROLES);
     privateSourceBucket =
         makeControlledGcsBucketUserPrivate(
             sourceOwnerResourceApi,
             getWorkspaceId(),
             UUID.randomUUID().toString(),
-            sourceOwnerUser.userEmail,
-            privateRoles,
             CloningInstructionsEnum.RESOURCE);
     ResourceModifier.addFileToBucket(privateSourceBucket, sourceOwnerUser, sourceProjectId);
 
@@ -185,8 +180,6 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             sourceOwnerResourceApi,
             getWorkspaceId(),
             privateDatasetName,
-            sourceOwnerUser.userEmail,
-            privateRoles,
             CloningInstructionsEnum.RESOURCE);
 
     // Create reference to GCS bucket with COPY_REFERENCE

@@ -135,7 +135,7 @@ public class WorkspaceService {
     SamRethrow.onInterrupted(
         () ->
             samService.checkAuthz(
-                userRequest, SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), action),
+                userRequest, SamConstants.SamResource.WORKSPACE, workspaceId.toString(), action),
         "checkAuthz");
     return workspace;
   }
@@ -159,7 +159,7 @@ public class WorkspaceService {
   /** Retrieves an existing workspace by ID */
   @Traced
   public Workspace getWorkspace(UUID id, AuthenticatedUserRequest userRequest) {
-    return validateWorkspaceAndAction(userRequest, id, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    return validateWorkspaceAndAction(userRequest, id, SamConstants.SamWorkspaceAction.READ);
   }
 
   /**
@@ -175,7 +175,7 @@ public class WorkspaceService {
       UUID workspaceId,
       @Nullable String name,
       @Nullable String description) {
-    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
     workspaceDao.updateWorkspace(workspaceId, name, description);
     return workspaceDao.getWorkspace(workspaceId);
   }
@@ -184,7 +184,7 @@ public class WorkspaceService {
   @Traced
   public void deleteWorkspace(UUID id, AuthenticatedUserRequest userRequest) {
     Workspace workspace =
-        validateWorkspaceAndAction(userRequest, id, SamConstants.SAM_WORKSPACE_DELETE_ACTION);
+        validateWorkspaceAndAction(userRequest, id, SamConstants.SamWorkspaceAction.DELETE);
 
     String description = "Delete workspace " + id;
     JobBuilder deleteJob =
@@ -222,8 +222,7 @@ public class WorkspaceService {
     }
 
     Workspace workspace =
-        validateWorkspaceAndAction(
-            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+        validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
     stageService.assertMcWorkspace(workspace, "createCloudContext");
 
     jobService
@@ -252,7 +251,7 @@ public class WorkspaceService {
       @Nullable String description) {
     final Workspace sourceWorkspace =
         validateWorkspaceAndAction(
-            userRequest, sourceWorkspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+            userRequest, sourceWorkspaceId, SamConstants.SamWorkspaceAction.READ);
     stageService.assertMcWorkspace(sourceWorkspace, "cloneGcpWorkspace");
 
     return jobService
@@ -280,8 +279,7 @@ public class WorkspaceService {
   @Traced
   public void deleteGcpCloudContext(UUID workspaceId, AuthenticatedUserRequest userRequest) {
     Workspace workspace =
-        validateWorkspaceAndAction(
-            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
+        validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
     stageService.assertMcWorkspace(workspace, "deleteGcpCloudContext");
     jobService
         .newJob(
@@ -304,7 +302,7 @@ public class WorkspaceService {
    */
   public Optional<GcpCloudContext> getAuthorizedGcpCloudContext(
       UUID workspaceId, AuthenticatedUserRequest userRequest) {
-    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
     return gcpCloudContextService.getGcpCloudContext(workspaceId);
   }
 
@@ -318,7 +316,7 @@ public class WorkspaceService {
    */
   public Optional<String> getAuthorizedGcpProject(
       UUID workspaceId, AuthenticatedUserRequest userRequest) {
-    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
     return gcpCloudContextService.getGcpProject(workspaceId);
   }
 
@@ -332,7 +330,7 @@ public class WorkspaceService {
    */
   public String getAuthorizedRequiredGcpProject(
       UUID workspaceId, AuthenticatedUserRequest userRequest) {
-    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+    validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
     return gcpCloudContextService.getRequiredGcpProject(workspaceId);
   }
 
@@ -353,7 +351,7 @@ public class WorkspaceService {
       AuthenticatedUserRequest executingUserRequest) {
     Workspace workspace =
         validateWorkspaceAndAction(
-            executingUserRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
+            executingUserRequest, workspaceId, SamConstants.SamWorkspaceAction.OWN);
     stageService.assertMcWorkspace(workspace, "removeWorkspaceRoleFromUser");
     // GCP always uses lowercase email identifiers, so we do the same here.
     String targetUserEmail = rawUserEmail.toLowerCase();

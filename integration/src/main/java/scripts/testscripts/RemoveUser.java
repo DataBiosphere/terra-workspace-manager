@@ -11,16 +11,13 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
-import bio.terra.workspace.model.PrivateResourceIamRoles;
 import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.storage.StorageException;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
@@ -41,9 +38,6 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
   private CreatedControlledGcpGcsBucket privateBucket;
   private GcpBigQueryDatasetResource privateDataset;
   private CreatedControlledGcpAiNotebookInstanceResult privateNotebook;
-  // Roles to grant user on private resource
-  private static final ImmutableList<ControlledResourceIamRole> PRIVATE_ROLES =
-      ImmutableList.of(ControlledResourceIamRole.WRITER, ControlledResourceIamRole.EDITOR);
 
   @Override
   protected void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi ownerWorkspaceApi)
@@ -88,8 +82,6 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
 
     // Create a private GCS bucket for privateResourceUser with one object inside.
     String privateBucketName = BUCKET_PREFIX + UUID.randomUUID();
-    PrivateResourceIamRoles privateRoles = new PrivateResourceIamRoles();
-    privateRoles.addAll(PRIVATE_ROLES);
     ControlledGcpResourceApi privateUserResourceApi =
         ClientTestUtils.getControlledGcpResourceClient(privateResourceUser, server);
     privateBucket =
@@ -97,20 +89,14 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
             privateUserResourceApi,
             getWorkspaceId(),
             privateBucketName,
-            privateResourceUser.userEmail,
-            privateRoles);
+            CloningInstructionsEnum.NOTHING);
     ResourceModifier.addFileToBucket(privateBucket, privateResourceUser, projectId);
 
     // Create a private BQ dataset for privateResourceUser and populate it.
     String datasetId = RandomStringUtils.randomAlphabetic(8).toLowerCase();
     privateDataset =
         ResourceMaker.makeControlledBigQueryDatasetUserPrivate(
-            privateUserResourceApi,
-            getWorkspaceId(),
-            datasetId,
-            privateResourceUser.userEmail,
-            privateRoles,
-            CloningInstructionsEnum.NOTHING);
+            privateUserResourceApi, getWorkspaceId(), datasetId, CloningInstructionsEnum.NOTHING);
     ResourceModifier.populateBigQueryDataset(privateDataset, privateResourceUser, projectId);
     // Create a private notebook for privateResourceUser.
     String notebookInstanceId = RandomStringUtils.randomAlphabetic(8).toLowerCase();

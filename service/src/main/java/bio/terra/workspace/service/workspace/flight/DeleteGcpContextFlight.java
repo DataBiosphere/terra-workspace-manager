@@ -5,8 +5,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.UUID;
 
@@ -22,8 +20,6 @@ public class DeleteGcpContextFlight extends Flight {
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
     UUID workspaceId =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    AuthenticatedUserRequest userRequest =
-        inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     RetryRule retryRule = RetryRules.cloudLongRunning();
 
@@ -31,11 +27,7 @@ public class DeleteGcpContextFlight extends Flight {
     // actual cloud objects, as GCP handles the cleanup when we delete the containing project.
     addStep(
         new DeleteControlledSamResourcesStep(
-            appContext.getSamService(),
-            appContext.getResourceDao(),
-            workspaceId,
-            CLOUD_PLATFORM,
-            userRequest),
+            appContext.getSamService(), appContext.getResourceDao(), workspaceId, CLOUD_PLATFORM),
         retryRule);
     addStep(
         new DeleteControlledDbResourcesStep(

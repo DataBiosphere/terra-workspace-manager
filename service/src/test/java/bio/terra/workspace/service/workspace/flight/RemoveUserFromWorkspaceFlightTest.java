@@ -17,8 +17,9 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParamete
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
+import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
@@ -33,10 +34,8 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import com.google.common.collect.ImmutableList;
 import java.time.Duration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,7 +53,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private UserAccessUtils userAccessUtils;
 
-  private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(3);
+  private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(5);
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
@@ -75,8 +74,13 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
 
+    samService.dumpRoleBindings(
+        SamResource.WORKSPACE,
+        workspaceId.toString(),
+        userAccessUtils.defaultUserAuthRequest().getRequiredToken());
+
     // Create a GCP context as default user
-    String makeContextJobId = RandomStringUtils.randomAlphabetic(8);
+    String makeContextJobId = UUID.randomUUID().toString();
     workspaceService.createGcpCloudContext(
         workspaceId, makeContextJobId, userAccessUtils.defaultUserAuthRequest());
     jobService.waitForJob(makeContextJobId);
@@ -135,9 +139,9 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     assertTrue(
         samService.isAuthorized(
             userAccessUtils.secondUserAuthRequest(),
-            SamConstants.SAM_WORKSPACE_RESOURCE,
+            SamResource.WORKSPACE,
             workspaceId.toString(),
-            SamConstants.SAM_WORKSPACE_WRITE_ACTION));
+            SamWorkspaceAction.WRITE));
     assertTrue(
         samService.isAuthorized(
             userAccessUtils.secondUserAuthRequest(),
@@ -161,9 +165,9 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     assertFalse(
         samService.isAuthorized(
             userAccessUtils.secondUserAuthRequest(),
-            SamConstants.SAM_WORKSPACE_RESOURCE,
+            SamResource.WORKSPACE,
             workspaceId.toString(),
-            SamConstants.SAM_WORKSPACE_WRITE_ACTION));
+            SamWorkspaceAction.WRITE));
     assertFalse(
         samService.isAuthorized(
             userAccessUtils.secondUserAuthRequest(),
@@ -192,12 +196,11 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetCreationParameters()
             .datasetId(datasetName)
             .location("us-central1");
-    List<ControlledResourceIamRole> privateRoles =
-        ImmutableList.of(ControlledResourceIamRole.WRITER, ControlledResourceIamRole.EDITOR);
+
     return controlledResourceService.createBigQueryDataset(
         datasetToCreate,
         datasetCreationParameters,
-        privateRoles,
+        ControlledResourceIamRole.EDITOR,
         userAccessUtils.secondUserAuthRequest());
   }
 }

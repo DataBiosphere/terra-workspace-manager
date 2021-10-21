@@ -77,7 +77,7 @@ public class ResourceDao {
                 Optional.ofNullable(rs.getString("managed_by"))
                     .map(ManagedByType::fromSql)
                     .orElse(null))
-            .associatedApp(
+            .applicationId(
                 Optional.ofNullable(rs.getString("associated_app"))
                     .map(UUID::fromString)
                     .orElse(null))
@@ -577,8 +577,7 @@ public class ResourceDao {
       params
           .addValue("access_scope", controlledResource.getAccessScope().toSql())
           .addValue("managed_by", controlledResource.getManagedBy().toSql())
-          // TODO: add associatedApp to ControlledResource
-          .addValue("associated_app", null)
+          .addValue("associated_app", controlledResource.getApplicationId())
           .addValue("assigned_user", controlledResource.getAssignedUser().orElse(null));
     } else {
       params

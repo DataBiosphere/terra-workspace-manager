@@ -69,9 +69,6 @@ public class ControlledResourceMetadataManager {
    * <p>Throws UnauthorizedException if the user is not permitted to perform the specified action on
    * the resource in question.
    *
-   * <p>Returns the controlled resource object if it exists and the user is permitted to perform the
-   * specified action.
-   *
    * @param userRequest the user's authenticated request
    * @param workspaceId if of the workspace this resource exists in
    * @param resourceId id of the resource in question

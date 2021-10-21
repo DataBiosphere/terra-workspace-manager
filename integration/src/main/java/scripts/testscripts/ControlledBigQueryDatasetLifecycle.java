@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.ResourceMaker;
+import scripts.utils.SamClientUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScriptBase {
@@ -87,6 +88,8 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(reader.userEmail), getWorkspaceId(), IamRole.READER);
 
+    SamClientUtils.dumpResourcePolicy(testUser, server, "workspace", getWorkspaceId().toString());
+
     // Create a cloud context
     String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
     logger.info("Created project {}", projectId);
@@ -94,7 +97,7 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     // Create a shared BigQuery dataset
     GcpBigQueryDatasetResource createdDataset =
         ResourceMaker.makeControlledBigQueryDatasetUserShared(
-            ownerResourceApi, getWorkspaceId(), DATASET_NAME);
+            ownerResourceApi, getWorkspaceId(), DATASET_NAME, null);
     UUID resourceId = createdDataset.getMetadata().getResourceId();
 
     // Retrieve the dataset resource
@@ -203,7 +206,7 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
    * Create and return a table with a single column in this test's dataset. Unlike createDataset,
    * this talks directly to BigQuery and does not go through WSM.
    */
-  private Table createTable(BigQuery bigQueryClient, String projectId) {
+  private Table createTable(BigQuery bigQueryClient, String projectId) throws InterruptedException {
     var tableId = TableId.of(projectId, DATASET_NAME, TABLE_NAME);
     var tableField = Field.of(COLUMN_NAME, StandardSQLTypeName.STRING);
     var schema = Schema.of(tableField);
@@ -211,7 +214,7 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     var tableInfo = TableInfo.of(tableId, tableDefinition);
 
     logger.info("Creating table {} in dataset {}", TABLE_NAME, DATASET_NAME);
-    return bigQueryClient.create(tableInfo);
+    return ClientTestUtils.getWithRetryOnException(() -> bigQueryClient.create(tableInfo));
   }
 
   /** Insert a single String value into the column/table/dataset specified by constant values. */

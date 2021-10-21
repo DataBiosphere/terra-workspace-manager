@@ -1,19 +1,16 @@
 package bio.terra.workspace.service.iam.model;
 
 import bio.terra.common.exception.ValidationException;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.generated.model.ApiControlledResourceIamRole;
 import java.util.Arrays;
 import java.util.Optional;
 
-/**
- * Internal representation of resource-level IAM roles. See {@Code
- * ControlledResourceInheritanceMapping} for the canonical mapping of workspace IamRoles to
- * equivalent ControlledResourceIamRoles.
- */
+/** Internal representation of resource-level IAM roles. */
 public enum ControlledResourceIamRole {
   OWNER("owner", null),
-  // Only private resources have the ASSIGNER role defined in Sam.
-  ASSIGNER("assigner", null),
+  // Only application-private resources have the DELETER role defined in Sam
+  DELETER("deleter", null),
   EDITOR("editor", ApiControlledResourceIamRole.EDITOR),
   WRITER("writer", ApiControlledResourceIamRole.WRITER),
   READER("reader", ApiControlledResourceIamRole.READER);
@@ -26,21 +23,20 @@ public enum ControlledResourceIamRole {
     this.apiRole = apiRole;
   }
 
-  // Some ControlledResourceIamRole.apiRole fields are null, so the below check needs to be careful
-  // not to call .equals on a null role. This also will throw if provided apiModel is null.
+  /**
+   * @param apiModel incoming API IAM role - cannot be null
+   * @return internal model IAM role
+   */
   public static ControlledResourceIamRole fromApiModel(ApiControlledResourceIamRole apiModel) {
     if (apiModel == null) {
-      throw new ValidationException("Non-null ApiControlledResourceIamRole required.");
+      throw new InternalLogicException("Do not call fromApiModel with null argument");
     }
     Optional<ControlledResourceIamRole> result =
         Arrays.stream(ControlledResourceIamRole.values())
             .filter(x -> apiModel.equals(x.apiRole))
             .findFirst();
     return result.orElseThrow(
-        () ->
-            new RuntimeException(
-                "No ControlledResourceIamRole enum found corresponding to model role "
-                    + apiModel.toString()));
+        () -> new ValidationException("Invalid ControlledResourceIamRole specified" + apiModel));
   }
 
   public static ControlledResourceIamRole fromSamRole(String samRole) {
@@ -50,8 +46,12 @@ public enum ControlledResourceIamRole {
             .findFirst();
     return result.orElseThrow(
         () ->
-            new RuntimeException(
+            new InternalLogicException(
                 "No ControlledResourceIamRole enum found corresponding to Sam role " + samRole));
+  }
+
+  public ApiControlledResourceIamRole toApiModel() {
+    return apiRole;
   }
 
   public String toSamRole() {

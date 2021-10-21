@@ -26,6 +26,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
       @JsonProperty("assignedUser") String assignedUser,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
+      @JsonProperty("applicationId") UUID applicationId,
       @JsonProperty("bucketName") String bucketName) {
 
     super(
@@ -36,7 +37,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
         cloningInstructions,
         assignedUser,
         accessScope,
-        managedBy);
+        managedBy,
+        applicationId);
     this.bucketName = bucketName;
     validate();
   }
@@ -116,6 +118,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
     private String assignedUser;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
+    private UUID applicationId;
     private String bucketName;
 
     public ControlledGcsBucketResource.Builder workspaceId(UUID workspaceId) {
@@ -164,6 +167,11 @@ public class ControlledGcsBucketResource extends ControlledResource {
       return this;
     }
 
+    public Builder applicationId(UUID applicationId) {
+      this.applicationId = applicationId;
+      return this;
+    }
+
     public ControlledGcsBucketResource build() {
       return new ControlledGcsBucketResource(
           workspaceId,
@@ -174,6 +182,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
           assignedUser,
           accessScope,
           managedBy,
+          applicationId,
           bucketName);
     }
   }
