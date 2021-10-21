@@ -10,7 +10,6 @@ import bio.terra.workspace.db.exception.ApplicationNotFoundException;
 import bio.terra.workspace.db.exception.InvalidApplicationStateException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WsmApplicationKeys;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import bio.terra.workspace.service.workspace.model.WsmApplicationState;
@@ -23,7 +22,6 @@ import org.slf4j.LoggerFactory;
 // application.
 public class ApplicationAblePrecheckStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(ApplicationAblePrecheckStep.class);
-
   private final ApplicationDao applicationDao;
   private final SamService samService;
   private final AuthenticatedUserRequest userRequest;
@@ -74,8 +72,8 @@ public class ApplicationAblePrecheckStep implements Step {
 
     // See if the application already has APPLICATION role for the workspace
     boolean enabledSam =
-        samService.doesUserHaveWorkspaceRole(
-            workspaceId, WsmIamRole.APPLICATION, application.getServiceAccount(), userRequest);
+        samService.isApplicationEnabledInSam(
+            workspaceId, application.getServiceAccount(), userRequest);
     workingMap.put(
         WsmApplicationKeys.APPLICATION_ABLE_SAM, computeCorrectState(ableEnum, enabledSam));
 
