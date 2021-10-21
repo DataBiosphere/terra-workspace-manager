@@ -12,6 +12,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String DESCRIPTION = "descriptionId";
   public static final String USER_TO_REMOVE = "userToRemove";
   public static final String ROLE_TO_REMOVE = "roleToRemove";
+  public static final String APPLICATION_ID = "applicationId";
 
   private WorkspaceFlightMapKeys() {}
 
@@ -80,4 +81,15 @@ public final class WorkspaceFlightMapKeys {
 
     private PetSaKeys() {}
   }
+
+  /** Workspace application keys */
+  public static class WsmApplicationKeys {
+    public static final String WSM_APPLICATION = "wsmApplication";
+    public static final String APPLICATION_ABLE_DAO = "applicationAbleDao";
+    public static final String APPLICATION_ABLE_SAM = "applicationAbleSam";
+    public static final String APPLICATION_ABLE_ENUM = "applicationAbleEnum";
+
+    private WsmApplicationKeys() {}
+  }
+
 }

@@ -177,8 +177,8 @@ public class ApplicationDao {
   }
 
   /**
-   * Enable an application in a workspace - do not perform the application state check. This is only
-   * used in testing.
+   * Enable an application in a workspace - do not perform the application state check.
+   * This is only used in testing.
    *
    * <p>It is not an error to enable an already enabled application.
    *
@@ -273,6 +273,17 @@ public class ApplicationDao {
       throw new ApplicationNotFoundException(
           String.format("Application %s not found.", applicationId.toString()));
     }
+  }
+
+  /**
+   * Retrieve a configured application
+   * @param applicationId id of the application to get
+   * @return WsmApplication
+   * @throws ApplicationNotFoundException when application is not found
+   */
+  @ReadTransaction
+  public WsmApplication getApplication(UUID applicationId) throws ApplicationNotFoundException {
+    return getApplicationOrThrow(applicationId);
   }
 
   // internal application lookup
