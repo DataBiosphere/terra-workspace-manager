@@ -22,7 +22,7 @@ runs:
         export TEST_RUNNER_SERVER_SPECIFICATION_FILE=${{ inputs.test-server }}
         resultsDir=/tmp/results$RANDOM
         echo "Running test suite ${{ inputs.test }} on ${{ inputs.test-server }}"
-        ../gradlew :integration:runTest --args="${{ inputs.test }} $resultsDir" --scan
+        ../gradlew :integration:runTest --args="${{ inputs.test }} $resultsDir" --scan --refresh-dependencies
         testResult=$?
         echo "Test result is $testResult"
         echo "Upload test results to Google Bucket"
