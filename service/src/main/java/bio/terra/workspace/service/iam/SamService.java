@@ -565,7 +565,7 @@ public class SamService {
   public boolean doesUserHaveWorkspaceRole(
       UUID workspaceId, WsmIamRole role, String email, AuthenticatedUserRequest userRequest) {
     try {
-      ResourcesApi resourcesApi = samResourcesApi(getWsmServiceAccountToken());
+      ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
 
       // This list is only the top-level role assignments and does not include users inherited
       // from groups. Since the use is for the application role, where WSM is adding the
