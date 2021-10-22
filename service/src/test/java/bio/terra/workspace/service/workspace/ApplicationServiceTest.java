@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -171,12 +173,12 @@ public class ApplicationServiceTest extends BaseUnitTest {
     // explicit get
     WsmWorkspaceApplication wsmApp =
         appService.getWorkspaceApplication(USER_REQUEST, workspaceId, LEO_UUID);
-    assertEquals(wsmApp.getApplication(), LEO_APP);
+    assertEquals(LEO_APP, wsmApp.getApplication());
     assertTrue(wsmApp.isEnabled());
 
     // get from workspace2
     wsmApp = appService.getWorkspaceApplication(USER_REQUEST, workspaceId2, LEO_UUID);
-    assertEquals(wsmApp.getApplication(), LEO_APP);
+    assertEquals(LEO_APP, wsmApp.getApplication());
     assertFalse(wsmApp.isEnabled());
 
     // enable Leo in workspace2
@@ -191,21 +193,22 @@ public class ApplicationServiceTest extends BaseUnitTest {
 
     // make sure Leo is still enabled in workspace2
     wsmApp = appService.getWorkspaceApplication(USER_REQUEST, workspaceId2, LEO_UUID);
-    assertEquals(wsmApp.getApplication(), LEO_APP);
+    assertEquals(LEO_APP, wsmApp.getApplication());
     assertTrue(wsmApp.isEnabled());
   }
 
   private void enumerateCheck(boolean leoEnabled, boolean carmenEnabled, boolean normEnabled) {
     List<WsmWorkspaceApplication> wsmAppList =
         appService.listWorkspaceApplications(USER_REQUEST, workspaceId, 0, 10);
-    assertEquals(wsmAppList.size(), 3);
+    // There may be stray applications in the DB, so we make sure that we at least have ours
+    assertThat(wsmAppList.size(), greaterThanOrEqualTo(3));
     for (WsmWorkspaceApplication wsmApp : wsmAppList) {
       if (wsmApp.getApplication().getApplicationId().equals(LEO_UUID)) {
-        assertEquals(wsmApp.isEnabled(), leoEnabled);
+        assertEquals(leoEnabled, wsmApp.isEnabled());
       } else if (wsmApp.getApplication().getApplicationId().equals(CARMEN_UUID)) {
-        assertEquals(wsmApp.isEnabled(), carmenEnabled);
+        assertEquals(carmenEnabled, wsmApp.isEnabled());
       } else if (wsmApp.getApplication().getApplicationId().equals(NORM_UUID)) {
-        assertEquals(wsmApp.isEnabled(), normEnabled);
+        assertEquals(normEnabled, wsmApp.isEnabled());
       }
     }
   }
