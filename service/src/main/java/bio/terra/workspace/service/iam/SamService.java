@@ -359,19 +359,7 @@ public class SamService {
         SamConstants.SAM_WORKSPACE_RESOURCE,
         workspaceId.toString(),
         samActionToModifyRole(role));
-    grantWorkspaceRoleWorker(workspaceId, userRequest.getRequiredToken(), role, email);
-  }
-
-  @Traced
-  public void grantWorkspaceRoleAsWsm(UUID workspaceId, WsmIamRole role, String email)
-      throws InterruptedException {
-    stageService.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
-    grantWorkspaceRoleWorker(workspaceId, getWsmServiceAccountToken(), role, email);
-  }
-
-  private void grantWorkspaceRoleWorker(
-      UUID workspaceId, String token, WsmIamRole role, String email) throws InterruptedException {
-    ResourcesApi resourceApi = samResourcesApi(token);
+    ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       // GCP always uses lowercase email identifiers, so we do the same here for consistency.
       SamRetry.retry(
@@ -405,18 +393,7 @@ public class SamService {
         SamConstants.SAM_WORKSPACE_RESOURCE,
         workspaceId.toString(),
         samActionToModifyRole(role));
-    removeWorkspaceRoleWorker(workspaceId, userRequest.getRequiredToken(), role, email);
-  }
-
-  @Traced
-  public void removeWorkspaceRoleAsWsm(UUID workspaceId, WsmIamRole role, String email)
-      throws InterruptedException {
-    removeWorkspaceRoleWorker(workspaceId, getWsmServiceAccountToken(), role, email);
-  }
-
-  private void removeWorkspaceRoleWorker(
-      UUID workspaceId, String token, WsmIamRole role, String email) throws InterruptedException {
-    ResourcesApi resourceApi = samResourcesApi(token);
+    ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       SamRetry.retry(
           () ->

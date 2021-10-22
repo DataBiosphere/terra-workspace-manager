@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 // application.
 public class ApplicationAblePrecheckStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(ApplicationAblePrecheckStep.class);
+
   private final ApplicationDao applicationDao;
   private final SamService samService;
   private final AuthenticatedUserRequest userRequest;

@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 public class ApplicationAbleIamStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(ApplicationAbleIamStep.class);
+
   private final SamService samService;
   private final AuthenticatedUserRequest userRequest;
   private final UUID workspaceId;

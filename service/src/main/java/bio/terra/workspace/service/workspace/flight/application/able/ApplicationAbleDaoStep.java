@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 public class ApplicationAbleDaoStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(ApplicationAbleDaoStep.class);
+
   private final ApplicationDao applicationDao;
   private final UUID workspaceId;
   private final UUID applicationId;
