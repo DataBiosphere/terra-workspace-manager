@@ -91,8 +91,10 @@ public class WsmApplicationService {
             userRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
     stageService.assertMcWorkspace(workspace, "enable-disableWorkspaceApplication");
 
-    String description = String.format("Enable or disable application %s on workspace %s",
-        applicationId.toString(), workspaceId.toString());
+    String description =
+        String.format(
+            "%s application %s on workspace %s",
+            ableEnum.name().toLowerCase(), applicationId.toString(), workspaceId.toString());
     JobBuilder job =
         jobService
             .newJob(

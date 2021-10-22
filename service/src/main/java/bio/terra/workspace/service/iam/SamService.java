@@ -352,10 +352,7 @@ public class SamService {
    */
   @Traced
   public void grantWorkspaceRole(
-      UUID workspaceId,
-      AuthenticatedUserRequest userRequest,
-      WsmIamRole role,
-      String email)
+      UUID workspaceId, AuthenticatedUserRequest userRequest, WsmIamRole role, String email)
       throws InterruptedException {
     stageService.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
     checkAuthz(
@@ -363,22 +360,7 @@ public class SamService {
         SamConstants.SAM_WORKSPACE_RESOURCE,
         workspaceId.toString(),
         samActionToModifyRole(role));
-    grantWorkspaceRoleWorker(workspaceId, userRequest.getRequiredToken(), role, email);
-  }
-
-  @Traced
-  public void grantWorkspaceRoleAsWsm(
-      UUID workspaceId,
-      WsmIamRole role,
-      String email)
-      throws InterruptedException {
-    stageService.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
-    grantWorkspaceRoleWorker(workspaceId, getWsmServiceAccountToken(), role, email);
-  }
-
-  private void grantWorkspaceRoleWorker(
-      UUID workspaceId, String token, WsmIamRole role, String email) throws InterruptedException {
-    ResourcesApi resourceApi = samResourcesApi(token);
+    ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       // GCP always uses lowercase email identifiers, so we do the same here for consistency.
       SamRetry.retry(
@@ -412,19 +394,7 @@ public class SamService {
         SamConstants.SAM_WORKSPACE_RESOURCE,
         workspaceId.toString(),
         samActionToModifyRole(role));
-    removeWorkspaceRoleWorker(workspaceId, userRequest.getRequiredToken(), role, email);
-  }
-
-  @Traced
-  public void removeWorkspaceRoleAsWsm(
-      UUID workspaceId, WsmIamRole role, String email)
-      throws InterruptedException {
-    removeWorkspaceRoleWorker(workspaceId, getWsmServiceAccountToken(), role, email);
-  }
-
-  private void removeWorkspaceRoleWorker(
-      UUID workspaceId, String token, WsmIamRole role, String email) throws InterruptedException {
-    ResourcesApi resourceApi = samResourcesApi(token);
+    ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       SamRetry.retry(
           () ->
@@ -592,10 +562,14 @@ public class SamService {
   }
 
   @Traced
-  public boolean doesUserHaveWorkspaceRole(UUID workspaceId, WsmIamRole role, String email) {
+  public boolean doesUserHaveWorkspaceRole(
+      UUID workspaceId, WsmIamRole role, String email, AuthenticatedUserRequest userRequest) {
     try {
       ResourcesApi resourcesApi = samResourcesApi(getWsmServiceAccountToken());
 
+      // This list is only the top-level role assignments and does not include users inherited
+      // from groups. Since the use is for the application role, where WSM is adding the
+      // application's SA to the role, all valid applications should be at the top-level.
       List<String> emailList =
           resourcesApi
               .getPolicyV2(

@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ApplicationAbleDaoStep implements Step {
-  private final static Logger logger = LoggerFactory.getLogger(ApplicationAbleDaoStep.class);
+  private static final Logger logger = LoggerFactory.getLogger(ApplicationAbleDaoStep.class);
 
   private final ApplicationDao applicationDao;
   private final UUID workspaceId;
@@ -23,10 +23,7 @@ public class ApplicationAbleDaoStep implements Step {
   private final AbleEnum ableEnum;
 
   public ApplicationAbleDaoStep(
-      ApplicationDao applicationDao,
-      UUID workspaceId,
-      UUID applicationId,
-      AbleEnum ableEnum) {
+      ApplicationDao applicationDao, UUID workspaceId, UUID applicationId, AbleEnum ableEnum) {
     this.applicationDao = applicationDao;
     this.workspaceId = workspaceId;
     this.applicationId = applicationId;
@@ -38,9 +35,7 @@ public class ApplicationAbleDaoStep implements Step {
     FlightMap workingMap = context.getWorkingMap();
 
     FlightUtils.validateRequiredEntries(
-        workingMap,
-        WsmApplicationKeys.APPLICATION_ABLE_DAO,
-        WsmApplicationKeys.WSM_APPLICATION);
+        workingMap, WsmApplicationKeys.APPLICATION_ABLE_DAO, WsmApplicationKeys.WSM_APPLICATION);
 
     // if the application was in the correct database state in precheck, we do nothing
     if (workingMap.get(WsmApplicationKeys.APPLICATION_ABLE_DAO, Boolean.class)) {
@@ -73,5 +68,4 @@ public class ApplicationAbleDaoStep implements Step {
     }
     return StepResult.getStepResultSuccess();
   }
-
 }

@@ -8,6 +8,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.exception.ApplicationNotFoundException;
 import bio.terra.workspace.db.exception.InvalidApplicationStateException;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WsmApplicationKeys;
@@ -21,10 +22,11 @@ import org.slf4j.LoggerFactory;
 // This step is shared by enable and disable to check the current enabled states of the
 // application.
 public class ApplicationAblePrecheckStep implements Step {
-  private final static Logger logger = LoggerFactory.getLogger(ApplicationAblePrecheckStep.class);
+  private static final Logger logger = LoggerFactory.getLogger(ApplicationAblePrecheckStep.class);
 
   private final ApplicationDao applicationDao;
   private final SamService samService;
+  private final AuthenticatedUserRequest userRequest;
   private final UUID workspaceId;
   private final UUID applicationId;
   private final AbleEnum ableEnum;
@@ -32,11 +34,13 @@ public class ApplicationAblePrecheckStep implements Step {
   public ApplicationAblePrecheckStep(
       ApplicationDao applicationDao,
       SamService samService,
+      AuthenticatedUserRequest userRequest,
       UUID workspaceId,
       UUID applicationId,
       AbleEnum ableEnum) {
     this.applicationDao = applicationDao;
     this.samService = samService;
+    this.userRequest = userRequest;
     this.workspaceId = workspaceId;
     this.applicationId = applicationId;
     this.ableEnum = ableEnum;
@@ -61,18 +65,17 @@ public class ApplicationAblePrecheckStep implements Step {
     WsmWorkspaceApplication workspaceApp;
     try {
       workspaceApp = applicationDao.getWorkspaceApplication(workspaceId, applicationId);
-      workingMap.put(WsmApplicationKeys.APPLICATION_ABLE_DAO,
+      workingMap.put(
+          WsmApplicationKeys.APPLICATION_ABLE_DAO,
           computeCorrectState(ableEnum, workspaceApp.isEnabled()));
     } catch (ApplicationNotFoundException e) {
-      workingMap.put(WsmApplicationKeys.APPLICATION_ABLE_DAO,
-          computeCorrectState(ableEnum, false));
+      workingMap.put(WsmApplicationKeys.APPLICATION_ABLE_DAO, computeCorrectState(ableEnum, false));
     }
 
     // See if the application already has APPLICATION role for the workspace
-    boolean enabledSam = samService.doesUserHaveWorkspaceRole(
-        workspaceId,
-        WsmIamRole.APPLICATION,
-        application.getServiceAccount());
+    boolean enabledSam =
+        samService.doesUserHaveWorkspaceRole(
+            workspaceId, WsmIamRole.APPLICATION, application.getServiceAccount(), userRequest);
     workingMap.put(WsmApplicationKeys.APPLICATION_ABLE_SAM, enabledSam);
 
     return StepResult.getStepResultSuccess();

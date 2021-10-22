@@ -6,6 +6,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WsmApplicationKeys;
@@ -15,17 +16,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ApplicationAbleIamStep implements Step {
-  private final static Logger logger = LoggerFactory.getLogger(ApplicationAbleIamStep.class);
+  private static final Logger logger = LoggerFactory.getLogger(ApplicationAbleIamStep.class);
 
   private final SamService samService;
+  private final AuthenticatedUserRequest userRequest;
   private final UUID workspaceId;
   private final AbleEnum ableEnum;
 
   public ApplicationAbleIamStep(
       SamService samService,
+      AuthenticatedUserRequest userRequest,
       UUID workspaceId,
       AbleEnum ableEnum) {
     this.samService = samService;
+    this.userRequest = userRequest;
     this.workspaceId = workspaceId;
     this.ableEnum = ableEnum;
   }
@@ -35,9 +39,7 @@ public class ApplicationAbleIamStep implements Step {
     FlightMap workingMap = context.getWorkingMap();
 
     FlightUtils.validateRequiredEntries(
-        workingMap,
-        WsmApplicationKeys.WSM_APPLICATION,
-        WsmApplicationKeys.APPLICATION_ABLE_SAM);
+        workingMap, WsmApplicationKeys.WSM_APPLICATION, WsmApplicationKeys.APPLICATION_ABLE_SAM);
 
     // if the application was in the correct Sam state in precheck, then we do nothing
     if (workingMap.get(WsmApplicationKeys.APPLICATION_ABLE_SAM, Boolean.class)) {
@@ -48,11 +50,11 @@ public class ApplicationAbleIamStep implements Step {
         workingMap.get(WsmApplicationKeys.WSM_APPLICATION, WsmApplication.class);
 
     if (ableEnum == AbleEnum.ENABLE) {
-      samService.grantWorkspaceRoleAsWsm(
-          workspaceId, WsmIamRole.APPLICATION, application.getServiceAccount());
+      samService.grantWorkspaceRole(
+          workspaceId, userRequest, WsmIamRole.APPLICATION, application.getServiceAccount());
     } else {
-      samService.removeWorkspaceRoleAsWsm(
-          workspaceId, WsmIamRole.APPLICATION, application.getServiceAccount());
+      samService.removeWorkspaceRole(
+          workspaceId, userRequest, WsmIamRole.APPLICATION, application.getServiceAccount());
     }
 
     return StepResult.getStepResultSuccess();
@@ -70,11 +72,11 @@ public class ApplicationAbleIamStep implements Step {
     WsmApplication application =
         workingMap.get(WsmApplicationKeys.WSM_APPLICATION, WsmApplication.class);
     if (ableEnum == AbleEnum.ENABLE) {
-      samService.removeWorkspaceRoleAsWsm(
-          workspaceId, WsmIamRole.APPLICATION, application.getServiceAccount());
+      samService.removeWorkspaceRole(
+          workspaceId, userRequest, WsmIamRole.APPLICATION, application.getServiceAccount());
     } else {
-      samService.grantWorkspaceRoleAsWsm(
-          workspaceId, WsmIamRole.APPLICATION, application.getServiceAccount());
+      samService.grantWorkspaceRole(
+          workspaceId, userRequest, WsmIamRole.APPLICATION, application.getServiceAccount());
     }
 
     return StepResult.getStepResultSuccess();
