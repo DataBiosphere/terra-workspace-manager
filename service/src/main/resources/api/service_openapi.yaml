@@ -1418,6 +1418,7 @@ components:
       name: offset
       in: query
       description: The number of items to skip before starting to collect the result set.
+      required: false
       schema:
         type: integer
         minimum: 0
@@ -1427,6 +1428,7 @@ components:
       name: limit
       in: query
       description: The maximum number of items to return. Default 10
+      required: false
       schema:
         type: integer
         minimum: 1
@@ -1915,6 +1917,7 @@ components:
     GcpContext:
       type: object
       description: The GCP cloud context associated with a workspace.
+      required: [projectId]
       properties:
         projectId:
           description: The ID of Gcp Project associated with the workspace.
@@ -1983,7 +1986,7 @@ components:
     RoleBinding:
       description: A binding between an IAM role and users with that role
       type: object
-      required: [role]
+      required: [role, members]
       properties:
         role:
           $ref: '#/components/schemas/IamRole'
@@ -2010,6 +2013,7 @@ components:
     CreateControlledGcpGcsBucketRequestBody:
       description: Payload for requesting a new controlled GCS bucket resource.
       type: object
+      required: [common, gcsBucket]
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
@@ -2019,6 +2023,7 @@ components:
     CreateControlledGcpBigQueryDatasetRequestBody:
       description: Payload for requesting a new controlled BigQuery dataset resource.
       type: object
+      required: [common, dataset]
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
@@ -2028,6 +2033,7 @@ components:
     CreateControlledGcpAiNotebookInstanceRequestBody:
       description: Payload for requesting a new controlled GCS bucket resource.
       type: object
+      required: [common, aiNotebookInstance, jobControl]
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
@@ -2056,6 +2062,7 @@ components:
     PrivateResourceUser:
       description: User and role information for a user of a private resource.
       type: object
+      required: [userName, privateResourceIamRoles]
       properties:
         userName:
           description: Email address for the user of the resource
@@ -2159,6 +2166,7 @@ components:
     GcpGcsBucketUpdateParameters:
       description: >-
         Parameters that may be changed by a user. Location and Bucket name are fixed upon create.
+      type: object
       properties:
         defaultStorageClass:
           $ref: '#/components/schemas/GcpGcsBucketDefaultStorageClass'
@@ -2180,6 +2188,7 @@ components:
         Options to control automatic deletion or storage class change for a bucket.
         Described at https://cloud.google.com/storage/docs/lifecycle.
       type: object
+      required: [rules]
       properties:
         rules:
           description: List of rules for this bucket
@@ -2190,6 +2199,7 @@ components:
     GcpGcsBucketLifecycleRule:
       description: A lifecycle rule for a bucket.
       type: object
+      required: [action]
       properties:
         action:
           $ref: '#/components/schemas/GcpGcsBucketLifecycleRuleAction'
@@ -2199,6 +2209,7 @@ components:
     GcpGcsBucketLifecycleRuleAction:
       description: The lifecycle action to take. See https://cloud.google.com/storage/docs/lifecycle#actions.
       type: object
+      required: [storageClass, type]
       properties:
         storageClass:
           $ref: '#/components/schemas/GcpGcsBucketDefaultStorageClass'
@@ -2669,6 +2680,7 @@ components:
         configuration has enough vCPUs and memory to support the machineType you have selected.
         See https://cloud.google.com/ai-platform/notebooks/docs/reference/rest/v1/projects.locations.instances#AcceleratorConfig
       type: object
+      required: [type, coreCount]
       properties:
         type:
           description: Type of this accelerator
@@ -2799,6 +2811,7 @@ components:
         Bucket properties included in post-creation, get, and update. Others must be
         retrieved from GCS using the name.
       type: object
+      required: [bucketName]
       properties:
         bucketName:
           description: Name of created bucket (not the resource name).
@@ -2820,6 +2833,7 @@ components:
         AI Notebook instance properties included in post-creation, get, and update. Others must be
         retrieved from GCP using the specification.
       type: object
+      required: [projectId, location, instanceId]
       properties:
         projectId:
           description: The GCP project id for the project containing the notebook instance.
@@ -2860,6 +2874,7 @@ components:
 
     ResourceDescription:
       type: object
+      required: [metadata, resourceAttributes]
       properties:
         metadata:
           description: the resource metadata common to all resources
