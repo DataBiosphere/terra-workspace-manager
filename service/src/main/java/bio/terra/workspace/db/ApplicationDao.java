@@ -275,6 +275,18 @@ public class ApplicationDao {
     }
   }
 
+  /**
+   * Retrieve a configured application
+   *
+   * @param applicationId id of the application to get
+   * @return WsmApplication
+   * @throws ApplicationNotFoundException when application is not found
+   */
+  @ReadTransaction
+  public WsmApplication getApplication(UUID applicationId) throws ApplicationNotFoundException {
+    return getApplicationOrThrow(applicationId);
+  }
+
   // internal application lookup
   private WsmApplication getApplicationOrThrow(UUID applicationId) {
     final String sql = APPLICATION_QUERY + " WHERE application_id = :application_id";

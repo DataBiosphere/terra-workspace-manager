@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
@@ -62,6 +63,7 @@ public class SamService {
   private final StageService stageService;
 
   private final Set<String> SAM_OAUTH_SCOPES = ImmutableSet.of("openid", "email", "profile");
+  private final Logger logger = LoggerFactory.getLogger(SamService.class);
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
@@ -70,8 +72,6 @@ public class SamService {
     this.stageService = stageService;
     this.wsmServiceAccountInitialized = false;
   }
-
-  private final Logger logger = LoggerFactory.getLogger(SamService.class);
 
   private ApiClient getApiClient(String accessToken) {
     ApiClient client = new ApiClient();
@@ -93,11 +93,15 @@ public class SamService {
   }
 
   @VisibleForTesting
-  public String getWsmServiceAccountToken() throws IOException {
-    GoogleCredentials creds =
-        GoogleCredentials.getApplicationDefault().createScoped(SAM_OAUTH_SCOPES);
-    creds.refreshIfExpired();
-    return creds.getAccessToken().getTokenValue();
+  public String getWsmServiceAccountToken() {
+    try {
+      GoogleCredentials creds =
+          GoogleCredentials.getApplicationDefault().createScoped(SAM_OAUTH_SCOPES);
+      creds.refreshIfExpired();
+      return creds.getAccessToken().getTokenValue();
+    } catch (IOException e) {
+      throw new InternalServerErrorException("Internal server error retrieving WSM credentials", e);
+    }
   }
 
   /**
@@ -125,7 +129,7 @@ public class SamService {
       String wsmAccessToken = null;
       try {
         wsmAccessToken = getWsmServiceAccountToken();
-      } catch (IOException e) {
+      } catch (InternalServerErrorException e) {
         // In cases where WSM is not running as a service account (e.g. unit tests), the above call
         // will throw. This can be ignored now and later when the credentials are used again.
         logger.warn(
@@ -398,7 +402,7 @@ public class SamService {
                   SamConstants.SAM_WORKSPACE_RESOURCE,
                   workspaceId.toString(),
                   role.toSamRole(),
-                  email));
+                  email.toLowerCase()));
       logger.info(
           "Removed role {} from user {} in workspace {}", role.toSamRole(), email, workspaceId);
     } catch (ApiException apiException) {
@@ -452,9 +456,6 @@ public class SamService {
           role.toSamRole(),
           email,
           resource.getResourceId());
-    } catch (IOException credentialException) {
-      throw new InternalServerErrorException(
-          "Internal server error removing resource role in Sam", credentialException);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Sam error removing resource role in Sam", apiException);
     }
@@ -505,9 +506,6 @@ public class SamService {
           role.toSamRole(),
           email,
           resource.getResourceId());
-    } catch (IOException credentialException) {
-      throw new InternalServerErrorException(
-          "Internal server error restoring resource role in Sam", credentialException);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Sam error restoring resource role in Sam", apiException);
     }
@@ -560,6 +558,33 @@ public class SamService {
           .getMemberEmails();
     } catch (ApiException e) {
       throw SamExceptionFactory.create("Error retrieving workspace policy members from Sam", e);
+    }
+  }
+
+  @Traced
+  public boolean doesUserHaveWorkspaceRole(
+      UUID workspaceId, WsmIamRole role, String email, AuthenticatedUserRequest userRequest) {
+    try {
+      ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
+
+      // This list is only the top-level role assignments and does not include users inherited
+      // from groups. Since the use is for the application role, where WSM is adding the
+      // application's SA to the role, all valid applications should be at the top-level.
+      List<String> emailList =
+          resourcesApi
+              .getPolicyV2(
+                  SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole())
+              .getMemberEmails();
+
+      for (String samEmail : emailList) {
+        if (StringUtils.equalsIgnoreCase(samEmail, email)) {
+          return true;
+        }
+      }
+      return false;
+
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Sam error querying role in Sam", apiException);
     }
   }
 
@@ -775,9 +800,6 @@ public class SamService {
           .map(AccessPolicyResponseEntryV2::getPolicyName)
           .map(ControlledResourceIamRole::fromSamRole)
           .collect(Collectors.toList());
-    } catch (IOException credentialException) {
-      throw new InternalServerErrorException(
-          "Internal server error reading private resource roles from Sam", credentialException);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Sam error removing resource role in Sam", apiException);
     }
@@ -841,14 +863,13 @@ public class SamService {
               .addRolesItem(ControlledResourceIamRole.OWNER.toSamRole())
               .addMemberEmailsItem(wsmSaEmail);
       request.putPoliciesItem(ControlledResourceIamRole.OWNER.toSamRole(), ownerPolicy);
-    } catch (IOException e) {
+    } catch (InternalServerErrorException e) {
       // In cases where WSM is not running as a service account (e.g. unit tests), the above call to
       // get application default credentials will fail. This is fine, as those cases don't create
       // real resources.
       logger.warn(
           "Failed to add WSM service account as resource owner Sam. This is expected for tests.",
           e);
-      return;
     }
   }
 

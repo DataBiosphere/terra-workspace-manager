@@ -5,8 +5,14 @@ import bio.terra.workspace.app.configuration.external.WsmApplicationConfiguratio
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.job.JobBuilder;
+import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WsmApplicationKeys;
+import bio.terra.workspace.service.workspace.flight.application.able.AbleEnum;
+import bio.terra.workspace.service.workspace.flight.application.able.ApplicationAbleFlight;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import bio.terra.workspace.service.workspace.model.WsmApplicationState;
@@ -18,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,24 +40,29 @@ public class WsmApplicationService {
   private static final Logger logger = LoggerFactory.getLogger(WsmApplicationService.class);
 
   private final ApplicationDao applicationDao;
+  private final JobService jobService;
   private final StageService stageService;
   private final WsmApplicationConfiguration wsmApplicationConfiguration;
   private final WorkspaceService workspaceService;
+
   // -- Testing Support --
   // Unlike most code, the configuration code runs at startup time and does not have any output
   // beyond writing to the log. In order to test it, we introduce a test mode and wrap the error
   // logging. When test mode is enabled, the wrapper saves a string array of log messages in
-  // addition to calling the logger.
+  // addition to calling the logger. We can then retrieve that log to check for the expected
+  // test outcomes.
   private boolean testMode = false;
   private List<String> errorList;
 
   @Autowired
   public WsmApplicationService(
       ApplicationDao applicationDao,
+      JobService jobService,
       StageService stageService,
       WsmApplicationConfiguration wsmApplicationConfiguration,
       WorkspaceService workspaceService) {
     this.applicationDao = applicationDao;
+    this.jobService = jobService;
     this.stageService = stageService;
     this.wsmApplicationConfiguration = wsmApplicationConfiguration;
     this.workspaceService = workspaceService;
@@ -60,20 +72,45 @@ public class WsmApplicationService {
 
   public WsmWorkspaceApplication disableWorkspaceApplication(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID applicationId) {
-    Workspace workspace =
-        workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
-    stageService.assertMcWorkspace(workspace, "disableWorkspaceApplication");
-    return applicationDao.disableWorkspaceApplication(workspaceId, applicationId);
+    return commonAbleJob(userRequest, workspaceId, applicationId, AbleEnum.DISABLE);
   }
 
   public WsmWorkspaceApplication enableWorkspaceApplication(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID applicationId) {
+    return commonAbleJob(userRequest, workspaceId, applicationId, AbleEnum.ENABLE);
+  }
+
+  // Common method to launch and wait for enable and disable flights.
+  private WsmWorkspaceApplication commonAbleJob(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      UUID applicationId,
+      AbleEnum ableEnum) {
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
             userRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
-    stageService.assertMcWorkspace(workspace, "enableWorkspaceApplication");
-    return applicationDao.enableWorkspaceApplication(workspaceId, applicationId);
+    stageService.assertMcWorkspace(
+        workspace,
+        (ableEnum == AbleEnum.ENABLE)
+            ? "enableWorkspaceApplication"
+            : "disableWorkspaceApplication");
+
+    String description =
+        String.format(
+            "%s application %s on workspace %s",
+            ableEnum.name().toLowerCase(), applicationId.toString(), workspaceId.toString());
+    JobBuilder job =
+        jobService
+            .newJob(
+                description,
+                UUID.randomUUID().toString(),
+                ApplicationAbleFlight.class,
+                null,
+                userRequest)
+            .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId)
+            .addParameter(WorkspaceFlightMapKeys.APPLICATION_ID, applicationId)
+            .addParameter(WsmApplicationKeys.APPLICATION_ABLE_ENUM, ableEnum);
+    return job.submitAndWait(WsmWorkspaceApplication.class);
   }
 
   public WsmWorkspaceApplication getWorkspaceApplication(
@@ -230,13 +267,15 @@ public class WsmApplicationService {
         logError("Invalid application configuration: service account is not a valid email address");
         return Optional.empty();
       }
+      // We keep everything homogeneously lowercase
+      String serviceAccount = StringUtils.lowerCase(config.getServiceAccount());
 
       return Optional.of(
           new WsmApplication()
               .applicationId(applicationId)
               .displayName(config.getName())
               .description(config.getDescription())
-              .serviceAccount(config.getServiceAccount())
+              .serviceAccount(serviceAccount)
               .state(state));
 
     } catch (IllegalArgumentException e) {
