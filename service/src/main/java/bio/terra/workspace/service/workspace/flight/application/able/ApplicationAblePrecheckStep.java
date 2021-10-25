@@ -76,7 +76,8 @@ public class ApplicationAblePrecheckStep implements Step {
     boolean enabledSam =
         samService.doesUserHaveWorkspaceRole(
             workspaceId, WsmIamRole.APPLICATION, application.getServiceAccount(), userRequest);
-    workingMap.put(WsmApplicationKeys.APPLICATION_ABLE_SAM, enabledSam);
+    workingMap.put(
+        WsmApplicationKeys.APPLICATION_ABLE_SAM, computeCorrectState(ableEnum, enabledSam));
 
     return StepResult.getStepResultSuccess();
   }

@@ -89,7 +89,11 @@ public class WsmApplicationService {
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
             userRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
-    stageService.assertMcWorkspace(workspace, "enable-disableWorkspaceApplication");
+    stageService.assertMcWorkspace(
+        workspace,
+        (ableEnum == AbleEnum.ENABLE)
+            ? "enableWorkspaceApplication"
+            : "disableWorkspaceApplication");
 
     String description =
         String.format(
