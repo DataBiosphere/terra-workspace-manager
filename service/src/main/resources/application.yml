@@ -21,6 +21,12 @@ env:
 
 # Below here is non-deployment-specific
 
+# When the target is 'local' the write-config.sh script will generate this properties file. It
+# contains the configuration of the WSM test application. We can use that application in our
+# integration testing to make sure the application code paths are working. However, we do not
+# want it to appear in production environments.
+spring.config.import: optional:file:../config/local-properties.yml
+
 logging.pattern.level: '%X{requestId} %5p'
 
 server:

@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.workspace;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -96,8 +99,8 @@ public class ApplicationUnitTest extends BaseUnitTest {
     testApp.setName(GOOD_NAME);
     testApp.setDescription(GOOD_DESC);
     WsmApplication wsmApp = configValidationSuccess(testApp);
-    assertEquals(wsmApp.getDisplayName(), GOOD_NAME);
-    assertEquals(wsmApp.getDescription(), GOOD_DESC);
+    assertEquals(GOOD_NAME, wsmApp.getDisplayName());
+    assertEquals(GOOD_DESC, wsmApp.getDescription());
   }
 
   // This test writes to the database, so conflicts with the missingConfigTest
@@ -117,9 +120,11 @@ public class ApplicationUnitTest extends BaseUnitTest {
     assertMessage(0, INFO_CREATED);
 
     // Retrieve apps from the database and validate the data round-trip
+    // There can be stray applications in the database, so we use greater/equal assert
+
     List<WsmApplication> wsmApps = appDao.listApplications();
-    assertEquals(wsmApps.size(), 1);
-    assertEquals(wsmApps.get(0), wsmApp);
+    assertThat(wsmApps.size(), greaterThanOrEqualTo(1));
+    assertThat(wsmApps, hasItem(wsmApp));
 
     // Trying to create a duplicate new application. This is not caught in the map, but
     // the database create fails on a PK constraint.

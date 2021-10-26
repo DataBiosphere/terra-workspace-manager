@@ -99,6 +99,7 @@ public class WsmApplicationService {
         String.format(
             "%s application %s on workspace %s",
             ableEnum.name().toLowerCase(), applicationId.toString(), workspaceId.toString());
+
     JobBuilder job =
         jobService
             .newJob(
