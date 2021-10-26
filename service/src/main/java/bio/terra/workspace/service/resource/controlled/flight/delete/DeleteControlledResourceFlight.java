@@ -38,21 +38,10 @@ public class DeleteControlledResourceFlight extends Flight {
             .castToControlledResource();
 
     // Flight plan:
-    // 1. Delete the Sam resource. That will make the object inaccessible.
-    // 2. Delete the cloud resource. This has unique logic for each resource type. Depending on the
+    // 1. Delete the cloud resource. This has unique logic for each resource type. Depending on the
     // specifics of the resource type, this step may require the flight to run asynchronously.
+    // 2. Delete the Sam resource. That will make the object inaccessible.
     // 3. Delete the metadata
-    /* intervalSeconds= */
-    /* maxCount=  */ final RetryRule samRetryRule =
-        new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount=  */ 2);
-    addStep(
-        new DeleteSamResourceStep(
-            flightBeanBag.getResourceDao(),
-            flightBeanBag.getSamService(),
-            workspaceId,
-            resourceId,
-            userRequest),
-        samRetryRule);
 
     final RetryRule gcpRetryRule = RetryRules.cloud();
     switch (resource.getResourceType()) {
@@ -86,6 +75,16 @@ public class DeleteControlledResourceFlight extends Flight {
         throw new ControlledResourceNotImplementedException(
             "Delete not yet implemented for resource type " + resource.getResourceType());
     }
+    final RetryRule samRetryRule =
+        new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount=  */ 2);
+    addStep(
+        new DeleteSamResourceStep(
+            flightBeanBag.getResourceDao(),
+            flightBeanBag.getSamService(),
+            workspaceId,
+            resourceId,
+            userRequest),
+        samRetryRule);
     addStep(
         new DeleteMetadataStep(flightBeanBag.getResourceDao(), workspaceId, resourceId),
         RetryRules.shortDatabase());
