@@ -22,6 +22,8 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.Bigquery;
 import com.google.api.services.bigquery.BigqueryScopes;
 import com.google.api.services.bigquery.model.Dataset;
+import com.google.api.services.storage.Storage;
+import com.google.api.services.storage.StorageScopes;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -248,6 +250,24 @@ public class CrlService {
    */
   public StorageCow createStorageCow(@Nullable String projectId) {
     return createStorageCowWorker(projectId, null);
+  }
+
+  /**
+   * Return a Storage client object from GCS's auto-generated client library, for functionality not
+   * present in GCS's preferred client library. Whenever possible, use {@code createStorageCow}
+   * instead of this method.
+   */
+  public Storage createWsmSaNakedStorageClient() {
+    assertCrlInUse();
+    try {
+      return new Storage(
+          Defaults.httpTransport(),
+          Defaults.jsonFactory(),
+          new HttpCredentialsAdapter(
+              GoogleCredentials.getApplicationDefault().createScoped(StorageScopes.all())));
+    } catch (IOException | GeneralSecurityException e) {
+      throw new CrlInternalException("Error creating naked Storage client.");
+    }
   }
 
   /**

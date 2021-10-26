@@ -9,9 +9,7 @@ import bio.terra.workspace.service.workspace.exceptions.SaCredentialsMissingExce
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.auth.ServiceAccountSigner;
-import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.ServiceOptions;
 import java.io.IOException;
 import java.time.Duration;

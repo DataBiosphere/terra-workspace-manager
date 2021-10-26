@@ -54,6 +54,7 @@ import com.google.cloud.storage.StorageException;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
@@ -91,7 +92,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
 
     // Create a user-shared controlled GCS bucket - should fail due to no cloud context
     ApiException createBucketFails =
-        assertThrows(ApiException.class, () -> createBucketAttempt(resourceApi));
+        assertThrows(ApiException.class, () -> createBucketAttempt(resourceApi, bucketName));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, createBucketFails.getCode());
     logger.info("Failed to create bucket, as expected");
 
@@ -100,8 +101,17 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     assertNotNull(projectId);
     logger.info("Created project {}", projectId);
 
+    // Create a bucket with a name that's already taken in another project. This should fail, as
+    // bucket names are globally unique in GCP.
+    ApiException duplicateNameFails =
+        assertThrows(
+            ApiException.class,
+            () -> createBucketAttempt(resourceApi, ClientTestUtils.TEST_BUCKET_NAME));
+    assertEquals(HttpStatus.SC_CONFLICT, duplicateNameFails.getCode());
+    logger.info("Failed to create bucket with duplicate name, as expected");
+
     // Create the bucket - should work this time
-    CreatedControlledGcpGcsBucket bucket = createBucketAttempt(resourceApi);
+    CreatedControlledGcpGcsBucket bucket = createBucketAttempt(resourceApi, bucketName);
     UUID resourceId = bucket.getResourceId();
 
     // Retrieve the bucket resource
@@ -285,8 +295,8 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     assertEquals(StorageClass.ARCHIVE, matchesStorageClass.get(0));
   }
 
-  private CreatedControlledGcpGcsBucket createBucketAttempt(ControlledGcpResourceApi resourceApi)
-      throws Exception {
+  private CreatedControlledGcpGcsBucket createBucketAttempt(
+      ControlledGcpResourceApi resourceApi, String bucketName) throws Exception {
     var creationParameters =
         new GcpGcsBucketCreationParameters()
             .name(bucketName)

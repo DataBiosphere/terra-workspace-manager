@@ -13,10 +13,18 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.GcsApiConversions;
+import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.services.storage.Storage;
+import com.google.api.services.storage.model.Bucket;
 import com.google.cloud.storage.BucketInfo;
+import com.google.cloud.storage.StorageException;
+import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Optional;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,23 +70,77 @@ public class CreateGcsBucketStep implements Step {
 
     StorageCow storageCow = crlService.createStorageCow(projectId);
 
-    // Don't try to create it if it already exists. At this point the assumption is
-    // this is a redo and this step created it already.
-    BucketCow existingBucket = storageCow.get(resource.getBucketName());
-    if (existingBucket == null) {
-      storageCow.create(bucketInfoBuilder.build());
-    } else {
-      logger.info("Bucket {} already exists. Continuing.", resource.getBucketName());
+    // Check whether the bucket exists before attempting to create it. If it does, verify that it
+    // is in the current project, which indicates a Stairway retry rather than a real name conflict.
+    // Uniqueness within the project is already verified in WSM's DB earlier in this flight.
+    try {
+      // storageCow.get returns null if the bucket is not found.
+      BucketCow existingBucket = storageCow.get(resource.getBucketName());
+      if (existingBucket == null) {
+        storageCow.create(bucketInfoBuilder.build());
+      } else {
+        if (!bucketInProject(resource.getBucketName(), projectId)) {
+          throw new DuplicateResourceException(
+              "The provided bucket name is already in use, please choose another.");
+        }
+        logger.info("Bucket {} already exists. Continuing.", resource.getBucketName());
+      }
+    } catch (StorageException storageException) {
+      // A 403 on a "get bucket" call or 409 on a "create bucket" call indicates this bucket name is
+      // already taken by someone else in GCP's global bucket namespace.
+      if (storageException.getCode() == HttpStatus.SC_FORBIDDEN
+          || storageException.getCode() == HttpStatus.SC_CONFLICT) {
+        throw new DuplicateResourceException(
+            "The provided bucket name is already in use, please choose another.");
+      }
+      // Other cloud errors are unexpected here, rethrow.
+      throw storageException;
     }
 
     return StepResult.getStepResultSuccess();
+  }
+
+  /**
+   * Assert the provided bucket name exists in the provided project. This uses GCS's auto-generated
+   * client library, as the other version does not provide access to a bucket's project.
+   *
+   * <p>TODO: If GCS's preferred client library supports getting a bucket's project in the future,
+   * this implementation should switch.
+   */
+  private boolean bucketInProject(String bucketName, String projectId) {
+    try {
+      Storage wsmSaNakedStorageClient = crlService.createWsmSaNakedStorageClient();
+      Bucket bucket = wsmSaNakedStorageClient.buckets().get(bucketName).execute();
+      BigInteger bucketProjectNumber = bucket.getProjectNumber();
+      // Per documentation, Project.getName() will return the int64 generated number prefixed by the
+      // literal "projects/".
+      String expectedProjectNumber =
+          crlService.getCloudResourceManagerCow().projects().get(projectId).execute().getName();
+      expectedProjectNumber = expectedProjectNumber.replaceFirst("^projects/", "");
+      return bucketProjectNumber.toString().equals(expectedProjectNumber);
+    } catch (GoogleJsonResponseException googleEx) {
+      // If WSM doesn't have access to this bucket or it isn't found, it is not in the project.
+      if (googleEx.getStatusCode() == HttpStatus.SC_FORBIDDEN
+          || googleEx.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        return false;
+      }
+      // Other errors from GCP are unexpected and should be rethrown.
+      throw new RuntimeException("Error while creating bucket", googleEx);
+    } catch (IOException e) {
+      // Unexpected error, rethrow.
+      throw new RuntimeException("Error while creating bucket", e);
+    }
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     final StorageCow storageCow = crlService.createStorageCow(projectId);
-    storageCow.delete(resource.getBucketName());
+    // WSM should only attempt to delete the buckets it created, so it does nothing if the bucket
+    // exists outside the current project.
+    if (bucketInProject(resource.getBucketName(), projectId)) {
+      storageCow.delete(resource.getBucketName());
+    }
     return StepResult.getStepResultSuccess();
   }
 }
