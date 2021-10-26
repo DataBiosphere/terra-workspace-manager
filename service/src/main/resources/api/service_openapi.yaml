@@ -1750,12 +1750,10 @@ components:
         # TODO: In the future, notification configuration will also be part of JobControl.
 
     Name:
-      # Note: These format restrictions are enforced by WM, not natively by
-      # Swagger.
       type: string
-      pattern: '^[a-zA-Z0-9][_a-zA-Z0-9]{0,62}$'
+      pattern: '^[-_a-zA-Z0-9]{1,1024}$'
       minLength: 1
-      maxLength: 63
+      maxLength: 1024
 
     SystemVersion:
       type: object
@@ -1986,7 +1984,6 @@ components:
     RoleBinding:
       description: A binding between an IAM role and users with that role
       type: object
-      required: [role, members]
       properties:
         role:
           $ref: '#/components/schemas/IamRole'
@@ -2062,10 +2059,10 @@ components:
     PrivateResourceUser:
       description: User and role information for a user of a private resource.
       type: object
-      required: [userName, privateResourceIamRoles]
+      required: [privateResourceIamRoles]
       properties:
         userName:
-          description: Email address for the user of the resource
+          description: Optional. Email address for the user of the resource. If not present, the email of the user making this request is used instead.
           type: string
         privateResourceIamRoles:
           $ref: '#/components/schemas/PrivateResourceIamRoles'
@@ -2209,7 +2206,7 @@ components:
     GcpGcsBucketLifecycleRuleAction:
       description: The lifecycle action to take. See https://cloud.google.com/storage/docs/lifecycle#actions.
       type: object
-      required: [storageClass, type]
+      required: [type]
       properties:
         storageClass:
           $ref: '#/components/schemas/GcpGcsBucketDefaultStorageClass'

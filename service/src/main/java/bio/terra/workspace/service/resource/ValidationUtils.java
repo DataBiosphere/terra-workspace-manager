@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
+import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
@@ -35,6 +36,10 @@ public class ValidationUtils {
    */
   public static final Pattern AI_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN =
       Pattern.compile("(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)");
+
+  /** Resource names must be 1-1024 characters, using letters, numbers, dashes, and underscores. */
+  public static final Pattern RESOURCE_NAME_VALIDATION_PATTERN =
+      Pattern.compile("^[-_a-zA-Z0-9]{1,1024}$");
 
   public static void validateBucketName(String name) {
     if (StringUtils.isEmpty(name) || !BUCKET_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
@@ -82,10 +87,10 @@ public class ValidationUtils {
   }
 
   public static void validateResourceName(String name) {
-    // TODO: Decide what name validation we should do for resource names. My suggestion is to match
-    // TDR
-    //  with a 512 character name that cannot being with an underscore. That gives us room to
-    // generate
-    //  names based on the resource name. It also is roomy.
+    if (StringUtils.isEmpty(name) || !RESOURCE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
+      logger.warn("Invalid resource name {}", name);
+      throw new InvalidNameException(
+          "Invalid resource name specified. Name must be 1 to 1024 alphanumeric characters, underscores, and dashes.");
+    }
   }
 }
