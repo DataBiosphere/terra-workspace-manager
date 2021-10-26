@@ -81,6 +81,9 @@ public class ControlledApplicationResourceLifecycle extends WorkspaceAllocateTes
     assertThat(
         disabledDescription.getWorkspaceApplicationState(),
         equalTo(WorkspaceApplicationState.DISABLED));
+
+    // TODO: PF-1038 - remember to clear this when we delete the bucket
+    bucketName = null;
   }
 
   @Override

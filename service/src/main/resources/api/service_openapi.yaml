@@ -206,7 +206,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ApplicationId'
-    post:
+    patch:
       summary: Disable an application in a workspace
       operationId: disableWorkspaceApplication
       tags: [WorkspaceApplication]
@@ -228,7 +228,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ApplicationId'
-    post:
+    patch:
       summary: Enable an application in a workspace
       operationId: enableWorkspaceApplication
       tags: [WorkspaceApplication]

@@ -2,6 +2,7 @@ package bio.terra.workspace.service.workspace;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -123,7 +124,7 @@ public class ApplicationUnitTest extends BaseUnitTest {
 
     List<WsmApplication> wsmApps = appDao.listApplications();
     assertThat(wsmApps.size(), greaterThanOrEqualTo(1));
-    assertTrue(findEqualApp(wsmApps, wsmApp));
+    assertThat(wsmApps, hasItem(wsmApp));
 
     // Trying to create a duplicate new application. This is not caught in the map, but
     // the database create fails on a PK constraint.
@@ -247,14 +248,5 @@ public class ApplicationUnitTest extends BaseUnitTest {
     assertEquals(wsmApp.getServiceAccount(), GOOD_EMAIL);
     assertEquals(wsmApp.getState().name(), GOOD_STATE);
     return wsmApp;
-  }
-
-  private boolean findEqualApp(List<WsmApplication> wsmApps, WsmApplication wsmApp) {
-    for (WsmApplication testApp : wsmApps) {
-      if (testApp.equals(wsmApp)) {
-        return true;
-      }
-    }
-    return false;
   }
 }
