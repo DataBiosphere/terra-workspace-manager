@@ -716,6 +716,8 @@ public class ResourceDao {
             return new ControlledAzureIpResource(dbResource);
           case AZURE_DISK:
             return new ControlledAzureDiskResource(dbResource);
+          case AZURE_VM:
+            return new ControlledAzureVmResource(dbResource);
           default:
             throw new InvalidMetadataException(
                 "Invalid controlled resource type" + dbResource.getResourceType().toString());

@@ -160,6 +160,7 @@ public class CreateControlledResourceFlight extends Flight {
                 resource.castToAzureVmResource(),
                 flightBeanBag.getResourceDao()),
             RetryRules.cloud());
+        break;
       default:
         throw new IllegalStateException(
             String.format("Unrecognized resource type %s", resource.getResourceType()));

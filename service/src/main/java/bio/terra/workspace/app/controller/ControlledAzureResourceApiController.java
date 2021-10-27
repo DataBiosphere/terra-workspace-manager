@@ -261,15 +261,15 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
   public ResponseEntity<ApiAzureVmResource> getAzureVm(UUID workspaceId, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledResource controlledResource =
-            controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
+        controlledResourceService.getControlledResource(workspaceId, resourceId, userRequest);
     try {
       var response = controlledResource.castToAzureVmResource().toApiResource();
       return new ResponseEntity<>(response, HttpStatus.OK);
     } catch (InvalidMetadataException ex) {
       throw new BadRequestException(
-              String.format(
-                      "Resource %s in workspace %s is not a controlled Azure Disk.",
-                      resourceId, workspaceId));
+          String.format(
+              "Resource %s in workspace %s is not a controlled Azure Disk.",
+              resourceId, workspaceId));
     }
   }
 
@@ -289,7 +289,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureVmResult(
-          UUID workspaceId, String jobId) {
+      UUID workspaceId, String jobId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     return getJobDeleteResult(jobId, userRequest);
   }
