@@ -2058,7 +2058,6 @@ components:
     PrivateResourceUser:
       description: User and role information for a user of a private resource.
       type: object
-      required: [privateResourceIamRoles]
       properties:
         userName:
           description: Optional. Email address for the user of the resource. If not present, the email of the user making this request is used instead.
