@@ -710,7 +710,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // Test idempotency of delete by retrying steps once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(DeleteSamResourceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(DeleteMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(DeleteBigQueryDatasetStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     // Do not test lastStepFailure, as this flight has no undo steps, only dismal failure.
