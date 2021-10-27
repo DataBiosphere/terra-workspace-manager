@@ -101,8 +101,8 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     assertNotNull(projectId);
     logger.info("Created project {}", projectId);
 
-    // Create a bucket with a name that's already taken in another project. This should fail, as
-    // bucket names are globally unique in GCP.
+    // Create a bucket with a name that's already taken in another project and not accessible to the
+    // WSM SA. This should fail, as bucket names are globally unique in GCP.
     ApiException duplicateNameFails =
         assertThrows(
             ApiException.class,
@@ -113,6 +113,16 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     // Create the bucket - should work this time
     CreatedControlledGcpGcsBucket bucket = createBucketAttempt(resourceApi, bucketName);
     UUID resourceId = bucket.getResourceId();
+
+    // Try creating another bucket with the same name. This should fail and should not affect the
+    // existing resource.
+    ApiException duplicateNameFailsAgain =
+        assertThrows(
+            ApiException.class,
+            () -> createBucketAttempt(resourceApi, bucketName));
+    assertEquals(HttpStatus.SC_CONFLICT, duplicateNameFailsAgain.getCode());
+    logger.info("Failed to create bucket with duplicate name again, as expected");
+
 
     // Retrieve the bucket resource
     logger.info("Retrieving bucket resource id {}", resourceId.toString());

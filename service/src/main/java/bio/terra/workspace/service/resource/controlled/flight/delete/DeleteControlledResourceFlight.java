@@ -75,16 +75,13 @@ public class DeleteControlledResourceFlight extends Flight {
         throw new ControlledResourceNotImplementedException(
             "Delete not yet implemented for resource type " + resource.getResourceType());
     }
-    final RetryRule samRetryRule =
-        new RetryRuleFixedInterval(/* intervalSeconds= */ 10, /* maxCount=  */ 2);
     addStep(
         new DeleteSamResourceStep(
             flightBeanBag.getResourceDao(),
             flightBeanBag.getSamService(),
             workspaceId,
             resourceId,
-            userRequest),
-        samRetryRule);
+            userRequest));
     addStep(
         new DeleteMetadataStep(flightBeanBag.getResourceDao(), workspaceId, resourceId),
         RetryRules.shortDatabase());

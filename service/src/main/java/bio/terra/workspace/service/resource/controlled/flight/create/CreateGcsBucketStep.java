@@ -112,12 +112,12 @@ public class CreateGcsBucketStep implements Step {
       Storage wsmSaNakedStorageClient = crlService.createWsmSaNakedStorageClient();
       Bucket bucket = wsmSaNakedStorageClient.buckets().get(bucketName).execute();
       BigInteger bucketProjectNumber = bucket.getProjectNumber();
-      // Per documentation, Project.getName() will return the int64 generated number prefixed by the
-      // literal "projects/".
-      String expectedProjectNumber =
+      // Per documentation, Project.getName() will return the int64 generated project number
+      // prefixed by the literal "projects/".
+      String contextProjectNumber =
           crlService.getCloudResourceManagerCow().projects().get(projectId).execute().getName();
-      expectedProjectNumber = expectedProjectNumber.replaceFirst("^projects/", "");
-      return bucketProjectNumber.toString().equals(expectedProjectNumber);
+      contextProjectNumber = contextProjectNumber.replaceFirst("^projects/", "");
+      return bucketProjectNumber.toString().equals(contextProjectNumber);
     } catch (GoogleJsonResponseException googleEx) {
       // If WSM doesn't have access to this bucket or it isn't found, it is not in the project.
       if (googleEx.getStatusCode() == HttpStatus.SC_FORBIDDEN
@@ -137,7 +137,9 @@ public class CreateGcsBucketStep implements Step {
     String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
     final StorageCow storageCow = crlService.createStorageCow(projectId);
     // WSM should only attempt to delete the buckets it created, so it does nothing if the bucket
-    // exists outside the current project.
+    // exists outside the current project. We can guarantee another flight did not create this
+    // bucket because uniqueness within the project is already verified in WSM's DB earlier in this
+    // flight.
     if (bucketInProject(resource.getBucketName(), projectId)) {
       storageCow.delete(resource.getBucketName());
     }
