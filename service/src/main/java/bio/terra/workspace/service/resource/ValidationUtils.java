@@ -37,9 +37,9 @@ public class ValidationUtils {
   public static final Pattern AI_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN =
       Pattern.compile("(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)");
 
-  /** Resource names must be 1-1024 characters, using letters, numbers, dashes, and underscores. */
+  /** Resource names must be 1-1024 characters, using letters, numbers, dashes, and underscores and must not start with a dash or underscore.*/
   public static final Pattern RESOURCE_NAME_VALIDATION_PATTERN =
-      Pattern.compile("^[-_a-zA-Z0-9]{1,1024}$");
+      Pattern.compile("^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$");
 
   public static void validateBucketName(String name) {
     if (StringUtils.isEmpty(name) || !BUCKET_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
@@ -90,7 +90,7 @@ public class ValidationUtils {
     if (StringUtils.isEmpty(name) || !RESOURCE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
       logger.warn("Invalid resource name {}", name);
       throw new InvalidNameException(
-          "Invalid resource name specified. Name must be 1 to 1024 alphanumeric characters, underscores, and dashes.");
+          "Invalid resource name specified. Name must be 1 to 1024 alphanumeric characters, underscores, and dashes and must not start with a dash or underscore.");
     }
   }
 }
