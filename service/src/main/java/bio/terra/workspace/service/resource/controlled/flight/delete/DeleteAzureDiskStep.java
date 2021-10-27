@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
  * actually delete the Azure Disk.
  */
 public class DeleteAzureDiskStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(CreateAzureDiskStep.class);
+  private static final Logger logger = LoggerFactory.getLogger(DeleteAzureDiskStep.class);
   private final AzureConfiguration azureConfig;
   private final ResourceDao resourceDao;
   private final CrlService crlService;

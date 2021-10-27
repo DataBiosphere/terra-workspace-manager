@@ -94,6 +94,19 @@ public class DeleteControlledResourceFlight extends Flight {
                 workspaceId,
                 resourceId));
         break;
+      case AZURE_VM:
+        addStep(
+          new DeleteAzureVmStep(
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag
+                    .getAzureCloudContextService()
+                    .getAzureCloudContext(resource.getWorkspaceId())
+                    .get(),
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getResourceDao(),
+            workspaceId,
+            resourceId));
+        break;
       case BIG_QUERY_DATASET:
         addStep(
             new DeleteBigQueryDatasetStep(

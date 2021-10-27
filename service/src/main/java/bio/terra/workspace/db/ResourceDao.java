@@ -18,6 +18,7 @@ import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -442,6 +443,9 @@ public class ResourceDao {
       case AZURE_DISK:
         validateUniqueAzureDisk(controlledResource.castToAzureDiskResource());
         break;
+      case AZURE_VM:
+        validateUniqueAzureVm(controlledResource.castToAzureVmResource());
+        break;
       default:
         throw new IllegalArgumentException(
             String.format(
@@ -553,6 +557,29 @@ public class ResourceDao {
     if (matchingCount != null && matchingCount > 0) {
       throw new DuplicateResourceException(
           String.format("An Azure Disk with ID %s already exists", resource.getDiskName()));
+    }
+  }
+
+  private void validateUniqueAzureVm(ControlledAzureVmResource resource) {
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND workspace_id = :workspace_id"
+            + " AND attributes->>'vmName' = :vm_name";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AZURE_VM.toSql())
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
+            .addValue("vm_name", resource.getVmName());
+    // TODO: are these needed?
+    //                    .addValue("ip_id", resource.getIpId())
+    //                    .addValue("network_id", resource.getNetworkId())
+    //                    .addValue("disk_id", resource.getDiskId());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format("An Azure Vm with ID %s already exists", resource.getVmName()));
     }
   }
 
