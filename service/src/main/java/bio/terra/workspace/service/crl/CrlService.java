@@ -258,7 +258,6 @@ public class CrlService {
    * instead of this method.
    */
   public Storage createWsmSaNakedStorageClient() {
-    assertCrlInUse();
     try {
       return new Storage(
           Defaults.httpTransport(),

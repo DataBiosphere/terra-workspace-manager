@@ -65,6 +65,8 @@ import scripts.utils.WorkspaceAllocateTestScriptBase;
 public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBase {
 
   private static final Logger logger = LoggerFactory.getLogger(ControlledGcsBucketLifecycle.class);
+  // This is a publicly accessible bucket provided by GCP.
+  private static final String PUBLIC_GCP_BUCKET_NAME = "gcp-public-data-landsat";
 
   private TestUserSpecification reader;
   private String bucketName;
@@ -110,6 +112,14 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     assertEquals(HttpStatus.SC_CONFLICT, duplicateNameFails.getCode());
     logger.info("Failed to create bucket with duplicate name, as expected");
 
+    // Create a bucket with a name that's already taken by a publicly accessible bucket. WSM should
+    // have get and read access, as the bucket is open to everyone.
+    ApiException publicDuplicateNameFails =
+        assertThrows(
+            ApiException.class, () -> createBucketAttempt(resourceApi, PUBLIC_GCP_BUCKET_NAME));
+    assertEquals(HttpStatus.SC_CONFLICT, publicDuplicateNameFails.getCode());
+    logger.info("Failed to create bucket with duplicate name of public bucket, as expected");
+
     // Create the bucket - should work this time
     CreatedControlledGcpGcsBucket bucket = createBucketAttempt(resourceApi, bucketName);
     UUID resourceId = bucket.getResourceId();
@@ -117,12 +127,9 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     // Try creating another bucket with the same name. This should fail and should not affect the
     // existing resource.
     ApiException duplicateNameFailsAgain =
-        assertThrows(
-            ApiException.class,
-            () -> createBucketAttempt(resourceApi, bucketName));
+        assertThrows(ApiException.class, () -> createBucketAttempt(resourceApi, bucketName));
     assertEquals(HttpStatus.SC_CONFLICT, duplicateNameFailsAgain.getCode());
     logger.info("Failed to create bucket with duplicate name again, as expected");
-
 
     // Retrieve the bucket resource
     logger.info("Retrieving bucket resource id {}", resourceId.toString());
