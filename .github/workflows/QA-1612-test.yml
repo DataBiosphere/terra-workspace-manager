@@ -68,6 +68,8 @@ jobs:
         run: |
           echo "agora_appVersion=5ead98ef9031" >> $GITHUB_ENV
           echo "agora_chartVersion=0.14.0" >> $GITHUB_ENV
+          echo "workspacemanager_appVersion=0.254.114" >> $GITHUB_ENV
+          echo "workspacemanager_chartVersion=0.47.0" >> $GITHUB_ENV
           echo $GITHUB_ENV
           more $GITHUB_ENV
 
