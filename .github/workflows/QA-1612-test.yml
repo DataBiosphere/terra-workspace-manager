@@ -64,13 +64,6 @@ jobs:
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
           target: wsmtest
 
-      - name: Sync Terra service versions
-        uses: DataBiosphere/terra-test-runner/.github/actions/sync-terra-services-version@QA-1612
-        with:
-          env_type: personal
-          environment: wsmtest
-          token: ${{ secrets.BROADBOT_TOKEN }}
-
       # The ArgoCD sync triggers the synchronization of the wsmtest cluster. Typically,
       # the cluster is reset within a few seconds. However, it is possible for it to take
       # minutes or hours. We have no way to check that the sync is complete. We sleep
