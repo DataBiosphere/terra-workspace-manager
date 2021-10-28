@@ -103,15 +103,12 @@ public class CreateAzureVmStep implements Step {
           .define(resource.getVmName())
           .withRegion(resource.getRegion())
           .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
-          // Note, there is a `withNewPrimaryNetwork` that just takes a name for testing, but we
-          // cannot use this as CRL expects a fully qualified azure Network
-          //                    .withNewPrimaryNetwork(getAzureName("network")) //TODO: use real
-          // existing network
+          //TODO: network, use a real network
           .withExistingPrimaryNetwork(network)
           .withSubnet(subnetName)
           .withPrimaryPrivateIPAddressDynamic()
           .withExistingPrimaryPublicIPAddress(existingAzureIp)
-          //              .withSpecializedLinuxCustomImage()
+          //TODO: use specific image              .withSpecializedLinuxCustomImage()
           .withPopularLinuxImage(KnownLinuxVirtualMachineImage.UBUNTU_SERVER_16_04_LTS)
           .withRootUsername(userName)
           .withSsh(sshKey)
@@ -153,7 +150,7 @@ public class CreateAzureVmStep implements Step {
                     "TODO",
                     diskResource.getDiskName()));
       }
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
 
     return StepResult.getStepResultSuccess();

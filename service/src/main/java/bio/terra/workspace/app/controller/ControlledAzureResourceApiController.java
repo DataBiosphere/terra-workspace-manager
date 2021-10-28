@@ -9,6 +9,8 @@ import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
+import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
+import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
@@ -16,6 +18,7 @@ import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDisk;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureIp;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureVm;
+import bio.terra.workspace.generated.model.ApiCreatedControlledAzureVmResult;
 import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceRequest;
 import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceResult;
 import bio.terra.workspace.generated.model.ApiJobControl;
@@ -142,7 +145,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
   }
 
   @Override
-  public ResponseEntity<ApiCreatedControlledAzureVm> createAzureVm(
+  public ResponseEntity<ApiCreatedControlledAzureVmResult> createAzureVm(
       UUID workspaceId, @Valid ApiCreateControlledAzureVmRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
@@ -166,13 +169,22 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
 
     List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
 
-    final ControlledAzureVmResource createdVm =
-        controlledResourceService.createVm(resource, body.getAzureVm(), privateRoles, userRequest);
-    var response =
-        new ApiCreatedControlledAzureVm()
-            .resourceId(createdVm.getResourceId())
-            .azureVm(createdVm.toApiResource());
-    return new ResponseEntity<>(response, HttpStatus.OK);
+    final String jobId = controlledResourceService.createVm(resource, body.getAzureVm(), privateRoles, userRequest);
+
+    final ApiCreatedControlledAzureVmResult result =
+            fetchCreateControlledAzureVmResult(jobId, userRequest);
+
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  private ApiCreatedControlledAzureVmResult fetchCreateControlledAzureVmResult(String jobId, AuthenticatedUserRequest userRequest) {
+    final JobService.AsyncJobResult<ApiCreatedControlledAzureVm> jobResult =
+            jobService.retrieveAsyncJobResult(
+                    jobId, ApiCreatedControlledAzureVm.class, userRequest);
+    return new ApiCreatedControlledAzureVmResult()
+            .jobReport(jobResult.getJobReport())
+            .errorReport(jobResult.getApiErrorReport())
+            .azureVm(jobResult.getResult());
   }
 
   @Override
@@ -268,7 +280,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     } catch (InvalidMetadataException ex) {
       throw new BadRequestException(
           String.format(
-              "Resource %s in workspace %s is not a controlled Azure Disk.",
+              "Resource %s in workspace %s is not a controlled Azure Vm.",
               resourceId, workspaceId));
     }
   }

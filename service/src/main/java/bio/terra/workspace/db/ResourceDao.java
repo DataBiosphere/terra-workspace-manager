@@ -569,13 +569,7 @@ public class ResourceDao {
             + " AND attributes->>'vmName' = :vm_name";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
-            .addValue("resource_type", WsmResourceType.AZURE_VM.toSql())
-            .addValue("workspace_id", resource.getWorkspaceId().toString())
             .addValue("vm_name", resource.getVmName());
-    // TODO: are these needed?
-    //                    .addValue("ip_id", resource.getIpId())
-    //                    .addValue("network_id", resource.getNetworkId())
-    //                    .addValue("disk_id", resource.getDiskId());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
     if (matchingCount != null && matchingCount > 0) {
       throw new DuplicateResourceException(

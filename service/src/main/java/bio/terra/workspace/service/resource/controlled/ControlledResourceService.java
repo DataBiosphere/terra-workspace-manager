@@ -100,7 +100,7 @@ public class ControlledResourceService {
     return jobBuilder.submitAndWait(ControlledAzureDiskResource.class);
   }
 
-  public ControlledAzureVmResource createVm(
+  public String createVm(
       ControlledAzureVmResource resource,
       ApiAzureVmCreationParameters creationParameters,
       List<ControlledResourceIamRole> privateResourceIamRoles,
@@ -114,7 +114,7 @@ public class ControlledResourceService {
                 null,
                 userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    return jobBuilder.submitAndWait(ControlledAzureVmResource.class);
+    return jobBuilder.submit();
   }
 
   /** Starts a create controlled bucket resource, blocking until its job is finished. */

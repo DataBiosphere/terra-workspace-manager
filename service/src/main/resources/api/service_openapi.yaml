@@ -2311,7 +2311,7 @@ components:
         Vm-specific properties to be set on creation. These are a subset of the values
         accepted by the azure resource API
       type: object
-      required: [name, region, ipId]
+      required: [name, region, ipId, diskId, networkId]
       properties:
         name:
           description: A valid vm name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
@@ -2358,7 +2358,7 @@ components:
           $ref: '#/components/schemas/AzureDiskResource'
 
     CreatedControlledAzureVm:
-      description: Response payload for requesting a new Azure VM
+      description: Api result class for creating A new Azure VM
       type: object
       properties:
         resourceId:
@@ -2832,6 +2832,17 @@ components:
           $ref: '#/components/schemas/ErrorReport'
         aiNotebookInstance:
           $ref: '#/components/schemas/GcpAiNotebookInstanceResource'
+
+    CreatedControlledAzureVmResult:
+      description: Api result class for creating an azure vm
+      type: object
+      properties:
+        azureVm:
+          $ref: '#/components/schemas/CreatedControlledAzureVm'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
 
     GcpAiNotebookInstanceCreationParameters:
       description: >-
@@ -3338,11 +3349,11 @@ components:
             $ref: '#/components/schemas/CreatedControlledAzureDisk'
 
     CreateControlledAzureVmResponse:
-      description: Response to create controlled Azure vm
+      description: Response to create controlled Azure Vm
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CreatedControlledAzureVm'
+            $ref: '#/components/schemas/CreatedControlledAzureVmResult'
 
     DeleteControlledAzureResourceResponse:
       description: Response Payload for deleting an azure ip
