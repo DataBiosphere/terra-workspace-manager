@@ -1,7 +1,7 @@
 # This workflow runs the WSM full regression tests, including perf, integration, and
 # resilience suites.
 
-name: QA-1612 test 10
+name: QA-1612 test 11
 
 on:
   push
@@ -85,7 +85,6 @@ jobs:
       - name: Sync Terra services version
         uses: DataBiosphere/terra-test-runner/.github/actions/sync-terra-services-version@QA-1612
         with:
-          env_type: personal
           environment: wsmtest
           token: ${{ secrets.BROADBOT_TOKEN }}
 
