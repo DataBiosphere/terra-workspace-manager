@@ -49,7 +49,7 @@ public class CreateControlledResourceFlight extends Flight {
     final UserWithPetSa userAndPet = new UserWithPetSa(assignedUserEmail, notebookPetSaEmail);
 
     // store the resource metadata in the WSM database
-    addStep(new StoreMetadataStep(flightBeanBag.getResourceDao()));
+    addStep(new StoreMetadataStep(flightBeanBag.getResourceDao()), RetryRules.shortDatabase());
 
     // create the Sam resource associated with the resource
     addStep(

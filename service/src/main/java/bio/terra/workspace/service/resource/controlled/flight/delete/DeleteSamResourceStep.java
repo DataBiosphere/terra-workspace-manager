@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.flight.delete;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -40,8 +39,7 @@ public class DeleteSamResourceStep implements Step {
   }
 
   @Override
-  public StepResult doStep(FlightContext flightContext)
-      throws InterruptedException, RetryException {
+  public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     WsmResource wsmResource = resourceDao.getResource(workspaceId, resourceId);
     ControlledResource resource = wsmResource.castToControlledResource();
     // deleteControlledResource already handles duplicate deletion, so we do not need to explicitly

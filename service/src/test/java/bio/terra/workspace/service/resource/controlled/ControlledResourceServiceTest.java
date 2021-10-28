@@ -47,7 +47,6 @@ import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteAiNot
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteBigQueryDatasetStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteGcsBucketStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteSamResourceStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveBigQueryDatasetCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveGcsBucketCloudAttributesStep;
@@ -710,7 +709,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
     // Test idempotency of delete by retrying steps once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(DeleteSamResourceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(DeleteMetadataStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(DeleteBigQueryDatasetStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     // Do not test lastStepFailure, as this flight has no undo steps, only dismal failure.

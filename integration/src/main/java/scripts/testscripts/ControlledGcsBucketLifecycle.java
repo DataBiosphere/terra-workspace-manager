@@ -54,6 +54,7 @@ import com.google.cloud.storage.StorageException;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
@@ -64,6 +65,8 @@ import scripts.utils.WorkspaceAllocateTestScriptBase;
 public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBase {
 
   private static final Logger logger = LoggerFactory.getLogger(ControlledGcsBucketLifecycle.class);
+  // This is a publicly accessible bucket provided by GCP.
+  private static final String PUBLIC_GCP_BUCKET_NAME = "gcp-public-data-landsat";
 
   private TestUserSpecification reader;
   private String bucketName;
@@ -91,7 +94,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
 
     // Create a user-shared controlled GCS bucket - should fail due to no cloud context
     ApiException createBucketFails =
-        assertThrows(ApiException.class, () -> createBucketAttempt(resourceApi));
+        assertThrows(ApiException.class, () -> createBucketAttempt(resourceApi, bucketName));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, createBucketFails.getCode());
     logger.info("Failed to create bucket, as expected");
 
@@ -100,9 +103,33 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     assertNotNull(projectId);
     logger.info("Created project {}", projectId);
 
+    // Create a bucket with a name that's already taken in another project and not accessible to the
+    // WSM SA. This should fail, as bucket names are globally unique in GCP.
+    ApiException duplicateNameFails =
+        assertThrows(
+            ApiException.class,
+            () -> createBucketAttempt(resourceApi, ClientTestUtils.TEST_BUCKET_NAME));
+    assertEquals(HttpStatus.SC_CONFLICT, duplicateNameFails.getCode());
+    logger.info("Failed to create bucket with duplicate name, as expected");
+
+    // Create a bucket with a name that's already taken by a publicly accessible bucket. WSM should
+    // have get and read access, as the bucket is open to everyone.
+    ApiException publicDuplicateNameFails =
+        assertThrows(
+            ApiException.class, () -> createBucketAttempt(resourceApi, PUBLIC_GCP_BUCKET_NAME));
+    assertEquals(HttpStatus.SC_CONFLICT, publicDuplicateNameFails.getCode());
+    logger.info("Failed to create bucket with duplicate name of public bucket, as expected");
+
     // Create the bucket - should work this time
-    CreatedControlledGcpGcsBucket bucket = createBucketAttempt(resourceApi);
+    CreatedControlledGcpGcsBucket bucket = createBucketAttempt(resourceApi, bucketName);
     UUID resourceId = bucket.getResourceId();
+
+    // Try creating another bucket with the same name. This should fail and should not affect the
+    // existing resource.
+    ApiException duplicateNameFailsAgain =
+        assertThrows(ApiException.class, () -> createBucketAttempt(resourceApi, bucketName));
+    assertEquals(HttpStatus.SC_CONFLICT, duplicateNameFailsAgain.getCode());
+    logger.info("Failed to create bucket with duplicate name again, as expected");
 
     // Retrieve the bucket resource
     logger.info("Retrieving bucket resource id {}", resourceId.toString());
@@ -285,8 +312,8 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     assertEquals(StorageClass.ARCHIVE, matchesStorageClass.get(0));
   }
 
-  private CreatedControlledGcpGcsBucket createBucketAttempt(ControlledGcpResourceApi resourceApi)
-      throws Exception {
+  private CreatedControlledGcpGcsBucket createBucketAttempt(
+      ControlledGcpResourceApi resourceApi, String bucketName) throws Exception {
     var creationParameters =
         new GcpGcsBucketCreationParameters()
             .name(bucketName)
