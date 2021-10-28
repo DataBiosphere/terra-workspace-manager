@@ -27,11 +27,16 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateGcsBucketStep;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpResponseException;
+import com.google.api.services.storage.Storage;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
 import com.google.cloud.storage.StorageClass;
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
@@ -49,15 +54,29 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
   @Mock private GcpCloudContextService mockGcpCloudContextService;
   @Mock private BucketCow mockBucketCow;
 
+  // Mocks for pretending the provided bucket does not exist.
+  @Mock private Storage mockStorageClient;
+  @Mock private Storage.Buckets mockBuckets;
+  @Mock private Storage.Buckets.Get mockStorageBucketsGet;
+
   @Captor private ArgumentCaptor<BucketInfo> bucketInfoCaptor;
 
   private static final String FAKE_PROJECT_ID = "fakeprojectid";
 
   @BeforeEach
-  public void setup() {
+  public void setup() throws IOException {
     doReturn(mockStorageCow).when(mockCrlService).createStorageCow(any(String.class));
+    doReturn(mockStorageClient).when(mockCrlService).createWsmSaNakedStorageClient();
     when(mockGcpCloudContextService.getRequiredGcpProject(any())).thenReturn(FAKE_PROJECT_ID);
     when(mockStorageCow.create(bucketInfoCaptor.capture())).thenReturn(mockBucketCow);
+
+    when(mockStorageClient.buckets()).thenReturn(mockBuckets);
+    when(mockBuckets.get(any(String.class))).thenReturn(mockStorageBucketsGet);
+    GoogleJsonResponseException fakeNotFoundError =
+        new GoogleJsonResponseException(
+            new HttpResponseException.Builder(403, "fake not found error", new HttpHeaders()),
+            /*details=*/ null);
+    when(mockStorageBucketsGet.execute()).thenThrow(fakeNotFoundError);
   }
 
   @Test
