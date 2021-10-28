@@ -69,7 +69,7 @@ jobs:
           echo "agora_appVersion=5ead98ef9031" >> $GITHUB_ENV
           echo "agora_chartVersion=0.14.0" >> $GITHUB_ENV
           echo $GITHUB_ENV
-          more $$GITHUB_ENV
+          more $GITHUB_ENV
 
       # The ArgoCD sync triggers the synchronization of the wsmtest cluster. Typically,
       # the cluster is reset within a few seconds. However, it is possible for it to take
