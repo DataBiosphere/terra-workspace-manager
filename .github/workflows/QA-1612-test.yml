@@ -26,10 +26,10 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install postgresql
 
-      - name: Set up AdoptOpenJDK 15
+      - name: Set up AdoptOpenJDK 11
         uses: joschi/setup-jdk@v2
         with:
-          java-version: 15
+          java-version: 11
 
       - name: Cache Gradle packages
         uses: actions/cache@v2
@@ -81,6 +81,13 @@ jobs:
           sleep 120
           version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
           echo "$(date "+%Y-%m-%dT%H:%M:%S") post-sync wsmtest version: $version"
+
+      - name: Sync Terra services version
+        uses: DataBiosphere/terra-test-runner/.github/actions/sync-terra-services-version@QA-1612
+        with:
+          env_type: personal
+          environment: wsmtest
+          token: ${{ secrets.BROADBOT_TOKEN }}
 
       - name: clean databases before integration suite
         if: always()
