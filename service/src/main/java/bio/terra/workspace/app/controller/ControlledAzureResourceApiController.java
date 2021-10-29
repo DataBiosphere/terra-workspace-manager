@@ -9,8 +9,6 @@ import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
-import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
-import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureIpRequestBody;
@@ -169,22 +167,23 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
 
     List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
 
-    final String jobId = controlledResourceService.createVm(resource, body.getAzureVm(), privateRoles, userRequest);
+    final String jobId =
+        controlledResourceService.createVm(resource, body.getAzureVm(), privateRoles, userRequest);
 
     final ApiCreatedControlledAzureVmResult result =
-            fetchCreateControlledAzureVmResult(jobId, userRequest);
+        fetchCreateControlledAzureVmResult(jobId, userRequest);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
-  private ApiCreatedControlledAzureVmResult fetchCreateControlledAzureVmResult(String jobId, AuthenticatedUserRequest userRequest) {
+  private ApiCreatedControlledAzureVmResult fetchCreateControlledAzureVmResult(
+      String jobId, AuthenticatedUserRequest userRequest) {
     final JobService.AsyncJobResult<ApiCreatedControlledAzureVm> jobResult =
-            jobService.retrieveAsyncJobResult(
-                    jobId, ApiCreatedControlledAzureVm.class, userRequest);
+        jobService.retrieveAsyncJobResult(jobId, ApiCreatedControlledAzureVm.class, userRequest);
     return new ApiCreatedControlledAzureVmResult()
-            .jobReport(jobResult.getJobReport())
-            .errorReport(jobResult.getApiErrorReport())
-            .azureVm(jobResult.getResult());
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .azureVm(jobResult.getResult());
   }
 
   @Override

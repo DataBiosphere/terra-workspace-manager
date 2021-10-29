@@ -20,7 +20,6 @@ import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.Disk;
-import com.azure.resourcemanager.compute.models.KnownLinuxVirtualMachineImage;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.network.models.Network;
 import com.azure.resourcemanager.network.models.NetworkSecurityGroup;
@@ -57,12 +56,6 @@ public class CreateAzureVmStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
-
-    // Note: these are public credentials, taken from:
-    // https://github.com/Azure-Samples/network-java-manage-virtual-network/blob/master/src/main/java/com/azure/resourcemanager/network/samples/ManageVirtualNetwork.java
-    final String userName = "tirekicker";
-    final String sshKey =
-        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCfSPC2K7LZcFKEO+/t3dzmQYtrJFZNxOsbVgOVKietqHyvmYGHEC0J2wPdAqQ/63g/hhAEFRoyehM+rbeDri4txB3YFfnOK58jqdkyXzupWqXzOrlKY4Wz9SKjjN765+dqUITjKRIaAip1Ri137szRg71WnrmdP3SphTRlCx1Bk2nXqWPsclbRDCiZeF8QOTi4JqbmJyK5+0UqhqYRduun8ylAwKKQJ1NJt85sYIHn9f1Rfr6Tq2zS0wZ7DHbZL+zB5rSlAr8QyUdg/GQD+cmSs6LvPJKL78d6hMGk84ARtFo4A79ovwX/Fj01znDQkU6nJildfkaolH2rWFG/qttD azjava@javalib.com";
 
     final ControlledAzureIpResource ipResource =
         resourceDao
@@ -103,15 +96,15 @@ public class CreateAzureVmStep implements Step {
           .define(resource.getVmName())
           .withRegion(resource.getRegion())
           .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
-          //TODO: network, use a real network
+          // TODO: network, use a real network
           .withExistingPrimaryNetwork(network)
           .withSubnet(subnetName)
           .withPrimaryPrivateIPAddressDynamic()
           .withExistingPrimaryPublicIPAddress(existingAzureIp)
-          //TODO: use specific image              .withSpecializedLinuxCustomImage()
-          .withPopularLinuxImage(KnownLinuxVirtualMachineImage.UBUNTU_SERVER_16_04_LTS)
-          .withRootUsername(userName)
-          .withSsh(sshKey)
+          // See here for difference between 'specialized' and 'general' LinuxCustomImage, the
+          // managed disk storage option being the key factor
+          // https://docs.microsoft.com/en-us/azure/virtual-machines/linux/imaging#generalized-and-specialized
+          .withSpecializedLinuxCustomImage(azureConfig.getCustomDockerImageId())
           .withExistingDataDisk(existingAzureDisk)
           .withTag("workspaceId", resource.getWorkspaceId().toString())
           .withTag("resourceId", resource.getResourceId().toString())
@@ -126,7 +119,7 @@ public class CreateAzureVmStep implements Step {
                       .setSubnetName(subnetName)
                       .setDisk(existingAzureDisk)
                       .setPublicIpAddress(existingAzureIp)
-                      .setImage(KnownLinuxVirtualMachineImage.UBUNTU_SERVER_16_04_LTS.toString())
+                      .setImage(azureConfig.getCustomDockerImageId())
                       .build()));
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
@@ -203,7 +196,7 @@ public class CreateAzureVmStep implements Step {
             .fromAddress("INTERNET")
             .fromAnyPort()
             .toAnyAddress()
-            .toPort(80)
+            .toPort(8080)
             .withProtocol(SecurityRuleProtocol.TCP)
             .attach()
             .defineRule("DenyInternetOutGoing")

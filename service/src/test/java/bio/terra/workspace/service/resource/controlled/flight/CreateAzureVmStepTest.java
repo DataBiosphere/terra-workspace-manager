@@ -30,7 +30,6 @@ import com.azure.core.util.Context;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.Disk;
 import com.azure.resourcemanager.compute.models.Disks;
-import com.azure.resourcemanager.compute.models.KnownLinuxVirtualMachineImage;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.compute.models.VirtualMachines;
@@ -77,14 +76,7 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
   @Mock private VirtualMachine.DefinitionStages.WithPublicIPAddress mockVmStage6;
   @Mock private VirtualMachine.DefinitionStages.WithProximityPlacementGroup mockVmStage7;
 
-  @Mock
-  private VirtualMachine.DefinitionStages.WithLinuxRootUsernameManagedOrUnmanaged mockVmStage8;
-
-  @Mock
-  private VirtualMachine.DefinitionStages.WithLinuxRootPasswordOrPublicKeyManagedOrUnmanaged
-      mockVmStage9;
-
-  @Mock private VirtualMachine.DefinitionStages.WithLinuxCreateManagedOrUnmanaged mockVmStage10;
+  @Mock private VirtualMachine.DefinitionStages.WithLinuxCreateManaged mockVmStage10;
   @Mock private VirtualMachine.DefinitionStages.WithManagedCreate mockVmStage11;
   @Mock private VirtualMachine.DefinitionStages.WithCreate mockVmStage11a;
   @Mock private VirtualMachine.DefinitionStages.WithCreate mockVmStage12;
@@ -166,6 +158,7 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
             any(AzureCloudContext.class), any(AzureConfiguration.class)))
         .thenReturn(mockComputeManager);
     when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
+    when(mockAzureConfig.getCustomDockerImageId()).thenReturn(STUB_STRING_RETURN);
 
     when(mockComputeManager.virtualMachines()).thenReturn(mockVms);
 
@@ -227,10 +220,7 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
     when(mockVmStage5.withPrimaryPrivateIPAddressDynamic()).thenReturn(mockVmStage6);
     when(mockVmStage6.withExistingPrimaryPublicIPAddress(any(PublicIpAddress.class)))
         .thenReturn(mockVmStage7);
-    when(mockVmStage7.withPopularLinuxImage(any(KnownLinuxVirtualMachineImage.class)))
-        .thenReturn(mockVmStage8);
-    when(mockVmStage8.withRootUsername(anyString())).thenReturn(mockVmStage9);
-    when(mockVmStage9.withSsh(anyString())).thenReturn(mockVmStage10);
+    when(mockVmStage7.withSpecializedLinuxCustomImage(anyString())).thenReturn(mockVmStage10);
     when(mockVmStage10.withExistingDataDisk(any(Disk.class))).thenReturn(mockVmStage11);
     when(mockVmStage11.withTag(anyString(), anyString())).thenReturn(mockVmStage11a);
     when(mockVmStage11a.withTag(anyString(), anyString())).thenReturn(mockVmStage12);
@@ -294,7 +284,7 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
             // create vm request
             .setSubnetName(requestDataOpt.get().subnetName())
             .setPublicIpAddress(mockPublicIpAddress)
-            .setImage(KnownLinuxVirtualMachineImage.UBUNTU_SERVER_16_04_LTS.toString())
+            .setImage(STUB_STRING_RETURN)
             .build();
 
     assertThat(requestDataOpt, equalTo(Optional.of(expected)));

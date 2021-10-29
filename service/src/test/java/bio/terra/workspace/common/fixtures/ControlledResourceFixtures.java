@@ -99,14 +99,14 @@ public class ControlledResourceFixtures {
   public static ApiAzureIpCreationParameters getAzureIpCreationParameters() {
     return new ApiAzureIpCreationParameters()
         .name(uniqueAzureName(AZURE_IP_NAME_PREFIX))
-        .region("eastus");
+        .region("westcentralus");
   }
 
   /** Construct a parameter object with a unique disk name to avoid unintended clashes. */
   public static ApiAzureDiskCreationParameters getAzureDiskCreationParameters() {
     return new ApiAzureDiskCreationParameters()
         .name(uniqueAzureName(AZURE_DISK_NAME_PREFIX))
-        .region("eastus")
+        .region("westcentralus")
         .size(50);
   }
 
@@ -117,7 +117,7 @@ public class ControlledResourceFixtures {
         .ipId(UUID.randomUUID())
         .networkId(UUID.randomUUID())
         .diskId(UUID.randomUUID())
-        .region("eastus");
+        .region("westcentralus");
   }
 
   public static String uniqueBucketName() {

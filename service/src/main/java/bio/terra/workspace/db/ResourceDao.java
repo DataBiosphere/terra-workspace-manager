@@ -565,10 +565,10 @@ public class ResourceDao {
         "SELECT COUNT(1)"
             + " FROM resource"
             + " WHERE resource_type = :resource_type"
-            + " AND workspace_id = :workspace_id"
             + " AND attributes->>'vmName' = :vm_name";
     MapSqlParameterSource sqlParams =
         new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AZURE_VM.toSql())
             .addValue("vm_name", resource.getVmName());
     Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
     if (matchingCount != null && matchingCount > 0) {
