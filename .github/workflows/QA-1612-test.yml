@@ -1,7 +1,7 @@
 # This workflow runs the WSM full regression tests, including perf, integration, and
 # resilience suites.
 
-name: QA-1612 test 11
+name: QA-1612 test 12
 
 on:
   push
