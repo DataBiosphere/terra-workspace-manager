@@ -13,6 +13,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.GcsApiConversions;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
+import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.storage.Storage;
@@ -28,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CreateGcsBucketStep implements Step {
+
   private static final Logger logger = LoggerFactory.getLogger(CreateGcsBucketStep.class);
   private final CrlService crlService;
   private final ControlledGcsBucketResource resource;
@@ -89,6 +91,10 @@ public class CreateGcsBucketStep implements Step {
       if (storageException.getCode() == HttpStatus.SC_CONFLICT) {
         throw new DuplicateResourceException(
             "The provided bucket name is already in use, please choose another.", storageException);
+      }
+      if (storageException.getCode() == HttpStatus.SC_BAD_REQUEST) {
+        throw new InvalidReferenceException(
+            "The provided bucket name is invalid, please follow the naming instruction on https://cloud.google.com/storage/docs/naming-buckets#requirements");
       }
       // Other cloud errors are unexpected here, rethrow.
       throw storageException;
