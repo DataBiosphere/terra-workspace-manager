@@ -199,14 +199,6 @@ public class CreateAzureVmStep implements Step {
             .toPort(8080)
             .withProtocol(SecurityRuleProtocol.TCP)
             .attach()
-            .defineRule("DenyInternetOutGoing")
-            .denyOutbound()
-            .fromAnyAddress()
-            .fromAnyPort()
-            .toAddress("INTERNET")
-            .toAnyPort()
-            .withAnyProtocol()
-            .attach()
             .create(
                 Defaults.buildContext(
                     CreateNetworkSecurityGroupRequestData.builder()

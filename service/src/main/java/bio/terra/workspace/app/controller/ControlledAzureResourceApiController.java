@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.utils.ControllerUtils;
@@ -168,12 +169,29 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
     List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
 
     final String jobId =
-        controlledResourceService.createVm(resource, body.getAzureVm(), privateRoles, userRequest);
+        controlledResourceService.createVm(
+            resource,
+            body.getAzureVm(),
+            privateRoles,
+            body.getJobControl(),
+            ControllerUtils.getAsyncResultEndpoint(
+                request, body.getJobControl().getId(), "create-result"),
+            userRequest);
 
     final ApiCreatedControlledAzureVmResult result =
         fetchCreateControlledAzureVmResult(jobId, userRequest);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCreatedControlledAzureVmResult> getCreateAzureVmResult(
+      UUID workspaceId, String jobId) throws ApiException {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ApiCreatedControlledAzureVmResult result =
+        fetchCreateControlledAzureVmResult(jobId, userRequest);
+    return new ResponseEntity<>(
+        result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
 
   private ApiCreatedControlledAzureVmResult fetchCreateControlledAzureVmResult(
