@@ -51,6 +51,8 @@ public class ValidationUtils {
    *
    * This method DOES NOT guarentee that the bucket name is valid.
    * @param name gcs-bucket name
+   * @throws InvalidNameException throws exception when the bucket name fails to conform to the
+   * Google naming convention for bucket name.
    */
   public static void validateBucketName(String name) {
     if (StringUtils.isEmpty(name) || !BUCKET_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
@@ -58,13 +60,7 @@ public class ValidationUtils {
       throw new InvalidNameException(
           "Invalid GCS bucket name specified. Names must be 3-222 lowercase letters, numbers, dashes, and underscores. See Google documentation for the full specification.");
     }
-    String[] substring = name.split("\\.");
-    if (substring.length == 0 && name.length() > 63) {
-      logger.warn("Invalid bucket name {}", name);
-      throw new InvalidNameException(
-          "Invalid GCS bucket name specified. Bucket names must contain 3-63 characters. See Google documentation https://cloud.google.com/storage/docs/naming-buckets#requirements for the full specification.");
-    }
-    for (String s : substring) {
+    for (String s : name.split("\\.")) {
       if (s.length() > 63) {
         logger.warn("Invalid bucket name {}", name);
         throw new InvalidNameException(

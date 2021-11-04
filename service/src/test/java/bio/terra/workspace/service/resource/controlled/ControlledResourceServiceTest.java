@@ -1083,7 +1083,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createGcsBucketDo_invalidBucketName_throwsInvalidReferenceException() throws Exception {
+  void createGcsBucketDo_invalidBucketName_throwsBadRequestException() throws Exception {
     ControlledGcsBucketResource resource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
             .workspaceId(workspace.getWorkspaceId())
