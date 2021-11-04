@@ -7,6 +7,7 @@ import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
+import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import org.junit.jupiter.api.Test;
 
@@ -104,7 +105,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
   @Test
   public void validateBucketName_nameHas64Character_throwsException() {
     assertThrows(
-        InvalidReferenceException.class,
+        InvalidNameException.class,
         () -> ValidationUtils.validateBucketName(INVALID_STRING));
   }
 
@@ -116,7 +117,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
   @Test
   public void validateBucketName_nameHas2Character_throwsException() {
     assertThrows(
-        InvalidReferenceException.class,
+        InvalidNameException.class,
         () -> ValidationUtils.validateBucketName("aa"));
   }
 
@@ -133,7 +134,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
   @Test
   public void validateBucketName_nameWithDotSeparatorButOneSubstringExceedsLimit_throwsException() {
     assertThrows(
-        InvalidReferenceException.class,
+        InvalidNameException.class,
         () -> ValidationUtils.validateBucketName(INVALID_STRING + "." + MAX_VALID_STRING));
   }
 
@@ -145,28 +146,28 @@ public class ValidationUtilsTest extends BaseUnitTest {
   @Test
   public void validateBucketName_nameStartAndEndWithDot_throwsException() {
     assertThrows(
-        InvalidReferenceException.class,
+        InvalidNameException.class,
         () -> ValidationUtils.validateBucketName(".bucket-name."));
   }
 
   @Test
   public void validateBucketName_nameWithGoogPrefix_throwsException() {
     assertThrows(
-        InvalidReferenceException.class,
+        InvalidNameException.class,
         () -> ValidationUtils.validateBucketName("goog-bucket-name1"));
   }
 
   @Test
   public void validateBucketName_nameContainsGoogle_throwsException() {
     assertThrows(
-        InvalidReferenceException.class,
+        InvalidNameException.class,
         () -> ValidationUtils.validateBucketName("bucket-google-name"));
   }
 
   @Test
   public void validateBucketName_nameContainsG00gle_throwsException() {
     assertThrows(
-        InvalidReferenceException.class,
+        InvalidNameException.class,
         () -> ValidationUtils.validateBucketName("bucket-g00gle-name"));
   }
 }

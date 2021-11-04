@@ -18,6 +18,7 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
@@ -27,7 +28,6 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateGcsBucketStep;
-import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -175,7 +175,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
   }
 
   @Test
-  public void createBucket_invalidBucketName_throwsInvalidReferenceException() {
+  public void createBucket_invalidBucketName_throwsBadRequestException() {
     doThrow(new StorageException(400, "bad request"))
         .when(mockStorageCow).create(bucketInfoCaptor.capture());
 
@@ -196,7 +196,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
     doReturn(inputFlightMap).when(mockFlightContext).getInputParameters();
 
     assertThrows(
-        InvalidReferenceException.class,
+        BadRequestException.class,
         () -> createGcsBucketStep.doStep(mockFlightContext)
     );
   }

@@ -55,31 +55,31 @@ public class ValidationUtils {
   public static void validateBucketName(String name) {
     if (StringUtils.isEmpty(name) || !BUCKET_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
       logger.warn("Invalid bucket name {}", name);
-      throw new InvalidReferenceException(
+      throw new InvalidNameException(
           "Invalid GCS bucket name specified. Names must be 3-222 lowercase letters, numbers, dashes, and underscores. See Google documentation for the full specification.");
     }
     String[] substring = name.split("\\.");
     if (substring.length == 0 && name.length() > 63) {
       logger.warn("Invalid bucket name {}", name);
-      throw new InvalidReferenceException(
+      throw new InvalidNameException(
           "Invalid GCS bucket name specified. Bucket names must contain 3-63 characters. See Google documentation https://cloud.google.com/storage/docs/naming-buckets#requirements for the full specification.");
     }
     for (String s : substring) {
       if (s.length() > 63) {
         logger.warn("Invalid bucket name {}", name);
-        throw new InvalidReferenceException(
+        throw new InvalidNameException(
             "Invalid GCS bucket name specified. Names containing dots can contain up to 222 characters, but each dot-separated component can be no longer than 63 characters. See Google documentation https://cloud.google.com/storage/docs/naming-buckets#requirements for the full specification.");
       }
     }
     if (name.startsWith(GOOG_PREFIX)) {
       logger.warn("Invalid bucket name {}", name);
-      throw new InvalidReferenceException(
+      throw new InvalidNameException(
           "Invalid GCS bucket name specified. Bucket names cannot have prefix goog. See Google documentation https://cloud.google.com/storage/docs/naming-buckets#requirements for the full specification.");
     }
     for (String google : GOOGLE_NAMES) {
       logger.warn("Invalid bucket name {}", name);
       if (name.contains(google)) {
-        throw new InvalidReferenceException(
+        throw new InvalidNameException(
             "Invalid GCS bucket name specified. Bucket names cannot contains google or mis-spelled google. See Google documentation https://cloud.google.com/storage/docs/naming-buckets#requirements for the full specification.");
       }
     }

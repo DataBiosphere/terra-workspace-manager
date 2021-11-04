@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.flight.create;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS;
 
 import bio.terra.cloudres.google.storage.StorageCow;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -13,7 +14,6 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.GcsApiConversions;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
-import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.storage.Storage;
@@ -93,7 +93,7 @@ public class CreateGcsBucketStep implements Step {
             "The provided bucket name is already in use, please choose another.", storageException);
       }
       if (storageException.getCode() == HttpStatus.SC_BAD_REQUEST) {
-        throw new InvalidReferenceException(
+        throw new BadRequestException(
             "Receive 400 BAD_REQUEST exception when creating a new gcs-bucket", storageException);
       }
       // Other cloud errors are unexpected here, rethrow.

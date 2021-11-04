@@ -55,7 +55,6 @@ import bio.terra.workspace.service.resource.controlled.flight.update.UpdateContr
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateGcsBucketStep;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
-import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -1094,7 +1093,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .build();
 
     assertThrows(
-        InvalidReferenceException.class,
+        BadRequestException.class,
         () ->
             controlledResourceService.createBucket(
                 resource,
