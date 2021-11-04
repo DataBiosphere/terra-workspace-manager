@@ -161,6 +161,8 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
             .vmName(body.getAzureVm().getName())
             .region(body.getAzureVm().getRegion())
+            .vmSize(body.getAzureVm().getVmSize())
+            .vmImageUri(body.getAzureVm().getVmImageUri())
             .ipId(body.getAzureVm().getIpId())
             .networkId(body.getAzureVm().getNetworkId())
             .diskId(body.getAzureVm().getDiskId())

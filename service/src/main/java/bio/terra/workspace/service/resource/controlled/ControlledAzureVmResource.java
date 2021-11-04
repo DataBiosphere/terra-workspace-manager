@@ -9,6 +9,7 @@ import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
@@ -16,6 +17,8 @@ import java.util.UUID;
 public class ControlledAzureVmResource extends ControlledResource {
   private final String vmName;
   private final String region;
+  private final String vmSize;
+  private final String vmImageUri;
 
   private final UUID ipId;
   private final UUID networkId;
@@ -33,6 +36,8 @@ public class ControlledAzureVmResource extends ControlledResource {
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("vmName") String vmName,
       @JsonProperty("region") String region,
+      @JsonProperty("vmSize") String vmSize,
+      @JsonProperty("vmImageUri") String vmImageUri,
       @JsonProperty("ipId") UUID ipId,
       @JsonProperty("networkId") UUID networkId,
       @JsonProperty("diskId") UUID diskId) {
@@ -48,6 +53,8 @@ public class ControlledAzureVmResource extends ControlledResource {
         managedBy);
     this.vmName = vmName;
     this.region = region;
+    this.vmSize = vmSize;
+    this.vmImageUri = vmImageUri;
     this.ipId = ipId;
     this.networkId = networkId;
     this.diskId = diskId;
@@ -60,6 +67,8 @@ public class ControlledAzureVmResource extends ControlledResource {
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureVmAttributes.class);
     this.vmName = attributes.getVmName();
     this.region = attributes.getRegion();
+    this.vmImageUri = attributes.getVmImageUri();
+    this.vmSize = attributes.getVmSize();
     this.ipId = attributes.getIpId();
     this.networkId = attributes.getNetworkId();
     this.diskId = attributes.getDiskId();
@@ -72,6 +81,14 @@ public class ControlledAzureVmResource extends ControlledResource {
 
   public String getRegion() {
     return region;
+  }
+
+  public String getVmSize() {
+    return vmSize;
+  }
+
+  public String getVmImageUri() {
+    return vmImageUri;
   }
 
   public UUID getIpId() {
@@ -87,7 +104,14 @@ public class ControlledAzureVmResource extends ControlledResource {
   }
 
   public ApiAzureVmAttributes toApiAttributes() {
-    return new ApiAzureVmAttributes().vmName(getVmName()).region(region.toString());
+    return new ApiAzureVmAttributes()
+        .vmName(getVmName())
+        .region(getRegion())
+        .vmSize(getVmSize())
+        .vmImageUri(getVmImageUri())
+        .ipId(getIpId())
+        .diskId(getDiskId())
+        .networkId(getNetworkId());
   }
 
   public ApiAzureVmResource toApiResource() {
@@ -103,7 +127,13 @@ public class ControlledAzureVmResource extends ControlledResource {
   public String attributesToJson() {
     return DbSerDes.toJson(
         new ControlledAzureVmAttributes(
-            getVmName(), getRegion(), getIpId(), getNetworkId(), getDiskId()));
+            getVmName(),
+            getRegion(),
+            getVmSize(),
+            getVmImageUri(),
+            getIpId(),
+            getNetworkId(),
+            getDiskId()));
   }
 
   @Override
@@ -120,6 +150,14 @@ public class ControlledAzureVmResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureVm.");
     }
+    if (getVmSize() == null) {
+      throw new MissingRequiredFieldException(
+          "Missing required valid vmSize field for ControlledAzureVm.");
+    }
+    if (getVmImageUri() == null) {
+      throw new MissingRequiredFieldException(
+          "Missing required valid vmImageUri field for ControlledAzureVm.");
+    }
     if (getIpId() == null) {
       throw new MissingRequiredFieldException("Missing required ipId field for ControlledAzureVm.");
     }
@@ -131,6 +169,14 @@ public class ControlledAzureVmResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required diskId field for ControlledAzureVm.");
     }
+
+    try {
+      VirtualMachineSizeTypes.fromString(getVmSize());
+    } catch (Exception e) {
+      throw new MissingRequiredFieldException(
+          "The field vmSize is not a valid azure vm size. Investigate VirtualMachineSizeTypes");
+    }
+
     ValidationUtils.validateAzureResourceName(getVmName());
   }
 
@@ -167,6 +213,8 @@ public class ControlledAzureVmResource extends ControlledResource {
     private ManagedByType managedBy;
     private String vmName;
     private String region;
+    private String vmSize;
+    private String vmImageUri;
     private UUID ipId;
     private UUID networkId;
     private UUID diskId;
@@ -199,6 +247,16 @@ public class ControlledAzureVmResource extends ControlledResource {
 
     public ControlledAzureVmResource.Builder vmName(String vmName) {
       this.vmName = vmName;
+      return this;
+    }
+
+    public ControlledAzureVmResource.Builder vmSize(String vmSize) {
+      this.vmSize = vmSize;
+      return this;
+    }
+
+    public ControlledAzureVmResource.Builder vmImageUri(String vmImageUri) {
+      this.vmImageUri = vmImageUri;
       return this;
     }
 
@@ -249,6 +307,8 @@ public class ControlledAzureVmResource extends ControlledResource {
           managedBy,
           vmName,
           region,
+          vmSize,
+          vmImageUri,
           ipId,
           networkId,
           diskId);

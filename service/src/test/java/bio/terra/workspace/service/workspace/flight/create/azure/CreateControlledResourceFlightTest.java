@@ -205,11 +205,13 @@ public class CreateControlledResourceFlightTest extends BaseAzureTest {
             .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
             .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
             .vmName(creationParameters.getName())
+            .vmSize(creationParameters.getVmSize())
+            .vmImageUri(creationParameters.getVmImageUri())
             .region(creationParameters.getRegion())
             .ipId(ipResource.getResourceId())
+            .diskId(diskResource.getResourceId())
             // TODO network: not used in step currently,
             .networkId(creationParameters.getNetworkId())
-            .diskId(diskResource.getResourceId())
             .build();
 
     // Submit a VM creation flight.

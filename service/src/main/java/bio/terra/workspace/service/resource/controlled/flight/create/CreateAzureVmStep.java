@@ -69,7 +69,7 @@ public class CreateAzureVmStep implements Step {
             .castToControlledResource()
             .castToAzureDiskResource();
 
-    // TODO: remove once networks are a controlled resource
+    // TODO network: remove once networks are a controlled resource
     final String name = getAzureName("network");
     final String subnetName = getAzureName("subnet");
     final String addressCidr = "192.168.0.0/16";
@@ -96,7 +96,7 @@ public class CreateAzureVmStep implements Step {
           .define(resource.getVmName())
           .withRegion(resource.getRegion())
           .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
-          // TODO: network, use a real network
+          // TODO network:, use a real network
           .withExistingPrimaryNetwork(network)
           .withSubnet(subnetName)
           .withPrimaryPrivateIPAddressDynamic()
@@ -104,11 +104,11 @@ public class CreateAzureVmStep implements Step {
           // See here for difference between 'specialized' and 'general' LinuxCustomImage, the
           // managed disk storage option being the key factor
           // https://docs.microsoft.com/en-us/azure/virtual-machines/linux/imaging#generalized-and-specialized
-          .withSpecializedLinuxCustomImage(azureConfig.getCustomDockerImageId())
+          .withSpecializedLinuxCustomImage(resource.getVmImageUri())
           .withExistingDataDisk(existingAzureDisk)
           .withTag("workspaceId", resource.getWorkspaceId().toString())
           .withTag("resourceId", resource.getResourceId().toString())
-          .withSize(VirtualMachineSizeTypes.STANDARD_D2S_V3)
+          .withSize(VirtualMachineSizeTypes.fromString(resource.getVmSize()))
           .create(
               Defaults.buildContext(
                   CreateVirtualMachineRequestData.builder()
