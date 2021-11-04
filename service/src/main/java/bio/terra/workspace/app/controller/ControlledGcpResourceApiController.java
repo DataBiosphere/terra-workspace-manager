@@ -67,6 +67,7 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 public class ControlledGcpResourceApiController implements ControlledGcpResourceApi {
+  // Fake change to trigger PR tests. Remove me!
   private final Logger logger = LoggerFactory.getLogger(ControlledGcpResourceApiController.class);
 
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
