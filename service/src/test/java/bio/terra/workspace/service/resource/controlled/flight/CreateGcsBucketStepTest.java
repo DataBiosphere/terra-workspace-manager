@@ -179,7 +179,8 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
     doThrow(new StorageException(400, "bad request"))
         .when(mockStorageCow).create(bucketInfoCaptor.capture());
 
-    final String bucketName = uniqueName("google-bucket-name");
+    // A bad bucket name that fails to be caught by the WSM validation.
+    final String bucketName = uniqueName("bad-bucket-name");
 
     final CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
