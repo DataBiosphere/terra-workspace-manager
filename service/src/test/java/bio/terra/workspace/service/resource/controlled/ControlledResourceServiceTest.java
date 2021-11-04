@@ -55,6 +55,7 @@ import bio.terra.workspace.service.resource.controlled.flight.update.UpdateContr
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateGcsBucketStep;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -1079,6 +1080,34 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
         resource,
         controlledResourceService.getControlledResource(
             workspace.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest()));
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  void createGcsBucketDo_invalidBucketName_throwsInvalidReferenceException() throws Exception {
+    ControlledGcsBucketResource resource =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
+            .workspaceId(workspace.getWorkspaceId())
+            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .bucketName("goog-bucket")
+            .build();
+
+    // Test idempotency of bucket-specific steps by retrying them once.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(CreateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(GcsBucketCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    jobService.setFlightDebugInfoForTest(
+        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
+    assertThrows(
+        InvalidReferenceException.class,
+        () ->
+            controlledResourceService.createBucket(
+                resource,
+                ControlledResourceFixtures.getGoogleBucketCreationParameters(),
+                Collections.emptyList(),
+                user.getAuthenticatedRequest())
+    );
   }
 
   @Test
