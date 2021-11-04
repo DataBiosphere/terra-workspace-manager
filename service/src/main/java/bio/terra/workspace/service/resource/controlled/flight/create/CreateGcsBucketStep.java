@@ -94,7 +94,7 @@ public class CreateGcsBucketStep implements Step {
       }
       if (storageException.getCode() == HttpStatus.SC_BAD_REQUEST) {
         throw new BadRequestException(
-            "Receive 400 BAD_REQUEST exception when creating a new gcs-bucket", storageException);
+            "Received 400 BAD_REQUEST exception when creating a new gcs-bucket", storageException);
       }
       // Other cloud errors are unexpected here, rethrow.
       throw storageException;
