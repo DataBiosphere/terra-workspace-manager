@@ -94,7 +94,7 @@ public class CreateGcsBucketStep implements Step {
       }
       if (storageException.getCode() == HttpStatus.SC_BAD_REQUEST) {
         throw new InvalidReferenceException(
-            "The provided bucket name is invalid, please follow the naming instruction on https://cloud.google.com/storage/docs/naming-buckets#requirements");
+            "Receive 400 BAD_REQUEST exception when creating a new gcs-bucket", storageException);
       }
       // Other cloud errors are unexpected here, rethrow.
       throw storageException;

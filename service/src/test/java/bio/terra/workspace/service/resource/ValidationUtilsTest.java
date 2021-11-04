@@ -11,6 +11,13 @@ import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenc
 import org.junit.jupiter.api.Test;
 
 public class ValidationUtilsTest extends BaseUnitTest {
+
+  private static final String MAX_VALID_STRING = "012345678901234567890123456789012345678901234567890123456789012";
+  private static final String INVALID_STRING = MAX_VALID_STRING + "b";
+  private static final String MAX_VALID_STRING_WITH_DOTS =
+      MAX_VALID_STRING + "." + MAX_VALID_STRING + "." + MAX_VALID_STRING + "."
+          + "012345678901234567890123456789";
+
   @Test
   public void aiNotebookInstanceName() {
     ValidationUtils.validateAiNotebookInstanceId("valid-instance-id-0");
@@ -92,5 +99,74 @@ public class ValidationUtilsTest extends BaseUnitTest {
                             .imageName("image-name")
                             .imageFamily("image-family"))
                     .containerImage(null)));
+  }
+
+  @Test
+  public void validateBucketName_nameHas64Character_throwsException() {
+    assertThrows(
+        InvalidReferenceException.class,
+        () -> ValidationUtils.validateBucketName(INVALID_STRING));
+  }
+
+  @Test
+  public void validateBucketName_nameHas63Character_OK() {
+    ValidationUtils.validateBucketName(MAX_VALID_STRING);
+  }
+
+  @Test
+  public void validateBucketName_nameHas2Character_throwsException() {
+    assertThrows(
+        InvalidReferenceException.class,
+        () -> ValidationUtils.validateBucketName("aa"));
+  }
+
+  @Test
+  public void validateBucketName_nameHas3Character_OK() {
+    ValidationUtils.validateBucketName("123");
+  }
+
+  @Test
+  public void validateBucketName_nameHas222CharacterWithDotSeparator_OK() {
+    ValidationUtils.validateBucketName(MAX_VALID_STRING_WITH_DOTS);
+  }
+
+  @Test
+  public void validateBucketName_nameWithDotSeparatorButOneSubstringExceedsLimit_throwsException() {
+    assertThrows(
+        InvalidReferenceException.class,
+        () -> ValidationUtils.validateBucketName(INVALID_STRING + "." + MAX_VALID_STRING));
+  }
+
+  @Test
+  public void validateBucketName_nameStartAndEndWithNumber_OK() {
+    ValidationUtils.validateBucketName("1-bucket-1");
+  }
+
+  @Test
+  public void validateBucketName_nameStartAndEndWithDot_throwsException() {
+    assertThrows(
+        InvalidReferenceException.class,
+        () -> ValidationUtils.validateBucketName(".bucket-name."));
+  }
+
+  @Test
+  public void validateBucketName_nameWithGoogPrefix_throwsException() {
+    assertThrows(
+        InvalidReferenceException.class,
+        () -> ValidationUtils.validateBucketName("goog-bucket-name1"));
+  }
+
+  @Test
+  public void validateBucketName_nameContainsGoogle_throwsException() {
+    assertThrows(
+        InvalidReferenceException.class,
+        () -> ValidationUtils.validateBucketName("bucket-google-name"));
+  }
+
+  @Test
+  public void validateBucketName_nameContainsG00gle_throwsException() {
+    assertThrows(
+        InvalidReferenceException.class,
+        () -> ValidationUtils.validateBucketName("bucket-g00gle-name"));
   }
 }

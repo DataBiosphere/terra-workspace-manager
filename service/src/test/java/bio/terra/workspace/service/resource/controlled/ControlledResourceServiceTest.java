@@ -1090,15 +1090,9 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
             .workspaceId(workspace.getWorkspaceId())
             .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
             .managedBy(ManagedByType.MANAGED_BY_USER)
-            .bucketName("goog-bucket")
+            .bucketName("192.168.5.4")
             .build();
 
-    // Test idempotency of bucket-specific steps by retrying them once.
-    Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(CreateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(GcsBucketCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
     assertThrows(
         InvalidReferenceException.class,
         () ->
