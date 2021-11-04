@@ -57,7 +57,7 @@ public class DeleteAzureVmStep implements Step {
       return StepResult.getStepResultSuccess();
     } catch (Exception ex) {
       logger.info("Attempt to delete Azure vm failed on this try: " + azureResourceId, ex);
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
   }
 

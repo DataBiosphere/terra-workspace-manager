@@ -142,8 +142,9 @@ public class CreateAzureVmStep implements Step {
                     ipResource.getIpName(),
                     "TODO",
                     diskResource.getDiskName()));
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
       }
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 
     return StepResult.getStepResultSuccess();
