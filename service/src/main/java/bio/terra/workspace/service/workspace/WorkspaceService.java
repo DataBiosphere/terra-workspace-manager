@@ -230,17 +230,10 @@ public class WorkspaceService {
             userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     stageService.assertMcWorkspace(workspace, "createCloudContext");
 
-    // TODO: We should probably do this in a step of the job. It will be talking to another
-    //  service and that may require retrying. It also may be slow, so getting it off of this
-    //  thread and getting our response back might be better.
     SpendProfileId spendProfileId =
         workspace
             .getSpendProfileId()
             .orElseThrow(() -> new MissingSpendProfileException(workspaceId));
-    SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId, userRequest);
-    if (spendProfile.billingAccountId().isEmpty()) {
-      throw new NoBillingAccountException(spendProfileId);
-    }
 
     jobService
         .newJob(
@@ -249,9 +242,8 @@ public class WorkspaceService {
             CreateGcpContextFlight.class,
             /* request= */ null,
             userRequest)
+        .addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfileId.id())
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
-        .addParameter(
-            WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendProfile.billingAccountId().get())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
         .submit();
   }

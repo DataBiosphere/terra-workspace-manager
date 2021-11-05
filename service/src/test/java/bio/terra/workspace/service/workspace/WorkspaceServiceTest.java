@@ -490,48 +490,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                 request.workspaceId(), jobId, USER_REQUEST, "/fake/value"));
   }
 
-  @Test
-  void createGoogleContextSpendLinkingUnauthorizedThrows() throws Exception {
-    WorkspaceRequest request =
-        defaultRequestBuilder(UUID.randomUUID())
-            .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
-    workspaceService.createWorkspace(request, USER_REQUEST);
-    String jobId = UUID.randomUUID().toString();
-
-    Mockito.when(
-            mockSamService.isAuthorized(
-                Mockito.eq(USER_REQUEST),
-                Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
-                Mockito.any(),
-                Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
-        .thenReturn(false);
-
-    assertThrows(
-        SpendUnauthorizedException.class,
-        () ->
-            workspaceService.createGcpCloudContext(
-                request.workspaceId(), jobId, USER_REQUEST, "/fake/value"));
-  }
-
-  @Test
-  void createGoogleContextSpendWithoutBillingAccountThrows() {
-    WorkspaceRequest request =
-        defaultRequestBuilder(UUID.randomUUID())
-            .spendProfileId(Optional.of(spendUtils.noBillingAccount()))
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
-    workspaceService.createWorkspace(request, USER_REQUEST);
-    String jobId = UUID.randomUUID().toString();
-
-    assertThrows(
-        NoBillingAccountException.class,
-        () ->
-            workspaceService.createGcpCloudContext(
-                request.workspaceId(), jobId, USER_REQUEST, "/fake/value"));
-  }
-
   /**
    * Convenience method for getting a WorkspaceRequest builder with some pre-filled default values.
    *

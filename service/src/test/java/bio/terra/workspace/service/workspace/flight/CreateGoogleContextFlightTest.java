@@ -67,21 +67,14 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
 
     // Retry steps once to validate idempotency.
-    Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(PullProjectFromPoolStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(SetProjectBillingStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(GrantWsmRoleAdminStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(CreateCustomGcpRolesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(StoreGcpContextStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(SyncSamGroupsStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(GcpCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    Map<String, StepStatus> retrySteps = getStepNameToStepStatusMap();
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateGcpContextFlight.class,
-            createInputParameters(workspaceId, spendUtils.defaultBillingAccountId(), userRequest),
+            createInputParameters(workspaceId, spendUtils.defaultSpendId().id(), userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             debugInfo);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
@@ -108,27 +101,49 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  void createProjectAndContext_spendProfileInvalid_failAndDeleteRequest() throws Exception {
+    UUID workspaceId = createWorkspace();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+
+    // Retry steps once to validate idempotency.
+    Map<String, StepStatus> retrySteps = getStepNameToStepStatusMap();
+    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
+
+    FlightState flightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateGcpContextFlight.class,
+            createInputParameters(workspaceId, spendUtils.noBillingAccount().id(), userRequest),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            debugInfo);
+
+    assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
+    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    String projectId =
+        flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
+    // The Project should exist, but requested to be deleted.
+    Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
+    assertEquals(projectId, project.getProjectId());
+    assertEquals("DELETE_REQUESTED", project.getState());
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void errorRevertsChanges() throws Exception {
     UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
 
     // Submit a flight class that always errors.
-    // Retry steps once to validate idempotency.
-    Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(PullProjectFromPoolStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(SetProjectBillingStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(CreateCustomGcpRolesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(StoreGcpContextStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(SyncSamGroupsStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(GcpCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    Map<String, StepStatus> retrySteps = getStepNameToStepStatusMap();
     FlightDebugInfo debugInfo =
         FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build();
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateGcpContextFlight.class,
-            createInputParameters(workspaceId, spendUtils.defaultBillingAccountId(), userRequest),
+            createInputParameters(workspaceId, spendUtils.defaultSpendId().id(), userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             debugInfo);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
@@ -140,6 +155,19 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());
     assertEquals("DELETE_REQUESTED", project.getState());
+  }
+
+  private Map<String, StepStatus> getStepNameToStepStatusMap() {
+    // Retry steps once to validate idempotency.
+    Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(PullProjectFromPoolStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(CheckSpendProfileStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(SetProjectBillingStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(CreateCustomGcpRolesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(StoreGcpContextStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(SyncSamGroupsStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(GcpCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    return retrySteps;
   }
 
   /** Creates a workspace, returning its workspaceId. */
@@ -154,10 +182,10 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
 
   /** Create the FlightMap input parameters required for the {@link CreateGcpContextFlight}. */
   private static FlightMap createInputParameters(
-      UUID workspaceId, String billingAccountId, AuthenticatedUserRequest userRequest) {
+      UUID workspaceId, String spendProfileId, AuthenticatedUserRequest userRequest) {
     FlightMap inputs = new FlightMap();
     inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
-    inputs.put(WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, billingAccountId);
+    inputs.put(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfileId);
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     return inputs;
   }

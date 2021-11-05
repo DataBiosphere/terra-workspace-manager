@@ -39,6 +39,7 @@ public class CreateGcpContextFlight extends Flight {
 
     RetryRule retryRule = RetryRules.shortExponential();
 
+    addStep(new CheckSpendProfileStep(appContext.getSpendProfileService(), userRequest), retryRule);
     addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()), RetryRules.cloud());
     addStep(new GrantWsmRoleAdminStep(crl), retryRule);
     addStep(new CreateCustomGcpRolesStep(crl.getIamCow()), retryRule);
