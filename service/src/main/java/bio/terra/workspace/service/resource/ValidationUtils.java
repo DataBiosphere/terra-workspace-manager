@@ -5,6 +5,7 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParam
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import com.google.common.collect.ImmutableList;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -41,11 +42,42 @@ public class ValidationUtils {
   public static final Pattern RESOURCE_NAME_VALIDATION_PATTERN =
       Pattern.compile("^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$");
 
+  private static final String GOOG_PREFIX = "goog";
+  private static final ImmutableList<String> GOOGLE_NAMES = ImmutableList.of("google", "g00gle");
+
+  /**
+   * Validates gcs-bucket name following Google documentation
+   * https://cloud.google.com/storage/docs/naming-buckets#requirements on a best-effort base.
+   *
+   * This method DOES NOT guarentee that the bucket name is valid.
+   * @param name gcs-bucket name
+   * @throws InvalidNameException throws exception when the bucket name fails to conform to the
+   * Google naming convention for bucket name.
+   */
   public static void validateBucketName(String name) {
     if (StringUtils.isEmpty(name) || !BUCKET_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
       logger.warn("Invalid bucket name {}", name);
-      throw new InvalidReferenceException(
+      throw new InvalidNameException(
           "Invalid GCS bucket name specified. Names must be 3-222 lowercase letters, numbers, dashes, and underscores. See Google documentation for the full specification.");
+    }
+    for (String s : name.split("\\.")) {
+      if (s.length() > 63) {
+        logger.warn("Invalid bucket name {}", name);
+        throw new InvalidNameException(
+            "Invalid GCS bucket name specified. Names containing dots can contain up to 222 characters, but each dot-separated component can be no longer than 63 characters. See Google documentation https://cloud.google.com/storage/docs/naming-buckets#requirements for the full specification.");
+      }
+    }
+    if (name.startsWith(GOOG_PREFIX)) {
+      logger.warn("Invalid bucket name {}", name);
+      throw new InvalidNameException(
+          "Invalid GCS bucket name specified. Bucket names cannot have prefix goog. See Google documentation https://cloud.google.com/storage/docs/naming-buckets#requirements for the full specification.");
+    }
+    for (String google : GOOGLE_NAMES) {
+      logger.warn("Invalid bucket name {}", name);
+      if (name.contains(google)) {
+        throw new InvalidNameException(
+            "Invalid GCS bucket name specified. Bucket names cannot contains google or mis-spelled google. See Google documentation https://cloud.google.com/storage/docs/naming-buckets#requirements for the full specification.");
+      }
     }
   }
 
