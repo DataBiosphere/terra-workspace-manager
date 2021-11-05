@@ -24,6 +24,7 @@ import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
+import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -453,7 +454,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         String resourceName = "testgcs-" + resourceId.toString();
 
         assertThrows(
-            InvalidReferenceException.class,
+            InvalidNameException.class,
             () ->
                 new ReferencedGcsBucketResource(
                     workspaceId,

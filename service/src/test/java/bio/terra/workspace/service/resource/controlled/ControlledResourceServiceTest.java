@@ -1083,6 +1083,28 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  void createGcsBucketDo_invalidBucketName_throwsBadRequestException() throws Exception {
+    ControlledGcsBucketResource resource =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
+            .workspaceId(workspace.getWorkspaceId())
+            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+            .managedBy(ManagedByType.MANAGED_BY_USER)
+            .bucketName("192.168.5.4")
+            .build();
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            controlledResourceService.createBucket(
+                resource,
+                ControlledResourceFixtures.getGoogleBucketCreationParameters(),
+                Collections.emptyList(),
+                user.getAuthenticatedRequest())
+    );
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createGcsBucketUndo() throws Exception {
     ControlledGcsBucketResource resource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketResource()
