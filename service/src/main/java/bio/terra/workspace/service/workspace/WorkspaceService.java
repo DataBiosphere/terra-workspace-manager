@@ -78,7 +78,9 @@ public class WorkspaceService {
     this.gcpCloudContextService = gcpCloudContextService;
   }
 
-  /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
+  /**
+   * Create a workspace with the specified parameters. Returns workspaceID of the new workspace.
+   */
   @Traced
   public UUID createWorkspace(
       WorkspaceRequest workspaceRequest, AuthenticatedUserRequest userRequest) {
@@ -116,11 +118,11 @@ public class WorkspaceService {
    * <p>Throws WorkspaceNotFoundException from getWorkspace if the workspace does not exist,
    * regardless of the user's permission.
    *
-   * <p>Throws SamUnauthorizedException if the user is not permitted to perform the specified action
-   * on the workspace in question.
+   * <p>Throws SamUnauthorizedException if the user is not permitted to perform the specified
+   * action on the workspace in question.
    *
-   * <p>Returns the Workspace object if it exists and the user is permitted to perform the specified
-   * action.
+   * <p>Returns the Workspace object if it exists and the user is permitted to perform the
+   * specified action.
    *
    * @param userRequest the user's authenticated request
    * @param workspaceId id of the workspace in question
@@ -160,7 +162,9 @@ public class WorkspaceService {
     return workspaceDao.getWorkspacesMatchingList(samWorkspaceIds, offset, limit);
   }
 
-  /** Retrieves an existing workspace by ID */
+  /**
+   * Retrieves an existing workspace by ID
+   */
   @Traced
   public Workspace getWorkspace(UUID id, AuthenticatedUserRequest userRequest) {
     return validateWorkspaceAndAction(userRequest, id, SamConstants.SAM_WORKSPACE_READ_ACTION);
@@ -184,7 +188,9 @@ public class WorkspaceService {
     return workspaceDao.getWorkspace(workspaceId);
   }
 
-  /** Delete an existing workspace by ID. */
+  /**
+   * Delete an existing workspace by ID.
+   */
   @Traced
   public void deleteWorkspace(UUID id, AuthenticatedUserRequest userRequest) {
     Workspace workspace =
@@ -348,7 +354,7 @@ public class WorkspaceService {
    * @param role Role to remove
    * @param rawUserEmail Email identifier of user whose role is being removed
    * @param executingUserRequest User credentials to authenticate this removal. Must belong to a
-   *     workspace owner, and likely do not belong to {@code userEmail}.
+   * workspace owner, and likely do not belong to {@code userEmail}.
    */
   public void removeWorkspaceRoleFromUser(
       UUID workspaceId,

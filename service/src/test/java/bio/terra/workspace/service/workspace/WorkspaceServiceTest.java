@@ -57,22 +57,35 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 class WorkspaceServiceTest extends BaseConnectedTest {
-  /** A fake authenticated user request. */
+
+  /**
+   * A fake authenticated user request.
+   */
   private static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest()
           .token(Optional.of("fake-token"))
           .email("fake@email.com")
           .subjectId("fakeID123");
 
-  @Autowired private WorkspaceService workspaceService;
-  @Autowired private JobService jobService;
-  @Autowired private CrlService crl;
-  @Autowired private SpendConnectedTestUtils spendUtils;
-  @Autowired private ReferencedResourceService referenceResourceService;
-  @Autowired private ResourceDao resourceDao;
-  @MockBean private DataRepoService dataRepoService;
-  /** Mock SamService does nothing for all calls that would throw if unauthorized. */
-  @MockBean private SamService mockSamService;
+  @Autowired
+  private WorkspaceService workspaceService;
+  @Autowired
+  private JobService jobService;
+  @Autowired
+  private CrlService crl;
+  @Autowired
+  private SpendConnectedTestUtils spendUtils;
+  @Autowired
+  private ReferencedResourceService referenceResourceService;
+  @Autowired
+  private ResourceDao resourceDao;
+  @MockBean
+  private DataRepoService dataRepoService;
+  /**
+   * Mock SamService does nothing for all calls that would throw if unauthorized.
+   */
+  @MockBean
+  private SamService mockSamService;
 
   @BeforeEach
   void setup() throws Exception {
@@ -80,11 +93,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // By default, allow all spend link calls as authorized. (All other isAuthorized calls return
     // false by Mockito default.
     Mockito.when(
-            mockSamService.isAuthorized(
-                Mockito.any(),
-                Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
-                Mockito.any(),
-                Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
+        mockSamService.isAuthorized(
+            Mockito.any(),
+            Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
+            Mockito.any(),
+            Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
         .thenReturn(true);
     // Return a valid google group for cloud sync, as Google validates groups added to GCP projects.
     Mockito.when(mockSamService.syncWorkspacePolicy(any(), any(), any()))
@@ -454,11 +467,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // RAWLS_WORKSPACE stage workspaces use existing Sam resources instead of owning them, so the
     // mock pretends our user has access to any workspace we ask about.
     Mockito.when(
-            mockSamService.isAuthorized(
-                Mockito.any(),
-                Mockito.eq(SamConstants.SAM_WORKSPACE_RESOURCE),
-                Mockito.any(),
-                Mockito.eq(SamConstants.SAM_WORKSPACE_READ_ACTION)))
+        mockSamService.isAuthorized(
+            Mockito.any(),
+            Mockito.eq(SamConstants.SAM_WORKSPACE_RESOURCE),
+            Mockito.any(),
+            Mockito.eq(SamConstants.SAM_WORKSPACE_READ_ACTION)))
         .thenReturn(true);
     WorkspaceRequest request =
         defaultRequestBuilder(UUID.randomUUID())

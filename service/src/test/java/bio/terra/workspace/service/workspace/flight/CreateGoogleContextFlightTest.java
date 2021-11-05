@@ -50,15 +50,24 @@ import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class CreateGoogleContextFlightTest extends BaseConnectedTest {
-  /** How long to wait for a Stairway flight to complete before timing out the test. */
+
+  /**
+   * How long to wait for a Stairway flight to complete before timing out the test.
+   */
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(3);
 
-  @Autowired private WorkspaceService workspaceService;
-  @Autowired private CrlService crl;
-  @Autowired private JobService jobService;
-  @Autowired private SpendConnectedTestUtils spendUtils;
-  @Autowired private SamService samService;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired
+  private WorkspaceService workspaceService;
+  @Autowired
+  private CrlService crl;
+  @Autowired
+  private JobService jobService;
+  @Autowired
+  private SpendConnectedTestUtils spendUtils;
+  @Autowired
+  private SamService samService;
+  @Autowired
+  private UserAccessUtils userAccessUtils;
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
@@ -201,7 +210,9 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     return retrySteps;
   }
 
-  /** Creates a workspace, returning its workspaceId. */
+  /**
+   * Creates a workspace, returning its workspaceId.
+   */
   private UUID createWorkspace(@Nullable SpendProfileId spendProfileId) {
     WorkspaceRequest request =
         WorkspaceRequest.builder()
@@ -212,7 +223,9 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     return workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
   }
 
-  /** Create the FlightMap input parameters required for the {@link CreateGcpContextFlight}. */
+  /**
+   * Create the FlightMap input parameters required for the {@link CreateGcpContextFlight}.
+   */
   private static FlightMap createInputParameters(
       UUID workspaceId, AuthenticatedUserRequest userRequest) {
     FlightMap inputs = new FlightMap();
@@ -239,7 +252,9 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     }
   }
 
-  /** Asserts that Sam groups are granted their appropriate IAM roles on a GCP project. */
+  /**
+   * Asserts that Sam groups are granted their appropriate IAM roles on a GCP project.
+   */
   private void assertPolicyGroupsSynced(UUID workspaceId, Project project) throws Exception {
     Map<WsmIamRole, String> roleToSamGroup =
         Arrays.stream(WsmIamRole.values())
@@ -249,12 +264,12 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
                     role ->
                         "group:"
                             + SamRethrow.onInterrupted(
-                                () ->
-                                    samService.syncWorkspacePolicy(
-                                        workspaceId,
-                                        role,
-                                        userAccessUtils.defaultUserAuthRequest()),
-                                "syncWorkspacePolicy")));
+                            () ->
+                                samService.syncWorkspacePolicy(
+                                    workspaceId,
+                                    role,
+                                    userAccessUtils.defaultUserAuthRequest()),
+                            "syncWorkspacePolicy")));
     Policy currentPolicy =
         crl.getCloudResourceManagerCow()
             .projects()
