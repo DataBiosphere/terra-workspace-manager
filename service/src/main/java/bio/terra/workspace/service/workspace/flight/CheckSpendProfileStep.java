@@ -29,7 +29,8 @@ public class CheckSpendProfileStep implements Step {
   private final UUID workspaceId;
   private final AuthenticatedUserRequest userRequest;
 
-  public CheckSpendProfileStep(WorkspaceDao workspaceDao, SpendProfileService spendProfileService, UUID workspaceId, AuthenticatedUserRequest userRequest) {
+  public CheckSpendProfileStep(WorkspaceDao workspaceDao, SpendProfileService spendProfileService,
+      UUID workspaceId, AuthenticatedUserRequest userRequest) {
     this.workspaceDao = workspaceDao;
     this.spendProfileService = spendProfileService;
     this.workspaceId = workspaceId;
@@ -49,8 +50,8 @@ public class CheckSpendProfileStep implements Step {
     if (spendProfile.billingAccountId().isEmpty()) {
       throw new NoBillingAccountException(spendProfileId);
     }
-   workingMap.put(BILLING_ACCOUNT_ID, spendProfile.billingAccountId());
-   return StepResult.getStepResultSuccess();
+    workingMap.put(BILLING_ACCOUNT_ID, spendProfile.billingAccountId());
+    return StepResult.getStepResultSuccess();
   }
 
   @Override
