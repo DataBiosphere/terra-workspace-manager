@@ -104,7 +104,7 @@ public class ApplicationUnitTest extends BaseUnitTest {
   }
 
   // This test writes to the database, so conflicts with the missingConfigTest
-  @DirtiesContext(methodMode = MethodMode.AFTER_METHOD)
+  @DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)
   @Test
   public void processAppTest() {
     // Each "pass" in the test represents starting up with a different configuration.
@@ -167,7 +167,7 @@ public class ApplicationUnitTest extends BaseUnitTest {
   }
 
   // This test writes to the database, so conflicts with the processAppTest
-  @DirtiesContext(methodMode = MethodMode.AFTER_METHOD)
+  @DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)
   @Test
   public void missingConfigTest() {
     // Create two applications
