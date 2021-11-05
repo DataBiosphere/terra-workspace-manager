@@ -230,11 +230,6 @@ public class WorkspaceService {
             userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     stageService.assertMcWorkspace(workspace, "createCloudContext");
 
-    SpendProfileId spendProfileId =
-        workspace
-            .getSpendProfileId()
-            .orElseThrow(() -> new MissingSpendProfileException(workspaceId));
-
     jobService
         .newJob(
             "Create GCP Cloud Context " + workspaceId,
@@ -242,7 +237,6 @@ public class WorkspaceService {
             CreateGcpContextFlight.class,
             /* request= */ null,
             userRequest)
-        .addParameter(WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfileId.id())
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
         .submit();

@@ -474,22 +474,6 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                 request.workspaceId(), jobId, USER_REQUEST, "/fake/value"));
   }
 
-  @Test
-  void createGoogleContextNoSpendProfileIdThrows() {
-    WorkspaceRequest request =
-        defaultRequestBuilder(UUID.randomUUID())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .build();
-    workspaceService.createWorkspace(request, USER_REQUEST);
-    String jobId = UUID.randomUUID().toString();
-
-    assertThrows(
-        MissingSpendProfileException.class,
-        () ->
-            workspaceService.createGcpCloudContext(
-                request.workspaceId(), jobId, USER_REQUEST, "/fake/value"));
-  }
-
   /**
    * Convenience method for getting a WorkspaceRequest builder with some pre-filled default values.
    *
