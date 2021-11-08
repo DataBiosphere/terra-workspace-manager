@@ -3,6 +3,7 @@ package bio.terra.workspace.service.workspace.flight;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.stairway.FlightDebugInfo;
@@ -112,7 +113,8 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createsProjectAndContext_noBillingAccount_fails() throws Exception {
+  void createsProjectAndContext_noBillingAccount_flightFailsAndGcpProjectNotCreated()
+      throws Exception {
     UUID workspaceId = createWorkspace(spendUtils.noBillingAccount());
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
@@ -127,17 +129,14 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
 
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
     assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
-    String projectId =
-        flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
-    // The Project should exist, but requested to be deleted.
-    Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
-    assertEquals(projectId, project.getProjectId());
-    assertEquals("DELETE_REQUESTED", project.getState());
+    assertFalse(
+        flightState.getResultMap().get().containsKey(WorkspaceFlightMapKeys.GCP_PROJECT_ID));
   }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createsProjectAndContext_emptySpendProfile_fails() throws Exception {
+  void createsProjectAndContext_emptySpendProfile_flightFailsAndGcpProjectNotCreated()
+      throws Exception {
     UUID workspaceId = createWorkspace(null);
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
@@ -152,20 +151,16 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
 
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
     assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
-    String projectId =
-        flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
-    // The Project should exist, but requested to be deleted.
-    Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
-    assertEquals(projectId, project.getProjectId());
-    assertEquals("DELETE_REQUESTED", project.getState());
+    assertFalse(
+        flightState.getResultMap().get().containsKey(WorkspaceFlightMapKeys.GCP_PROJECT_ID));
   }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createsProjectAndContext_unauthorizedSpendProfile_fails() throws Exception {
+  void createsProjectAndContext_unauthorizedSpendProfile_flightFailsAndGcpProjectNotCreated()
+      throws Exception {
     UUID workspaceId = createWorkspace(spendUtils.defaultSpendId());
-    AuthenticatedUserRequest userRequest =
-        userAccessUtils.secondUserAuthRequest().email("liam.dragonmaw@test.firecloud.org");
+    AuthenticatedUserRequest userRequest = userAccessUtils.secondUserAuthRequest();
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
@@ -176,12 +171,8 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
             FlightDebugInfo.newBuilder().build());
 
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
-    String projectId =
-        flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
-    // The Project should exist, but requested to be deleted.
-    Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
-    assertEquals(projectId, project.getProjectId());
-    assertEquals("DELETE_REQUESTED", project.getState());
+    assertFalse(
+        flightState.getResultMap().get().containsKey(WorkspaceFlightMapKeys.GCP_PROJECT_ID));
   }
 
   @Test
