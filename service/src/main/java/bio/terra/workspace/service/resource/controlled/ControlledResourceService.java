@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -438,19 +439,20 @@ public class ControlledResourceService {
       return;
     }
 
-    Optional<String> assignedUser = controlledResource.getAssignedUser();
+    String assignedUser = controlledResource.getAssignedUser().orElse("");
     final boolean isAllowed =
-        assignedUser.orElse("").length() <= MAX_ASSIGNED_USER_LENGTH &&
+        assignedUser.length() <= MAX_ASSIGNED_USER_LENGTH &&
             // If there is no assigned user, this condition is satisfied.
-            assignedUser.map(userEmail::equalsIgnoreCase).orElse(true);
+            (StringUtils.isEmpty(assignedUser) || StringUtils
+                .equalsIgnoreCase(assignedUser, userEmail));
 
     if (!isAllowed) {
       throw new BadRequestException(
           "User ("
               + userEmail
               + ") may only assign a private controlled resource to themselves ("
-              + assignedUser.orElse("")
-              .substring(0, Math.min(assignedUser.orElse("").length(), MAX_ASSIGNED_USER_LENGTH))
+              + assignedUser
+              .substring(0, Math.min(assignedUser.length(), MAX_ASSIGNED_USER_LENGTH))
               + ").");
     }
   }
