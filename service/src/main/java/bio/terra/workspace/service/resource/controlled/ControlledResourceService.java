@@ -37,9 +37,13 @@ import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-/** CRUD methods for controlled objects. */
+/**
+ * CRUD methods for controlled objects.
+ */
 @Component
 public class ControlledResourceService {
+
+  private static final int MAX_ASSIGNED_USER_LENGTH = 128;
 
   private final JobService jobService;
   private final WorkspaceService workspaceService;
@@ -67,7 +71,9 @@ public class ControlledResourceService {
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
   }
 
-  /** Starts a create controlled bucket resource, blocking until its job is finished. */
+  /**
+   * Starts a create controlled bucket resource, blocking until its job is finished.
+   */
   public ControlledGcsBucketResource createBucket(
       ControlledGcsBucketResource resource,
       ApiGcpGcsBucketCreationParameters creationParameters,
@@ -75,11 +81,11 @@ public class ControlledResourceService {
       AuthenticatedUserRequest userRequest) {
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
-                resource,
-                privateResourceIamRoles,
-                new ApiJobControl().id(UUID.randomUUID().toString()),
-                null,
-                userRequest)
+            resource,
+            privateResourceIamRoles,
+            new ApiJobControl().id(UUID.randomUUID().toString()),
+            null,
+            userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
   }
@@ -117,15 +123,15 @@ public class ControlledResourceService {
    * @param jobControl - job service control structure
    * @param userRequest - incoming request
    * @param destinationResourceName - override value for resource name. Re-uses previous name if
-   *     null
+   * null
    * @param destinationDescription - override value for resource description. Re-uses previous value
-   *     if null
+   * if null
    * @param destinationBucketName - GCS bucket name for cloned bucket. If null, a random name will
-   *     be generated
+   * be generated
    * @param destinationLocation - location string for the destination bucket. If null, the source
-   *     bucket's location will be used.
+   * bucket's location will be used.
    * @param cloningInstructionsOverride - cloning instructions for this operation. If null, the
-   *     source bucket's cloning instructions will be honored.
+   * source bucket's cloning instructions will be honored.
    * @return - Job ID of submitted flight
    */
   public String cloneGcsBucket(
@@ -180,7 +186,9 @@ public class ControlledResourceService {
     return jobBuilder.submit();
   }
 
-  /** Starts a create controlled BigQuery dataset resource, blocking until its job is finished. */
+  /**
+   * Starts a create controlled BigQuery dataset resource, blocking until its job is finished.
+   */
   public ControlledBigQueryDatasetResource createBigQueryDataset(
       ControlledBigQueryDatasetResource resource,
       ApiGcpBigQueryDatasetCreationParameters creationParameters,
@@ -188,16 +196,18 @@ public class ControlledResourceService {
       AuthenticatedUserRequest userRequest) {
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
-                resource,
-                privateResourceIamRoles,
-                new ApiJobControl().id(UUID.randomUUID().toString()),
-                null,
-                userRequest)
+            resource,
+            privateResourceIamRoles,
+            new ApiJobControl().id(UUID.randomUUID().toString()),
+            null,
+            userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return jobBuilder.submitAndWait(ControlledBigQueryDatasetResource.class);
   }
 
-  /** Starts an update controlled BigQuery dataset resource, blocking until its job is finished. */
+  /**
+   * Starts an update controlled BigQuery dataset resource, blocking until its job is finished.
+   */
   public ControlledBigQueryDatasetResource updateBqDataset(
       ControlledBigQueryDatasetResource resource,
       @Nullable ApiGcpBigQueryDatasetUpdateParameters updateParameters,
@@ -232,13 +242,12 @@ public class ControlledResourceService {
    * @param userRequest - request object for this call
    * @param destinationResourceName - resource name. Uses source name if null
    * @param destinationDescription - description string for cloned dataset. Source description if
-   *     null.
+   * null.
    * @param destinationDatasetName - name for new resource. Can equal source name. If null, a random
-   *     name will be generated
+   * name will be generated
    * @param destinationLocation - location override. Uses source location if null
    * @param cloningInstructionsOverride - Cloning instructions for this clone operation, overriding
-   *     any existing instructions. Existing instructions are used if null.
-   * @return
+   * any existing instructions. Existing instructions are used if null.
    */
   public String cloneBigQueryDataset(
       UUID sourceWorkspaceId,
@@ -291,7 +300,9 @@ public class ControlledResourceService {
     return jobBuilder.submit();
   }
 
-  /** Starts a create controlled AI Notebook instance resource job, returning the job id. */
+  /**
+   * Starts a create controlled AI Notebook instance resource job, returning the job id.
+   */
   public String createAiNotebookInstance(
       ControlledAiNotebookInstanceResource resource,
       ApiGcpAiNotebookInstanceCreationParameters creationParameters,
@@ -319,7 +330,9 @@ public class ControlledResourceService {
     return jobBuilder.submit();
   }
 
-  /** Create a JobBuilder for creating controlled resources with the common parameters populated. */
+  /**
+   * Create a JobBuilder for creating controlled resources with the common parameters populated.
+   */
   private JobBuilder commonCreationJobBuilder(
       ControlledResource resource,
       List<ControlledResourceIamRole> privateResourceIamRoles,
@@ -367,7 +380,9 @@ public class ControlledResourceService {
     return resourceDao.getResource(workspaceId, resourceId).castToControlledResource();
   }
 
-  /** Synchronously delete a controlled resource. */
+  /**
+   * Synchronously delete a controlled resource.
+   */
   public void deleteControlledResourceSync(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
 
@@ -422,16 +437,20 @@ public class ControlledResourceService {
       // No need to handle SHARED resources
       return;
     }
-    // If there is no assigned user, this condition is satisfied.
-    //noinspection deprecation
+
+    Optional<String> assignedUser = controlledResource.getAssignedUser();
     final boolean isAllowed =
-        controlledResource.getAssignedUser().map(userEmail::equalsIgnoreCase).orElse(true);
+        assignedUser.orElse("").length() <= MAX_ASSIGNED_USER_LENGTH &&
+            // If there is no assigned user, this condition is satisfied.
+            assignedUser.map(userEmail::equalsIgnoreCase).orElse(true);
+
     if (!isAllowed) {
       throw new BadRequestException(
           "User ("
               + userEmail
               + ") may only assign a private controlled resource to themselves ("
-              + controlledResource.getAssignedUser().orElse("")
+              + assignedUser.orElse("")
+              .substring(0, Math.min(assignedUser.orElse("").length(), MAX_ASSIGNED_USER_LENGTH))
               + ").");
     }
   }

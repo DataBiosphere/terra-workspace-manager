@@ -52,6 +52,7 @@ public class ControlledResourceMetadataManager {
     if (name != null) {
       ValidationUtils.validateResourceName(name);
     }
+    ValidationUtils.validateResourceDescriptionName(description);
     resourceDao.updateResource(workspaceId, resourceId, name, description);
   }
 
