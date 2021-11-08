@@ -44,18 +44,12 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
    */
   private static final Duration CREATION_FLIGHT_TIMEOUT = Duration.ofMinutes(3);
 
-  @Autowired
-  private WorkspaceService workspaceService;
-  @Autowired
-  private GcpCloudContextService gcpCloudContextService;
-  @Autowired
-  private CrlService crl;
-  @Autowired
-  private JobService jobService;
-  @Autowired
-  private SpendConnectedTestUtils spendUtils;
-  @Autowired
-  private UserAccessUtils userAccessUtils;
+  @Autowired private WorkspaceService workspaceService;
+  @Autowired private GcpCloudContextService gcpCloudContextService;
+  @Autowired private CrlService crl;
+  @Autowired private JobService jobService;
+  @Autowired private SpendConnectedTestUtils spendUtils;
+  @Autowired private UserAccessUtils userAccessUtils;
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
@@ -179,9 +173,7 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
     assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
   }
 
-  /**
-   * Creates a workspace, returning its workspaceId.
-   */
+  /** Creates a workspace, returning its workspaceId. */
   private UUID createWorkspace() {
     WorkspaceRequest request =
         WorkspaceRequest.builder()

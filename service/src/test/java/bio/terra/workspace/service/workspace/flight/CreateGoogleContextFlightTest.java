@@ -117,17 +117,13 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
 
-    // Retry steps once to validate idempotency.
-    Map<String, StepStatus> retrySteps = getStepNameToStepStatusMap();
-    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
-
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateGcpContextFlight.class,
             createInputParameters(workspaceId, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
-            debugInfo);
+            FlightDebugInfo.newBuilder().build());
 
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
     assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
@@ -146,9 +142,30 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
 
-    // Retry steps once to validate idempotency.
-    Map<String, StepStatus> retrySteps = getStepNameToStepStatusMap();
-    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
+    FlightState flightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateGcpContextFlight.class,
+            createInputParameters(workspaceId, userRequest),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            FlightDebugInfo.newBuilder().build());
+
+    assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
+    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
+    String projectId =
+        flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
+    // The Project should exist, but requested to be deleted.
+    Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
+    assertEquals(projectId, project.getProjectId());
+    assertEquals("DELETE_REQUESTED", project.getState());
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  void createsProjectAndContext_unauthorizedSpendProfile_fails() throws Exception {
+    UUID workspaceId = createWorkspace(spendUtils.defaultSpendId());
+    AuthenticatedUserRequest userRequest =
+        userAccessUtils.secondUserAuthRequest().email("liam.dragonmaw@test.firecloud.org");
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
@@ -156,10 +173,9 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
             CreateGcpContextFlight.class,
             createInputParameters(workspaceId, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
-            debugInfo);
+            FlightDebugInfo.newBuilder().build());
 
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
-    assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
     String projectId =
         flightState.getResultMap().get().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
     // The Project should exist, but requested to be deleted.

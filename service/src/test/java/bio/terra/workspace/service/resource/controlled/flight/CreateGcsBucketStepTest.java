@@ -44,7 +44,6 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
-import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -53,27 +52,18 @@ import org.mockito.Mock;
 
 public class CreateGcsBucketStepTest extends BaseUnitTest {
 
-  @Mock
-  private FlightContext mockFlightContext;
-  @Mock
-  private CrlService mockCrlService;
-  @Mock
-  private StorageCow mockStorageCow;
-  @Mock
-  private GcpCloudContextService mockGcpCloudContextService;
-  @Mock
-  private BucketCow mockBucketCow;
+  @Mock private FlightContext mockFlightContext;
+  @Mock private CrlService mockCrlService;
+  @Mock private StorageCow mockStorageCow;
+  @Mock private GcpCloudContextService mockGcpCloudContextService;
+  @Mock private BucketCow mockBucketCow;
 
   // Mocks for pretending the provided bucket does not exist.
-  @Mock
-  private Storage mockStorageClient;
-  @Mock
-  private Storage.Buckets mockBuckets;
-  @Mock
-  private Storage.Buckets.Get mockStorageBucketsGet;
+  @Mock private Storage mockStorageClient;
+  @Mock private Storage.Buckets mockBuckets;
+  @Mock private Storage.Buckets.Get mockStorageBucketsGet;
 
-  @Captor
-  private ArgumentCaptor<BucketInfo> bucketInfoCaptor;
+  @Captor private ArgumentCaptor<BucketInfo> bucketInfoCaptor;
 
   private static final String FAKE_PROJECT_ID = "fakeprojectid";
 
@@ -177,7 +167,8 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
   @Test
   public void createBucket_invalidBucketName_throwsBadRequestException() {
     doThrow(new StorageException(400, "bad request"))
-        .when(mockStorageCow).create(bucketInfoCaptor.capture());
+        .when(mockStorageCow)
+        .create(bucketInfoCaptor.capture());
 
     // A bad bucket name that fails to be caught by the WSM validation.
     final String bucketName = uniqueName("bad-bucket-name");
@@ -195,9 +186,6 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
     inputFlightMap.makeImmutable();
     doReturn(inputFlightMap).when(mockFlightContext).getInputParameters();
 
-    assertThrows(
-        BadRequestException.class,
-        () -> createGcsBucketStep.doStep(mockFlightContext)
-    );
+    assertThrows(BadRequestException.class, () -> createGcsBucketStep.doStep(mockFlightContext));
   }
 }

@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.workspace.flight;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WORKSPACE;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -16,12 +15,9 @@ import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import java.util.Optional;
 import java.util.UUID;
 
-/**
- * This is a step to check that the user is authorized to use the workspace spend profile.
- */
+/** This is a step to check that the user is authorized to use the workspace spend profile. */
 public class CheckSpendProfileStep implements Step {
 
   private final WorkspaceDao workspaceDao;
@@ -29,8 +25,11 @@ public class CheckSpendProfileStep implements Step {
   private final UUID workspaceId;
   private final AuthenticatedUserRequest userRequest;
 
-  public CheckSpendProfileStep(WorkspaceDao workspaceDao, SpendProfileService spendProfileService,
-      UUID workspaceId, AuthenticatedUserRequest userRequest) {
+  public CheckSpendProfileStep(
+      WorkspaceDao workspaceDao,
+      SpendProfileService spendProfileService,
+      UUID workspaceId,
+      AuthenticatedUserRequest userRequest) {
     this.workspaceDao = workspaceDao;
     this.spendProfileService = spendProfileService;
     this.workspaceId = workspaceId;
