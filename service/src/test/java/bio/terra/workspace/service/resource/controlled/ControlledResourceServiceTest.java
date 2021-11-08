@@ -1099,8 +1099,7 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
                 resource,
                 ControlledResourceFixtures.getGoogleBucketCreationParameters(),
                 Collections.emptyList(),
-                user.getAuthenticatedRequest())
-    );
+                user.getAuthenticatedRequest()));
   }
 
   @Test
