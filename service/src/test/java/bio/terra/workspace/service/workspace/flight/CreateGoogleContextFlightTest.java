@@ -160,13 +160,13 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   void createsProjectAndContext_unauthorizedSpendProfile_flightFailsAndGcpProjectNotCreated()
       throws Exception {
     UUID workspaceId = createWorkspace(spendUtils.defaultSpendId());
-    AuthenticatedUserRequest userRequest = userAccessUtils.secondUserAuthRequest();
+    AuthenticatedUserRequest unauthorizedUserRequest = userAccessUtils.secondUserAuthRequest();
 
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateGcpContextFlight.class,
-            createInputParameters(workspaceId, userRequest),
+            createInputParameters(workspaceId, unauthorizedUserRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             FlightDebugInfo.newBuilder().build());
 
