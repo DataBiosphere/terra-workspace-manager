@@ -121,6 +121,8 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
     // If the resource's workspace has a GCP cloud context, use the SA from that context. Otherwise,
     // use the provided credentials. This cannot use arbitrary pet SA credentials, as they may not
     // have the BigQuery APIs enabled.
+    // User credentials have already been validated at this point, so it's safe to use an
+    // unauthenticated method from GcpCloudContextService.
     Optional<String> maybeProjectId =
         gcpCloudContextService
             .getGcpCloudContext(getWorkspaceId())

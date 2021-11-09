@@ -914,8 +914,8 @@ public class SamService {
   }
 
   /**
-   * Fetch credentials of a user's pet service account in a given project. This request to Sam
-   * will create the pet SA if it doesn't already exist.
+   * Fetch credentials of a user's pet service account in a given project. This request to Sam will
+   * create the pet SA if it doesn't already exist.
    */
   public AuthenticatedUserRequest getOrCreatePetSaCredentials(
       String projectId, AuthenticatedUserRequest userRequest) throws InterruptedException {
