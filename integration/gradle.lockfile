@@ -9,6 +9,7 @@ com.fasterxml.jackson.core:jackson-annotations:2.12.3=compileClasspath,runtimeCl
 com.fasterxml.jackson.core:jackson-core:2.12.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson.core:jackson-databind:2.12.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.12.3=runtimeClasspath,testRuntimeClasspath
 com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.12.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.12.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson:jackson-bom:2.12.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
