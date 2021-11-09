@@ -24,7 +24,6 @@ jobs:
 
       - name: Check presence of terra-helmfile
         run: |
-          ls -l integration/src/main/resources
           ls -l terra-helmfile
           ls -l terra-helmfile/versions/app
           ls -l terra-helmfile/environments/personal
