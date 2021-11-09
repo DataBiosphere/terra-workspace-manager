@@ -21,11 +21,5 @@
   "testRunnerK8SServiceAccountFile": "testrunner-k8s-wsmtest-sa.json",
 
   "skipDeployment": true,
-  "skipKubernetes": false,
-
-  "versionScript": {
-    "name": "ReadFromTerraHelmfileRepo",
-    "description": "Version from https://github.com/broadinstitute/terra-helmfile",
-    "parameters": ["terra-helmfile/versions/app/dev.yaml", "terra-helmfile/environments/personal/wsmtest.yaml"]
-  }
+  "skipKubernetes": false
 }
