@@ -43,7 +43,8 @@ public class CheckSpendProfileStep implements Step {
     SpendProfileId spendProfileId =
         workspace
             .getSpendProfileId()
-            .orElseThrow(() -> new MissingSpendProfileException(workspaceId));
+            .orElseThrow(
+                () -> MissingSpendProfileException.missingSpendProfileException(workspaceId));
 
     SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId, userRequest);
     if (spendProfile.billingAccountId().isEmpty()) {

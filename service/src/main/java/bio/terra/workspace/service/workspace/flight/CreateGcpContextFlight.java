@@ -37,8 +37,7 @@ public class CreateGcpContextFlight extends Flight {
             appContext.getWorkspaceDao(),
             appContext.getSpendProfileService(),
             workspaceId,
-            userRequest),
-        retryRule);
+            userRequest));
     addStep(new GenerateProjectIdStep());
     addStep(
         new PullProjectFromPoolStep(
