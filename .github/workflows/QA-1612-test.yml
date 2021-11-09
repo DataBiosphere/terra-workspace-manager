@@ -14,20 +14,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # Check out terra-helmfile repo
-      - uses: actions/checkout@v2
-        with:
-          repository: broadinstitute/terra-helmfile
-          ref: master
-          token: ${{ secrets.BROADBOT_TOKEN }}
-          path: integration/terra-helmfile
-
-      - name: Check presence of terra-helmfile
-        run: |
-          ls -l integration/terra-helmfile
-          ls -l integration/terra-helmfile/versions/app
-          ls -l integration/terra-helmfile/environments/personal
-
       # Install postgres:
       # - Create the file repository configuration.
       # - Import the repository signing key.
@@ -95,6 +81,12 @@ jobs:
           sleep 120
           version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
           echo "$(date "+%Y-%m-%dT%H:%M:%S") post-sync wsmtest version: $version"
+
+      - name: Sync Terra services version
+        uses: DataBiosphere/terra-test-runner/.github/actions/sync-terra-services-version@QA-1612
+        with:
+          environment: wsmtest
+          token: ${{ secrets.BROADBOT_TOKEN }}
 
       - name: clean databases before integration suite
         if: always()
