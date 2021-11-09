@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightMap;
@@ -18,6 +19,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
@@ -29,6 +31,7 @@ import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedExce
 import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
+import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.v3.model.Binding;
@@ -48,9 +51,12 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 class CreateGoogleContextFlightTest extends BaseConnectedTest {
 
@@ -61,8 +67,24 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   @Autowired private CrlService crl;
   @Autowired private JobService jobService;
   @Autowired private SpendConnectedTestUtils spendUtils;
-  @Autowired private SamService samService;
+  @MockBean private SamService mockSamService;
   @Autowired private UserAccessUtils userAccessUtils;
+
+  @BeforeEach
+  void setUp() throws InterruptedException {
+    // By default, allow all spend link calls as authorized. (All other isAuthorized calls return
+    // false by Mockito default.
+    Mockito.when(
+            mockSamService.isAuthorized(
+                Mockito.any(),
+                Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
+                Mockito.any(),
+                Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
+        .thenReturn(true);
+    // Return a valid google group for cloud sync, as Google validates groups added to GCP projects.
+    Mockito.when(mockSamService.syncWorkspacePolicy(any(), any(), any()))
+        .thenReturn("terra-workspace-manager-test-group@googlegroups.com");
+  }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
@@ -122,7 +144,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
             FlightDebugInfo.newBuilder().build());
 
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
-    assertEquals(SpendUnauthorizedException.class, flightState.getException().get().getClass());
+    assertEquals(NoBillingAccountException.class, flightState.getException().get().getClass());
     assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
     assertFalse(
         flightState.getResultMap().get().containsKey(WorkspaceFlightMapKeys.GCP_PROJECT_ID));
@@ -155,6 +177,13 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createsProjectAndContext_unauthorizedSpendProfile_flightFailsAndGcpProjectNotCreated()
       throws Exception {
+    Mockito.when(
+            mockSamService.isAuthorized(
+                Mockito.any(),
+                Mockito.eq(SamConstants.SPEND_PROFILE_RESOURCE),
+                Mockito.any(),
+                Mockito.eq(SamConstants.SPEND_PROFILE_LINK_ACTION)))
+        .thenReturn(false);
     UUID workspaceId = createWorkspace(spendUtils.defaultSpendId());
     AuthenticatedUserRequest unauthorizedUserRequest = userAccessUtils.secondUserAuthRequest();
 
@@ -205,7 +234,6 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     // Retry steps once to validate idempotency.
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(PullProjectFromPoolStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(CheckSpendProfileStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(SetProjectBillingStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(CreateCustomGcpRolesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(StoreGcpContextStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -263,7 +291,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
                         "group:"
                             + SamRethrow.onInterrupted(
                                 () ->
-                                    samService.syncWorkspacePolicy(
+                                    mockSamService.syncWorkspacePolicy(
                                         workspaceId,
                                         role,
                                         userAccessUtils.defaultUserAuthRequest()),

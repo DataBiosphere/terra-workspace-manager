@@ -48,7 +48,7 @@ public class CheckSpendProfileStep implements Step {
 
     SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId, userRequest);
     if (spendProfile.billingAccountId().isEmpty()) {
-      throw new NoBillingAccountException(spendProfileId);
+      throw NoBillingAccountException.noBillingAccountException(spendProfileId);
     }
     workingMap.put(BILLING_ACCOUNT_ID, spendProfile.billingAccountId());
     return StepResult.getStepResultSuccess();
