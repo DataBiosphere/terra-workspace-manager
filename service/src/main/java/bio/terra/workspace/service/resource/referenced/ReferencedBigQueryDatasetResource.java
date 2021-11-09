@@ -9,9 +9,13 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamRethrow;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
@@ -112,7 +116,24 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
   @Override
   public boolean checkAccess(FlightBeanBag context, AuthenticatedUserRequest userRequest) {
     CrlService crlService = context.getCrlService();
-    return crlService.canReadBigQueryDataset(projectId, datasetName, userRequest);
+    SamService samService = context.getSamService();
+    GcpCloudContextService gcpCloudContextService = context.getGcpCloudContextService();
+    // If the resource's workspace has a GCP cloud context, use the SA from that context. Otherwise,
+    // use the provided credentials. This cannot use arbitrary pet SA credentials, as they may not
+    // have the BigQuery APIs enabled.
+    Optional<String> maybeProjectId =
+        gcpCloudContextService
+            .getGcpCloudContext(getWorkspaceId())
+            .map(GcpCloudContext::getGcpProjectId);
+    if (maybeProjectId.isPresent()) {
+      AuthenticatedUserRequest petCreds =
+          SamRethrow.onInterrupted(
+              () -> samService.getOrCreatePetSaCredentials(maybeProjectId.get(), userRequest),
+              "checkBigQueryDatasetAccess");
+      return crlService.canReadBigQueryDataset(projectId, datasetName, petCreds);
+    } else {
+      return crlService.canReadBigQueryDataset(projectId, datasetName, userRequest);
+    }
   }
 
   /**

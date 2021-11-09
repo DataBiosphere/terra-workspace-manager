@@ -13,10 +13,16 @@ import org.junit.jupiter.api.Test;
 
 public class ValidationUtilsTest extends BaseUnitTest {
 
-  private static final String MAX_VALID_STRING = "012345678901234567890123456789012345678901234567890123456789012";
+  private static final String MAX_VALID_STRING =
+      "012345678901234567890123456789012345678901234567890123456789012";
   private static final String INVALID_STRING = MAX_VALID_STRING + "b";
   private static final String MAX_VALID_STRING_WITH_DOTS =
-      MAX_VALID_STRING + "." + MAX_VALID_STRING + "." + MAX_VALID_STRING + "."
+      MAX_VALID_STRING
+          + "."
+          + MAX_VALID_STRING
+          + "."
+          + MAX_VALID_STRING
+          + "."
           + "012345678901234567890123456789";
 
   @Test
@@ -105,8 +111,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
   @Test
   public void validateBucketName_nameHas64Character_throwsException() {
     assertThrows(
-        InvalidNameException.class,
-        () -> ValidationUtils.validateBucketName(INVALID_STRING));
+        InvalidNameException.class, () -> ValidationUtils.validateBucketName(INVALID_STRING));
   }
 
   @Test
@@ -116,9 +121,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
 
   @Test
   public void validateBucketName_nameHas2Character_throwsException() {
-    assertThrows(
-        InvalidNameException.class,
-        () -> ValidationUtils.validateBucketName("aa"));
+    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateBucketName("aa"));
   }
 
   @Test
@@ -146,28 +149,24 @@ public class ValidationUtilsTest extends BaseUnitTest {
   @Test
   public void validateBucketName_nameStartAndEndWithDot_throwsException() {
     assertThrows(
-        InvalidNameException.class,
-        () -> ValidationUtils.validateBucketName(".bucket-name."));
+        InvalidNameException.class, () -> ValidationUtils.validateBucketName(".bucket-name."));
   }
 
   @Test
   public void validateBucketName_nameWithGoogPrefix_throwsException() {
     assertThrows(
-        InvalidNameException.class,
-        () -> ValidationUtils.validateBucketName("goog-bucket-name1"));
+        InvalidNameException.class, () -> ValidationUtils.validateBucketName("goog-bucket-name1"));
   }
 
   @Test
   public void validateBucketName_nameContainsGoogle_throwsException() {
     assertThrows(
-        InvalidNameException.class,
-        () -> ValidationUtils.validateBucketName("bucket-google-name"));
+        InvalidNameException.class, () -> ValidationUtils.validateBucketName("bucket-google-name"));
   }
 
   @Test
   public void validateBucketName_nameContainsG00gle_throwsException() {
     assertThrows(
-        InvalidNameException.class,
-        () -> ValidationUtils.validateBucketName("bucket-g00gle-name"));
+        InvalidNameException.class, () -> ValidationUtils.validateBucketName("bucket-g00gle-name"));
   }
 }
