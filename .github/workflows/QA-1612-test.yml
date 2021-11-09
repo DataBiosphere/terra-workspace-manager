@@ -14,6 +14,21 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      # Check out terra-helmfile repo
+      - uses: actions/checkout@v2
+        with:
+          repository: broadinstitute/terra-helmfile
+          ref: master
+          token: ${{ secrets.BROADBOT_TOKEN }}
+          path: integration/src/main/resources/terra-helmfile
+
+      - name: Check presence of terra-helmfile
+        run: |
+          ls -l integration/src/main/resources
+          ls -l integration/src/main/resources/terra-helmfile
+          ls -l integration/src/main/resources/terra-helmfile/versions/app
+          ls -l integration/src/main/resources/terra-helmfile/environments/personal
+
       # Install postgres:
       # - Create the file repository configuration.
       # - Import the repository signing key.
