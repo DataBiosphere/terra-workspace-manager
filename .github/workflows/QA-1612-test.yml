@@ -20,14 +20,14 @@ jobs:
           repository: broadinstitute/terra-helmfile
           ref: master
           token: ${{ secrets.BROADBOT_TOKEN }}
-          path: integration/src/main/resources/terra-helmfile
+          path: terra-helmfile
 
       - name: Check presence of terra-helmfile
         run: |
           ls -l integration/src/main/resources
-          ls -l integration/src/main/resources/terra-helmfile
-          ls -l integration/src/main/resources/terra-helmfile/versions/app
-          ls -l integration/src/main/resources/terra-helmfile/environments/personal
+          ls -l terra-helmfile
+          ls -l terra-helmfile/versions/app
+          ls -l terra-helmfile/environments/personal
 
       # Install postgres:
       # - Create the file repository configuration.
