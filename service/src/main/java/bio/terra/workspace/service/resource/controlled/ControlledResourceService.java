@@ -42,7 +42,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ControlledResourceService {
 
-  private static final int MAX_ASSIGNED_USER_LENGTH = 128;
+  private static final int MAX_ASSIGNED_USER_LENGTH = 254;
 
   private final JobService jobService;
   private final WorkspaceService workspaceService;
