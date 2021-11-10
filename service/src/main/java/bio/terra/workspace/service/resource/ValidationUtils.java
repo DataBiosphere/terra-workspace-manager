@@ -5,6 +5,9 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParam
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import java.util.regex.Pattern;
+
+import com.azure.core.management.Region;
+import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,5 +105,34 @@ public class ValidationUtils {
     //  with a 512 character name that cannot being with an underscore. That gives us room to
     // generate
     //  names based on the resource name. It also is roomy.
+  }
+
+  //TODO: fix validation once gradle `sbt console` equivalent is found..
+  public static void validateAzureVmSize(String vmSize) {
+    try {
+      VirtualMachineSizeTypes s = VirtualMachineSizeTypes.fromString(vmSize);
+      if (s == null) {
+        throw new InvalidReferenceException("Invalid Azure vm size specified. See the class `com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes`");
+      }
+    } catch (Exception e) {
+      logger.warn("Invalid Azure vmSize {}", vmSize);
+      throw new InvalidReferenceException(
+              "Invalid Azure vm size specified. See the class `com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes`");
+    }
+  }
+
+  //TODO: fix validation once gradle `sbt console` equivalent is found..
+  public static void validateRegion(String region) {
+    try {
+      Region r = Region.fromName(region);
+      if (r == null) {
+        logger.warn("Invalid Azure region {}", region);
+        throw new InvalidReferenceException("Invalid Azure Region specified. See the class `com.azure.core.management.Region`");
+      }
+    } catch (Exception e) {
+      logger.warn("Invalid Azure region {}", region);
+      throw new InvalidReferenceException(
+              "Invalid Azure Regon specified. See the class `com.azure.core.management.Region`");
+    }
   }
 }

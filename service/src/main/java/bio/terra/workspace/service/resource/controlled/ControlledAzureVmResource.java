@@ -9,6 +9,7 @@ import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -170,14 +171,9 @@ public class ControlledAzureVmResource extends ControlledResource {
           "Missing required diskId field for ControlledAzureVm.");
     }
 
-    try {
-      VirtualMachineSizeTypes.fromString(getVmSize());
-    } catch (Exception e) {
-      throw new MissingRequiredFieldException(
-          "The field vmSize is not a valid azure vm size. Investigate VirtualMachineSizeTypes");
-    }
-
     ValidationUtils.validateAzureResourceName(getVmName());
+    ValidationUtils.validateAzureVmSize(getVmName());
+    ValidationUtils.validateRegion(getRegion());
   }
 
   @Override
