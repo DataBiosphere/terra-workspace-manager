@@ -17,11 +17,13 @@ import com.google.api.services.cloudresourcemanager.v3.model.Binding;
 import com.google.api.services.cloudresourcemanager.v3.model.GetIamPolicyRequest;
 import com.google.api.services.cloudresourcemanager.v3.model.Policy;
 import com.google.api.services.cloudresourcemanager.v3.model.SetIamPolicyRequest;
+import com.google.cloud.storage.StorageException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,6 +85,10 @@ public class GcpCloudSyncStep implements Step {
       resourceManagerCow.projects().setIamPolicy(gcpProjectId, iamPolicyRequest).execute();
     } catch (IOException e) {
       throw new RetryableCrlException("Error setting IAM permissions", e);
+    } catch (StorageException e) {
+      if (e.getCode() == HttpStatus.SC_BAD_REQUEST || e.getCode() == HttpStatus.SC_NOT_FOUND) {
+        throw new RetryableCrlException("Error setting IAM permissions", e);
+      }
     }
     return StepResult.getStepResultSuccess();
   }

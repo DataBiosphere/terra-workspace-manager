@@ -12,11 +12,14 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.exceptions.RetryableCrlException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.cloud.Policy;
+import com.google.cloud.storage.StorageException;
 import java.util.Map;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +48,7 @@ public class GcsBucketCloudSyncStep implements Step {
     // Users do not have read or write access to IAM policies, so requests are executed via
     // WSM's service account.
     StorageCow wsmSaStorageCow = crlService.createStorageCow(projectId);
+    try {
     Policy currentPolicy = wsmSaStorageCow.getIamPolicy(resource.getBucketName());
     GcpPolicyBuilder updatedPolicyBuilder =
         new GcpPolicyBuilder(resource, projectId, currentPolicy);
@@ -70,7 +74,13 @@ public class GcsBucketCloudSyncStep implements Step {
 
     logger.info(
         "Syncing workspace roles to GCP permissions on bucket {}", resource.getBucketName());
-    wsmSaStorageCow.setIamPolicy(resource.getBucketName(), updatedPolicyBuilder.build());
+
+      wsmSaStorageCow.setIamPolicy(resource.getBucketName(), updatedPolicyBuilder.build());
+    } catch (StorageException e) {
+      if (e.getCode() == HttpStatus.SC_BAD_REQUEST || e.getCode() == HttpStatus.SC_NOT_FOUND) {
+        throw new RetryableCrlException("Error setting IAM permission", e);
+      }
+    }
 
     return StepResult.getStepResultSuccess();
   }
