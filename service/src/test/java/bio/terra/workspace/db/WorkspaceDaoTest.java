@@ -49,7 +49,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   private UUID workspaceId;
   @Nullable private SpendProfileId spendProfileId;
-  private final String READ_SQL =
+  private static final String READ_SQL =
       "SELECT workspace_id, spend_profile FROM workspace WHERE workspace_id = :id";
 
   @BeforeEach

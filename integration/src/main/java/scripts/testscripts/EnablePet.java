@@ -60,8 +60,8 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
         ClientTestUtils.getWorkspaceClientFromToken(petSaToken, server);
     String petEnableResult = petSaWorkspaceApi.enablePet(getWorkspaceId());
     assertEquals(petSaEmail, petEnableResult);
-    Iam petIamClient = ClientTestUtils.getGcpIamClientFromToken(petSaToken);
     // TODO(PF-991): This will fail until pet SA self-impersonation is fixed.
+    // Iam petIamClient = ClientTestUtils.getGcpIamClientFromToken(petSaToken);
     // assertFalse(canImpersonateSa(petIamClient, petSaEmail));
 
     // Add second user to the workspace as a reader.

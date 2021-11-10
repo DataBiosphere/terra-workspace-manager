@@ -84,7 +84,6 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
         jobService.retrieveAsyncJobResult(
             makeContextJobId, GcpCloudContext.class, userAccessUtils.defaultUserAuthRequest());
     assertEquals(StatusEnum.SUCCEEDED, createContextJobResult.getJobReport().getStatus());
-    GcpCloudContext gcpContext = createContextJobResult.getResult();
 
     // Create a private dataset for secondary user
     String datasetId = RandomStringUtils.randomAlphabetic(8);

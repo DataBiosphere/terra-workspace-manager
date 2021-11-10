@@ -23,6 +23,7 @@ import bio.terra.workspace.model.JobControl;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.notebooks.v1.AIPlatformNotebooks;
 import com.google.api.services.notebooks.v1.model.StopInstanceRequest;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
@@ -62,9 +63,10 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
   }
 
   @Override
+  @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE")
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
-    String projectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
 
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(resourceUser.userEmail),

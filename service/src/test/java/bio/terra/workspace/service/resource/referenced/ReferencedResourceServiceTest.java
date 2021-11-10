@@ -34,6 +34,7 @@ import bio.terra.workspace.service.resource.referenced.flight.create.ValidateRef
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -172,6 +173,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     }
 
     @Test
+    @SuppressFBWarnings(
+        value = "DLS_DEAD_LOCAL_STORE",
+        justification =
+            "referencedDataRepoSnapshotResource field is unused because the test is to"
+                + "test undo step.")
     void createReferencedResourceUndo() {
       Map<String, StepStatus> retrySteps = new HashMap<>();
       retrySteps.put(ValidateReferenceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -182,14 +188,15 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       jobService.setFlightDebugInfoForTest(debugInfo);
       UUID resourceId = UUID.randomUUID();
       referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
-      new ReferencedDataRepoSnapshotResource(
-          workspaceId,
-          resourceId,
-          "aname",
-          "some description",
-          CloningInstructions.COPY_NOTHING,
-          DATA_REPO_INSTANCE_NAME,
-          "polaroid");
+      ReferencedDataRepoSnapshotResource unused =
+          new ReferencedDataRepoSnapshotResource(
+              workspaceId,
+              resourceId,
+              "aname",
+              "some description",
+              CloningInstructions.COPY_NOTHING,
+              DATA_REPO_INSTANCE_NAME,
+              "polaroid");
       // Service methods which wait for a flight to complete will throw an
       // InvalidResultStateException when that flight fails without a cause, which occurs when a
       // flight fails via debugInfo.

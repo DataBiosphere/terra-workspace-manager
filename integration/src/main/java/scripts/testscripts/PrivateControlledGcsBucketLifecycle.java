@@ -34,6 +34,7 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -137,7 +138,9 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     StorageException ownerCannotWritePrivateBucket =
         assertThrows(
             StorageException.class,
-            () -> ownerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes()),
+            () ->
+                ownerStorageClient.create(
+                    blobInfo, GCS_BLOB_CONTENT.getBytes(StandardCharsets.UTF_8)),
             "Workspace owner was able to write to private bucket");
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, ownerCannotWritePrivateBucket.getCode());
     logger.info("Workspace owner cannot write to private resource as expected");
@@ -146,13 +149,17 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     StorageException readerCannotWriteBucket =
         assertThrows(
             StorageException.class,
-            () -> workspaceReaderStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes()),
+            () ->
+                workspaceReaderStorageClient.create(
+                    blobInfo, GCS_BLOB_CONTENT.getBytes(StandardCharsets.UTF_8)),
             "Workspace reader was able to write to private bucket");
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, readerCannotWriteBucket.getCode());
     logger.info("Workspace reader cannot write to private resource as expected");
 
     // Private resource user can write object to bucket
-    Blob createdBlob = privateUserStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
+    Blob createdBlob =
+        privateUserStorageClient.create(
+            blobInfo, GCS_BLOB_CONTENT.getBytes(StandardCharsets.UTF_8));
     logger.info("Private resource user can write {} to private resource", blobInfo.getName());
 
     // Private user can read their bucket

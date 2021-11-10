@@ -119,14 +119,6 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     assertEquals(HttpStatus.NOT_FOUND.value(), exception.getStatusCode());
   }
 
-  private static void assertNotFound(ServiceAccountName serviceAccountName, IamCow iam) {
-    GoogleJsonResponseException exception =
-        assertThrows(
-            GoogleJsonResponseException.class,
-            () -> iam.projects().serviceAccounts().get(serviceAccountName).execute());
-    assertEquals(HttpStatus.NOT_FOUND.value(), exception.getStatusCode());
-  }
-
   /**
    * Checks whether the provided IamCow (with credentials) has permission to impersonate a provided
    * service account (via iam.serviceAccounts.actAs permission).
