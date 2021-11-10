@@ -44,6 +44,7 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
     super(workspaceId, resourceId, name, description, cloningInstructions);
     this.instanceName = instanceName;
     this.snapshotId = snapshotId;
+    validate();
   }
 
   /**
@@ -60,6 +61,7 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
         DbSerDes.fromJson(dbResource.getAttributes(), ReferencedDataRepoSnapshotAttributes.class);
     this.instanceName = attributes.getInstanceName();
     this.snapshotId = attributes.getSnapshotId();
+    validate();
   }
 
   public static ReferencedDataRepoSnapshotResource.Builder builder() {

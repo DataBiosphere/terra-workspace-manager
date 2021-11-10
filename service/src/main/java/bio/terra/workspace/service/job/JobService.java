@@ -119,7 +119,7 @@ public class JobService {
       // be checked separately. Allowing duplicate FlightIds is useful for ensuring idempotent
       // behavior of flights.
       logger.warn("Received duplicate job ID: {}", jobId);
-      throw new DuplicateJobIdException("Received duplicate jobId, see logs for details", ex);
+      throw new DuplicateJobIdException("Received duplicate jobId", ex);
     } catch (StairwayException | InterruptedException stairwayEx) {
       throw new InternalStairwayException(stairwayEx);
     }
