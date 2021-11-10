@@ -44,11 +44,11 @@ public class CheckSpendProfileStep implements Step {
         workspace
             .getSpendProfileId()
             .orElseThrow(
-                () -> MissingSpendProfileException.missingSpendProfileException(workspaceId));
+                () -> MissingSpendProfileException.forWorkspace(workspaceId));
 
     SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId, userRequest);
     if (spendProfile.billingAccountId().isEmpty()) {
-      throw NoBillingAccountException.noBillingAccountException(spendProfileId);
+      throw NoBillingAccountException.forSpendProfile(spendProfileId);
     }
     workingMap.put(BILLING_ACCOUNT_ID, spendProfile.billingAccountId());
     return StepResult.getStepResultSuccess();

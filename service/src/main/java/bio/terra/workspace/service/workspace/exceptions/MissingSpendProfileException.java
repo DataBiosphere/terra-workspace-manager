@@ -12,7 +12,7 @@ public class MissingSpendProfileException extends BadRequestException {
     super(message);
   }
 
-  public static MissingSpendProfileException missingSpendProfileException(UUID workspaceId) {
+  public static MissingSpendProfileException forWorkspace(UUID workspaceId) {
     return new MissingSpendProfileException(
         String.format(
             "Spend profile id required, but none found on workspace %s", workspaceId.toString()));
