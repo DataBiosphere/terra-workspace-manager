@@ -7,6 +7,7 @@ import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.google.common.collect.ImmutableList;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,21 +39,26 @@ public class ValidationUtils {
   public static final Pattern AI_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN =
       Pattern.compile("(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)");
 
-  /** Resource names must be 1-1024 characters, using letters, numbers, dashes, and underscores and must not start with a dash or underscore.*/
+  /**
+   * Resource names must be 1-1024 characters, using letters, numbers, dashes, and underscores and
+   * must not start with a dash or underscore.
+   */
   public static final Pattern RESOURCE_NAME_VALIDATION_PATTERN =
       Pattern.compile("^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$");
 
   private static final String GOOG_PREFIX = "goog";
   private static final ImmutableList<String> GOOGLE_NAMES = ImmutableList.of("google", "g00gle");
+  private static final int MAX_RESOURCE_DESCRIPTION_NAME = 2048;
 
   /**
    * Validates gcs-bucket name following Google documentation
    * https://cloud.google.com/storage/docs/naming-buckets#requirements on a best-effort base.
    *
-   * This method DOES NOT guarentee that the bucket name is valid.
+   * <p>This method DOES NOT guarentee that the bucket name is valid.
+   *
    * @param name gcs-bucket name
    * @throws InvalidNameException throws exception when the bucket name fails to conform to the
-   * Google naming convention for bucket name.
+   *     Google naming convention for bucket name.
    */
   public static void validateBucketName(String name) {
     if (StringUtils.isEmpty(name) || !BUCKET_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
@@ -123,6 +129,13 @@ public class ValidationUtils {
       logger.warn("Invalid resource name {}", name);
       throw new InvalidNameException(
           "Invalid resource name specified. Name must be 1 to 1024 alphanumeric characters, underscores, and dashes and must not start with a dash or underscore.");
+    }
+  }
+
+  public static void validateResourceDescriptionName(@Nullable String name) {
+    if (name != null && name.length() > MAX_RESOURCE_DESCRIPTION_NAME) {
+      throw new InvalidNameException(
+          "Invalid description specified. Description must be under 2048 characters.");
     }
   }
 }
