@@ -1,4 +1,4 @@
-name: Run linter tests against PRs (pre and post merge)
+name: Run linter tests
 on:
   workflow_dispatch: {}
   push:
