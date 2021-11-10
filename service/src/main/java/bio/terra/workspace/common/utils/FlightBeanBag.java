@@ -12,6 +12,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadat
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesComponent;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
+import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,7 @@ public class FlightBeanBag {
   private final SamService samService;
   private final WorkspaceDao workspaceDao;
   private final WorkspaceService workspaceService;
+  private final SpendProfileService spendProfileService;
 
   @Lazy
   @Autowired
@@ -58,7 +60,8 @@ public class FlightBeanBag {
       ResourceDao resourceDao,
       SamService samService,
       WorkspaceDao workspaceDao,
-      WorkspaceService workspaceService) {
+      WorkspaceService workspaceService,
+      SpendProfileService spendProfileService) {
     this.applicationDao = applicationDao;
     this.bucketCloneRolesComponent = bucketCloneRolesComponent;
     this.bufferService = bufferService;
@@ -73,6 +76,7 @@ public class FlightBeanBag {
     this.samService = samService;
     this.workspaceDao = workspaceDao;
     this.workspaceService = workspaceService;
+    this.spendProfileService = spendProfileService;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -133,5 +137,9 @@ public class FlightBeanBag {
 
   public WorkspaceService getWorkspaceService() {
     return workspaceService;
+  }
+
+  public SpendProfileService getSpendProfileService() {
+    return spendProfileService;
   }
 }

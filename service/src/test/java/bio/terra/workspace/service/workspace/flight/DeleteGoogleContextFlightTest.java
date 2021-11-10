@@ -27,12 +27,14 @@ import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class DeleteGoogleContextFlightTest extends BaseConnectedTest {
+
   /**
    * How long to wait for a delete context Stairway flight to complete before timing out the test.
    */
@@ -56,8 +58,6 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
     FlightMap createParameters = new FlightMap();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     createParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
-    createParameters.put(
-        WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendUtils.defaultBillingAccountId());
     createParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 
     // Create the google context.
@@ -122,8 +122,6 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
     FlightMap createParameters = new FlightMap();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     createParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
-    createParameters.put(
-        WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendUtils.defaultBillingAccountId());
     createParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 
     // Create the google context.
@@ -181,6 +179,7 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
         WorkspaceRequest.builder()
             .workspaceId(UUID.randomUUID())
             .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
             .build();
     return workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
   }

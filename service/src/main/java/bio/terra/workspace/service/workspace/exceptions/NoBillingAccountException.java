@@ -8,8 +8,12 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
  * Profile does not have a billing account associated with it.
  */
 public class NoBillingAccountException extends BadRequestException {
-  public NoBillingAccountException(SpendProfileId spendProfileId) {
-    super(
+  public NoBillingAccountException(String message) {
+    super(message);
+  }
+
+  public static NoBillingAccountException forSpendProfile(SpendProfileId spendProfileId) {
+    return new NoBillingAccountException(
         String.format(
             "Billing acocunt id required, but none found on spend profile %s",
             spendProfileId.id()));

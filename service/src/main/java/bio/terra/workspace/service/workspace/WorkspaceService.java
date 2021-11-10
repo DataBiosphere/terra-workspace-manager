@@ -11,13 +11,9 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneGcpWorkspaceFlight;
-import bio.terra.workspace.service.spendprofile.SpendProfile;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
-import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
-import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
 import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.RemoveUserFromWorkspaceFlight;
@@ -230,18 +226,6 @@ public class WorkspaceService {
             userRequest, workspaceId, SamConstants.SAM_WORKSPACE_WRITE_ACTION);
     stageService.assertMcWorkspace(workspace, "createCloudContext");
 
-    // TODO: We should probably do this in a step of the job. It will be talking to another
-    //  service and that may require retrying. It also may be slow, so getting it off of this
-    //  thread and getting our response back might be better.
-    SpendProfileId spendProfileId =
-        workspace
-            .getSpendProfileId()
-            .orElseThrow(() -> new MissingSpendProfileException(workspaceId));
-    SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId, userRequest);
-    if (spendProfile.billingAccountId().isEmpty()) {
-      throw new NoBillingAccountException(spendProfileId);
-    }
-
     jobService
         .newJob(
             "Create GCP Cloud Context " + workspaceId,
@@ -250,8 +234,6 @@ public class WorkspaceService {
             /* request= */ null,
             userRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
-        .addParameter(
-            WorkspaceFlightMapKeys.BILLING_ACCOUNT_ID, spendProfile.billingAccountId().get())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
         .submit();
   }

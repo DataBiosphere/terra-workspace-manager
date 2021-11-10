@@ -31,13 +31,18 @@ public class CreateGcpContextFlight extends Flight {
     AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
+    RetryRule retryRule = RetryRules.shortExponential();
+    addStep(
+        new CheckSpendProfileStep(
+            appContext.getWorkspaceDao(),
+            appContext.getSpendProfileService(),
+            workspaceId,
+            userRequest));
     addStep(new GenerateProjectIdStep());
     addStep(
         new PullProjectFromPoolStep(
             appContext.getBufferService(), crl.getCloudResourceManagerCow()),
         bufferRetryRule);
-
-    RetryRule retryRule = RetryRules.shortExponential();
 
     addStep(new SetProjectBillingStep(crl.getCloudBillingClientCow()), RetryRules.cloud());
     addStep(new GrantWsmRoleAdminStep(crl), retryRule);
