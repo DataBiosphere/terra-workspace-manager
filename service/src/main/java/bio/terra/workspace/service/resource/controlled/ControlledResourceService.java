@@ -34,12 +34,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /** CRUD methods for controlled objects. */
 @Component
 public class ControlledResourceService {
+
+  private static final int MAX_ASSIGNED_USER_LENGTH = 254;
 
   private final JobService jobService;
   private final WorkspaceService workspaceService;
@@ -238,7 +241,6 @@ public class ControlledResourceService {
    * @param destinationLocation - location override. Uses source location if null
    * @param cloningInstructionsOverride - Cloning instructions for this clone operation, overriding
    *     any existing instructions. Existing instructions are used if null.
-   * @return
    */
   public String cloneBigQueryDataset(
       UUID sourceWorkspaceId,
@@ -422,16 +424,21 @@ public class ControlledResourceService {
       // No need to handle SHARED resources
       return;
     }
-    // If there is no assigned user, this condition is satisfied.
-    //noinspection deprecation
+
+    String assignedUser = controlledResource.getAssignedUser().orElse("");
     final boolean isAllowed =
-        controlledResource.getAssignedUser().map(userEmail::equalsIgnoreCase).orElse(true);
+        assignedUser.length() <= MAX_ASSIGNED_USER_LENGTH
+            &&
+            // If there is no assigned user, this condition is satisfied.
+            (StringUtils.isEmpty(assignedUser)
+                || StringUtils.equalsIgnoreCase(assignedUser, userEmail));
+
     if (!isAllowed) {
       throw new BadRequestException(
           "User ("
               + userEmail
               + ") may only assign a private controlled resource to themselves ("
-              + controlledResource.getAssignedUser().orElse("")
+              + assignedUser.substring(0, Math.min(assignedUser.length(), MAX_ASSIGNED_USER_LENGTH))
               + ").");
     }
   }
