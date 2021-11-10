@@ -7,6 +7,7 @@ import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import com.google.common.collect.ImmutableList;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +48,7 @@ public class ValidationUtils {
 
   private static final String GOOG_PREFIX = "goog";
   private static final ImmutableList<String> GOOGLE_NAMES = ImmutableList.of("google", "g00gle");
+  private static final int MAX_RESOURCE_DESCRIPTION_NAME = 2048;
 
   /**
    * Validates gcs-bucket name following Google documentation
@@ -127,6 +129,13 @@ public class ValidationUtils {
       logger.warn("Invalid resource name {}", name);
       throw new InvalidNameException(
           "Invalid resource name specified. Name must be 1 to 1024 alphanumeric characters, underscores, and dashes and must not start with a dash or underscore.");
+    }
+  }
+
+  public static void validateResourceDescriptionName(@Nullable String name) {
+    if (name != null && name.length() > MAX_RESOURCE_DESCRIPTION_NAME) {
+      throw new InvalidNameException(
+          "Invalid description specified. Description must be under 2048 characters.");
     }
   }
 }

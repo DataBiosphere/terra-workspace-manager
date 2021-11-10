@@ -165,7 +165,7 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
 
     // Cloud metadata matches the updated values
     Dataset cloudDataset = ownerBqClient.getDataset(DatasetId.of(projectId, DATASET_NAME));
-    assertEquals(defaultTableLifetimeSec * 1000, cloudDataset.getDefaultTableLifetime());
+    assertEquals(defaultTableLifetimeSec * 1000L, cloudDataset.getDefaultTableLifetime());
     assertNull(cloudDataset.getDefaultPartitionExpirationMs());
 
     // Workspace writer can delete the table we created earlier

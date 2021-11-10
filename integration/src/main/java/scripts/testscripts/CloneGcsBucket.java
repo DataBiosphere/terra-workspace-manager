@@ -42,6 +42,7 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule.SetStorageClassLifecycl
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageClass;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
@@ -113,7 +114,9 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
         ClientTestUtils.getGcpStorageClient(sourceOwnerUser, sourceProjectId);
     final BlobId blobId = BlobId.of(sourceBucketName, GCS_BLOB_NAME);
     final BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
-    final Blob createdFile = sourceOwnerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
+    final Blob createdFile =
+        sourceOwnerStorageClient.create(
+            blobInfo, GCS_BLOB_CONTENT.getBytes(StandardCharsets.UTF_8));
     logger.info("Wrote blob {} to bucket", createdFile.getBlobId());
 
     // create destination workspace

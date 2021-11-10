@@ -130,6 +130,10 @@ public abstract class WsmResource {
         || getResourceId() == null) {
       throw new MissingRequiredFieldException("Missing required field for WsmResource.");
     }
+    ValidationUtils.validateResourceName(getName());
+    if (getDescription() != null) {
+      ValidationUtils.validateResourceDescriptionName(getDescription());
+    }
   }
 
   public ReferencedResource castToReferencedResource() {

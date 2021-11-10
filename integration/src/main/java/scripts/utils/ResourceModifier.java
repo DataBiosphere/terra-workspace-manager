@@ -33,6 +33,7 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Optional;
@@ -58,7 +59,8 @@ public class ResourceModifier {
     final BlobId blobId =
         BlobId.of(bucket.getGcpBucket().getAttributes().getBucketName(), GCS_BLOB_NAME);
     final BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
-    return sourceOwnerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
+    return sourceOwnerStorageClient.create(
+        blobInfo, GCS_BLOB_CONTENT.getBytes(StandardCharsets.UTF_8));
   }
 
   public static Blob retrieveBucketFile(

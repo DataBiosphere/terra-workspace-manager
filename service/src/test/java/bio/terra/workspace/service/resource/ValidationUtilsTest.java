@@ -169,4 +169,24 @@ public class ValidationUtilsTest extends BaseUnitTest {
     assertThrows(
         InvalidNameException.class, () -> ValidationUtils.validateBucketName("bucket-g00gle-name"));
   }
+
+  @Test
+  public void validateResourceDescription_nameTooLong_throwsException() {
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < 2050; i++) {
+      sb.append("a");
+    }
+    assertThrows(
+        InvalidNameException.class,
+        () -> ValidationUtils.validateResourceDescriptionName(sb.toString()));
+  }
+
+  @Test
+  public void validateResourceDescription_nameWith2048Char_validates() {
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < 2048; i++) {
+      sb.append("a");
+    }
+    ValidationUtils.validateResourceDescriptionName(sb.toString());
+  }
 }

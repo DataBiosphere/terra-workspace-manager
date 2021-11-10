@@ -13,6 +13,7 @@ import com.google.api.services.iam.v1.Iam;
 import com.google.api.services.iam.v1.model.TestIamPermissionsRequest;
 import com.google.api.services.iam.v1.model.TestIamPermissionsResponse;
 import com.google.auth.oauth2.AccessToken;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Collections;
 import java.util.List;
 import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
@@ -39,6 +40,7 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
   }
 
   @Override
+  @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE")
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi userWorkspaceApi)
       throws Exception {
     // Validate that the user cannot impersonate their pet before calling this endpoint.
@@ -60,7 +62,7 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
         ClientTestUtils.getWorkspaceClientFromToken(petSaToken, server);
     String petEnableResult = petSaWorkspaceApi.enablePet(getWorkspaceId());
     assertEquals(petSaEmail, petEnableResult);
-    Iam petIamClient = ClientTestUtils.getGcpIamClientFromToken(petSaToken);
+    Iam unused = ClientTestUtils.getGcpIamClientFromToken(petSaToken);
     // TODO(PF-991): This will fail until pet SA self-impersonation is fixed.
     // assertFalse(canImpersonateSa(petIamClient, petSaEmail));
 

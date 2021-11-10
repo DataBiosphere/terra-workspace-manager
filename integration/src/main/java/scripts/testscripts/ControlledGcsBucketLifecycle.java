@@ -51,6 +51,7 @@ import com.google.cloud.storage.Storage.BucketField;
 import com.google.cloud.storage.Storage.BucketGetOption;
 import com.google.cloud.storage.StorageClass;
 import com.google.cloud.storage.StorageException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -144,7 +145,8 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     // Owner can write object to bucket
     BlobId blobId = BlobId.of(bucketName, GCS_BLOB_NAME);
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
-    Blob createdFile = ownerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes());
+    Blob createdFile =
+        ownerStorageClient.create(blobInfo, GCS_BLOB_CONTENT.getBytes(StandardCharsets.UTF_8));
     logger.info("Wrote blob {} to bucket", createdFile.getBlobId());
 
     // Owner can read the object they created
@@ -187,7 +189,9 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
     StorageException readerCannotWrite =
         assertThrows(
             StorageException.class,
-            () -> readerStorageClient.create(readerBlobInfo, GCS_BLOB_CONTENT.getBytes()),
+            () ->
+                readerStorageClient.create(
+                    readerBlobInfo, GCS_BLOB_CONTENT.getBytes(StandardCharsets.UTF_8)),
             "Workspace reader was able to write a file to a bucket!");
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, readerCannotWrite.getCode());
     logger.info("Failed to write new blob {} as reader as expected", readerBlobId.getName());

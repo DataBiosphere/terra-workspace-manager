@@ -7,6 +7,7 @@ import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleAction;
 import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleActionType;
 import bio.terra.workspace.model.GcpGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.model.GcpGcsBucketUpdateParameters;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -43,9 +44,13 @@ public class GcsBucketTestFixtures {
               new GcpGcsBucketLifecycleRuleCondition()
                   .createdBefore(OffsetDateTime.parse("2007-01-03T00:00:00.00Z"))
                   .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.STANDARD));
-  // list must not be immutable if deserialization is to work
+
+  @SuppressFBWarnings(
+      value = "MS_MUTABLE_COLLECTION",
+      justification = "list must not be immutable if deserialization is to work")
   public static final List<GcpGcsBucketLifecycleRule> LIFECYCLE_RULES =
       new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
+
   public static final String RESOURCE_DESCRIPTION = "A huge bucket";
   public static final String UPDATED_RESOURCE_NAME = "new_resource_name";
   public static final String UPDATED_RESOURCE_NAME_2 = "another_resource_name";
