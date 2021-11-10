@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
+import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.model.GrantRoleRequestBody;
@@ -162,6 +163,18 @@ public class ControlledBigQueryDatasetLifecycle extends WorkspaceAllocateTestScr
     var datasetAfterUpdate = ownerResourceApi.getBigQueryDataset(getWorkspaceId(), resourceId);
     assertEquals(datasetAfterUpdate.getMetadata().getDescription(), resourceDescription);
     logger.info("Workspace owner updated resource {}", resourceId);
+
+    // However, invalid updates are rejected.
+    String invalidName = "!!!invalid_name!!!";
+    var invalidUpdateDatasetRequest =
+        new UpdateControlledGcpBigQueryDatasetRequestBody().name(invalidName);
+    ApiException invalidUpdateEx =
+        assertThrows(
+            ApiException.class,
+            () ->
+                ownerResourceApi.updateBigQueryDataset(
+                    invalidUpdateDatasetRequest, getWorkspaceId(), resourceId));
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, invalidUpdateEx.getCode());
 
     // Cloud metadata matches the updated values
     Dataset cloudDataset = ownerBqClient.getDataset(DatasetId.of(projectId, DATASET_NAME));

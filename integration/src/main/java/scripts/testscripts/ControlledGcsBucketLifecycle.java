@@ -219,6 +219,20 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
         resource.getMetadata().getDescription());
     assertEquals(UPDATED_RESOURCE_NAME, resource.getMetadata().getName());
     assertEquals(UPDATED_DESCRIPTION, resource.getMetadata().getDescription());
+    // However, invalid updates are rejected.
+    String invalidName = "!!!invalid_name!!!";
+    ApiException invalidUpdateEx =
+        assertThrows(
+            ApiException.class,
+            () ->
+                updateBucketAttempt(
+                    resourceApi,
+                    resourceId,
+                    invalidName,
+                    /*updatedDescription=*/ null,
+                    /*updateParameters=*/ null));
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, invalidUpdateEx.getCode());
+
     final Bucket retrievedUpdatedBucket =
         ownerStorageClient.get(
             bucketName, BucketGetOption.fields(BucketField.LIFECYCLE, BucketField.STORAGE_CLASS));
@@ -342,7 +356,7 @@ public class ControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBas
       UUID resourceId,
       @Nullable String updatedResourceName,
       @Nullable String updatedDescription,
-      GcpGcsBucketUpdateParameters updateParameters)
+      @Nullable GcpGcsBucketUpdateParameters updateParameters)
       throws ApiException {
     var body =
         new UpdateControlledGcpGcsBucketRequestBody()
