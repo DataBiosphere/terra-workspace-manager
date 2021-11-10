@@ -417,8 +417,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         assertThat(resource, equalTo(resultResource));
 
         // Mock Sam will not return real credentials for a pet SA to make this call, but we don't
-        // need
-        // real credentials because we also mock out cloud validation here.
+        // need real credentials because we also mock out cloud validation here.
         assertTrue(
             referenceResourceService.checkAccess(
                 workspaceId, referenceResource.getResourceId(), USER_REQUEST));
@@ -520,8 +519,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         assertThat(resource, equalTo(resultResource));
 
         // Mock Sam will not return real credentials for a pet SA to make this call, but we don't
-        // need
-        // real credentials because we also mock out cloud validation here.
+        // need real credentials because we also mock out cloud validation here.
         assertTrue(
             referenceResourceService.checkAccess(
                 workspaceId, referenceResource.getResourceId(), USER_REQUEST));
