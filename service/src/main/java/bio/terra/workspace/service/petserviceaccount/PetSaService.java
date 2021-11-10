@@ -237,6 +237,9 @@ public class PetSaService {
    * Fetches credentials for the provided user's pet service account in the current workspace's GCP
    * context if one exists. This will create a pet SA for the user if one does not exist, but will
    * return empty if the workspace does not have a GCP context.
+   *
+   * <p>This method does not validate that the provided credentials have appropriate workspace
+   * access.
    */
   public Optional<AuthenticatedUserRequest> getWorkspacePetCredentials(
       UUID workspaceId, AuthenticatedUserRequest userRequest) {
