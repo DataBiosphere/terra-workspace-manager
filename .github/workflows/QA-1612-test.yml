@@ -90,12 +90,6 @@ jobs:
           version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
           echo "$(date "+%Y-%m-%dT%H:%M:%S") post-sync wsmtest version: $version"
 
-      - name: Sync Terra services version
-        uses: DataBiosphere/terra-test-runner/.github/actions/sync-terra-services-version@QA-1612
-        with:
-          environment: wsmtest
-          token: ${{ secrets.BROADBOT_TOKEN }}
-
       - name: clean databases before integration suite
         if: always()
         uses: ./.github/actions/clean-databases
