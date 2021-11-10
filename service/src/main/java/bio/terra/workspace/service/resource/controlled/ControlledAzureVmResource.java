@@ -9,8 +9,6 @@ import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
-import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
