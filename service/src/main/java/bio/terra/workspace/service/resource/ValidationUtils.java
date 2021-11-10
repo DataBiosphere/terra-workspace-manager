@@ -38,7 +38,10 @@ public class ValidationUtils {
   public static final Pattern AI_NOTEBOOK_INSTANCE_NAME_VALIDATION_PATTERN =
       Pattern.compile("(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)");
 
-  /** Resource names must be 1-1024 characters, using letters, numbers, dashes, and underscores and must not start with a dash or underscore.*/
+  /**
+   * Resource names must be 1-1024 characters, using letters, numbers, dashes, and underscores and
+   * must not start with a dash or underscore.
+   */
   public static final Pattern RESOURCE_NAME_VALIDATION_PATTERN =
       Pattern.compile("^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$");
 
@@ -49,10 +52,11 @@ public class ValidationUtils {
    * Validates gcs-bucket name following Google documentation
    * https://cloud.google.com/storage/docs/naming-buckets#requirements on a best-effort base.
    *
-   * This method DOES NOT guarentee that the bucket name is valid.
+   * <p>This method DOES NOT guarentee that the bucket name is valid.
+   *
    * @param name gcs-bucket name
    * @throws InvalidNameException throws exception when the bucket name fails to conform to the
-   * Google naming convention for bucket name.
+   *     Google naming convention for bucket name.
    */
   public static void validateBucketName(String name) {
     if (StringUtils.isEmpty(name) || !BUCKET_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
