@@ -66,7 +66,7 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
   @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE")
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
-    String unused = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
+    CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
 
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(resourceUser.userEmail),
