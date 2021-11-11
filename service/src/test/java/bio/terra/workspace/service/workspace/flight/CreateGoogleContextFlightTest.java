@@ -242,7 +242,12 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     return retrySteps;
   }
 
-  /** Creates a workspace, returning its workspaceId. */
+  /**
+   * Creates a workspace, returning its workspaceId.
+   *
+   * Because the tests in this class mock Sam and Janitor service cleans up GCP projects, we do not
+   * need to explicitly clean up the workspaces created here.
+   */
   private UUID createWorkspace(@Nullable SpendProfileId spendProfileId) {
     WorkspaceRequest request =
         WorkspaceRequest.builder()

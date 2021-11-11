@@ -75,13 +75,19 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
+// Per-class lifecycle on this test to allow a shared workspace object across tests, which saves
+// time creating and deleting GCP contexts.
+@TestInstance(Lifecycle.PER_CLASS)
 public class ControlledResourceServiceTest extends BaseConnectedTest {
   /** The default roles to use when creating user private AI notebook instance resources */
   private static final List<ControlledResourceIamRole> DEFAULT_ROLES =
@@ -180,6 +186,15 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
   @AfterEach
   public void resetFlightDebugInfo() {
     jobService.setFlightDebugInfoForTest(null);
+  }
+
+  /**
+   * After running all tests, delete the shared workspace.
+   */
+  @AfterAll
+  private void cleanUpSharedWorkspace() {
+    user = userAccessUtils.defaultUser();
+    workspaceService.deleteWorkspace(reusableWorkspace.getWorkspaceId(), user.getAuthenticatedRequest());
   }
 
   @Test

@@ -183,7 +183,9 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
   }
 
   @Override
-  protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) {
+  protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
+      throws Exception {
+    super.doCleanup(testUsers, workspaceApi);
     if (destinationWorkspaceId != null) {
       try {
         workspaceApi.deleteWorkspace(destinationWorkspaceId);
