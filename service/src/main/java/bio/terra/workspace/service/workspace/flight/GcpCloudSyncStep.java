@@ -7,6 +7,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRole;
@@ -87,8 +88,9 @@ public class GcpCloudSyncStep implements Step {
       throw new RetryableCrlException("Error setting IAM permissions", e);
     } catch (StorageException e) {
       if (e.getCode() == HttpStatus.SC_BAD_REQUEST || e.getCode() == HttpStatus.SC_NOT_FOUND) {
-        throw new RetryableCrlException("Error setting IAM permissions", e);
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
+      throw e;
     }
     return StepResult.getStepResultSuccess();
   }

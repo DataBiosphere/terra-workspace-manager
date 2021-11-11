@@ -5,6 +5,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -12,7 +13,6 @@ import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
-import bio.terra.workspace.service.workspace.exceptions.RetryableCrlException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -49,37 +49,39 @@ public class GcsBucketCloudSyncStep implements Step {
     // WSM's service account.
     StorageCow wsmSaStorageCow = crlService.createStorageCow(projectId);
     try {
-    Policy currentPolicy = wsmSaStorageCow.getIamPolicy(resource.getBucketName());
-    GcpPolicyBuilder updatedPolicyBuilder =
-        new GcpPolicyBuilder(resource, projectId, currentPolicy);
+      Policy currentPolicy = wsmSaStorageCow.getIamPolicy(resource.getBucketName());
+      GcpPolicyBuilder updatedPolicyBuilder =
+          new GcpPolicyBuilder(resource, projectId, currentPolicy);
 
-    // Read Sam groups for each workspace role.
-    Map<WsmIamRole, String> workspaceRoleGroupsMap =
-        workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, new TypeReference<>() {});
-    for (Map.Entry<WsmIamRole, String> entry : workspaceRoleGroupsMap.entrySet()) {
-      updatedPolicyBuilder.addWorkspaceBinding(entry.getKey(), entry.getValue());
-    }
-
-    // Resources with permissions given to individual users (private or application managed) use
-    // the resource's Sam policies to manage those individuals, so they must be synced here.
-    // This section should also run for application managed resources, once those are supported.
-    if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
-      Map<ControlledResourceIamRole, String> resourceRoleGroupsMap =
-          workingMap.get(
-              ControlledResourceKeys.IAM_RESOURCE_GROUP_EMAIL_MAP, new TypeReference<>() {});
-      for (Map.Entry<ControlledResourceIamRole, String> entry : resourceRoleGroupsMap.entrySet()) {
-        updatedPolicyBuilder.addResourceBinding(entry.getKey(), entry.getValue());
+      // Read Sam groups for each workspace role.
+      Map<WsmIamRole, String> workspaceRoleGroupsMap =
+          workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, new TypeReference<>() {});
+      for (Map.Entry<WsmIamRole, String> entry : workspaceRoleGroupsMap.entrySet()) {
+        updatedPolicyBuilder.addWorkspaceBinding(entry.getKey(), entry.getValue());
       }
-    }
 
-    logger.info(
-        "Syncing workspace roles to GCP permissions on bucket {}", resource.getBucketName());
+      // Resources with permissions given to individual users (private or application managed) use
+      // the resource's Sam policies to manage those individuals, so they must be synced here.
+      // This section should also run for application managed resources, once those are supported.
+      if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
+        Map<ControlledResourceIamRole, String> resourceRoleGroupsMap =
+            workingMap.get(
+                ControlledResourceKeys.IAM_RESOURCE_GROUP_EMAIL_MAP, new TypeReference<>() {});
+        for (Map.Entry<ControlledResourceIamRole, String> entry :
+            resourceRoleGroupsMap.entrySet()) {
+          updatedPolicyBuilder.addResourceBinding(entry.getKey(), entry.getValue());
+        }
+      }
+
+      logger.info(
+          "Syncing workspace roles to GCP permissions on bucket {}", resource.getBucketName());
 
       wsmSaStorageCow.setIamPolicy(resource.getBucketName(), updatedPolicyBuilder.build());
     } catch (StorageException e) {
       if (e.getCode() == HttpStatus.SC_BAD_REQUEST || e.getCode() == HttpStatus.SC_NOT_FOUND) {
-        throw new RetryableCrlException("Error setting IAM permission", e);
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
+      throw e;
     }
 
     return StepResult.getStepResultSuccess();

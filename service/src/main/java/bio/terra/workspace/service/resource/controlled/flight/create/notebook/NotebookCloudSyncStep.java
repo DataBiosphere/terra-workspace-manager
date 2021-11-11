@@ -20,12 +20,14 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.notebooks.v1.model.Binding;
 import com.google.api.services.notebooks.v1.model.Policy;
 import com.google.api.services.notebooks.v1.model.SetIamPolicyRequest;
+import com.google.cloud.storage.StorageException;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,6 +66,11 @@ public class NotebookCloudSyncStep implements Step {
           .execute();
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    } catch (StorageException e) {
+      if (e.getCode() == HttpStatus.SC_NOT_FOUND || e.getCode() == HttpStatus.SC_BAD_REQUEST) {
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      }
+      throw e;
     }
     return StepResult.getStepResultSuccess();
   }
