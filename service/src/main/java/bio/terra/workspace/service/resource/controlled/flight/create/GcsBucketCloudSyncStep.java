@@ -19,9 +19,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.cloud.Policy;
 import com.google.cloud.storage.StorageException;
 import java.util.Map;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 
 /** A step for granting cloud permissions on resources to workspace members. */
 public class GcsBucketCloudSyncStep implements Step {
@@ -78,7 +78,7 @@ public class GcsBucketCloudSyncStep implements Step {
 
       wsmSaStorageCow.setIamPolicy(resource.getBucketName(), updatedPolicyBuilder.build());
     } catch (StorageException e) {
-      if (e.getCode() == HttpStatus.BAD_REQUEST.value()) {
+      if (e.getCode() == HttpStatus.SC_BAD_REQUEST) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
       throw e;
