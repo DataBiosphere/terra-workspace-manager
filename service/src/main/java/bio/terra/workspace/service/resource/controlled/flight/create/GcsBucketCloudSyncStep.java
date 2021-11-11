@@ -5,6 +5,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -16,7 +17,9 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.cloud.Policy;
+import com.google.cloud.storage.StorageException;
 import java.util.Map;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,32 +48,44 @@ public class GcsBucketCloudSyncStep implements Step {
     // Users do not have read or write access to IAM policies, so requests are executed via
     // WSM's service account.
     StorageCow wsmSaStorageCow = crlService.createStorageCow(projectId);
-    Policy currentPolicy = wsmSaStorageCow.getIamPolicy(resource.getBucketName());
-    GcpPolicyBuilder updatedPolicyBuilder =
-        new GcpPolicyBuilder(resource, projectId, currentPolicy);
+    try {
+      Policy currentPolicy = wsmSaStorageCow.getIamPolicy(resource.getBucketName());
+      GcpPolicyBuilder updatedPolicyBuilder =
+          new GcpPolicyBuilder(resource, projectId, currentPolicy);
 
-    // Read Sam groups for each workspace role.
-    Map<WsmIamRole, String> workspaceRoleGroupsMap =
-        workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, new TypeReference<>() {});
-    for (Map.Entry<WsmIamRole, String> entry : workspaceRoleGroupsMap.entrySet()) {
-      updatedPolicyBuilder.addWorkspaceBinding(entry.getKey(), entry.getValue());
-    }
-
-    // Resources with permissions given to individual users (private or application managed) use
-    // the resource's Sam policies to manage those individuals, so they must be synced here.
-    // This section should also run for application managed resources, once those are supported.
-    if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
-      Map<ControlledResourceIamRole, String> resourceRoleGroupsMap =
-          workingMap.get(
-              ControlledResourceKeys.IAM_RESOURCE_GROUP_EMAIL_MAP, new TypeReference<>() {});
-      for (Map.Entry<ControlledResourceIamRole, String> entry : resourceRoleGroupsMap.entrySet()) {
-        updatedPolicyBuilder.addResourceBinding(entry.getKey(), entry.getValue());
+      // Read Sam groups for each workspace role.
+      Map<WsmIamRole, String> workspaceRoleGroupsMap =
+          workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, new TypeReference<>() {});
+      for (Map.Entry<WsmIamRole, String> entry : workspaceRoleGroupsMap.entrySet()) {
+        updatedPolicyBuilder.addWorkspaceBinding(entry.getKey(), entry.getValue());
       }
-    }
 
-    logger.info(
-        "Syncing workspace roles to GCP permissions on bucket {}", resource.getBucketName());
-    wsmSaStorageCow.setIamPolicy(resource.getBucketName(), updatedPolicyBuilder.build());
+      // Resources with permissions given to individual users (private or application managed) use
+      // the resource's Sam policies to manage those individuals, so they must be synced here.
+      // This section should also run for application managed resources, once those are supported.
+      if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
+        Map<ControlledResourceIamRole, String> resourceRoleGroupsMap =
+            workingMap.get(
+                ControlledResourceKeys.IAM_RESOURCE_GROUP_EMAIL_MAP, new TypeReference<>() {});
+        for (Map.Entry<ControlledResourceIamRole, String> entry :
+            resourceRoleGroupsMap.entrySet()) {
+          updatedPolicyBuilder.addResourceBinding(entry.getKey(), entry.getValue());
+        }
+      }
+
+      logger.info(
+          "Syncing workspace roles to GCP permissions on bucket {}", resource.getBucketName());
+
+      wsmSaStorageCow.setIamPolicy(resource.getBucketName(), updatedPolicyBuilder.build());
+    } catch (StorageException e) {
+      // When SAM created a new group but has not synced to GCP, GCP will throws a 400 with
+      // message Group does not exist. To avoid the failure due to the delay, retry when it has 400
+      // HTTP status.
+      if (e.getCode() == HttpStatus.SC_BAD_REQUEST) {
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      }
+      throw e;
+    }
 
     return StepResult.getStepResultSuccess();
   }
