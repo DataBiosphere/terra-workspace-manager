@@ -22,6 +22,11 @@ jobs:
           token: ${{ secrets.BROADBOT_TOKEN }}
           path: integration/terra-helmfile
 
+      - name: Check got config
+        run: |
+          ls -l .git/config
+          cat .git/config
+
       # Install postgres:
       # - Create the file repository configuration.
       # - Import the repository signing key.
