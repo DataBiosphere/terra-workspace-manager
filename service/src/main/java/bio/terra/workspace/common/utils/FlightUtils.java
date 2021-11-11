@@ -3,12 +3,9 @@ package bio.terra.workspace.common.utils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
-import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
-import com.google.cloud.storage.StorageException;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.springframework.http.HttpStatus;
@@ -113,21 +110,5 @@ public final class FlightUtils {
               .orElse(null);
     }
     return errorMessage;
-  }
-
-  /**
-   * Handles StorageException, when it has code 400 or 404, returns a STEP_RESULT_FAILURE_RETRY
-   * status to retry the step, otherwise, re-throw the exception.
-   *
-   * @param e storageException
-   * @return a stepResult with a retry status when the storageException has recoverable exception.
-   * @throws StorageException rethrows StorageException when the step should not be retried.
-   */
-  public static StepResult retryStorageExceptionOrRethrow(StorageException e) {
-    if (e.getCode() == HttpStatus.BAD_REQUEST.value()
-        || e.getCode() == HttpStatus.NOT_FOUND.value()) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-    }
-    throw e;
   }
 }

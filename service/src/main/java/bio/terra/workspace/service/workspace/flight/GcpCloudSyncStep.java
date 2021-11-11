@@ -8,7 +8,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.mappings.CustomGcpIamRole;
 import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
@@ -18,7 +17,6 @@ import com.google.api.services.cloudresourcemanager.v3.model.Binding;
 import com.google.api.services.cloudresourcemanager.v3.model.GetIamPolicyRequest;
 import com.google.api.services.cloudresourcemanager.v3.model.Policy;
 import com.google.api.services.cloudresourcemanager.v3.model.SetIamPolicyRequest;
-import com.google.cloud.storage.StorageException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -85,8 +83,6 @@ public class GcpCloudSyncStep implements Step {
       resourceManagerCow.projects().setIamPolicy(gcpProjectId, iamPolicyRequest).execute();
     } catch (IOException e) {
       throw new RetryableCrlException("Error setting IAM permissions", e);
-    } catch (StorageException e) {
-      return FlightUtils.retryStorageExceptionOrRethrow(e);
     }
     return StepResult.getStepResultSuccess();
   }

@@ -5,8 +5,8 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -21,6 +21,7 @@ import com.google.cloud.storage.StorageException;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 
 /** A step for granting cloud permissions on resources to workspace members. */
 public class GcsBucketCloudSyncStep implements Step {
@@ -77,7 +78,10 @@ public class GcsBucketCloudSyncStep implements Step {
 
       wsmSaStorageCow.setIamPolicy(resource.getBucketName(), updatedPolicyBuilder.build());
     } catch (StorageException e) {
-      return FlightUtils.retryStorageExceptionOrRethrow(e);
+      if (e.getCode() == HttpStatus.BAD_REQUEST.value()) {
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      }
+      throw e;
     }
 
     return StepResult.getStepResultSuccess();
