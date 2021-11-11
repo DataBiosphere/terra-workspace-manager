@@ -78,6 +78,9 @@ public class GcsBucketCloudSyncStep implements Step {
 
       wsmSaStorageCow.setIamPolicy(resource.getBucketName(), updatedPolicyBuilder.build());
     } catch (StorageException e) {
+      // When SAM created a new group but has not synced to GCP, GCP will throws a 400 with
+      // message Group does not exist. To avoid the failure due to the delay, retry when it has 400
+      // HTTP status.
       if (e.getCode() == HttpStatus.SC_BAD_REQUEST) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
