@@ -17,14 +17,6 @@ import org.junit.jupiter.api.Test;
 public class ControlledGcsBucketResourceTest extends BaseUnitTest {
 
   @Test
-  public void testValidateOk() {
-    ControlledGcsBucketResource gcsBucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketResource().build();
-    // will throw if anything is amiss
-    gcsBucketResource.validate();
-  }
-
-  @Test
   public void testValidateThrows() {
     assertThrows(
         MissingRequiredFieldException.class,

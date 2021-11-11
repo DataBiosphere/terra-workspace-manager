@@ -7,6 +7,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceResourceFlight;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -42,7 +43,6 @@ public class ReferencedResourceService {
       ReferencedResource resource, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
         userRequest, resource.getWorkspaceId(), SamConstants.SAM_CREATE_REFERENCED_RESOURCE);
-    resource.validate();
 
     String jobDescription =
         String.format(
@@ -89,6 +89,12 @@ public class ReferencedResourceService {
       AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SAM_UPDATE_REFERENCED_RESOURCE);
+    // Name may be null if the user is not updating it in this request.
+    if (name != null) {
+      ValidationUtils.validateResourceName(name);
+    }
+    // Description may also be null, but this validator accepts null descriptions.
+    ValidationUtils.validateResourceDescriptionName(description);
     resourceDao.updateResource(workspaceId, resourceId, name, description);
   }
 

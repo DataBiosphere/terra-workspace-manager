@@ -52,6 +52,8 @@ public class ControlledResourceMetadataManager {
     if (name != null) {
       ValidationUtils.validateResourceName(name);
     }
+    // Description may also be null, but this validator accepts null descriptions.
+    ValidationUtils.validateResourceDescriptionName(description);
     resourceDao.updateResource(workspaceId, resourceId, name, description);
   }
 

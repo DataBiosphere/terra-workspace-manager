@@ -78,7 +78,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
                 CloningInstructions.fromApiModel(body.getMetadata().getCloningInstructions()))
             .bucketName(body.getBucket().getBucketName())
             .build();
-    resource.validate();
 
     ReferencedResource referenceResource =
         referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
@@ -137,7 +136,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .projectId(body.getDataset().getProjectId())
             .datasetName(body.getDataset().getDatasetId())
             .build();
-    resource.validate();
 
     ReferencedResource referenceResource =
         referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
@@ -200,7 +198,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .instanceName(body.getSnapshot().getInstanceName())
             .snapshotId(body.getSnapshot().getSnapshot())
             .build();
-    resource.validate();
 
     ReferencedResource referenceResource =
         referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());

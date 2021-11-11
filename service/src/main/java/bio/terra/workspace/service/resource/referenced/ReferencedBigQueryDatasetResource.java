@@ -45,6 +45,7 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
     super(workspaceId, resourceId, name, description, cloningInstructions);
     this.projectId = projectId;
     this.datasetName = datasetName;
+    validate();
   }
 
   /**
@@ -62,6 +63,7 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
         DbSerDes.fromJson(dbResource.getAttributes(), ReferencedBigQueryDatasetAttributes.class);
     this.projectId = attributes.getProjectId();
     this.datasetName = attributes.getDatasetName();
+    validate();
   }
 
   public static ReferencedBigQueryDatasetResource.Builder builder() {

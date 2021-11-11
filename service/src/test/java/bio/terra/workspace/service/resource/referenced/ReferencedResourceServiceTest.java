@@ -139,6 +139,15 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             workspaceId, referenceResource.getResourceId(), USER_REQUEST);
     assertThat(referenceResource.getName(), equalTo(updatedName2));
     assertThat(referenceResource.getDescription(), equalTo(updatedDescription2));
+
+    // Update to invalid name is rejected.
+    String invalidName = "!!!!invalid_name!!!";
+    assertThrows(
+        InvalidNameException.class,
+        () ->
+            referenceResourceService.updateReferenceResource(
+                workspaceId, referenceResource.getResourceId(), invalidName, null, USER_REQUEST));
+    // Update to invalid description
   }
 
   /**
@@ -217,60 +226,56 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
     @Test
     void testInvalidWorkspaceId() {
-      referenceResource =
-          new ReferencedDataRepoSnapshotResource(
-              null,
-              UUID.randomUUID(),
-              "aname",
-              null,
-              CloningInstructions.COPY_NOTHING,
-              DATA_REPO_INSTANCE_NAME,
-              "polaroid");
       assertThrows(
           MissingRequiredFieldException.class,
-          () -> referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST));
+          () ->
+              new ReferencedDataRepoSnapshotResource(
+                  null,
+                  UUID.randomUUID(),
+                  "aname",
+                  null,
+                  CloningInstructions.COPY_NOTHING,
+                  DATA_REPO_INSTANCE_NAME,
+                  "polaroid"));
     }
 
     @Test
     void testInvalidName() {
-      referenceResource =
-          new ReferencedDataRepoSnapshotResource(
-              workspaceId,
-              UUID.randomUUID(),
-              null,
-              null,
-              CloningInstructions.COPY_NOTHING,
-              DATA_REPO_INSTANCE_NAME,
-              "polaroid");
       assertThrows(
           MissingRequiredFieldException.class,
-          () -> referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST));
+          () ->
+              new ReferencedDataRepoSnapshotResource(
+                  workspaceId,
+                  UUID.randomUUID(),
+                  null,
+                  null,
+                  CloningInstructions.COPY_NOTHING,
+                  DATA_REPO_INSTANCE_NAME,
+                  "polaroid"));
     }
 
     @Test
     void testInvalidCloningInstructions() {
-      referenceResource =
-          new ReferencedDataRepoSnapshotResource(
-              workspaceId,
-              UUID.randomUUID(),
-              "aname",
-              null,
-              null,
-              DATA_REPO_INSTANCE_NAME,
-              "polaroid");
       assertThrows(
           MissingRequiredFieldException.class,
-          () -> referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST));
+          () ->
+              new ReferencedDataRepoSnapshotResource(
+                  workspaceId,
+                  UUID.randomUUID(),
+                  "aname",
+                  null,
+                  null,
+                  DATA_REPO_INSTANCE_NAME,
+                  "polaroid"));
     }
 
     @Test
     void testInvalidResourceId() {
-      referenceResource =
-          new ReferencedDataRepoSnapshotResource(
-              workspaceId, null, "aname", null, null, DATA_REPO_INSTANCE_NAME, "polaroid");
       assertThrows(
           MissingRequiredFieldException.class,
-          () -> referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST));
+          () ->
+              new ReferencedDataRepoSnapshotResource(
+                  workspaceId, null, "aname", null, null, DATA_REPO_INSTANCE_NAME, "polaroid"));
     }
   }
 
@@ -319,18 +324,17 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       UUID resourceId = UUID.randomUUID();
       String resourceName = "testdatarepo-" + resourceId.toString();
 
-      ReferencedDataRepoSnapshotResource resource =
-          new ReferencedDataRepoSnapshotResource(
-              workspaceId,
-              resourceId,
-              resourceName,
-              "description of " + resourceName,
-              CloningInstructions.COPY_NOTHING,
-              null,
-              "polaroid");
       assertThrows(
           MissingRequiredFieldException.class,
-          () -> referenceResourceService.createReferenceResource(resource, USER_REQUEST));
+          () ->
+              new ReferencedDataRepoSnapshotResource(
+                  workspaceId,
+                  resourceId,
+                  resourceName,
+                  "description of " + resourceName,
+                  CloningInstructions.COPY_NOTHING,
+                  null,
+                  "polaroid"));
     }
 
     @Test
@@ -338,18 +342,17 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       UUID resourceId = UUID.randomUUID();
       String resourceName = "testdatarepo-" + resourceId.toString();
 
-      ReferencedDataRepoSnapshotResource resource =
-          new ReferencedDataRepoSnapshotResource(
-              workspaceId,
-              resourceId,
-              resourceName,
-              "description of " + resourceName,
-              CloningInstructions.COPY_NOTHING,
-              DATA_REPO_INSTANCE_NAME,
-              null);
       assertThrows(
           MissingRequiredFieldException.class,
-          () -> referenceResourceService.createReferenceResource(resource, USER_REQUEST));
+          () ->
+              new ReferencedDataRepoSnapshotResource(
+                  workspaceId,
+                  resourceId,
+                  resourceName,
+                  "description of " + resourceName,
+                  CloningInstructions.COPY_NOTHING,
+                  DATA_REPO_INSTANCE_NAME,
+                  null));
     }
 
     @Test
@@ -545,18 +548,17 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         UUID resourceId = UUID.randomUUID();
         String resourceName = "testdatarepo-" + resourceId.toString();
 
-        ReferencedBigQueryDatasetResource resource =
-            new ReferencedBigQueryDatasetResource(
-                workspaceId,
-                resourceId,
-                resourceName,
-                "description of " + resourceName,
-                CloningInstructions.COPY_NOTHING,
-                null,
-                "testbq-datasetname");
         assertThrows(
             MissingRequiredFieldException.class,
-            () -> referenceResourceService.createReferenceResource(resource, USER_REQUEST));
+            () ->
+                new ReferencedBigQueryDatasetResource(
+                    workspaceId,
+                    resourceId,
+                    resourceName,
+                    "description of " + resourceName,
+                    CloningInstructions.COPY_NOTHING,
+                    null,
+                    "testbq-datasetname"));
       }
 
       @Test
@@ -564,18 +566,17 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         UUID resourceId = UUID.randomUUID();
         String resourceName = "testdatarepo-" + resourceId.toString();
 
-        ReferencedBigQueryDatasetResource resource =
-            new ReferencedBigQueryDatasetResource(
-                workspaceId,
-                resourceId,
-                resourceName,
-                "description of " + resourceName,
-                CloningInstructions.COPY_NOTHING,
-                "testbq-projectid",
-                "");
         assertThrows(
             MissingRequiredFieldException.class,
-            () -> referenceResourceService.createReferenceResource(resource, USER_REQUEST));
+            () ->
+                new ReferencedBigQueryDatasetResource(
+                    workspaceId,
+                    resourceId,
+                    resourceName,
+                    "description of " + resourceName,
+                    CloningInstructions.COPY_NOTHING,
+                    "testbq-projectid",
+                    ""));
       }
 
       @Test
@@ -583,18 +584,17 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         UUID resourceId = UUID.randomUUID();
         String resourceName = "testdatarepo-" + resourceId.toString();
 
-        ReferencedBigQueryDatasetResource resource =
-            new ReferencedBigQueryDatasetResource(
-                workspaceId,
-                resourceId,
-                resourceName,
-                "description of " + resourceName,
-                CloningInstructions.COPY_NOTHING,
-                "testbq-projectid",
-                "Nor do datasets; neither ' nor *");
         assertThrows(
             InvalidReferenceException.class,
-            () -> referenceResourceService.createReferenceResource(resource, USER_REQUEST));
+            () ->
+                new ReferencedBigQueryDatasetResource(
+                    workspaceId,
+                    resourceId,
+                    resourceName,
+                    "description of " + resourceName,
+                    CloningInstructions.COPY_NOTHING,
+                    "testbq-projectid",
+                    "Nor do datasets; neither ' nor *"));
       }
 
       @Test

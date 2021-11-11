@@ -143,6 +143,7 @@ public class WorkspaceApiController implements WorkspaceApi {
   public ResponseEntity<ApiWorkspaceDescriptionList> listWorkspaces(Integer offset, Integer limit) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     logger.info("Listing workspaces for {}", userRequest.getEmail());
+    ControllerValidationUtils.validatePaginationParams(offset, limit);
     List<Workspace> workspaces = workspaceService.listWorkspaces(userRequest, offset, limit);
     var response =
         new ApiWorkspaceDescriptionList()
