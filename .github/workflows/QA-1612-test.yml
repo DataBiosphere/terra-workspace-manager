@@ -14,10 +14,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Git commit metada
-        run: |
-          git log -n 1
-
       # Check out terra-helmfile repo
       - uses: actions/checkout@v2
         with:
