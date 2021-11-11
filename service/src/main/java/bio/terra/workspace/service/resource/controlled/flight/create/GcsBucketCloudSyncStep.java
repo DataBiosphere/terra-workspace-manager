@@ -5,8 +5,8 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.cloud.Policy;
 import com.google.cloud.storage.StorageException;
 import java.util.Map;
-import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,10 +77,7 @@ public class GcsBucketCloudSyncStep implements Step {
 
       wsmSaStorageCow.setIamPolicy(resource.getBucketName(), updatedPolicyBuilder.build());
     } catch (StorageException e) {
-      if (e.getCode() == HttpStatus.SC_BAD_REQUEST || e.getCode() == HttpStatus.SC_NOT_FOUND) {
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-      }
-      throw e;
+      return FlightUtils.retryStorageExceptionOrRethrow(e);
     }
 
     return StepResult.getStepResultSuccess();

@@ -8,6 +8,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -27,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,10 +67,7 @@ public class NotebookCloudSyncStep implements Step {
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     } catch (StorageException e) {
-      if (e.getCode() == HttpStatus.SC_NOT_FOUND || e.getCode() == HttpStatus.SC_BAD_REQUEST) {
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-      }
-      throw e;
+      return FlightUtils.retryStorageExceptionOrRethrow(e);
     }
     return StepResult.getStepResultSuccess();
   }
