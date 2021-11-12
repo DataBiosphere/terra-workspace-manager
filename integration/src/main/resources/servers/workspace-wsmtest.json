@@ -25,14 +25,9 @@
 
   "versionScripts": [
     {
-      "name": "ReadFromTerraHelmfileRepo",
-      "description": "Version from https://github.com/broadinstitute/terra-helmfile",
-      "parameters": ["terra-helmfile/versions/app/dev.yaml", "terra-helmfile/environments/personal/wsmtest.yaml"]
-    },
-    {
-      "name": "ReadFromGitCommitLog",
-      "description": "Version from git log",
-      "parameters": ["../.git"]
+      "name": "ReadFromTerraHelmFileRepoAndGitCommitLog",
+      "description": "Version from https://github.com/broadinstitute/terra-helmfile and Git Commit Log",
+      "parameters": ["terra-helmfile/versions/app/dev.yaml", "terra-helmfile/environments/personal/wsmtest.yaml", "../.git"]
     }
   ]
 }
