@@ -477,6 +477,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
    *
    * <p>This provides default values for jobId (random UUID), spend profile (Optional.empty()), and
    * workspace stage (MC_WORKSPACE).
+   *
+   * <p>Because the tests in this class mock Sam, we do not need to explicitly clean up workspaces
+   * created here.
    */
   private WorkspaceRequest.Builder defaultRequestBuilder(UUID workspaceId) {
     return WorkspaceRequest.builder()

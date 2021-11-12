@@ -29,6 +29,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,10 +53,29 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private UserAccessUtils userAccessUtils;
 
+  private UUID workspaceId;
+
+  @BeforeEach
+  public void setup() {
+    // Create a new workspace at the start of each test.
+    WorkspaceRequest request =
+        WorkspaceRequest.builder()
+            .workspaceId(UUID.randomUUID())
+            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
+            .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
+            .build();
+    workspaceId =
+        workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
+  }
+
+  @AfterEach
+  public void tearDown() {
+    workspaceService.deleteWorkspace(workspaceId, userAccessUtils.defaultUserAuthRequest());
+  }
+
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteContextDo() throws Exception {
-    UUID workspaceId = createWorkspace();
     FlightMap createParameters = new FlightMap();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     createParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
@@ -118,7 +139,6 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteContextUndo() throws Exception {
-    UUID workspaceId = createWorkspace();
     FlightMap createParameters = new FlightMap();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     createParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString());
@@ -156,7 +176,6 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
 
   @Test
   void deleteNonExistentContextIsOk() throws Exception {
-    UUID workspaceId = createWorkspace();
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
 
@@ -171,16 +190,5 @@ class DeleteGoogleContextFlightTest extends BaseConnectedTest {
             null);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
     assertTrue(workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest).isEmpty());
-  }
-
-  /** Creates a workspace, returning its workspaceId. */
-  private UUID createWorkspace() {
-    WorkspaceRequest request =
-        WorkspaceRequest.builder()
-            .workspaceId(UUID.randomUUID())
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .spendProfileId(Optional.of(spendUtils.defaultSpendId()))
-            .build();
-    return workspaceService.createWorkspace(request, userAccessUtils.defaultUserAuthRequest());
   }
 }

@@ -257,7 +257,9 @@ public class CloneGcsBucket extends WorkspaceAllocateTestScriptBase {
   }
 
   @Override
-  protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi) {
+  protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
+      throws Exception {
+    super.doCleanup(testUsers, workspaceApi);
     if (destinationWorkspaceId != null) {
       try {
         final WorkspaceApi cloningUserWorkspaceApi =
