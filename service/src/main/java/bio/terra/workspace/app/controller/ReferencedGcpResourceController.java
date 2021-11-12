@@ -6,15 +6,18 @@ import bio.terra.workspace.generated.model.ApiCloneReferencedGcpDataRepoSnapshot
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsBucketResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpGcsBucketReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiUpdateDataReferenceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
@@ -114,6 +117,66 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   @Override
   public ResponseEntity<Void> deleteBucketReference(UUID workspaceId, UUID resourceId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    referenceResourceService.deleteReferenceResource(workspaceId, resourceId, userRequest);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  // -- Bid Query DataTable -- //
+  @Override
+  public ResponseEntity<ApiGcpBigQueryDataTableResource> createBigQueryDataTableReference(
+      UUID id, @Valid ApiCreateGcpBigQueryDataTableReferenceRequestBody body) {
+    var resource =
+        ReferencedBigQueryDataTableResource.builder()
+            .workspaceId(id)
+            .name(body.getMetadata().getName())
+            .description(body.getMetadata().getDescription())
+            .cloningInstructions(
+                CloningInstructions.fromApiModel(body.getMetadata().getCloningInstructions()))
+            .projectId(body.getDataset().getProjectId())
+            .datasetName(body.getDataset().getDatasetId())
+            .dataTableName(body.getDataTable().getDataTableId())
+            .build();
+    ReferencedResource referenceResource =
+        referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
+    ApiGcpBigQueryDataTableResource response =
+        referenceResource.castToBigQueryDataTableResource().toApiResource();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiGcpBigQueryDataTableResource> getBigQueryDataTableReference(
+      UUID id, UUID referenceId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ReferencedResource referenceResource =
+        referenceResourceService.getReferenceResource(id, referenceId, userRequest);
+    ApiGcpBigQueryDataTableResource response =
+        referenceResource.castToBigQueryDataTableResource().toApiResource();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiGcpBigQueryDataTableResource> getBigQueryDataTableReferenceByName(
+      UUID id, String name) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ReferencedResource referenceResource =
+        referenceResourceService.getReferenceResourceByName(id, name, userRequest);
+    ApiGcpBigQueryDataTableResource response =
+        referenceResource.castToBigQueryDataTableResource().toApiResource();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> updateBigQueryDataTableReference(
+      UUID id, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    referenceResourceService.updateReferenceResource(
+        id, referenceId, body.getName(), body.getDescription(), userRequest);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @Override
+  public ResponseEntity<Void> deleteBigQueryDataTableReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.deleteReferenceResource(workspaceId, resourceId, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);

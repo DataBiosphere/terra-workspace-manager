@@ -723,7 +723,79 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatatable:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new BigQuery data table reference in a workspace.
+      operationId: createBigQueryDataTableReference
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGcpBigQueryDataTableReferenceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/GcpBigQueryDataTableReferenceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatatable/{resourceId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Gets a reference to a BigQuery data table from a workspace.
+      operationId: getBigQueryDataTableReference
+      tags: [ ReferencedGcpResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GcpBigQueryDataTableReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update name or description of a BigQuery data table reference in a workspace.
+      operationId: updateBigQueryDataTableReference
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete BigQuery data table reference
+      operationId: deleteBigQueryDataTableReference
+      tags: [ ReferencedGcpResource ]
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
@@ -823,7 +895,23 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatatable/name/{name}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Name'
+    get:
+      summary: Gets a reference to a BigQuery data table by name.
+      operationId: getBigQueryDataTableReferenceByName
+      tags: [ ReferencedGcpResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GcpBigQueryDataTableReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets/name/{name}:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
@@ -1146,7 +1234,6 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
-
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/bqdatasets:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
@@ -1953,6 +2040,18 @@ components:
           $ref: '#/components/schemas/ReferenceResourceCommonFields'
         bucket:
           $ref: '#/components/schemas/GcpGcsBucketAttributes'
+
+    CreateGcpBigQueryDataTableReferenceRequestBody:
+      type: object
+      description: A request to create a reference to a BigQuery data table.
+      required: [ metadata, dataset, dataTable ]
+      properties:
+        metadata:
+          $ref: '#/components/schemas/ReferenceResourceCommonFields'
+        dataset:
+          $ref: '#/components/schemas/GcpBigQueryDataTableAttributes'
+        dataTable:
+          $ref: '#/components/schemas/GcpBigQueryDataTableAttributes'
 
     CreateGcpBigQueryDatasetReferenceRequestBody:
       type: object
@@ -2780,6 +2879,29 @@ components:
         attributes:
           $ref: '#/components/schemas/DataRepoSnapshotAttributes'
 
+    GcpBigQueryDataTableAttributes:
+      description: Attributes of a BigQuery data table
+      type: object
+      required: [ projectId, datasetId, dataTableId ]
+      properties:
+        projectId:
+          type: string
+        datasetId:
+          type: string
+        dataTableId:
+          type: string
+
+    GcpBigQueryDataTableResource:
+      type: object
+      description: A reference to a BigQuery data table.
+      required: [ metadata, dataset, dataTable ]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/GcpBigQueryDataTableAttributes'
+
     GcpBigQueryDatasetAttributes:
       description: Attributes of a BigQuery dataset
       type: object
@@ -2945,6 +3067,7 @@ components:
       enum:
         - AI_NOTEBOOK
         - BIG_QUERY_DATASET
+        - BIG_QUERY_DATATABLE
         - DATA_REPO_SNAPSHOT
         - GCS_BUCKET
 
@@ -2999,6 +3122,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GcpGcsBucketResource'
+
+    GcpBigQueryDataTableReferenceResponse:
+      description: Response containing a reference to a BiqQuery data table.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GcpBigQueryDataTableResource'
 
     GcpBigQueryDatasetReferenceResponse:
       description: Response containing a reference to a BiqQuery dataset.

@@ -38,6 +38,11 @@ public abstract class ReferencedResource extends WsmResource {
     return (ReferencedBigQueryDatasetResource) this;
   }
 
+  public ReferencedBigQueryDataTableResource castToBigQueryDataTableResource() {
+    validateSubclass(WsmResourceType.BIG_QUERY_DATATABLE);
+    return (ReferencedBigQueryDataTableResource) this;
+  }
+
   public ReferencedDataRepoSnapshotResource castToDataRepoSnapshotResource() {
     validateSubclass(WsmResourceType.DATA_REPO_SNAPSHOT);
     return (ReferencedDataRepoSnapshotResource) this;
