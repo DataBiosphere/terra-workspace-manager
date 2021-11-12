@@ -23,7 +23,7 @@
   "skipDeployment": true,
   "skipKubernetes": false,
 
-  "versionScript": [
+  "versionScripts": [
     {
       "name": "ReadFromTerraHelmfileRepo",
       "description": "Version from https://github.com/broadinstitute/terra-helmfile",
