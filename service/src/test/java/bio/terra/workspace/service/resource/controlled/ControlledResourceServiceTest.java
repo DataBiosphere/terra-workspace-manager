@@ -188,13 +188,12 @@ public class ControlledResourceServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(null);
   }
 
-  /**
-   * After running all tests, delete the shared workspace.
-   */
+  /** After running all tests, delete the shared workspace. */
   @AfterAll
   private void cleanUpSharedWorkspace() {
     user = userAccessUtils.defaultUser();
-    workspaceService.deleteWorkspace(reusableWorkspace.getWorkspaceId(), user.getAuthenticatedRequest());
+    workspaceService.deleteWorkspace(
+        reusableWorkspace.getWorkspaceId(), user.getAuthenticatedRequest());
   }
 
   @Test
