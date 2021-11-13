@@ -53,26 +53,38 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Tag("unit")
 class ReferencedResourceServiceTest extends BaseUnitTest {
+
   private static final Logger logger = LoggerFactory.getLogger(ReferencedResourceServiceTest.class);
   private static final String DATA_REPO_INSTANCE_NAME = "terra";
   private static final String FAKE_PROJECT_ID = "fakeprojecctid";
 
-  /** A fake authenticated user request. */
+  /**
+   * A fake authenticated user request.
+   */
   private static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest()
           .token(Optional.of("fake-token"))
           .email("fake@email.com")
           .subjectId("fakeID123");
 
-  @Autowired private WorkspaceService workspaceService;
-  @Autowired private WorkspaceDao workspaceDao;
-  @Autowired private ReferencedResourceService referenceResourceService;
-  @Autowired private JobService jobService;
-  /** Mock SamService does nothing for all calls that would throw if unauthorized. */
-  @MockBean private SamService mockSamService;
+  @Autowired
+  private WorkspaceService workspaceService;
+  @Autowired
+  private WorkspaceDao workspaceDao;
+  @Autowired
+  private ReferencedResourceService referenceResourceService;
+  @Autowired
+  private JobService jobService;
+  /**
+   * Mock SamService does nothing for all calls that would throw if unauthorized.
+   */
+  @MockBean
+  private SamService mockSamService;
 
-  @MockBean private DataRepoService mockDataRepoService;
-  @MockBean private CrlService mockCrlService;
+  @MockBean
+  private DataRepoService mockDataRepoService;
+  @MockBean
+  private CrlService mockCrlService;
 
   private UUID workspaceId;
   private ReferencedResource referenceResource;
@@ -166,6 +178,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
   @Nested
   class FlightChecks {
+
     // Test idempotency of stairway steps
     @Test
     void createReferencedResourceDo() {
@@ -393,6 +406,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
     @Nested
     class GcpBucketReference {
+
       @BeforeEach
       void setup() throws Exception {
         // Make the Verify step always succeed
@@ -489,7 +503,9 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
     @Nested
     class BigQueryReference {
+
       private static final String DATASET_NAME = "testbq_datasetname";
+      private static final String DATATABLE_NAME = "testbq datatablename";
 
       @BeforeEach
       void setup() throws Exception {
@@ -497,7 +513,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         doReturn(true).when(mockCrlService).canReadBigQueryDataset(any(), any(), any());
       }
 
-      private ReferencedBigQueryDatasetResource makeBigQueryResource() {
+      private ReferencedBigQueryDatasetResource makeBigQueryDatasetResource() {
         UUID resourceId = UUID.randomUUID();
         String resourceName = "testbq-" + resourceId.toString();
 
@@ -511,9 +527,23 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             DATASET_NAME);
       }
 
+      private ReferencedBigQueryDataTableResource makeBigQueryDataTableResource() {
+        UUID resourceId = UUID.randomUUID();
+        String resourceName = "testbq-" + resourceId;
+        return new ReferencedBigQueryDataTableResource(
+            workspaceId,
+            resourceId,
+            resourceName,
+            "description of " + resourceName,
+            CloningInstructions.COPY_REFERENCE,
+            FAKE_PROJECT_ID,
+            DATASET_NAME,
+            DATATABLE_NAME);
+      }
+
       @Test
-      void testBigQueryReference() {
-        referenceResource = makeBigQueryResource();
+      void testBigQueryDatasetReference() {
+        referenceResource = makeBigQueryDatasetResource();
         assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCED));
 
         ReferencedBigQueryDatasetResource resource =
@@ -544,7 +574,41 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       }
 
       @Test
-      void testMissingProjectId() {
+      void bigQueryDataTableReference() {
+        referenceResource = makeBigQueryDataTableResource();
+        assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCED));
+
+        ReferencedBigQueryDataTableResource resource =
+            referenceResource.castToBigQueryDataTableResource();
+        assertThat(resource.getResourceType(), equalTo(WsmResourceType.BIG_QUERY_DATATABLE));
+        assertEquals(resource.getDataTableName(), DATATABLE_NAME);
+        assertEquals(resource.getDatasetName(), DATASET_NAME);
+
+        ReferencedResource resultReferenceResource =
+            referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
+
+        ReferencedBigQueryDataTableResource resultResource =
+            resultReferenceResource.castToBigQueryDataTableResource();
+        assertThat(resource, equalTo(resultResource));
+        assertTrue(
+            referenceResourceService.checkAccess(
+                workspaceId, referenceResource.getResourceId(), USER_REQUEST));
+        ReferencedResource byid =
+            referenceResourceService.getReferenceResource(
+                workspaceId, resource.getResourceId(), USER_REQUEST);
+        ReferencedResource byname =
+            referenceResourceService.getReferenceResourceByName(
+                workspaceId, resource.getName(), USER_REQUEST);
+        assertThat(
+            byid.castToBigQueryDataTableResource(),
+            equalTo(byname.castToBigQueryDataTableResource()));
+
+        referenceResourceService.deleteReferenceResource(
+            workspaceId, referenceResource.getResourceId(), USER_REQUEST);
+      }
+
+      @Test
+      void createReferencedBigQueryDatasetResource_missesProjectId_throwsException() {
         UUID resourceId = UUID.randomUUID();
         String resourceName = "testdatarepo-" + resourceId.toString();
 
@@ -558,11 +622,30 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                     "description of " + resourceName,
                     CloningInstructions.COPY_NOTHING,
                     null,
-                    "testbq-datasetname"));
+                    "testbq_datasetname"));
       }
 
       @Test
-      void testMissingDatasetName() {
+      void createReferencedBigQueryDataTableResource_missesDataTableName_throwsException() {
+        UUID resourceId = UUID.randomUUID();
+        String resourceName = "testdatarepo-" + resourceId;
+
+        assertThrows(
+            MissingRequiredFieldException.class,
+            () ->
+                new ReferencedBigQueryDataTableResource(
+                    workspaceId,
+                    resourceId,
+                    resourceName,
+                    "description of " + resourceName,
+                    CloningInstructions.COPY_NOTHING,
+                    "testbq-projectid",
+                    "testbq-datasetname",
+                    ""));
+      }
+
+      @Test
+      void createReferencedBigQueryDatasetResource_missesDatasetName_throwsException() {
         UUID resourceId = UUID.randomUUID();
         String resourceName = "testdatarepo-" + resourceId.toString();
 
@@ -580,7 +663,26 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       }
 
       @Test
-      void testInvalidDatasetName() {
+      void createReferencedBigQueryDataTableResource_invalidDataTableName_throwsException() {
+        UUID resourceId = UUID.randomUUID();
+        String resourceName = "testdatarepo-" + resourceId;
+
+        assertThrows(
+            InvalidNameException.class,
+            () ->
+                new ReferencedBigQueryDataTableResource(
+                    workspaceId,
+                    resourceId,
+                    resourceName,
+                    "description of " + resourceName,
+                    CloningInstructions.COPY_NOTHING,
+                    "testbq-projectid",
+                    DATASET_NAME,
+                    "*&%@#"));
+      }
+
+      @Test
+      void createReferencedBigQueryDatasetResource_invalidDatasetName_throwsException() {
         UUID resourceId = UUID.randomUUID();
         String resourceName = "testdatarepo-" + resourceId.toString();
 
@@ -599,7 +701,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
       @Test
       void testInvalidCast() {
-        referenceResource = makeBigQueryResource();
+        referenceResource = makeBigQueryDatasetResource();
         assertThrows(
             InvalidMetadataException.class, () -> referenceResource.castToGcsBucketResource());
 

@@ -21,6 +21,7 @@ import bio.terra.workspace.service.resource.exception.DuplicateResourceException
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
@@ -616,13 +617,12 @@ public class ResourceDao {
         switch (dbResource.getResourceType()) {
           case GCS_BUCKET:
             return new ReferencedGcsBucketResource(dbResource);
-
           case BIG_QUERY_DATASET:
             return new ReferencedBigQueryDatasetResource(dbResource);
-
+          case BIG_QUERY_DATATABLE:
+            return new ReferencedBigQueryDataTableResource(dbResource);
           case DATA_REPO_SNAPSHOT:
             return new ReferencedDataRepoSnapshotResource(dbResource);
-
           default:
             throw new InvalidMetadataException(
                 "Invalid reference resource type" + dbResource.getResourceType().toString());

@@ -2982,6 +2982,8 @@ components:
       properties:
         gcpBqDataset:
           $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
+        gcpBqDataTable:
+          $ref: '#/components/schemas/GcpBigQueryDataTableAttributes'
         gcpDataRepoSnapshot:
           $ref: '#/components/schemas/DataRepoSnapshotAttributes'
         gcpGcsBucket:

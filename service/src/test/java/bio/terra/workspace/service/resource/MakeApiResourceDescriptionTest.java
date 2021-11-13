@@ -11,6 +11,7 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAttributes;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
@@ -23,6 +24,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDataset
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
@@ -52,7 +54,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
   }
 
   @Test
-  public void mapReferencedBigQueryTest() throws Exception {
+  public void mapReferencedBigQueryDataset() throws Exception {
     String projectId = RandomStringUtils.randomAlphabetic(12);
     String datasetName = RandomStringUtils.randomAlphabetic(12);
 
@@ -68,6 +70,27 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     assertThat(attributes, is(notNullValue()));
     assertThat(attributes.getDatasetId(), equalTo(datasetName));
     assertThat(attributes.getProjectId(), equalTo(projectId));
+  }
+
+  @Test
+  public void mapReferencedBigQueryDataTableTest() throws Exception {
+    String projectId = RandomStringUtils.randomAlphabetic(12);
+    String datasetName = RandomStringUtils.randomAlphabetic(12);
+    String datatableName = RandomStringUtils.randomAlphabetic(12);
+
+    var resource =
+        new ReferencedBigQueryDataTableResource(
+            workspaceId, resourceId, resourceName, description, cloning, projectId, datasetName, datatableName);
+
+    ApiResourceDescription resourceDescription =
+        resourceController.makeApiResourceDescription((WsmResource) resource, null);
+    validateWsmResource(resourceDescription);
+    ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
+    ApiGcpBigQueryDataTableAttributes attributes = union.getGcpBqDataTable();
+    assertThat(attributes, is(notNullValue()));
+    assertThat(attributes.getDatasetId(), equalTo(datasetName));
+    assertThat(attributes.getProjectId(), equalTo(projectId));
+    assertThat(attributes.getDataTableId(), equalTo(datatableName));
   }
 
   @Test

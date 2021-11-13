@@ -59,14 +59,14 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
    */
   public ReferencedBigQueryDataTableResource(DbResource dbResource) {
     super(dbResource);
-    if (dbResource.getResourceType() != WsmResourceType.BIG_QUERY_DATASET) {
-      throw new InvalidMetadataException("Expected BIG_QUERY_DATASET");
+    if (dbResource.getResourceType() != WsmResourceType.BIG_QUERY_DATATABLE) {
+      throw new InvalidMetadataException("Expected BIG_QUERY_DATATABLE");
     }
 
     ReferencedBigQueryDataTableAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ReferencedBigQueryDataTableAttributes.class);
     this.projectId = attributes.getProjectId();
-    this.datasetName = attributes.getDataTableName();
+    this.datasetName = attributes.getDatasetName();
     this.dataTableName = attributes.getDataTableName();
     validate();
   }
@@ -115,11 +115,12 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   @Override
   public void validate() {
     super.validate();
-    if (Strings.isNullOrEmpty(getProjectId()) || Strings.isNullOrEmpty(getDataTableName())) {
+    if (Strings.isNullOrEmpty(getProjectId()) || Strings.isNullOrEmpty(getDatasetName()) || Strings.isNullOrEmpty(getDataTableName())) {
       throw new MissingRequiredFieldException(
           "Missing required field for ReferenceBigQueryDataTableAttributes.");
     }
-    ValidationUtils.validateBqDatasetName(getDataTableName());
+    ValidationUtils.validateBqDatasetName(getDatasetName());
+    ValidationUtils.validateBqDataTableName(getDataTableName());
   }
 
   @Override

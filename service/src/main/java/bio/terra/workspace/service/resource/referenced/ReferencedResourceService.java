@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ReferencedResourceService {
+
   private final JobService jobService;
   private final ResourceDao resourceDao;
   private final WorkspaceService workspaceService;
