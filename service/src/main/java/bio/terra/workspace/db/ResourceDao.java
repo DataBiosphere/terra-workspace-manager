@@ -561,6 +561,7 @@ public class ResourceDao {
   }
 
   private void validateUniqueAzureVm(ControlledAzureVmResource resource) {
+    // This should take into account azure uniqueness paaram, namely the fields in `AzureContext`
     String sql =
         "SELECT COUNT(1)"
             + " FROM resource"
