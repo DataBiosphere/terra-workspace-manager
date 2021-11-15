@@ -80,7 +80,14 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
 
     var resource =
         new ReferencedBigQueryDataTableResource(
-            workspaceId, resourceId, resourceName, description, cloning, projectId, datasetName, datatableName);
+            workspaceId,
+            resourceId,
+            resourceName,
+            description,
+            cloning,
+            projectId,
+            datasetName,
+            datatableName);
 
     ApiResourceDescription resourceDescription =
         resourceController.makeApiResourceDescription((WsmResource) resource, null);

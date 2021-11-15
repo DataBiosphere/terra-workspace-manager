@@ -58,33 +58,22 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   private static final String DATA_REPO_INSTANCE_NAME = "terra";
   private static final String FAKE_PROJECT_ID = "fakeprojecctid";
 
-  /**
-   * A fake authenticated user request.
-   */
+  /** A fake authenticated user request. */
   private static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest()
           .token(Optional.of("fake-token"))
           .email("fake@email.com")
           .subjectId("fakeID123");
 
-  @Autowired
-  private WorkspaceService workspaceService;
-  @Autowired
-  private WorkspaceDao workspaceDao;
-  @Autowired
-  private ReferencedResourceService referenceResourceService;
-  @Autowired
-  private JobService jobService;
-  /**
-   * Mock SamService does nothing for all calls that would throw if unauthorized.
-   */
-  @MockBean
-  private SamService mockSamService;
+  @Autowired private WorkspaceService workspaceService;
+  @Autowired private WorkspaceDao workspaceDao;
+  @Autowired private ReferencedResourceService referenceResourceService;
+  @Autowired private JobService jobService;
+  /** Mock SamService does nothing for all calls that would throw if unauthorized. */
+  @MockBean private SamService mockSamService;
 
-  @MockBean
-  private DataRepoService mockDataRepoService;
-  @MockBean
-  private CrlService mockCrlService;
+  @MockBean private DataRepoService mockDataRepoService;
+  @MockBean private CrlService mockCrlService;
 
   private UUID workspaceId;
   private ReferencedResource referenceResource;

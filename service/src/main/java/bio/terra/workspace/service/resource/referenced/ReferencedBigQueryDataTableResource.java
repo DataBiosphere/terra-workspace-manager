@@ -115,9 +115,11 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   @Override
   public void validate() {
     super.validate();
-    if (Strings.isNullOrEmpty(getProjectId()) || Strings.isNullOrEmpty(getDatasetName()) || Strings.isNullOrEmpty(getDataTableName())) {
+    if (Strings.isNullOrEmpty(getProjectId())
+        || Strings.isNullOrEmpty(getDatasetName())
+        || Strings.isNullOrEmpty(getDataTableName())) {
       throw new MissingRequiredFieldException(
-          "Missing required field for ReferenceBigQueryDataTableAttributes.");
+          "Missing required field for ReferenceBigQueryDataTableAttributes");
     }
     ValidationUtils.validateBqDatasetName(getDatasetName());
     ValidationUtils.validateBqDataTableName(getDataTableName());
@@ -138,7 +140,8 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   public Builder toBuilder() {
     return builder()
         .cloningInstructions(getCloningInstructions())
-        .datasetName(getDataTableName())
+        .datasetName(getDatasetName())
+        .dataTableName(getDataTableName())
         .description(getDescription())
         .name(getName())
         .projectId(getProjectId())

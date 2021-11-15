@@ -796,6 +796,31 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatatable/{resourceId}/clone:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a BigQuery Data table
+      operationId: cloneGcpBigQueryDataTableReference
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneReferencedResourceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneReferencedGcpBigQueryDataTableResourceResponse'
+        '202':
+          $ref: '#/components/responses/CloneReferencedGcpBigQueryDataTableResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatasets:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
@@ -2044,12 +2069,10 @@ components:
     CreateGcpBigQueryDataTableReferenceRequestBody:
       type: object
       description: A request to create a reference to a BigQuery data table.
-      required: [ metadata, dataset, dataTable ]
+      required: [ metadata, dataTable ]
       properties:
         metadata:
           $ref: '#/components/schemas/ReferenceResourceCommonFields'
-        dataset:
-          $ref: '#/components/schemas/GcpBigQueryDataTableAttributes'
         dataTable:
           $ref: '#/components/schemas/GcpBigQueryDataTableAttributes'
 
@@ -2472,6 +2495,25 @@ components:
           format: uuid
         resource:
           $ref: '#/components/schemas/GcpBigQueryDatasetResource'
+    CloneReferencedGcpBigQueryDataTableResourceResult:
+      description: >-
+        API result class for cloning a referenced BigQuery data table resource. Includes source workspace
+        and resource IDs for provenance. If the effective cloning instructions are not
+        COPY_REFERENCE, then no clone is created and the resource is null.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        resource:
+          $ref: '#/components/schemas/GcpBigQueryDataTableResource'
     CloneReferencedGcpDataRepoSnapshotResourceResult:
       description: >-
         API result class for cloning a referenced Data Repo snapshot resource. Includes source workspace
@@ -2894,7 +2936,7 @@ components:
     GcpBigQueryDataTableResource:
       type: object
       description: A reference to a BigQuery data table.
-      required: [ metadata, dataset, dataTable ]
+      required: [ metadata, dataTable ]
       properties:
         metadata:
           description: the resource metadata common to all resources
@@ -3232,6 +3274,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneReferencedGcpBigQueryDatasetResourceResult'
+    CloneReferencedGcpBigQueryDataTableResourceResponse:
+      description: Response for successful BigQuery data table reference clone
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneReferencedGcpBigQueryDataTableResourceResult'
     CloneReferencedGcpDataRepoSnapshotResourceResponse:
       description: Response for successful Data Repo Snapshot reference clone
       content:

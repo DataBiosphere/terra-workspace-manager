@@ -130,12 +130,12 @@ public class ResourceController implements ResourceApi {
               break;
             }
           case BIG_QUERY_DATATABLE:
-          {
-            ReferencedBigQueryDataTableResource resource =
-                referencedResource.castToBigQueryDataTableResource();
-            union.gcpBqDataTable(resource.toApiAttributes());
-            break;
-          }
+            {
+              ReferencedBigQueryDataTableResource resource =
+                  referencedResource.castToBigQueryDataTableResource();
+              union.gcpBqDataTable(resource.toApiAttributes());
+              break;
+            }
           case DATA_REPO_SNAPSHOT:
             {
               ReferencedDataRepoSnapshotResource resource =

@@ -10,6 +10,7 @@ import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
+import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
@@ -25,6 +26,7 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
 
   private TestUserSpecification secondUser;
   private UUID bqResourceId;
+  private UUID bqDataTableResourceId;
   private UUID bucketResourceId;
   private UUID snapshotResourceId;
 
@@ -39,11 +41,20 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
 
     ApiClient apiClient = ClientTestUtils.getClientForTestUser(testUsers.get(0), server);
     ReferencedGcpResourceApi referencedGcpResourceApi = new ReferencedGcpResourceApi(apiClient);
+
     String bqReferenceName = RandomStringUtils.random(6, true, false);
     GcpBigQueryDatasetResource bqReference =
         ResourceMaker.makeBigQueryReference(
             referencedGcpResourceApi, getWorkspaceId(), bqReferenceName);
     bqResourceId = bqReference.getMetadata().getResourceId();
+
+    String bqDataTableReferenceName =
+        RandomStringUtils.random(/*count=*/ 1024, /*letters=*/ true, /*numbers=*/ true);
+    GcpBigQueryDataTableResource bqDataTableReference =
+        ResourceMaker.makeBigQueryDataTableReference(
+            referencedGcpResourceApi, getWorkspaceId(), bqDataTableReferenceName);
+    bqDataTableResourceId = bqDataTableReference.getMetadata().getResourceId();
+
     String bucketReferenceName = RandomStringUtils.random(6, true, false);
     GcpGcsBucketResource bucketReference =
         ResourceMaker.makeGcsBucketReference(
@@ -76,11 +87,13 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
 
     // Check that our main test user has access
     assertTrue(ownerApi.checkReferenceAccess(getWorkspaceId(), bqResourceId));
+    assertTrue(ownerApi.checkReferenceAccess(getWorkspaceId(), bqDataTableResourceId));
     assertTrue(ownerApi.checkReferenceAccess(getWorkspaceId(), bucketResourceId));
     assertTrue(ownerApi.checkReferenceAccess(getWorkspaceId(), snapshotResourceId));
 
     // Check that our secondary test user does not have access
     assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), bqResourceId));
+    assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), bqDataTableResourceId));
     assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), bucketResourceId));
     assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), snapshotResourceId));
   }

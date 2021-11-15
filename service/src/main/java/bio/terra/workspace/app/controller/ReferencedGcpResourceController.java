@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.generated.controller.ReferencedGcpResourceApi;
+import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDataTableResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpBigQueryDatasetResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpDataRepoSnapshotResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedGcpGcsBucketResourceResult;
@@ -133,8 +134,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .description(body.getMetadata().getDescription())
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getMetadata().getCloningInstructions()))
-            .projectId(body.getDataset().getProjectId())
-            .datasetName(body.getDataset().getDatasetId())
+            .projectId(body.getDataTable().getProjectId())
+            .datasetName(body.getDataTable().getDatasetId())
             .dataTableName(body.getDataTable().getDataTableId())
             .build();
     ReferencedResource referenceResource =
@@ -343,6 +344,48 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
     final var result =
         new ApiCloneReferencedGcpGcsBucketResourceResult()
             .resource(clonedReferencedResource.castToGcsBucketResource().toApiModel())
+            .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+            .sourceResourceId(sourceReferencedResource.getResourceId())
+            .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCloneReferencedGcpBigQueryDataTableResourceResult>
+      cloneGcpBigQueryDataTableReference(
+          UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
+    final ReferencedResource sourceReferencedResource =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, userRequest);
+
+    final CloningInstructions effectiveCloningInstructions =
+        Optional.ofNullable(body.getCloningInstructions())
+            .map(CloningInstructions::fromApiModel)
+            .orElse(sourceReferencedResource.getCloningInstructions());
+    if (CloningInstructions.COPY_REFERENCE != effectiveCloningInstructions) {
+      // Nothing to clone here
+      final var emptyResult =
+          new ApiCloneReferencedGcpBigQueryDataTableResourceResult()
+              .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
+              .sourceResourceId(sourceReferencedResource.getResourceId())
+              .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
+              .resource(null);
+      return new ResponseEntity<>(emptyResult, HttpStatus.OK);
+    }
+    // Clone the reference
+    final ReferencedResource clonedReferencedResource =
+        referenceResourceService.cloneReferencedResource(
+            sourceReferencedResource,
+            body.getDestinationWorkspaceId(),
+            body.getName(),
+            body.getDescription(),
+            userRequest);
+
+    // Build the correct response type
+    final var result =
+        new ApiCloneReferencedGcpBigQueryDataTableResourceResult()
+            .resource(clonedReferencedResource.castToBigQueryDataTableResource().toApiResource())
             .sourceWorkspaceId(sourceReferencedResource.getWorkspaceId())
             .sourceResourceId(sourceReferencedResource.getResourceId())
             .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel());

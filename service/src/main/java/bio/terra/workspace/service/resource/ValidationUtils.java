@@ -103,12 +103,12 @@ public class ValidationUtils {
   }
 
   public static void validateBqDataTableName(String name) {
-    if (StringUtils.isEmpty(name) || !BQ_DATATABLE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
+    if (StringUtils.isEmpty(name)
+        || !BQ_DATATABLE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
       logger.warn("Invalid data table name %s", name);
       throw new InvalidNameException(
           "Invalid BQ table name specified. Name must be 1-1024 characters, contains Unicode characters in category L"
-              + " (letter), M (mark), N (number), Pc (connector, including underscore), Pd (dash), Zs (space)"
-      );
+              + " (letter), M (mark), N (number), Pc (connector, including underscore), Pd (dash), Zs (space)");
     }
   }
 
