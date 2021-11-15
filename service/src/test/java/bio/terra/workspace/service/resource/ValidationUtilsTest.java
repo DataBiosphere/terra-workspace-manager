@@ -199,7 +199,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
   }
 
   @Test
-  public void validateBqDataTableName_fails() {
+  public void validateBqDataTableName_invalidName_throwsException() {
     assertThrows(
         InvalidNameException.class,
         () ->
