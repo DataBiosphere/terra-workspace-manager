@@ -201,12 +201,7 @@ public class ValidationUtilsTest extends BaseUnitTest {
   @Test
   public void validateBqDataTableName_invalidName_throwsException() {
     assertThrows(
-        InvalidNameException.class,
-        () ->
-            ValidationUtils.validateBqDataTableName("00_お客様*"));
-    assertThrows(
-        InvalidNameException.class,
-        () ->
-            ValidationUtils.validateBqDataTableName(""));
+        InvalidNameException.class, () -> ValidationUtils.validateBqDataTableName("00_お客様*"));
+    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateBqDataTableName(""));
   }
 }
