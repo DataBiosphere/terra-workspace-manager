@@ -25,9 +25,14 @@
 
   "versionScripts": [
     {
-      "name": "ReadFromTerraHelmFileRepoAndGitCommitLog",
+      "name": "ReadFromTerraHelmFileRepo",
       "description": "Version from https://github.com/broadinstitute/terra-helmfile and Git Commit Log",
-      "parameters": ["terra-helmfile/versions/app/dev.yaml", "terra-helmfile/environments/personal/wsmtest.yaml", "../.git"]
+      "parameters": ["workspacemanager","terra-helmfile/versions/app/dev.yaml", "terra-helmfile/environments/personal/wsmtest.yaml", "../.git"]
+    },
+    {
+      "name": "ReadFromGitCommitLog",
+      "description": "Version from Git Commit Log",
+      "parameters": ["../.git"]
     }
   ]
 }
