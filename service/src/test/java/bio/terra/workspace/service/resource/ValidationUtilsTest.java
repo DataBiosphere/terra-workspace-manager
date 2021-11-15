@@ -189,4 +189,24 @@ public class ValidationUtilsTest extends BaseUnitTest {
     }
     ValidationUtils.validateResourceDescriptionName(sb.toString());
   }
+
+  @Test
+  public void validateBqDataTableName() {
+    ValidationUtils.validateBqDataTableName("00_お客様");
+    ValidationUtils.validateBqDataTableName("table 01");
+    ValidationUtils.validateBqDataTableName("ग्राहक");
+    ValidationUtils.validateBqDataTableName("étudiant-01");
+  }
+
+  @Test
+  public void validateBqDataTableName_fails() {
+    assertThrows(
+        InvalidNameException.class,
+        () ->
+            ValidationUtils.validateBqDataTableName("00_お客様*"));
+    assertThrows(
+        InvalidNameException.class,
+        () ->
+            ValidationUtils.validateBqDataTableName(""));
+  }
 }
