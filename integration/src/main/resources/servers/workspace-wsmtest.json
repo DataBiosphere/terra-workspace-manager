@@ -25,7 +25,7 @@
 
   "versionScripts": [
     {
-      "name": "ReadFromTerraHelmFileRepo",
+      "name": "ReadFromTerraHelmfileRepo",
       "description": "Version from https://github.com/broadinstitute/terra-helmfile and Git Commit Log",
       "parameters": ["workspacemanager","terra-helmfile/versions/app/dev.yaml", "terra-helmfile/environments/personal/wsmtest.yaml", "../.git"]
     },
