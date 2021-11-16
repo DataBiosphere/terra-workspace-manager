@@ -143,6 +143,29 @@ public class CreateControlledResourceFlight extends Flight {
                 resource.castToAzureIpResource()),
             RetryRules.cloud());
         break;
+      case AZURE_VM:
+        addStep(
+            new GetAzureVmStep(
+                flightBeanBag.getAzureConfig(),
+                flightBeanBag
+                    .getAzureCloudContextService()
+                    .getAzureCloudContext(resource.getWorkspaceId())
+                    .get(),
+                flightBeanBag.getCrlService(),
+                resource.castToAzureVmResource()),
+            RetryRules.cloud());
+        addStep(
+            new CreateAzureVmStep(
+                flightBeanBag.getAzureConfig(),
+                flightBeanBag
+                    .getAzureCloudContextService()
+                    .getAzureCloudContext(resource.getWorkspaceId())
+                    .get(),
+                flightBeanBag.getCrlService(),
+                resource.castToAzureVmResource(),
+                flightBeanBag.getResourceDao()),
+            RetryRules.cloud());
+        break;
       default:
         throw new IllegalStateException(
             String.format("Unrecognized resource type %s", resource.getResourceType()));

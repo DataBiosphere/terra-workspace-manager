@@ -6,6 +6,7 @@ import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
@@ -111,6 +112,21 @@ public class ControlledResourceService {
                 userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return jobBuilder.submitAndWait(ControlledAzureDiskResource.class);
+  }
+
+  public String createVm(
+      ControlledAzureVmResource resource,
+      ApiAzureVmCreationParameters creationParameters,
+      List<ControlledResourceIamRole> privateResourceIamRoles,
+      ApiJobControl jobControl,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
+
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(
+                resource, privateResourceIamRoles, jobControl, resultPath, userRequest)
+            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    return jobBuilder.submit();
   }
 
   /** Starts a create controlled bucket resource, blocking until its job is finished. */
