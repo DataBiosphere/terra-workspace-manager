@@ -182,6 +182,29 @@ public class CreateControlledResourceFlight extends Flight {
                 resource.castToAzureVmResource(),
                 flightBeanBag.getResourceDao()),
             RetryRules.cloud());
+        break;
+      case AZURE_STORAGE_ACCOUNT:
+        addStep(
+            new GetAzureStorageStep(
+                flightBeanBag.getAzureConfig(),
+                flightBeanBag
+                    .getAzureCloudContextService()
+                    .getAzureCloudContext(resource.getWorkspaceId())
+                    .get(),
+                flightBeanBag.getCrlService(),
+                resource.castToAzureStorageResource()),
+            RetryRules.cloud());
+        addStep(
+            new CreateAzureStorageStep(
+                flightBeanBag.getAzureConfig(),
+                flightBeanBag
+                    .getAzureCloudContextService()
+                    .getAzureCloudContext(resource.getWorkspaceId())
+                    .get(),
+                flightBeanBag.getCrlService(),
+                resource.castToAzureStorageResource()),
+            RetryRules.cloud());
+        break;
       default:
         throw new IllegalStateException(
             String.format("Unrecognized resource type %s", resource.getResourceType()));

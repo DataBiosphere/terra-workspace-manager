@@ -6,6 +6,7 @@ import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.utils.ControllerUtils;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiAzureIpResource;
@@ -31,6 +32,7 @@ import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.*;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
@@ -144,6 +146,38 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
         new ApiCreatedControlledAzureIp()
             .resourceId(createdIp.getResourceId())
             .azureIp(createdIp.toApiResource());
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCreatedControlledAzureStorage> createAzureStorage(
+      UUID workspaceId, @Valid ApiCreateControlledAzureStorageRequestBody body) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
+    ControlledAzureStorageResource resource =
+        ControlledAzureStorageResource.builder()
+            .workspaceId(workspaceId)
+            .resourceId(UUID.randomUUID())
+            .name(body.getCommon().getName())
+            .description(body.getCommon().getDescription())
+            .cloningInstructions(
+                CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
+            .assignedUser(assignedUserFromBodyOrToken(body.getCommon(), userRequest))
+            .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
+            .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
+            .storageAccountName(body.getAzureStorage().getName())
+            .region(body.getAzureStorage().getRegion())
+            .build();
+
+    List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
+
+    final ControlledAzureStorageResource createdStorage =
+        controlledResourceService.createStorage(
+            resource, body.getAzureStorage(), privateRoles, userRequest);
+    var response =
+        new ApiCreatedControlledAzureStorage()
+            .resourceId(createdStorage.getResourceId())
+            .azureStorage(createdStorage.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 

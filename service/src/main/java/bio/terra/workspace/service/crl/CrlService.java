@@ -27,6 +27,7 @@ import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.resources.ResourceManager;
+import com.azure.resourcemanager.storage.StorageManager;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.Bigquery;
 import com.google.api.services.bigquery.BigqueryScopes;
@@ -142,6 +143,13 @@ public class CrlService {
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
     return buildComputeManager(azureCloudContext, azureConfig);
+  }
+
+  /** Returns an Azure {@link StorageManager} configured for use with CRL. */
+  public StorageManager getStorageManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    return buildStorageManager(azureCloudContext, azureConfig);
   }
 
   /** Returns an Azure {@link ResourceManager} configured for use with CRL. */
@@ -409,6 +417,25 @@ public class CrlService {
     ComputeManager manager =
         bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
                 clientConfig, ComputeManager.configure())
+            .authenticate(azureCreds, azureProfile);
+
+    return manager;
+  }
+
+  private StorageManager buildStorageManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    TokenCredential azureCreds = getManagedAppCredentials(azureConfig);
+
+    AzureProfile azureProfile =
+        new AzureProfile(
+            azureCloudContext.getAzureTenantId(),
+            azureCloudContext.getAzureSubscriptionId(),
+            AzureEnvironment.AZURE);
+
+    // We must use FQDN because there are two `Defaults` symbols imported otherwise.
+    StorageManager manager =
+        bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, StorageManager.configure())
             .authenticate(azureCreds, azureProfile);
 
     return manager;

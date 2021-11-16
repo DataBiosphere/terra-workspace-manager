@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
@@ -82,6 +83,23 @@ public class ControlledResourceService {
                 userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return jobBuilder.submitAndWait(ControlledAzureIpResource.class);
+  }
+
+  public ControlledAzureStorageResource createStorage(
+      ControlledAzureStorageResource resource,
+      ApiAzureStorageCreationParameters creationParameters,
+      List<ControlledResourceIamRole> privateResourceIamRoles,
+      AuthenticatedUserRequest userRequest) {
+
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(
+                resource,
+                privateResourceIamRoles,
+                new ApiJobControl().id(UUID.randomUUID().toString()),
+                null,
+                userRequest)
+            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    return jobBuilder.submitAndWait(ControlledAzureStorageResource.class);
   }
 
   public ControlledAzureDiskResource createDisk(
