@@ -723,7 +723,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatatable:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatatables:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     post:
@@ -747,7 +747,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatatable/{resourceId}:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatatables/{resourceId}:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/ResourceId'
@@ -790,13 +790,15 @@ paths:
       responses:
         '204':
           description: OK
+        '400':
+            $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatatable/{resourceId}/clone:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatatables/{resourceId}/clone:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/ResourceId'
@@ -920,7 +922,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatatable/name/{name}:
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bigquerydatatables/name/{name}:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/Name'

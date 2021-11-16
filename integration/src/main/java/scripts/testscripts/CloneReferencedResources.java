@@ -31,12 +31,13 @@ import scripts.utils.ResourceMaker;
 public class CloneReferencedResources extends DataRepoTestScriptBase {
 
   private static final String DATASET_RESOURCE_NAME = "dataset_resource_name";
+  private static final String DATA_TABLE_RESOURCE_NAME = "data_table_resource_name";
   private static final Logger logger = LoggerFactory.getLogger(CloneReferencedResources.class);
   private static final String CLONED_BUCKET_RESOURCE_NAME = "a_new_name";
   private static final String CLONED_DATASET_RESOURCE_NAME = "a_cloned_reference";
   private static final String CLONED_DATASET_DESCRIPTION = "Second star to the right.";
-  private static final String CLONED_DATATABLE_RESOURCE_NAME = "a_cloned_data_table_reference";
-  private static final String CLONED_DATATABLE_DESCRIPTION = "Cloned data table reference";
+  private static final String CLONED_DATA_TABLE_REFERENCE = "a_cloned_data_table_reference";
+  private static final String CLONED_DATA_TABLE_DESCRIPTION = "a cloned data table reference";
 
   private DataRepoSnapshotResource sourceDataRepoSnapshotReference;
   private GcpGcsBucketResource sourceBucketReference;
@@ -63,7 +64,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
 
     sourceBigQueryDataTableReference =
         ResourceMaker.makeBigQueryDataTableReference(
-            referencedGcpResourceApi, getWorkspaceId(), DATASET_RESOURCE_NAME + "1");
+            referencedGcpResourceApi, getWorkspaceId(), DATA_TABLE_RESOURCE_NAME);
 
     final String snapshotReferenceName = RandomStringUtils.random(6, true, false);
 
@@ -154,8 +155,8 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
     final var cloneBigQueryDataTableRequestBody =
         new CloneReferencedResourceRequestBody()
             .cloningInstructions(CloningInstructionsEnum.REFERENCE)
-            .name(CLONED_DATATABLE_RESOURCE_NAME)
-            .description(CLONED_DATATABLE_DESCRIPTION)
+            .name(CLONED_DATA_TABLE_REFERENCE)
+            .description(CLONED_DATA_TABLE_DESCRIPTION)
             .destinationWorkspaceId(destinationWorkspaceId);
 
     logger.info(
@@ -171,14 +172,15 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
             sourceBigQueryDataTableReference.getMetadata().getResourceId());
     assertEquals(getWorkspaceId(), cloneDataTableReferenceResult.getSourceWorkspaceId());
     final ResourceMetadata clonedDataTableResourceMetadata =
-        cloneDatasetReferenceResult.getResource().getMetadata();
+        cloneDataTableReferenceResult.getResource().getMetadata();
     assertEquals(StewardshipType.REFERENCED, clonedDataTableResourceMetadata.getStewardshipType());
-    assertEquals(ResourceType.BIG_QUERY_DATASET, clonedDataTableResourceMetadata.getResourceType());
+    assertEquals(
+        ResourceType.BIG_QUERY_DATATABLE, clonedDataTableResourceMetadata.getResourceType());
     assertEquals(
         sourceBigQueryDataTableReference.getMetadata().getResourceId(),
         cloneDataTableReferenceResult.getSourceResourceId());
-    assertEquals(CLONED_DATASET_RESOURCE_NAME, clonedDataTableResourceMetadata.getName());
-    assertEquals(CLONED_DATASET_DESCRIPTION, clonedDataTableResourceMetadata.getDescription());
+    assertEquals(CLONED_DATA_TABLE_REFERENCE, clonedDataTableResourceMetadata.getName());
+    assertEquals(CLONED_DATA_TABLE_DESCRIPTION, clonedDataTableResourceMetadata.getDescription());
     assertEquals(
         sourceBigQueryDataTableReference.getAttributes().getProjectId(),
         cloneDataTableReferenceResult.getResource().getAttributes().getProjectId());

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.referenced;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
@@ -8,6 +9,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceResourceFlight;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -109,6 +111,23 @@ public class ReferencedResourceService {
    */
   public void deleteReferenceResource(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceId, SamConstants.SAM_DELETE_REFERENCED_RESOURCE);
+    resourceDao.deleteResource(workspaceId, resourceId);
+  }
+
+  public void deleteReferenceResourceForResourceType(
+      UUID workspaceId,
+      UUID resourceId,
+      AuthenticatedUserRequest userRequest,
+      WsmResourceType resourceType) {
+    if (!resourceDao.getResource(workspaceId, resourceId).getResourceType().equals(resourceType)) {
+      throw new BadRequestException(
+          "The reference resource type is expected to be "
+              + resourceType
+              + ", but is actually "
+              + resourceDao.getResource(workspaceId, resourceId).getResourceType());
+    }
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SAM_DELETE_REFERENCED_RESOURCE);
     resourceDao.deleteResource(workspaceId, resourceId);

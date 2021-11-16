@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   private final String projectId;
@@ -28,7 +29,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
    *
    * @param workspaceId workspace unique identifier
    * @param resourceId resource unique identifier
-   * @param name name - may be null
+   * @param name name resource name; unique within a workspace
    * @param description description - may be null
    * @param cloningInstructions cloning instructions
    * @param projectId google project id
@@ -40,7 +41,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
       @JsonProperty("workspaceId") UUID workspaceId,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
-      @JsonProperty("description") String description,
+      @JsonProperty("description") @Nullable String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("projectId") String projectId,
       @JsonProperty("datasetName") String datasetName,
@@ -128,7 +129,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   @Override
   public boolean checkAccess(FlightBeanBag context, AuthenticatedUserRequest userRequest) {
     CrlService crlService = context.getCrlService();
-    return crlService.canReadBigQueryDataset(projectId, datasetName, userRequest);
+    return crlService.canReadBigQueryDataTable(projectId, datasetName, dataTableName, userRequest);
   }
 
   /**

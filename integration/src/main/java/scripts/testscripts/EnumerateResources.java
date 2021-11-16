@@ -3,6 +3,8 @@ package scripts.testscripts;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
@@ -44,11 +46,12 @@ public class EnumerateResources extends DataRepoTestScriptBase {
 
   // TODO: make these parameters in the test description?
   // The test is written so that these can be modified here. The invariant is that the
-  // resulting set of resources can be read in 3 pages.
+  // resulting set of resources can be read in 3 pages where the third page is not full.
   // Number of resources to create for enumeration
   private static final int RESOURCE_COUNT = 12;
   // Page size to use for enumeration paging
-  private static final int PAGE_SIZE = 4;
+  private static final int PAGE_SIZE = 5;
+  private static final int NUM_RESOURCE_TYPE = 6;
   // Roles to grant user on private resource
   private static final ImmutableList<ControlledResourceIamRole> PRIVATE_ROLES =
       ImmutableList.of(ControlledResourceIamRole.WRITER, ControlledResourceIamRole.EDITOR);
@@ -74,7 +77,8 @@ public class EnumerateResources extends DataRepoTestScriptBase {
     workspaceReader = testUsers.get(1);
 
     // static assumptions
-    assertThat(PAGE_SIZE * 3, equalTo(RESOURCE_COUNT));
+    assertThat(PAGE_SIZE * 2, lessThan(RESOURCE_COUNT));
+    assertThat(PAGE_SIZE * 3, greaterThan(RESOURCE_COUNT));
 
     ApiClient ownerApiClient = ClientTestUtils.getClientForTestUser(workspaceOwner, server);
     ownerControlledGcpResourceApi = new ControlledGcpResourceApi(ownerApiClient);
@@ -138,7 +142,7 @@ public class EnumerateResources extends DataRepoTestScriptBase {
     ResourceList page3List =
         ownerResourceApi.enumerateResources(getWorkspaceId(), 2 * PAGE_SIZE, PAGE_SIZE, null, null);
     logResult("page3", page3List);
-    assertThat(page3List.getResources().size(), equalTo(PAGE_SIZE));
+    assertThat(page3List.getResources().size(), lessThan(PAGE_SIZE));
 
     List<ResourceDescription> descriptionList = new ArrayList<>();
     descriptionList.addAll(page1List.getResources());
@@ -301,7 +305,7 @@ public class EnumerateResources extends DataRepoTestScriptBase {
     for (int i = 0; i < RESOURCE_COUNT; i++) {
       String name = RandomStringUtils.random(6, true, false) + i;
 
-      switch (i % 6) {
+      switch (i % NUM_RESOURCE_TYPE) {
         case 0:
           {
             GcpBigQueryDatasetResource resource =

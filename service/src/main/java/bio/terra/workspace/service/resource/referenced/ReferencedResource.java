@@ -9,13 +9,14 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public abstract class ReferencedResource extends WsmResource {
   public ReferencedResource(
       UUID workspaceId,
       UUID resourceId,
       String name,
-      String description,
+      @Nullable String description,
       CloningInstructions cloningInstructions) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
   }

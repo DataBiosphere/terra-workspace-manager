@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
@@ -500,6 +501,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       void setup() throws Exception {
         // Make the Verify step always succeed
         doReturn(true).when(mockCrlService).canReadBigQueryDataset(any(), any(), any());
+        doReturn(true).when(mockCrlService).canReadBigQueryDataTable(any(), any(), any(), any());
       }
 
       private ReferencedBigQueryDatasetResource makeBigQueryDatasetResource() {
@@ -592,8 +594,27 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             byid.castToBigQueryDataTableResource(),
             equalTo(byname.castToBigQueryDataTableResource()));
 
-        referenceResourceService.deleteReferenceResource(
-            workspaceId, referenceResource.getResourceId(), USER_REQUEST);
+        referenceResourceService.deleteReferenceResourceForResourceType(
+            workspaceId,
+            referenceResource.getResourceId(),
+            USER_REQUEST,
+            WsmResourceType.BIG_QUERY_DATATABLE);
+      }
+
+      @Test
+      void bigQueryDataTableReference_deleteWithWrongType_throwsException() {
+        referenceResource = makeBigQueryDataTableResource();
+
+        referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
+
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                referenceResourceService.deleteReferenceResourceForResourceType(
+                    workspaceId,
+                    referenceResource.getResourceId(),
+                    USER_REQUEST,
+                    WsmResourceType.BIG_QUERY_DATASET));
       }
 
       @Test

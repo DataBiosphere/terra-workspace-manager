@@ -17,6 +17,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiUpdateDataReferenceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
@@ -179,7 +180,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteBigQueryDataTableReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    referenceResourceService.deleteReferenceResource(workspaceId, resourceId, userRequest);
+    referenceResourceService.deleteReferenceResourceForResourceType(
+        workspaceId, resourceId, userRequest, WsmResourceType.BIG_QUERY_DATATABLE);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

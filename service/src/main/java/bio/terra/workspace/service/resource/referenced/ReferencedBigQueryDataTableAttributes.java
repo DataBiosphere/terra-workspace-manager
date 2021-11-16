@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.referenced;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ReferencedBigQueryDataTableAttributes {
   private final String projectId;
@@ -10,9 +9,10 @@ public class ReferencedBigQueryDataTableAttributes {
 
   @JsonCreator
   public ReferencedBigQueryDataTableAttributes(
-      @JsonProperty("projectId") String projectId,
-      @JsonProperty("datasetName") String datasetName,
-      @JsonProperty("dataTableName") String dataTableName) {
+      // @JsonProperty("projectId") String projectId,
+      // @JsonProperty("datasetName") String datasetName,
+      // @JsonProperty("dataTableName") String dataTableName) {
+      String projectId, String datasetName, String dataTableName) {
     this.projectId = projectId;
     this.datasetName = datasetName;
     this.dataTableName = dataTableName;

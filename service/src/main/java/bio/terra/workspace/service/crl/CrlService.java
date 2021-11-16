@@ -205,6 +205,38 @@ public class CrlService {
   }
 
   /**
+   * Wrap the BigQuery read access check in its own method. That allows unit tests to mock this
+   * service and generate an answer without actually touching BigQuery.
+   *
+   * @param projectId Google project id where the dataset is
+   * @param datasetName name of the dataset
+   * @param dataTableName name of the datatable
+   * @param userRequest auth info
+   * @return true if the user has permission to list the tables of the given dataset
+   */
+  public boolean canReadBigQueryDataTable(
+      String projectId,
+      String datasetName,
+      String dataTableName,
+      AuthenticatedUserRequest userRequest) {
+    try {
+      createBigQueryCow(userRequest).tables().get(projectId, datasetName, dataTableName).execute();
+      // createBigQueryCow(userRequest).tables().list(projectId, datasetName).execute();
+      return true;
+    } catch (GoogleJsonResponseException ex) {
+      if (ex.getStatusCode() == HttpStatus.SC_NOT_FOUND
+          || ex.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
+        // TODO: remove
+        System.out.println("yuhuyoyo status code is " + ex.getStatusCode());
+        return false;
+      }
+      throw new InvalidReferenceException("Error while trying to access BigQuery dataset", ex);
+    } catch (IOException ex) {
+      throw new InvalidReferenceException("Error while trying to access BigQuery dataset", ex);
+    }
+  }
+
+  /**
    * Wrap the BigQuery dataset fetch in its own method. This allows unit tests to mock this service
    * and generate an answer without actually touching BigQuery.
    *
