@@ -4,7 +4,11 @@ import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import com.azure.core.management.Region;
+import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,5 +106,21 @@ public class ValidationUtils {
     //  with a 512 character name that cannot being with an underscore. That gives us room to
     // generate
     //  names based on the resource name. It also is roomy.
+  }
+
+  public static void validateAzureVmSize(String vmSize) {
+    if (!VirtualMachineSizeTypes.values().stream().map(x -> x.toString()).collect(Collectors.toList()).contains(vmSize)) {
+      logger.warn("Invalid Azure vmSize {}", vmSize);
+      throw new InvalidReferenceException(
+              "Invalid Azure vm size specified. See the class `com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes`");
+    }
+  }
+
+  public static void validateRegion(String region) {
+    if (!Region.values().stream().map(x -> x.toString()).collect(Collectors.toList()).contains(region)) {
+      logger.warn("Invalid Azure region {}", region);
+      throw new InvalidReferenceException(
+              "Invalid Azure Regon specified. See the class `com.azure.core.management.Region`");
+    }
   }
 }

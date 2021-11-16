@@ -2,6 +2,7 @@ package bio.terra.workspace.common.fixtures;
 
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
@@ -18,10 +19,12 @@ import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.bigquery.model.Dataset;
 import com.google.cloud.storage.BucketInfo;
@@ -77,6 +80,7 @@ public class ControlledResourceFixtures {
   public static final String AZURE_NAME_PREFIX = "azure";
   public static final String AZURE_IP_NAME_PREFIX = "ip";
   public static final String AZURE_DISK_NAME_PREFIX = "disk";
+  public static final String AZURE_VM_NAME_PREFIX = "vm";
 
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
       new ApiGcpGcsBucketCreationParameters()
@@ -92,19 +96,32 @@ public class ControlledResourceFixtures {
         .lifecycle(new ApiGcpGcsBucketLifecycle().rules(LIFECYCLE_RULES));
   }
 
-  /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
+  /** Construct a parameter object with a unique ip name to avoid unintended clashes. */
   public static ApiAzureIpCreationParameters getAzureIpCreationParameters() {
     return new ApiAzureIpCreationParameters()
         .name(uniqueAzureName(AZURE_IP_NAME_PREFIX))
-        .region("eastus");
+        .region("westcentralus");
   }
 
-  /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
+  /** Construct a parameter object with a unique disk name to avoid unintended clashes. */
   public static ApiAzureDiskCreationParameters getAzureDiskCreationParameters() {
     return new ApiAzureDiskCreationParameters()
         .name(uniqueAzureName(AZURE_DISK_NAME_PREFIX))
-        .region("eastus")
+        .region("westcentralus")
         .size(50);
+  }
+
+  /** Construct a parameter object with a unique vm name to avoid unintended clashes. */
+  public static ApiAzureVmCreationParameters getAzureVmCreationParameters() {
+    return new ApiAzureVmCreationParameters()
+        .name(uniqueAzureName(AZURE_VM_NAME_PREFIX))
+        .region("westcentralus")
+        .vmSize(VirtualMachineSizeTypes.STANDARD_D2S_V3.toString())
+        .vmImageUri(
+            "/subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.0.4")
+        .ipId(UUID.randomUUID())
+        .diskId(UUID.randomUUID())
+        .networkId(UUID.randomUUID());
   }
 
   public static String uniqueBucketName() {
@@ -180,6 +197,27 @@ public class ControlledResourceFixtures {
         diskName,
         region,
         size);
+  }
+
+  public static ControlledAzureVmResource getAzureVm(
+      ApiAzureVmCreationParameters creationParameters) {
+    return new ControlledAzureVmResource(
+        WORKSPACE_ID,
+        RESOURCE_ID,
+        RESOURCE_NAME,
+        RESOURCE_DESCRIPTION,
+        CLONING_INSTRUCTIONS,
+        OWNER_EMAIL,
+        // TODO: these should be changed when we group the resources
+        AccessScopeType.ACCESS_SCOPE_PRIVATE,
+        ManagedByType.MANAGED_BY_USER,
+        creationParameters.getName(),
+        creationParameters.getRegion(),
+        creationParameters.getVmSize(),
+        creationParameters.getVmImageUri(),
+        creationParameters.getIpId(),
+        creationParameters.getNetworkId(),
+        creationParameters.getDiskId());
   }
 
   private ControlledResourceFixtures() {}

@@ -18,6 +18,7 @@ import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
@@ -442,6 +443,9 @@ public class ResourceDao {
       case AZURE_DISK:
         validateUniqueAzureDisk(controlledResource.castToAzureDiskResource());
         break;
+      case AZURE_VM:
+        validateUniqueAzureVm(controlledResource.castToAzureVmResource());
+        break;
       default:
         throw new IllegalArgumentException(
             String.format(
@@ -553,6 +557,24 @@ public class ResourceDao {
     if (matchingCount != null && matchingCount > 0) {
       throw new DuplicateResourceException(
           String.format("An Azure Disk with ID %s already exists", resource.getDiskName()));
+    }
+  }
+
+  private void validateUniqueAzureVm(ControlledAzureVmResource resource) {
+    // This should take into account azure uniqueness param, namely the fields in `AzureContext`
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND attributes->>'vmName' = :vm_name";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AZURE_VM.toSql())
+            .addValue("vm_name", resource.getVmName());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format("An Azure Vm with ID %s already exists", resource.getVmName()));
     }
   }
 
@@ -689,6 +711,8 @@ public class ResourceDao {
             return new ControlledAzureIpResource(dbResource);
           case AZURE_DISK:
             return new ControlledAzureDiskResource(dbResource);
+          case AZURE_VM:
+            return new ControlledAzureVmResource(dbResource);
           default:
             throw new InvalidMetadataException(
                 "Invalid controlled resource type" + dbResource.getResourceType().toString());
