@@ -13,12 +13,8 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * A step for deleting a controlled Azure Disk resource. This step uses the following process to
- * actually delete the Azure Disk.
- */
-public class DeleteAzureDiskStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(DeleteAzureDiskStep.class);
+public class DeleteAzureVmStep implements Step {
+  private static final Logger logger = LoggerFactory.getLogger(DeleteAzureVmStep.class);
   private final AzureConfiguration azureConfig;
   private final ResourceDao resourceDao;
   private final CrlService crlService;
@@ -27,7 +23,7 @@ public class DeleteAzureDiskStep implements Step {
   private final UUID workspaceId;
   private final UUID resourceId;
 
-  public DeleteAzureDiskStep(
+  public DeleteAzureVmStep(
       AzureConfiguration azureConfig,
       AzureCloudContext azureCloudContext,
       CrlService crlService,
@@ -45,30 +41,30 @@ public class DeleteAzureDiskStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException {
     var wsmResource = resourceDao.getResource(workspaceId, resourceId);
-    var disk = wsmResource.castToControlledResource().castToAzureDiskResource();
+    var vm = wsmResource.castToControlledResource().castToAzureVmResource();
 
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
     var azureResourceId =
         String.format(
-            "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/disks/%s",
+            "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s",
             azureCloudContext.getAzureSubscriptionId(),
             azureCloudContext.getAzureResourceGroupId(),
-            disk.getDiskName());
+            vm.getVmName());
     try {
-      logger.info("Attempting to delete disk " + azureResourceId);
+      logger.info("Attempting to delete vm " + azureResourceId);
 
-      computeManager.disks().deleteById(azureResourceId);
+      computeManager.virtualMachines().deleteById(azureResourceId);
       return StepResult.getStepResultSuccess();
     } catch (Exception ex) {
-      logger.info("Attempt to delete Azure disk failed on this try: " + azureResourceId, ex);
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
+      logger.info("Attempt to delete Azure vm failed on this try: " + azureResourceId, ex);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     logger.error(
-        "Cannot undo delete of Azure disk resource {} in workspace {}.", resourceId, workspaceId);
+        "Cannot undo delete of Azure vm resource {} in workspace {}.", resourceId, workspaceId);
     // Surface whatever error caused Stairway to begin undoing.
     return flightContext.getResult();
   }

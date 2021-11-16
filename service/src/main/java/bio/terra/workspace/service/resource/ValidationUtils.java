@@ -5,9 +5,12 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParam
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import com.azure.core.management.Region;
+import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.common.collect.ImmutableList;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -203,6 +206,22 @@ public class ValidationUtils {
     if (name != null && name.length() > MAX_RESOURCE_DESCRIPTION_NAME) {
       throw new InvalidNameException(
           "Invalid description specified. Description must be under 2048 characters.");
+    }
+  }
+
+  public static void validateAzureVmSize(String vmSize) {
+    if (!VirtualMachineSizeTypes.values().stream().map(x -> x.toString()).collect(Collectors.toList()).contains(vmSize)) {
+      logger.warn("Invalid Azure vmSize {}", vmSize);
+      throw new InvalidReferenceException(
+              "Invalid Azure vm size specified. See the class `com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes`");
+    }
+  }
+
+  public static void validateRegion(String region) {
+    if (!Region.values().stream().map(x -> x.toString()).collect(Collectors.toList()).contains(region)) {
+      logger.warn("Invalid Azure region {}", region);
+      throw new InvalidReferenceException(
+              "Invalid Azure Regon specified. See the class `com.azure.core.management.Region`");
     }
   }
 }
