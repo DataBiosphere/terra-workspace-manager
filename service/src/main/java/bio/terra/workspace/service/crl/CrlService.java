@@ -221,13 +221,10 @@ public class CrlService {
       AuthenticatedUserRequest userRequest) {
     try {
       createBigQueryCow(userRequest).tables().get(projectId, datasetName, dataTableName).execute();
-      // createBigQueryCow(userRequest).tables().list(projectId, datasetName).execute();
       return true;
     } catch (GoogleJsonResponseException ex) {
       if (ex.getStatusCode() == HttpStatus.SC_NOT_FOUND
           || ex.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
-        // TODO: remove
-        System.out.println("yuhuyoyo status code is " + ex.getStatusCode());
         return false;
       }
       throw new InvalidReferenceException("Error while trying to access BigQuery dataset", ex);
