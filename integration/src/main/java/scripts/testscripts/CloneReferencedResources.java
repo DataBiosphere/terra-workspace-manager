@@ -38,7 +38,6 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
   private static final String CLONED_DATASET_DESCRIPTION = "Second star to the right.";
   private static final String CLONED_DATA_TABLE_REFERENCE = "a_cloned_data_table_reference";
   private static final String CLONED_DATA_TABLE_DESCRIPTION = "a cloned data table reference";
-  private static final String COLUMN_NAME = "myColumn";
 
   private DataRepoSnapshotResource sourceDataRepoSnapshotReference;
   private GcpGcsBucketResource sourceBucketReference;
