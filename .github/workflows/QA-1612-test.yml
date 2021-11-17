@@ -95,14 +95,6 @@ jobs:
           version=$(curl https://workspace.wsmtest.integ.envs.broadinstitute.org/version)
           echo "$(date "+%Y-%m-%dT%H:%M:%S") post-sync wsmtest version: $version"
 
-      - name: Run the perf test suite
-        id: perf-test
-        if: always()
-        uses: ./.github/actions/integration-test
-        with:
-          test-server: workspace-wsmtest.json
-          test: suites/BasicPerf.json
-
       - name: clean databases before resiliency suite
         if: always()
         uses: ./.github/actions/clean-databases
