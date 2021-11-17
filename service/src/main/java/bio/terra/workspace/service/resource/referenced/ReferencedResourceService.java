@@ -116,17 +116,29 @@ public class ReferencedResourceService {
     resourceDao.deleteResource(workspaceId, resourceId);
   }
 
+  /**
+   * Delete a reference. The only state we hold for a reference is in the metadata database so we
+   * directly delete that.
+   *
+   * @param workspaceId workspace of interest
+   * @param resourceId resource to delete
+   * @param userRequest authenticated user
+   * @param resourceType wsm resource type that the to-be-deleted resource should have
+   * @throws BadRequestException when the resource type is different from the specified resource
+   *     type.
+   */
   public void deleteReferenceResourceForResourceType(
       UUID workspaceId,
       UUID resourceId,
       AuthenticatedUserRequest userRequest,
       WsmResourceType resourceType) {
-    if (!resourceDao.getResource(workspaceId, resourceId).getResourceType().equals(resourceType)) {
+    WsmResourceType targetResourceType =
+        resourceDao.getResource(workspaceId, resourceId).getResourceType();
+    if (!targetResourceType.equals(resourceType)) {
       throw new BadRequestException(
-          "The reference resource type is expected to be "
-              + resourceType
-              + ", but is actually "
-              + resourceDao.getResource(workspaceId, resourceId).getResourceType());
+          String.format(
+              "The reference resource type is expected to be %s, but is actually %s",
+              resourceType.name(), targetResourceType.name()));
     }
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SAM_DELETE_REFERENCED_RESOURCE);

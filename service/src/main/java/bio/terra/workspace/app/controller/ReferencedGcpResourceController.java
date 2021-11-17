@@ -120,6 +120,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteBucketReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    // TODO: use {code referenceResourceService#deleteReferenceResourceForResourceType instead.
     referenceResourceService.deleteReferenceResource(workspaceId, resourceId, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -244,6 +245,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteBigQueryDatasetReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    // TODO: use {code referenceResourceService#deleteReferenceResourceForResourceType instead.
     referenceResourceService.deleteReferenceResource(workspaceId, resourceId, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -306,6 +308,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteDataRepoSnapshotReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    // TODO: use {code referenceResourceService#deleteReferenceResourceForResourceType instead.
     referenceResourceService.deleteReferenceResource(workspaceId, resourceId, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
