@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,10 +54,17 @@ class SamServiceTest extends BaseConnectedTest {
   @Autowired private ReferencedResourceService referenceResourceService;
 
   @MockBean private DataRepoService mockDataRepoService;
+  private UUID workspaceId;
 
   @BeforeEach
   public void setup() {
     doReturn(true).when(mockDataRepoService).snapshotReadable(any(), any(), any());
+    workspaceId = createWorkspaceDefaultUser();
+  }
+
+  @AfterEach
+  public void tearDown() {
+    workspaceService.deleteWorkspace(workspaceId, defaultUserRequest());
   }
 
   @Test
@@ -70,7 +78,6 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void addedReaderCanRead() throws Exception {
-    UUID workspaceId = createWorkspaceDefaultUser();
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
         UnauthorizedException.class,
@@ -84,8 +91,6 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void addedWriterCanWrite() throws Exception {
-    UUID workspaceId = createWorkspaceDefaultUser();
-
     ReferencedDataRepoSnapshotResource referenceResource =
         ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
 
@@ -108,7 +113,6 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void removedReaderCannotRead() throws Exception {
-    UUID workspaceId = createWorkspaceDefaultUser();
     // Before being granted permission, secondary user should be rejected.
     assertThrows(
         UnauthorizedException.class,
@@ -128,7 +132,6 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void nonOwnerCannotAddReader() {
-    UUID workspaceId = createWorkspaceDefaultUser();
     // Note that this request uses the secondary user's authentication token, when only the first
     // user is an owner.
     assertThrows(
@@ -167,7 +170,6 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void invalidUserEmailRejected() {
-    UUID workspaceId = createWorkspaceDefaultUser();
     assertThrows(
         SamBadRequestException.class,
         () ->
@@ -180,7 +182,6 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void listPermissionsIncludesAddedUsers() throws Exception {
-    UUID workspaceId = createWorkspaceDefaultUser();
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
     List<RoleBinding> policyList = samService.listRoleBindings(workspaceId, defaultUserRequest());
@@ -210,7 +211,6 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void writerCannotListPermissions() throws Exception {
-    UUID workspaceId = createWorkspaceDefaultUser();
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), WsmIamRole.WRITER, userAccessUtils.getSecondUserEmail());
     assertThrows(
@@ -241,7 +241,6 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void listWorkspacesIncludesWsmWorkspace() throws Exception {
-    UUID workspaceId = createWorkspaceDefaultUser();
     List<UUID> samWorkspaceIdList =
         samService.listWorkspaceIds(userAccessUtils.defaultUserAuthRequest());
     assertTrue(samWorkspaceIdList.contains(workspaceId));
@@ -250,7 +249,6 @@ class SamServiceTest extends BaseConnectedTest {
   @Test
   void workspaceReaderIsSharedResourceReader() throws Exception {
     // Default user is workspace owner, secondary user is workspace reader
-    UUID workspaceId = createWorkspaceDefaultUser();
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
 
@@ -271,7 +269,6 @@ class SamServiceTest extends BaseConnectedTest {
   @Test
   void workspaceReaderIsNotPrivateResourceReader() throws Exception {
     // Default user is workspace owner, secondary user is workspace reader
-    UUID workspaceId = createWorkspaceDefaultUser();
     samService.grantWorkspaceRole(
         workspaceId, defaultUserRequest(), WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
 
@@ -309,18 +306,16 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void duplicateResourceCreateIgnored() throws Exception {
-    UUID workspaceId = createWorkspaceDefaultUser();
-
     ControlledResource bucketResource = defaultBucket(workspaceId).build();
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
     // This duplicate call should complete without throwing.
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
+    // Delete the bucket so we can clean up the workspace.
+    samService.deleteControlledResource(bucketResource, defaultUserRequest());
   }
 
   @Test
   void duplicateResourceDeleteIgnored() throws Exception {
-    UUID workspaceId = createWorkspaceDefaultUser();
-
     ControlledResource bucketResource = defaultBucket(workspaceId).build();
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
 
