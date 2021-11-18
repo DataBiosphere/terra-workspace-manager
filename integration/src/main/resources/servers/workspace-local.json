@@ -11,5 +11,13 @@
   "testRunnerServiceAccountFile": "delegate-user-sa.json",
 
   "skipDeployment": true,
-  "skipKubernetes": true
+  "skipKubernetes": true,
+
+  "versionScripts": [
+    {
+      "name": "ReadFromGitCommitLog",
+      "description": "Version from Git Commit Log",
+      "parameters": ["../.git"]
+    }
+  ]
 }

@@ -43,6 +43,14 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    # Check out terra-helmfile repo
+    - uses: actions/checkout@v2
+      with:
+        repository: broadinstitute/terra-helmfile
+        ref: master
+        token: ${{ secrets.BROADBOT_TOKEN }}
+        path: integration/terra-helmfile
+
     - name: Initialize Postgres DB for local server test run
       env:
         PGPASSWORD: postgres
