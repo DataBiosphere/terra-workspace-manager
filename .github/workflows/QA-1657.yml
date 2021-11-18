@@ -17,8 +17,13 @@ jobs:
       - name: Check out environments and versions directories from terra-helmfile
         id: checkout-helm-versions-step
         uses: ./.github/actions/checkout-helm-versions
+        with:
+          repository: broadinstitute/terra-helmfile
+          ref: master
+          token: ${{ secrets.BROADBOT_TOKEN }}
+          path: integration/terra-helmfile
 
       - name: Check dir
         run: |
           ls -l
-          cat terra-helmfile/versions/app/dev.yaml
+          cat integration/terra-helmfile/versions/app/dev.yaml
