@@ -607,6 +607,123 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bucket/files:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new GCS bucket file reference in a workspace.
+      operationId: createBucketFileReference
+      tags: [ReferencedGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGcpGcsBucketFileReferenceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/GcpGcsBucketFileReferenceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bucket/files/{resourceId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Gets a reference to a bucket file from a workspace.
+      operationId: getBucketFileReference
+      tags: [ReferencedGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GcpGcsBucketFileReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update name or description of a bucket file reference in a workspace.
+      operationId: updateBucketFileReference
+      tags: [ReferencedGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete Gcp bucket file reference
+      operationId: deleteBucketFileReference
+      tags: [ReferencedGcpResource]
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bucket/files/{resourceId}/clone:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a referenced GCS Bucket file resource
+      operationId: cloneGcpGcsBucketFileReference
+      tags: [ReferencedGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneReferencedResourceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneReferencedGcpGcsBucketFileResourceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/bucket/files/name/{name}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/Name'
+    get:
+      summary: Gets a reference to a Gcp bucket file by name.
+      operationId: getBucketFileReferenceByName
+      tags: [ReferencedGcpResource]
+      responses:
+        '200':
+          $ref: '#/components/responses/GcpGcsBucketFileReferenceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/referenced/gcp/buckets:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
@@ -1944,6 +2061,16 @@ components:
         snapshot:
           $ref: '#/components/schemas/DataRepoSnapshotAttributes'
 
+    CreateGcpGcsBucketFileReferenceRequestBody:
+      type: object
+      description: A request to create a reference to a GCS bucket file.
+      required: [ metadata, file ]
+      properties:
+        metadata:
+          $ref: '#/components/schemas/ReferenceResourceCommonFields'
+        file:
+          $ref: '#/components/schemas/GcpGcsBucketFileAttributes'
+
     CreateGcpGcsBucketReferenceRequestBody:
       type: object
       description: A request to create a reference to a GCS bucket.
@@ -2354,6 +2481,25 @@ components:
           format: uuid
         resource:
           $ref: '#/components/schemas/GcpGcsBucketResource'
+    CloneReferencedGcpGcsBucketFileResourceResult:
+      description: >-
+        API result class for cloning a referenced GCS Bucket file resource. Includes source workspace
+        and resource IDs for provenance. If the effective cloning instructions are not
+        COPY_REFERENCE, then no clone is created and the resource is null.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: ID of the workspace of the source resource for this clone
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource
+          type: string
+          format: uuid
+        resource:
+          $ref: '#/components/schemas/GcpGcsBucketFileResource'
     CloneReferencedGcpBigQueryDatasetResourceResult:
       description: >-
         API result class for cloning a referenced BigQuery dataset resource. Includes source workspace
@@ -2801,6 +2947,31 @@ components:
         attributes:
           $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
 
+    GcpGcsBucketFileAttributes:
+      description: >-
+        Bucket properties included in post-creation, get, and update. Others must be
+        retrieved from GCS using the name.
+      type: object
+      required: [ bucketName ]
+      properties:
+        bucketName:
+          description: Name of created bucket (not the resource name).
+          type: string
+        fileName:
+          description: Name of the file in the gcs bucket.
+          type: string
+
+    GcpGcsBucketFileResource:
+      type: object
+      description: Description of a GCS bucket file.
+      required: [ metadata, attributes ]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/GcpGcsBucketFileAttributes'
+
     GcpGcsBucketAttributes:
       description: >-
         Bucket properties included in post-creation, get, and update. Others must be
@@ -2864,6 +3035,8 @@ components:
           $ref: '#/components/schemas/DataRepoSnapshotAttributes'
         gcpGcsBucket:
           $ref: '#/components/schemas/GcpGcsBucketAttributes'
+        gcpGcsBucketFile:
+          $ref: '#/components/schemas/GcpGcsBucketFileAttributes'
         gcpAiNotebookInstance:
           $ref: '#/components/schemas/GcpAiNotebookInstanceAttributes'
 
@@ -2947,6 +3120,7 @@ components:
         - BIG_QUERY_DATASET
         - DATA_REPO_SNAPSHOT
         - GCS_BUCKET
+        - GCS_BUCKET_FILE
 
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration
@@ -2992,6 +3166,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/DataRepoSnapshotResource'
+
+    GcpGcsBucketFileReferenceResponse:
+      description: Response containing a reference to a Gcp bucket file.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GcpGcsBucketFileResource'
 
     GcpGcsBucketReferenceResponse:
       description: Response containing a reference to a Gcp bucket.
@@ -3088,6 +3269,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreateCloudContextResult'
+    CloneReferencedGcpGcsBucketFileResourceResponse:
+      description: Response for successful GCS Bucket file reference clone
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneReferencedGcpGcsBucketFileResourceResult'
     CloneReferencedGcpGcsBucketResourceResponse:
       description: Response for successful GCS Bucket reference clone
       content:

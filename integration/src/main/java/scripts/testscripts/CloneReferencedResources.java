@@ -15,6 +15,7 @@ import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GcpGcsBucketFileResource;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
@@ -37,6 +38,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
 
   private DataRepoSnapshotResource sourceDataRepoSnapshotReference;
   private GcpGcsBucketResource sourceBucketReference;
+  private GcpGcsBucketFileResource sourceBucketFileReference;
   private GcpBigQueryDatasetResource sourceBigQueryDatasetReference;
   private UUID destinationWorkspaceId;
   private ReferencedGcpResourceApi referencedGcpResourceApi;

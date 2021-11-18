@@ -399,6 +399,50 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         doReturn(true).when(mockCrlService).canReadGcsBucket(any(), any());
       }
 
+      private ReferencedGcsBucketFileResource makeGcsBucketFileResource() {
+        UUID resourceId = UUID.randomUUID();
+        String resourceName = "testgcs-" + resourceId.toString();
+
+        return new ReferencedGcsBucketFileResource(
+            workspaceId,
+            resourceId,
+            resourceName,
+            "description of " + resourceName,
+            CloningInstructions.COPY_DEFINITION,
+            /*bucketName=*/"theres-a-hole-in-the-bottom-of-the",
+            /*fileName=*/"balloon");
+      }
+
+      @Test
+      void gcsBucketFileReference() {
+        referenceResource = makeGcsBucketFileResource();
+        assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCED));
+
+        ReferencedGcsBucketFileResource resource = referenceResource.castToGcsBucketFileResource();
+        assertThat(resource.getResourceType(), equalTo(WsmResourceType.GCS_BUCKET_FILE));
+
+        ReferencedResource resultReferenceResource =
+            referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
+        ReferencedGcsBucketFileResource resultResource =
+            resultReferenceResource.castToGcsBucketFileResource();
+        assertThat(resource, equalTo(resultResource));
+
+        assertTrue(
+            referenceResourceService.checkAccess(
+                workspaceId, referenceResource.getResourceId(), USER_REQUEST));
+
+        ReferencedResource byid =
+            referenceResourceService.getReferenceResource(
+                workspaceId, resource.getResourceId(), USER_REQUEST);
+        ReferencedResource byname =
+            referenceResourceService.getReferenceResourceByName(
+                workspaceId, resource.getName(), USER_REQUEST);
+        assertThat(byid.castToGcsBucketFileResource(), equalTo(byname.castToGcsBucketFileResource()));
+
+        referenceResourceService.deleteReferenceResource(
+            workspaceId, referenceResource.getResourceId(), USER_REQUEST);
+      }
+
       private ReferencedGcsBucketResource makeGcsBucketResource() {
         UUID resourceId = UUID.randomUUID();
         String resourceName = "testgcs-" + resourceId.toString();
@@ -440,6 +484,23 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
         referenceResourceService.deleteReferenceResource(
             workspaceId, referenceResource.getResourceId(), USER_REQUEST);
+      }
+
+      @Test
+      void missingBucketFileName_throwsException() {
+        UUID resourceId = UUID.randomUUID();
+        String resourceName = "testgcs-" + resourceId.toString();
+        assertThrows(
+            MissingRequiredFieldException.class,
+            () ->
+                new ReferencedGcsBucketFileResource(
+                    workspaceId,
+                    resourceId,
+                    resourceName,
+                    "description of " + resourceName,
+                    CloningInstructions.COPY_DEFINITION,
+                    /*bucketName=*/"spongebob",
+                    /*fileName=*/""));
       }
 
       @Test

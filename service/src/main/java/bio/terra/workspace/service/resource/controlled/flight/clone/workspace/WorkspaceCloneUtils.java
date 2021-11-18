@@ -6,6 +6,7 @@ import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketFileResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.model.WsmCloneResourceResult;
@@ -55,6 +56,15 @@ public class WorkspaceCloneUtils {
                 name,
                 description);
         break;
+      case GCS_BUCKET_FILE:
+        destinationResource =
+            buildDestinationGcsBucketFileReference(
+                sourceReferencedResource.castToGcsBucketFileResource(),
+                destinationWorkspaceId,
+                name,
+                description
+            );
+        break;
       case DATA_REPO_SNAPSHOT:
         destinationResource =
             buildDestinationDataRepoSnapshotReference(
@@ -98,6 +108,22 @@ public class WorkspaceCloneUtils {
       @Nullable String description) {
 
     final ReferencedGcsBucketResource.Builder resultBuilder =
+        sourceBucketResource.toBuilder()
+            .workspaceId(destinationWorkspaceId)
+            .resourceId(UUID.randomUUID());
+    // apply optional override variables
+    Optional.ofNullable(name).ifPresent(resultBuilder::name);
+    Optional.ofNullable(description).ifPresent(resultBuilder::description);
+    return resultBuilder.build();
+  }
+
+  private static ReferencedResource buildDestinationGcsBucketFileReference(
+      ReferencedGcsBucketFileResource sourceBucketResource,
+      UUID destinationWorkspaceId,
+      @Nullable String name,
+      @Nullable String description) {
+
+    final ReferencedGcsBucketFileResource.Builder resultBuilder =
         sourceBucketResource.toBuilder()
             .workspaceId(destinationWorkspaceId)
             .resourceId(UUID.randomUUID());

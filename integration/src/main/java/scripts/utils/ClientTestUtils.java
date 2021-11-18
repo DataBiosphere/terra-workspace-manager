@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 public class ClientTestUtils {
 
   public static final String TEST_BUCKET_NAME = "terra_wsm_test_resource";
+  public static final String TEST_BUCKET_FILE_NAME = "terra_wsm_test_file";
   public static final String TEST_BQ_DATASET_NAME = "terra_wsm_test_dataset";
   public static final String TEST_BQ_DATASET_PROJECT = "terra-kernel-k8s";
   public static final String RESOURCE_NAME_PREFIX = "terratest";

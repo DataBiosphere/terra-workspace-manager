@@ -48,6 +48,11 @@ public abstract class ReferencedResource extends WsmResource {
     return (ReferencedGcsBucketResource) this;
   }
 
+  public ReferencedGcsBucketFileResource castToGcsBucketFileResource() {
+    validateSubclass(WsmResourceType.GCS_BUCKET_FILE);
+    return (ReferencedGcsBucketFileResource) this;
+  }
+
   /**
    * Check for a user's access to the resource being referenced. This call should talk to an
    * external service (a cloud platform, Terra Data Repo, etc) specific to the referenced resource

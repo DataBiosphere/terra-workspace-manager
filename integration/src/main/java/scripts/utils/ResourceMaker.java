@@ -2,6 +2,7 @@ package scripts.utils;
 
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_PROJECT;
+import static scripts.utils.ClientTestUtils.TEST_BUCKET_FILE_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
 
@@ -18,6 +19,7 @@ import bio.terra.workspace.model.CreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpBigQueryDatasetReferenceRequestBody;
+import bio.terra.workspace.model.CreateGcpGcsBucketFileReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpGcsBucketReferenceRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
@@ -33,6 +35,8 @@ import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.GcpGcsBucketCreationParameters;
 import bio.terra.workspace.model.GcpGcsBucketDefaultStorageClass;
+import bio.terra.workspace.model.GcpGcsBucketFileAttributes;
+import bio.terra.workspace.model.GcpGcsBucketFileResource;
 import bio.terra.workspace.model.GcpGcsBucketLifecycle;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.JobControl;
@@ -41,6 +45,7 @@ import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceIamRoles;
 import bio.terra.workspace.model.PrivateResourceUser;
 import bio.terra.workspace.model.ReferenceResourceCommonFields;
+import com.google.protobuf.Api;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
@@ -115,6 +120,21 @@ public class ResourceMaker {
             .bucket(new GcpGcsBucketAttributes().bucketName(TEST_BUCKET_NAME));
 
     return resourceApi.createBucketReference(body, workspaceId);
+  }
+
+  public static GcpGcsBucketFileResource makeGcsBucketFileReference(
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name) throws ApiException {
+    var body =
+        new CreateGcpGcsBucketFileReferenceRequestBody()
+            .metadata(
+                new ReferenceResourceCommonFields()
+                    .cloningInstructions(
+                        CloningInstructionsEnum.NOTHING)
+                    .description("Description of " + name)
+                    .name(name))
+            .file(new GcpGcsBucketFileAttributes().bucketName(TEST_BUCKET_NAME).fileName(TEST_BUCKET_FILE_NAME));
+
+    return resourceApi.createBucketFileReference(body, workspaceId);
   }
 
   public static GcpGcsBucketResource makeGcsBucketReference(
