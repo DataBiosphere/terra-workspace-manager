@@ -4,7 +4,13 @@
 name: QA-1612 test 42
 
 on:
-  push
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      - '.github/**'
+      - 'service/local-dev/**'
 
 jobs:
   qa-1612-tests:
