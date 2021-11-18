@@ -19,12 +19,13 @@ jobs:
           mkdir -p terra-helmfile/environments
           cd terra-helmfile
           git init
-          git config --global init.defaultBranch master
+          # git config --global init.defaultBranch master
           ls -l .git
           cat .git/config
-          git branch -m master
+          # git branch -m master
           cat .git/config
           git remote add origin https://broadbot:${{ secrets.BROADBOT_TOKEN }}@github.com/broadbot/terra-helmfile.git
+          git fetch --all
           git config core.sparseCheckout true
           if [ -f .git/info/sparse-checkout ]; then
             rm .git/info/sparse-checkout
