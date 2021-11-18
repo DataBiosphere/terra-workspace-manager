@@ -243,15 +243,14 @@ public class PetSaService {
    */
   public Optional<AuthenticatedUserRequest> getWorkspacePetCredentials(
       UUID workspaceId, AuthenticatedUserRequest userRequest) {
-    Optional<String> maybeProjectId =
-        gcpCloudContextService
-            .getGcpCloudContext(workspaceId)
-            .map(GcpCloudContext::getGcpProjectId);
-    return maybeProjectId.map(
-        projectId ->
-            SamRethrow.onInterrupted(
-                () -> samService.getOrCreatePetSaCredentials(projectId, userRequest),
-                "getWorkspacePetCredentials"));
+    return gcpCloudContextService
+        .getGcpCloudContext(workspaceId)
+        .map(GcpCloudContext::getGcpProjectId)
+        .map(
+            projectId ->
+                SamRethrow.onInterrupted(
+                    () -> samService.getOrCreatePetSaCredentials(projectId, userRequest),
+                    "getWorkspacePetCredentials"));
   }
 
   /**

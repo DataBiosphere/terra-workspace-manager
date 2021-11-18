@@ -919,11 +919,16 @@ public class SamService {
    */
   public AuthenticatedUserRequest getOrCreatePetSaCredentials(
       String projectId, AuthenticatedUserRequest userRequest) throws InterruptedException {
-    GoogleApi googleApi = samGoogleApi(userRequest.getRequiredToken());
+    GoogleApi samGoogleApi = samGoogleApi(userRequest.getRequiredToken());
     try {
       String petEmail = getOrCreatePetSaEmail(projectId, userRequest);
       String petToken =
-          SamRetry.retry(() -> googleApi.getPetServiceAccountToken(projectId, PET_SA_OAUTH_SCOPES));
+          SamRetry.retry(
+              () -> samGoogleApi.getPetServiceAccountToken(projectId, PET_SA_OAUTH_SCOPES));
+      // This should never happen, but it's more informative than an NPE from Optional.of
+      if (petToken == null) {
+        throw new InternalServerErrorException("Sam returned null pet service account token");
+      }
       return new AuthenticatedUserRequest().email(petEmail).token(Optional.of(petToken));
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create(
