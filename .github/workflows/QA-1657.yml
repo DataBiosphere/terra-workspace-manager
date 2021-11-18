@@ -1,0 +1,30 @@
+# This workflow runs the WSM full regression tests, including perf, integration, and
+# resilience suites.
+
+name: Test sparse checkout
+
+on:
+  push
+
+jobs:
+  nightly-tests:
+
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Sparse checkout
+        run: |
+          mkdir -p terra-helmfile/environments
+          cd terra-helmfile
+          git init
+          git remote add origin https://${{ secrets.BROADBOT_TOKEN }}:x-oauth-basic@github.com/broadinstitute/terra-helmfile
+          git config core.sparseCheckout true
+          if [ -f .git/info/sparse-checkout ]; then
+            rm .git/info/sparse-checkout
+          fi
+          echo "environments/" >> .git/info/sparse-checkout
+          git checkout master
+          ls -l
+          ls -l environments
