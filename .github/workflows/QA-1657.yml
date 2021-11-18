@@ -7,7 +7,7 @@ on:
   push
 
 jobs:
-  nightly-tests:
+  sparse-checout:
 
     runs-on: self-hosted
 
@@ -19,8 +19,13 @@ jobs:
           mkdir -p terra-helmfile/environments
           cd terra-helmfile
           git init
-          git remote add origin https://${{ secrets.BROADBOT_TOKEN }}:x-oauth-basic@github.com/broadinstitute/terra-helmfile
+          git config --global init.defaultBranch master
+          ls -l .git
+          cat .git/config
+          git branch -m master
           git config core.sparseCheckout true
+          cat .git/config
+          git remote add origin https://${{ secrets.BROADBOT_TOKEN }}:x-oauth-basic@github.com/broadinstitute/terra-helmfile
           if [ -f .git/info/sparse-checkout ]; then
             rm .git/info/sparse-checkout
           fi
