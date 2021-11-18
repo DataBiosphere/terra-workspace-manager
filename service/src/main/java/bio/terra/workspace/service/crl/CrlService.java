@@ -155,11 +155,12 @@ public class CrlService {
     assertCrlInUse();
     try {
       return new Bigquery.Builder(
-          Defaults.httpTransport(),
-          Defaults.jsonFactory(),
-          new HttpCredentialsAdapter(
-              GoogleCredentials.getApplicationDefault().createScoped(BigqueryScopes.all())))
-          .setApplicationName(clientConfig.getClientName()).build();
+              Defaults.httpTransport(),
+              Defaults.jsonFactory(),
+              new HttpCredentialsAdapter(
+                  GoogleCredentials.getApplicationDefault().createScoped(BigqueryScopes.all())))
+          .setApplicationName(clientConfig.getClientName())
+          .build();
     } catch (IOException | GeneralSecurityException e) {
       throw new CrlInternalException("Error creating naked BigQuery client.");
     }
@@ -261,11 +262,12 @@ public class CrlService {
   public Storage createWsmSaNakedStorageClient() {
     try {
       return new Storage.Builder(
-          Defaults.httpTransport(),
-          Defaults.jsonFactory(),
-          new HttpCredentialsAdapter(
-              GoogleCredentials.getApplicationDefault().createScoped(StorageScopes.all())))
-          .setApplicationName(clientConfig.getClientName()).build();
+              Defaults.httpTransport(),
+              Defaults.jsonFactory(),
+              new HttpCredentialsAdapter(
+                  GoogleCredentials.getApplicationDefault().createScoped(StorageScopes.all())))
+          .setApplicationName(clientConfig.getClientName())
+          .build();
     } catch (IOException | GeneralSecurityException e) {
       throw new CrlInternalException("Error creating naked Storage client.");
     }
