@@ -16,14 +16,10 @@ jobs:
 
       - name: Sparse checkout
         run: |
+          echo ${{ env.GITHUB_WORKSPACE }}
           mkdir -p terra-helmfile/environments
           cd terra-helmfile
           git init
-          # git config --global init.defaultBranch master
-          ls -l .git
-          cat .git/config
-          # git branch -m master
-          cat .git/config
           git remote add origin https://${{ secrets.BROADBOT_TOKEN }}@github.com/broadinstitute/terra-helmfile.git
           git fetch --all --quiet
           git config core.sparseCheckout true
@@ -33,8 +29,9 @@ jobs:
           echo "environments/" >> .git/info/sparse-checkout
           echo "versions/" >> .git/info/sparse-checkout
           git checkout master
+          cd ${{ env.GITHUB_WORKSPACE }}
           ls -l
-          ls -l environments
-          ls -l versions
-          ls -l versions/app
-          cat versions/app/dev.yaml
+
+      - name: Check dir
+        run: |
+          ls -l
