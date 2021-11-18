@@ -1,0 +1,22 @@
+name: 'checkout-helm-versions'
+description: 'Sparse checkout of environments and versions directories from https://github.com/broadinstitute/terra-helmfile/'
+author: 'ichengchang'
+runs:
+  using: "composite"
+  steps:
+    - name: Sparse checkout https://github.com/broadinstitute/terra-helmfile/
+      id: sparse-checkout
+      run: |
+        mkdir -p terra-helmfile/environments
+        cd terra-helmfile
+        git init
+        git remote add origin https://${{ secrets.BROADBOT_TOKEN }}@github.com/broadinstitute/terra-helmfile.git
+        git fetch --all --quiet
+        git config core.sparseCheckout true
+        if [ -f .git/info/sparse-checkout ]; then
+          rm .git/info/sparse-checkout
+        fi
+        echo "environments/" >> .git/info/sparse-checkout
+        echo "versions/" >> .git/info/sparse-checkout
+        git checkout master
+      shell: bash

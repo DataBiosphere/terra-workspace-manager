@@ -14,23 +14,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Sparse checkout
-        run: |
-          echo $GITHUB_WORKSPACE
-          mkdir -p terra-helmfile/environments
-          cd terra-helmfile
-          git init
-          git remote add origin https://${{ secrets.BROADBOT_TOKEN }}@github.com/broadinstitute/terra-helmfile.git
-          git fetch --all --quiet
-          git config core.sparseCheckout true
-          if [ -f .git/info/sparse-checkout ]; then
-            rm .git/info/sparse-checkout
-          fi
-          echo "environments/" >> .git/info/sparse-checkout
-          echo "versions/" >> .git/info/sparse-checkout
-          git checkout master
-          ls -l
+      - name: Check out environments and versions directories from terra-helmfile
+        id: checkout-helm-versions-step
+        uses: ./.github/actions/checkout-helm-versions
 
       - name: Check dir
         run: |
           ls -l
+          cat terra-helmfile/versions/app/dev.yaml
