@@ -29,7 +29,6 @@ jobs:
           echo "environments/" >> .git/info/sparse-checkout
           echo "versions/" >> .git/info/sparse-checkout
           git checkout master
-          cd $GITHUB_WORKSPACE
           ls -l
 
       - name: Check dir
