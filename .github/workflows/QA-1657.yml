@@ -25,7 +25,7 @@ jobs:
           # git branch -m master
           cat .git/config
           git remote add origin https://${{ secrets.BROADBOT_TOKEN }}@github.com/broadinstitute/terra-helmfile.git
-          git fetch --all
+          git fetch --all --quiet
           git config core.sparseCheckout true
           if [ -f .git/info/sparse-checkout ]; then
             rm .git/info/sparse-checkout
