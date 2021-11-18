@@ -16,7 +16,7 @@ jobs:
 
       - name: Sparse checkout
         run: |
-          echo ${{ env.GITHUB_WORKSPACE }}
+          echo $GITHUB_WORKSPACE
           mkdir -p terra-helmfile/environments
           cd terra-helmfile
           git init
@@ -29,7 +29,7 @@ jobs:
           echo "environments/" >> .git/info/sparse-checkout
           echo "versions/" >> .git/info/sparse-checkout
           git checkout master
-          cd ${{ env.GITHUB_WORKSPACE }}
+          cd $GITHUB_WORKSPACE
           ls -l
 
       - name: Check dir
