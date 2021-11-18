@@ -9,6 +9,7 @@ import bio.terra.workspace.service.datarepo.exception.DataRepoInternalServerErro
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.HashMap;
+import javax.ws.rs.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,16 +20,18 @@ import org.springframework.stereotype.Component;
 public class DataRepoService {
 
   private final DataRepoConfiguration dataRepoConfiguration;
+  private final Client commonHttpClient;
 
   @Autowired
   public DataRepoService(DataRepoConfiguration dataRepoConfiguration) {
     this.dataRepoConfiguration = dataRepoConfiguration;
+    commonHttpClient = new ApiClient().getHttpClient();
   }
 
   private final Logger logger = LoggerFactory.getLogger(DataRepoService.class);
 
   private ApiClient getApiClient(String accessToken) {
-    ApiClient client = new ApiClient();
+    ApiClient client = new ApiClient().setHttpClient(commonHttpClient);
     client.setAccessToken(accessToken);
     return client;
   }

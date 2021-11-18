@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import okhttp3.OkHttpClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
@@ -60,6 +61,7 @@ public class SamService {
 
   private final SamConfiguration samConfig;
   private final StageService stageService;
+  private final OkHttpClient commonHttpClient;
 
   private final Set<String> SAM_OAUTH_SCOPES = ImmutableSet.of("openid", "email", "profile");
   private final Logger logger = LoggerFactory.getLogger(SamService.class);
@@ -70,12 +72,15 @@ public class SamService {
     this.samConfig = samConfig;
     this.stageService = stageService;
     this.wsmServiceAccountInitialized = false;
+    this.commonHttpClient = new ApiClient().getHttpClient();
   }
 
   private ApiClient getApiClient(String accessToken) {
-    ApiClient client = new ApiClient();
-    client.setAccessToken(accessToken);
-    return client.setBasePath(samConfig.getBasePath());
+    // OkHttpClient objects manage their own thread pools, so it's much more performant to share one
+    // across requests.
+    ApiClient apiClient = new ApiClient().setHttpClient(commonHttpClient).setBasePath(samConfig.getBasePath());
+    apiClient.setAccessToken(accessToken);
+    return apiClient;
   }
 
   private ResourcesApi samResourcesApi(String accessToken) {
