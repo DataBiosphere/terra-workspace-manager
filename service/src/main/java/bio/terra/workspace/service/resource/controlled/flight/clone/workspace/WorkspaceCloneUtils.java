@@ -136,7 +136,7 @@ public class WorkspaceCloneUtils {
       UUID destinationWorkspaceId,
       @Nullable String name,
       @Nullable String description) {
-    // keep projectId and dataset name the same since they are for the referent
+    // keep projectId, dataset name and data table name the same since they are for the referent
     final ReferencedBigQueryDataTableResource.Builder resultBuilder =
         sourceBigQueryResource.toBuilder()
             .workspaceId(destinationWorkspaceId)

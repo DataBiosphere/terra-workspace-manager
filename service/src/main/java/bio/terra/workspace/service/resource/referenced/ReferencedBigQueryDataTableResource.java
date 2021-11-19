@@ -23,8 +23,8 @@ import javax.annotation.Nullable;
 public class ReferencedBigQueryDataTableResource extends ReferencedResource {
 
   private final String projectId;
-  private final String datasetName;
-  private final String dataTableName;
+  private final String datasetId;
+  private final String dataTableId;
 
   /**
    * Constructor for serialized form for Stairway use
@@ -35,7 +35,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
    * @param description description - may be null
    * @param cloningInstructions cloning instructions
    * @param projectId google project id
-   * @param datasetName BigQuery dataset name
+   * @param datasetId BigQuery dataset name
    * @param dataTableName BigQuery dataset's data table name
    */
   @JsonCreator
@@ -46,12 +46,12 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("projectId") String projectId,
-      @JsonProperty("datasetName") String datasetName,
+      @JsonProperty("datasetId") String datasetId,
       @JsonProperty("dataTableName") String dataTableName) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
     this.projectId = projectId;
-    this.datasetName = datasetName;
-    this.dataTableName = dataTableName;
+    this.datasetId = datasetId;
+    this.dataTableId = dataTableName;
     validate();
   }
 
@@ -63,14 +63,14 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   public ReferencedBigQueryDataTableResource(DbResource dbResource) {
     super(dbResource);
     if (dbResource.getResourceType() != WsmResourceType.BIQ_QUERY_DATA_TABLE) {
-      throw new InvalidMetadataException("Expected BIG_QUERY_DATATABLE");
+      throw new InvalidMetadataException("Expected BIG_QUERY_DATA_TABLE");
     }
 
     ReferencedBigQueryDataTableAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ReferencedBigQueryDataTableAttributes.class);
     this.projectId = attributes.getProjectId();
-    this.datasetName = attributes.getDatasetName();
-    this.dataTableName = attributes.getDataTableName();
+    this.datasetId = attributes.getDatasetId();
+    this.dataTableId = attributes.getDataTableId();
     validate();
   }
 
@@ -82,19 +82,19 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
     return projectId;
   }
 
-  public String getDatasetName() {
-    return datasetName;
+  public String getDatasetId() {
+    return datasetId;
   }
 
-  public String getDataTableName() {
-    return dataTableName;
+  public String getDataTableId() {
+    return dataTableId;
   }
 
   public ApiGcpBigQueryDataTableAttributes toApiAttributes() {
     return new ApiGcpBigQueryDataTableAttributes()
         .projectId(getProjectId())
-        .datasetId(getDatasetName())
-        .dataTableId(getDataTableName());
+        .datasetId(getDatasetId())
+        .dataTableId(getDataTableId());
   }
 
   public ApiGcpBigQueryDataTableResource toApiResource() {
@@ -112,20 +112,20 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   public String attributesToJson() {
     return DbSerDes.toJson(
         new ReferencedBigQueryDataTableAttributes(
-            getProjectId(), getDatasetName(), getDataTableName()));
+            getProjectId(), getDatasetId(), getDataTableId()));
   }
 
   @Override
   public void validate() {
     super.validate();
     if (Strings.isNullOrEmpty(getProjectId())
-        || Strings.isNullOrEmpty(getDatasetName())
-        || Strings.isNullOrEmpty(getDataTableName())) {
+        || Strings.isNullOrEmpty(getDatasetId())
+        || Strings.isNullOrEmpty(getDataTableId())) {
       throw new MissingRequiredFieldException(
           "Missing required field for ReferenceBigQueryDataTableAttributes");
     }
-    ValidationUtils.validateBqDatasetName(getDatasetName());
-    ValidationUtils.validateBqDataTableName(getDataTableName());
+    ValidationUtils.validateBqDatasetName(getDatasetId());
+    ValidationUtils.validateBqDataTableName(getDataTableId());
   }
 
   @Override
@@ -135,7 +135,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
     Optional<AuthenticatedUserRequest> maybePetCreds =
         petSaService.getWorkspacePetCredentials(getWorkspaceId(), userRequest);
     return crlService.canReadBigQueryDataTable(
-        projectId, datasetName, dataTableName, maybePetCreds.orElse(userRequest));
+        projectId, datasetId, dataTableId, maybePetCreds.orElse(userRequest));
   }
 
   /**
@@ -147,8 +147,8 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   public Builder toBuilder() {
     return builder()
         .cloningInstructions(getCloningInstructions())
-        .datasetName(getDatasetName())
-        .dataTableName(getDataTableName())
+        .datasetId(getDatasetId())
+        .dataTableId(getDataTableId())
         .description(getDescription())
         .name(getName())
         .projectId(getProjectId())
@@ -164,8 +164,8 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
     private String description;
     private CloningInstructions cloningInstructions;
     private String projectId;
-    private String datasetName;
-    private String dataTableName;
+    private String datasetId;
+    private String dataTableId;
 
     public ReferencedBigQueryDataTableResource.Builder workspaceId(UUID workspaceId) {
       this.workspaceId = workspaceId;
@@ -198,13 +198,13 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
       return this;
     }
 
-    public Builder datasetName(String datasetName) {
-      this.datasetName = datasetName;
+    public Builder datasetId(String datasetId) {
+      this.datasetId = datasetId;
       return this;
     }
 
-    public Builder dataTableName(String dataTableName) {
-      this.dataTableName = dataTableName;
+    public Builder dataTableId(String dataTableId) {
+      this.dataTableId = dataTableId;
       return this;
     }
 
@@ -217,8 +217,8 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
           description,
           cloningInstructions,
           projectId,
-          datasetName,
-          dataTableName);
+          datasetId,
+          dataTableId);
     }
   }
 }

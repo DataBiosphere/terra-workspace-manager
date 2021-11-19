@@ -493,7 +493,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     class BigQueryReference {
 
       private static final String DATASET_NAME = "testbq_datasetname";
-      private static final String DATATABLE_NAME = "testbq datatablename";
+      private static final String DATA_TABLE_NAME = "testbq datatablename";
 
       @BeforeEach
       void setup() throws Exception {
@@ -527,7 +527,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             CloningInstructions.COPY_REFERENCE,
             FAKE_PROJECT_ID,
             DATASET_NAME,
-            DATATABLE_NAME);
+            DATA_TABLE_NAME);
       }
 
       @Test
@@ -571,8 +571,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         ReferencedBigQueryDataTableResource resource =
             referenceResource.castToBigQueryDataTableResource();
         assertEquals(resource.getResourceType(), WsmResourceType.BIQ_QUERY_DATA_TABLE);
-        assertEquals(resource.getDataTableName(), DATATABLE_NAME);
-        assertEquals(resource.getDatasetName(), DATASET_NAME);
+        assertEquals(resource.getDataTableId(), DATA_TABLE_NAME);
+        assertEquals(resource.getDatasetId(), DATASET_NAME);
 
         ReferencedResource resultReferenceResource =
             referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);

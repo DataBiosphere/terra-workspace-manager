@@ -120,12 +120,13 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteBucketReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // TODO: use {@code referenceResourceService#deleteReferenceResourceForResourceType} instead.
+    // TODO(PF-1212): use {@code referenceResourceService#deleteReferenceResourceForResourceType}
+    // instead.
     referenceResourceService.deleteReferenceResource(workspaceId, resourceId, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
-  // -- BidQuery DataTable -- //
+  // -- BigQuery DataTable -- //
   @Override
   public ResponseEntity<ApiGcpBigQueryDataTableResource> createBigQueryDataTableReference(
       UUID id, @Valid ApiCreateGcpBigQueryDataTableReferenceRequestBody body) {
@@ -137,8 +138,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getMetadata().getCloningInstructions()))
             .projectId(body.getDataTable().getProjectId())
-            .datasetName(body.getDataTable().getDatasetId())
-            .dataTableName(body.getDataTable().getDataTableId())
+            .datasetId(body.getDataTable().getDatasetId())
+            .dataTableId(body.getDataTable().getDataTableId())
             .build();
     ReferencedResource referenceResource =
         referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
@@ -245,7 +246,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteBigQueryDatasetReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // TODO: use {@code referenceResourceService#deleteReferenceResourceForResourceType} instead.
+    // TODO(PF-1212): use {@code referenceResourceService#deleteReferenceResourceForResourceType}
+    // instead.
     referenceResourceService.deleteReferenceResource(workspaceId, resourceId, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -308,7 +310,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteDataRepoSnapshotReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // TODO: use {@code referenceResourceService#deleteReferenceResourceForResourceType} instead.
+    // TODO(PF-1212): use {@code referenceResourceService#deleteReferenceResourceForResourceType}
+    // instead.
     referenceResourceService.deleteReferenceResource(workspaceId, resourceId, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }

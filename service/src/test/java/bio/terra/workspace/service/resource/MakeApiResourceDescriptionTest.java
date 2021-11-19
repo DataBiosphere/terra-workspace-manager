@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -68,8 +67,8 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
     ApiGcpBigQueryDatasetAttributes attributes = union.getGcpBqDataset();
     assertThat(attributes, is(notNullValue()));
-    assertThat(attributes.getDatasetId(), equalTo(datasetName));
-    assertThat(attributes.getProjectId(), equalTo(projectId));
+    assertEquals(attributes.getDatasetId(), datasetName);
+    assertEquals(attributes.getProjectId(), projectId);
   }
 
   @Test
@@ -95,9 +94,9 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
     ApiGcpBigQueryDataTableAttributes attributes = union.getGcpBqDataTable();
     assertThat(attributes, is(notNullValue()));
-    assertThat(attributes.getDatasetId(), equalTo(datasetName));
-    assertThat(attributes.getProjectId(), equalTo(projectId));
-    assertThat(attributes.getDataTableId(), equalTo(datatableName));
+    assertEquals(attributes.getDatasetId(), datasetName);
+    assertEquals(attributes.getProjectId(), projectId);
+    assertEquals(attributes.getDataTableId(), datatableName);
   }
 
   @Test
@@ -115,8 +114,8 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
     ApiDataRepoSnapshotAttributes attributes = union.getGcpDataRepoSnapshot();
     assertThat(attributes, is(notNullValue()));
-    assertThat(attributes.getInstanceName(), equalTo(instanceName));
-    assertThat(attributes.getSnapshot(), equalTo(snapshotId));
+    assertEquals(attributes.getInstanceName(), instanceName);
+    assertEquals(attributes.getSnapshot(), snapshotId);
   }
 
   @Test
@@ -133,16 +132,16 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
     ApiGcpGcsBucketAttributes attributes = union.getGcpGcsBucket();
     assertThat(attributes, is(notNullValue()));
-    assertThat(attributes.getBucketName(), equalTo(bucketName));
+    assertEquals(attributes.getBucketName(), bucketName);
   }
 
   public void validateWsmResource(ApiResourceDescription resourceDescription) {
     ApiResourceMetadata metadata = resourceDescription.getMetadata();
-    assertThat(metadata.getWorkspaceId(), equalTo(workspaceId));
-    assertThat(metadata.getResourceId(), equalTo(resourceId));
-    assertThat(metadata.getName(), equalTo(resourceName));
-    assertThat(metadata.getDescription(), equalTo(description));
-    assertThat(metadata.getCloningInstructions(), equalTo(cloning.toApiModel()));
+    assertEquals(metadata.getWorkspaceId(), workspaceId);
+    assertEquals(metadata.getResourceId(), resourceId);
+    assertEquals(metadata.getName(), resourceName);
+    assertEquals(metadata.getDescription(), description);
+    assertEquals(metadata.getCloningInstructions(), cloning.toApiModel());
   }
 
   @Nested
@@ -180,7 +179,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
       ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
       ApiGcpGcsBucketAttributes attributes = union.getGcpGcsBucket();
       assertThat(attributes, is(notNullValue()));
-      assertThat(attributes.getBucketName(), equalTo(bucketName));
+      assertEquals(attributes.getBucketName(), bucketName);
     }
 
     @Test
@@ -206,8 +205,8 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
       ApiResourceAttributesUnion union = resourceDescription.getResourceAttributes();
       ApiGcpBigQueryDatasetAttributes attributes = union.getGcpBqDataset();
       assertThat(attributes, is(notNullValue()));
-      assertThat(attributes.getDatasetId(), equalTo(datasetName));
-      assertThat(attributes.getProjectId(), equalTo(projectId));
+      assertEquals(attributes.getDatasetId(), datasetName);
+      assertEquals(attributes.getProjectId(), projectId);
     }
 
     @Test
@@ -245,11 +244,11 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
       ApiResourceMetadata metadata = resourceDescription.getMetadata();
       ApiControlledResourceMetadata common = metadata.getControlledResourceMetadata();
       assertThat(common, is(notNullValue()));
-      assertThat(common.getAccessScope(), equalTo(accessScopeType.toApiModel()));
-      assertThat(common.getManagedBy(), equalTo(managedByType.toApiModel()));
+      assertEquals(common.getAccessScope(), accessScopeType.toApiModel());
+      assertEquals(common.getManagedBy(), managedByType.toApiModel());
       ApiPrivateResourceUser user = common.getPrivateResourceUser();
       assertThat(user, is(notNullValue()));
-      assertThat(user.getUserName(), equalTo(assignedUser));
+      assertEquals(user.getUserName(), assignedUser);
     }
   }
 }

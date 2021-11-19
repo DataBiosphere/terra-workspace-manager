@@ -5,28 +5,28 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ReferencedBigQueryDataTableAttributes {
   private final String projectId;
-  private final String datasetName;
-  private final String dataTableName;
+  private final String datasetId;
+  private final String dataTableId;
 
   @JsonCreator
   public ReferencedBigQueryDataTableAttributes(
       @JsonProperty("projectId") String projectId,
-      @JsonProperty("datasetName") String datasetName,
-      @JsonProperty("dataTableName") String dataTableName) {
+      @JsonProperty("datasetId") String datasetId,
+      @JsonProperty("dataTableId") String dataTableId) {
     this.projectId = projectId;
-    this.datasetName = datasetName;
-    this.dataTableName = dataTableName;
+    this.datasetId = datasetId;
+    this.dataTableId = dataTableId;
   }
 
   public String getProjectId() {
     return projectId;
   }
 
-  public String getDatasetName() {
-    return datasetName;
+  public String getDatasetId() {
+    return datasetId;
   }
 
-  public String getDataTableName() {
-    return dataTableName;
+  public String getDataTableId() {
+    return dataTableId;
   }
 }
