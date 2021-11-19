@@ -176,7 +176,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         cloneDataTableReferenceResult.getResource().getMetadata();
     assertEquals(StewardshipType.REFERENCED, clonedDataTableResourceMetadata.getStewardshipType());
     assertEquals(
-        ResourceType.BIG_QUERY_DATATABLE, clonedDataTableResourceMetadata.getResourceType());
+        ResourceType.BIG_QUERY_DATA_TABLE, clonedDataTableResourceMetadata.getResourceType());
     assertEquals(
         sourceBigQueryDataTableReference.getMetadata().getResourceId(),
         cloneDataTableReferenceResult.getSourceResourceId());
