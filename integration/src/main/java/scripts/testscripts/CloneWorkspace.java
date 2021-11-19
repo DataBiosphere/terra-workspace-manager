@@ -473,7 +473,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(CloneResourceResult.SKIPPED, dataTableReferenceDetails.getResult());
     assertEquals(
         CloningInstructionsEnum.NOTHING, dataTableReferenceDetails.getCloningInstructions());
-    assertEquals(ResourceType.BIG_QUERY_DATATABLE, dataTableReferenceDetails.getResourceType());
+    assertEquals(ResourceType.BIG_QUERY_DATA_TABLE, dataTableReferenceDetails.getResourceType());
     assertEquals(StewardshipType.REFERENCED, dataTableReferenceDetails.getStewardshipType());
     assertNull(dataTableReferenceDetails.getDestinationResourceId());
     assertNull(dataTableReferenceDetails.getErrorMessage());
