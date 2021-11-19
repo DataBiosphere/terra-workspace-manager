@@ -112,6 +112,29 @@ public class ResourceDao {
     return deleted;
   }
 
+  @WriteTransaction
+  public boolean deleteResourceForResourceType(
+      UUID workspaceId, UUID resourceId, WsmResourceType resourceType) {
+    final String sql =
+        "DELETE FROM resource WHERE workspace_id = :workspace_id AND resource_id = :resource_id AND resource_type = :resource_type";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("resource_id", resourceId.toString())
+            .addValue("resource_type", resourceType.toSql());
+    int rowsAffected = jdbcTemplate.update(sql, params);
+    boolean deleted = rowsAffected > 0;
+
+    logger.info(
+        "{} record for resource {} of resource type {} in workspace {}",
+        (deleted ? "Deleted" : "No Delete - did not find"),
+        resourceId,
+        resourceType,
+        workspaceId);
+
+    return deleted;
+  }
+
   /**
    * enumerateReferences - temporary This is a temporary implementation to support the old
    * DataReference model. It also does not filter by what is visible to the user. I think we will

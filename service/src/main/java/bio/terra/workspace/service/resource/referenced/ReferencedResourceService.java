@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.referenced;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
@@ -124,8 +123,6 @@ public class ReferencedResourceService {
    * @param resourceId resource to delete
    * @param userRequest authenticated user
    * @param resourceType wsm resource type that the to-be-deleted resource should have
-   * @throws BadRequestException when the resource type is different from the specified resource
-   *     type.
    */
   public void deleteReferenceResourceForResourceType(
       UUID workspaceId,
@@ -134,15 +131,9 @@ public class ReferencedResourceService {
       WsmResourceType resourceType) {
     WsmResourceType targetResourceType =
         resourceDao.getResource(workspaceId, resourceId).getResourceType();
-    if (!targetResourceType.equals(resourceType)) {
-      throw new BadRequestException(
-          String.format(
-              "The reference resource type is expected to be %s, but is actually %s",
-              resourceType.name(), targetResourceType.name()));
-    }
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SAM_DELETE_REFERENCED_RESOURCE);
-    resourceDao.deleteResource(workspaceId, resourceId);
+    resourceDao.deleteResourceForResourceType(workspaceId, resourceId, resourceType);
   }
 
   public ReferencedResource getReferenceResource(

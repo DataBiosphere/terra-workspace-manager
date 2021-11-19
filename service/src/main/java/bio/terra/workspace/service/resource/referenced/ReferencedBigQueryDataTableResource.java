@@ -9,6 +9,7 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDataTableResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -20,6 +21,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 public class ReferencedBigQueryDataTableResource extends ReferencedResource {
+
   private final String projectId;
   private final String datasetName;
   private final String dataTableName;
@@ -129,7 +131,11 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   @Override
   public boolean checkAccess(FlightBeanBag context, AuthenticatedUserRequest userRequest) {
     CrlService crlService = context.getCrlService();
-    return crlService.canReadBigQueryDataTable(projectId, datasetName, dataTableName, userRequest);
+    PetSaService petSaService = context.getPetSaService();
+    Optional<AuthenticatedUserRequest> maybePetCreds =
+        petSaService.getWorkspacePetCredentials(getWorkspaceId(), userRequest);
+    return crlService.canReadBigQueryDataTable(
+        projectId, datasetName, dataTableName, maybePetCreds.orElse(userRequest));
   }
 
   /**
@@ -151,6 +157,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
   }
 
   public static class Builder {
+
     private UUID workspaceId;
     private UUID resourceId;
     private String name;

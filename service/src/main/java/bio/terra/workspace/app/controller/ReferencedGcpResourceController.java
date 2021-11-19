@@ -120,12 +120,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteBucketReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // TODO: use {code referenceResourceService#deleteReferenceResourceForResourceType instead.
+    // TODO: use {@code referenceResourceService#deleteReferenceResourceForResourceType} instead.
     referenceResourceService.deleteReferenceResource(workspaceId, resourceId, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
-  // -- Bid Query DataTable -- //
+  // -- BidQuery DataTable -- //
   @Override
   public ResponseEntity<ApiGcpBigQueryDataTableResource> createBigQueryDataTableReference(
       UUID id, @Valid ApiCreateGcpBigQueryDataTableReferenceRequestBody body) {
@@ -245,7 +245,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteBigQueryDatasetReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // TODO: use {code referenceResourceService#deleteReferenceResourceForResourceType instead.
+    // TODO: use {@code referenceResourceService#deleteReferenceResourceForResourceType} instead.
     referenceResourceService.deleteReferenceResource(workspaceId, resourceId, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
@@ -308,7 +308,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteDataRepoSnapshotReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // TODO: use {code referenceResourceService#deleteReferenceResourceForResourceType instead.
+    // TODO: use {@code referenceResourceService#deleteReferenceResourceForResourceType} instead.
     referenceResourceService.deleteReferenceResource(workspaceId, resourceId, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }

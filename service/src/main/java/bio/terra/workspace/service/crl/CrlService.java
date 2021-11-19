@@ -212,7 +212,7 @@ public class CrlService {
    * @param datasetName name of the dataset
    * @param dataTableName name of the datatable
    * @param userRequest auth info
-   * @return true if the user has permission to list the tables of the given dataset
+   * @return true if the user has permission to the specified table of the given dataset
    */
   public boolean canReadBigQueryDataTable(
       String projectId,
