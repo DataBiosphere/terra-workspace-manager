@@ -8,6 +8,7 @@ import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.petserviceaccount.model.UserWithPetSa;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.iam.v1.model.Binding;
 import com.google.api.services.iam.v1.model.Policy;
@@ -230,6 +231,26 @@ public class PetSaService {
             () -> samService.constructUserPetSaEmail(projectId, userEmail, userRequest),
             "getUserPetSa");
     return serviceAccountExists(constructedSa) ? Optional.of(constructedSa) : Optional.empty();
+  }
+
+  /**
+   * Fetches credentials for the provided user's pet service account in the current workspace's GCP
+   * context if one exists. This will create a pet SA for the user if one does not exist, but will
+   * return empty if the workspace does not have a GCP context.
+   *
+   * <p>This method does not validate that the provided credentials have appropriate workspace
+   * access.
+   */
+  public Optional<AuthenticatedUserRequest> getWorkspacePetCredentials(
+      UUID workspaceId, AuthenticatedUserRequest userRequest) {
+    return gcpCloudContextService
+        .getGcpCloudContext(workspaceId)
+        .map(GcpCloudContext::getGcpProjectId)
+        .map(
+            projectId ->
+                SamRethrow.onInterrupted(
+                    () -> samService.getOrCreatePetSaCredentials(projectId, userRequest),
+                    "getWorkspacePetCredentials"));
   }
 
   /**

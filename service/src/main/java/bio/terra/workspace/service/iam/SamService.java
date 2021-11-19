@@ -16,6 +16,7 @@ import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
@@ -52,7 +53,7 @@ import org.springframework.stereotype.Component;
  * interpreted by the functions in this class.
  *
  * <p>This class is used both by Flights and outside of Flights. Flights need the
- * InterruptedExceptions to be thrown. Outside of flights, use the rethrowIfSamInterrupted. See
+ * InterruptedExceptions to be thrown. Outside of flights, use the SamRethrow.onInterrupted. See
  * comment there for more detail.
  */
 @Component
@@ -62,6 +63,9 @@ public class SamService {
   private final StageService stageService;
 
   private final Set<String> SAM_OAUTH_SCOPES = ImmutableSet.of("openid", "email", "profile");
+  private final List<String> PET_SA_OAUTH_SCOPES =
+      ImmutableList.of(
+          "openid", "email", "profile", "https://www.googleapis.com/auth/cloud-platform");
   private final Logger logger = LoggerFactory.getLogger(SamService.class);
   private boolean wsmServiceAccountInitialized;
 
@@ -906,6 +910,29 @@ public class SamService {
       return SamRetry.retry(() -> googleApi.getPetServiceAccount(projectId));
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error getting pet service account from Sam", apiException);
+    }
+  }
+
+  /**
+   * Fetch credentials of a user's pet service account in a given project. This request to Sam will
+   * create the pet SA if it doesn't already exist.
+   */
+  public AuthenticatedUserRequest getOrCreatePetSaCredentials(
+      String projectId, AuthenticatedUserRequest userRequest) throws InterruptedException {
+    GoogleApi samGoogleApi = samGoogleApi(userRequest.getRequiredToken());
+    try {
+      String petEmail = getOrCreatePetSaEmail(projectId, userRequest);
+      String petToken =
+          SamRetry.retry(
+              () -> samGoogleApi.getPetServiceAccountToken(projectId, PET_SA_OAUTH_SCOPES));
+      // This should never happen, but it's more informative than an NPE from Optional.of
+      if (petToken == null) {
+        throw new InternalServerErrorException("Sam returned null pet service account token");
+      }
+      return new AuthenticatedUserRequest().email(petEmail).token(Optional.of(petToken));
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create(
+          "Error getting pet service account token from Sam", apiException);
     }
   }
 
