@@ -21,6 +21,7 @@ import bio.terra.workspace.service.resource.exception.DuplicateResourceException
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
@@ -106,6 +107,29 @@ public class ResourceDao {
         "{} record for resource {} in workspace {}",
         (deleted ? "Deleted" : "No Delete - did not find"),
         resourceId,
+        workspaceId);
+
+    return deleted;
+  }
+
+  @WriteTransaction
+  public boolean deleteResourceForResourceType(
+      UUID workspaceId, UUID resourceId, WsmResourceType resourceType) {
+    final String sql =
+        "DELETE FROM resource WHERE workspace_id = :workspace_id AND resource_id = :resource_id AND resource_type = :resource_type";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("resource_id", resourceId.toString())
+            .addValue("resource_type", resourceType.toSql());
+    int rowsAffected = jdbcTemplate.update(sql, params);
+    boolean deleted = rowsAffected > 0;
+
+    logger.info(
+        "{} record for resource {} of resource type {} in workspace {}",
+        (deleted ? "Deleted" : "No Delete - did not find"),
+        resourceId,
+        resourceType,
         workspaceId);
 
     return deleted;
@@ -616,13 +640,12 @@ public class ResourceDao {
         switch (dbResource.getResourceType()) {
           case GCS_BUCKET:
             return new ReferencedGcsBucketResource(dbResource);
-
           case BIG_QUERY_DATASET:
             return new ReferencedBigQueryDatasetResource(dbResource);
-
+          case BIQ_QUERY_DATA_TABLE:
+            return new ReferencedBigQueryDataTableResource(dbResource);
           case DATA_REPO_SNAPSHOT:
             return new ReferencedDataRepoSnapshotResource(dbResource);
-
           default:
             throw new InvalidMetadataException(
                 "Invalid reference resource type" + dbResource.getResourceType().toString());

@@ -8,6 +8,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ValidationUtils;
+import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceResourceFlight;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ReferencedResourceService {
+
   private final JobService jobService;
   private final ResourceDao resourceDao;
   private final WorkspaceService workspaceService;
@@ -111,6 +113,27 @@ public class ReferencedResourceService {
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SAM_DELETE_REFERENCED_RESOURCE);
     resourceDao.deleteResource(workspaceId, resourceId);
+  }
+
+  /**
+   * Delete a reference. The only state we hold for a reference is in the metadata database so we
+   * directly delete that.
+   *
+   * @param workspaceId workspace of interest
+   * @param resourceId resource to delete
+   * @param userRequest authenticated user
+   * @param resourceType wsm resource type that the to-be-deleted resource should have
+   */
+  public void deleteReferenceResourceForResourceType(
+      UUID workspaceId,
+      UUID resourceId,
+      AuthenticatedUserRequest userRequest,
+      WsmResourceType resourceType) {
+    WsmResourceType targetResourceType =
+        resourceDao.getResource(workspaceId, resourceId).getResourceType();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceId, SamConstants.SAM_DELETE_REFERENCED_RESOURCE);
+    resourceDao.deleteResourceForResourceType(workspaceId, resourceId, resourceType);
   }
 
   public ReferencedResource getReferenceResource(

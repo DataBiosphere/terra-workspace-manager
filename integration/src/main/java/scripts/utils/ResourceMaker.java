@@ -2,6 +2,7 @@ package scripts.utils;
 
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_PROJECT;
+import static scripts.utils.ClientTestUtils.TEST_BQ_DATATABLE_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
 
@@ -17,6 +18,7 @@ import bio.terra.workspace.model.CreateControlledGcpAiNotebookInstanceRequestBod
 import bio.terra.workspace.model.CreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreateDataRepoSnapshotReferenceRequestBody;
+import bio.terra.workspace.model.CreateGcpBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpGcsBucketReferenceRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
@@ -27,6 +29,8 @@ import bio.terra.workspace.model.DeleteControlledGcpGcsBucketRequest;
 import bio.terra.workspace.model.DeleteControlledGcpGcsBucketResult;
 import bio.terra.workspace.model.GcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.model.GcpAiNotebookInstanceVmImage;
+import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
+import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetAttributes;
 import bio.terra.workspace.model.GcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
@@ -71,6 +75,25 @@ public class ResourceMaker {
                     .projectId(TEST_BQ_DATASET_PROJECT));
 
     return resourceApi.createBigQueryDatasetReference(body, workspaceId);
+  }
+
+  public static GcpBigQueryDataTableResource makeBigQueryDataTableReference(
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name) throws ApiException {
+
+    var body =
+        new CreateGcpBigQueryDataTableReferenceRequestBody()
+            .metadata(
+                new ReferenceResourceCommonFields()
+                    .cloningInstructions(CloningInstructionsEnum.NOTHING)
+                    .description("Description of " + name)
+                    .name(name))
+            .dataTable(
+                new GcpBigQueryDataTableAttributes()
+                    .datasetId(TEST_BQ_DATASET_NAME)
+                    .projectId(TEST_BQ_DATASET_PROJECT)
+                    .dataTableId(TEST_BQ_DATATABLE_NAME));
+
+    return resourceApi.createBigQueryDataTableReference(body, workspaceId);
   }
 
   public static DataRepoSnapshotResource makeDataRepoSnapshotReference(

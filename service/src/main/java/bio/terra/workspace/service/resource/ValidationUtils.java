@@ -33,6 +33,13 @@ public class ValidationUtils {
       Pattern.compile("^[_a-zA-Z0-9]{1,1024}$");
 
   /**
+   * BigQuery data table name must be 1-1024 characters, contains Unicode characters in category L
+   * (letter), M (mark), N (number), Pc (connector, including underscore), Pd (dash), Zs (space).
+   */
+  public static final Pattern BQ_DATATABLE_NAME_VALIDATION_PATTERN =
+      Pattern.compile("^[\\p{L}\\p{N}\\p{Pc}\\p{Pd}\\p{Zs}\\p{M}]{1,1024}$");
+
+  /**
    * AI Notebook instances must be 1-63 characters, using lower case letters, numbers, and dashes.
    * The first character must be a lower case letter, and the last character must not be a dash.
    */
@@ -92,6 +99,16 @@ public class ValidationUtils {
       logger.warn("Invalid BQ name {}", name);
       throw new InvalidReferenceException(
           "Invalid BQ dataset name specified. Name must be 1 to 1024 alphanumeric characters or underscores.");
+    }
+  }
+
+  public static void validateBqDataTableName(String name) {
+    if (StringUtils.isEmpty(name)
+        || !BQ_DATATABLE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
+      logger.warn("Invalid data table name %s", name);
+      throw new InvalidNameException(
+          "Invalid BQ table name specified. Name must be 1-1024 characters, contains Unicode characters in category L"
+              + " (letter), M (mark), N (number), Pc (connector, including underscore), Pd (dash), Zs (space)");
     }
   }
 

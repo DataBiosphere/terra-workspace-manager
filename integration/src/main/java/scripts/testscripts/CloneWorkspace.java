@@ -26,6 +26,7 @@ import bio.terra.workspace.model.CloneWorkspaceResult;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
+import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
@@ -63,6 +64,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private CreatedControlledGcpGcsBucket sharedCopyNothingSourceBucket;
   private CreatedControlledGcpGcsBucket sharedSourceBucket;
   private GcpBigQueryDatasetResource sourceDatasetReference;
+  private GcpBigQueryDataTableResource sourceDataTableReference;
   private GcpBigQueryDatasetResource copyDefinitionDataset;
   private GcpBigQueryDatasetResource copyResourceDataset;
   private GcpBigQueryDatasetResource privateDataset;
@@ -201,6 +203,9 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     sourceDatasetReference =
         ResourceMaker.makeBigQueryReference(
             referencedGcpResourceApi, getWorkspaceId(), "dataset_resource_1");
+    sourceDataTableReference =
+        ResourceMaker.makeBigQueryDataTableReference(
+            referencedGcpResourceApi, getWorkspaceId(), "datatable_resource_1");
   }
 
   @Override
@@ -231,7 +236,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         "Clone Workspace", cloneResult.getJobReport(), cloneResult.getErrorReport());
     assertNull(cloneResult.getErrorReport());
     assertNotNull(cloneResult.getWorkspace());
-    assertThat(cloneResult.getWorkspace().getResources(), hasSize(9));
+    assertThat(cloneResult.getWorkspace().getResources(), hasSize(10));
     assertEquals(getWorkspaceId(), cloneResult.getWorkspace().getSourceWorkspaceId());
     destinationWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
     assertNotNull(destinationWorkspaceId);
@@ -454,6 +459,24 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(StewardshipType.REFERENCED, datasetReferenceDetails.getStewardshipType());
     assertNull(datasetReferenceDetails.getDestinationResourceId());
     assertNull(datasetReferenceDetails.getErrorMessage());
+
+    final ResourceCloneDetails dataTableReferenceDetails =
+        getOrFail(
+            cloneResult.getWorkspace().getResources().stream()
+                .filter(
+                    r ->
+                        sourceDataTableReference
+                            .getMetadata()
+                            .getResourceId()
+                            .equals(r.getSourceResourceId()))
+                .findFirst());
+    assertEquals(CloneResourceResult.SKIPPED, dataTableReferenceDetails.getResult());
+    assertEquals(
+        CloningInstructionsEnum.NOTHING, dataTableReferenceDetails.getCloningInstructions());
+    assertEquals(ResourceType.BIG_QUERY_DATA_TABLE, dataTableReferenceDetails.getResourceType());
+    assertEquals(StewardshipType.REFERENCED, dataTableReferenceDetails.getStewardshipType());
+    assertNull(dataTableReferenceDetails.getDestinationResourceId());
+    assertNull(dataTableReferenceDetails.getErrorMessage());
   }
 
   @Override
