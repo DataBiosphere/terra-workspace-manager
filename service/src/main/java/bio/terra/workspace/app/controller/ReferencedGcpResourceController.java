@@ -89,25 +89,30 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
     ReferencedResource referenceResource =
         referenceResourceService.createReferenceResource(resource, getAuthenticatedInfo());
-    ApiGcpGcsBucketFileResource response = referenceResource.castToGcsBucketFileResource().toApiModel();
+    ApiGcpGcsBucketFileResource response =
+        referenceResource.castToGcsBucketFileResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<ApiGcpGcsBucketFileResource> getBucketFileReference(UUID id, UUID referenceId) {
+  public ResponseEntity<ApiGcpGcsBucketFileResource> getBucketFileReference(
+      UUID id, UUID referenceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource referenceResource =
         referenceResourceService.getReferenceResource(id, referenceId, userRequest);
-    ApiGcpGcsBucketFileResource response = referenceResource.castToGcsBucketFileResource().toApiModel();
+    ApiGcpGcsBucketFileResource response =
+        referenceResource.castToGcsBucketFileResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<ApiGcpGcsBucketFileResource> getBucketFileReferenceByName(UUID id, String name) {
+  public ResponseEntity<ApiGcpGcsBucketFileResource> getBucketFileReferenceByName(
+      UUID id, String name) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ReferencedResource referenceResource =
         referenceResourceService.getReferenceResourceByName(id, name, userRequest);
-    ApiGcpGcsBucketFileResource response = referenceResource.castToGcsBucketFileResource().toApiModel();
+    ApiGcpGcsBucketFileResource response =
+        referenceResource.castToGcsBucketFileResource().toApiModel();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -123,7 +128,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteBucketFileReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    referenceResourceService.deleteReferenceResourceForResourceType(workspaceId, resourceId, userRequest, WsmResourceType.GCS_BUCKET_FILE);
+    referenceResourceService.deleteReferenceResourceForResourceType(
+        workspaceId, resourceId, userRequest, WsmResourceType.GCS_BUCKET_FILE);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

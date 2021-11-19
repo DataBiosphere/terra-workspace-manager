@@ -409,8 +409,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             resourceName,
             "description of " + resourceName,
             CloningInstructions.COPY_DEFINITION,
-            /*bucketName=*/"theres-a-hole-in-the-bottom-of-the",
-            /*fileName=*/"balloon");
+            /*bucketName=*/ "theres-a-hole-in-the-bottom-of-the",
+            /*fileName=*/ "balloon");
       }
 
       @Test
@@ -437,7 +437,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         ReferencedResource byname =
             referenceResourceService.getReferenceResourceByName(
                 workspaceId, resource.getName(), USER_REQUEST);
-        assertThat(byid.castToGcsBucketFileResource(), equalTo(byname.castToGcsBucketFileResource()));
+        assertThat(
+            byid.castToGcsBucketFileResource(), equalTo(byname.castToGcsBucketFileResource()));
 
         referenceResourceService.deleteReferenceResource(
             workspaceId, referenceResource.getResourceId(), USER_REQUEST);
@@ -501,8 +502,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                     resourceName,
                     "description of " + resourceName,
                     CloningInstructions.COPY_DEFINITION,
-                    /*bucketName=*/"spongebob",
-                    /*fileName=*/""));
+                    /*bucketName=*/ "spongebob",
+                    /*fileName=*/ ""));
       }
 
       @Test

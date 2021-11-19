@@ -2,8 +2,8 @@ package scripts.utils;
 
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_PROJECT;
-import static scripts.utils.ClientTestUtils.TEST_BUCKET_FILE_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATATABLE_NAME;
+import static scripts.utils.ClientTestUtils.TEST_BUCKET_FILE_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
 
@@ -49,7 +49,6 @@ import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceIamRoles;
 import bio.terra.workspace.model.PrivateResourceUser;
 import bio.terra.workspace.model.ReferenceResourceCommonFields;
-import com.google.protobuf.Api;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
@@ -151,11 +150,13 @@ public class ResourceMaker {
         new CreateGcpGcsBucketFileReferenceRequestBody()
             .metadata(
                 new ReferenceResourceCommonFields()
-                    .cloningInstructions(
-                        CloningInstructionsEnum.NOTHING)
+                    .cloningInstructions(CloningInstructionsEnum.NOTHING)
                     .description("Description of " + name)
                     .name(name))
-            .file(new GcpGcsBucketFileAttributes().bucketName(TEST_BUCKET_NAME).fileName(TEST_BUCKET_FILE_NAME));
+            .file(
+                new GcpGcsBucketFileAttributes()
+                    .bucketName(TEST_BUCKET_NAME)
+                    .fileName(TEST_BUCKET_FILE_NAME));
 
     return resourceApi.createBucketFileReference(body, workspaceId);
   }

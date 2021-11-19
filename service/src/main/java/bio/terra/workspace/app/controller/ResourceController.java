@@ -153,11 +153,12 @@ public class ResourceController implements ResourceApi {
             }
 
           case GCS_BUCKET_FILE:
-          {
-            ReferencedGcsBucketFileResource resource = referencedResource.castToGcsBucketFileResource();
-            union.gcpGcsBucketFile(resource.toApiAttributes());
-            break;
-          }
+            {
+              ReferencedGcsBucketFileResource resource =
+                  referencedResource.castToGcsBucketFileResource();
+              union.gcpGcsBucketFile(resource.toApiAttributes());
+              break;
+            }
 
           default:
             throw new InternalLogicException(

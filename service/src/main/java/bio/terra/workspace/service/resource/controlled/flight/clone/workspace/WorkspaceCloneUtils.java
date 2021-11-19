@@ -63,8 +63,7 @@ public class WorkspaceCloneUtils {
                 sourceReferencedResource.castToGcsBucketFileResource(),
                 destinationWorkspaceId,
                 name,
-                description
-            );
+                description);
         break;
       case DATA_REPO_SNAPSHOT:
         destinationResource =

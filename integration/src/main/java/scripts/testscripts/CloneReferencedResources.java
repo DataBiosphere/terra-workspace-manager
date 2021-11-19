@@ -10,15 +10,15 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloneReferencedGcpDataRepoSnapshotResourceResult;
-import bio.terra.workspace.model.CloneReferencedGcpGcsBucketResourceResult;
 import bio.terra.workspace.model.CloneReferencedGcpGcsBucketFileResourceResult;
+import bio.terra.workspace.model.CloneReferencedGcpGcsBucketResourceResult;
 import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
-import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsBucketFileResource;
+import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
@@ -163,7 +163,8 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         CLONED_BUCKET_FILE_RESOURCE_NAME,
         cloneBucketFileReferenceResult.getResource().getMetadata().getName());
     assertEquals(
-        TEST_BUCKET_FILE_NAME, cloneBucketFileReferenceResult.getResource().getAttributes().getBucketName());
+        TEST_BUCKET_FILE_NAME,
+        cloneBucketFileReferenceResult.getResource().getAttributes().getBucketName());
 
     final var cloneBigQueryDatasetRequestBody =
         new CloneReferencedResourceRequestBody()

@@ -13,9 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * A collection of static validation functions
- */
+/** A collection of static validation functions */
 public class ValidationUtils {
 
   private static final Logger logger = LoggerFactory.getLogger(ValidationUtils.class);
@@ -72,14 +70,14 @@ public class ValidationUtils {
   private static final int MAX_RESOURCE_DESCRIPTION_NAME = 2048;
 
   /**
-   * Validates gcs-bucket name following Google documentation https://cloud.google.com/storage/docs/naming-buckets#requirements
-   * on a best-effort base.
+   * Validates gcs-bucket name following Google documentation
+   * https://cloud.google.com/storage/docs/naming-buckets#requirements on a best-effort base.
    *
    * <p>This method DOES NOT guarentee that the bucket name is valid.
    *
    * @param name gcs-bucket name
    * @throws InvalidNameException throws exception when the bucket name fails to conform to the
-   * Google naming convention for bucket name.
+   *     Google naming convention for bucket name.
    */
   public static void validateBucketName(String name) {
     if (StringUtils.isEmpty(name) || !BUCKET_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
@@ -112,11 +110,11 @@ public class ValidationUtils {
     int nameLength = fileName.getBytes(StandardCharsets.UTF_8).length;
     if (nameLength < 1 || nameLength > 1024) {
       throw new InvalidNameException(
-          "bucket file names must contain any sequence of valid Unicode characters, of length 1-1024 bytes when UTF-8 encoded"
-      );
+          "bucket file names must contain any sequence of valid Unicode characters, of length 1-1024 bytes when UTF-8 encoded");
     }
     if (fileName.startsWith(ACME_CHALLENGE_PREFIX)) {
-      throw new InvalidNameException("bucket file name cannot start with .well-known/acme-challenge/");
+      throw new InvalidNameException(
+          "bucket file name cannot start with .well-known/acme-challenge/");
     }
     for (String disallowedObjectName : DISALLOWED_OBJECT_NAMES) {
       if (disallowedObjectName.equals(fileName)) {

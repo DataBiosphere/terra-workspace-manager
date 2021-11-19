@@ -12,8 +12,8 @@ import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
-import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsBucketFileResource;
+import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import java.util.List;
@@ -72,7 +72,8 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
             getDataRepoInstanceName());
     snapshotResourceId = snapshotReference.getMetadata().getResourceId();
 
-    String bucketFileReferenceName = RandomStringUtils.random(6, /*letters*/true, /*numbers=*/true);
+    String bucketFileReferenceName =
+        RandomStringUtils.random(6, /*letters*/ true, /*numbers=*/ true);
     GcpGcsBucketFileResource bucketFileReference =
         ResourceMaker.makeGcsBucketFileReference(
             referencedGcpResourceApi, getWorkspaceId(), bucketFileReferenceName);

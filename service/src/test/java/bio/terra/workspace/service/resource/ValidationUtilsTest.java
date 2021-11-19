@@ -195,40 +195,30 @@ public class ValidationUtilsTest extends BaseUnitTest {
   public void validateBucketFileName_disallowName_throwException() {
     String file = ".";
 
-    assertThrows(
-        InvalidNameException.class,
-        () ->
-            ValidationUtils.validateBucketFileName(file));
+    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateBucketFileName(file));
   }
 
   @Test
   public void validateBucketFileName_emptyString_throwsException() {
     String file = "";
 
-    assertThrows(
-        InvalidNameException.class,
-        () ->
-            ValidationUtils.validateBucketFileName(file));
+    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateBucketFileName(file));
   }
 
   @Test
   public void validateBucketFileName_startsWithAcmeChallengePrefix_throwsException() {
     String file = ".well-known/acme-challenge/hello.txt";
 
-    assertThrows(
-        InvalidNameException.class,
-        () ->
-            ValidationUtils.validateBucketFileName(file));
+    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateBucketFileName(file));
   }
 
   @Test
   public void validateBucketFileName_legalFileName_validate() {
     ValidationUtils.validateBucketFileName("hello.txt");
     ValidationUtils.validateBucketFileName(
-        RandomStringUtils.random(1024, /*letters=*/true, /*numbers=*/true));
+        RandomStringUtils.random(1024, /*letters=*/ true, /*numbers=*/ true));
     ValidationUtils.validateBucketFileName("你好.png");
   }
-
 
   @Test
   public void validateBqDataTableName() {

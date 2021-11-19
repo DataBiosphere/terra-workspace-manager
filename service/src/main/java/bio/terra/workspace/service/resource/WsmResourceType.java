@@ -22,14 +22,14 @@ public enum WsmResourceType {
       CloudPlatform.GCP,
       "AI_NOTEBOOK_INSTANCE",
       ApiResourceType.AI_NOTEBOOK,
-      /*referenceClass=*/null,
+      /*referenceClass=*/ null,
       ControlledAiNotebookInstanceResource.class),
   DATA_REPO_SNAPSHOT(
       CloudPlatform.GCP,
       "DATA_REPO_SNAPSHOT",
       ApiResourceType.DATA_REPO_SNAPSHOT,
       ReferencedDataRepoSnapshotResource.class,
-      /*controlledClass=*/null),
+      /*controlledClass=*/ null),
   GCS_BUCKET(
       CloudPlatform.GCP,
       "GCS_BUCKET",
@@ -41,7 +41,7 @@ public enum WsmResourceType {
       "GCS_BUCKET_FILE",
       ApiResourceType.GCS_BUCKET_FILE,
       ReferencedGcsBucketFileResource.class,
-      /*controlledClass=*/null),
+      /*controlledClass=*/ null),
   BIG_QUERY_DATASET(
       CloudPlatform.GCP,
       "BIG_QUERY_DATASET",

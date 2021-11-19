@@ -5,10 +5,8 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketFileAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketFileResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
@@ -73,9 +71,7 @@ public class ReferencedGcsBucketFileResource extends ReferencedResource {
   }
 
   public ApiGcpGcsBucketFileAttributes toApiAttributes() {
-    return new ApiGcpGcsBucketFileAttributes()
-        .bucketName(getBucketName())
-        .fileName(getFileName());
+    return new ApiGcpGcsBucketFileAttributes().bucketName(getBucketName()).fileName(getFileName());
   }
 
   public ApiGcpGcsBucketFileResource toApiModel() {

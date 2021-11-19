@@ -28,8 +28,8 @@ import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
-import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GcpGcsBucketFileResource;
+import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.PrivateResourceIamRoles;
@@ -203,9 +203,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     sourceBucketFileReference =
         ResourceMaker.makeGcsBucketFileReference(
-            referencedGcpResourceApi,
-            getWorkspaceId(),
-            "a reference to hello_world.txt");
+            referencedGcpResourceApi, getWorkspaceId(), "a reference to hello_world.txt");
 
     // create reference to BQ dataset with COPY_NOTHING
     sourceDatasetReference =
