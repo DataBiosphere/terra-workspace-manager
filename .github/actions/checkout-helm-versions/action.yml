@@ -1,3 +1,5 @@
+# This action supports helmVersions reporting in the TestRunner BigQuery schema. For example,
+# https://console.cloud.google.com/bigquery?cloudshell=false&project=terra-kernel-k8s&ws=!1m10!1m4!4m3!1sterra-kernel-k8s!2ssimple_stream_dataset!3ssimple_streamtable!1m4!4m3!1sterra-kernel-k8s!2ssimple_stream_dataset!3sSUMMARY_testRun
 name: 'checkout-helm-versions'
 description: 'Action to do a sparse checkout of environments and versions directories from https://github.com/broadinstitute/terra-helmfile/'
 author: 'ichengchang'
