@@ -104,7 +104,7 @@ public class ReferencedGcsBucketFileResource extends ReferencedResource {
       throw new MissingRequiredFieldException("Missing required field for ReferenceGcsBucket.");
     }
     ValidationUtils.validateBucketName(getBucketName());
-    //TODO: validate bucket file name
+    ValidationUtils.validateBucketFileName(getFileName());
   }
 
   @Override

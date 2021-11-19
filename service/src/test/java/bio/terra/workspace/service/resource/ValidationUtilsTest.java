@@ -9,6 +9,7 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImag
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
 
 public class ValidationUtilsTest extends BaseUnitTest {
@@ -188,5 +189,42 @@ public class ValidationUtilsTest extends BaseUnitTest {
       sb.append("a");
     }
     ValidationUtils.validateResourceDescriptionName(sb.toString());
+  }
+
+  @Test
+  public void validateBucketFileName_disallowName_throwException() {
+    String file = ".";
+
+    assertThrows(
+        InvalidNameException.class,
+        () ->
+            ValidationUtils.validateBucketFileName(file));
+  }
+
+  @Test
+  public void validateBucketFileName_emptyString_throwsException() {
+    String file = "";
+
+    assertThrows(
+        InvalidNameException.class,
+        () ->
+            ValidationUtils.validateBucketFileName(file));
+  }
+
+  @Test
+  public void validateBucketFileName_startsWithAcmeChallengePrefix_throwsException() {
+    String file = ".well-known/acme-challenge/hello.txt";
+
+    assertThrows(
+        InvalidNameException.class,
+        () ->
+            ValidationUtils.validateBucketFileName(file));
+  }
+
+  @Test
+  public void validateBucketFileName_legalFileName_validate() {
+    ValidationUtils.validateBucketFileName("hello.txt");
+    ValidationUtils.validateBucketFileName(RandomStringUtils.random(1024, /*letters=*/true, /*numbers=*/true));
+    ValidationUtils.validateBucketFileName("你好.png");
   }
 }

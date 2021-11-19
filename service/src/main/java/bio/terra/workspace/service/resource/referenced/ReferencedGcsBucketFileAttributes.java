@@ -9,8 +9,8 @@ public class ReferencedGcsBucketFileAttributes {
 
   @JsonCreator
   public ReferencedGcsBucketFileAttributes(
-      String bucketName,
-      String fileName) {
+      @JsonProperty("bucketName") String bucketName,
+      @JsonProperty("fileName") String fileName) {
     this.bucketName = bucketName;
     this.fileName = fileName;
   }
