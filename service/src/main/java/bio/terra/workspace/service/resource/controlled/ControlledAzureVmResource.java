@@ -153,6 +153,10 @@ public class ControlledAzureVmResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required valid vmSize field for ControlledAzureVm.");
     }
+    if (getVmImageUri() == null) {
+      throw new MissingRequiredFieldException(
+              "Missing required valid vmImageUri field for ControlledAzureVm.");
+    }
     if (getIpId() == null) {
       throw new MissingRequiredFieldException("Missing required ipId field for ControlledAzureVm.");
     }

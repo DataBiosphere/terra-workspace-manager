@@ -92,9 +92,6 @@ public class CreateAzureVmStep implements Step {
               .getByResourceGroup(
                   azureCloudContext.getAzureResourceGroupId(), ipResource.getIpName());
 
-      String imageUrl =
-          Optional.ofNullable(resource.getVmImageUri())
-              .orElse(azureConfig.getCustomDockerImageId());
       computeManager
           .virtualMachines()
           .define(resource.getVmName())
@@ -123,7 +120,7 @@ public class CreateAzureVmStep implements Step {
                       .setSubnetName(subnetName)
                       .setDisk(existingAzureDisk)
                       .setPublicIpAddress(existingAzureIp)
-                      .setImage(imageUrl)
+                      .setImage(resource.getVmImageUri())
                       .build()));
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
