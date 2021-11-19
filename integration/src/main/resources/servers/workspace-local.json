@@ -16,7 +16,7 @@
   "versionScripts": [
     {
       "name": "ReadFromGitCommitLog",
-      "description": "Version from Git Commit Log",
+      "description": "Hash of local git branch from Git Commit Log",
       "parameters": ["../.git"]
     }
   ]

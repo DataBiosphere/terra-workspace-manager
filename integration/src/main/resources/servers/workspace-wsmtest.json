@@ -31,7 +31,7 @@
     },
     {
       "name": "ReadFromGitCommitLog",
-      "description": "Version from Git Commit Log",
+      "description": "Hash of git branch from Git Commit Log",
       "parameters": ["../.git"]
     }
   ]
