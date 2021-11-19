@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.referenced;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -113,8 +111,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         workspaceId, referenceResource.getResourceId(), updatedName, null, USER_REQUEST);
     referenceResource =
         referenceResourceService.getReferenceResourceByName(workspaceId, updatedName, USER_REQUEST);
-    assertThat(referenceResource.getName(), equalTo(updatedName));
-    assertThat(referenceResource.getDescription(), equalTo(originalDescription));
+    assertEquals(referenceResource.getName(), updatedName);
+    assertEquals(referenceResource.getDescription(), originalDescription);
 
     // Change the description
     String updatedDescription = "updated" + referenceResource.getDescription();
@@ -124,8 +122,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     referenceResource =
         referenceResourceService.getReferenceResource(
             workspaceId, referenceResource.getResourceId(), USER_REQUEST);
-    assertThat(referenceResource.getName(), equalTo(updatedName));
-    assertThat(referenceResource.getDescription(), equalTo(updatedDescription));
+    assertEquals(referenceResource.getName(), updatedName);
+    assertEquals(referenceResource.getDescription(), updatedDescription);
 
     // Change both
     String updatedName2 = "2" + updatedName;
@@ -139,8 +137,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     referenceResource =
         referenceResourceService.getReferenceResource(
             workspaceId, referenceResource.getResourceId(), USER_REQUEST);
-    assertThat(referenceResource.getName(), equalTo(updatedName2));
-    assertThat(referenceResource.getDescription(), equalTo(updatedDescription2));
+    assertEquals(referenceResource.getName(), updatedName2);
+    assertEquals(referenceResource.getDescription(), updatedDescription2);
 
     // Update to invalid name is rejected.
     String invalidName = "!!!!invalid_name!!!";
@@ -293,17 +291,17 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     @Test
     void testDataRepoReference() {
       referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
-      assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCED));
+      assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
       ReferencedDataRepoSnapshotResource resource =
           referenceResource.castToDataRepoSnapshotResource();
-      assertThat(resource.getResourceType(), equalTo(WsmResourceType.DATA_REPO_SNAPSHOT));
+      assertEquals(resource.getResourceType(), WsmResourceType.DATA_REPO_SNAPSHOT);
 
       ReferencedResource resultReferenceResource =
           referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
       ReferencedDataRepoSnapshotResource resultResource =
           resultReferenceResource.castToDataRepoSnapshotResource();
-      assertThat(resource, equalTo(resultResource));
+      assertEquals(resource, resultResource);
 
       assertTrue(
           referenceResourceService.checkAccess(
@@ -315,8 +313,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       ReferencedResource byname =
           referenceResourceService.getReferenceResourceByName(
               workspaceId, resource.getName(), USER_REQUEST);
-      assertThat(
-          byid.castToDataRepoSnapshotResource(), equalTo(byname.castToDataRepoSnapshotResource()));
+      assertEquals(byid.castToDataRepoSnapshotResource(), byname.castToDataRepoSnapshotResource());
 
       referenceResourceService.deleteReferenceResource(
           workspaceId, referenceResource.getResourceId(), USER_REQUEST);
@@ -385,7 +382,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         List<ReferencedResource> daoResources =
             referenceResourceService.enumerateReferences(workspaceId, 0, 100, USER_REQUEST);
         logger.info("testEnumerate - got {}", daoResources.size());
-        assertThat(daoResources.size(), equalTo(resources.size()));
+        assertEquals(daoResources.size(), resources.size());
       } finally {
         for (var resource : resources) {
           referenceResourceService.deleteReferenceResource(
@@ -419,16 +416,16 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       @Test
       void testGcsBucketReference() {
         referenceResource = makeGcsBucketResource();
-        assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCED));
+        assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
         ReferencedGcsBucketResource resource = referenceResource.castToGcsBucketResource();
-        assertThat(resource.getResourceType(), equalTo(WsmResourceType.GCS_BUCKET));
+        assertEquals(resource.getResourceType(), WsmResourceType.GCS_BUCKET);
 
         ReferencedResource resultReferenceResource =
             referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
         ReferencedGcsBucketResource resultResource =
             resultReferenceResource.castToGcsBucketResource();
-        assertThat(resource, equalTo(resultResource));
+        assertEquals(resource, resultResource);
 
         // Mock Sam will not return real credentials for a pet SA to make this call, but we don't
         // need real credentials because we also mock out cloud validation here.
@@ -442,7 +439,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         ReferencedResource byname =
             referenceResourceService.getReferenceResourceByName(
                 workspaceId, resource.getName(), USER_REQUEST);
-        assertThat(byid.castToGcsBucketResource(), equalTo(byname.castToGcsBucketResource()));
+        assertEquals(byid.castToGcsBucketResource(), byname.castToGcsBucketResource());
 
         referenceResourceService.deleteReferenceResource(
             workspaceId, referenceResource.getResourceId(), USER_REQUEST);
@@ -537,17 +534,17 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       @Test
       void testBigQueryDatasetReference() {
         referenceResource = makeBigQueryDatasetResource();
-        assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCED));
+        assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
         ReferencedBigQueryDatasetResource resource =
             referenceResource.castToBigQueryDatasetResource();
-        assertThat(resource.getResourceType(), equalTo(WsmResourceType.BIG_QUERY_DATASET));
+        assertEquals(resource.getResourceType(), WsmResourceType.BIG_QUERY_DATASET);
 
         ReferencedResource resultReferenceResource =
             referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
         ReferencedBigQueryDatasetResource resultResource =
             resultReferenceResource.castToBigQueryDatasetResource();
-        assertThat(resource, equalTo(resultResource));
+        assertEquals(resource, resultResource);
 
         // Mock Sam will not return real credentials for a pet SA to make this call, but we don't
         // need real credentials because we also mock out cloud validation here.
@@ -561,8 +558,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         ReferencedResource byname =
             referenceResourceService.getReferenceResourceByName(
                 workspaceId, resource.getName(), USER_REQUEST);
-        assertThat(
-            byid.castToBigQueryDatasetResource(), equalTo(byname.castToBigQueryDatasetResource()));
+        assertEquals(byid.castToBigQueryDatasetResource(), byname.castToBigQueryDatasetResource());
 
         referenceResourceService.deleteReferenceResource(
             workspaceId, referenceResource.getResourceId(), USER_REQUEST);
@@ -571,11 +567,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       @Test
       void bigQueryDataTableReference() {
         referenceResource = makeBigQueryDataTableResource();
-        assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCED));
+        assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
         ReferencedBigQueryDataTableResource resource =
             referenceResource.castToBigQueryDataTableResource();
-        assertThat(resource.getResourceType(), equalTo(WsmResourceType.BIG_QUERY_DATATABLE));
+        assertEquals(resource.getResourceType(), WsmResourceType.BIG_QUERY_DATATABLE);
         assertEquals(resource.getDataTableName(), DATATABLE_NAME);
         assertEquals(resource.getDatasetName(), DATASET_NAME);
 
@@ -584,7 +580,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
         ReferencedBigQueryDataTableResource resultResource =
             resultReferenceResource.castToBigQueryDataTableResource();
-        assertThat(resource, equalTo(resultResource));
+        assertEquals(resource, resultResource);
         assertTrue(
             referenceResourceService.checkAccess(
                 workspaceId, referenceResource.getResourceId(), USER_REQUEST));
@@ -594,9 +590,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         ReferencedResource byname =
             referenceResourceService.getReferenceResourceByName(
                 workspaceId, resource.getName(), USER_REQUEST);
-        assertThat(
-            byid.castToBigQueryDataTableResource(),
-            equalTo(byname.castToBigQueryDataTableResource()));
+        assertEquals(
+            byid.castToBigQueryDataTableResource(), byname.castToBigQueryDataTableResource());
 
         referenceResourceService.deleteReferenceResourceForResourceType(
             workspaceId,
@@ -754,11 +749,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       @Test
       void testDuplicateResourceName() {
         referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
-        assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCED));
+        assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
         ReferencedDataRepoSnapshotResource resource =
             referenceResource.castToDataRepoSnapshotResource();
-        assertThat(resource.getResourceType(), equalTo(WsmResourceType.DATA_REPO_SNAPSHOT));
+        assertEquals(resource.getResourceType(), WsmResourceType.DATA_REPO_SNAPSHOT);
         referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
 
         UUID resourceId = UUID.randomUUID();
