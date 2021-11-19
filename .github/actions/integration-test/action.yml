@@ -22,9 +22,6 @@ runs:
         export TEST_RUNNER_SERVER_SPECIFICATION_FILE=${{ inputs.test-server }}
         resultsDir=/tmp/results$RANDOM
         echo "Running test suite ${{ inputs.test }} on ${{ inputs.test-server }}"
-        ls -l
-        ls -l terra-helmfile/versions/app/dev.yaml
-        ls -l terra-helmfile/environments/personal/wsmtest.yaml
         ../gradlew :integration:runTest --args="${{ inputs.test }} $resultsDir" --scan
         testResult=$?
         echo "Test result is $testResult"
