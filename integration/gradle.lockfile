@@ -2,13 +2,14 @@
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
 bio.terra:datarepo-client:1.0.155-SNAPSHOT=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-bio.terra:terra-test-runner:0.0.9-SNAPSHOT=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+bio.terra:terra-test-runner:0.0.10-SNAPSHOT=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 ch.qos.logback:logback-classic:1.2.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 ch.qos.logback:logback-core:1.2.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson.core:jackson-annotations:2.12.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson.core:jackson-core:2.12.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson.core:jackson-databind:2.12.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.12.3=runtimeClasspath,testRuntimeClasspath
 com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.12.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.12.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson:jackson-bom:2.12.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
@@ -56,6 +57,7 @@ com.google.j2objc:j2objc-annotations:1.3=compileClasspath,runtimeClasspath,testC
 com.google.oauth-client:google-oauth-client:1.31.5=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.google.protobuf:protobuf-java-util:3.15.8=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.google.protobuf:protobuf-java:3.15.8=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.googlecode.javaewah:JavaEWAH:1.1.12=runtimeClasspath,testRuntimeClasspath
 com.squareup.okhttp3:logging-interceptor:3.14.9=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.squareup.okhttp3:okhttp:3.14.9=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.squareup.okio:okio:1.17.2=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
@@ -118,6 +120,7 @@ org.checkerframework:checker-qual:3.8.0=compileClasspath,runtimeClasspath,testCo
 org.codehaus.mojo:animal-sniffer-annotations:1.20=runtimeClasspath,testRuntimeClasspath
 org.conscrypt:conscrypt-openjdk-uber:2.5.1=runtimeClasspath,testRuntimeClasspath
 org.dom4j:dom4j:2.1.3=spotbugs
+org.eclipse.jgit:org.eclipse.jgit:5.13.0.202109080827-r=runtimeClasspath,testRuntimeClasspath
 org.glassfish.hk2.external:aopalliance-repackaged:2.6.1=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.glassfish.hk2.external:jakarta.inject:2.6.1=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.glassfish.hk2:hk2-api:2.6.1=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
