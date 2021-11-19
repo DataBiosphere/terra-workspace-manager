@@ -63,7 +63,6 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         ResourceMaker.makeBigQueryReference(
             referencedGcpResourceApi, getWorkspaceId(), DATASET_RESOURCE_NAME);
 
-    // createTable(ClientTestUtils.getGcpBigQueryClient(testUsers.get(0), "terra-kernel-k8s"));
     sourceBigQueryDataTableReference =
         ResourceMaker.makeBigQueryDataTableReference(
             referencedGcpResourceApi, getWorkspaceId(), DATA_TABLE_RESOURCE_NAME);

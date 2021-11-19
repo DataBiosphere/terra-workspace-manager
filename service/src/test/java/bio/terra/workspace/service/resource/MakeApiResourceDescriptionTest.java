@@ -54,7 +54,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
   }
 
   @Test
-  public void mapReferencedBigQueryDataset() throws Exception {
+  public void mapReferencedBigQueryDatasetTest() throws Exception {
     String projectId = RandomStringUtils.randomAlphabetic(12);
     String datasetName = RandomStringUtils.randomAlphabetic(12);
 
