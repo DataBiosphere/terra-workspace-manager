@@ -11,6 +11,7 @@ import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloneReferencedGcpDataRepoSnapshotResourceResult;
 import bio.terra.workspace.model.CloneReferencedGcpGcsBucketResourceResult;
+import bio.terra.workspace.model.CloneReferencedGcpGcsBucketFileResourceResult;
 import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.DataRepoSnapshotResource;

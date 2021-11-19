@@ -123,12 +123,11 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteBucketFileReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // TODO: check reference type here.
-    referenceResourceService.deleteReferenceResource(workspaceId, resourceId, userRequest);
+    referenceResourceService.deleteReferenceResourceForResourceType(workspaceId, resourceId, userRequest, WsmResourceType.GCS_BUCKET_FILE);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
-  // -- GCS Bucket -- //
 
+  // -- GCS Bucket -- //
   @Override
   public ResponseEntity<ApiGcpGcsBucketResource> createBucketReference(
       UUID id, @Valid ApiCreateGcpGcsBucketReferenceRequestBody body) {

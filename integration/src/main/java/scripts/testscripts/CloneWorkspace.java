@@ -205,8 +205,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         ResourceMaker.makeGcsBucketFileReference(
             referencedGcpResourceApi,
             getWorkspaceId(),
-            "a reference to hello_world.txt",
-            CloningInstructionsEnum.REFERENCE);
+            "a reference to hello_world.txt");
 
     // create reference to BQ dataset with COPY_NOTHING
     sourceDatasetReference =
