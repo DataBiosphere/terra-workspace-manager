@@ -18,8 +18,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # Check out terra-helmfile repo
-      - uses: actions/checkout@v2
+      # Sparse check out terra-helmfile repo version directories
+      - uses: ./.github/actions/checkout-helm-versions
         with:
           repository: broadinstitute/terra-helmfile
           ref: master
