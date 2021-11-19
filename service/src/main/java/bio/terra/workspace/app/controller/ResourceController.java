@@ -18,6 +18,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDataset
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketFileResource;
@@ -129,7 +130,13 @@ public class ResourceController implements ResourceApi {
               union.gcpBqDataset(resource.toApiAttributes());
               break;
             }
-
+          case BIQ_QUERY_DATA_TABLE:
+            {
+              ReferencedBigQueryDataTableResource resource =
+                  referencedResource.castToBigQueryDataTableResource();
+              union.gcpBqDataTable(resource.toApiAttributes());
+              break;
+            }
           case DATA_REPO_SNAPSHOT:
             {
               ReferencedDataRepoSnapshotResource resource =

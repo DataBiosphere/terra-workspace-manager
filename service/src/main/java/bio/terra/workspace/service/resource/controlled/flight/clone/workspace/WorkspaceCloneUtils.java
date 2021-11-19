@@ -4,6 +4,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketFileResource;
@@ -81,6 +82,14 @@ public class WorkspaceCloneUtils {
                 name,
                 description);
         break;
+      case BIQ_QUERY_DATA_TABLE:
+        destinationResource =
+            buildDestinationBigQueryDataTableReference(
+                sourceReferencedResource.castToBigQueryDataTableResource(),
+                destinationWorkspaceId,
+                name,
+                description);
+        break;
       case AI_NOTEBOOK_INSTANCE:
       default:
         throw new BadRequestException(
@@ -140,6 +149,21 @@ public class WorkspaceCloneUtils {
       @Nullable String description) {
     // keep projectId and dataset name the same since they are for the referent
     final ReferencedBigQueryDatasetResource.Builder resultBuilder =
+        sourceBigQueryResource.toBuilder()
+            .workspaceId(destinationWorkspaceId)
+            .resourceId(UUID.randomUUID());
+    Optional.ofNullable(name).ifPresent(resultBuilder::name);
+    Optional.ofNullable(description).ifPresent(resultBuilder::description);
+    return resultBuilder.build();
+  }
+
+  private static ReferencedResource buildDestinationBigQueryDataTableReference(
+      ReferencedBigQueryDataTableResource sourceBigQueryResource,
+      UUID destinationWorkspaceId,
+      @Nullable String name,
+      @Nullable String description) {
+    // keep projectId, dataset name and data table name the same since they are for the referent
+    final ReferencedBigQueryDataTableResource.Builder resultBuilder =
         sourceBigQueryResource.toBuilder()
             .workspaceId(destinationWorkspaceId)
             .resourceId(UUID.randomUUID());

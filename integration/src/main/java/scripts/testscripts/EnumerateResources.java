@@ -17,6 +17,7 @@ import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.ControlledResourceMetadata;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
+import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
@@ -47,9 +48,10 @@ public class EnumerateResources extends DataRepoTestScriptBase {
   // The test is written so that these can be modified here. The invariant is that the
   // resulting set of resources can be read in 3 pages where the third page is not full.
   // Number of resources to create for enumeration
-  private static final int RESOURCE_COUNT = 10;
+  private static final int RESOURCE_COUNT = 12;
   // Page size to use for enumeration paging
-  private static final int PAGE_SIZE = 4;
+  private static final int PAGE_SIZE = 5;
+  private static final int NUM_RESOURCE_TYPE = 6;
   // Roles to grant user on private resource
   private static final ImmutableList<ControlledResourceIamRole> PRIVATE_ROLES =
       ImmutableList.of(ControlledResourceIamRole.WRITER, ControlledResourceIamRole.EDITOR);
@@ -303,7 +305,7 @@ public class EnumerateResources extends DataRepoTestScriptBase {
     for (int i = 0; i < RESOURCE_COUNT; i++) {
       String name = RandomStringUtils.random(6, true, false) + i;
 
-      switch (i % 5) {
+      switch (i % NUM_RESOURCE_TYPE) {
         case 0:
           {
             GcpBigQueryDatasetResource resource =
@@ -350,6 +352,14 @@ public class EnumerateResources extends DataRepoTestScriptBase {
             GcpBigQueryDatasetResource resource =
                 ResourceMaker.makeControlledBigQueryDatasetUserShared(
                     controlledGcpResourceApi, workspaceId, name);
+            resourceList.add(resource.getMetadata());
+            break;
+          }
+        case 5:
+          {
+            GcpBigQueryDataTableResource resource =
+                ResourceMaker.makeBigQueryDataTableReference(
+                    referencedGcpResourceApi, workspaceId, name);
             resourceList.add(resource.getMetadata());
             break;
           }

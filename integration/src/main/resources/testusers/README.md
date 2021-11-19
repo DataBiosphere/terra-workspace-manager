@@ -13,9 +13,9 @@ These include:
     - Owned by Jade team in all environments. Test user `Albus Dumbledore` can also grant other test users access.
 - Usage of the `wm-default-spend-profile` spend profile in Sam
     - Owned by `developer-admins` and Platform Foundations team
-- Read access to the `terra_wsm_test_dataset` BigQuery dataset and `terra_wsm_test_resource` 
-  GCS bucket, both in the `terra-kernel-k8s` GCP project.
-    - Owned by Platform Foundation and App Services teams.
+    - Read access to the `terra_wsm_test_dataset` BigQuery dataset, `terra wsm test data table` BigQuery data table, and `terra_wsm_test_resource` 
+      GCS bucket, both in the `terra-kernel-k8s` GCP project.
+        - Owned by Platform Foundation and App Services teams.
   
 Users have different access to the above resources. Some tests also rely on specific
 users not having resource access, e.g. testing that a user cannot use a spend profile
@@ -25,8 +25,8 @@ doesn't currently exist, consider minting a new test user.
 
 Currently, users have the following access permissions, replicated across environments:
 
-|                                           | TDR Snapshot       | `wm-default-spend-profile` | BQ Dataset `terra_wsm_test_dataset` | Bucket `terra_wsm_test_resource` |
-| ----------------------------------------- | ------------------ | -------------------------- | ------------------------ | ------------------------- |
-| **bella.redwalker**    | :white_check_mark: | :white_check_mark:         | :white_check_mark:       | :white_check_mark:        |
-| **elijah.thunderlord** | :x:                | :white_check_mark:         | :x:                      | :white_check_mark:        |
-| **liam.dragonmaw**     | :x:                | :x:                        | :x:                      | :x:                       |
+|                                           | TDR Snapshot       | `wm-default-spend-profile` | BQ Dataset `terra_wsm_test_dataset` | BQ Data table `terra wsm test data table` | Bucket `terra_wsm_test_resource` |
+| ----------------------------------------- | ------------------ | -------------------------- | ------------------------ | ------------------------- | ------------------------- |
+| **bella.redwalker**    | :white_check_mark: | :white_check_mark:         | :white_check_mark:       | :white_check_mark:        | :white_check_mark:        |
+| **elijah.thunderlord** | :x:                | :white_check_mark:         | :x:                      | :x:                      | :white_check_mark:        |
+| **liam.dragonmaw**     | :x:                | :x:                        | :x:                      | :x:                      |:x:                       |
