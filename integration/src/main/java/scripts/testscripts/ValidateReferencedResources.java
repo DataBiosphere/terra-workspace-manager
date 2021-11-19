@@ -12,6 +12,7 @@ import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GcpGcsBucketFileResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import java.util.List;
@@ -27,6 +28,7 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
   private UUID bqResourceId;
   private UUID bucketResourceId;
   private UUID snapshotResourceId;
+  private UUID bucketFileResourceId;
 
   @Override
   public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
@@ -58,6 +60,12 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
             getDataRepoSnapshotId(),
             getDataRepoInstanceName());
     snapshotResourceId = snapshotReference.getMetadata().getResourceId();
+
+    String bucketFileReferenceName = RandomStringUtils.random(6, /*letters*/true, /*numbers=*/true);
+    GcpGcsBucketFileResource bucketFileReference =
+        ResourceMaker.makeGcsBucketFileReference(
+            referencedGcpResourceApi, getWorkspaceId(), bucketFileReferenceName);
+    bucketFileResourceId = bucketFileReference.getMetadata().getResourceId();
   }
 
   @Override
@@ -78,10 +86,12 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
     assertTrue(ownerApi.checkReferenceAccess(getWorkspaceId(), bqResourceId));
     assertTrue(ownerApi.checkReferenceAccess(getWorkspaceId(), bucketResourceId));
     assertTrue(ownerApi.checkReferenceAccess(getWorkspaceId(), snapshotResourceId));
+    assertTrue(ownerApi.checkReferenceAccess(getWorkspaceId(), bucketFileResourceId));
 
     // Check that our secondary test user does not have access
     assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), bqResourceId));
     assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), bucketResourceId));
     assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), snapshotResourceId));
+    assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), bucketFileResourceId));
   }
 }

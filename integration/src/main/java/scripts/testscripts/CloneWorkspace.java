@@ -28,6 +28,7 @@ import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GcpGcsBucketFileResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.PrivateResourceIamRoles;
@@ -67,6 +68,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private GcpBigQueryDatasetResource copyResourceDataset;
   private GcpBigQueryDatasetResource privateDataset;
   private GcpGcsBucketResource sourceBucketReference;
+  private GcpGcsBucketFileResource sourceBucketFileReference;
   private String copyDefinitionDatasetName;
   private String copyResourceDatasetName;
   private String nameSuffix;
@@ -195,6 +197,13 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             referencedGcpResourceApi,
             getWorkspaceId(),
             bucketReferenceName,
+            CloningInstructionsEnum.REFERENCE);
+
+    sourceBucketFileReference =
+        ResourceMaker.makeGcsBucketFileReference(
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            "a reference to hello_world.txt",
             CloningInstructionsEnum.REFERENCE);
 
     // create reference to BQ dataset with COPY_NOTHING
@@ -437,6 +446,25 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(StewardshipType.REFERENCED, bucketReferenceDetails.getStewardshipType());
     assertNotNull(bucketReferenceDetails.getDestinationResourceId());
     assertNull(bucketReferenceDetails.getErrorMessage());
+
+    final ResourceCloneDetails bucketFileReferenceDetails =
+        getOrFail(
+            cloneResult.getWorkspace().getResources().stream()
+                .filter(
+                    r ->
+                        sourceBucketFileReference
+                            .getMetadata()
+                            .getResourceId()
+                            .equals(r.getSourceResourceId()))
+                .findFirst());
+    logger.info(bucketFileReferenceDetails.toString());
+    assertEquals(CloneResourceResult.SUCCEEDED, bucketFileReferenceDetails.getResult());
+    assertEquals(
+        CloningInstructionsEnum.REFERENCE, bucketFileReferenceDetails.getCloningInstructions());
+    assertEquals(ResourceType.GCS_BUCKET_FILE, bucketFileReferenceDetails.getResourceType());
+    assertEquals(StewardshipType.REFERENCED, bucketFileReferenceDetails.getStewardshipType());
+    assertNotNull(bucketFileReferenceDetails.getDestinationResourceId());
+    assertNull(bucketFileReferenceDetails.getErrorMessage());
 
     final ResourceCloneDetails datasetReferenceDetails =
         getOrFail(
