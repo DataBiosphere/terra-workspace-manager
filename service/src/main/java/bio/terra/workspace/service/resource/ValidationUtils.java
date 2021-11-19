@@ -125,7 +125,7 @@ public class ValidationUtils {
         .contains(region)) {
       logger.warn("Invalid Azure region {}", region);
       throw new InvalidReferenceException(
-          "Invalid Azure Regon specified. See the class `com.azure.core.management.Region`");
+          "Invalid Azure Region specified. See the class `com.azure.core.management.Region`");
     }
   }
 }
