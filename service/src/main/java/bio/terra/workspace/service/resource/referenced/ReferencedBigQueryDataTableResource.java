@@ -36,7 +36,7 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
    * @param cloningInstructions cloning instructions
    * @param projectId google project id
    * @param datasetId BigQuery dataset name
-   * @param dataTableName BigQuery dataset's data table name
+   * @param dataTableId BigQuery dataset's data table name
    */
   @JsonCreator
   public ReferencedBigQueryDataTableResource(
@@ -47,11 +47,11 @@ public class ReferencedBigQueryDataTableResource extends ReferencedResource {
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("projectId") String projectId,
       @JsonProperty("datasetId") String datasetId,
-      @JsonProperty("dataTableName") String dataTableName) {
+      @JsonProperty("dataTableId") String dataTableId) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
     this.projectId = projectId;
     this.datasetId = datasetId;
-    this.dataTableId = dataTableName;
+    this.dataTableId = dataTableId;
     validate();
   }
 
