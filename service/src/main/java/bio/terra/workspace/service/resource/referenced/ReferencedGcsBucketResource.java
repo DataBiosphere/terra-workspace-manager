@@ -9,6 +9,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -96,7 +97,13 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
   @Override
   public boolean checkAccess(FlightBeanBag context, AuthenticatedUserRequest userRequest) {
     CrlService crlService = context.getCrlService();
-    return crlService.canReadGcsBucket(bucketName, userRequest);
+    PetSaService petSaService = context.getPetSaService();
+    // If the resource's workspace has a GCP cloud context, use the SA from that context. Otherwise,
+    // use the provided credentials. This cannot use arbitrary pet SA credentials, as they may not
+    // have the Storage APIs enabled.
+    Optional<AuthenticatedUserRequest> maybePetCreds =
+        petSaService.getWorkspacePetCredentials(getWorkspaceId(), userRequest);
+    return crlService.canReadGcsBucket(bucketName, maybePetCreds.orElse(userRequest));
   }
 
   /**
