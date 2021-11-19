@@ -14,7 +14,7 @@ public class AzureConfiguration {
   private String managedAppClientSecret;
   private String managedAppTenantId;
 
-  private String customDockerImageId;
+  private String customImageId;
 
   public void setManagedAppClientId(String managedAppClientId) {
     this.managedAppClientId = managedAppClientId;
@@ -41,10 +41,10 @@ public class AzureConfiguration {
   }
 
   public String getCustomDockerImageId() {
-    return customDockerImageId;
+    return customImageId;
   }
 
   public void setCustomDockerImageId(String customDockerImageId) {
-    this.customDockerImageId = customDockerImageId;
+    this.customImageId = customImageId;
   }
 }

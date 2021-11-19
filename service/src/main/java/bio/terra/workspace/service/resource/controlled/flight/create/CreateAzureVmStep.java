@@ -26,6 +26,7 @@ import com.azure.resourcemanager.network.models.NetworkSecurityGroup;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
 import com.azure.resourcemanager.network.models.SecurityRuleProtocol;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -91,6 +92,9 @@ public class CreateAzureVmStep implements Step {
               .getByResourceGroup(
                   azureCloudContext.getAzureResourceGroupId(), ipResource.getIpName());
 
+      String imageUrl =
+          Optional.ofNullable(resource.getVmImageUri())
+              .orElse(azureConfig.getCustomDockerImageId());
       computeManager
           .virtualMachines()
           .define(resource.getVmName())
@@ -119,7 +123,7 @@ public class CreateAzureVmStep implements Step {
                       .setSubnetName(subnetName)
                       .setDisk(existingAzureDisk)
                       .setPublicIpAddress(existingAzureIp)
-                      .setImage(azureConfig.getCustomDockerImageId())
+                      .setImage(imageUrl)
                       .build()));
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
