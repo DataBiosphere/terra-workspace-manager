@@ -72,7 +72,7 @@ public class WorkspaceCloneUtils {
                 name,
                 description);
         break;
-      case BIG_QUERY_DATATABLE:
+      case BIQ_QUERY_DATA_TABLE:
         destinationResource =
             buildDestinationBigQueryDataTableReference(
                 sourceReferencedResource.castToBigQueryDataTableResource(),

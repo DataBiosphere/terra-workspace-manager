@@ -182,7 +182,7 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> deleteBigQueryDataTableReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     referenceResourceService.deleteReferenceResourceForResourceType(
-        workspaceId, resourceId, userRequest, WsmResourceType.BIG_QUERY_DATATABLE);
+        workspaceId, resourceId, userRequest, WsmResourceType.BIQ_QUERY_DATA_TABLE);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

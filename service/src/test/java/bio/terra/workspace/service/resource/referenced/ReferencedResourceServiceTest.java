@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
@@ -571,7 +570,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
         ReferencedBigQueryDataTableResource resource =
             referenceResource.castToBigQueryDataTableResource();
-        assertEquals(resource.getResourceType(), WsmResourceType.BIG_QUERY_DATATABLE);
+        assertEquals(resource.getResourceType(), WsmResourceType.BIQ_QUERY_DATA_TABLE);
         assertEquals(resource.getDataTableName(), DATATABLE_NAME);
         assertEquals(resource.getDatasetName(), DATASET_NAME);
 
@@ -597,23 +596,43 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             workspaceId,
             referenceResource.getResourceId(),
             USER_REQUEST,
-            WsmResourceType.BIG_QUERY_DATATABLE);
+            WsmResourceType.BIQ_QUERY_DATA_TABLE);
       }
 
       @Test
-      void bigQueryDataTableReference_deleteWithWrongType_throwsException() {
+      void bigQueryDataTableReference_deleteWithWrongTypeThenRightType_doesNotDeleteFirstTime() {
         referenceResource = makeBigQueryDataTableResource();
 
-        referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
+        ReferencedResource resultReferenceResource =
+            referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
+        ReferencedBigQueryDataTableResource resultResource =
+            resultReferenceResource.castToBigQueryDataTableResource();
 
+        referenceResourceService.deleteReferenceResourceForResourceType(
+            workspaceId,
+            referenceResource.getResourceId(),
+            USER_REQUEST,
+            WsmResourceType.BIG_QUERY_DATASET);
+
+        // Fail to delete the resource the first time with the wrong resource type.
+        ReferencedResource resource =
+            referenceResourceService.getReferenceResource(
+                workspaceId, referenceResource.getResourceId(), USER_REQUEST);
+        assertEquals(
+            referenceResource.castToBigQueryDataTableResource(),
+            resource.castToBigQueryDataTableResource());
+
+        referenceResourceService.deleteReferenceResourceForResourceType(
+            workspaceId,
+            referenceResource.getResourceId(),
+            USER_REQUEST,
+            WsmResourceType.BIQ_QUERY_DATA_TABLE);
+        // BQ data table is successfully deleted.
         assertThrows(
-            BadRequestException.class,
+            ResourceNotFoundException.class,
             () ->
-                referenceResourceService.deleteReferenceResourceForResourceType(
-                    workspaceId,
-                    referenceResource.getResourceId(),
-                    USER_REQUEST,
-                    WsmResourceType.BIG_QUERY_DATASET));
+                referenceResourceService.getReferenceResource(
+                    workspaceId, referenceResource.getResourceId(), USER_REQUEST));
       }
 
       @Test

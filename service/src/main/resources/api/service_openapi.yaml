@@ -3111,7 +3111,7 @@ components:
       enum:
         - AI_NOTEBOOK
         - BIG_QUERY_DATASET
-        - BIG_QUERY_DATATABLE
+        - BIG_QUERY_DATA_TABLE
         - DATA_REPO_SNAPSHOT
         - GCS_BUCKET
 

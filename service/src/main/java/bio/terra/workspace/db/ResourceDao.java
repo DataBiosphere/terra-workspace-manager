@@ -642,7 +642,7 @@ public class ResourceDao {
             return new ReferencedGcsBucketResource(dbResource);
           case BIG_QUERY_DATASET:
             return new ReferencedBigQueryDatasetResource(dbResource);
-          case BIG_QUERY_DATATABLE:
+          case BIQ_QUERY_DATA_TABLE:
             return new ReferencedBigQueryDataTableResource(dbResource);
           case DATA_REPO_SNAPSHOT:
             return new ReferencedDataRepoSnapshotResource(dbResource);
