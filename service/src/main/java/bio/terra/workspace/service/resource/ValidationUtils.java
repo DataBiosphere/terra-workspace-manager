@@ -98,8 +98,8 @@ public class ValidationUtils {
           "Invalid GCS bucket name specified. Bucket names cannot have prefix goog. See Google documentation https://cloud.google.com/storage/docs/naming-buckets#requirements for the full specification.");
     }
     for (String google : GOOGLE_NAMES) {
-      logger.warn("Invalid bucket name {}", name);
       if (name.contains(google)) {
+        logger.warn("Invalid bucket name {}", name);
         throw new InvalidNameException(
             "Invalid GCS bucket name specified. Bucket names cannot contains google or mis-spelled google. See Google documentation https://cloud.google.com/storage/docs/naming-buckets#requirements for the full specification.");
       }
