@@ -439,8 +439,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                 workspaceId, resource.getName(), USER_REQUEST);
         assertEquals(byid.castToGcsBucketFileResource(), byname.castToGcsBucketFileResource());
 
-        referenceResourceService.deleteReferenceResource(
-            workspaceId, referenceResource.getResourceId(), USER_REQUEST);
+        referenceResourceService.deleteReferenceResourceForResourceType(
+            workspaceId,
+            referenceResource.getResourceId(),
+            USER_REQUEST,
+            WsmResourceType.GCS_BUCKET_FILE);
       }
 
       private ReferencedGcsBucketResource makeGcsBucketResource() {
