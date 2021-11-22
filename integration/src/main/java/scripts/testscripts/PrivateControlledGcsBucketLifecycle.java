@@ -158,8 +158,10 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
 
     // Private resource user can write object to bucket
     Blob createdBlob =
-        privateUserStorageClient.create(
-            blobInfo, GCS_BLOB_CONTENT.getBytes(StandardCharsets.UTF_8));
+        ClientTestUtils.getWithRetryOnException(
+            () ->
+                privateUserStorageClient.create(
+                    blobInfo, GCS_BLOB_CONTENT.getBytes(StandardCharsets.UTF_8)));
     logger.info("Private resource user can write {} to private resource", blobInfo.getName());
 
     // Private user can read their bucket

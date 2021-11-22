@@ -52,7 +52,8 @@ public class DeleteGcpContextWithControlledResource extends WorkspaceAllocateTes
     // Create a referenced BigQuery dataset
     String resourceName = "my-resource-name-" + UUID.randomUUID().toString();
     GcpBigQueryDatasetResource referencedDataset =
-        ResourceMaker.makeBigQueryReference(referencedResourceApi, getWorkspaceId(), resourceName);
+        ResourceMaker.makeBigQueryDatasetReference(
+            referencedResourceApi, getWorkspaceId(), resourceName);
     UUID referencedResourceId = referencedDataset.getMetadata().getResourceId();
     logger.info("Created referenced dataset {}", referencedResourceId);
 

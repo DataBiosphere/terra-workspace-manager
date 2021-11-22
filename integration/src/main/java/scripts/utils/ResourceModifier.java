@@ -51,16 +51,24 @@ public class ResourceModifier {
 
   private static final Logger logger = LoggerFactory.getLogger(ResourceModifier.class);
 
+  /**
+   * Add a simple text file to a GCS bucket.
+   *
+   * <p>This method retries on all GCP exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create a file in the bucket).
+   */
   public static Blob addFileToBucket(
       CreatedControlledGcpGcsBucket bucket, TestUserSpecification bucketWriter, String gcpProjectId)
-      throws IOException {
+      throws IOException, InterruptedException {
     final Storage sourceOwnerStorageClient =
         ClientTestUtils.getGcpStorageClient(bucketWriter, gcpProjectId);
     final BlobId blobId =
         BlobId.of(bucket.getGcpBucket().getAttributes().getBucketName(), GCS_BLOB_NAME);
     final BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build();
-    return sourceOwnerStorageClient.create(
-        blobInfo, GCS_BLOB_CONTENT.getBytes(StandardCharsets.UTF_8));
+    return ClientTestUtils.getWithRetryOnException(
+        () ->
+            sourceOwnerStorageClient.create(
+                blobInfo, GCS_BLOB_CONTENT.getBytes(StandardCharsets.UTF_8)));
   }
 
   public static Blob retrieveBucketFile(
@@ -79,6 +87,9 @@ public class ResourceModifier {
   /**
    * Create two tables with multiple rows in them into the provided dataset. Uses a mixture of
    * streaming and DDL insertion to demonstrate the difference in copy job behavior.
+   *
+   * <p>This method retries on all GCP exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create tables in a dataset).
    *
    * @param dataset - empty BigQuery dataset
    * @param ownerUser - User who owns the dataset
@@ -103,7 +114,8 @@ public class ResourceModifier {
         TableInfo.newBuilder(employeeTableId, StandardTableDefinition.of(employeeSchema))
             .setFriendlyName("Employee")
             .build();
-    final Table createdEmployeeTable = bigQueryClient.create(employeeTableInfo);
+    final Table createdEmployeeTable =
+        ClientTestUtils.getWithRetryOnException(() -> bigQueryClient.create(employeeTableInfo));
     logger.debug("Employee Table: {}", createdEmployeeTable);
 
     final Table createdDepartmentTable =
