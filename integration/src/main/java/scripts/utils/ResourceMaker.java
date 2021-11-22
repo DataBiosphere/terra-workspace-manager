@@ -60,7 +60,8 @@ public class ResourceMaker {
   private static final long DELETE_BUCKET_POLL_SECONDS = 15;
 
   public static GcpBigQueryDatasetResource makeBigQueryReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name) throws ApiException {
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
+      throws ApiException, InterruptedException {
 
     var body =
         new CreateGcpBigQueryDatasetReferenceRequestBody()
@@ -74,11 +75,13 @@ public class ResourceMaker {
                     .datasetId(TEST_BQ_DATASET_NAME)
                     .projectId(TEST_BQ_DATASET_PROJECT));
 
-    return resourceApi.createBigQueryDatasetReference(body, workspaceId);
+    return ClientTestUtils.getWithRetryOnException(
+        () -> resourceApi.createBigQueryDatasetReference(body, workspaceId));
   }
 
   public static GcpBigQueryDataTableResource makeBigQueryDataTableReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name) throws ApiException {
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
+      throws ApiException, InterruptedException {
 
     var body =
         new CreateGcpBigQueryDataTableReferenceRequestBody()
@@ -93,7 +96,8 @@ public class ResourceMaker {
                     .projectId(TEST_BQ_DATASET_PROJECT)
                     .dataTableId(TEST_BQ_DATATABLE_NAME));
 
-    return resourceApi.createBigQueryDataTableReference(body, workspaceId);
+    return ClientTestUtils.getWithRetryOnException(
+        () -> resourceApi.createBigQueryDataTableReference(body, workspaceId));
   }
 
   public static DataRepoSnapshotResource makeDataRepoSnapshotReference(
@@ -102,7 +106,7 @@ public class ResourceMaker {
       String name,
       String dataRepoSnapshotId,
       String dataRepoInstanceName)
-      throws ApiException {
+      throws ApiException, InterruptedException {
 
     var body =
         new CreateDataRepoSnapshotReferenceRequestBody()
@@ -116,7 +120,8 @@ public class ResourceMaker {
                     .snapshot(dataRepoSnapshotId)
                     .instanceName(dataRepoInstanceName));
 
-    return resourceApi.createDataRepoSnapshotReference(body, workspaceId);
+    return ClientTestUtils.getWithRetryOnException(
+        () -> resourceApi.createDataRepoSnapshotReference(body, workspaceId));
   }
 
   public static GcpGcsBucketResource makeGcsBucketReference(
@@ -124,7 +129,7 @@ public class ResourceMaker {
       UUID workspaceId,
       String name,
       @Nullable CloningInstructionsEnum cloningInstructions)
-      throws ApiException {
+      throws ApiException, InterruptedException {
 
     var body =
         new CreateGcpGcsBucketReferenceRequestBody()
@@ -137,11 +142,13 @@ public class ResourceMaker {
                     .name(name))
             .bucket(new GcpGcsBucketAttributes().bucketName(TEST_BUCKET_NAME));
 
-    return resourceApi.createBucketReference(body, workspaceId);
+    return ClientTestUtils.getWithRetryOnException(
+        () -> resourceApi.createBucketReference(body, workspaceId));
   }
 
   public static GcpGcsBucketResource makeGcsBucketReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name) throws ApiException {
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
+      throws ApiException, InterruptedException {
     return makeGcsBucketReference(resourceApi, workspaceId, name, null);
   }
 
