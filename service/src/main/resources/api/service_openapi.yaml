@@ -3113,10 +3113,10 @@ components:
 
     GcpGcsBucketFileAttributes:
       description: >-
-        Bucket properties included in post-creation, get, and update. Others must be
+        Bucket file properties included in post-creation, get, and update. Others must be
         retrieved from GCS using the name.
       type: object
-      required: [ bucketName ]
+      required: [ bucketName, fileName ]
       properties:
         bucketName:
           description: Name of created bucket (not the resource name).

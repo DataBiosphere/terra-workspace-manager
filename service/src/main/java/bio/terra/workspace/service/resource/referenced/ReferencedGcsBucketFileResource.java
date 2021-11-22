@@ -32,6 +32,7 @@ public class ReferencedGcsBucketFileResource extends ReferencedResource {
    * @param description description - may be null
    * @param cloningInstructions cloning instructions
    * @param bucketName bucket name
+   * @param fileName name for the file in the bucket
    */
   @JsonCreator
   public ReferencedGcsBucketFileResource(
@@ -94,7 +95,7 @@ public class ReferencedGcsBucketFileResource extends ReferencedResource {
   public void validate() {
     super.validate();
     if (getResourceType() != WsmResourceType.GCS_BUCKET_FILE) {
-      throw new InconsistentFieldsException("Expected GCS_BUCKET");
+      throw new InconsistentFieldsException("Expected GCS_BUCKET_FILE");
     }
     if (Strings.isNullOrEmpty(getBucketName()) || Strings.isNullOrEmpty(getFileName())) {
       throw new MissingRequiredFieldException(

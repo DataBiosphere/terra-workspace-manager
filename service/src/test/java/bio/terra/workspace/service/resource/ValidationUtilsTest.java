@@ -193,16 +193,12 @@ public class ValidationUtilsTest extends BaseUnitTest {
 
   @Test
   public void validateBucketFileName_disallowName_throwException() {
-    String file = ".";
-
-    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateBucketFileName(file));
+    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateBucketFileName("."));
   }
 
   @Test
-  public void validateBucketFileName_emptyString_throwsException() {
-    String file = "";
-
-    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateBucketFileName(file));
+  public void validateBucketFileName_emptyOrNullString_throwsException() {
+    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateBucketFileName(""));
   }
 
   @Test
@@ -210,6 +206,15 @@ public class ValidationUtilsTest extends BaseUnitTest {
     String file = ".well-known/acme-challenge/hello.txt";
 
     assertThrows(InvalidNameException.class, () -> ValidationUtils.validateBucketFileName(file));
+  }
+
+  @Test
+  public void validateBucketFileName_fileNameTooLong_throwsException() {
+    assertThrows(
+        InvalidNameException.class,
+        () ->
+            ValidationUtils.validateBucketFileName(
+                RandomStringUtils.random(1025, /*letters=*/ true, /*numbers=*/ true)));
   }
 
   @Test
