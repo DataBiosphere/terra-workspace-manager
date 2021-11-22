@@ -119,7 +119,7 @@ public class CreateAzureVmStep implements Step {
                       .setSubnetName(subnetName)
                       .setDisk(existingAzureDisk)
                       .setPublicIpAddress(existingAzureIp)
-                      .setImage(azureConfig.getCustomDockerImageId())
+                      .setImage(resource.getVmImageUri())
                       .build()));
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
