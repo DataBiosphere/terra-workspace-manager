@@ -74,12 +74,12 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   // -- GSC Bucket file -- //
   @Override
   public ResponseEntity<ApiGcpGcsBucketFileResource> createBucketFileReference(
-      UUID id, @Valid ApiCreateGcpGcsBucketFileReferenceRequestBody body) {
+      UUID workspaceId, @Valid ApiCreateGcpGcsBucketFileReferenceRequestBody body) {
 
     // Construct a ReferenceGcsBucketResource object from the API input
     var resource =
         ReferencedGcsBucketFileResource.builder()
-            .workspaceId(id)
+            .workspaceId(workspaceId)
             .name(body.getMetadata().getName())
             .description(body.getMetadata().getDescription())
             .cloningInstructions(

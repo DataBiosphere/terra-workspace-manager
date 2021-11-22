@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.referenced;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -437,6 +438,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         ReferencedResource byname =
             referenceResourceService.getReferenceResourceByName(
                 workspaceId, resource.getName(), USER_REQUEST);
+        assertNotNull(byid.castToGcsBucketFileResource());
         assertEquals(byid.castToGcsBucketFileResource(), byname.castToGcsBucketFileResource());
 
         referenceResourceService.deleteReferenceResourceForResourceType(

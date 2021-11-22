@@ -3122,7 +3122,7 @@ components:
           description: Name of created bucket (not the resource name).
           type: string
         fileName:
-          description: Name of the file in the gcs bucket.
+          description: Full path to the file in the gcs bucket.
           type: string
 
     GcpGcsBucketFileResource:

@@ -18,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class ReferencedGcsBucketFileResource extends ReferencedResource {
   private final String bucketName;
@@ -28,7 +29,7 @@ public class ReferencedGcsBucketFileResource extends ReferencedResource {
    *
    * @param workspaceId workspace unique identifier
    * @param resourceId resource unique identifier
-   * @param name name - may be null
+   * @param name name - name of the referenced resource.
    * @param description description - may be null
    * @param cloningInstructions cloning instructions
    * @param bucketName bucket name
@@ -39,7 +40,7 @@ public class ReferencedGcsBucketFileResource extends ReferencedResource {
       @JsonProperty("workspaceId") UUID workspaceId,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
-      @JsonProperty("description") String description,
+      @JsonProperty("description") @Nullable String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("bucketName") String bucketName,
       @JsonProperty("fileName") String fileName) {
