@@ -210,18 +210,24 @@ public class ValidationUtils {
   }
 
   public static void validateAzureVmSize(String vmSize) {
-    if (!VirtualMachineSizeTypes.values().stream().map(x -> x.toString()).collect(Collectors.toList()).contains(vmSize)) {
+    if (!VirtualMachineSizeTypes.values().stream()
+        .map(x -> x.toString())
+        .collect(Collectors.toList())
+        .contains(vmSize)) {
       logger.warn("Invalid Azure vmSize {}", vmSize);
       throw new InvalidReferenceException(
-              "Invalid Azure vm size specified. See the class `com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes`");
+          "Invalid Azure vm size specified. See the class `com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes`");
     }
   }
 
   public static void validateRegion(String region) {
-    if (!Region.values().stream().map(x -> x.toString()).collect(Collectors.toList()).contains(region)) {
+    if (!Region.values().stream()
+        .map(x -> x.toString())
+        .collect(Collectors.toList())
+        .contains(region)) {
       logger.warn("Invalid Azure region {}", region);
       throw new InvalidReferenceException(
-              "Invalid Azure Regon specified. See the class `com.azure.core.management.Region`");
+          "Invalid Azure Region specified. See the class `com.azure.core.management.Region`");
     }
   }
 }
