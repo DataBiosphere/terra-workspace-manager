@@ -51,6 +51,12 @@ public class ResourceModifier {
 
   private static final Logger logger = LoggerFactory.getLogger(ResourceModifier.class);
 
+  /**
+   * Add a simple text file to a GCS bucket.
+   *
+   * <p>This method retries on all GCP exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create a file in the bucket).
+   */
   public static Blob addFileToBucket(
       CreatedControlledGcpGcsBucket bucket, TestUserSpecification bucketWriter, String gcpProjectId)
       throws IOException, InterruptedException {
@@ -81,6 +87,9 @@ public class ResourceModifier {
   /**
    * Create two tables with multiple rows in them into the provided dataset. Uses a mixture of
    * streaming and DDL insertion to demonstrate the difference in copy job behavior.
+   *
+   * <p>This method retries on all GCP exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create tables in a dataset).
    *
    * @param dataset - empty BigQuery dataset
    * @param ownerUser - User who owns the dataset

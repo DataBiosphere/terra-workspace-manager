@@ -59,6 +59,12 @@ public class ResourceMaker {
   private static final Logger logger = LoggerFactory.getLogger(ResourceMaker.class);
   private static final long DELETE_BUCKET_POLL_SECONDS = 15;
 
+  /**
+   * Calls WSM to create a referenced BigQuery dataset in the specified workspace.
+   *
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create a reference).
+   */
   public static GcpBigQueryDatasetResource makeBigQueryDatasetReference(
       ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
       throws ApiException, InterruptedException {
@@ -79,6 +85,12 @@ public class ResourceMaker {
         () -> resourceApi.createBigQueryDatasetReference(body, workspaceId));
   }
 
+  /**
+   * Calls WSM to create a referenced BigQuery table in the specified workspace.
+   *
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create a reference).
+   */
   public static GcpBigQueryDataTableResource makeBigQueryDataTableReference(
       ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
       throws ApiException, InterruptedException {
@@ -100,6 +112,7 @@ public class ResourceMaker {
         () -> resourceApi.createBigQueryDataTableReference(body, workspaceId));
   }
 
+  /** Calls WSM to create a referenced TDR snapshot in the specified workspace. */
   public static DataRepoSnapshotResource makeDataRepoSnapshotReference(
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,
@@ -123,6 +136,12 @@ public class ResourceMaker {
     return resourceApi.createDataRepoSnapshotReference(body, workspaceId);
   }
 
+  /**
+   * Calls WSM to create a referenced GCS bucket in the specified workspace.
+   *
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create a reference).
+   */
   public static GcpGcsBucketResource makeGcsBucketReference(
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,
