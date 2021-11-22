@@ -437,8 +437,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         ReferencedResource byname =
             referenceResourceService.getReferenceResourceByName(
                 workspaceId, resource.getName(), USER_REQUEST);
-        assertEquals(
-            byid.castToGcsBucketFileResource(), byname.castToGcsBucketFileResource());
+        assertEquals(byid.castToGcsBucketFileResource(), byname.castToGcsBucketFileResource());
 
         referenceResourceService.deleteReferenceResource(
             workspaceId, referenceResource.getResourceId(), USER_REQUEST);
