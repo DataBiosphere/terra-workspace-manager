@@ -8,7 +8,6 @@ import com.azure.core.management.Region;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,18 +108,24 @@ public class ValidationUtils {
   }
 
   public static void validateAzureVmSize(String vmSize) {
-    if (!VirtualMachineSizeTypes.values().stream().map(x -> x.toString()).collect(Collectors.toList()).contains(vmSize)) {
+    if (!VirtualMachineSizeTypes.values().stream()
+        .map(x -> x.toString())
+        .collect(Collectors.toList())
+        .contains(vmSize)) {
       logger.warn("Invalid Azure vmSize {}", vmSize);
       throw new InvalidReferenceException(
-              "Invalid Azure vm size specified. See the class `com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes`");
+          "Invalid Azure vm size specified. See the class `com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes`");
     }
   }
 
   public static void validateRegion(String region) {
-    if (!Region.values().stream().map(x -> x.toString()).collect(Collectors.toList()).contains(region)) {
+    if (!Region.values().stream()
+        .map(x -> x.toString())
+        .collect(Collectors.toList())
+        .contains(region)) {
       logger.warn("Invalid Azure region {}", region);
       throw new InvalidReferenceException(
-              "Invalid Azure Regon specified. See the class `com.azure.core.management.Region`");
+          "Invalid Azure Region specified. See the class `com.azure.core.management.Region`");
     }
   }
 }

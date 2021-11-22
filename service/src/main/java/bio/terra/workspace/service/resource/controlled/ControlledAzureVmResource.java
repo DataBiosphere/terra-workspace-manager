@@ -170,7 +170,7 @@ public class ControlledAzureVmResource extends ControlledResource {
     }
 
     ValidationUtils.validateAzureResourceName(getVmName());
-    ValidationUtils.validateAzureVmSize(getVmName());
+    ValidationUtils.validateAzureVmSize(getVmSize());
     ValidationUtils.validateRegion(getRegion());
   }
 

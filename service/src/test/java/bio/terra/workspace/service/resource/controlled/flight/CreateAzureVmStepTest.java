@@ -158,7 +158,6 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
             any(AzureCloudContext.class), any(AzureConfiguration.class)))
         .thenReturn(mockComputeManager);
     when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
-    when(mockAzureConfig.getCustomDockerImageId()).thenReturn(STUB_STRING_RETURN);
 
     when(mockComputeManager.virtualMachines()).thenReturn(mockVms);
 
@@ -284,7 +283,8 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
             // create vm request
             .setSubnetName(requestDataOpt.get().subnetName())
             .setPublicIpAddress(mockPublicIpAddress)
-            .setImage(STUB_STRING_RETURN)
+            .setImage(
+                "/subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.0.4")
             .build();
 
     assertThat(requestDataOpt, equalTo(Optional.of(expected)));
