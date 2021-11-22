@@ -138,12 +138,12 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
             .destinationWorkspaceId(destinationWorkspaceId);
     logger.info(
         "Cloning GCS Bucket file Reference\n\tworkspaceId: {}\n\tresourceId: {}\ninto\n\tworkspaceId: {}",
-        sourceBucketReference.getMetadata().getWorkspaceId(),
-        sourceBucketReference.getMetadata().getResourceId(),
+        sourceBucketFileReference.getMetadata().getWorkspaceId(),
+        sourceBucketFileReference.getMetadata().getResourceId(),
         destinationWorkspaceId);
     final CloneReferencedGcpGcsBucketFileResourceResult cloneBucketFileReferenceResult =
         referencedGcpResourceApi.cloneGcpGcsBucketFileReference(
-            cloneBucketReferenceRequestBody,
+            cloneBucketFileReferenceRequestBody,
             getWorkspaceId(),
             sourceBucketReference.getMetadata().getResourceId());
     assertEquals(getWorkspaceId(), cloneBucketFileReferenceResult.getSourceWorkspaceId());

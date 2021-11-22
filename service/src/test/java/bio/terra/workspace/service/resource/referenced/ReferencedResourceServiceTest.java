@@ -416,16 +416,16 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       @Test
       void gcsBucketFileReference() {
         referenceResource = makeGcsBucketFileResource();
-        assertThat(referenceResource.getStewardshipType(), equalTo(StewardshipType.REFERENCED));
+        assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
         ReferencedGcsBucketFileResource resource = referenceResource.castToGcsBucketFileResource();
-        assertThat(resource.getResourceType(), equalTo(WsmResourceType.GCS_BUCKET_FILE));
+        assertEquals(resource.getResourceType(), WsmResourceType.GCS_BUCKET_FILE);
 
         ReferencedResource resultReferenceResource =
             referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
         ReferencedGcsBucketFileResource resultResource =
             resultReferenceResource.castToGcsBucketFileResource();
-        assertThat(resource, equalTo(resultResource));
+        assertEquals(resource, resultResource);
 
         assertTrue(
             referenceResourceService.checkAccess(
@@ -437,8 +437,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         ReferencedResource byname =
             referenceResourceService.getReferenceResourceByName(
                 workspaceId, resource.getName(), USER_REQUEST);
-        assertThat(
-            byid.castToGcsBucketFileResource(), equalTo(byname.castToGcsBucketFileResource()));
+        assertEquals(
+            byid.castToGcsBucketFileResource(), byname.castToGcsBucketFileResource());
 
         referenceResourceService.deleteReferenceResource(
             workspaceId, referenceResource.getResourceId(), USER_REQUEST);
