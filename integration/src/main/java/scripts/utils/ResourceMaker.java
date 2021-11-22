@@ -59,7 +59,7 @@ public class ResourceMaker {
   private static final Logger logger = LoggerFactory.getLogger(ResourceMaker.class);
   private static final long DELETE_BUCKET_POLL_SECONDS = 15;
 
-  public static GcpBigQueryDatasetResource makeBigQueryReference(
+  public static GcpBigQueryDatasetResource makeBigQueryDatasetReference(
       ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
       throws ApiException, InterruptedException {
 
@@ -106,7 +106,7 @@ public class ResourceMaker {
       String name,
       String dataRepoSnapshotId,
       String dataRepoInstanceName)
-      throws ApiException, InterruptedException {
+      throws ApiException {
 
     var body =
         new CreateDataRepoSnapshotReferenceRequestBody()
@@ -120,8 +120,7 @@ public class ResourceMaker {
                     .snapshot(dataRepoSnapshotId)
                     .instanceName(dataRepoInstanceName));
 
-    return ClientTestUtils.getWithRetryOnException(
-        () -> resourceApi.createDataRepoSnapshotReference(body, workspaceId));
+    return resourceApi.createDataRepoSnapshotReference(body, workspaceId);
   }
 
   public static GcpGcsBucketResource makeGcsBucketReference(
