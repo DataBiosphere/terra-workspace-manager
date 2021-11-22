@@ -11,6 +11,7 @@ import bio.terra.workspace.service.buffer.exception.BufferServiceAPIException;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAuthorizationException;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
+import javax.ws.rs.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,14 +24,16 @@ public class BufferService {
   private final Logger logger = LoggerFactory.getLogger(BufferService.class);
 
   private final BufferServiceConfiguration bufferServiceConfiguration;
+  private final Client commonHttpClient;
 
   @Autowired
   public BufferService(BufferServiceConfiguration bufferServiceConfiguration) {
     this.bufferServiceConfiguration = bufferServiceConfiguration;
+    this.commonHttpClient = new ApiClient().getHttpClient();
   }
 
   private ApiClient getApiClient(String accessToken) {
-    ApiClient client = new ApiClient();
+    ApiClient client = new ApiClient().setHttpClient(commonHttpClient);
     client.setAccessToken(accessToken);
     return client;
   }
