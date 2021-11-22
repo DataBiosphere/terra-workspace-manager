@@ -97,7 +97,8 @@ public class ReferencedGcsBucketFileResource extends ReferencedResource {
       throw new InconsistentFieldsException("Expected GCS_BUCKET");
     }
     if (Strings.isNullOrEmpty(getBucketName()) || Strings.isNullOrEmpty(getFileName())) {
-      throw new MissingRequiredFieldException("Missing required field for ReferenceGcsBucket.");
+      throw new MissingRequiredFieldException(
+          "Missing required field for ReferenceGcsBucketFileResource.");
     }
     ValidationUtils.validateBucketName(getBucketName());
     ValidationUtils.validateBucketFileName(getFileName());
@@ -124,6 +125,7 @@ public class ReferencedGcsBucketFileResource extends ReferencedResource {
   public Builder toBuilder() {
     return builder()
         .bucketName(getBucketName())
+        .fileName(getFileName())
         .cloningInstructions(getCloningInstructions())
         .description(getDescription())
         .name(getName())

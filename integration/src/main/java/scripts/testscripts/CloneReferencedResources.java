@@ -58,6 +58,8 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
     ApiClient apiClient = ClientTestUtils.getClientForTestUser(testUsers.get(0), server);
     referencedGcpResourceApi = new ReferencedGcpResourceApi(apiClient);
     String bucketReferenceName = RandomStringUtils.random(16, true, false);
+    String bucketFileReferenceName =
+        RandomStringUtils.random(1024, /*letters=*/ true, /*numbers=*/ true);
 
     // create reference to existing test bucket
     sourceBucketReference =
@@ -66,7 +68,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
 
     sourceBucketFileReference =
         ResourceMaker.makeGcsBucketFileReference(
-            referencedGcpResourceApi, getWorkspaceId(), bucketReferenceName);
+            referencedGcpResourceApi, getWorkspaceId(), bucketFileReferenceName);
 
     sourceBigQueryDatasetReference =
         ResourceMaker.makeBigQueryReference(
@@ -145,7 +147,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         referencedGcpResourceApi.cloneGcpGcsBucketFileReference(
             cloneBucketFileReferenceRequestBody,
             getWorkspaceId(),
-            sourceBucketReference.getMetadata().getResourceId());
+            sourceBucketFileReference.getMetadata().getResourceId());
     assertEquals(getWorkspaceId(), cloneBucketFileReferenceResult.getSourceWorkspaceId());
     assertEquals(
         StewardshipType.REFERENCED,
@@ -154,17 +156,20 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         ResourceType.GCS_BUCKET_FILE,
         cloneBucketFileReferenceResult.getResource().getMetadata().getResourceType());
     assertEquals(
-        sourceBucketReference.getMetadata().getResourceId(),
+        sourceBucketFileReference.getMetadata().getResourceId(),
         cloneBucketFileReferenceResult.getSourceResourceId());
     assertEquals(
-        sourceBucketReference.getMetadata().getDescription(),
+        sourceBucketFileReference.getMetadata().getDescription(),
         cloneBucketFileReferenceResult.getResource().getMetadata().getDescription());
     assertEquals(
         CLONED_BUCKET_FILE_RESOURCE_NAME,
         cloneBucketFileReferenceResult.getResource().getMetadata().getName());
     assertEquals(
-        TEST_BUCKET_FILE_NAME,
+        TEST_BUCKET_NAME,
         cloneBucketFileReferenceResult.getResource().getAttributes().getBucketName());
+    assertEquals(
+        TEST_BUCKET_FILE_NAME,
+        cloneBucketFileReferenceResult.getResource().getAttributes().getFileName());
 
     final var cloneBigQueryDatasetRequestBody =
         new CloneReferencedResourceRequestBody()

@@ -126,13 +126,12 @@ public class WorkspaceCloneUtils {
   }
 
   private static ReferencedResource buildDestinationGcsBucketFileReference(
-      ReferencedGcsBucketFileResource sourceBucketResource,
+      ReferencedGcsBucketFileResource sourceBucketFileResource,
       UUID destinationWorkspaceId,
       @Nullable String name,
       @Nullable String description) {
-
     final ReferencedGcsBucketFileResource.Builder resultBuilder =
-        sourceBucketResource.toBuilder()
+        sourceBucketFileResource.toBuilder()
             .workspaceId(destinationWorkspaceId)
             .resourceId(UUID.randomUUID());
     // apply optional override variables
