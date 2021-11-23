@@ -1,18 +1,18 @@
 {
-  "name": "ControlledBigQueryDatasetLifecycle",
-  "description": "CRUD controlled BQ dataset tests.",
+  "name": "ControlledApplicationLifecycle",
+  "description": "Controlled application resource tests.",
   "serverSpecificationFile": "workspace-local.json",
   "kubernetes": {},
   "application": {},
   "testScripts": [
     {
-      "name": "ControlledBigQueryDatasetLifecycle",
+      "name": "ControlledApplicationSharedGcsBucketLifecycle",
       "numberOfUserJourneyThreadsToRun": 1,
       "userJourneyThreadPoolSize": 1,
-      "expectedTimeForEach": 30,
+      "expectedTimeForEach": 10,
       "expectedTimeForEachUnit": "MINUTES",
       "parameters": ["wm-default-spend-profile"]
     }
   ],
-  "testUserFiles": ["bella.json", "elijah.json", "liam.json"]
+  "testUserFiles": ["bella.json", "elijah.json", "liam.json", "wsmapp.json"]
 }

@@ -9,21 +9,16 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.iam.model.WsmIamRole;
-import bio.terra.workspace.service.resource.controlled.AccessScopeType;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
-import bio.terra.workspace.service.resource.controlled.flight.create.GcpPolicyBuilder;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.services.notebooks.v1.model.Binding;
 import com.google.api.services.notebooks.v1.model.Policy;
 import com.google.api.services.notebooks.v1.model.SetIamPolicyRequest;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -32,17 +27,23 @@ import org.slf4j.LoggerFactory;
 /** Step to sync Sam policy groups for the resource to GCP permissions. */
 public class NotebookCloudSyncStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(NotebookCloudSyncStep.class);
+  private final ControlledResourceService controlledResourceService;
   private final CrlService crlService;
   private final ControlledAiNotebookInstanceResource resource;
   private final GcpCloudContextService gcpCloudContextService;
+  private final AuthenticatedUserRequest userRequest;
 
   public NotebookCloudSyncStep(
+      ControlledResourceService controlledResourceService,
       CrlService crlService,
       ControlledAiNotebookInstanceResource resource,
-      GcpCloudContextService gcpCloudContextService) {
+      GcpCloudContextService gcpCloudContextService,
+      AuthenticatedUserRequest userRequest) {
+    this.controlledResourceService = controlledResourceService;
     this.crlService = crlService;
     this.resource = resource;
     this.gcpCloudContextService = gcpCloudContextService;
+    this.userRequest = userRequest;
   }
 
   @Override
@@ -71,35 +72,19 @@ public class NotebookCloudSyncStep implements Step {
   /**
    * Creates the bindings to set on the Notebook instance.
    *
-   * <p>{@link GcpPolicyBuilder} works in com.google.cloud.Policy objects, but these are not used by
-   * the notebooks API. Transform the com.google.cloud.Policy into a list of bindings to use for the
-   * GCP Notebooks API.
+   * <p>{@link
+   * bio.terra.workspace.service.resource.controlled.ControlledResourceService#configureGcpPolicyForResource}
+   * works in com.google.cloud.Policy objects, but these are not used by the notebooks API.
+   * Transform the com.google.cloud.Policy into a list of bindings to use for the GCP Notebooks API.
    */
-  private List<Binding> createBindings(String projectId, FlightMap workingMap) {
-    GcpPolicyBuilder policyBuilder =
-        new GcpPolicyBuilder(resource, projectId, com.google.cloud.Policy.newBuilder().build());
+  private List<Binding> createBindings(String projectId, FlightMap workingMap)
+      throws InterruptedException {
+    com.google.cloud.Policy currentPolicy = com.google.cloud.Policy.newBuilder().build();
+    com.google.cloud.Policy newPolicy =
+        controlledResourceService.configureGcpPolicyForResource(
+            resource, projectId, currentPolicy, userRequest);
 
-    // Read Sam groups for each workspace role.
-    Map<WsmIamRole, String> workspaceRoleGroupsMap =
-        workingMap.get(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, new TypeReference<>() {});
-    for (Map.Entry<WsmIamRole, String> entry : workspaceRoleGroupsMap.entrySet()) {
-      policyBuilder.addWorkspaceBinding(entry.getKey(), entry.getValue());
-    }
-
-    // Resources with permissions given to individual users (private or application managed) use
-    // the resource's Sam policies to manage those individuals, so they must be synced here.
-    // This section should also run for application managed resources, once those are supported.
-    if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
-      Map<ControlledResourceIamRole, String> resourceRoleGroupsMap =
-          workingMap.get(
-              WorkspaceFlightMapKeys.ControlledResourceKeys.IAM_RESOURCE_GROUP_EMAIL_MAP,
-              new TypeReference<>() {});
-      for (Map.Entry<ControlledResourceIamRole, String> entry : resourceRoleGroupsMap.entrySet()) {
-        policyBuilder.addResourceBinding(entry.getKey(), entry.getValue());
-      }
-    }
-    com.google.cloud.Policy gcpPolicy = policyBuilder.build();
-    return gcpPolicy.getBindingsList().stream()
+    return newPolicy.getBindingsList().stream()
         .map(NotebookCloudSyncStep::convertBinding)
         .collect(Collectors.toList());
   }

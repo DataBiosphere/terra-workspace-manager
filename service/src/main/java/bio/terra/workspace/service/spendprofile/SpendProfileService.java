@@ -49,9 +49,9 @@ public class SpendProfileService {
         () ->
             samService.isAuthorized(
                 userRequest,
-                SamConstants.SPEND_PROFILE_RESOURCE,
+                SamConstants.SamResource.SPEND_PROFILE,
                 spendProfileId.id(),
-                SamConstants.SPEND_PROFILE_LINK_ACTION),
+                SamConstants.SamSpendProfileAction.LINK),
         "isAuthorized")) {
       throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
     }

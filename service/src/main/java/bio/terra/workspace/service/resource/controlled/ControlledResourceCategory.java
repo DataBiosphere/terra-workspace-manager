@@ -1,9 +1,9 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.iam.model.WsmIamRole;
-import bio.terra.workspace.service.resource.controlled.mappings.ControlledResourceInheritanceMapping;
-import com.google.common.collect.Multimap;
+import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.resource.controlled.mappings.ControlledResourceSyncMapping;
+import bio.terra.workspace.service.resource.controlled.mappings.ControlledResourceSyncMapping.SyncMapping;
+import java.util.List;
 
 /**
  * A combination of AccessScopeType and ManagedByType. These categories handle IAM slightly
@@ -13,49 +13,49 @@ public enum ControlledResourceCategory {
   USER_SHARED(
       AccessScopeType.ACCESS_SCOPE_SHARED,
       ManagedByType.MANAGED_BY_USER,
-      "controlled-user-shared-workspace-resource",
-      "create_controlled_user_shared",
-      ControlledResourceInheritanceMapping.USER_SHARED_MAPPING),
+      SamConstants.SamResource.CONTROLLED_USER_SHARED,
+      SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_USER_SHARED,
+      ControlledResourceSyncMapping.USER_SHARED_MAPPING),
   USER_PRIVATE(
       AccessScopeType.ACCESS_SCOPE_PRIVATE,
       ManagedByType.MANAGED_BY_USER,
-      "controlled-user-private-workspace-resource",
-      "create_controlled_user_private",
-      ControlledResourceInheritanceMapping.USER_PRIVATE_MAPPING),
+      SamConstants.SamResource.CONTROLLED_USER_PRIVATE,
+      SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_USER_PRIVATE,
+      ControlledResourceSyncMapping.USER_PRIVATE_MAPPING),
   APPLICATION_SHARED(
       AccessScopeType.ACCESS_SCOPE_SHARED,
       ManagedByType.MANAGED_BY_APPLICATION,
-      "controlled-application-shared-workspace-resource",
-      "create_controlled_application_shared",
-      ControlledResourceInheritanceMapping.APPLICATION_SHARED_MAPPING),
+      SamConstants.SamResource.CONTROLLED_APPLICATION_SHARED,
+      SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_USER_SHARED,
+      ControlledResourceSyncMapping.APPLICATION_SHARED_MAPPING),
   APPLICATION_PRIVATE(
       AccessScopeType.ACCESS_SCOPE_PRIVATE,
       ManagedByType.MANAGED_BY_APPLICATION,
-      "controlled-application-private-workspace-resource",
-      "create_controlled_application_private",
-      ControlledResourceInheritanceMapping.APPLICATION_PRIVATE_MAPPING);
+      SamConstants.SamResource.CONTROLLED_APPLICATION_PRIVATE,
+      SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_USER_PRIVATE,
+      ControlledResourceSyncMapping.APPLICATION_PRIVATE_MAPPING);
 
   private final AccessScopeType accessScopeType;
   private final ManagedByType managedByType;
   private final String samResourceName;
   private final String samCreateResourceAction;
-  private final Multimap<WsmIamRole, ControlledResourceIamRole> inheritanceMapping;
+  private final List<SyncMapping> syncMappings;
 
   ControlledResourceCategory(
       AccessScopeType accessScopeType,
       ManagedByType managedByType,
       String samResourceName,
       String samCreateResourceAction,
-      Multimap<WsmIamRole, ControlledResourceIamRole> inheritanceMapping) {
+      List<SyncMapping> syncMappings) {
     this.accessScopeType = accessScopeType;
     this.managedByType = managedByType;
     this.samResourceName = samResourceName;
     this.samCreateResourceAction = samCreateResourceAction;
-    this.inheritanceMapping = inheritanceMapping;
+    this.syncMappings = syncMappings;
   }
 
-  public Multimap<WsmIamRole, ControlledResourceIamRole> getInheritanceMapping() {
-    return inheritanceMapping;
+  public List<SyncMapping> getSyncMappings() {
+    return syncMappings;
   }
 
   public AccessScopeType getAccessScopeType() {

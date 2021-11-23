@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.exceptions;
+package bio.terra.workspace.common.exception;
 
 import bio.terra.common.exception.InternalServerErrorException;
 

@@ -473,7 +473,7 @@ public class WorkspaceApiController implements WorkspaceApi {
     // Validate that the user is a workspace member, as enablePetServiceAccountImpersonation does
     // not authenticate.
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
     String userEmail =
         SamRethrow.onInterrupted(() -> samService.getUserEmailFromSam(userRequest), "enablePet");
     String petSaEmail =

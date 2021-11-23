@@ -99,4 +99,13 @@ public class GcpUtils {
           "Unable to find WSM service account credentials. Ensure WSM is actually running as a service account");
     }
   }
+
+  public static String getWsmSaEmail() {
+    try {
+      return getWsmSaEmail(GoogleCredentials.getApplicationDefault());
+    } catch (IOException e) {
+      throw new SaCredentialsMissingException(
+          "Unable to find WSM service account credentials. Ensure WSM is actually running as a service account");
+    }
+  }
 }

@@ -6,14 +6,14 @@ import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
-import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceCategory;
 import bio.terra.workspace.service.stage.StageService;
-import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -209,12 +209,13 @@ public class SamService {
             .policies(defaultWorkspacePolicies(humanUserEmail));
     try {
       SamRetry.retry(
-          () ->
-              resourceApi.createResourceV2(SamConstants.SAM_WORKSPACE_RESOURCE, workspaceRequest));
+          () -> resourceApi.createResourceV2(SamConstants.SamResource.WORKSPACE, workspaceRequest));
       logger.info("Created Sam resource for workspace {}", id);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error creating a Workspace resource in Sam", apiException);
     }
+    dumpRoleBindings(
+        SamConstants.SamResource.WORKSPACE, id.toString(), userRequest.getRequiredToken());
   }
 
   /**
@@ -229,7 +230,7 @@ public class SamService {
     try {
       List<ResourceAndAccessPolicy> resourceAndPolicies =
           SamRetry.retry(
-              () -> resourceApi.listResourcesAndPolicies(SamConstants.SAM_WORKSPACE_RESOURCE));
+              () -> resourceApi.listResourcesAndPolicies(SamConstants.SamResource.WORKSPACE));
       for (var resourceAndPolicy : resourceAndPolicies) {
         try {
           workspaceIds.add(UUID.fromString(resourceAndPolicy.getResourceId()));
@@ -253,7 +254,7 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(authToken);
     try {
       SamRetry.retry(
-          () -> resourceApi.deleteResource(SamConstants.SAM_WORKSPACE_RESOURCE, id.toString()));
+          () -> resourceApi.deleteResource(SamConstants.SamResource.WORKSPACE, id.toString()));
       logger.info("Deleted Sam resource for workspace {}", id);
     } catch (ApiException apiException) {
       logger.info("Sam API error while deleting workspace, code is " + apiException.getCode());
@@ -366,7 +367,7 @@ public class SamService {
     stageService.assertMcWorkspace(workspaceId, "grantWorkspaceRole");
     checkAuthz(
         userRequest,
-        SamConstants.SAM_WORKSPACE_RESOURCE,
+        SamConstants.SamResource.WORKSPACE,
         workspaceId.toString(),
         samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
@@ -375,7 +376,7 @@ public class SamService {
       SamRetry.retry(
           () ->
               resourceApi.addUserToPolicy(
-                  SamConstants.SAM_WORKSPACE_RESOURCE,
+                  SamConstants.SamResource.WORKSPACE,
                   workspaceId.toString(),
                   role.toSamRole(),
                   email.toLowerCase()));
@@ -400,7 +401,7 @@ public class SamService {
     stageService.assertMcWorkspace(workspaceId, "removeWorkspaceRole");
     checkAuthz(
         userRequest,
-        SamConstants.SAM_WORKSPACE_RESOURCE,
+        SamConstants.SamResource.WORKSPACE,
         workspaceId.toString(),
         samActionToModifyRole(role));
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
@@ -408,7 +409,7 @@ public class SamService {
       SamRetry.retry(
           () ->
               resourceApi.removeUserFromPolicy(
-                  SamConstants.SAM_WORKSPACE_RESOURCE,
+                  SamConstants.SamResource.WORKSPACE,
                   workspaceId.toString(),
                   role.toSamRole(),
                   email.toLowerCase()));
@@ -447,9 +448,9 @@ public class SamService {
     // is a safeguard against accidentally invoking these credentials for unauthorized users.
     checkAuthz(
         userRequest,
-        SamConstants.SAM_WORKSPACE_RESOURCE,
+        SamConstants.SamResource.WORKSPACE,
         resource.getWorkspaceId().toString(),
-        SamConstants.SAM_WORKSPACE_OWN_ACTION);
+        SamConstants.SamWorkspaceAction.OWN);
 
     try {
       ResourcesApi wsmSaResourceApi = samResourcesApi(getWsmServiceAccountToken());
@@ -497,9 +498,9 @@ public class SamService {
     // is a safeguard against accidentally invoking these credentials for unauthorized users.
     checkAuthz(
         userRequest,
-        SamConstants.SAM_WORKSPACE_RESOURCE,
+        SamConstants.SamResource.WORKSPACE,
         resource.getWorkspaceId().toString(),
-        SamConstants.SAM_WORKSPACE_OWN_ACTION);
+        SamConstants.SamWorkspaceAction.OWN);
 
     try {
       ResourcesApi wsmSaResourceApi = samResourcesApi(getWsmServiceAccountToken());
@@ -532,16 +533,16 @@ public class SamService {
     stageService.assertMcWorkspace(workspaceId, "listRoleBindings");
     checkAuthz(
         userRequest,
-        SamConstants.SAM_WORKSPACE_RESOURCE,
+        SamConstants.SamResource.WORKSPACE,
         workspaceId.toString(),
-        SamConstants.SAM_WORKSPACE_READ_IAM_ACTION);
+        SamConstants.SamWorkspaceAction.READ_IAM);
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       List<AccessPolicyResponseEntry> samResult =
           SamRetry.retry(
               () ->
                   resourceApi.listResourcePolicies(
-                      SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString()));
+                      SamConstants.SamResource.WORKSPACE, workspaceId.toString()));
       return samResult.stream()
           .map(
               entry ->
@@ -562,11 +563,29 @@ public class SamService {
     ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
     try {
       return resourcesApi
-          .getPolicyV2(
-              SamConstants.SAM_WORKSPACE_RESOURCE, workspaceId.toString(), role.toSamRole())
+          .getPolicyV2(SamConstants.SamResource.WORKSPACE, workspaceId.toString(), role.toSamRole())
           .getMemberEmails();
     } catch (ApiException e) {
       throw SamExceptionFactory.create("Error retrieving workspace policy members from Sam", e);
+    }
+  }
+
+  // Add code to retrieve and dump the role assignments for WSM controlled resources
+  // for debugging. No permission check outside of Sam.
+  public void dumpRoleBindings(String samResourceType, String resourceId, String token) {
+    logger.debug("DUMP ROLE BINDING - resourceType {} resourceId {}", samResourceType, resourceId);
+
+    ResourcesApi resourceApi = samResourcesApi(token);
+    try {
+      List<AccessPolicyResponseEntryV2> samResult =
+          SamRetry.retry(() -> resourceApi.listResourcePoliciesV2(samResourceType, resourceId));
+      for (AccessPolicyResponseEntryV2 entry : samResult) {
+        logger.debug("  samPolicy: {}", entry);
+      }
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error listing role bindings in Sam", apiException);
+    } catch (InterruptedException e) {
+      logger.warn("dump role binding was interrupted");
     }
   }
 
@@ -578,9 +597,9 @@ public class SamService {
     try {
       ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
       return resourcesApi.resourceActionV2(
-          SamConstants.SAM_WORKSPACE_RESOURCE,
+          SamConstants.SamResource.WORKSPACE,
           workspaceId.toString(),
-          SamConstants.SAM_CREATE_CONTROLLED_APPLICATION_PRIVATE,
+          SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_USER_PRIVATE,
           email);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Sam error querying role in Sam", apiException);
@@ -598,12 +617,15 @@ public class SamService {
       throws InterruptedException {
     String group =
         syncPolicyOnObject(
-            SamConstants.SAM_WORKSPACE_RESOURCE,
+            SamConstants.SamResource.WORKSPACE,
             workspaceId.toString(),
             role.toSamRole(),
             userRequest);
     logger.info(
-        "Synced role {} to google group {} in workspace {}", role.toSamRole(), group, workspaceId);
+        "Synced workspace role {} to google group {} in workspace {}",
+        role.toSamRole(),
+        group,
+        workspaceId);
     return group;
   }
 
@@ -612,29 +634,29 @@ public class SamService {
    * return the email of that group.
    *
    * <p>This should only be called for controlled resources which require permissions granted to
-   * individual users, i.e. private or application-controlled resources. All other cases are handled
-   * by the permissions that workspace-level roles inherit on resources via Sam's hierarchical
-   * resources, and do not use the policies synced by this function.
+   * individual users, i.e. user-private or application-controlled resources. All other cases are
+   * handled by the permissions that workspace-level roles inherit on resources via Sam's
+   * hierarchical resources, and do not use the policies synced by this function.
    *
    * <p>This operation in Sam is idempotent, so we don't worry about calling this multiple times.
    *
    * @param resource The resource to sync a binding for
    * @param role The policy to sync in Sam
    * @param userRequest User authentication
-   * @return
+   * @return Sam policy group name
    */
   @Traced
-  public String syncPrivateResourcePolicy(
+  public String syncResourcePolicy(
       ControlledResource resource,
       ControlledResourceIamRole role,
       AuthenticatedUserRequest userRequest)
       throws InterruptedException {
-    // TODO: in the future, this function will also be called for application managed resources,
-    //  including app-shared. This check should be modified appropriately.
-    if (resource.getAccessScope() != AccessScopeType.ACCESS_SCOPE_PRIVATE) {
+    if (ControlledResourceCategory.get(resource.getAccessScope(), resource.getManagedBy())
+        == ControlledResourceCategory.USER_SHARED) {
       throw new InternalLogicException(
-          "syncPrivateResourcePolicy should not be called for shared resources!");
+          "syncResourcePolicy should not be called for USER managed SHARED access resources!");
     }
+
     String group =
         syncPolicyOnObject(
             resource.getCategory().getSamResourceName(),
@@ -642,7 +664,7 @@ public class SamService {
             role.toSamRole(),
             userRequest);
     logger.info(
-        "Synced role {} to google group {} for resource {}",
+        "Synced resource role {} to google group {} for resource {}",
         role.toSamRole(),
         group,
         resource.getResourceId());
@@ -680,46 +702,56 @@ public class SamService {
    * Create a controlled resource in Sam.
    *
    * @param resource The WSM representation of the resource to create.
-   * @param privateIamRoles The IAM role(s) to grant a private user. Required for private resources,
-   *     should be null otherwise.
-   * @param assignedUserEmail Email identifier of the assigned user of this resource. Required for
-   *     private resources, should be null otherwise.
+   * @param privateIamRole The IAM role to grant on a private resource. It is required for
+   *     user-private resources and optional for application-private resources.
+   * @param assignedUserEmail Email identifier of the assigned user of this resource. Same
+   *     constraints as privateIamRoles.
    * @param userRequest Credentials to use for talking to Sam.
    */
   @Traced
   public void createControlledResource(
       ControlledResource resource,
-      @Nullable List<ControlledResourceIamRole> privateIamRoles,
+      @Nullable ControlledResourceIamRole privateIamRole,
       @Nullable String assignedUserEmail,
       AuthenticatedUserRequest userRequest)
       throws InterruptedException {
-    // Set up the master OWNER user in Sam for all controlled resources, if it's not already.
+    // We need the WSM SA for setting controlled resource policies
     initializeWsmServiceAccount();
-    ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
+
     FullyQualifiedResourceId workspaceParentFqId =
         new FullyQualifiedResourceId()
             .resourceId(resource.getWorkspaceId().toString())
-            .resourceTypeName(SamConstants.SAM_WORKSPACE_RESOURCE);
+            .resourceTypeName(SamConstants.SamResource.WORKSPACE);
+
     CreateResourceRequestV2 resourceRequest =
         new CreateResourceRequestV2()
             .resourceId(resource.getResourceId().toString())
             .parent(workspaceParentFqId);
 
-    addWsmResourceOwnerPolicy(resourceRequest);
-    // Only create policies for private resources. Workspace role permissions are handled through
-    // role-based inheritance in Sam instead. This should expand to include policies for
-    // applications in the future.
-    if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
-      // The assigned user is always the current user for private resources.
-      addPrivateResourcePolicies(resourceRequest, privateIamRoles, assignedUserEmail);
-    }
+    var builder =
+        new ControlledResourceSamPolicyBuilder(
+            this,
+            privateIamRole,
+            assignedUserEmail,
+            userRequest,
+            ControlledResourceCategory.get(resource.getAccessScope(), resource.getManagedBy()));
+    builder.addPolicies(resourceRequest);
 
     try {
+      // We use the user request for the create, but could equally well use the WSM SA.
+      // The creating token has no effect on the resource policies.
+      ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
       SamRetry.retry(
           () ->
               resourceApi.createResourceV2(
                   resource.getCategory().getSamResourceName(), resourceRequest));
       logger.info("Created Sam controlled resource {}", resource.getResourceId());
+
+      dumpRoleBindings(
+          resource.getCategory().getSamResourceName(),
+          resource.getResourceId().toString(),
+          getWsmServiceAccountToken());
+
     } catch (ApiException apiException) {
       // Do nothing if the resource to create already exists, this may not be the first time do is
       // called. Other exceptions still need to be surfaced.
@@ -737,11 +769,17 @@ public class SamService {
     }
   }
 
+  /**
+   * Delete controlled resource with an access token
+   *
+   * @param resource the controlled resource whose Sam resource to delete
+   * @param token access token
+   * @throws InterruptedException on thread interrupt
+   */
   @Traced
-  public void deleteControlledResource(
-      ControlledResource resource, AuthenticatedUserRequest userRequest)
+  public void deleteControlledResource(ControlledResource resource, String token)
       throws InterruptedException {
-    ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
+    ResourcesApi resourceApi = samResourcesApi(token);
     try {
       SamRetry.retry(
           () ->
@@ -765,6 +803,20 @@ public class SamService {
   }
 
   /**
+   * Delete controlled resource with the user request
+   *
+   * @param resource the controlled resource whose Sam resource to delete
+   * @param userRequest user performing the delete
+   * @throws InterruptedException on thread interrupt
+   */
+  @Traced
+  public void deleteControlledResource(
+      ControlledResource resource, AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
+    deleteControlledResource(resource, userRequest.getRequiredToken());
+  }
+
+  /**
    * Return the list of roles a user has directly on a private, user-managed controlled resource.
    * This will not return roles that a user holds via group membership.
    *
@@ -785,9 +837,9 @@ public class SamService {
     // is a safeguard against accidentally invoking these credentials for unauthorized users.
     checkAuthz(
         userRequest,
-        SamConstants.SAM_WORKSPACE_RESOURCE,
+        SamConstants.SamResource.WORKSPACE,
         resource.getWorkspaceId().toString(),
-        SamConstants.SAM_WORKSPACE_OWN_ACTION);
+        SamConstants.SamWorkspaceAction.OWN);
 
     try {
       ResourcesApi wsmSaResourceApi = samResourcesApi(getWsmServiceAccountToken());
@@ -870,39 +922,6 @@ public class SamService {
           "Failed to add WSM service account as resource owner Sam. This is expected for tests.",
           e);
     }
-  }
-
-  /**
-   * Add policies for managing private users via policy. All private resources will have reader,
-   * writer, and editor policies even if they are empty to support potential later reassignment.
-   * This method will likely expand to support policies for applications in the future.
-   */
-  private void addPrivateResourcePolicies(
-      CreateResourceRequestV2 request,
-      List<ControlledResourceIamRole> privateIamRoles,
-      String privateUser) {
-    AccessPolicyMembershipV2 readerPolicy =
-        new AccessPolicyMembershipV2().addRolesItem(ControlledResourceIamRole.READER.toSamRole());
-    AccessPolicyMembershipV2 writerPolicy =
-        new AccessPolicyMembershipV2().addRolesItem(ControlledResourceIamRole.WRITER.toSamRole());
-    AccessPolicyMembershipV2 editorPolicy =
-        new AccessPolicyMembershipV2().addRolesItem(ControlledResourceIamRole.EDITOR.toSamRole());
-
-    // Create a reader or writer role as specified by the user request, but also create empty
-    // roles in case of later re-assignment.
-    if (privateIamRoles.contains(ControlledResourceIamRole.WRITER)) {
-      writerPolicy.addMemberEmailsItem(privateUser);
-    } else if (privateIamRoles.contains(ControlledResourceIamRole.READER)) {
-      readerPolicy.addMemberEmailsItem(privateUser);
-    }
-
-    if (privateIamRoles.contains(ControlledResourceIamRole.EDITOR)) {
-      editorPolicy.addMemberEmailsItem(privateUser);
-    }
-
-    request.putPoliciesItem(ControlledResourceIamRole.READER.toSamRole(), readerPolicy);
-    request.putPoliciesItem(ControlledResourceIamRole.WRITER.toSamRole(), writerPolicy);
-    request.putPoliciesItem(ControlledResourceIamRole.EDITOR.toSamRole(), editorPolicy);
   }
 
   /**

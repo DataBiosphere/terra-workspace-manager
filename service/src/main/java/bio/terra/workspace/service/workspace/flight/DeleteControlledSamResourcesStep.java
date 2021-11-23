@@ -5,7 +5,6 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -17,7 +16,10 @@ import org.slf4j.LoggerFactory;
 /**
  * A step to delete all controlled resources in a workspace from Sam, potentially limited to a
  * single cloud platform. This reads the list of controlled resources in a workspace from the WSM
- * database.
+ * database. We use the WSM SA to delete the controlled resources, since it is the only actor that
+ * has DELETE permission on all controlled resources. Note that this is the one case where we delete
+ * resources out from under applications. In some distant future, we may have a method of requesting
+ * the application to clean up.
  */
 public class DeleteControlledSamResourcesStep implements Step {
 
@@ -26,19 +28,16 @@ public class DeleteControlledSamResourcesStep implements Step {
   private final ResourceDao resourceDao;
   private final UUID workspaceId;
   private final CloudPlatform cloudPlatform;
-  private final AuthenticatedUserRequest userRequest;
 
   public DeleteControlledSamResourcesStep(
       SamService samService,
       ResourceDao resourceDao,
       UUID workspaceId,
-      CloudPlatform cloudPlatform,
-      AuthenticatedUserRequest userRequest) {
+      CloudPlatform cloudPlatform) {
     this.samService = samService;
     this.resourceDao = resourceDao;
     this.workspaceId = workspaceId;
     this.cloudPlatform = cloudPlatform;
-    this.userRequest = userRequest;
   }
 
   @Override
@@ -49,7 +48,7 @@ public class DeleteControlledSamResourcesStep implements Step {
         resourceDao.listControlledResources(workspaceId, cloudPlatform);
 
     for (ControlledResource resource : controlledResourceList) {
-      samService.deleteControlledResource(resource, userRequest);
+      samService.deleteControlledResource(resource, samService.getWsmServiceAccountToken());
     }
     return StepResult.getStepResultSuccess();
   }

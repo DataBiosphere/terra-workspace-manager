@@ -12,7 +12,9 @@ runs:
     - name: Launch the background process
       id: launch
       run: |
-        ./gradlew :service:bootRun --args='--spring.profiles.include=human-readable-logging' | tee bootrun.log &
+        # The redirect magic provides null input to work around a gradle bug and sends
+        # both stdout and stderr to the log file.
+        ./gradlew :service:bootRun --args='--spring.profiles.include=human-readable-logging'  2>&1 < /dev/null | tee bootrun.log &
         bootrunpid=$!
         disown $bootrunpid
         echo "Launched WSM service pid $bootrunpid"
@@ -22,15 +24,22 @@ runs:
     - name: Wait for boot run to be ready
       id: wait-for-ready
       run: |
-        # If the timeout command times out, it SIGTERMs, which if done at the top-level of the
-        # GHA script exits the script. So, we wrap the timeout and return status in a subprocess.
-        # If timeout terminates its subprocess, then resultStatus is empty.
-        # If echo succeeds, timeout exits normally, and resultStatus is 0.
-        resultStatus=$(timeout 60 bash -c 'until echo > /dev/tcp/localhost/8080; do sleep 1; done' && echo $?)
-        if [[ $resultStatus == 0 ]]
+        # Give it some time before starting to poll.
+        sleep 10
+        started=1
+        for i in `seq 1 50`;
+        do
+          echo "try server connect $i"
+          if echo > /dev/tcp/localhost/8080
+          then
+            echo "Server started successfully"
+            started=0
+            break
+          fi
+          sleep 1
+        done
+        if [ "${started}" -eq "1" ]
         then
-          echo "Server started successfully"
-        else
           echo "Server did not start successfully. Dumping log file"
           cat bootrun.log
         fi

@@ -5,6 +5,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ValidationUtils;
@@ -44,7 +45,7 @@ public class ReferencedResourceService {
   public ReferencedResource createReferenceResource(
       ReferencedResource resource, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userRequest, resource.getWorkspaceId(), SamConstants.SAM_CREATE_REFERENCED_RESOURCE);
+        userRequest, resource.getWorkspaceId(), SamConstants.SamWorkspaceAction.CREATE_REFERENCE);
 
     String jobDescription =
         String.format(
@@ -90,7 +91,7 @@ public class ReferencedResourceService {
       @Nullable String description,
       AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SAM_UPDATE_REFERENCED_RESOURCE);
+        userRequest, workspaceId, SamConstants.SamWorkspaceAction.UPDATE_REFERENCE);
     // Name may be null if the user is not updating it in this request.
     if (name != null) {
       ValidationUtils.validateResourceName(name);
@@ -111,7 +112,7 @@ public class ReferencedResourceService {
   public void deleteReferenceResource(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SAM_DELETE_REFERENCED_RESOURCE);
+        userRequest, workspaceId, SamConstants.SamWorkspaceAction.DELETE_REFERENCE);
     resourceDao.deleteResource(workspaceId, resourceId);
   }
 
@@ -129,38 +130,36 @@ public class ReferencedResourceService {
       UUID resourceId,
       AuthenticatedUserRequest userRequest,
       WsmResourceType resourceType) {
-    WsmResourceType targetResourceType =
-        resourceDao.getResource(workspaceId, resourceId).getResourceType();
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SAM_DELETE_REFERENCED_RESOURCE);
+        userRequest, workspaceId, SamWorkspaceAction.DELETE_REFERENCE);
     resourceDao.deleteResourceForResourceType(workspaceId, resourceId, resourceType);
   }
 
   public ReferencedResource getReferenceResource(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
     return resourceDao.getResource(workspaceId, resourceId).castToReferencedResource();
   }
 
   public ReferencedResource getReferenceResourceByName(
       UUID workspaceId, String name, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
     return resourceDao.getResourceByName(workspaceId, name).castToReferencedResource();
   }
 
   public List<ReferencedResource> enumerateReferences(
       UUID workspaceId, int offset, int limit, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
     return resourceDao.enumerateReferences(workspaceId, offset, limit);
   }
 
   public boolean checkAccess(
       UUID workspaceId, UUID resourceId, AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
     ReferencedResource referencedResource =
         resourceDao.getResource(workspaceId, resourceId).castToReferencedResource();
     return referencedResource.checkAccess(beanBag, userRequest);

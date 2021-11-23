@@ -88,7 +88,7 @@ public class WsmApplicationService {
       AbleEnum ableEnum) {
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_OWN_ACTION);
+            userRequest, workspaceId, SamConstants.SamWorkspaceAction.OWN);
     stageService.assertMcWorkspace(
         workspace,
         (ableEnum == AbleEnum.ENABLE)
@@ -118,7 +118,7 @@ public class WsmApplicationService {
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID applicationId) {
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+            userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
     stageService.assertMcWorkspace(workspace, "getWorkspaceApplication");
     return applicationDao.getWorkspaceApplication(workspaceId, applicationId);
   }
@@ -127,7 +127,7 @@ public class WsmApplicationService {
       AuthenticatedUserRequest userRequest, UUID workspaceId, int offset, int limit) {
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceId, SamConstants.SAM_WORKSPACE_READ_ACTION);
+            userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
     stageService.assertMcWorkspace(workspace, "listWorkspaceApplication");
     return applicationDao.listWorkspaceApplications(workspaceId, offset, limit);
   }

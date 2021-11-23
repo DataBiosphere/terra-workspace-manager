@@ -37,7 +37,7 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
     // Create a shared BigQuery dataset
     GcpBigQueryDatasetResource createdDataset =
         ResourceMaker.makeControlledBigQueryDatasetUserShared(
-            resourceApi, getWorkspaceId(), DATASET_NAME);
+            resourceApi, getWorkspaceId(), DATASET_NAME, null);
     UUID resourceId = createdDataset.getMetadata().getResourceId();
     logger.info("Created controlled dataset {}", resourceId);
 

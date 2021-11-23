@@ -33,9 +33,9 @@ public class CheckUserStillInWorkspaceStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     boolean userCanReadWorkspace =
         samService.userIsAuthorized(
-            SamConstants.SAM_WORKSPACE_RESOURCE,
+            SamConstants.SamResource.WORKSPACE,
             workspaceId.toString(),
-            SamConstants.SAM_WORKSPACE_READ_ACTION,
+            SamConstants.SamWorkspaceAction.READ,
             removedUserEmail,
             userRequest);
     FlightMap workingMap = context.getWorkingMap();

@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
@@ -23,6 +25,7 @@ import bio.terra.workspace.service.resource.controlled.flight.create.CreateContr
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledGcsBucketResourceFlight;
+import bio.terra.workspace.service.resource.controlled.mappings.ControlledResourceSyncMapping.SyncMapping;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -30,11 +33,12 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import bio.terra.workspace.service.workspace.model.WsmApplication;
+import com.google.cloud.Policy;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -47,6 +51,7 @@ public class ControlledResourceService {
   private final JobService jobService;
   private final WorkspaceService workspaceService;
   private final ResourceDao resourceDao;
+  private final ApplicationDao applicationDao;
   private final StageService stageService;
   private final SamService samService;
   private final GcpCloudContextService gcpCloudContextService;
@@ -57,6 +62,7 @@ public class ControlledResourceService {
       JobService jobService,
       WorkspaceService workspaceService,
       ResourceDao resourceDao,
+      ApplicationDao applicationDao,
       StageService stageService,
       SamService samService,
       GcpCloudContextService gcpCloudContextService,
@@ -64,6 +70,7 @@ public class ControlledResourceService {
     this.jobService = jobService;
     this.workspaceService = workspaceService;
     this.resourceDao = resourceDao;
+    this.applicationDao = applicationDao;
     this.stageService = stageService;
     this.samService = samService;
     this.gcpCloudContextService = gcpCloudContextService;
@@ -74,15 +81,10 @@ public class ControlledResourceService {
   public ControlledGcsBucketResource createBucket(
       ControlledGcsBucketResource resource,
       ApiGcpGcsBucketCreationParameters creationParameters,
-      List<ControlledResourceIamRole> privateResourceIamRoles,
+      ControlledResourceIamRole privateResourceIamRole,
       AuthenticatedUserRequest userRequest) {
     JobBuilder jobBuilder =
-        commonCreationJobBuilder(
-                resource,
-                privateResourceIamRoles,
-                new ApiJobControl().id(UUID.randomUUID().toString()),
-                null,
-                userRequest)
+        commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
   }
@@ -187,15 +189,10 @@ public class ControlledResourceService {
   public ControlledBigQueryDatasetResource createBigQueryDataset(
       ControlledBigQueryDatasetResource resource,
       ApiGcpBigQueryDatasetCreationParameters creationParameters,
-      List<ControlledResourceIamRole> privateResourceIamRoles,
+      ControlledResourceIamRole privateResourceIamRole,
       AuthenticatedUserRequest userRequest) {
     JobBuilder jobBuilder =
-        commonCreationJobBuilder(
-                resource,
-                privateResourceIamRoles,
-                new ApiJobControl().id(UUID.randomUUID().toString()),
-                null,
-                userRequest)
+        commonCreationJobBuilder(resource, privateResourceIamRole, userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return jobBuilder.submitAndWait(ControlledBigQueryDatasetResource.class);
   }
@@ -297,18 +294,20 @@ public class ControlledResourceService {
   public String createAiNotebookInstance(
       ControlledAiNotebookInstanceResource resource,
       ApiGcpAiNotebookInstanceCreationParameters creationParameters,
-      List<ControlledResourceIamRole> privateResourceIamRoles,
-      ApiJobControl jobControl,
+      @Nullable ControlledResourceIamRole privateResourceIamRole,
+      @Nullable ApiJobControl jobControl,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
-    if (privateResourceIamRoles.stream()
-        .noneMatch(role -> role.equals(ControlledResourceIamRole.WRITER))) {
+
+    // Special check for notebooks: READER is not a useful role
+    if (privateResourceIamRole == ControlledResourceIamRole.READER) {
       throw new BadRequestException(
-          "A private, controlled AI Notebook instance must have the writer role or else it is not useful.");
+          "A private, controlled AI Notebook instance must have the writer or editor role or else it is not useful.");
     }
+
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
-            resource, privateResourceIamRoles, jobControl, resultPath, userRequest);
+            resource, privateResourceIamRole, jobControl, resultPath, userRequest);
     String petSaEmail =
         SamRethrow.onInterrupted(
             () ->
@@ -321,44 +320,74 @@ public class ControlledResourceService {
     return jobBuilder.submit();
   }
 
+  /** Simpler interface for synchronous controlled resource creation */
+  private JobBuilder commonCreationJobBuilder(
+      ControlledResource resource,
+      ControlledResourceIamRole privateResourceIamRole,
+      AuthenticatedUserRequest userRequest) {
+    return commonCreationJobBuilder(resource, privateResourceIamRole, null, null, userRequest);
+  }
+
   /** Create a JobBuilder for creating controlled resources with the common parameters populated. */
   private JobBuilder commonCreationJobBuilder(
       ControlledResource resource,
-      List<ControlledResourceIamRole> privateResourceIamRoles,
-      ApiJobControl jobControl,
-      String resultPath,
+      @Nullable ControlledResourceIamRole privateResourceIamRole,
+      @Nullable ApiJobControl jobControl,
+      @Nullable String resultPath,
       AuthenticatedUserRequest userRequest) {
-    String userEmail =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(userRequest), "commonCreationJobBuilder");
+
     // Pre-flight assertions
-    validateCreateFlightPrerequisites(resource, userEmail, userRequest);
+    validateCreateFlightPrerequisites(resource, userRequest);
 
     final String jobDescription =
         String.format(
             "Create controlled resource %s; id %s; name %s",
             resource.getResourceType(), resource.getResourceId(), resource.getName());
 
+    // Get or create a job id for the flight
+    String jobId =
+        Optional.ofNullable(jobControl)
+            .map(ApiJobControl::getId)
+            .orElse(UUID.randomUUID().toString());
+
     return jobService
-        .newJob(
-            jobDescription,
-            jobControl.getId(),
-            CreateControlledResourceFlight.class,
-            resource,
-            userRequest)
-        .addParameter(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLES, privateResourceIamRoles)
-        .addParameter(ControlledResourceKeys.PRIVATE_RESOURCE_USER_EMAIL, userEmail)
+        .newJob(jobDescription, jobId, CreateControlledResourceFlight.class, resource, userRequest)
+        .addParameter(ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLE, privateResourceIamRole)
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
   }
 
   private void validateCreateFlightPrerequisites(
-      ControlledResource resource, String userEmail, AuthenticatedUserRequest userRequest) {
+      ControlledResource resource, AuthenticatedUserRequest userRequest) {
     stageService.assertMcWorkspace(resource.getWorkspaceId(), "createControlledResource");
     workspaceService.validateWorkspaceAndAction(
         userRequest,
         resource.getWorkspaceId(),
         resource.getCategory().getSamCreateResourceAction());
-    validateOnlySelfAssignment(resource, userEmail);
+  }
+
+  /**
+   * When creating application-owned resources, we need to hold the UUID of the application in the
+   * ControlledResource object. On the one hand, maybe this should be done as part of the create
+   * flight. On the other hand, the pattern we have is to assemble the complete ControlledResource
+   * in the controller and have that class be immutable. So we do this lookup and error check early
+   * on. Throws ApplicationNotFound if there is no matching application record.
+   *
+   * @param managedBy the managed by type
+   * @param userRequest the user request
+   * @return null if not an application managed resource; application UUID otherwise
+   */
+  public @Nullable UUID getAssociatedApp(
+      ManagedByType managedBy, AuthenticatedUserRequest userRequest) {
+    if (managedBy != ManagedByType.MANAGED_BY_APPLICATION) {
+      return null;
+    }
+
+    String applicationEmail =
+        SamRethrow.onInterrupted(
+            () -> samService.getUserEmailFromSam(userRequest), "get application email");
+
+    WsmApplication application = applicationDao.getApplicationByEmail(applicationEmail);
+    return application.getApplicationId();
   }
 
   public ControlledResource getControlledResource(
@@ -397,6 +426,48 @@ public class ControlledResourceService {
     return deleteJob.submit();
   }
 
+  public Policy configureGcpPolicyForResource(
+      ControlledResource resource,
+      String projectId,
+      Policy currentPolicy,
+      AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
+
+    GcpPolicyBuilder gcpPolicyBuilder = new GcpPolicyBuilder(resource, projectId, currentPolicy);
+
+    List<SyncMapping> syncMappings = resource.getCategory().getSyncMappings();
+    for (SyncMapping syncMapping : syncMappings) {
+      String policyGroup = syncPolicyGroup(resource, syncMapping, userRequest);
+      gcpPolicyBuilder.addResourceBinding(syncMapping.getTargetRole(), policyGroup);
+    }
+
+    return gcpPolicyBuilder.build();
+  }
+
+  private String syncPolicyGroup(
+      ControlledResource resource, SyncMapping syncMapping, AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
+
+    switch (syncMapping.getRoleSource()) {
+      case RESOURCE:
+        return samService.syncResourcePolicy(
+            resource,
+            syncMapping
+                .getResourceRole()
+                .orElseThrow(() -> new InternalLogicException("Mismatched syncMapping")),
+            userRequest);
+
+      case WORKSPACE:
+        return samService.syncWorkspacePolicy(
+            resource.getWorkspaceId(),
+            syncMapping
+                .getWorkspaceRole()
+                .orElseThrow(() -> new InternalLogicException("Mismatched syncMapping")),
+            userRequest);
+    }
+    throw new InternalLogicException("Invalid role source");
+  }
+
   /**
    * Creates and returns a JobBuilder object for deleting a controlled resource. Depending on the
    * type of resource being deleted, this job may need to run asynchronously.
@@ -417,29 +488,5 @@ public class ControlledResourceService {
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
         .addParameter(ResourceKeys.RESOURCE_ID, resourceId.toString())
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath);
-  }
-
-  private void validateOnlySelfAssignment(ControlledResource controlledResource, String userEmail) {
-    if (!controlledResource.getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
-      // No need to handle SHARED resources
-      return;
-    }
-
-    String assignedUser = controlledResource.getAssignedUser().orElse("");
-    final boolean isAllowed =
-        assignedUser.length() <= MAX_ASSIGNED_USER_LENGTH
-            &&
-            // If there is no assigned user, this condition is satisfied.
-            (StringUtils.isEmpty(assignedUser)
-                || StringUtils.equalsIgnoreCase(assignedUser, userEmail));
-
-    if (!isAllowed) {
-      throw new BadRequestException(
-          "User ("
-              + userEmail
-              + ") may only assign a private controlled resource to themselves ("
-              + assignedUser.substring(0, Math.min(assignedUser.length(), MAX_ASSIGNED_USER_LENGTH))
-              + ").");
-    }
   }
 }

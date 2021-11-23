@@ -54,6 +54,8 @@ public class ClientTestUtils {
   public static final String TEST_BQ_DATATABLE_NAME = "terra wsm test data table";
   public static final String TEST_BQ_DATASET_PROJECT = "terra-kernel-k8s";
   public static final String RESOURCE_NAME_PREFIX = "terratest";
+  // We may want this to be a test parameter. It has to match what is in the config or in the helm
+  public static final UUID TEST_WSM_APP = UUID.fromString("E4C0924A-3D7D-4D3D-8DE4-3D2CF50C3818");
   private static final Logger logger = LoggerFactory.getLogger(ClientTestUtils.class);
 
   // Required scopes for client tests include the usual login scopes and GCP scope.
@@ -264,7 +266,7 @@ public class ClientTestUtils {
    * @param <T> - type of result
    * @return - result from supplier, the first time it doesn't throw, or null if all tries have been
    *     exhausted
-   * @throws InterruptedException
+   * @throws InterruptedException if the sleep is interrupted
    */
   public static @Nullable <T> T getWithRetryOnException(SupplierWithException<T> supplier)
       throws InterruptedException {

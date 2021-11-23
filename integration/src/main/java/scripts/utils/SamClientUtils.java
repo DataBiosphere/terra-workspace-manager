@@ -6,9 +6,12 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
+import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
+import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntryV2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,5 +60,22 @@ public class SamClientUtils {
   public static GoogleApi samGoogleApi(TestUserSpecification testUser, ServerSpecification server)
       throws Exception {
     return new GoogleApi(getSamApiClient(testUser, server));
+  }
+
+  // dump the Sam policy on a resource - assuming you have permission
+  public static void dumpResourcePolicy(
+      TestUserSpecification testUser,
+      ServerSpecification server,
+      String resourceTypeName,
+      String resourceId)
+      throws Exception {
+
+    ResourcesApi samApi = new ResourcesApi(getSamApiClient(testUser, server));
+    List<AccessPolicyResponseEntryV2> policies =
+        samApi.listResourcePoliciesV2(resourceTypeName, resourceId);
+    logger.info("SAM POLICY DUMP for {} id {}", resourceTypeName, resourceId);
+    for (AccessPolicyResponseEntryV2 entry : policies) {
+      logger.info("  policy: {}", entry);
+    }
   }
 }

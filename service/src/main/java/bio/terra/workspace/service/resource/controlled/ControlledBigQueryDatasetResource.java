@@ -27,6 +27,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       @JsonProperty("assignedUser") String assignedUser,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
+      @JsonProperty("applicationId") UUID applicationId,
       @JsonProperty("datasetName") String datasetName) {
 
     super(
@@ -37,7 +38,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         cloningInstructions,
         assignedUser,
         accessScope,
-        managedBy);
+        managedBy,
+        applicationId);
     this.datasetName = datasetName;
     validate();
   }
@@ -116,6 +118,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     private String assignedUser;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
+    private UUID applicationId;
     private String datasetName;
 
     public ControlledBigQueryDatasetResource.Builder workspaceId(UUID workspaceId) {
@@ -164,6 +167,11 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       return this;
     }
 
+    public Builder applicationId(UUID applicationId) {
+      this.applicationId = applicationId;
+      return this;
+    }
+
     public ControlledBigQueryDatasetResource build() {
       return new ControlledBigQueryDatasetResource(
           workspaceId,
@@ -174,6 +182,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
           assignedUser,
           accessScope,
           managedBy,
+          applicationId,
           datasetName);
     }
   }

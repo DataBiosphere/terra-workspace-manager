@@ -3,8 +3,8 @@ package bio.terra.workspace.service.iam;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.generated.model.ApiControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import org.junit.jupiter.api.Test;
@@ -23,6 +23,6 @@ public class ControlledResourceIamRoleTest extends BaseUnitTest {
         ControlledResourceIamRole.EDITOR,
         ControlledResourceIamRole.fromApiModel(ApiControlledResourceIamRole.EDITOR));
 
-    assertThrows(ValidationException.class, () -> ControlledResourceIamRole.fromApiModel(null));
+    assertThrows(InternalLogicException.class, () -> ControlledResourceIamRole.fromApiModel(null));
   }
 }

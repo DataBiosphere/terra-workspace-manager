@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ResourceApi;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
@@ -26,7 +27,6 @@ import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResour
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.exceptions.InternalLogicException;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import java.util.UUID;

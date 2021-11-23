@@ -9,7 +9,6 @@ import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.WsmResourceType;
-import bio.terra.workspace.service.resource.controlled.exception.ControlledResourceNotImplementedException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import java.util.Objects;
@@ -24,6 +23,7 @@ public abstract class ControlledResource extends WsmResource {
   private final String assignedUser;
   private final AccessScopeType accessScope;
   private final ManagedByType managedBy;
+  private final UUID applicationId;
 
   public ControlledResource(
       UUID workspaceId,
@@ -33,11 +33,13 @@ public abstract class ControlledResource extends WsmResource {
       CloningInstructions cloningInstructions,
       String assignedUser,
       AccessScopeType accessScope,
-      ManagedByType managedBy) {
+      ManagedByType managedBy,
+      UUID applicationId) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
     this.assignedUser = assignedUser;
     this.accessScope = accessScope;
     this.managedBy = managedBy;
+    this.applicationId = applicationId;
   }
 
   public ControlledResource(DbResource dbResource) {
@@ -48,6 +50,7 @@ public abstract class ControlledResource extends WsmResource {
     this.assignedUser = dbResource.getAssignedUser().orElse(null);
     this.accessScope = dbResource.getAccessScope().orElse(null);
     this.managedBy = dbResource.getManagedBy().orElse(null);
+    this.applicationId = dbResource.getApplicationId().orElse(null);
   }
 
   @Override
@@ -70,6 +73,10 @@ public abstract class ControlledResource extends WsmResource {
 
   public ManagedByType getManagedBy() {
     return managedBy;
+  }
+
+  public UUID getApplicationId() {
+    return applicationId;
   }
 
   public ControlledResourceCategory getCategory() {
@@ -102,9 +109,10 @@ public abstract class ControlledResource extends WsmResource {
     if (getAssignedUser().isPresent() && getAccessScope() == AccessScopeType.ACCESS_SCOPE_SHARED) {
       throw new InconsistentFieldsException("Assigned user on SHARED resource");
     }
-    if (getManagedBy() == ManagedByType.MANAGED_BY_APPLICATION) {
-      throw new ControlledResourceNotImplementedException(
-          "WSM does not support application managed resources yet");
+
+    if (getApplicationId() != null && getManagedBy() != ManagedByType.MANAGED_BY_APPLICATION) {
+      throw new InconsistentFieldsException(
+          "Application managed resource without an application id");
     }
   }
 

@@ -31,6 +31,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       @JsonProperty("assignedUser") String assignedUser,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
+      @JsonProperty("application") UUID applicationId,
       @JsonProperty("instanceId") String instanceId,
       @JsonProperty("location") String location) {
     super(
@@ -41,7 +42,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
         cloningInstructions,
         assignedUser,
         accessScope,
-        managedBy);
+        managedBy,
+        applicationId);
     this.instanceId = instanceId;
     this.location = location;
     validate();
@@ -154,6 +156,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     private String assignedUser;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
+    private UUID applicationId;
     private String instanceId;
     private String location;
 
@@ -207,6 +210,11 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       return this;
     }
 
+    public Builder applicationId(UUID applicationId) {
+      this.applicationId = applicationId;
+      return this;
+    }
+
     public ControlledAiNotebookInstanceResource build() {
       return new ControlledAiNotebookInstanceResource(
           workspaceId,
@@ -217,6 +225,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
           assignedUser,
           accessScope,
           managedBy,
+          applicationId,
           instanceId,
           location);
     }
