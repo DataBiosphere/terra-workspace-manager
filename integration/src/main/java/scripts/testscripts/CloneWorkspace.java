@@ -207,7 +207,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     // create reference to BQ dataset with COPY_NOTHING
     sourceDatasetReference =
-        ResourceMaker.makeBigQueryReference(
+        ResourceMaker.makeBigQueryDatasetReference(
             referencedGcpResourceApi, getWorkspaceId(), "dataset_resource_1");
     sourceDataTableReference =
         ResourceMaker.makeBigQueryDataTableReference(

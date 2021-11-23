@@ -63,8 +63,15 @@ public class ResourceMaker {
   private static final Logger logger = LoggerFactory.getLogger(ResourceMaker.class);
   private static final long DELETE_BUCKET_POLL_SECONDS = 15;
 
-  public static GcpBigQueryDatasetResource makeBigQueryReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name) throws ApiException {
+  /**
+   * Calls WSM to create a referenced BigQuery dataset in the specified workspace.
+   *
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create a reference).
+   */
+  public static GcpBigQueryDatasetResource makeBigQueryDatasetReference(
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
+      throws ApiException, InterruptedException {
 
     var body =
         new CreateGcpBigQueryDatasetReferenceRequestBody()
@@ -78,11 +85,19 @@ public class ResourceMaker {
                     .datasetId(TEST_BQ_DATASET_NAME)
                     .projectId(TEST_BQ_DATASET_PROJECT));
 
-    return resourceApi.createBigQueryDatasetReference(body, workspaceId);
+    return ClientTestUtils.getWithRetryOnException(
+        () -> resourceApi.createBigQueryDatasetReference(body, workspaceId));
   }
 
+  /**
+   * Calls WSM to create a referenced BigQuery table in the specified workspace.
+   *
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create a reference).
+   */
   public static GcpBigQueryDataTableResource makeBigQueryDataTableReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name) throws ApiException {
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
+      throws ApiException, InterruptedException {
 
     var body =
         new CreateGcpBigQueryDataTableReferenceRequestBody()
@@ -97,9 +112,11 @@ public class ResourceMaker {
                     .projectId(TEST_BQ_DATASET_PROJECT)
                     .dataTableId(TEST_BQ_DATATABLE_NAME));
 
-    return resourceApi.createBigQueryDataTableReference(body, workspaceId);
+    return ClientTestUtils.getWithRetryOnException(
+        () -> resourceApi.createBigQueryDataTableReference(body, workspaceId));
   }
 
+  /** Calls WSM to create a referenced TDR snapshot in the specified workspace. */
   public static DataRepoSnapshotResource makeDataRepoSnapshotReference(
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,
@@ -123,12 +140,18 @@ public class ResourceMaker {
     return resourceApi.createDataRepoSnapshotReference(body, workspaceId);
   }
 
+  /**
+   * Calls WSM to create a referenced GCS bucket in the specified workspace.
+   *
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create a reference).
+   */
   public static GcpGcsBucketResource makeGcsBucketReference(
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,
       String name,
       @Nullable CloningInstructionsEnum cloningInstructions)
-      throws ApiException {
+      throws ApiException, InterruptedException {
 
     var body =
         new CreateGcpGcsBucketReferenceRequestBody()
@@ -141,7 +164,8 @@ public class ResourceMaker {
                     .name(name))
             .bucket(new GcpGcsBucketAttributes().bucketName(TEST_BUCKET_NAME));
 
-    return resourceApi.createBucketReference(body, workspaceId);
+    return ClientTestUtils.getWithRetryOnException(
+        () -> resourceApi.createBucketReference(body, workspaceId));
   }
 
   public static GcpGcsBucketFileResource makeGcsBucketFileReference(
@@ -162,7 +186,8 @@ public class ResourceMaker {
   }
 
   public static GcpGcsBucketResource makeGcsBucketReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name) throws ApiException {
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
+      throws ApiException, InterruptedException {
     return makeGcsBucketReference(resourceApi, workspaceId, name, null);
   }
 

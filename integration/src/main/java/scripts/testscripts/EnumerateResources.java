@@ -309,7 +309,8 @@ public class EnumerateResources extends DataRepoTestScriptBase {
         case 0:
           {
             GcpBigQueryDatasetResource resource =
-                ResourceMaker.makeBigQueryReference(referencedGcpResourceApi, workspaceId, name);
+                ResourceMaker.makeBigQueryDatasetReference(
+                    referencedGcpResourceApi, workspaceId, name);
             resourceList.add(resource.getMetadata());
             break;
           }

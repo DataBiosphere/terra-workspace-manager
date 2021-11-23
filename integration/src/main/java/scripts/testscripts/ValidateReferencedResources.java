@@ -46,7 +46,7 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
 
     String bqReferenceName = RandomStringUtils.random(6, true, false);
     GcpBigQueryDatasetResource bqReference =
-        ResourceMaker.makeBigQueryReference(
+        ResourceMaker.makeBigQueryDatasetReference(
             referencedGcpResourceApi, getWorkspaceId(), bqReferenceName);
     bqResourceId = bqReference.getMetadata().getResourceId();
 
