@@ -3,6 +3,7 @@ package scripts.utils;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_PROJECT;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATATABLE_NAME;
+import static scripts.utils.ClientTestUtils.TEST_BUCKET_FILE_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
 
@@ -20,6 +21,7 @@ import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpBigQueryDatasetReferenceRequestBody;
+import bio.terra.workspace.model.CreateGcpGcsBucketFileReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpGcsBucketReferenceRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
@@ -37,6 +39,8 @@ import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.GcpGcsBucketCreationParameters;
 import bio.terra.workspace.model.GcpGcsBucketDefaultStorageClass;
+import bio.terra.workspace.model.GcpGcsBucketFileAttributes;
+import bio.terra.workspace.model.GcpGcsBucketFileResource;
 import bio.terra.workspace.model.GcpGcsBucketLifecycle;
 import bio.terra.workspace.model.GcpGcsBucketResource;
 import bio.terra.workspace.model.JobControl;
@@ -162,6 +166,31 @@ public class ResourceMaker {
 
     return ClientTestUtils.getWithRetryOnException(
         () -> resourceApi.createBucketReference(body, workspaceId));
+  }
+
+  /**
+   * Calls WSM to create a referenced GCS bucket file in the specified workspace.
+   *
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create a reference).
+   */
+  public static GcpGcsBucketFileResource makeGcsBucketFileReference(
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
+      throws ApiException, InterruptedException {
+    var body =
+        new CreateGcpGcsBucketFileReferenceRequestBody()
+            .metadata(
+                new ReferenceResourceCommonFields()
+                    .cloningInstructions(CloningInstructionsEnum.NOTHING)
+                    .description("Description of " + name)
+                    .name(name))
+            .file(
+                new GcpGcsBucketFileAttributes()
+                    .bucketName(TEST_BUCKET_NAME)
+                    .fileName(TEST_BUCKET_FILE_NAME));
+
+    return ClientTestUtils.getWithRetryOnException(
+        () -> resourceApi.createBucketFileReference(body, workspaceId));
   }
 
   public static GcpGcsBucketResource makeGcsBucketReference(

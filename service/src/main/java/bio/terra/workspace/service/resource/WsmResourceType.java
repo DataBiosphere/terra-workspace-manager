@@ -9,6 +9,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketFileResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -21,20 +22,26 @@ public enum WsmResourceType {
       CloudPlatform.GCP,
       "AI_NOTEBOOK_INSTANCE",
       ApiResourceType.AI_NOTEBOOK,
-      null,
+      /*referenceClass=*/ null,
       ControlledAiNotebookInstanceResource.class),
   DATA_REPO_SNAPSHOT(
       CloudPlatform.GCP,
       "DATA_REPO_SNAPSHOT",
       ApiResourceType.DATA_REPO_SNAPSHOT,
       ReferencedDataRepoSnapshotResource.class,
-      null),
+      /*controlledClass=*/ null),
   GCS_BUCKET(
       CloudPlatform.GCP,
       "GCS_BUCKET",
       ApiResourceType.GCS_BUCKET,
       ReferencedGcsBucketResource.class,
       ControlledGcsBucketResource.class),
+  GCS_BUCKET_FILE(
+      CloudPlatform.GCP,
+      "GCS_BUCKET_FILE",
+      ApiResourceType.GCS_BUCKET_FILE,
+      ReferencedGcsBucketFileResource.class,
+      /*controlledClass=*/ null),
   BIG_QUERY_DATASET(
       CloudPlatform.GCP,
       "BIG_QUERY_DATASET",
