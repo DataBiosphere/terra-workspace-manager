@@ -168,8 +168,15 @@ public class ResourceMaker {
         () -> resourceApi.createBucketReference(body, workspaceId));
   }
 
+  /**
+   * Calls WSM to create a referenced GCS bucket file in the specified workspace.
+   *
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * not expect a user to be able to create a reference).
+   */
   public static GcpGcsBucketFileResource makeGcsBucketFileReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name) throws ApiException {
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
+      throws ApiException, InterruptedException {
     var body =
         new CreateGcpGcsBucketFileReferenceRequestBody()
             .metadata(
@@ -182,7 +189,8 @@ public class ResourceMaker {
                     .bucketName(TEST_BUCKET_NAME)
                     .fileName(TEST_BUCKET_FILE_NAME));
 
-    return resourceApi.createBucketFileReference(body, workspaceId);
+    return ClientTestUtils.getWithRetryOnException(
+        () -> resourceApi.createBucketFileReference(body, workspaceId));
   }
 
   public static GcpGcsBucketResource makeGcsBucketReference(
