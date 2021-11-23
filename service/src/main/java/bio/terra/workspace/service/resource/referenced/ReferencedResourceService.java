@@ -5,6 +5,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ValidationUtils;
@@ -129,10 +130,8 @@ public class ReferencedResourceService {
       UUID resourceId,
       AuthenticatedUserRequest userRequest,
       WsmResourceType resourceType) {
-    WsmResourceType targetResourceType =
-        resourceDao.getResource(workspaceId, resourceId).getResourceType();
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SAM_DELETE_REFERENCED_RESOURCE);
+        userRequest, workspaceId, SamWorkspaceAction.DELETE_REFERENCE);
     resourceDao.deleteResourceForResourceType(workspaceId, resourceId, resourceType);
   }
 
