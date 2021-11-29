@@ -186,8 +186,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteBucketReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    referenceResourceService.deleteReferenceResourceForResourceType(workspaceId, resourceId,
-        userRequest, WsmResourceType.GCS_BUCKET);
+    referenceResourceService.deleteReferenceResourceForResourceType(
+        workspaceId, resourceId, userRequest, WsmResourceType.GCS_BUCKET);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -311,8 +311,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteBigQueryDatasetReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    referenceResourceService.deleteReferenceResourceForResourceType(workspaceId, resourceId,
-        userRequest, WsmResourceType.BIG_QUERY_DATASET);
+    referenceResourceService.deleteReferenceResourceForResourceType(
+        workspaceId, resourceId, userRequest, WsmResourceType.BIG_QUERY_DATASET);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -374,15 +374,15 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteDataRepoSnapshotReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    referenceResourceService.deleteReferenceResourceForResourceType(workspaceId, resourceId,
-        userRequest, WsmResourceType.DATA_REPO_SNAPSHOT);
+    referenceResourceService.deleteReferenceResourceForResourceType(
+        workspaceId, resourceId, userRequest, WsmResourceType.DATA_REPO_SNAPSHOT);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Override
   public ResponseEntity<ApiCloneReferencedGcpGcsBucketFileResourceResult>
-  cloneGcpGcsBucketFileReference(
-      UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
+      cloneGcpGcsBucketFileReference(
+          UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     final ReferencedResource sourceReferencedResource =
@@ -465,8 +465,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   @Override
   public ResponseEntity<ApiCloneReferencedGcpBigQueryDataTableResourceResult>
-  cloneGcpBigQueryDataTableReference(
-      UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
+      cloneGcpBigQueryDataTableReference(
+          UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     final ReferencedResource sourceReferencedResource =
@@ -507,8 +507,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   @Override
   public ResponseEntity<ApiCloneReferencedGcpBigQueryDatasetResourceResult>
-  cloneGcpBigQueryDatasetReference(
-      UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
+      cloneGcpBigQueryDatasetReference(
+          UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     final ReferencedResource sourceReferencedResource =
@@ -550,8 +550,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
 
   @Override
   public ResponseEntity<ApiCloneReferencedGcpDataRepoSnapshotResourceResult>
-  cloneGcpDataRepoSnapshotReference(
-      UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
+      cloneGcpDataRepoSnapshotReference(
+          UUID workspaceId, UUID resourceId, @Valid ApiCloneReferencedResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     final ReferencedResource sourceReferencedResource =

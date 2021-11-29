@@ -89,8 +89,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     jobService.setFlightDebugInfoForTest(null);
     if (referenceResource != null) {
       try {
-        referenceResourceService.deleteReferenceResource(
-            referenceResource.getWorkspaceId(), referenceResource.getResourceId(), USER_REQUEST);
+        referenceResourceService.deleteReferenceResourceForResourceType(
+            referenceResource.getWorkspaceId(),
+            referenceResource.getResourceId(),
+            USER_REQUEST,
+            referenceResource.getResourceType());
       } catch (Exception ex) {
         logger.warn("Failed to delete reference resource " + referenceResource.getResourceId());
       }
@@ -315,8 +318,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
               workspaceId, resource.getName(), USER_REQUEST);
       assertEquals(byid.castToDataRepoSnapshotResource(), byname.castToDataRepoSnapshotResource());
 
-      referenceResourceService.deleteReferenceResource(
-          workspaceId, referenceResource.getResourceId(), USER_REQUEST);
+      referenceResourceService.deleteReferenceResourceForResourceType(
+          workspaceId,
+          referenceResource.getResourceId(),
+          USER_REQUEST,
+          WsmResourceType.DATA_REPO_SNAPSHOT);
     }
 
     @Test
@@ -385,8 +391,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
         assertEquals(daoResources.size(), resources.size());
       } finally {
         for (var resource : resources) {
-          referenceResourceService.deleteReferenceResource(
-              workspaceId, resource.getResourceId(), USER_REQUEST);
+          referenceResourceService.deleteReferenceResourceForResourceType(
+              workspaceId, resource.getResourceId(), USER_REQUEST, resource.getResourceType());
         }
       }
     }
@@ -489,8 +495,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                 workspaceId, resource.getName(), USER_REQUEST);
         assertEquals(byid.castToGcsBucketResource(), byname.castToGcsBucketResource());
 
-        referenceResourceService.deleteReferenceResource(
-            workspaceId, referenceResource.getResourceId(), USER_REQUEST);
+        referenceResourceService.deleteReferenceResourceForResourceType(
+            workspaceId,
+            referenceResource.getResourceId(),
+            USER_REQUEST,
+            WsmResourceType.GCS_BUCKET);
       }
 
       @Test
@@ -625,8 +634,11 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
                 workspaceId, resource.getName(), USER_REQUEST);
         assertEquals(byid.castToBigQueryDatasetResource(), byname.castToBigQueryDatasetResource());
 
-        referenceResourceService.deleteReferenceResource(
-            workspaceId, referenceResource.getResourceId(), USER_REQUEST);
+        referenceResourceService.deleteReferenceResourceForResourceType(
+            workspaceId,
+            referenceResource.getResourceId(),
+            USER_REQUEST,
+            WsmResourceType.BIG_QUERY_DATASET);
       }
 
       @Test
