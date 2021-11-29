@@ -186,9 +186,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteBucketReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // TODO(PF-1212): use {@code referenceResourceService#deleteReferenceResourceForResourceType}
-    // instead.
-    referenceResourceService.deleteReferenceResource(workspaceId, resourceId, userRequest);
+    referenceResourceService.deleteReferenceResourceForResourceType(
+        workspaceId, resourceId, userRequest, WsmResourceType.GCS_BUCKET);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -312,9 +311,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteBigQueryDatasetReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // TODO(PF-1212): use {@code referenceResourceService#deleteReferenceResourceForResourceType}
-    // instead.
-    referenceResourceService.deleteReferenceResource(workspaceId, resourceId, userRequest);
+    referenceResourceService.deleteReferenceResourceForResourceType(
+        workspaceId, resourceId, userRequest, WsmResourceType.BIG_QUERY_DATASET);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -376,9 +374,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   @Override
   public ResponseEntity<Void> deleteDataRepoSnapshotReference(UUID workspaceId, UUID resourceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // TODO(PF-1212): use {@code referenceResourceService#deleteReferenceResourceForResourceType}
-    // instead.
-    referenceResourceService.deleteReferenceResource(workspaceId, resourceId, userRequest);
+    referenceResourceService.deleteReferenceResourceForResourceType(
+        workspaceId, resourceId, userRequest, WsmResourceType.DATA_REPO_SNAPSHOT);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
