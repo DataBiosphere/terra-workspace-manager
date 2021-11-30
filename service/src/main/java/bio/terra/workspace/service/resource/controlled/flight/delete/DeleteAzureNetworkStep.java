@@ -51,11 +51,7 @@ public class DeleteAzureNetworkStep implements Step {
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
     var azureResourceId =
         String.format(
-            "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/network/%s", // TODO:
-            // need
-            // correct
-            // url
-            // here
+            "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/network/%s",
             azureCloudContext.getAzureSubscriptionId(),
             azureCloudContext.getAzureResourceGroupId(),
             network.getNetworkName());

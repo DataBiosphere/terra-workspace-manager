@@ -437,7 +437,6 @@ public class ResourceDao {
       case BIG_QUERY_DATASET:
         validateUniqueBigQueryDataset(controlledResource.castToBigQueryDatasetResource());
         break;
-      case DATA_REPO_SNAPSHOT:
       case AZURE_IP:
         validateUniqueAzureIp(controlledResource.castToAzureIpResource());
         break;
@@ -450,6 +449,7 @@ public class ResourceDao {
       case AZURE_VM:
         validateUniqueAzureVm(controlledResource.castToAzureVmResource());
         break;
+      case DATA_REPO_SNAPSHOT:
       default:
         throw new IllegalArgumentException(
             String.format(
