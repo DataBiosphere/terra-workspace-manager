@@ -6,6 +6,7 @@ import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
@@ -114,6 +115,23 @@ public class ControlledResourceService {
                 userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return jobBuilder.submitAndWait(ControlledAzureDiskResource.class);
+  }
+
+  public ControlledAzureNetworkResource createNetwork(
+      ControlledAzureNetworkResource resource,
+      ApiAzureNetworkCreationParameters creationParameters,
+      List<ControlledResourceIamRole> privateResourceIamRoles,
+      AuthenticatedUserRequest userRequest) {
+
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(
+                resource,
+                privateResourceIamRoles,
+                new ApiJobControl().id(UUID.randomUUID().toString()),
+                null,
+                userRequest)
+            .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
+    return jobBuilder.submitAndWait(ControlledAzureNetworkResource.class);
   }
 
   public String createVm(
