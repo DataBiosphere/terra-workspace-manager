@@ -137,13 +137,45 @@ public class ValidationUtils {
    * https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
    * for azure resource rules
    */
-  public static void validateAzureResourceName(String name) {
+  public static void validateAzureIPorSubnetName(String name) {
     Pattern pattern = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-_.]{0,78}[a-zA-Z0-9_]$");
 
     if (!pattern.matcher(name).matches()) {
-      logger.warn("Invalid Azure resource name {}", name);
+      logger.warn("Invalid Azure IP or Subnet name {}", name);
       throw new InvalidReferenceException(
-          "Invalid Azure resource name specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
+          "Invalid Azure IP or Subnet name specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
+    }
+  }
+
+  public static void validateAzureNetworkName(String name) {
+    Pattern pattern = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-_.]{2,62}[a-zA-Z0-9_]$");
+
+    if (!pattern.matcher(name).matches()) {
+      logger.warn("Invalid Azure network name {}", name);
+      throw new InvalidReferenceException(
+          "Invalid Azure network name specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
+    }
+  }
+
+  public static void validateAzureDiskName(String name) {
+    Pattern pattern = Pattern.compile("^[a-zA-Z0-9-_]{0,80}$");
+
+    if (!pattern.matcher(name).matches()) {
+      logger.warn("Invalid Disk name {}", name);
+      throw new InvalidReferenceException(
+          "Invalid Azure Disk name specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
+    }
+  }
+
+  public static void validateAzureCidrBlock(String range) {
+    Pattern pattern =
+        Pattern.compile(
+            "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(\\d|[1-2]\\d|3[0-2]))$");
+
+    if (!pattern.matcher(range).matches()) {
+      logger.warn("Invalid CIDR block {}", range);
+      throw new InvalidReferenceException(
+          "Invalid Azure CIDR block specified. See documentation for full specification https://stackoverflow.com/questions/18608165/cidr-notation-and-ip-range-validator-pattern/18611259.");
     }
   }
 

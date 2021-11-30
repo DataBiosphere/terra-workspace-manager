@@ -2,6 +2,7 @@ package bio.terra.workspace.common.fixtures;
 
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
@@ -19,6 +20,7 @@ import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
@@ -80,6 +82,8 @@ public class ControlledResourceFixtures {
   public static final String AZURE_NAME_PREFIX = "azure";
   public static final String AZURE_IP_NAME_PREFIX = "ip";
   public static final String AZURE_DISK_NAME_PREFIX = "disk";
+  public static final String AZURE_NETWORK_NAME_PREFIX = "network";
+  public static final String AZURE_SUBNET_NAME_PREFIX = "subnet";
   public static final String AZURE_VM_NAME_PREFIX = "vm";
 
   public static final ApiGcpGcsBucketCreationParameters GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL =
@@ -109,6 +113,16 @@ public class ControlledResourceFixtures {
         .name(uniqueAzureName(AZURE_DISK_NAME_PREFIX))
         .region("westcentralus")
         .size(50);
+  }
+
+  /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
+  public static ApiAzureNetworkCreationParameters getAzureNetworkCreationParameters() {
+    return new ApiAzureNetworkCreationParameters()
+        .name(uniqueAzureName(AZURE_NETWORK_NAME_PREFIX))
+        .subnetName(uniqueAzureName(AZURE_SUBNET_NAME_PREFIX))
+        .addressSpaceCidr("192.168.0.0/16")
+        .subnetAddressCidr("192.168.1.0/24")
+        .region("eastus");
   }
 
   /** Construct a parameter object with a unique vm name to avoid unintended clashes. */
@@ -198,6 +212,25 @@ public class ControlledResourceFixtures {
         diskName,
         region,
         size);
+  }
+
+  public static ControlledAzureNetworkResource getAzureNetwork(
+      ApiAzureNetworkCreationParameters creationParameters) {
+    return new ControlledAzureNetworkResource(
+        WORKSPACE_ID,
+        RESOURCE_ID,
+        RESOURCE_NAME,
+        RESOURCE_DESCRIPTION,
+        CLONING_INSTRUCTIONS,
+        OWNER_EMAIL,
+        // TODO: these should be changed when we group the resources
+        AccessScopeType.ACCESS_SCOPE_PRIVATE,
+        ManagedByType.MANAGED_BY_USER,
+        creationParameters.getName(),
+        creationParameters.getSubnetName(),
+        creationParameters.getAddressSpaceCidr(),
+        creationParameters.getSubnetAddressCidr(),
+        creationParameters.getRegion());
   }
 
   public static ControlledAzureVmResource getAzureVm(
