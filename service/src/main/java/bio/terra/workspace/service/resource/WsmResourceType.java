@@ -5,6 +5,7 @@ import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
@@ -69,6 +70,12 @@ public enum WsmResourceType {
       ApiResourceType.AZURE_DISK,
       null,
       ControlledAzureDiskResource.class),
+  AZURE_NETWORK(
+      CloudPlatform.AZURE,
+      "AZURE_NETWORK",
+      ApiResourceType.AZURE_NETWORK,
+      null,
+      ControlledAzureNetworkResource.class),
   AZURE_VM(
       CloudPlatform.AZURE,
       "AZURE_VM",
