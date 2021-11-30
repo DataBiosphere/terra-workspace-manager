@@ -41,7 +41,7 @@ public class GetAzureStorageStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
 
-    if (!storageManager
+    if (storageManager
         .storageAccounts()
         .checkNameAvailability(resource.getStorageAccountName())
         .isAvailable()) {

@@ -65,7 +65,7 @@ public class GetAzureStorageStepTest extends BaseAzureTest {
             ControlledResourceFixtures.getAzureStorage(
                 creationParameters.getName(), creationParameters.getRegion()));
 
-    when(mockNameAvailabilityResult.isAvailable()).thenReturn(false);
+    when(mockNameAvailabilityResult.isAvailable()).thenReturn(true);
     when(mockStorageAccounts.checkNameAvailability(creationParameters.getName()))
         .thenReturn(mockNameAvailabilityResult);
 
@@ -88,7 +88,7 @@ public class GetAzureStorageStepTest extends BaseAzureTest {
             ControlledResourceFixtures.getAzureStorage(
                 creationParameters.getName(), creationParameters.getRegion()));
 
-    when(mockNameAvailabilityResult.isAvailable()).thenReturn(true);
+    when(mockNameAvailabilityResult.isAvailable()).thenReturn(false);
     when(mockStorageAccounts.checkNameAvailability(creationParameters.getName()))
         .thenReturn(mockNameAvailabilityResult);
 

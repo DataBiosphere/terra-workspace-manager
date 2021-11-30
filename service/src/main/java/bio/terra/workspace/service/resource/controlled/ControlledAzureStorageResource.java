@@ -80,7 +80,8 @@ public class ControlledAzureStorageResource extends ControlledResource {
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ControlledAzureStorageAttributes(getStorageAccountName(), getRegion()));
+    return DbSerDes.toJson(
+        new ControlledAzureStorageAttributes(getStorageAccountName(), getRegion()));
   }
 
   @Override
