@@ -18,6 +18,7 @@ import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
@@ -436,16 +437,19 @@ public class ResourceDao {
       case BIG_QUERY_DATASET:
         validateUniqueBigQueryDataset(controlledResource.castToBigQueryDatasetResource());
         break;
-      case DATA_REPO_SNAPSHOT:
       case AZURE_IP:
         validateUniqueAzureIp(controlledResource.castToAzureIpResource());
         break;
       case AZURE_DISK:
         validateUniqueAzureDisk(controlledResource.castToAzureDiskResource());
         break;
+      case AZURE_NETWORK:
+        validateUniqueAzureNetwork(controlledResource.castToAzureNetworkResource());
+        break;
       case AZURE_VM:
         validateUniqueAzureVm(controlledResource.castToAzureVmResource());
         break;
+      case DATA_REPO_SNAPSHOT:
       default:
         throw new IllegalArgumentException(
             String.format(
@@ -575,6 +579,25 @@ public class ResourceDao {
     if (matchingCount != null && matchingCount > 0) {
       throw new DuplicateResourceException(
           String.format("An Azure Vm with ID %s already exists", resource.getVmName()));
+    }
+  }
+
+  private void validateUniqueAzureNetwork(ControlledAzureNetworkResource resource) {
+    String sql =
+        "SELECT COUNT(1)"
+            + " FROM resource"
+            + " WHERE resource_type = :resource_type"
+            + " AND workspace_id = :workspace_id"
+            + " AND attributes->>'networkName' = :network_name";
+    MapSqlParameterSource sqlParams =
+        new MapSqlParameterSource()
+            .addValue("resource_type", WsmResourceType.AZURE_NETWORK.toSql())
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
+            .addValue("network_name", resource.getNetworkName());
+    Integer matchingCount = jdbcTemplate.queryForObject(sql, sqlParams, Integer.class);
+    if (matchingCount != null && matchingCount > 0) {
+      throw new DuplicateResourceException(
+          String.format("An Azure Network with ID %s already exists", resource.getNetworkName()));
     }
   }
 
@@ -713,6 +736,8 @@ public class ResourceDao {
             return new ControlledAzureDiskResource(dbResource);
           case AZURE_VM:
             return new ControlledAzureVmResource(dbResource);
+          case AZURE_NETWORK:
+            return new ControlledAzureNetworkResource(dbResource);
           default:
             throw new InvalidMetadataException(
                 "Invalid controlled resource type" + dbResource.getResourceType().toString());

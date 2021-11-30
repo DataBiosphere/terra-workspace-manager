@@ -124,6 +124,11 @@ public abstract class ControlledResource extends WsmResource {
     return (ControlledAzureDiskResource) this;
   }
 
+  public ControlledAzureNetworkResource castToAzureNetworkResource() {
+    validateSubclass(WsmResourceType.AZURE_NETWORK);
+    return (ControlledAzureNetworkResource) this;
+  }
+
   public ControlledAzureVmResource castToAzureVmResource() {
     validateSubclass(WsmResourceType.AZURE_VM);
     return (ControlledAzureVmResource) this;
