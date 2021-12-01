@@ -25,10 +25,14 @@ import scripts.utils.ResourceMaker;
 
 public class ValidateReferencedResources extends DataRepoTestScriptBase {
 
+  // liam.dragonmaw@test.firecloud.org
   private TestUserSpecification secondUser;
+  // elijah.thunderlord@test.firecloud.org
+  private TestUserSpecification thirdUser;
   private UUID bqResourceId;
   private UUID bqDataTableResourceId;
   private UUID bucketResourceId;
+  private UUID fineGrainedBucketResourceId;
   private UUID snapshotResourceId;
   private UUID bucketFileResourceId;
 
@@ -37,9 +41,10 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
       throws Exception {
     super.doSetup(testUsers, workspaceApi);
     assertThat(
-        "There must be at least two test users defined for this test.",
-        testUsers != null && testUsers.size() > 1);
+        "There must be at least three test users defined for this test.",
+        testUsers != null && testUsers.size() > 2);
     this.secondUser = testUsers.get(1);
+    this.thirdUser = testUsers.get(2);
 
     ApiClient apiClient = ClientTestUtils.getClientForTestUser(testUsers.get(0), server);
     ReferencedGcpResourceApi referencedGcpResourceApi = new ReferencedGcpResourceApi(apiClient);
@@ -74,9 +79,15 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
 
     String bucketFileReferenceName =
         RandomStringUtils.random(6, /*letters*/ true, /*numbers=*/ true);
+    String fineGrainedBucketReferenceName =
+        RandomStringUtils.random(6, /*letters*/ true, /*numbers=*/ true);
     GcpGcsBucketFileResource bucketFileReference =
-        ResourceMaker.makeGcsBucketFileReference(
+        ResourceMaker.makeGcsBucketFileInFineGrainedBucketReference(
             referencedGcpResourceApi, getWorkspaceId(), bucketFileReferenceName);
+    fineGrainedBucketResourceId = ResourceMaker.makeGcsBucketWithFineGrainedAccessReference(
+        referencedGcpResourceApi, getWorkspaceId(),
+        fineGrainedBucketReferenceName, /*cloningInstructions=*/null
+    ).getMetadata().getResourceId();
     bucketFileResourceId = bucketFileReference.getMetadata().getResourceId();
   }
 
@@ -86,11 +97,17 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
     ResourceApi ownerApi = new ResourceApi(ClientTestUtils.getClientForTestUser(testUser, server));
     ResourceApi secondUserApi =
         new ResourceApi(ClientTestUtils.getClientForTestUser(secondUser, server));
+    ResourceApi thirdUserApi = new ResourceApi(
+        ClientTestUtils.getClientForTestUser(thirdUser, server));
 
     // Add second user as workspace reader, though this will not affect permissions on referenced
     // external objects.
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(secondUser.userEmail),
+        getWorkspaceId(),
+        IamRole.READER);
+    workspaceApi.grantRole(
+        new GrantRoleRequestBody().memberEmail(thirdUser.userEmail),
         getWorkspaceId(),
         IamRole.READER);
 
@@ -107,5 +124,10 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
     assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), bucketResourceId));
     assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), snapshotResourceId));
     assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), bucketFileResourceId));
+
+    // Third test user have access to the fine-grained access bucket but does not have access to
+    // the file within this bucket.
+    assertTrue(thirdUserApi.checkReferenceAccess(getWorkspaceId(), fineGrainedBucketResourceId));
+    assertFalse(thirdUserApi.checkReferenceAccess(getWorkspaceId(), bucketFileResourceId));
   }
 }

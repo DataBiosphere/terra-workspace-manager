@@ -365,14 +365,15 @@ public class CrlService {
       // If successfully get the blob, the user have at least READER access.
       BlobCow blobCow = storage.get(blobId);
       if (blobCow == null) {
-        throw new InvalidReferenceException(
-            String.format("Error while trying to access GCS blob %s in bucket %s", filePath, bucketName)
-        );
+        return false;
       }
       return true;
     } catch (StorageException e) {
+      if (e.getCode() == HttpStatus.SC_FORBIDDEN) {
+        return false;
+      }
       throw new InvalidReferenceException(
-          String.format("Error while trying to access GCS blob %s in bucket %s", filePath, bucketName));
+          String.format("Error while trying to access GCS blob %s in bucket %s and status code %s", filePath, bucketName));
     }
   }
 

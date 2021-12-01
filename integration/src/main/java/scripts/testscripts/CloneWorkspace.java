@@ -186,6 +186,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     final ApiClient apiClient = ClientTestUtils.getClientForTestUser(sourceOwnerUser, server);
     final var referencedGcpResourceApi = new ReferencedGcpResourceApi(apiClient);
     final String bucketReferenceName = RandomStringUtils.random(16, true, false);
+    final String bucketFileReferenceName = RandomStringUtils.random(16, true, false);
 
     sourceBucketReference =
         ResourceMaker.makeGcsBucketReference(
@@ -196,7 +197,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     sourceBucketFileReference =
         ResourceMaker.makeGcsBucketFileReference(
-            referencedGcpResourceApi, getWorkspaceId(), "a reference to hello_world.txt");
+            referencedGcpResourceApi, getWorkspaceId(), "clone to hello_world.txt");
 
     // create reference to BQ dataset with COPY_NOTHING
     sourceDatasetReference =

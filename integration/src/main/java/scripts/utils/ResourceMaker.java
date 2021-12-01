@@ -6,6 +6,7 @@ import static scripts.utils.ClientTestUtils.TEST_BQ_DATATABLE_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_FILE_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
+import static scripts.utils.ClientTestUtils.TEST_FILE_IN_FINE_GRAINED_BUCKET;
 import static scripts.utils.GcsBucketTestFixtures.BUCKET_PREFIX;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
 
@@ -60,6 +61,7 @@ import org.slf4j.LoggerFactory;
 
 // Static methods to create resources
 public class ResourceMaker {
+
   private static final Logger logger = LoggerFactory.getLogger(ResourceMaker.class);
   private static final long DELETE_BUCKET_POLL_SECONDS = 15;
   private static final String BUCKET_LOCATION = "US-CENTRAL1";
@@ -67,7 +69,8 @@ public class ResourceMaker {
   /**
    * Calls WSM to create a referenced BigQuery dataset in the specified workspace.
    *
-   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you
+   * do
    * not expect a user to be able to create a reference).
    */
   public static GcpBigQueryDatasetResource makeBigQueryDatasetReference(
@@ -93,7 +96,8 @@ public class ResourceMaker {
   /**
    * Calls WSM to create a referenced BigQuery table in the specified workspace.
    *
-   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you
+   * do
    * not expect a user to be able to create a reference).
    */
   public static GcpBigQueryDataTableResource makeBigQueryDataTableReference(
@@ -117,7 +121,9 @@ public class ResourceMaker {
         () -> resourceApi.createBigQueryDataTableReference(body, workspaceId));
   }
 
-  /** Calls WSM to create a referenced TDR snapshot in the specified workspace. */
+  /**
+   * Calls WSM to create a referenced TDR snapshot in the specified workspace.
+   */
   public static DataRepoSnapshotResource makeDataRepoSnapshotReference(
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,
@@ -144,7 +150,8 @@ public class ResourceMaker {
   /**
    * Calls WSM to create a referenced GCS bucket in the specified workspace.
    *
-   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you
+   * do
    * not expect a user to be able to create a reference).
    */
   public static GcpGcsBucketResource makeGcsBucketReference(
@@ -152,6 +159,34 @@ public class ResourceMaker {
       UUID workspaceId,
       String name,
       @Nullable CloningInstructionsEnum cloningInstructions)
+      throws ApiException, InterruptedException {
+    return makeGcsBucketReference(resourceApi, workspaceId, name,
+        cloningInstructions, /*isBucketWithFineGrainedAccess=*/false);
+  }
+
+  public static GcpGcsBucketResource makeGcsBucketWithFineGrainedAccessReference(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      @Nullable CloningInstructionsEnum cloningInstructions)
+      throws InterruptedException, ApiException {
+    return makeGcsBucketReference(resourceApi, workspaceId, name,
+        cloningInstructions, /*isBucketWithFineGrainedAccess=*/false);
+  }
+
+  /**
+   * Calls WSM to create a referenced GCS bucket in the specified workspace.
+   *
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you
+   * do
+   * not expect a user to be able to create a reference).
+   */
+  public static GcpGcsBucketResource makeGcsBucketReference(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      @Nullable CloningInstructionsEnum cloningInstructions,
+      boolean isBucketWithFineGrainedAccess)
       throws ApiException, InterruptedException {
 
     var body =
@@ -163,8 +198,11 @@ public class ResourceMaker {
                             .orElse(CloningInstructionsEnum.NOTHING))
                     .description("Description of " + name)
                     .name(name))
-            .bucket(new GcpGcsBucketAttributes().bucketName(TEST_BUCKET_NAME));
+            .bucket(new GcpGcsBucketAttributes().bucketName(
+                isBucketWithFineGrainedAccess ? TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS
+                    : TEST_BUCKET_NAME));
 
+    logger.info("Making reference to a gcs bucket");
     return ClientTestUtils.getWithRetryOnException(
         () -> resourceApi.createBucketReference(body, workspaceId));
   }
@@ -172,11 +210,38 @@ public class ResourceMaker {
   /**
    * Calls WSM to create a referenced GCS bucket file in the specified workspace.
    *
-   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you
+   * do
    * not expect a user to be able to create a reference).
    */
   public static GcpGcsBucketFileResource makeGcsBucketFileReference(
       ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
+      throws ApiException, InterruptedException {
+    return makeGcsBucketFileReference(resourceApi, workspaceId, name, /*isFineGrainedBucket=*/false);
+  }
+
+  /**
+   * Calls WSM to create a referenced GCS bucket file in the specified workspace.
+   *
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you
+   * do
+   * not expect a user to be able to create a reference).
+   */
+  public static GcpGcsBucketFileResource makeGcsBucketFileInFineGrainedBucketReference(
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
+      throws ApiException, InterruptedException {
+    return makeGcsBucketFileReference(resourceApi, workspaceId, name, /*isFineGrainedBucket=*/true);
+  }
+
+  /**
+   * Calls WSM to create a referenced GCS bucket file in the specified workspace.
+   *
+   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you
+   * do
+   * not expect a user to be able to create a reference).
+   */
+  public static GcpGcsBucketFileResource makeGcsBucketFileReference(
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name, boolean isFineGrainedBucket)
       throws ApiException, InterruptedException {
     var body =
         new CreateGcpGcsBucketFileReferenceRequestBody()
@@ -187,10 +252,10 @@ public class ResourceMaker {
                     .name(name))
             .file(
                 new GcpGcsBucketFileAttributes()
-                    .bucketName(TEST_BUCKET_NAME)
-                    //.bucketName(TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS)
-                    .fileName(TEST_BUCKET_FILE_NAME));
+                    .bucketName(isFineGrainedBucket? TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS: TEST_BUCKET_NAME)
+                    .fileName(isFineGrainedBucket? TEST_FILE_IN_FINE_GRAINED_BUCKET: TEST_BUCKET_FILE_NAME));
 
+    logger.info("Making reference to a gcs bucket file");
     return ClientTestUtils.getWithRetryOnException(
         () -> resourceApi.createBucketFileReference(body, workspaceId));
   }

@@ -1,8 +1,9 @@
 package scripts.testscripts;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static scripts.utils.ClientTestUtils.TEST_BUCKET_FILE_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
+import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
+import static scripts.utils.ClientTestUtils.TEST_FILE_IN_FINE_GRAINED_BUCKET;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
@@ -67,7 +68,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
             referencedGcpResourceApi, getWorkspaceId(), bucketReferenceName);
 
     sourceBucketFileReference =
-        ResourceMaker.makeGcsBucketFileReference(
+        ResourceMaker.makeGcsBucketFileInFineGrainedBucketReference(
             referencedGcpResourceApi, getWorkspaceId(), bucketFileReferenceName);
 
     sourceBigQueryDatasetReference =
@@ -165,10 +166,10 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
         CLONED_BUCKET_FILE_RESOURCE_NAME,
         cloneBucketFileReferenceResult.getResource().getMetadata().getName());
     assertEquals(
-        TEST_BUCKET_NAME,
+        TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
         cloneBucketFileReferenceResult.getResource().getAttributes().getBucketName());
     assertEquals(
-        TEST_BUCKET_FILE_NAME,
+        TEST_FILE_IN_FINE_GRAINED_BUCKET,
         cloneBucketFileReferenceResult.getResource().getAttributes().getFileName());
 
     final var cloneBigQueryDatasetRequestBody =
