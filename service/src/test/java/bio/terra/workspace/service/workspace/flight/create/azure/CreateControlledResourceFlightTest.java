@@ -189,7 +189,7 @@ public class CreateControlledResourceFlightTest extends BaseAzureTest {
     ControlledAzureDiskResource diskResource = createDisk(workspaceId, userRequest);
 
     // Create network
-    // TODO network
+    ControlledAzureNetworkResource networkResource = createNetwork(workspaceId, userRequest);
 
     final ApiAzureVmCreationParameters creationParameters =
         ControlledResourceFixtures.getAzureVmCreationParameters();
@@ -211,8 +211,7 @@ public class CreateControlledResourceFlightTest extends BaseAzureTest {
             .region(creationParameters.getRegion())
             .ipId(ipResource.getResourceId())
             .diskId(diskResource.getResourceId())
-            // TODO network: not used in step currently,
-            .networkId(creationParameters.getNetworkId())
+            .networkId(networkResource.getResourceId())
             .build();
 
     // Submit a VM creation flight.
@@ -306,6 +305,43 @@ public class CreateControlledResourceFlightTest extends BaseAzureTest {
 
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
+    return resource;
+  }
+
+  private ControlledAzureNetworkResource createNetwork(
+      UUID workspaceId, AuthenticatedUserRequest userRequest) throws InterruptedException {
+    final ApiAzureNetworkCreationParameters creationParameters =
+        ControlledResourceFixtures.getAzureNetworkCreationParameters();
+
+    // TODO: make this application-private resource once the POC supports it
+    final UUID resourceId = UUID.randomUUID();
+    ControlledAzureNetworkResource resource =
+        ControlledAzureNetworkResource.builder()
+            .workspaceId(workspaceId)
+            .resourceId(resourceId)
+            .name(getAzureName("network"))
+            .description(getAzureName("network-desc"))
+            .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+            .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+            .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+            .networkName(creationParameters.getName())
+            .region(creationParameters.getRegion())
+            .subnetName(creationParameters.getSubnetName())
+            .addressSpaceCidr(creationParameters.getAddressSpaceCidr())
+            .subnetAddressCidr(creationParameters.getSubnetAddressCidr())
+            .build();
+
+    // Submit a Disk creation flight.
+    FlightState flightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateControlledResourceFlight.class,
+            azureTestUtils.createControlledResourceInputParameters(
+                workspaceId, userRequest, resource),
+            STAIRWAY_FLIGHT_TIMEOUT,
+            null);
+
+    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
     return resource;
   }
 
