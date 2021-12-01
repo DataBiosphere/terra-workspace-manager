@@ -84,6 +84,8 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private static final ImmutableList<ControlledResourceIamRole> PRIVATE_ROLES =
       ImmutableList.of(ControlledResourceIamRole.WRITER, ControlledResourceIamRole.EDITOR);
 
+  private static final int EXPECTED_NUM_CLONED_RESOURCES = 11;
+
   @Override
   protected void doSetup(
       List<TestUserSpecification> testUsers, WorkspaceApi sourceOwnerWorkspaceApi)
@@ -196,7 +198,10 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     sourceBucketFileReference =
         ResourceMaker.makeGcsBucketFileReference(
-            referencedGcpResourceApi, getWorkspaceId(), "a reference to hello_world.txt");
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            "a_reference_to_hello_world_txt",
+            CloningInstructionsEnum.REFERENCE);
 
     // create reference to BQ dataset with COPY_NOTHING
     sourceDatasetReference =
@@ -235,7 +240,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         "Clone Workspace", cloneResult.getJobReport(), cloneResult.getErrorReport());
     assertNull(cloneResult.getErrorReport());
     assertNotNull(cloneResult.getWorkspace());
-    assertThat(cloneResult.getWorkspace().getResources(), hasSize(10));
+    assertThat(cloneResult.getWorkspace().getResources(), hasSize(EXPECTED_NUM_CLONED_RESOURCES));
     assertEquals(getWorkspaceId(), cloneResult.getWorkspace().getSourceWorkspaceId());
     destinationWorkspaceId = cloneResult.getWorkspace().getDestinationWorkspaceId();
     assertNotNull(destinationWorkspaceId);

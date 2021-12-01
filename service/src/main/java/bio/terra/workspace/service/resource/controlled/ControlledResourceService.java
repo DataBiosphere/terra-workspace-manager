@@ -145,16 +145,11 @@ public class ControlledResourceService {
       @Nullable String destinationLocation,
       @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
     stageService.assertMcWorkspace(destinationWorkspaceId, "cloneGcsBucket");
+    // Authorization check is handled as the first flight step rather than before the flight, as
+    // this flight is re-used for cloneWorkspace.
 
     final ControlledResource sourceBucketResource =
         getControlledResource(sourceWorkspaceId, sourceResourceId, userRequest);
-
-    // Verify user can read source resource in Sam
-    controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest,
-        sourceBucketResource.getWorkspaceId(),
-        sourceBucketResource.getResourceId(),
-        SamControlledResourceActions.READ_ACTION);
 
     // Write access to the target workspace will be established in the create flight
     final String jobDescription =
@@ -253,13 +248,8 @@ public class ControlledResourceService {
     stageService.assertMcWorkspace(destinationWorkspaceId, "cloneGcpBigQueryDataset");
     final ControlledResource sourceDatasetResource =
         getControlledResource(sourceWorkspaceId, sourceResourceId, userRequest);
-
-    // Verify user can read source resource in Sam
-    controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest,
-        sourceDatasetResource.getWorkspaceId(),
-        sourceDatasetResource.getResourceId(),
-        SamControlledResourceActions.READ_ACTION);
+    // Authorization check is handled as the first flight step rather than before the flight, as
+    // this flight is re-used for cloneWorkspace.
 
     // Write access to the target workspace will be established in the create flight
     final String jobDescription =

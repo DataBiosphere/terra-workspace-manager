@@ -177,11 +177,22 @@ public class ResourceMaker {
   public static GcpGcsBucketFileResource makeGcsBucketFileReference(
       ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
       throws ApiException, InterruptedException {
+    return makeGcsBucketFileReference(resourceApi, workspaceId, name, null);
+  }
+
+  public static GcpGcsBucketFileResource makeGcsBucketFileReference(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      String name,
+      @Nullable CloningInstructionsEnum cloningInstructions)
+      throws ApiException, InterruptedException {
     var body =
         new CreateGcpGcsBucketFileReferenceRequestBody()
             .metadata(
                 new ReferenceResourceCommonFields()
-                    .cloningInstructions(CloningInstructionsEnum.NOTHING)
+                    .cloningInstructions(
+                        Optional.ofNullable(cloningInstructions)
+                            .orElse(CloningInstructionsEnum.NOTHING))
                     .description("Description of " + name)
                     .name(name))
             .file(
