@@ -10,6 +10,7 @@ import bio.terra.cloudres.google.compute.CloudComputeCow;
 import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
+import bio.terra.cloudres.google.storage.BlobCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.app.configuration.external.CrlConfiguration;
@@ -28,6 +29,8 @@ import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.storage.Acl;
+import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
@@ -352,6 +355,24 @@ public class CrlService {
     } catch (StorageException e) {
       throw new InvalidReferenceException(
           String.format("Error while trying to access GCS bucket %s", bucketName), e);
+    }
+  }
+
+  public boolean canReadGcsBucketFile(String bucketName, String filePath, AuthenticatedUserRequest userRequest) {
+    try {
+      StorageCow storage = createStorageCow(null, userRequest);
+      BlobId blobId = BlobId.of(bucketName, filePath);
+      // If successfully get the blob, the user have at least READER access.
+      BlobCow blobCow = storage.get(blobId);
+      if (blobCow == null) {
+        throw new InvalidReferenceException(
+            String.format("Error while trying to access GCS blob %s in bucket %s", filePath, bucketName)
+        );
+      }
+      return true;
+    } catch (StorageException e) {
+      throw new InvalidReferenceException(
+          String.format("Error while trying to access GCS blob %s in bucket %s", filePath, bucketName));
     }
   }
 

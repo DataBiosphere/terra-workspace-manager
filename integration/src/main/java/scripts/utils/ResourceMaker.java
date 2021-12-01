@@ -5,6 +5,7 @@ import static scripts.utils.ClientTestUtils.TEST_BQ_DATASET_PROJECT;
 import static scripts.utils.ClientTestUtils.TEST_BQ_DATATABLE_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_FILE_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
+import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
 import static scripts.utils.GcsBucketTestFixtures.BUCKET_PREFIX;
 import static scripts.utils.GcsBucketTestFixtures.LIFECYCLE_RULES;
 
@@ -187,6 +188,7 @@ public class ResourceMaker {
             .file(
                 new GcpGcsBucketFileAttributes()
                     .bucketName(TEST_BUCKET_NAME)
+                    //.bucketName(TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS)
                     .fileName(TEST_BUCKET_FILE_NAME));
 
     return ClientTestUtils.getWithRetryOnException(

@@ -115,7 +115,7 @@ public class ReferencedGcsBucketFileResource extends ReferencedResource {
     // have the Storage APIs enabled.
     Optional<AuthenticatedUserRequest> maybePetCreds =
         petSaService.getWorkspacePetCredentials(getWorkspaceId(), userRequest);
-    return crlService.canReadGcsBucket(bucketName, maybePetCreds.orElse(userRequest));
+    return crlService.canReadGcsBucketFile(bucketName, fileName, maybePetCreds.orElse(userRequest));
   }
 
   /**
