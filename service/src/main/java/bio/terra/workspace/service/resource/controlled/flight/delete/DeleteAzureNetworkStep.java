@@ -49,19 +49,29 @@ public class DeleteAzureNetworkStep implements Step {
     var network = wsmResource.castToControlledResource().castToAzureNetworkResource();
 
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
-    var azureResourceId =
+    var azureNetworkResourceId =
         String.format(
             "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/network/%s",
             azureCloudContext.getAzureSubscriptionId(),
             azureCloudContext.getAzureResourceGroupId(),
             network.getNetworkName());
+    var azureSubnetResourceId =
+        String.format(
+            "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s/subnets/%s",
+            azureCloudContext.getAzureSubscriptionId(),
+            azureCloudContext.getAzureResourceGroupId(),
+            network.getNetworkName(),
+            network.getSubnetName());
     try {
-      logger.info("Attempting to delete network " + azureResourceId);
+      logger.info("Attempting to delete network " + azureNetworkResourceId);
 
-      computeManager.networkManager().networks().deleteById(azureResourceId);
+      // Delete network first to remove association between subnet and network
+      computeManager.networkManager().networks().deleteById(azureNetworkResourceId);
+      computeManager.networkManager().networkSecurityGroups().deleteById(azureSubnetResourceId);
       return StepResult.getStepResultSuccess();
     } catch (Exception ex) {
-      logger.info("Attempt to delete Azure network failed on this try: " + azureResourceId, ex);
+      logger.info(
+          "Attempt to delete Azure network failed on this try: " + azureNetworkResourceId, ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
   }
