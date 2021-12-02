@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 public class CreateAzureStorageStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(CreateAzureStorageStep.class);
-  public static final String CREATED_STORAGE_ACCOUNT_ID = "CREATED_STORAGE_ACCOUNT_ID";
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureStorageResource resource;
@@ -41,25 +40,21 @@ public class CreateAzureStorageStep implements Step {
     StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
 
     try {
-      String storageAccountId =
-          storageManager
-              .storageAccounts()
-              .define(resource.getStorageAccountName())
-              .withRegion(resource.getRegion())
-              .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
-              .withHnsEnabled(true)
-              .withTag("workspaceId", resource.getWorkspaceId().toString())
-              .withTag("resourceId", resource.getResourceId().toString())
-              .create(
-                  Defaults.buildContext(
-                      CreateStorageAccountRequestData.builder()
-                          .setName(resource.getStorageAccountName())
-                          .setRegion(Region.fromName(resource.getRegion()))
-                          .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-                          .build()))
-              .id();
-
-      setStorageAccountIdCreatedInCurrentContext(context, storageAccountId);
+      storageManager
+          .storageAccounts()
+          .define(resource.getStorageAccountName())
+          .withRegion(resource.getRegion())
+          .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
+          .withHnsEnabled(true)
+          .withTag("workspaceId", resource.getWorkspaceId().toString())
+          .withTag("resourceId", resource.getResourceId().toString())
+          .create(
+              Defaults.buildContext(
+                  CreateStorageAccountRequestData.builder()
+                      .setName(resource.getStorageAccountName())
+                      .setRegion(Region.fromName(resource.getRegion()))
+                      .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
+                      .build()));
 
     } catch (ManagementException e) {
       logger.error(
@@ -68,18 +63,15 @@ public class CreateAzureStorageStep implements Step {
           e.getValue().getCode(),
           e);
 
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
 
     return StepResult.getStepResultSuccess();
   }
 
   /**
-   * Deletes the storage account if the current flight created it. This method is not canonically
-   * idempotent as its behavior depends on the flight the context. This approach is intended to: -
-   * Avoid unwanted deletion if two or more concurrent requests pass the get step and one or more
-   * creation requests fail. - Enforce deletion of the storage account only if created successfully
-   * but the do step failed.
+   * Deletes the storage account if the account is available. If the storage account is available
+   * and deletes fails, the failure is considered fatal and must looked into it.
    *
    * @param context
    * @return Step result.
@@ -89,26 +81,30 @@ public class CreateAzureStorageStep implements Step {
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     StorageManager storageManager = crlService.getStorageManager(azureCloudContext, azureConfig);
 
-    String storageAccountId = getStorageAccountIdCreatedInCurrentContext(context);
-    if (storageAccountId != null) {
-      try {
-        logger.warn("Attempting to delete storage account: {}", storageAccountId);
-        storageManager.storageAccounts().deleteById(storageAccountId);
-        logger.warn("Successfully deleted storage account: {}", storageAccountId);
-      } catch (ManagementException e) {
-        logger.error("Failed to delete storage account: {}", storageAccountId);
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-      }
+    // If the storage account does not exist (isAvailable == true)
+    // then return success.
+    if (storageManager
+        .storageAccounts()
+        .checkNameAvailability(resource.getStorageAccountName())
+        .isAvailable()) {
+      logger.warn(
+          "Deletion of the storage account is not required. Storage account does not exist. {}",
+          resource.getStorageAccountName());
+      return StepResult.getStepResultSuccess();
     }
+
+    try {
+      logger.warn("Attempting to delete storage account: {}", resource.getStorageAccountName());
+      storageManager
+          .storageAccounts()
+          .deleteByResourceGroup(
+              azureCloudContext.getAzureResourceGroupId(), resource.getStorageAccountName());
+      logger.warn("Successfully deleted storage account: {}", resource.getStorageAccountName());
+    } catch (ManagementException e) {
+      logger.error("Failed to delete storage account: {}", resource.getStorageAccountName());
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+    }
+
     return StepResult.getStepResultSuccess();
-  }
-
-  private String getStorageAccountIdCreatedInCurrentContext(FlightContext context) {
-    return context.getWorkingMap().get(CREATED_STORAGE_ACCOUNT_ID, String.class);
-  }
-
-  private void setStorageAccountIdCreatedInCurrentContext(
-      FlightContext context, String storageAccountId) {
-    context.getWorkingMap().put(CREATED_STORAGE_ACCOUNT_ID, storageAccountId);
   }
 }

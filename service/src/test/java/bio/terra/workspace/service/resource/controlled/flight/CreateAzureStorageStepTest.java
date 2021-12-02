@@ -25,6 +25,7 @@ import com.azure.core.management.exception.ManagementError;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.core.util.Context;
 import com.azure.resourcemanager.storage.StorageManager;
+import com.azure.resourcemanager.storage.models.CheckNameAvailabilityResult;
 import com.azure.resourcemanager.storage.models.StorageAccount;
 import com.azure.resourcemanager.storage.models.StorageAccounts;
 import java.util.Optional;
@@ -49,6 +50,7 @@ public class CreateAzureStorageStepTest extends BaseAzureTest {
   @Mock private StorageAccount.DefinitionStages.WithGroup mockStorageGroupStage;
   @Mock private StorageAccount.DefinitionStages.WithCreate mockStorageCreateStage;
   @Mock private StorageAccount mockStorageAccount;
+  @Mock private CheckNameAvailabilityResult mockNameAvailabilityResult;
 
   private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
 
@@ -109,13 +111,6 @@ public class CreateAzureStorageStepTest extends BaseAzureTest {
             .build();
 
     assertThat(storageAccountRequestDataOpt, equalTo(Optional.of(expected)));
-
-    // Verify flight context contains the storage account id.
-    assertThat(
-        flightContext
-            .getWorkingMap()
-            .get(CreateAzureStorageStep.CREATED_STORAGE_ACCOUNT_ID, String.class),
-        equalTo(STUB_STRING_RETURN));
   }
 
   @Test
@@ -128,13 +123,6 @@ public class CreateAzureStorageStepTest extends BaseAzureTest {
 
     // Verify step fails...
     assertThat(stepResult.isSuccess(), equalTo(false));
-
-    // Verify storage account is not set in flight context...
-    assertThat(
-        flightContext
-            .getWorkingMap()
-            .get(CreateAzureStorageStep.CREATED_STORAGE_ACCOUNT_ID, String.class),
-        equalTo(null));
   }
 
   private CreateAzureStorageStep createCreateAzureStorageStep() {
@@ -156,49 +144,46 @@ public class CreateAzureStorageStepTest extends BaseAzureTest {
   }
 
   @Test
-  public void undoStep_twoSimultaneousCreateRequestsFirstSucceeds() throws InterruptedException {
-
-    CreateAzureStorageStep createAzureStorageStep1 = createCreateAzureStorageStep();
-    CreateAzureStorageStep createAzureStorageStep2 = createCreateAzureStorageStep();
-
-    FlightContext flightContext1 = createMockFlightContext();
-    FlightContext flightContext2 = createMockFlightContext();
-
-    // Call do() for each but fail the second one, and call undo.
-    StepResult doResult1 = createAzureStorageStep1.doStep(flightContext1);
-
-    when(mockStorageCreateStage.create(any(Context.class))).thenThrow(mockException);
-    StepResult doResult2 = createAzureStorageStep1.doStep(flightContext1);
-
-    StepResult undoResult2 = createAzureStorageStep2.undoStep(flightContext2);
-
-    // Verify first do() returns success but second fails
-    assertThat(doResult1, equalTo(StepResult.getStepResultSuccess()));
-    assertThat(doResult2.isSuccess(), equalTo(false));
-
-    // Verify second unDo() succeeds
-    assertThat(undoResult2, equalTo(StepResult.getStepResultSuccess()));
-
-    // Verify delete operation was not called.
-    verify(mockStorageAccounts, times(0)).deleteById(STUB_STRING_RETURN);
-  }
-
-  @Test
-  public void undoStep_deletesStorageIfStorageAccountIdSetInContext() throws InterruptedException {
+  public void undoStep_deletesStorageIfStorageAccountDoesNotExist() throws InterruptedException {
 
     CreateAzureStorageStep createAzureStorageStep = createCreateAzureStorageStep();
     FlightContext flightContext = createMockFlightContext();
 
-    // Set the storage account id in flight context
-    flightContext
-        .getWorkingMap()
-        .put(CreateAzureStorageStep.CREATED_STORAGE_ACCOUNT_ID, STUB_STRING_RETURN);
+    // Storage account does not exist
+    when(mockNameAvailabilityResult.isAvailable()).thenReturn(true);
+    when(mockStorageAccounts.checkNameAvailability(creationParameters.getName()))
+        .thenReturn(mockNameAvailabilityResult);
+
     StepResult stepResult = createAzureStorageStep.undoStep(flightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
 
-    // Verify the resource is deleted
-    verify(mockStorageAccounts).deleteById(STUB_STRING_RETURN);
+    // Verify delete operation is not called.
+    verify(mockStorageAccounts, times(0))
+        .deleteByResourceGroup(
+            mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getName());
+  }
+
+  @Test
+  public void undoStep_deletesStorageIfStorageAccountExists() throws InterruptedException {
+
+    CreateAzureStorageStep createAzureStorageStep = createCreateAzureStorageStep();
+    FlightContext flightContext = createMockFlightContext();
+
+    // Storage account exists
+    when(mockNameAvailabilityResult.isAvailable()).thenReturn(false);
+    when(mockStorageAccounts.checkNameAvailability(creationParameters.getName()))
+        .thenReturn(mockNameAvailabilityResult);
+
+    StepResult stepResult = createAzureStorageStep.undoStep(flightContext);
+
+    // Verify step returns success
+    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
+
+    // Verify delete operation is called.
+    verify(mockStorageAccounts)
+        .deleteByResourceGroup(
+            mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getName());
   }
 }
