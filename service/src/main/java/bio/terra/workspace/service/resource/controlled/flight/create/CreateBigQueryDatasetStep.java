@@ -9,6 +9,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -16,6 +17,8 @@ import bio.terra.workspace.service.resource.controlled.BigQueryApiConversions;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.model.Dataset;
 import com.google.api.services.bigquery.model.Dataset.Access;
@@ -67,8 +70,13 @@ public class CreateBigQueryDatasetStep implements Step {
     FlightMap inputMap = flightContext.getInputParameters();
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         inputMap.get(CREATION_PARAMETERS, ApiGcpBigQueryDatasetCreationParameters.class);
-    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
-    List<Access> accessConfiguration = buildDatasetAccessConfiguration(projectId);
+    FlightMap workingMap = flightContext.getWorkingMap();
+    FlightUtils.validateRequiredEntries(workingMap, ControlledResourceKeys.GCP_CLOUD_CONTEXT);
+    GcpCloudContext cloudContext =
+        workingMap.get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
+    String projectId = cloudContext.getGcpProjectId();
+
+    List<Access> accessConfiguration = buildDatasetAccessConfiguration(cloudContext);
     DatasetReference datasetId =
         new DatasetReference().setProjectId(projectId).setDatasetId(resource.getDatasetName());
     Dataset datasetToCreate =
@@ -110,14 +118,14 @@ public class CreateBigQueryDatasetStep implements Step {
    * translation, that means this can still use the resource-type-agnostic policy-building code from
    * {@link ControlledResourceService}.
    */
-  private List<Access> buildDatasetAccessConfiguration(String projectId)
+  private List<Access> buildDatasetAccessConfiguration(GcpCloudContext cloudContext)
       throws InterruptedException {
     // As this is a new dataset, we pass an empty Policy object as the initial state to
     // configure the GCP policy
     Policy currentPolicy = Policy.newBuilder().build();
     Policy newPolicy =
         controlledResourceService.configureGcpPolicyForResource(
-            resource, projectId, currentPolicy, userRequest);
+            resource, cloudContext, currentPolicy, userRequest);
     List<Binding> bindingList = newPolicy.getBindingsList();
     return bindingList.stream().map(this::toAccess).collect(Collectors.toList());
   }

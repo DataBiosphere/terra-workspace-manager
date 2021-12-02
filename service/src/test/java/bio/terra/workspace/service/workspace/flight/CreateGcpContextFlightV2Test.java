@@ -33,6 +33,7 @@ import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.NoBillingAccountException;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.WorkspaceRequest;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.api.services.cloudresourcemanager.v3.model.Binding;
@@ -59,7 +60,12 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-class CreateGoogleContextFlightTest extends BaseConnectedTest {
+/**
+ * TODO: PF-1238 this is a near duplicate of CreateGoogleContextFlightTest for testing
+ * CreateGcpContextFlightV2. When we implement PF-1238, we can just remove the whole
+ * CreateGoogleContextFlightTest module.
+ */
+class CreateGcpContextFlightV2Test extends BaseConnectedTest {
 
   /** How long to wait for a Stairway flight to complete before timing out the test. */
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(3);
@@ -102,7 +108,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            CreateGcpContextFlight.class,
+            CreateGcpContextFlightV2.class,
             createInputParameters(workspaceId, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             debugInfo);
@@ -116,6 +122,17 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     String contextProjectId =
         workspaceService.getAuthorizedRequiredGcpProject(workspaceId, userRequest);
     assertEquals(projectId, contextProjectId);
+
+    // Verify that the policies were properly stored
+    Optional<GcpCloudContext> optionalCloudContext =
+        workspaceService.getAuthorizedGcpCloudContext(workspaceId, userRequest);
+    assertTrue(optionalCloudContext.isPresent(), "has cloud context");
+    GcpCloudContext cloudContext = optionalCloudContext.get();
+
+    assertTrue(cloudContext.getSamPolicyOwner().isPresent(), "has owner policy");
+    assertTrue(cloudContext.getSamPolicyWriter().isPresent(), "has writer policy");
+    assertTrue(cloudContext.getSamPolicyReader().isPresent(), "has reader policy");
+    assertTrue(cloudContext.getSamPolicyApplication().isPresent(), "has application policy");
 
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());
@@ -139,7 +156,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            CreateGcpContextFlight.class,
+            CreateGcpContextFlightV2.class,
             createInputParameters(workspaceId, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             FlightDebugInfo.newBuilder().build());
@@ -162,7 +179,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            CreateGcpContextFlight.class,
+            CreateGcpContextFlightV2.class,
             createInputParameters(workspaceId, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             FlightDebugInfo.newBuilder().build());
@@ -191,7 +208,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            CreateGcpContextFlight.class,
+            CreateGcpContextFlightV2.class,
             createInputParameters(workspaceId, unauthorizedUserRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             FlightDebugInfo.newBuilder().build());
@@ -216,7 +233,7 @@ class CreateGoogleContextFlightTest extends BaseConnectedTest {
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            CreateGcpContextFlight.class,
+            CreateGcpContextFlightV2.class,
             createInputParameters(workspaceId, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             debugInfo);

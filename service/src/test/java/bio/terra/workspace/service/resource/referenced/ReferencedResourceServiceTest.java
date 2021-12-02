@@ -683,8 +683,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
 
         ReferencedResource resultReferenceResource =
             referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
-        ReferencedBigQueryDataTableResource resultResource =
-            resultReferenceResource.castToBigQueryDataTableResource();
+        resultReferenceResource.castToBigQueryDataTableResource();
 
         referenceResourceService.deleteReferenceResourceForResourceType(
             workspaceId,

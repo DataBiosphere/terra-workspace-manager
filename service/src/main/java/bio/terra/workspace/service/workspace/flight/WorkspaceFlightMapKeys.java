@@ -25,6 +25,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String PRIVATE_RESOURCE_IAM_ROLE = "privateResourceIamRole";
     public static final String PRIVATE_RESOURCE_USER_EMAIL = "privateResourceUserEmail";
     public static final String IAM_RESOURCE_GROUP_EMAIL_MAP = "iamResourceGroupEmailMap";
+    public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
 
     public static final String UPDATE_PARAMETERS = "updateParameters";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";

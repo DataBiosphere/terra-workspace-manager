@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class DeleteGoogleContextFlightTest extends BaseConnectedTest {
+class DeleteGcpContextFlightTest extends BaseConnectedTest {
 
   /**
    * How long to wait for a delete context Stairway flight to complete before timing out the test.

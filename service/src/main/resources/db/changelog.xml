@@ -3,4 +3,5 @@
     <include file="changesets/20210301_revised_initial_schema.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20210917_cloud_context.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/20211006_application_columns.yaml" relativeToChangelogFile="true"/>
+    <include file="changesets/20211202_cloud_context_lock.yaml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

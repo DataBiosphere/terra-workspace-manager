@@ -45,7 +45,8 @@ public class CreateControlledResourceFlight extends Flight {
 
     final String assignedUserEmail = resource.getAssignedUser().orElse(null);
 
-    // store the resource metadata in the WSM database
+    // Store the resource metadata in the WSM database. Doing this first means concurrent
+    // conflicting resources with the same name or resource attributes can be prevented.
     addStep(new StoreMetadataStep(flightBeanBag.getResourceDao()), RetryRules.shortDatabase());
 
     // create the Sam resource associated with the resource
@@ -56,6 +57,14 @@ public class CreateControlledResourceFlight extends Flight {
             privateResourceIamRole,
             assignedUserEmail,
             userRequest));
+
+    // Get the cloud context and store it in the working map
+    // This step may need to update the cloud context row in the database to convert
+    // context V1 format into V2 format.
+    addStep(
+        new GetGcpCloudContextStep(
+            resource.getWorkspaceId(), flightBeanBag.getGcpCloudContextService()),
+        RetryRules.shortDatabase());
 
     // create the cloud resource and grant IAM roles via CRL
     switch (resource.getResourceType()) {

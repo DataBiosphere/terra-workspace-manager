@@ -11,10 +11,9 @@ import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneGcpWorkspaceFlight;
-import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.exceptions.BufferServiceDisabledException;
-import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlight;
+import bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2;
 import bio.terra.workspace.service.workspace.flight.DeleteGcpContextFlight;
 import bio.terra.workspace.service.workspace.flight.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceCreateFlight;
@@ -52,7 +51,6 @@ public class WorkspaceService {
   private final WorkspaceDao workspaceDao;
   private final GcpCloudContextService gcpCloudContextService;
   private final SamService samService;
-  private final SpendProfileService spendProfileService;
   private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
 
@@ -61,14 +59,12 @@ public class WorkspaceService {
       JobService jobService,
       WorkspaceDao workspaceDao,
       SamService samService,
-      SpendProfileService spendProfileService,
       BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
       GcpCloudContextService gcpCloudContextService) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
-    this.spendProfileService = spendProfileService;
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
     this.gcpCloudContextService = gcpCloudContextService;
@@ -229,7 +225,7 @@ public class WorkspaceService {
         .newJob(
             "Create GCP Cloud Context " + workspaceId,
             jobId,
-            CreateGcpContextFlight.class,
+            CreateGcpContextFlightV2.class,
             /* request= */ null,
             userRequest)
         .addParameter(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceId.toString())
@@ -300,6 +296,7 @@ public class WorkspaceService {
    * @param userRequest auth of user to test for read access
    * @return optional GCP cloud context
    */
+  // TODO: !!!! THIS IS ONLY USED IN TESTING !!!! Make it a test utility
   public Optional<GcpCloudContext> getAuthorizedGcpCloudContext(
       UUID workspaceId, AuthenticatedUserRequest userRequest) {
     validateWorkspaceAndAction(userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
