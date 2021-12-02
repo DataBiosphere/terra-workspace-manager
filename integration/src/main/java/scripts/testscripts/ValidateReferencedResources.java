@@ -3,6 +3,9 @@ package scripts.testscripts;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
+import static scripts.utils.ClientTestUtils.TEST_FILE_IN_FINE_GRAINED_BUCKET;
+import static scripts.utils.ClientTestUtils.TEST_FOLDER_IN_FINE_GRAINED_BUCKET;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
@@ -34,7 +37,10 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
   private UUID bucketResourceId;
   private UUID fineGrainedBucketResourceId;
   private UUID snapshotResourceId;
+  // reference to gs://terra_wsm_fine_grained_test_bucket/foo/monkey_sees_monkey_dos.txt
   private UUID bucketFileResourceId;
+  // reference to gs://terra_wsm_fine_grained_test_bucket/foo/
+  private UUID bucketFolderResourceId;
 
   @Override
   public void doSetup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
@@ -82,13 +88,20 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
     String fineGrainedBucketReferenceName =
         RandomStringUtils.random(6, /*letters*/ true, /*numbers=*/ true);
     GcpGcsBucketFileResource bucketFileReference =
-        ResourceMaker.makeGcsBucketFileInFineGrainedBucketReference(
-            referencedGcpResourceApi, getWorkspaceId(), bucketFileReferenceName);
+        ResourceMaker.makeGcsBucketFileReference(
+            referencedGcpResourceApi, getWorkspaceId(), bucketFileReferenceName, TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS, TEST_FILE_IN_FINE_GRAINED_BUCKET);
     fineGrainedBucketResourceId = ResourceMaker.makeGcsBucketWithFineGrainedAccessReference(
         referencedGcpResourceApi, getWorkspaceId(),
         fineGrainedBucketReferenceName, /*cloningInstructions=*/null
     ).getMetadata().getResourceId();
     bucketFileResourceId = bucketFileReference.getMetadata().getResourceId();
+
+    String folderReferenceName =
+        RandomStringUtils.random(6, /*letters*/ true, /*numbers=*/ true);
+    GcpGcsBucketFileResource bucketFolderReference =
+        ResourceMaker.makeGcsBucketFileReference(
+            referencedGcpResourceApi, getWorkspaceId(), folderReferenceName, TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS, TEST_FOLDER_IN_FINE_GRAINED_BUCKET);
+    bucketFolderResourceId = bucketFolderReference.getMetadata().getResourceId();
   }
 
   @Override
@@ -117,6 +130,7 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
     assertTrue(ownerApi.checkReferenceAccess(getWorkspaceId(), bucketResourceId));
     assertTrue(ownerApi.checkReferenceAccess(getWorkspaceId(), snapshotResourceId));
     assertTrue(ownerApi.checkReferenceAccess(getWorkspaceId(), bucketFileResourceId));
+    assertTrue(ownerApi.checkReferenceAccess(getWorkspaceId(), bucketFolderResourceId));
 
     // Check that our secondary test user does not have access
     assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), bqResourceId));
@@ -124,10 +138,12 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
     assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), bucketResourceId));
     assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), snapshotResourceId));
     assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), bucketFileResourceId));
+    assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), bucketFolderResourceId));
 
     // Third test user have access to the fine-grained access bucket but does not have access to
     // the file within this bucket.
     assertTrue(thirdUserApi.checkReferenceAccess(getWorkspaceId(), fineGrainedBucketResourceId));
-    assertFalse(thirdUserApi.checkReferenceAccess(getWorkspaceId(), bucketFileResourceId));
+    assertTrue(thirdUserApi.checkReferenceAccess(getWorkspaceId(), bucketFileResourceId));
+    assertFalse(thirdUserApi.checkReferenceAccess(getWorkspaceId(), bucketFolderResourceId));
   }
 }

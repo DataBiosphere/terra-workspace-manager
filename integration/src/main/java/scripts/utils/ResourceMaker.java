@@ -215,33 +215,7 @@ public class ResourceMaker {
    * not expect a user to be able to create a reference).
    */
   public static GcpGcsBucketFileResource makeGcsBucketFileReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
-      throws ApiException, InterruptedException {
-    return makeGcsBucketFileReference(resourceApi, workspaceId, name, /*isFineGrainedBucket=*/false);
-  }
-
-  /**
-   * Calls WSM to create a referenced GCS bucket file in the specified workspace.
-   *
-   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you
-   * do
-   * not expect a user to be able to create a reference).
-   */
-  public static GcpGcsBucketFileResource makeGcsBucketFileInFineGrainedBucketReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name)
-      throws ApiException, InterruptedException {
-    return makeGcsBucketFileReference(resourceApi, workspaceId, name, /*isFineGrainedBucket=*/true);
-  }
-
-  /**
-   * Calls WSM to create a referenced GCS bucket file in the specified workspace.
-   *
-   * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you
-   * do
-   * not expect a user to be able to create a reference).
-   */
-  public static GcpGcsBucketFileResource makeGcsBucketFileReference(
-      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name, boolean isFineGrainedBucket)
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, String name, String bucketName, String objectName)
       throws ApiException, InterruptedException {
     var body =
         new CreateGcpGcsBucketFileReferenceRequestBody()
@@ -252,8 +226,8 @@ public class ResourceMaker {
                     .name(name))
             .file(
                 new GcpGcsBucketFileAttributes()
-                    .bucketName(isFineGrainedBucket? TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS: TEST_BUCKET_NAME)
-                    .fileName(isFineGrainedBucket? TEST_FILE_IN_FINE_GRAINED_BUCKET: TEST_BUCKET_FILE_NAME));
+                    .bucketName(bucketName)
+                    .fileName(objectName));
 
     logger.info("Making reference to a gcs bucket file");
     return ClientTestUtils.getWithRetryOnException(

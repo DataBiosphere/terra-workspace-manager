@@ -35,6 +35,7 @@ import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -361,6 +362,11 @@ public class CrlService {
   public boolean canReadGcsBucketFile(String bucketName, String filePath, AuthenticatedUserRequest userRequest) {
     try {
       StorageCow storage = createStorageCow(null, userRequest);
+      boolean isUniformBucketLevelAccessEnabled =
+          storage.get(bucketName).getBucketInfo().getIamConfiguration().isUniformBucketLevelAccessEnabled();
+      if (isUniformBucketLevelAccessEnabled) {
+        return canReadGcsBucket(bucketName, userRequest);
+      }
       BlobId blobId = BlobId.of(bucketName, filePath);
       // If successfully get the blob, the user have at least READER access.
       BlobCow blobCow = storage.get(blobId);

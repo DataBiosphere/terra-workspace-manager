@@ -68,8 +68,8 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
             referencedGcpResourceApi, getWorkspaceId(), bucketReferenceName);
 
     sourceBucketFileReference =
-        ResourceMaker.makeGcsBucketFileInFineGrainedBucketReference(
-            referencedGcpResourceApi, getWorkspaceId(), bucketFileReferenceName);
+        ResourceMaker.makeGcsBucketFileReference(
+            referencedGcpResourceApi, getWorkspaceId(), bucketFileReferenceName, TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS, TEST_FILE_IN_FINE_GRAINED_BUCKET);
 
     sourceBigQueryDatasetReference =
         ResourceMaker.makeBigQueryDatasetReference(

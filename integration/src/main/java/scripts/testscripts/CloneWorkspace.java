@@ -7,6 +7,9 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static scripts.utils.ClientTestUtils.TEST_BUCKET_FILE_NAME;
+import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
+import static scripts.utils.ClientTestUtils.TEST_FILE_IN_FINE_GRAINED_BUCKET;
 import static scripts.utils.ClientTestUtils.getOrFail;
 import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_NAME;
 import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
@@ -197,7 +200,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     sourceBucketFileReference =
         ResourceMaker.makeGcsBucketFileReference(
-            referencedGcpResourceApi, getWorkspaceId(), "clone to hello_world.txt");
+            referencedGcpResourceApi, getWorkspaceId(), bucketFileReferenceName, TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS, TEST_FILE_IN_FINE_GRAINED_BUCKET);
 
     // create reference to BQ dataset with COPY_NOTHING
     sourceDatasetReference =
