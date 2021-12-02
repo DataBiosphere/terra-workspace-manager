@@ -117,8 +117,8 @@ public class ReferencedResourceService {
   }
 
   /**
-   * Delete a reference. The only state we hold for a reference is in the metadata database so we
-   * directly delete that.
+   * Delete a reference for the specified resource type. If the resource type stored in the metadata
+   * database does not match with the specified type, we do not delete the data.
    *
    * @param workspaceId workspace of interest
    * @param resourceId resource to delete

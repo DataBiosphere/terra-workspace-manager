@@ -8,6 +8,7 @@
     "integration/CloneBigQueryDataset.json",
     "integration/CloneGcsBucket.json",
     "integration/CloneReferencedResources.json",
+    "integration/CloneWorkspace.json",
     "integration/ControlledBigQueryDatasetLifecycle.json",
     "integration/ControlledGcsBucketLifecycle.json",
     "integration/DataReferenceLifecycle.json",
