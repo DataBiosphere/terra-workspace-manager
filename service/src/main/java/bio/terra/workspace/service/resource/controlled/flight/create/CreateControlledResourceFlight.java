@@ -205,7 +205,6 @@ public class CreateControlledResourceFlight extends Flight {
                 resource.castToAzureStorageResource()),
             RetryRules.cloud());
         break;
-        break;
       default:
         throw new IllegalStateException(
             String.format("Unrecognized resource type %s", resource.getResourceType()));
