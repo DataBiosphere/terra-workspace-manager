@@ -172,7 +172,7 @@ public class ResourceMaker {
         workspaceId,
         name,
         cloningInstructions,
-        /*isBucketWithFineGrainedAccess=*/ false);
+        /*isBucketWithFineGrainedAccess=*/ true);
   }
 
   /**
