@@ -146,6 +146,11 @@ public abstract class ControlledResource extends WsmResource {
     return (ControlledAzureIpResource) this;
   }
 
+  public ControlledAzureStorageResource castToAzureStorageResource() {
+    validateSubclass(WsmResourceType.AZURE_STORAGE_ACCOUNT);
+    return (ControlledAzureStorageResource) this;
+  }
+
   public ControlledAzureDiskResource castToAzureDiskResource() {
     validateSubclass(WsmResourceType.AZURE_DISK);
     return (ControlledAzureDiskResource) this;
