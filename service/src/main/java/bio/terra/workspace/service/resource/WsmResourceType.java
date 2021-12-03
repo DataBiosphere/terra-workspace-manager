@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiResourceType;
+import bio.terra.workspace.service.resource.controlled.*;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
@@ -81,7 +82,13 @@ public enum WsmResourceType {
       "AZURE_VM",
       ApiResourceType.AZURE_VM,
       null,
-      ControlledAzureVmResource.class);
+      ControlledAzureVmResource.class),
+  AZURE_STORAGE_ACCOUNT(
+      CloudPlatform.AZURE,
+      "AZURE_STORAGE_ACCOUNT",
+      ApiResourceType.AZURE_STORAGE_ACCOUNT,
+      null,
+      ControlledAzureStorageResource.class);
 
   private final CloudPlatform cloudPlatform;
   private final String dbString; // serialized form of the resource type
