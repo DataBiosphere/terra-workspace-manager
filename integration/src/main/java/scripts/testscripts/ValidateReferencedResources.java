@@ -154,7 +154,8 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
     ResourceApi fileReaderApi =
         new ResourceApi(ClientTestUtils.getClientForTestUser(fileReaderUser, server));
 
-    // Add noAccessUser and fileReaderUser as workspace reader, though this will not affect permissions on referenced
+    // Add noAccessUser and fileReaderUser as workspace reader, though this will not affect
+    // permissions on referenced
     // external objects.
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(noAccessUser.userEmail),
@@ -181,7 +182,8 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
     // Reference to gs://terra_wsm_fine_grained_test_bucket
     assertTrue(ownerApi.checkReferenceAccess(getWorkspaceId(), fineGrainedBucketResourceId));
     assertFalse(fileReaderApi.checkReferenceAccess(getWorkspaceId(), fineGrainedBucketResourceId));
-    assertFalse(noAccessUserApi.checkReferenceAccess(getWorkspaceId(), fineGrainedBucketResourceId));
+    assertFalse(
+        noAccessUserApi.checkReferenceAccess(getWorkspaceId(), fineGrainedBucketResourceId));
 
     // Reference to gs://terra_wsm_fine_grained_test_bucket/foo/monkey_sees_monkey_dos.txt
     assertTrue(ownerApi.checkReferenceAccess(getWorkspaceId(), bucketTxtFileResourceId));
