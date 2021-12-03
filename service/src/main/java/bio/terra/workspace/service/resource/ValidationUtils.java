@@ -26,6 +26,13 @@ public class ValidationUtils {
       Pattern.compile("^[a-z0-9][-_.a-z0-9]{1,220}[a-z0-9]$");
 
   /**
+   * Azure Storage Account name validation valid. An storage account name must be between 3-24
+   * characters in length and may contain numbers and lowercase letters only.
+   */
+  public static final Pattern AZURE_STORAGE_ACCOUNT_NAME_VALIDATION_PATTERN =
+      Pattern.compile("^[a-z0-9]{3,24}$");
+
+  /**
    * BigQuery datasets must be 1-1024 characters, using letters (upper or lowercase), numbers, and
    * underscores.
    */
@@ -137,6 +144,14 @@ public class ValidationUtils {
     //  with a 512 character name that cannot being with an underscore. That gives us room to
     // generate
     //  names based on the resource name. It also is roomy.
+  }
+
+  public static void validateStorageAccountName(String storageAccountName) {
+    if (!AZURE_STORAGE_ACCOUNT_NAME_VALIDATION_PATTERN.matcher(storageAccountName).matches()) {
+      logger.warn("Invalid Storage Account name: {}", storageAccountName);
+      throw new InvalidReferenceException(
+          "Invalid Azure Storage Account name. The name must be 3 to 24 alphanumeric lower case characters.");
+    }
   }
 
   public static void validateAzureVmSize(String vmSize) {

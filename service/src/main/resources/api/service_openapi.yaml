@@ -1037,6 +1037,27 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/storage:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure Storage Account
+      operationId: createAzureStorage
+      tags: [ControlledAzureResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureStorageRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureStorageResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/buckets/delete-result/{jobId}:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -2215,6 +2236,16 @@ components:
         azureIp:
           $ref: '#/components/schemas/AzureIpCreationParameters'
 
+    CreateControlledAzureStorageRequestBody:
+      description: Payload for requesting a new controlled Azure storage account resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureStorage:
+          $ref: '#/components/schemas/AzureStorageCreationParameters'
+
+
     CreateControlledAzureDiskRequestBody:
       description: Payload for requesting a new controlled Azure Disk resource.
       type: object
@@ -2391,6 +2422,22 @@ components:
             It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
           type: string
 
+    AzureStorageCreationParameters:
+      description: >-
+        Storage-specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [ name, region ]
+      properties:
+        name:
+          description: A valid storage account name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
+          type: string
+        region:
+          description: |
+            A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
+            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
+          type: string
+
     AzureDiskCreationParameters:
       description: >-
         Disk-specific properties to be set on creation. These are a subset of the values
@@ -2480,6 +2527,17 @@ components:
           format: uuid
         azureIp:
           $ref: '#/components/schemas/AzureIpResource'
+
+    CreatedControlledAzureStorage:
+      description: Response payload for requesting a new Azure storage account
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureStorage:
+          $ref: '#/components/schemas/AzureStorageResource'
 
     CreatedControlledAzureDisk:
       description: Response payload for requesting a new Azure disk
@@ -3208,6 +3266,18 @@ components:
           description: Azure region of created ip
           type: string
 
+    AzureStorageAttributes:
+      description: >-
+        Storage properties included in post-creation get.
+      type: object
+      properties:
+        storageAccountName:
+          description: Name of the storage account.
+          type: string
+        region:
+          description: Azure region of created storage account.
+          type: string
+
     AzureDiskAttributes:
       description: >-
         Disk properties included in post-creation get and update. Others must be retrieved from Azure using the name.
@@ -3303,6 +3373,17 @@ components:
         attributes:
           $ref: '#/components/schemas/AzureIpAttributes'
 
+    AzureStorageResource:
+      type: object
+      description: Description of an Azure storage account.
+      required: [ metadata, attributes ]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AzureStorageAttributes'
+
     AzureDiskResource:
       type: object
       description: Description of an Azure disk
@@ -3382,6 +3463,8 @@ components:
           $ref: '#/components/schemas/AzureIpAttributes'
         azureNetwork:
           $ref: '#/components/schemas/AzureNetworkAttributes'
+        azureStorage:
+          $ref: '#/components/schemas/AzureStorageAttributes'
 
     ResourceDescription:
       type: object
@@ -3466,6 +3549,7 @@ components:
         - AZURE_DISK
         - AZURE_NETWORK
         - AZURE_VM
+        - AZURE_STORAGE_ACCOUNT
 
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration
@@ -3532,6 +3616,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/RoleBindingList'
+
+    CreateControlledAzureStorageResponse:
+      description: Response to create controlled azure storage
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAzureStorage'
 
     CreateControlledAzureIpResponse:
       description: Response to create controlled azure ip
