@@ -132,7 +132,7 @@ public class ControlledResourceFixtures {
         .subnetName(uniqueAzureName(AZURE_SUBNET_NAME_PREFIX))
         .addressSpaceCidr("192.168.0.0/16")
         .subnetAddressCidr("192.168.1.0/24")
-        .region("eastus");
+        .region("westcentralus");
   }
 
   /** Construct a parameter object with a unique vm name to avoid unintended clashes. */

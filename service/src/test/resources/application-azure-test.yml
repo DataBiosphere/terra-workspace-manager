@@ -34,6 +34,6 @@ workspace:
     #managed-resource-group-id: mrg-dd-1-preview-20210927180234
 
     # MRG: mrg-rt20210929-1-previe-20210929212242
-    managed-resource-group-id: mrg-rt20210929-1-previe-20210929212242
+    managed-resource-group-id: mrg-qi-20210930145737
 
     client-id:

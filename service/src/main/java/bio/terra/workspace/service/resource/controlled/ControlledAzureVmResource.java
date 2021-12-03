@@ -169,7 +169,7 @@ public class ControlledAzureVmResource extends ControlledResource {
           "Missing required diskId field for ControlledAzureVm.");
     }
     ValidationUtils.validateAzureIPorSubnetName(getVmName());
-    ValidationUtils.validateAzureVmSize(getVmName());
+    ValidationUtils.validateAzureVmSize(getVmSize());
     ValidationUtils.validateRegion(getRegion());
   }
 

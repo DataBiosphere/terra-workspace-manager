@@ -142,6 +142,7 @@ public class ControlledAzureNetworkResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureNetwork.");
     }
+    ValidationUtils.validateRegion(getRegion());
     ValidationUtils.validateAzureNetworkName(getNetworkName());
     ValidationUtils.validateAzureIPorSubnetName(getSubnetName());
     ValidationUtils.validateAzureCidrBlock(getAddressSpaceCidr());
