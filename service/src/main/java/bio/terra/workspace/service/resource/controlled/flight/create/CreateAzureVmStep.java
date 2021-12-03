@@ -1,8 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.create;
 
 import bio.terra.cloudres.azure.resourcemanager.common.Defaults;
-import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateNetworkRequestData;
-import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateNetworkSecurityGroupRequestData;
 import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateVirtualMachineRequestData;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -14,6 +12,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureVmResource;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.Region;
@@ -22,11 +21,7 @@ import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.Disk;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.network.models.Network;
-import com.azure.resourcemanager.network.models.NetworkSecurityGroup;
 import com.azure.resourcemanager.network.models.PublicIpAddress;
-import com.azure.resourcemanager.network.models.SecurityRuleProtocol;
-import java.util.Collections;
-import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,15 +64,13 @@ public class CreateAzureVmStep implements Step {
             .castToControlledResource()
             .castToAzureDiskResource();
 
-    // TODO network: remove once networks are a controlled resource
-    final String name = getAzureName("network");
-    final String subnetName = getAzureName("subnet");
-    final String addressCidr = "192.168.0.0/16";
-    final String subnetAddressCidr = "192.168.1.0/24";
+    final ControlledAzureNetworkResource networkResource =
+        resourceDao
+            .getResource(resource.getWorkspaceId(), resource.getNetworkId())
+            .castToControlledResource()
+            .castToAzureNetworkResource();
 
     try {
-      Network network = createNetwork(name, subnetName, addressCidr, subnetAddressCidr);
-
       Disk existingAzureDisk =
           computeManager
               .disks()
@@ -91,14 +84,20 @@ public class CreateAzureVmStep implements Step {
               .getByResourceGroup(
                   azureCloudContext.getAzureResourceGroupId(), ipResource.getIpName());
 
+      Network existingNetwork =
+          computeManager
+              .networkManager()
+              .networks()
+              .getByResourceGroup(
+                  azureCloudContext.getAzureResourceGroupId(), networkResource.getNetworkName());
+
       computeManager
           .virtualMachines()
           .define(resource.getVmName())
           .withRegion(resource.getRegion())
           .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
-          // TODO network:, use a real network
-          .withExistingPrimaryNetwork(network)
-          .withSubnet(subnetName)
+          .withExistingPrimaryNetwork(existingNetwork)
+          .withSubnet(networkResource.getSubnetName())
           .withPrimaryPrivateIPAddressDynamic()
           .withExistingPrimaryPublicIPAddress(existingAzureIp)
           // See here for difference between 'specialized' and 'general' LinuxCustomImage, the
@@ -115,8 +114,8 @@ public class CreateAzureVmStep implements Step {
                       .setName(resource.getVmName())
                       .setRegion(Region.fromName(resource.getRegion()))
                       .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-                      .setNetwork(network)
-                      .setSubnetName(subnetName)
+                      .setNetwork(existingNetwork)
+                      .setSubnetName(networkResource.getSubnetName())
                       .setDisk(existingAzureDisk)
                       .setPublicIpAddress(existingAzureIp)
                       .setImage(resource.getVmImageUri())
@@ -170,74 +169,5 @@ public class CreateAzureVmStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     return StepResult.getStepResultSuccess();
-  }
-
-  // TODO: THIS IS NOT HOW NETWORKS WILL BE CREATED, AND WILL BE REMOVED TO USE A CONTROLLED
-  // RESOURCE ONCE THAT WORK IS DONE (SEPARATE TICKET)
-  // Most of this is taken from this very helpful snippet
-  // https://github.com/Azure-Samples/network-java-manage-virtual-network/blob/master/src/main/java/com/azure/resourcemanager/network/samples/ManageVirtualNetwork.java
-  private Network createNetwork(
-      String networkName,
-      String subnetName,
-      String addressSpaceCidr,
-      String subnetAddressSpaceCidr) {
-    ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
-
-    NetworkSecurityGroup subnetNsg =
-        computeManager
-            .networkManager()
-            .networkSecurityGroups()
-            .define(subnetName)
-            .withRegion(resource.getRegion())
-            .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
-            .withTag("workspaceId", resource.getWorkspaceId().toString())
-            .withTag("resourceId", resource.getResourceId().toString())
-            .defineRule("AllowHttpInComing")
-            .allowInbound()
-            .fromAddress("INTERNET")
-            .fromAnyPort()
-            .toAnyAddress()
-            .toPort(8080)
-            .withProtocol(SecurityRuleProtocol.TCP)
-            .attach()
-            .create(
-                Defaults.buildContext(
-                    CreateNetworkSecurityGroupRequestData.builder()
-                        .setName(networkName)
-                        .setRegion(Region.fromName(resource.getRegion()))
-                        .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-                        .setRules(Collections.emptyList())
-                        .build()));
-
-    return computeManager
-        .networkManager()
-        .networks()
-        .define(networkName)
-        .withRegion(resource.getRegion())
-        .withExistingResourceGroup(azureCloudContext.getAzureResourceGroupId())
-        .withTag("workspaceId", resource.getWorkspaceId().toString())
-        .withTag("resourceId", resource.getResourceId().toString())
-        .withAddressSpace(addressSpaceCidr)
-        .defineSubnet(subnetName)
-        .withAddressPrefix(subnetAddressSpaceCidr)
-        .withExistingNetworkSecurityGroup(subnetNsg)
-        .attach()
-        .create(
-            Defaults.buildContext(
-                CreateNetworkRequestData.builder()
-                    .setName(networkName)
-                    .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-                    .setRegion(Region.fromName(resource.getRegion()))
-                    .setSubnetName(subnetName)
-                    .setNetworkSecurityGroup(subnetNsg)
-                    .setAddressPrefix(subnetAddressSpaceCidr)
-                    .setAddressSpaceCidr(addressSpaceCidr)
-                    .build()));
-  }
-
-  // TODO: delete me once networks are handled properly
-  private static String getAzureName(String tag) {
-    final String id = UUID.randomUUID().toString().substring(0, 6);
-    return String.format("wsm-stub-%s-%s", tag, id);
   }
 }
