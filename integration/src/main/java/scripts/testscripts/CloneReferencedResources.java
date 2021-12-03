@@ -85,8 +85,7 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
             "reference_to_foo_folder",
             null,
             TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
-            TEST_FOLDER_IN_FINE_GRAINED_BUCKET
-        );
+            TEST_FOLDER_IN_FINE_GRAINED_BUCKET);
 
     sourceBigQueryDatasetReference =
         ResourceMaker.makeBigQueryDatasetReference(
