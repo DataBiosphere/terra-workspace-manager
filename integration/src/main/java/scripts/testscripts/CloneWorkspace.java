@@ -7,7 +7,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static scripts.utils.ClientTestUtils.TEST_BUCKET_FILE_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
 import static scripts.utils.ClientTestUtils.TEST_FILE_IN_FINE_GRAINED_BUCKET;
 import static scripts.utils.ClientTestUtils.getOrFail;
@@ -189,9 +188,8 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     // Create reference to GCS bucket with COPY_REFERENCE
     final ApiClient apiClient = ClientTestUtils.getClientForTestUser(sourceOwnerUser, server);
-    final var referencedGcpResourceApi = new ReferencedGcpResourceApi(apiClient);
+    ReferencedGcpResourceApi referencedGcpResourceApi = new ReferencedGcpResourceApi(apiClient);
     final String bucketReferenceName = RandomStringUtils.random(16, true, false);
-    final String bucketFileReferenceName = RandomStringUtils.random(16, true, false);
 
     sourceBucketReference =
         ResourceMaker.makeGcsBucketReference(
@@ -202,8 +200,12 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     sourceBucketFileReference =
         ResourceMaker.makeGcsBucketFileReference(
-            referencedGcpResourceApi, getWorkspaceId(), bucketFileReferenceName,
-            TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS, TEST_FILE_IN_FINE_GRAINED_BUCKET);
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            "a_reference_to_hello_world_txt",
+            CloningInstructionsEnum.REFERENCE,
+            TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
+            TEST_FILE_IN_FINE_GRAINED_BUCKET);
 
     // create reference to BQ dataset with COPY_NOTHING
     sourceDatasetReference =
