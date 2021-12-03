@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.fixtures;
 
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureIpCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureNetworkCreationParameters;
@@ -16,6 +17,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleAction;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleActionType;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRuleCondition;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
+import bio.terra.workspace.service.resource.controlled.*;
 import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
@@ -116,6 +118,13 @@ public class ControlledResourceFixtures {
         .size(50);
   }
 
+  /** Construct a parameter object with a unique name to avoid unintended clashes. */
+  public static ApiAzureStorageCreationParameters getAzureStorageCreationParameters() {
+    return new ApiAzureStorageCreationParameters()
+        .name(uniqueStorageAccountName())
+        .region("eastus");
+  }
+
   /** Construct a parameter object with a unique bucket name to avoid unintended clashes. */
   public static ApiAzureNetworkCreationParameters getAzureNetworkCreationParameters() {
     return new ApiAzureNetworkCreationParameters()
@@ -145,6 +154,10 @@ public class ControlledResourceFixtures {
 
   public static String uniqueAzureName(String resourcePrefix) {
     return uniqueName(AZURE_NAME_PREFIX + "-" + AZURE_NAME_PREFIX);
+  }
+
+  public static String uniqueStorageAccountName() {
+    return UUID.randomUUID().toString().toLowerCase().replace("-", "").substring(0, 23);
   }
 
   public static ApiGcpAiNotebookInstanceCreationParameters defaultNotebookCreationParameters() {
@@ -233,6 +246,22 @@ public class ControlledResourceFixtures {
         creationParameters.getAddressSpaceCidr(),
         creationParameters.getSubnetAddressCidr(),
         creationParameters.getRegion());
+  }
+
+  public static ControlledAzureStorageResource getAzureStorage(
+      String storageAccountName, String region) {
+    return new ControlledAzureStorageResource(
+        WORKSPACE_ID,
+        RESOURCE_ID,
+        RESOURCE_NAME,
+        RESOURCE_DESCRIPTION,
+        CLONING_INSTRUCTIONS,
+        OWNER_EMAIL,
+        // TODO: these should be changed when we group the resources
+        AccessScopeType.ACCESS_SCOPE_PRIVATE,
+        ManagedByType.MANAGED_BY_USER,
+        storageAccountName,
+        region);
   }
 
   public static ControlledAzureVmResource getAzureVm(
