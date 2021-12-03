@@ -15,8 +15,8 @@ import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
-import bio.terra.workspace.model.GcpGcsBucketFileResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GcpGcsObjectResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import java.util.List;
@@ -39,7 +39,7 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
   private UUID snapshotResourceId;
   // resource id of the reference to
   // gs://terra_wsm_fine_grained_test_bucket/foo/monkey_sees_monkey_dos.txt
-  private UUID bucketFileResourceId;
+  private UUID bucketTxtFileResourceId;
   // resource id of reference to gs://terra_wsm_fine_grained_test_bucket/foo/
   private UUID fooFolderResourceId;
   // resource id of reference to gs://terra_wsm_fine_grained_test_bucket/foo/**.txt
@@ -92,15 +92,15 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
 
     // Reference to gs://terra_wsm_fine_grained_test_bucket/foo/monkey_sees_monkey_dos.txt. Bella
     // and Elijah has READER access to this file.
-    GcpGcsBucketFileResource bucketFileReference =
-        ResourceMaker.makeGcsBucketFileReference(
+    GcpGcsObjectResource bucketFileReference =
+        ResourceMaker.makeGcsObjectReference(
             referencedGcpResourceApi,
             getWorkspaceId(),
             "reference_to_foo_monkey_sees_monkey_dos",
             null,
             TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
             TEST_FILE_IN_FINE_GRAINED_BUCKET);
-    bucketFileResourceId = bucketFileReference.getMetadata().getResourceId();
+    bucketTxtFileResourceId = bucketFileReference.getMetadata().getResourceId();
 
     // Reference to gs://terra_wsm_fine_grained_test_bucket. Bella and Elijah has READER access.
     fineGrainedBucketResourceId =
@@ -113,8 +113,8 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
             .getResourceId();
 
     // Reference to gs://terra_wsm_fine_grained_test_bucket/foo/. Only Bella has READER access.
-    GcpGcsBucketFileResource bucketFolderReference =
-        ResourceMaker.makeGcsBucketFileReference(
+    GcpGcsObjectResource bucketFolderReference =
+        ResourceMaker.makeGcsObjectReference(
             referencedGcpResourceApi,
             getWorkspaceId(),
             "foo_folder",
@@ -123,8 +123,8 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
             TEST_FOLDER_IN_FINE_GRAINED_BUCKET);
     fooFolderResourceId = bucketFolderReference.getMetadata().getResourceId();
 
-    GcpGcsBucketFileResource fooTxtFileReference =
-        ResourceMaker.makeGcsBucketFileReference(
+    GcpGcsObjectResource fooTxtFileReference =
+        ResourceMaker.makeGcsObjectReference(
             referencedGcpResourceApi,
             getWorkspaceId(),
             "foo_txt_files",
@@ -133,8 +133,8 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
             "foo/**.txt");
     fooTxtFilesResourceId = fooTxtFileReference.getMetadata().getResourceId();
 
-    GcpGcsBucketFileResource fooAllFilesReference =
-        ResourceMaker.makeGcsBucketFileReference(
+    GcpGcsObjectResource fooAllFilesReference =
+        ResourceMaker.makeGcsObjectReference(
             referencedGcpResourceApi,
             getWorkspaceId(),
             "foo_all_files",
@@ -183,9 +183,9 @@ public class ValidateReferencedResources extends DataRepoTestScriptBase {
     assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), fineGrainedBucketResourceId));
 
     // Reference to gs://terra_wsm_fine_grained_test_bucket/foo/monkey_sees_monkey_dos.txt
-    assertTrue(ownerApi.checkReferenceAccess(getWorkspaceId(), bucketFileResourceId));
-    assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), bucketFileResourceId));
-    assertTrue(thirdUserApi.checkReferenceAccess(getWorkspaceId(), bucketFileResourceId));
+    assertTrue(ownerApi.checkReferenceAccess(getWorkspaceId(), bucketTxtFileResourceId));
+    assertFalse(secondUserApi.checkReferenceAccess(getWorkspaceId(), bucketTxtFileResourceId));
+    assertTrue(thirdUserApi.checkReferenceAccess(getWorkspaceId(), bucketTxtFileResourceId));
 
     // Reference to gs://terra_wsm_fine_grained_test_bucket/foo/. Only Bella has access.
     // folder.

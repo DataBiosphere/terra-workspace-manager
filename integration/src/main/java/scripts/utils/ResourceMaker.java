@@ -21,8 +21,8 @@ import bio.terra.workspace.model.CreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.model.CreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpBigQueryDatasetReferenceRequestBody;
-import bio.terra.workspace.model.CreateGcpGcsBucketFileReferenceRequestBody;
 import bio.terra.workspace.model.CreateGcpGcsBucketReferenceRequestBody;
+import bio.terra.workspace.model.CreateGcpGcsObjectReferenceRequestBody;
 import bio.terra.workspace.model.CreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.DataRepoSnapshotAttributes;
@@ -39,10 +39,10 @@ import bio.terra.workspace.model.GcpBigQueryDatasetResource;
 import bio.terra.workspace.model.GcpGcsBucketAttributes;
 import bio.terra.workspace.model.GcpGcsBucketCreationParameters;
 import bio.terra.workspace.model.GcpGcsBucketDefaultStorageClass;
-import bio.terra.workspace.model.GcpGcsBucketFileAttributes;
-import bio.terra.workspace.model.GcpGcsBucketFileResource;
 import bio.terra.workspace.model.GcpGcsBucketLifecycle;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GcpGcsObjectAttributes;
+import bio.terra.workspace.model.GcpGcsObjectResource;
 import bio.terra.workspace.model.JobControl;
 import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
@@ -211,12 +211,12 @@ public class ResourceMaker {
   }
 
   /**
-   * Calls WSM to create a referenced GCS bucket file in the specified workspace.
+   * Calls WSM to create a referenced GCS bucket object in the specified workspace.
    *
    * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
    * not expect a user to be able to create a reference).
    */
-  public static GcpGcsBucketFileResource makeGcsBucketFileReference(
+  public static GcpGcsObjectResource makeGcsObjectReference(
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,
       String name,
@@ -225,7 +225,7 @@ public class ResourceMaker {
       String objectName)
       throws ApiException, InterruptedException {
     var body =
-        new CreateGcpGcsBucketFileReferenceRequestBody()
+        new CreateGcpGcsObjectReferenceRequestBody()
             .metadata(
                 new ReferenceResourceCommonFields()
                     .cloningInstructions(
@@ -233,11 +233,11 @@ public class ResourceMaker {
                             .orElse(CloningInstructionsEnum.NOTHING))
                     .description("Description of " + name)
                     .name(name))
-            .file(new GcpGcsBucketFileAttributes().bucketName(bucketName).fileName(objectName));
+            .file(new GcpGcsObjectAttributes().bucketName(bucketName).fileName(objectName));
 
     logger.info("Making reference to a gcs bucket file");
     return ClientTestUtils.getWithRetryOnException(
-        () -> resourceApi.createBucketFileReference(body, workspaceId));
+        () -> resourceApi.createGcsObjectReference(body, workspaceId));
   }
 
   public static GcpGcsBucketResource makeGcsBucketReference(

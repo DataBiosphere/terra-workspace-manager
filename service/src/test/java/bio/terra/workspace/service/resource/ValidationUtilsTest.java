@@ -193,19 +193,19 @@ public class ValidationUtilsTest extends BaseUnitTest {
 
   @Test
   public void validateBucketFileName_disallowName_throwException() {
-    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateBucketFileName("."));
+    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateGcsObjectName("."));
   }
 
   @Test
   public void validateBucketFileName_emptyOrNullString_throwsException() {
-    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateBucketFileName(""));
+    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateGcsObjectName(""));
   }
 
   @Test
   public void validateBucketFileName_startsWithAcmeChallengePrefix_throwsException() {
     String file = ".well-known/acme-challenge/hello.txt";
 
-    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateBucketFileName(file));
+    assertThrows(InvalidNameException.class, () -> ValidationUtils.validateGcsObjectName(file));
   }
 
   @Test
@@ -213,16 +213,16 @@ public class ValidationUtilsTest extends BaseUnitTest {
     assertThrows(
         InvalidNameException.class,
         () ->
-            ValidationUtils.validateBucketFileName(
+            ValidationUtils.validateGcsObjectName(
                 RandomStringUtils.random(1025, /*letters=*/ true, /*numbers=*/ true)));
   }
 
   @Test
   public void validateBucketFileName_legalFileName_validate() {
-    ValidationUtils.validateBucketFileName("hello.txt");
-    ValidationUtils.validateBucketFileName(
+    ValidationUtils.validateGcsObjectName("hello.txt");
+    ValidationUtils.validateGcsObjectName(
         RandomStringUtils.random(1024, /*letters=*/ true, /*numbers=*/ true));
-    ValidationUtils.validateBucketFileName("你好.png");
+    ValidationUtils.validateGcsObjectName("你好.png");
   }
 
   @Test

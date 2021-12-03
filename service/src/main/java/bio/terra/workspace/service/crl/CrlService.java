@@ -356,12 +356,12 @@ public class CrlService {
     }
   }
 
-  public boolean canReadGcsBucketFile(
-      String bucketName, String filePath, AuthenticatedUserRequest userRequest) {
+  public boolean canReadGcsObject(
+      String bucketName, String objectName, AuthenticatedUserRequest userRequest) {
     try {
       StorageCow storage = createStorageCow(null, userRequest);
       // If successfully get the blob, the user have at least READER access.
-      storage.get(BlobId.of(bucketName, filePath));
+      storage.get(BlobId.of(bucketName, objectName));
       return true;
     } catch (StorageException e) {
       if (e.getCode() == HttpStatus.SC_FORBIDDEN) {
@@ -370,7 +370,7 @@ public class CrlService {
       throw new InvalidReferenceException(
           String.format(
               "Error while trying to access GCS blob %s in bucket %s and status code %s",
-              filePath, bucketName),
+              objectName, bucketName),
           e);
     }
   }

@@ -24,8 +24,8 @@ import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
-import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketFileResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -640,8 +640,8 @@ public class ResourceDao {
         switch (dbResource.getResourceType()) {
           case GCS_BUCKET:
             return new ReferencedGcsBucketResource(dbResource);
-          case GCS_BUCKET_FILE:
-            return new ReferencedGcsBucketFileResource(dbResource);
+          case GCS_OBJECT:
+            return new ReferencedGcsObjectResource(dbResource);
           case BIG_QUERY_DATASET:
             return new ReferencedBigQueryDatasetResource(dbResource);
           case BIQ_QUERY_DATA_TABLE:

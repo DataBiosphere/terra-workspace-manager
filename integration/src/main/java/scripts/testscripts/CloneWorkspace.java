@@ -30,8 +30,8 @@ import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
-import bio.terra.workspace.model.GcpGcsBucketFileResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GcpGcsObjectResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceCloneDetails;
@@ -71,7 +71,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private GcpBigQueryDatasetResource copyResourceDataset;
   private GcpBigQueryDatasetResource privateDataset;
   private GcpGcsBucketResource sourceBucketReference;
-  private GcpGcsBucketFileResource sourceBucketFileReference;
+  private GcpGcsObjectResource sourceBucketFileReference;
   private String copyDefinitionDatasetName;
   private String copyResourceDatasetName;
   private String nameSuffix;
@@ -199,7 +199,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             CloningInstructionsEnum.REFERENCE);
 
     sourceBucketFileReference =
-        ResourceMaker.makeGcsBucketFileReference(
+        ResourceMaker.makeGcsObjectReference(
             referencedGcpResourceApi,
             getWorkspaceId(),
             "a_reference_to_hello_world_txt",
@@ -465,7 +465,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(CloneResourceResult.SUCCEEDED, bucketFileReferenceDetails.getResult());
     assertEquals(
         CloningInstructionsEnum.REFERENCE, bucketFileReferenceDetails.getCloningInstructions());
-    assertEquals(ResourceType.GCS_BUCKET_FILE, bucketFileReferenceDetails.getResourceType());
+    assertEquals(ResourceType.GCS_OBJECT, bucketFileReferenceDetails.getResourceType());
     assertEquals(StewardshipType.REFERENCED, bucketFileReferenceDetails.getStewardshipType());
     assertNotNull(bucketFileReferenceDetails.getDestinationResourceId());
     assertNull(bucketFileReferenceDetails.getErrorMessage());
