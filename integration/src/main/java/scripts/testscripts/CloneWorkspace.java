@@ -202,7 +202,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         ResourceMaker.makeGcsObjectReference(
             referencedGcpResourceApi,
             getWorkspaceId(),
-            "a_reference_to_hello_world_txt",
+            "a_reference_to_foo_monkey_sees_monkey_dos",
             CloningInstructionsEnum.REFERENCE,
             TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
             TEST_FILE_IN_FINE_GRAINED_BUCKET);
