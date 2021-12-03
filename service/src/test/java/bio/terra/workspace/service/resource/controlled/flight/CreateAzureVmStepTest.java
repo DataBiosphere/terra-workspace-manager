@@ -20,6 +20,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.ControlledAzureIpResource;
+import bio.terra.workspace.service.resource.controlled.ControlledAzureNetworkResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateAzureVmStep;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -58,6 +59,7 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
   private static final String STUB_DISK_NAME = "stub-disk-name";
   private static final String STUB_IP_NAME = "stub-disk-name";
   private static final String STUB_NETWORK_NAME = "stub-network-name";
+  private static final String STUB_SUBNET_NAME = "stub-subnet-name";
 
   @Mock private FlightContext mockFlightContext;
   @Mock private CrlService mockCrlService;
@@ -149,6 +151,7 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
   @Mock private ControlledResource mockControlledResource;
   @Mock private ControlledAzureIpResource mockAzureIpResource;
   @Mock private ControlledAzureDiskResource mockAzureDiskResource;
+  @Mock private ControlledAzureNetworkResource mockAzureNetworkResource;
 
   private ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
 
@@ -231,13 +234,13 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
     when(mockWsmResource.castToControlledResource()).thenReturn(mockControlledResource);
     when(mockControlledResource.castToAzureDiskResource()).thenReturn(mockAzureDiskResource);
     when(mockControlledResource.castToAzureIpResource()).thenReturn(mockAzureIpResource);
+    when(mockControlledResource.castToAzureNetworkResource()).thenReturn(mockAzureNetworkResource);
+
+    // Resource mocks
     when(mockAzureDiskResource.getDiskName()).thenReturn(STUB_DISK_NAME);
     when(mockAzureIpResource.getIpName()).thenReturn(STUB_IP_NAME);
-
-    // TODO: network mock (for getname and anything else done to the azure/controlled resource, see
-    // above dao mocks)
-
-    // Deletion mocks
+    when(mockAzureNetworkResource.getNetworkName()).thenReturn(STUB_NETWORK_NAME);
+    when(mockAzureNetworkResource.getSubnetName()).thenReturn(STUB_SUBNET_NAME);
 
     // Exception mock
     when(mockException.getValue())
@@ -279,9 +282,7 @@ public class CreateAzureVmStepTest extends BaseAzureTest {
             .setResourceGroupName(mockAzureCloudContext.getAzureResourceGroupId())
             .setDisk(mockDisk)
             .setNetwork(mockNetwork)
-            // TODO: network this can be fixed when we aren't auto-generating network info in the
-            // create vm request
-            .setSubnetName(requestDataOpt.get().subnetName())
+            .setSubnetName(STUB_SUBNET_NAME)
             .setPublicIpAddress(mockPublicIpAddress)
             .setImage(
                 "/subscriptions/3efc5bdf-be0e-44e7-b1d7-c08931e3c16c/resourceGroups/mrg-qi-1-preview-20210517084351/providers/Microsoft.Compute/galleries/msdsvm/images/customized_ms_dsvm/versions/0.0.4")
