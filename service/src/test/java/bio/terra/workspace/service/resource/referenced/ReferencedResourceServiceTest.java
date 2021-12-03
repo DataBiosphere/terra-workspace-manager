@@ -404,9 +404,10 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       void setup() throws Exception {
         // Make the Verify step always succeed
         doReturn(true).when(mockCrlService).canReadGcsBucket(any(), any());
+        doReturn(true).when(mockCrlService).canReadGcsObject(any(), any(), any());
       }
 
-      private ReferencedGcsObjectResource makeGcsBucketFileResource() {
+      private ReferencedGcsObjectResource makeGcsObjectReference() {
         UUID resourceId = UUID.randomUUID();
         String resourceName = "testgcs-" + resourceId.toString();
 
@@ -417,12 +418,12 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
             "description of " + resourceName,
             CloningInstructions.COPY_DEFINITION,
             /*bucketName=*/ "theres-a-hole-in-the-bottom-of-the",
-            /*fileName=*/ "balloon");
+            /*objectName=*/ "balloon");
       }
 
       @Test
-      void gcsBucketFileReference() {
-        referenceResource = makeGcsBucketFileResource();
+      void gcsObjectReference() {
+        referenceResource = makeGcsObjectReference();
         assertEquals(referenceResource.getStewardshipType(), StewardshipType.REFERENCED);
 
         ReferencedGcsObjectResource resource = referenceResource.castToGcsObjectResource();
@@ -503,7 +504,7 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
       }
 
       @Test
-      void missingBucketFileName_throwsException() {
+      void missingObjectName_throwsException() {
         UUID resourceId = UUID.randomUUID();
         String resourceName = "testgcs-" + resourceId.toString();
         assertThrows(
