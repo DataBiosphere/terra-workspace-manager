@@ -17,6 +17,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDataset
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.PrivateResourceState;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -54,7 +55,7 @@ public class ResourceDao {
   private static final String RESOURCE_SELECT_SQL =
       "SELECT workspace_id, cloud_platform, resource_id, name, description, "
           + "stewardship_type, resource_type, cloning_instructions, attributes,"
-          + " access_scope, managed_by, associated_app, assigned_user"
+          + " access_scope, managed_by, associated_app, assigned_user, private_resource_state"
           + " FROM resource WHERE workspace_id = :workspace_id ";
 
   private static final RowMapper<DbResource> DB_RESOURCE_ROW_MAPPER =
@@ -81,7 +82,11 @@ public class ResourceDao {
                 Optional.ofNullable(rs.getString("associated_app"))
                     .map(UUID::fromString)
                     .orElse(null))
-            .assignedUser(rs.getString("assigned_user"));
+            .assignedUser(rs.getString("assigned_user"))
+            .privateResourceState(
+                Optional.ofNullable(rs.getString("private_resource_state"))
+                    .map(PrivateResourceState::fromSql)
+                    .orElse(null));
       };
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -465,6 +470,34 @@ public class ResourceDao {
     storeResource(controlledResource);
   }
 
+  @WriteTransaction
+  public void setPrivateResourceState(
+      ControlledResource resource, PrivateResourceState privateResourceState) {
+    String sql =
+        "UPDATE resource SET private_resource_state = :private_resource_state WHERE workspace_id = :workspace_id AND resource_id = :resource_id AND access_scope = :private_access_scope";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("private_resource_state", privateResourceState.toSql())
+            .addValue("workspace_id", resource.getWorkspaceId().toString())
+            .addValue("resource_id", resource.getResourceId().toString())
+            .addValue("private_access_scope", AccessScopeType.ACCESS_SCOPE_PRIVATE.toSql());
+    jdbcTemplate.update(sql, params);
+  }
+
+  /** Sets the private_resource_state of all resources in a single workspace assigned to a user. */
+  @WriteTransaction
+  public void setPrivateResourcesStateForWorkspaceUser(
+      UUID workspaceId, String userEmail, PrivateResourceState state) {
+    String sql =
+        "UPDATE resource SET private_resource_state = :private_resource_state WHERE workspace_id = :workspace_id AND assigned_user = :user_email";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("private_resource_state", state.toSql())
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("user_email", userEmail);
+    jdbcTemplate.update(sql, params);
+  }
+
   private void validateUniqueGcsBucket(ControlledGcsBucketResource bucketResource) {
     String bucketSql =
         "SELECT COUNT(1)"
@@ -555,10 +588,10 @@ public class ResourceDao {
     final String sql =
         "INSERT INTO resource (workspace_id, cloud_platform, resource_id, name, description, stewardship_type,"
             + " resource_type, cloning_instructions, attributes,"
-            + " access_scope, managed_by, associated_app, assigned_user)"
+            + " access_scope, managed_by, associated_app, assigned_user, private_resource_state)"
             + " VALUES (:workspace_id, :cloud_platform, :resource_id, :name, :description, :stewardship_type,"
             + " :resource_type, :cloning_instructions, cast(:attributes AS jsonb),"
-            + " :access_scope, :managed_by, :associated_app, :assigned_user)";
+            + " :access_scope, :managed_by, :associated_app, :assigned_user, :private_resource_state)";
 
     final var params =
         new MapSqlParameterSource()
@@ -578,13 +611,20 @@ public class ResourceDao {
           .addValue("access_scope", controlledResource.getAccessScope().toSql())
           .addValue("managed_by", controlledResource.getManagedBy().toSql())
           .addValue("associated_app", controlledResource.getApplicationId())
-          .addValue("assigned_user", controlledResource.getAssignedUser().orElse(null));
+          .addValue("assigned_user", controlledResource.getAssignedUser().orElse(null))
+          .addValue(
+              "private_resource_state",
+              controlledResource
+                  .getPrivateResourceState()
+                  .map(PrivateResourceState::toSql)
+                  .orElse(null));
     } else {
       params
           .addValue("access_scope", null)
           .addValue("managed_by", null)
           .addValue("associated_app", null)
-          .addValue("assigned_user", null);
+          .addValue("assigned_user", null)
+          .addValue("private_resource_state", null);
     }
 
     try {
@@ -598,33 +638,6 @@ public class ResourceDao {
           String.format(
               "A resource already exists in the workspace that has the same name (%s) or the same id (%s)",
               resource.getName(), resource.getResourceId().toString()));
-    } catch (Exception e) {
-      // TODO: This logging is intended to help diagnose Postgres crashes occurring on resource
-      // creation.
-      //  Once this issue is resolved, this should be removed.
-      logger.info(
-          "Failed to create resource workspace_id: {}, cloud_platform: {}, resource_id: {}, name: {}, description: {}, stewardship_type: {}, resource_type: {}, cloning_instructions: {}, attributes: {}",
-          resource.getWorkspaceId().toString(),
-          resource.getResourceType().getCloudPlatform().toString(),
-          resource.getResourceId().toString(),
-          resource.getName(),
-          resource.getDescription(),
-          resource.getStewardshipType().toSql(),
-          resource.getResourceType().toSql(),
-          resource.getCloningInstructions().toSql(),
-          resource.attributesToJson());
-      if (resource.getStewardshipType().equals(CONTROLLED)) {
-        ControlledResource controlledResource = resource.castToControlledResource();
-        logger.info(
-            "Resource also has controlled-resource specific parameters access_scope: {}, managed_by: {}, associated_app: {}, assigned_user: {}",
-            controlledResource.getAccessScope().toSql(),
-            controlledResource.getManagedBy().toSql(),
-            null,
-            controlledResource.getAssignedUser().orElse(null));
-      }
-      // After logging, rethrow the exception
-      logger.info("Resource creation failure is:", e);
-      throw e;
     }
   }
 

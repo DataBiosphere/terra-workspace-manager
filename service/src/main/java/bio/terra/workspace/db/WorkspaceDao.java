@@ -4,6 +4,7 @@ import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.service.resource.controlled.PrivateResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
@@ -357,5 +358,44 @@ public class WorkspaceDao {
     return Optional.ofNullable(
         DataAccessUtils.singleResult(
             jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("creating_flight"))));
+  }
+
+  public static class WorkspaceUserPair {
+    private final UUID workspaceId;
+    private final String userEmail;
+
+    public WorkspaceUserPair(UUID workspaceId, String userEmail) {
+      this.workspaceId = workspaceId;
+      this.userEmail = userEmail;
+    }
+
+    public UUID getWorkspaceId() {
+      return workspaceId;
+    }
+
+    public String getUserEmail() {
+      return userEmail;
+    }
+  }
+
+  private static final RowMapper<WorkspaceUserPair> WORKSPACE_USER_PAIR_ROW_MAPPER =
+      (rs, rowNum) ->
+          new WorkspaceUserPair(
+              UUID.fromString(rs.getString("workspace_id")), rs.getString("assigned_user"));
+
+  /**
+   * A method for finding all users of private resources and the workspaces they have resources in.
+   * The returned set will only have one entry for each {workspace, user} pair, even if a user has
+   * multiple private resources in the same workspace.
+   */
+  @ReadTransaction
+  public List<WorkspaceUserPair> getPrivateResourceUsers() {
+    String sql =
+        "SELECT DISTINCT workspace_id, assigned_user FROM resource WHERE assigned_user IS NOT NULL AND private_resource_state = :active_resource_state";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("active_resource_state", PrivateResourceState.ACTIVE.toSql());
+
+    return jdbcTemplate.query(sql, params, WORKSPACE_USER_PAIR_ROW_MAPPER);
   }
 }

@@ -25,7 +25,7 @@ public enum StewardshipType {
       }
     }
     throw new SerializationException(
-        "Deeserialization failed: no matching stewardship type for " + dbString);
+        "Deserialization failed: no matching stewardship type for " + dbString);
   }
 
   /**

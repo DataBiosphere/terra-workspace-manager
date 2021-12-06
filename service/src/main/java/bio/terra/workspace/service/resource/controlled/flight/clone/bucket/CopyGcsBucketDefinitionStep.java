@@ -87,6 +87,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
             description,
             sourceBucket.getCloningInstructions(),
             sourceBucket.getAssignedUser().orElse(null),
+            sourceBucket.getPrivateResourceState().orElse(null),
             sourceBucket.getAccessScope(),
             sourceBucket.getManagedBy(),
             sourceBucket.getApplicationId(),

@@ -25,6 +25,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       @JsonProperty("description") String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("assignedUser") String assignedUser,
+      @JsonProperty("privateResourceState") PrivateResourceState privateResourceState,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
       @JsonProperty("applicationId") UUID applicationId,
@@ -39,7 +40,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
         assignedUser,
         accessScope,
         managedBy,
-        applicationId);
+        applicationId,
+        privateResourceState);
     this.datasetName = datasetName;
     validate();
   }
@@ -54,6 +56,21 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
 
   public static ControlledBigQueryDatasetResource.Builder builder() {
     return new ControlledBigQueryDatasetResource.Builder();
+  }
+
+  public Builder toBuilder() {
+    return new Builder()
+        .workspaceId(getWorkspaceId())
+        .resourceId(getResourceId())
+        .name(getName())
+        .description(getDescription())
+        .cloningInstructions(getCloningInstructions())
+        .assignedUser(getAssignedUser().orElse(null))
+        .privateResourceState(getPrivateResourceState().orElse(null))
+        .accessScope(getAccessScope())
+        .managedBy(getManagedBy())
+        .applicationId(getApplicationId())
+        .datasetName(getDatasetName());
   }
 
   public String getDatasetName() {
@@ -116,6 +133,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
     private String description;
     private CloningInstructions cloningInstructions;
     private String assignedUser;
+    private PrivateResourceState privateResourceState;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
     private UUID applicationId;
@@ -157,6 +175,11 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       return this;
     }
 
+    public Builder privateResourceState(PrivateResourceState privateResourceState) {
+      this.privateResourceState = privateResourceState;
+      return this;
+    }
+
     public Builder accessScope(AccessScopeType accessScope) {
       this.accessScope = accessScope;
       return this;
@@ -180,6 +203,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
           description,
           cloningInstructions,
           assignedUser,
+          privateResourceState,
           accessScope,
           managedBy,
           applicationId,

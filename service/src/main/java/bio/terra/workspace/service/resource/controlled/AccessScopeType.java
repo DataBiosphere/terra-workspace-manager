@@ -41,7 +41,7 @@ public enum AccessScopeType {
       }
     }
     throw new SerializationException(
-        "Deeserialization failed: no matching access scope type for " + dbString);
+        "Deserialization failed: no matching access scope type for " + dbString);
   }
 
   public String toSql() {

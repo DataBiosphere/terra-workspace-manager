@@ -28,6 +28,7 @@ import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -112,6 +113,8 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     retrySteps.put(
         RemovePrivateResourceAccessStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
+        MarkPrivateResourcesAbandonedStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(
         RevokePetUsagePermissionStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo failingDebugInfo =
         FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build();
@@ -188,6 +191,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             .name(datasetName)
             .cloningInstructions(CloningInstructions.COPY_NOTHING)
             .assignedUser(userAccessUtils.getSecondUserEmail())
+            .privateResourceState(PrivateResourceState.INITIALIZING)
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
             .datasetName(datasetName)

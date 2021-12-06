@@ -2330,6 +2330,17 @@ components:
       items:
         $ref: '#/components/schemas/ControlledResourceIamRole'
 
+    PrivateResourceState:
+      description: >-
+        The possible states of ownership of a private resource. When a resource is abandoned, the
+        assigned user loses permission to access it.
+      type: string
+      enum:
+      - ABANDONED
+      - ACTIVE
+      - INITIALIZING
+      - LEGACY
+
     ReferenceResourceCommonFields:
       type: object
       required: [name, cloningInstructions]
@@ -3050,6 +3061,8 @@ components:
           $ref: '#/components/schemas/ManagedBy'
         privateResourceUser:
           $ref: '#/components/schemas/PrivateResourceUser'
+        privateResourceState:
+          $ref: '#/components/schemas/PrivateResourceState'
 
     DataRepoSnapshotAttributes:
       description: Attributes of a data repository snapshot

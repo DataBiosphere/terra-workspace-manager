@@ -48,6 +48,7 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
             "as in foobar",
             CloningInstructions.COPY_RESOURCE,
             null,
+            null,
             AccessScopeType.ACCESS_SCOPE_SHARED,
             ManagedByType.MANAGED_BY_USER,
             null,

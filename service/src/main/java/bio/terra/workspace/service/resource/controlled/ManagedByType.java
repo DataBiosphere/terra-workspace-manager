@@ -49,6 +49,6 @@ public enum ManagedByType {
       }
     }
     throw new SerializationException(
-        "Deeserialization failed: no matching managed by type for " + dbString);
+        "Deserialization failed: no matching managed by type for " + dbString);
   }
 }

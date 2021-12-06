@@ -1,0 +1,14 @@
+databaseChangeLog:
+- changeSet:
+    id: add private resource state column
+    author: zloery
+    changes:
+    - addColumn:
+        tableName: resource
+        columns:
+        - column:
+            name: private_resource_state
+            type: text
+            defaultValue: ACTIVE
+            remarks: |
+              From PrivateResourceState: ABANDONED, ACTIVE, INITIALIZING, LEGACY

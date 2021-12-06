@@ -17,6 +17,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledAiNotebookInsta
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.bigquery.model.Dataset;
@@ -120,6 +121,7 @@ public class ControlledResourceFixtures {
         RESOURCE_DESCRIPTION,
         CLONING_INSTRUCTIONS,
         OWNER_EMAIL,
+        PrivateResourceState.ACTIVE,
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_USER,
         null,
@@ -201,6 +203,7 @@ public class ControlledResourceFixtures {
         .description("my notebook description")
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
         .assignedUser("myusername@mydomain.mine")
+        .privateResourceState(PrivateResourceState.INITIALIZING)
         .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
         .managedBy(ManagedByType.MANAGED_BY_USER)
         .instanceId("my-instance-id")

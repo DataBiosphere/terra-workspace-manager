@@ -9,7 +9,10 @@ public enum WsmIamRole {
   READER("reader", ApiIamRole.READER),
   WRITER("writer", ApiIamRole.WRITER),
   APPLICATION("application", ApiIamRole.APPLICATION),
-  OWNER("owner", ApiIamRole.OWNER);
+  OWNER("owner", ApiIamRole.OWNER),
+  // The manager role is given to WSM's SA on all Sam workspace objects for admin control. Users
+  // are never given this role.
+  MANAGER("manager", null);
 
   private final String samRole;
   private final ApiIamRole apiRole;

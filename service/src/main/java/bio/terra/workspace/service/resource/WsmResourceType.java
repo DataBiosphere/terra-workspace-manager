@@ -81,7 +81,7 @@ public enum WsmResourceType {
       }
     }
     throw new SerializationException(
-        "Deeserialization failed: no matching resource type for " + dbString);
+        "Deserialization failed: no matching resource type for " + dbString);
   }
 
   /**

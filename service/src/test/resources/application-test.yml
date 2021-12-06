@@ -7,6 +7,9 @@ workspace:
   datarepo.instances:
     fake-valid-test: https://fake-valid-data-repo-url.broadinstitute.org
 
+  private-resource-cleanup:
+    enabled: false
+
   sam.base-path: https://sam.dsde-dev.broadinstitute.org
 
   stairway-database:

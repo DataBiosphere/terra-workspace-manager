@@ -14,14 +14,16 @@ import bio.terra.workspace.service.resource.model.StewardshipType;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 /**
  * Class for all controlled resource fields that are not common to all resource stewardship types
  * and are not specific to any particular resource type.
  */
 public abstract class ControlledResource extends WsmResource {
-  private final String assignedUser;
+  @Nullable private final String assignedUser;
   private final AccessScopeType accessScope;
+  @Nullable private final PrivateResourceState privateResourceState;
   private final ManagedByType managedBy;
   private final UUID applicationId;
 
@@ -34,12 +36,14 @@ public abstract class ControlledResource extends WsmResource {
       String assignedUser,
       AccessScopeType accessScope,
       ManagedByType managedBy,
-      UUID applicationId) {
+      UUID applicationId,
+      PrivateResourceState privateResourceState) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
     this.assignedUser = assignedUser;
     this.accessScope = accessScope;
     this.managedBy = managedBy;
     this.applicationId = applicationId;
+    this.privateResourceState = privateResourceState;
   }
 
   public ControlledResource(DbResource dbResource) {
@@ -51,6 +55,7 @@ public abstract class ControlledResource extends WsmResource {
     this.accessScope = dbResource.getAccessScope().orElse(null);
     this.managedBy = dbResource.getManagedBy().orElse(null);
     this.applicationId = dbResource.getApplicationId().orElse(null);
+    this.privateResourceState = dbResource.getPrivateResourceState().orElse(null);
   }
 
   @Override
@@ -79,6 +84,10 @@ public abstract class ControlledResource extends WsmResource {
     return applicationId;
   }
 
+  public Optional<PrivateResourceState> getPrivateResourceState() {
+    return Optional.ofNullable(privateResourceState);
+  }
+
   public ControlledResourceCategory getCategory() {
     return ControlledResourceCategory.get(accessScope, managedBy);
   }
@@ -92,7 +101,9 @@ public abstract class ControlledResource extends WsmResource {
             .managedBy(managedBy.toApiModel())
             .privateResourceUser(
                 // TODO: PF-616 figure out how to supply the assigned user's role
-                new ApiPrivateResourceUser().userName(assignedUser));
+                new ApiPrivateResourceUser().userName(assignedUser))
+            .privateResourceState(
+                getPrivateResourceState().map(PrivateResourceState::toApiModel).orElse(null));
     metadata.controlledResourceMetadata(controlled);
     return metadata;
   }
@@ -113,6 +124,12 @@ public abstract class ControlledResource extends WsmResource {
     if (getApplicationId() != null && getManagedBy() != ManagedByType.MANAGED_BY_APPLICATION) {
       throw new InconsistentFieldsException(
           "Application managed resource without an application id");
+    }
+
+    if ((privateResourceState == null)
+        == (getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
+      throw new InconsistentFieldsException(
+          "Private resource state must be non-null for private resources and null for all other types.");
     }
   }
 
