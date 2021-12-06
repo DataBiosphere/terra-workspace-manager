@@ -114,8 +114,6 @@ public class ReferencedResourceService {
     ValidationUtils.validateResourceDescriptionName(description);
     boolean updated;
     if (resource != null)  {
-      //TODO: validate union
-
       JobBuilder createJob =
           jobService
               .newJob(
@@ -127,12 +125,8 @@ public class ReferencedResourceService {
               .addParameter(
                   WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE,
                   resource.getResourceType().name())
-              .addParameter(
-                  ResourceKeys.RESOURCE_NAME,
-                  name)
-              .addParameter(
-                  ResourceKeys.RESOURCE_DESCRIPTION,
-                  description);
+              .addParameter(ResourceKeys.RESOURCE_NAME, name)
+              .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, description);
 
       updated = createJob.submitAndWait(Boolean.class);
     } else {

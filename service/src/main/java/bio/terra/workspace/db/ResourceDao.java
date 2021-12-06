@@ -37,6 +37,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -372,7 +373,7 @@ public class ResourceDao {
 
     updateParams.forEach(
         (k, v) -> {
-          if (k != null && v != null) {
+          if (!StringUtils.isEmpty(k) && !StringUtils.isEmpty(v)) {
             params.addValue(k, v);
           }
         });

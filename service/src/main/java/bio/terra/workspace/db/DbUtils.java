@@ -22,7 +22,11 @@ public class DbUtils {
       if (i > 0) {
         sb.append(", ");
       }
-      sb.append(columnName).append(" = :").append(columnName);
+      if (!columnName.equals("attributes")) {
+        sb.append(columnName).append(" = :").append(columnName);
+      } else {
+        sb.append("attributes = cast(:attributes AS jsonb)");
+      }
     }
     return sb.toString();
   }
