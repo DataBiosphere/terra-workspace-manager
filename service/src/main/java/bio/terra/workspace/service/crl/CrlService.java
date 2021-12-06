@@ -369,7 +369,8 @@ public class CrlService {
       }
       throw new InvalidReferenceException(
           String.format(
-              "Error while trying to access GCS blob %s in bucket %s", objectName, bucketName), e);
+              "Error while trying to access GCS blob %s in bucket %s", objectName, bucketName),
+          e);
     }
   }
 
