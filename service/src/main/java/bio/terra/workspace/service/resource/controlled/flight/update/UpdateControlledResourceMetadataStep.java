@@ -34,8 +34,7 @@ public class UpdateControlledResourceMetadataStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     final FlightMap inputParameters = flightContext.getInputParameters();
-    final String resourceName =
-        inputParameters.get(ResourceKeys.RESOURCE_NAME, String.class);
+    final String resourceName = inputParameters.get(ResourceKeys.RESOURCE_NAME, String.class);
     final String resourceDescription =
         inputParameters.get(ResourceKeys.RESOURCE_DESCRIPTION, String.class);
     final AuthenticatedUserRequest userRequest =
@@ -53,8 +52,7 @@ public class UpdateControlledResourceMetadataStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     final FlightMap workingMap = flightContext.getWorkingMap();
-    final String previousName =
-        workingMap.get(ResourceKeys.PREVIOUS_RESOURCE_NAME, String.class);
+    final String previousName = workingMap.get(ResourceKeys.PREVIOUS_RESOURCE_NAME, String.class);
     final String previousDescription =
         workingMap.get(ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION, String.class);
     resourceDao.updateResource(workspaceId, resourceId, previousName, previousDescription);

@@ -107,10 +107,12 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
 
     UUID resourceId = referenceResource.getResourceId();
-    ReferencedResource originalResource = referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+    ReferencedResource originalResource =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
     String originalName = referenceResource.getName();
     String originalDescription = referenceResource.getDescription();
-    String originalInstanceName = referenceResource.castToDataRepoSnapshotResource().getInstanceName();
+    String originalInstanceName =
+        referenceResource.castToDataRepoSnapshotResource().getInstanceName();
 
     String newSnapshotId = "new_snapshot_id";
     ReferencedResource updatedResource =
@@ -121,7 +123,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     referenceResourceService.updateReferenceResource(
         workspaceId, referenceResource.getResourceId(), null, null, updatedResource, USER_REQUEST);
 
-    ReferencedResource result = referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+    ReferencedResource result =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
     assertEquals(originalName, result.getName());
     assertEquals(originalDescription, result.getDescription());
     assertEquals(originalInstanceName, result.castToDataRepoSnapshotResource().getInstanceName());
@@ -134,7 +137,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
 
     UUID resourceId = referenceResource.getResourceId();
-    ReferencedResource originalResource = referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+    ReferencedResource originalResource =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
     String originalName = referenceResource.getName();
     String originalDescription = referenceResource.getDescription();
 
@@ -149,7 +153,8 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
     referenceResourceService.updateReferenceResource(
         workspaceId, referenceResource.getResourceId(), null, null, updatedResource, USER_REQUEST);
 
-    ReferencedResource result = referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+    ReferencedResource result =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
     assertEquals(originalName, result.getName());
     assertEquals(originalDescription, result.getDescription());
     assertEquals(newInstanceName, result.castToDataRepoSnapshotResource().getInstanceName());

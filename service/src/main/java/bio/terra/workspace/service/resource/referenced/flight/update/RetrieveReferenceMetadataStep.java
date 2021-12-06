@@ -14,24 +14,20 @@ public class RetrieveReferenceMetadataStep implements Step {
   private final UUID workspaceId;
   private final UUID resourceId;
 
-  public RetrieveReferenceMetadataStep(
-      ResourceDao resourceDao, UUID workspaceId, UUID resourceId) {
+  public RetrieveReferenceMetadataStep(ResourceDao resourceDao, UUID workspaceId, UUID resourceId) {
     this.resourceDao = resourceDao;
     this.workspaceId = workspaceId;
     this.resourceId = resourceId;
   }
+
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     WsmResource resource = resourceDao.getResource(workspaceId, resourceId);
     context.getWorkingMap().put(ResourceKeys.PREVIOUS_ATTRIBUTES, resource.attributesToJson());
+    context.getWorkingMap().put(ResourceKeys.PREVIOUS_RESOURCE_NAME, resource.getName());
     context
         .getWorkingMap()
-        .put(ResourceKeys.PREVIOUS_RESOURCE_NAME, resource.getName());
-    context
-        .getWorkingMap()
-        .put(
-            ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
-            resource.getDescription());
+        .put(ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION, resource.getDescription());
     return StepResult.getStepResultSuccess();
   }
 

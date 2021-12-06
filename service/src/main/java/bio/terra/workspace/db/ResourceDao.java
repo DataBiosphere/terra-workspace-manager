@@ -389,8 +389,8 @@ public class ResourceDao {
     return updateResource(workspaceId, resourceId, updateParams);
   }
 
-  public static Map<String, String> getUpdateParams(@Nullable String name,
-      @Nullable String description, @Nullable String attributes) {
+  public static Map<String, String> getUpdateParams(
+      @Nullable String name, @Nullable String description, @Nullable String attributes) {
     Map<String, String> updateParams = new HashMap<>();
     updateParams.put("name", name);
     updateParams.put("description", description);

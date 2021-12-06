@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.referenced;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
-import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
@@ -93,7 +92,8 @@ public class ReferencedResourceService {
       @Nullable String name,
       @Nullable String description,
       AuthenticatedUserRequest userRequest) {
-    updateReferenceResource(workspaceId, resourceId, name, description, /*referencedResource=*/null, userRequest);
+    updateReferenceResource(
+        workspaceId, resourceId, name, description, /*referencedResource=*/ null, userRequest);
   }
 
   public void updateReferenceResource(
@@ -102,8 +102,7 @@ public class ReferencedResourceService {
       @Nullable String name,
       @Nullable String description,
       @Nullable ReferencedResource resource,
-      AuthenticatedUserRequest userRequest
-  ) {
+      AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.UPDATE_REFERENCE);
     // Name may be null if the user is not updating it in this request.
@@ -113,7 +112,7 @@ public class ReferencedResourceService {
     // Description may also be null, but this validator accepts null descriptions.
     ValidationUtils.validateResourceDescriptionName(description);
     boolean updated;
-    if (resource != null)  {
+    if (resource != null) {
       JobBuilder createJob =
           jobService
               .newJob(
@@ -133,7 +132,7 @@ public class ReferencedResourceService {
       updated = resourceDao.updateResource(workspaceId, resourceId, name, description);
     }
     if (!updated) {
-      //TODO: remove
+      // TODO: remove
       System.out.println("yuhuyoyo fail to update");
     }
   }
