@@ -1843,6 +1843,9 @@ components:
           $ref: "#/components/schemas/Name"
         description:
           type: string
+        resourceAttributes:
+          description: Data specific to the type of resource
+          $ref: '#/components/schemas/ResourceAttributesUnion'
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceMetadata:

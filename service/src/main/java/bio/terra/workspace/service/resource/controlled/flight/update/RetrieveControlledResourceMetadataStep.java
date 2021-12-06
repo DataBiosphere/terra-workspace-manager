@@ -7,7 +7,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.UUID;
 
 /**
@@ -35,11 +35,11 @@ public class RetrieveControlledResourceMetadataStep implements Step {
 
     flightContext
         .getWorkingMap()
-        .put(ControlledResourceKeys.PREVIOUS_RESOURCE_NAME, controlledResource.getName());
+        .put(ResourceKeys.PREVIOUS_RESOURCE_NAME, controlledResource.getName());
     flightContext
         .getWorkingMap()
         .put(
-            ControlledResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
+            ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             controlledResource.getDescription());
     return StepResult.getStepResultSuccess();
   }

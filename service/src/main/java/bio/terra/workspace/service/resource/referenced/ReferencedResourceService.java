@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.referenced;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
+import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
@@ -12,8 +13,10 @@ import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceResourceFlight;
+import bio.terra.workspace.service.resource.referenced.flight.update.UpdateReferenceResourceFlight;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
@@ -90,6 +93,17 @@ public class ReferencedResourceService {
       @Nullable String name,
       @Nullable String description,
       AuthenticatedUserRequest userRequest) {
+    updateReferenceResource(workspaceId, resourceId, name, description, /*referencedResource=*/null, userRequest);
+  }
+
+  public void updateReferenceResource(
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable ReferencedResource resource,
+      AuthenticatedUserRequest userRequest
+  ) {
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.UPDATE_REFERENCE);
     // Name may be null if the user is not updating it in this request.
@@ -98,9 +112,37 @@ public class ReferencedResourceService {
     }
     // Description may also be null, but this validator accepts null descriptions.
     ValidationUtils.validateResourceDescriptionName(description);
-    resourceDao.updateResource(workspaceId, resourceId, name, description);
-  }
+    boolean updated;
+    if (resource != null)  {
+      //TODO: validate union
 
+      JobBuilder createJob =
+          jobService
+              .newJob(
+                  "Update reference target",
+                  UUID.randomUUID().toString(),
+                  UpdateReferenceResourceFlight.class,
+                  resource,
+                  userRequest)
+              .addParameter(
+                  WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE,
+                  resource.getResourceType().name())
+              .addParameter(
+                  ResourceKeys.RESOURCE_NAME,
+                  name)
+              .addParameter(
+                  ResourceKeys.RESOURCE_DESCRIPTION,
+                  description);
+
+      updated = createJob.submitAndWait(Boolean.class);
+    } else {
+      updated = resourceDao.updateResource(workspaceId, resourceId, name, description);
+    }
+    if (!updated) {
+      //TODO: remove
+      System.out.println("yuhuyoyo fail to update");
+    }
+  }
   /**
    * Delete a reference. The only state we hold for a reference is in the metadata database so we
    * directly delete that.

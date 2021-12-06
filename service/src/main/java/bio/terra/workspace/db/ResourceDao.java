@@ -30,7 +30,9 @@ import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -364,22 +366,35 @@ public class ResourceDao {
 
   @WriteTransaction
   public boolean updateResource(
-      UUID workspaceId, UUID resourceId, String name, String description) {
-    if (name == null && description == null) {
-      return false;
-    }
+      UUID workspaceId, UUID resourceId, Map<String, String> updateParams) {
 
     var params = new MapSqlParameterSource();
 
-    if (name != null) {
-      params.addValue("name", name);
-    }
-
-    if (description != null) {
-      params.addValue("description", description);
-    }
+    updateParams.forEach(
+        (k, v) -> {
+          if (k != null && v != null) {
+            params.addValue(k, v);
+          }
+        });
 
     return updateResourceColumns(workspaceId, resourceId, params);
+  }
+
+  @WriteTransaction
+  public boolean updateResource(
+      UUID workspaceId, UUID resourceId, @Nullable String name, @Nullable String description) {
+    Map<String, String> updateParams = getUpdateParams(name, description, null);
+
+    return updateResource(workspaceId, resourceId, updateParams);
+  }
+
+  public static Map<String, String> getUpdateParams(@Nullable String name,
+      @Nullable String description, @Nullable String attributes) {
+    Map<String, String> updateParams = new HashMap<>();
+    updateParams.put("name", name);
+    updateParams.put("description", description);
+    updateParams.put("attributes", attributes);
+    return updateParams;
   }
 
   /**

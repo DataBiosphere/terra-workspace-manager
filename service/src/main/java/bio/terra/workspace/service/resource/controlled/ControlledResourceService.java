@@ -108,8 +108,8 @@ public class ControlledResourceService {
                 resource,
                 userRequest)
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
-            .addParameter(ControlledResourceKeys.RESOURCE_NAME, resourceName)
-            .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
+            .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
+            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
     return jobBuilder.submitAndWait(ControlledGcsBucketResource.class);
   }
 
@@ -168,8 +168,8 @@ public class ControlledResourceService {
                 sourceBucketResource,
                 userRequest)
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
-            .addParameter(ControlledResourceKeys.RESOURCE_NAME, destinationResourceName)
-            .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
+            .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
+            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(ControlledResourceKeys.DESTINATION_BUCKET_NAME, destinationBucketName)
             .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
             .addParameter(
@@ -212,8 +212,8 @@ public class ControlledResourceService {
                 resource,
                 userRequest)
             .addParameter(ControlledResourceKeys.UPDATE_PARAMETERS, updateParameters)
-            .addParameter(ControlledResourceKeys.RESOURCE_NAME, resourceName)
-            .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
+            .addParameter(ResourceKeys.RESOURCE_NAME, resourceName)
+            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, resourceDescription);
     return jobBuilder.submitAndWait(ControlledBigQueryDatasetResource.class);
   }
 
@@ -267,8 +267,8 @@ public class ControlledResourceService {
                 sourceDatasetResource,
                 userRequest)
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
-            .addParameter(ControlledResourceKeys.RESOURCE_NAME, destinationResourceName)
-            .addParameter(ControlledResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
+            .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
+            .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
             .addParameter(ControlledResourceKeys.DESTINATION_DATASET_NAME, destinationDatasetName)
             .addParameter(

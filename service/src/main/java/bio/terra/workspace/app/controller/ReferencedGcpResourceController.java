@@ -303,8 +303,21 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> updateBigQueryDatasetReference(
       UUID id, UUID referenceId, ApiUpdateDataReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    referenceResourceService.updateReferenceResource(
-        id, referenceId, body.getName(), body.getDescription(), userRequest);
+    if (body.getResourceAttributes() == null
+        || body.getResourceAttributes().getGcpBqDataset() == null) {
+      referenceResourceService.updateReferenceResource(
+          id, referenceId, body.getName(), body.getDescription(), userRequest);
+    } else {
+      ReferencedResource referencedResource = referenceResourceService.getReferenceResource(id, referenceId, userRequest);
+      ReferencedBigQueryDatasetResource bqDatasetResource = referencedResource.castToBigQueryDatasetResource();
+      ReferencedBigQueryDatasetResource updatedBqDatasetResource = bqDatasetResource.toBuilder()
+          .projectId(body.getResourceAttributes().getGcpBqDataset().getProjectId())
+          .datasetName(body.getResourceAttributes().getGcpBqDataset().getDatasetId())
+          .build();
+      referenceResourceService.updateReferenceResource(
+          id, referenceId, body.getName(), body.getDescription(), updatedBqDatasetResource, userRequest
+      );
+    }
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

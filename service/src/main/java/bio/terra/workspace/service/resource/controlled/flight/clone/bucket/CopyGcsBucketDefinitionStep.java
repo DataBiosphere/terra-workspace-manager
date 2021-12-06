@@ -16,6 +16,7 @@ import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResour
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -60,14 +61,14 @@ public class CopyGcsBucketDefinitionStep implements Step {
     final String resourceName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
-            ControlledResourceKeys.RESOURCE_NAME,
-            ControlledResourceKeys.PREVIOUS_RESOURCE_NAME,
+            ResourceKeys.RESOURCE_NAME,
+            ResourceKeys.PREVIOUS_RESOURCE_NAME,
             String.class);
     final String description =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
-            ControlledResourceKeys.RESOURCE_DESCRIPTION,
-            ControlledResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
+            ResourceKeys.RESOURCE_DESCRIPTION,
+            ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             String.class);
     final String bucketName =
         Optional.ofNullable(
