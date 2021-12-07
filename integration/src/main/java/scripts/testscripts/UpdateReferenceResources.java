@@ -116,14 +116,9 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     ResourceApi partialAccessResourceApi =
         new ResourceApi(ClientTestUtils.getClientForTestUser(userWithPartialAccess, server));
 
-    // Update snapshot
-    DataRepoSnapshotAttributes snapshotAttributes = new DataRepoSnapshotAttributes();
+    // Update snapshot's name and description
     String newSnapshotReferenceName = "newSnapshotReferenceName";
     String newSnapshotReferenceDescription = "a new description of another snapshot reference";
-    String newSnapshotId = "newSnapshotId";
-    String newInstanceName = "newInstanceName";
-    // snapshotAttributes.setSnapshot(newSnapshotId);
-    // snapshotAttributes.setInstanceName(newInstanceName);
     ResourceMaker.updateDataRepoSnapshotReferenceResource(
         fullAccessApi,
         getWorkspaceId(),
