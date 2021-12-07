@@ -48,6 +48,10 @@ import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceUser;
 import bio.terra.workspace.model.ReferenceResourceCommonFields;
+import bio.terra.workspace.model.UpdateBigQueryDataTableReferenceRequestBody;
+import bio.terra.workspace.model.UpdateBigQueryDatasetReferenceRequestBody;
+import bio.terra.workspace.model.UpdateDataRepoSnapshotReferenceRequestBody;
+import bio.terra.workspace.model.UpdateGcsBucketReferenceRequestBody;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
@@ -90,6 +94,29 @@ public class ResourceMaker {
   }
 
   /**
+   * Update the name, description or referencing target of a reference.
+   * @throws ApiException
+   */
+  public static void updateBigQueryDatasetReference(
+      ReferencedGcpResourceApi resourceApi, UUID workspace, UUID resourceId,
+      @Nullable String name, @Nullable String description, @Nullable GcpBigQueryDatasetAttributes attributes)
+      throws ApiException {
+    UpdateBigQueryDatasetReferenceRequestBody body =
+        new UpdateBigQueryDatasetReferenceRequestBody();
+    if (name != null) {
+      body.setName(name);
+    }
+    if (description != null) {
+      body.setDescription(description);
+    }
+    if (attributes != null) {
+      body.setResourceAttributes(attributes);
+    }
+    resourceApi.updateBigQueryDatasetReferenceResource(body, workspace, resourceId);
+  }
+
+
+  /**
    * Calls WSM to create a referenced BigQuery table in the specified workspace.
    *
    * <p>This method retries on all WSM exceptions, do not use it for the negative case (where you do
@@ -116,6 +143,28 @@ public class ResourceMaker {
         () -> resourceApi.createBigQueryDataTableReference(body, workspaceId));
   }
 
+  /**
+   * Update name, description and/or referencing target of BigQuery data table.
+   * @throws ApiException
+   */
+  public static void updateBigQueryDataTableReference(
+      ReferencedGcpResourceApi resourceApi, UUID workspaceId, UUID resourceId, @Nullable String name,
+      @Nullable String description, @Nullable GcpBigQueryDataTableAttributes attributes
+  ) throws ApiException {
+    UpdateBigQueryDataTableReferenceRequestBody body =
+        new UpdateBigQueryDataTableReferenceRequestBody();
+    if (name != null) {
+      body.setName(name);
+    }
+    if (description != null) {
+      body.setDescription(description);
+    }
+    if (attributes != null) {
+      body.setResourceAttributes(attributes);
+    }
+    resourceApi.updateBigQueryDataTableReferenceResource(body, workspaceId, resourceId);
+  }
+
   /** Calls WSM to create a referenced TDR snapshot in the specified workspace. */
   public static DataRepoSnapshotResource makeDataRepoSnapshotReference(
       ReferencedGcpResourceApi resourceApi,
@@ -138,6 +187,30 @@ public class ResourceMaker {
                     .instanceName(dataRepoInstanceName));
 
     return resourceApi.createDataRepoSnapshotReference(body, workspaceId);
+  }
+
+  /**
+   * Update name, description, and/or referencing target of a data repo snapshot reference.
+   * @throws ApiException
+   */
+  public static void updateDataRepoSnapshotReferenceResource(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId, UUID resourceId, @Nullable String name, @Nullable String description,
+      @Nullable DataRepoSnapshotAttributes attributes
+  ) throws ApiException {
+    UpdateDataRepoSnapshotReferenceRequestBody body =
+        new UpdateDataRepoSnapshotReferenceRequestBody();
+    if (name != null) {
+      body.setName(name);
+    }
+    if (description != null) {
+      body.setDescription(description);
+    }
+    if (attributes != null) {
+      body.setResourceAttributes(attributes);
+    }
+
+    resourceApi.updateDataRepoSnapshotReferenceResource(body, workspaceId, resourceId);
   }
 
   /**
@@ -166,6 +239,32 @@ public class ResourceMaker {
 
     return ClientTestUtils.getWithRetryOnException(
         () -> resourceApi.createBucketReference(body, workspaceId));
+  }
+
+  /**
+   * Update name, description, and/or referencing target for GCS bucket.
+   * @throws ApiException
+   */
+  public static void updateGcsBucketReference(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable GcpGcsBucketAttributes attributes
+  ) throws ApiException {
+    UpdateGcsBucketReferenceRequestBody body =
+        new UpdateGcsBucketReferenceRequestBody();
+    if (name != null) {
+      body.setName(name);
+    }
+    if (description != null) {
+      body.setDescription(description);
+    }
+    if (attributes != null) {
+      body.setResourceAttributes(attributes);
+    }
+    resourceApi.updateBucketReferenceResource(body, workspaceId, resourceId);
   }
 
   /**
