@@ -49,11 +49,17 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         ResourceMaker.makeBigQueryDataTableReference(
             referencedGcpResourceApi, getWorkspaceId(), "bqTableReference");
     bqTableResourceId = bqDataTableReference.getMetadata().getResourceId();
-    DataRepoSnapshotResource snapshotResource = ResourceMaker.makeDataRepoSnapshotReference(referencedGcpResourceApi, getWorkspaceId(), "dataRepoReference",
-        getDataRepoSnapshotId(), getDataRepoInstanceName());
+    DataRepoSnapshotResource snapshotResource =
+        ResourceMaker.makeDataRepoSnapshotReference(
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            "dataRepoReference",
+            getDataRepoSnapshotId(),
+            getDataRepoInstanceName());
     dataRepoSnapshotResourceId = snapshotResource.getMetadata().getResourceId();
     GcpGcsBucketResource bucketResource =
-        ResourceMaker.makeGcsBucketReference(referencedGcpResourceApi, getWorkspaceId(), "bucketReference");
+        ResourceMaker.makeGcsBucketReference(
+            referencedGcpResourceApi, getWorkspaceId(), "bucketReference");
     bucketResourceId = bucketResource.getMetadata().getResourceId();
   }
 
@@ -78,10 +84,15 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     // snapshotAttributes.setSnapshot(newSnapshotId);
     // snapshotAttributes.setInstanceName(newInstanceName);
     ResourceMaker.updateDataRepoSnapshotReferenceResource(
-        referencedGcpResourceApi, getWorkspaceId(), dataRepoSnapshotResourceId,
-        newSnapshotReferenceName, newSnapshotReferenceDescription, null);
+        referencedGcpResourceApi,
+        getWorkspaceId(),
+        dataRepoSnapshotResourceId,
+        newSnapshotReferenceName,
+        newSnapshotReferenceDescription,
+        null);
     DataRepoSnapshotResource snapshotResource =
-        referencedGcpResourceApi.getDataRepoSnapshotReference(getWorkspaceId(), dataRepoSnapshotResourceId);
+        referencedGcpResourceApi.getDataRepoSnapshotReference(
+            getWorkspaceId(), dataRepoSnapshotResourceId);
     assertEquals(newSnapshotReferenceName, snapshotResource.getMetadata().getName());
     assertEquals(newSnapshotReferenceDescription, snapshotResource.getMetadata().getDescription());
 
@@ -89,9 +100,15 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     String newDatasetName = "newDatasetName";
     String newDatasetDescription = "newDescription";
     GcpBigQueryDatasetAttributes datasetAttributes = new GcpBigQueryDatasetAttributes();
-    ResourceMaker.updateBigQueryDatasetReference(referencedGcpResourceApi, getWorkspaceId(), bqDatasetResourceId,
-        newDatasetName, newDatasetDescription, null);
-    GcpBigQueryDatasetResource datasetResource = referencedGcpResourceApi.getBigQueryDatasetReference(getWorkspaceId(), bqDatasetResourceId);
+    ResourceMaker.updateBigQueryDatasetReference(
+        referencedGcpResourceApi,
+        getWorkspaceId(),
+        bqDatasetResourceId,
+        newDatasetName,
+        newDatasetDescription,
+        null);
+    GcpBigQueryDatasetResource datasetResource =
+        referencedGcpResourceApi.getBigQueryDatasetReference(getWorkspaceId(), bqDatasetResourceId);
     assertEquals(newDatasetName, datasetResource.getMetadata().getName());
     assertEquals(newDatasetDescription, datasetResource.getMetadata().getDescription());
 
@@ -99,8 +116,13 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     String newDataTableName = "newDataTableName";
     String newDataTableDescription = "a new description to the new data table reference";
     GcpBigQueryDataTableAttributes dataTableAttributes = new GcpBigQueryDataTableAttributes();
-    ResourceMaker.updateBigQueryDataTableReference(referencedGcpResourceApi, getWorkspaceId(), bqTableResourceId,
-        newDataTableName, newDataTableDescription, null);
+    ResourceMaker.updateBigQueryDataTableReference(
+        referencedGcpResourceApi,
+        getWorkspaceId(),
+        bqTableResourceId,
+        newDataTableName,
+        newDataTableDescription,
+        null);
     GcpBigQueryDataTableResource dataTableResource =
         referencedGcpResourceApi.getBigQueryDataTableReference(getWorkspaceId(), bqTableResourceId);
     assertEquals(newDataTableName, dataTableResource.getMetadata().getName());
@@ -110,14 +132,20 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     String newBucketName = "newGcsBucket";
     String newBucketDescription = "a new description to the new bucket reference";
     GcpGcsBucketAttributes bucketAttributes = new GcpGcsBucketAttributes();
-    ResourceMaker.updateGcsBucketReference(referencedGcpResourceApi, getWorkspaceId(), bucketResourceId, newBucketName, newBucketDescription, null);
-    GcpGcsBucketResource bucketResource = referencedGcpResourceApi.getBucketReference(getWorkspaceId(), bucketResourceId);
+    ResourceMaker.updateGcsBucketReference(
+        referencedGcpResourceApi,
+        getWorkspaceId(),
+        bucketResourceId,
+        newBucketName,
+        newBucketDescription,
+        null);
+    GcpGcsBucketResource bucketResource =
+        referencedGcpResourceApi.getBucketReference(getWorkspaceId(), bucketResourceId);
     assertEquals(newBucketName, bucketResource.getMetadata().getName());
     assertEquals(newBucketDescription, bucketResource.getMetadata().getDescription());
 
     // Update GCS bucket object
     String newBlobName = "newBlobName";
     String newblobDescription = "a new description to the new bucket blob reference";
-
   }
 }
