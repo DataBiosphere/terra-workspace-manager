@@ -136,7 +136,8 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
   public ResponseEntity<Void> updateBucketObjectReferenceResource(
       UUID workspaceId, UUID referenceId, ApiUpdateGcsBucketObjectReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    if (body.getResourceAttributes() == null) {
+    ApiGcpGcsObjectAttributes bucketObjectAttributes = body.getResourceAttributes();
+    if (bucketObjectAttributes == null) {
       referenceResourceService.updateReferenceResource(
           workspaceId, referenceId, body.getName(), body.getDescription(), userRequest);
     } else {
@@ -145,7 +146,6 @@ public class ReferencedGcpResourceController implements ReferencedGcpResourceApi
               .getReferenceResource(workspaceId, referenceId, userRequest)
               .castToGcsObjectResource()
               .toBuilder();
-      ApiGcpGcsObjectAttributes bucketObjectAttributes = body.getResourceAttributes();
       if (!StringUtils.isEmpty(bucketObjectAttributes.getBucketName())) {
         updateBucketObjectResourceBuilder.bucketName(bucketObjectAttributes.getBucketName());
       }

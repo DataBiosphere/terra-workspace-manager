@@ -12,6 +12,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Resou
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
+/** A step to update the resource reference's name, description, and/or attributes. */
 public class UpdateReferenceMetadataStep implements Step {
   private final ResourceDao resourceDao;
   private final ReferencedResource referencedResource;
@@ -38,8 +39,9 @@ public class UpdateReferenceMetadataStep implements Step {
         resourceDao.updateResource(
             workspaceId,
             resourceId,
-            ResourceDao.getUpdateParams(
-                resourceName, resourceDescription, referencedResource.attributesToJson()));
+            resourceName,
+            resourceDescription,
+            referencedResource.attributesToJson());
     FlightUtils.setResponse(flightContext, updated, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }
@@ -54,9 +56,7 @@ public class UpdateReferenceMetadataStep implements Step {
         workingMap.get(ResourceKeys.PREVIOUS_ATTRIBUTES, String.class);
 
     resourceDao.updateResource(
-        workspaceId,
-        resourceId,
-        ResourceDao.getUpdateParams(previousName, previousDescription, previousAttributes));
+        workspaceId, resourceId, previousName, previousDescription, previousAttributes);
     return StepResult.getStepResultSuccess();
   }
 }

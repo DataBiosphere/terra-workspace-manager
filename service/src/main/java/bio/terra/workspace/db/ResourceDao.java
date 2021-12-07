@@ -366,7 +366,7 @@ public class ResourceDao {
   }
 
   @WriteTransaction
-  public boolean updateResource(
+  private boolean updateResource(
       UUID workspaceId, UUID resourceId, Map<String, String> updateParams) {
 
     var params = new MapSqlParameterSource();
@@ -381,6 +381,32 @@ public class ResourceDao {
     return updateResourceColumns(workspaceId, resourceId, params);
   }
 
+  /**
+   * Update name, description, and/or attributes of the resource.
+   *
+   * @param name name of the resource, may be null if it does not need to be updated
+   * @param description description of the resource, may be null if it does not need to be updated
+   * @param attributes resource-type specific attributes, may be null if it does not need to be
+   *     updated .
+   */
+  @WriteTransaction
+  public boolean updateResource(
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable String attributes) {
+    Map<String, String> updateParams = getUpdateParams(name, description, attributes);
+
+    return updateResource(workspaceId, resourceId, updateParams);
+  }
+
+  /**
+   * Update name and/or description of the resource.
+   *
+   * @param name name of the resource, may be null if it does not need to be updated
+   * @param description description of the resource, may be null if it does not need to be updated
+   */
   @WriteTransaction
   public boolean updateResource(
       UUID workspaceId, UUID resourceId, @Nullable String name, @Nullable String description) {
@@ -389,7 +415,8 @@ public class ResourceDao {
     return updateResource(workspaceId, resourceId, updateParams);
   }
 
-  public static Map<String, String> getUpdateParams(
+  /** Gets a map of the params that needs to be updated. */
+  private static Map<String, String> getUpdateParams(
       @Nullable String name, @Nullable String description, @Nullable String attributes) {
     Map<String, String> updateParams = new HashMap<>();
     updateParams.put("name", name);

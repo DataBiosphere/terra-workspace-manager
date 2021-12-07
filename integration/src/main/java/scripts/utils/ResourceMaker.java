@@ -96,9 +96,7 @@ public class ResourceMaker {
   }
 
   /**
-   * Update the name, description or referencing target of a reference.
-   *
-   * @throws ApiException
+   * Updates the name, description or referencing target of a BQ dataset reference.
    */
   public static void updateBigQueryDatasetReference(
       ReferencedGcpResourceApi resourceApi,
@@ -149,7 +147,7 @@ public class ResourceMaker {
         () -> resourceApi.createBigQueryDataTableReference(body, workspaceId));
   }
 
-  /** Update name, description and/or referencing target of BigQuery data table. */
+  /** Updates name, description and/or referencing target of BigQuery data table reference. */
   public static void updateBigQueryDataTableReference(
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,
@@ -197,9 +195,7 @@ public class ResourceMaker {
   }
 
   /**
-   * Update name, description, and/or referencing target of a data repo snapshot reference.
-   *
-   * @throws ApiException
+   * Updates name, description, and/or referencing target of a data repo snapshot reference.
    */
   public static void updateDataRepoSnapshotReferenceResource(
       ReferencedGcpResourceApi resourceApi,
@@ -293,7 +289,7 @@ public class ResourceMaker {
         () -> resourceApi.createBucketReference(body, workspaceId));
   }
 
-  /** Update name, description, and/or referencing target for GCS bucket. */
+  /** Updates name, description, and/or referencing target for GCS bucket reference. */
   public static void updateGcsBucketReference(
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,
@@ -345,7 +341,7 @@ public class ResourceMaker {
         () -> resourceApi.createGcsObjectReference(body, workspaceId));
   }
 
-  /** Update name, description, and/or referencing target for GCS bucket. */
+  /** Updates name, description, and/or referencing target for GCS bucket object reference. */
   public static void updateGcsBucketObjectReference(
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,

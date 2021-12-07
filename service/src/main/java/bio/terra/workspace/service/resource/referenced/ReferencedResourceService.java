@@ -20,11 +20,15 @@ import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ReferencedResourceService {
+
+  private final Logger logger = LoggerFactory.getLogger(ReferencedResourceService.class);
 
   private final JobService jobService;
   private final ResourceDao resourceDao;
@@ -132,8 +136,7 @@ public class ReferencedResourceService {
       updated = resourceDao.updateResource(workspaceId, resourceId, name, description);
     }
     if (!updated) {
-      // TODO: remove
-      System.out.println("yuhuyoyo fail to update");
+      logger.warn("There's no update to the referenced resource");
     }
   }
   /**

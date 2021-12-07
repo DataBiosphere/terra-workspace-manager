@@ -8,6 +8,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.flight.create.ValidateReferenceStep;
 
+/** A flight to update the reference resource's name, description, and/or attributes. */
 public class UpdateReferenceResourceFlight extends Flight {
 
   /**

@@ -9,6 +9,11 @@ import bio.terra.workspace.service.resource.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.UUID;
 
+/**
+ * A step to retrieve the name, description, and attributes of the original resource reference.
+ *
+ * <p>This step is to make sure that if update fail, we can restore back to the original resource.
+ */
 public class RetrieveReferenceMetadataStep implements Step {
   private final ResourceDao resourceDao;
   private final UUID workspaceId;
