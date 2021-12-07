@@ -396,6 +396,9 @@ public class ResourceDao {
       @Nullable String name,
       @Nullable String description,
       @Nullable String attributes) {
+    if (name == null & description == null && attributes == null) {
+      return false;
+    }
     Map<String, String> updateParams = getUpdateParams(name, description, attributes);
 
     return updateResource(workspaceId, resourceId, updateParams);
@@ -410,6 +413,9 @@ public class ResourceDao {
   @WriteTransaction
   public boolean updateResource(
       UUID workspaceId, UUID resourceId, @Nullable String name, @Nullable String description) {
+    if (name == null & description == null) {
+      return false;
+    }
     Map<String, String> updateParams = getUpdateParams(name, description, null);
 
     return updateResource(workspaceId, resourceId, updateParams);
