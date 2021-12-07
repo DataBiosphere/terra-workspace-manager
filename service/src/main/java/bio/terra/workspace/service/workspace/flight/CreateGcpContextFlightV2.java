@@ -55,7 +55,7 @@ public class CreateGcpContextFlightV2 extends Flight {
 
     // Write the cloud context row in a "locked" state
     addStep(
-        new CreateAndLockDbGcpCloudContextStep(workspaceId, appContext.getGcpCloudContextService()),
+        new CreateDbGcpCloudContextStep(workspaceId, appContext.getGcpCloudContextService()),
         shortRetry);
 
     // Allocate the GCP project from RBS by generating the id and then getting the project.
@@ -77,8 +77,7 @@ public class CreateGcpContextFlightV2 extends Flight {
     // This must be the last step, since it clears the lock. So this step also
     // sets the flight response.
     addStep(
-        new UpdateAndUnlockDbGcpCloudContextStep(
-            workspaceId, appContext.getGcpCloudContextService()),
+        new UpdateDbGcpCloudContextStep(workspaceId, appContext.getGcpCloudContextService()),
         shortRetry);
   }
 }

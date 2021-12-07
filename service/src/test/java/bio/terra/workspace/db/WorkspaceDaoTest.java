@@ -223,11 +223,11 @@ class WorkspaceDaoTest extends BaseUnitTest {
     @Test
     void createDeleteGcpCloudContext() {
       String flightId = "flight-createdeletegcpcloudcontext";
-      gcpCloudContextService.createAndLockGcpCloudContext(workspaceId, flightId);
-      gcpCloudContextService.deleteAndUnlockGcpCloudContext(workspaceId, "mismatched-flight-id");
+      gcpCloudContextService.createGcpCloudContext(workspaceId, flightId);
+      gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceId, "mismatched-flight-id");
 
       GcpCloudContext gcpCloudContext = makeCloudContext();
-      gcpCloudContextService.updateAndUnlockGcpCloudContext(workspaceId, gcpCloudContext, flightId);
+      gcpCloudContextService.updateGcpCloudContext(workspaceId, gcpCloudContext, flightId);
 
       Workspace workspace = workspaceDao.getWorkspace(workspaceId);
       Optional<GcpCloudContext> cloudContext = gcpCloudContextService.getGcpCloudContext(workspace);
@@ -238,7 +238,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
       checkCloudContext(cloudContext);
 
       // delete with mismatched flight id - it should not delete
-      gcpCloudContextService.deleteAndUnlockGcpCloudContext(workspaceId, "mismatched-flight-id");
+      gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceId, "mismatched-flight-id");
 
       // Make sure the context is still there
       cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceId);
@@ -258,9 +258,9 @@ class WorkspaceDaoTest extends BaseUnitTest {
     @Test
     void deleteWorkspaceWithCloudContext() {
       String flightId = "flight-deleteworkspacewithcloudcontext";
-      gcpCloudContextService.createAndLockGcpCloudContext(workspaceId, flightId);
+      gcpCloudContextService.createGcpCloudContext(workspaceId, flightId);
       GcpCloudContext gcpCloudContext = makeCloudContext();
-      gcpCloudContextService.updateAndUnlockGcpCloudContext(workspaceId, gcpCloudContext, flightId);
+      gcpCloudContextService.updateGcpCloudContext(workspaceId, gcpCloudContext, flightId);
 
       assertTrue(workspaceDao.deleteWorkspace(workspaceId));
       assertThrows(WorkspaceNotFoundException.class, () -> workspaceDao.getWorkspace(workspaceId));

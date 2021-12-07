@@ -7,7 +7,6 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -16,15 +15,12 @@ import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
-/**
- * Stores the previously generated Google Project Id in the {@link WorkspaceDao} as the Google cloud
- * context for the workspace.
- */
-public class UpdateAndUnlockDbGcpCloudContextStep implements Step {
+/** Updates the previously stored cloud context row, filling in the context JSON. */
+public class UpdateDbGcpCloudContextStep implements Step {
   private final UUID workspaceId;
   private final GcpCloudContextService gcpCloudContextService;
 
-  public UpdateAndUnlockDbGcpCloudContextStep(
+  public UpdateDbGcpCloudContextStep(
       UUID workspaceId, GcpCloudContextService gcpCloudContextService) {
     this.workspaceId = workspaceId;
     this.gcpCloudContextService = gcpCloudContextService;
@@ -49,8 +45,7 @@ public class UpdateAndUnlockDbGcpCloudContextStep implements Step {
             workspaceRoleGroupsMap.get(WsmIamRole.READER),
             workspaceRoleGroupsMap.get(WsmIamRole.APPLICATION));
 
-    gcpCloudContextService.updateAndUnlockGcpCloudContext(
-        workspaceId, context, flightContext.getFlightId());
+    gcpCloudContextService.updateGcpCloudContext(workspaceId, context, flightContext.getFlightId());
 
     FlightUtils.setResponse(flightContext, context, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
@@ -58,7 +53,7 @@ public class UpdateAndUnlockDbGcpCloudContextStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    // We do not undo anything here. The create/lock step will delete the row, if need be.
+    // We do not undo anything here. The create step will delete the row, if need be.
     return StepResult.getStepResultSuccess();
   }
 }

@@ -44,14 +44,14 @@ public class GcpCloudContextService {
   }
 
   /**
-   * Create and lock the GCP cloud context for a workspace Supports {@link
+   * Create the GCP cloud context for a workspace Supports {@link
    * bio.terra.workspace.service.workspace.flight.CreateGcpContextFlightV2}
    *
    * @param workspaceId workspace id where the context is being created
    * @param flightId flight doing the creating
    */
-  public void createAndLockGcpCloudContext(UUID workspaceId, String flightId) {
-    workspaceDao.createAndLockCloudContext(workspaceId, CloudPlatform.GCP, flightId);
+  public void createGcpCloudContext(UUID workspaceId, String flightId) {
+    workspaceDao.createCloudContext(workspaceId, CloudPlatform.GCP, flightId);
   }
 
   /**
@@ -61,9 +61,9 @@ public class GcpCloudContextService {
    * @param cloudContext cloud context data
    * @param flightId flight completing the creation
    */
-  public void updateAndUnlockGcpCloudContext(
+  public void updateGcpCloudContext(
       UUID workspaceId, GcpCloudContext cloudContext, String flightId) {
-    workspaceDao.updateAndUnlockCloudContext(
+    workspaceDao.updateCloudContext(
         workspaceId, CloudPlatform.GCP, cloudContext.serialize(), flightId);
   }
 
@@ -78,24 +78,12 @@ public class GcpCloudContextService {
   }
 
   /**
-   * Delete a locked GCP cloud context for a workspace. Used in the create context code during undo
-   * to remove a cloud context, but only if we have it locked.
-   *
-   * @param workspaceId workspace id of the context
-   * @param flightId locking flight id
-   */
-  public void deleteAndUnlockGcpCloudContext(UUID workspaceId, String flightId) {
-    workspaceDao.deleteAndUnlockCloudContext(workspaceId, CloudPlatform.GCP, flightId);
-  }
-
-  /**
    * Delete a cloud context for the workspace validating the flight id. For details: {@link
    * WorkspaceDao#deleteCloudContextWithCheck(UUID, CloudPlatform, String)}
    *
    * @param workspaceId workspace of the cloud context
    * @param flightId flight id making the delete request
    */
-  @Deprecated // TODO: PF-1238 remove
   public void deleteGcpCloudContextWithCheck(UUID workspaceId, String flightId) {
     workspaceDao.deleteCloudContextWithCheck(workspaceId, CloudPlatform.GCP, flightId);
   }

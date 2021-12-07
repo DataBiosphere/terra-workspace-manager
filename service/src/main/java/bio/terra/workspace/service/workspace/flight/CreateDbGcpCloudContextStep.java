@@ -11,11 +11,11 @@ import java.util.UUID;
  * Stores the previously generated Google Project Id in the {@link WorkspaceDao} as the Google cloud
  * context for the workspace.
  */
-public class CreateAndLockDbGcpCloudContextStep implements Step {
+public class CreateDbGcpCloudContextStep implements Step {
   private final UUID workspaceId;
   private final GcpCloudContextService gcpCloudContextService;
 
-  public CreateAndLockDbGcpCloudContextStep(
+  public CreateDbGcpCloudContextStep(
       UUID workspaceId, GcpCloudContextService gcpCloudContextService) {
     this.workspaceId = workspaceId;
     this.gcpCloudContextService = gcpCloudContextService;
@@ -23,14 +23,14 @@ public class CreateAndLockDbGcpCloudContextStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-    gcpCloudContextService.createAndLockGcpCloudContext(workspaceId, flightContext.getFlightId());
+    gcpCloudContextService.createGcpCloudContext(workspaceId, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    // Delete the cloud context, but only if it is the one we have locked
-    gcpCloudContextService.deleteAndUnlockGcpCloudContext(workspaceId, flightContext.getFlightId());
+    // Delete the cloud context, but only if it is the one we created
+    gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceId, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 }

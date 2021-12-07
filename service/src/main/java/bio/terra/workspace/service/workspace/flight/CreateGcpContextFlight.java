@@ -52,8 +52,7 @@ public class CreateGcpContextFlight extends Flight {
     addStep(
         new SyncSamGroupsStep(appContext.getSamService(), workspaceId, userRequest), shortRetry);
     addStep(new GcpCloudSyncStep(crl.getCloudResourceManagerCow()), cloudRetry);
-    addStep(
-        new StoreGcpContextStep(appContext.getGcpCloudContextService(), workspaceId), dbRetry);
+    addStep(new StoreGcpContextStep(appContext.getGcpCloudContextService(), workspaceId), dbRetry);
     addStep(new SetGcpContextOutputStep());
   }
 }

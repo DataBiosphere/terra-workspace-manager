@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -18,7 +17,6 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -97,12 +95,6 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
   @Test
   public void autoUpgradeTest() throws Exception {
-    final AuthenticatedUserRequest USER_REQUEST =
-        new AuthenticatedUserRequest()
-            .token(Optional.of("fake-token"))
-            .email("fake@email.com")
-            .subjectId("fakeID123");
-
     // By default, allow all spend link calls as authorized. (All other isAuthorized calls return
     // false by Mockito default.
     Mockito.when(
@@ -137,8 +129,8 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
     // Create a cloud context in the database with a V1 format
     final String flightId = UUID.randomUUID().toString();
-    workspaceDao.createAndLockCloudContext(workspaceId, CloudPlatform.GCP, flightId);
-    workspaceDao.updateAndUnlockCloudContext(workspaceId, CloudPlatform.GCP, V1_JSON, flightId);
+    workspaceDao.createCloudContext(workspaceId, CloudPlatform.GCP, flightId);
+    workspaceDao.updateCloudContext(workspaceId, CloudPlatform.GCP, V1_JSON, flightId);
 
     // Run the service call that should do the upgrade
     GcpCloudContext updatedContext = gcpCloudContextService.getRequiredGcpCloudContext(workspaceId);

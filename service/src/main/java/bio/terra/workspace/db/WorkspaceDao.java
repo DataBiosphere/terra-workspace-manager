@@ -262,22 +262,20 @@ public class WorkspaceDao {
   }
 
   /**
-   * Create and lock cloud context - this is used as part of CreateGcpContextFlightV2 to insert the
-   * context row at the start of the create context operation.
+   * Create cloud context - this is used as part of CreateGcpContextFlightV2 to insert the context
+   * row at the start of the create context operation.
    */
   @WriteTransaction
-  public void createAndLockCloudContext(
-      UUID workspaceId, CloudPlatform cloudPlatform, String flightId) {
+  public void createCloudContext(UUID workspaceId, CloudPlatform cloudPlatform, String flightId) {
     final String platform = cloudPlatform.toSql();
     final String sql =
-        "INSERT INTO cloud_context (workspace_id, cloud_platform, creating_flight, locking_flight)"
-            + " VALUES (:workspace_id, :cloud_platform, :creating_flight, :locking_flight)";
+        "INSERT INTO cloud_context (workspace_id, cloud_platform, creating_flight)"
+            + " VALUES (:workspace_id, :cloud_platform, :creating_flight)";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("cloud_platform", platform)
-            .addValue("creating_flight", flightId)
-            .addValue("locking_flight", flightId);
+            .addValue("creating_flight", flightId);
     try {
       jdbcTemplate.update(sql, params);
       logger.info("Inserted record for {} cloud context for workspace {}", platform, workspaceId);
@@ -290,11 +288,11 @@ public class WorkspaceDao {
   }
 
   /**
-   * Second part of the create cloud context - write the context and clear the lock This transaction
-   * is run from a flight step, so we want it to be idempotent. The algorithm is this:
+   * Second part of the create cloud context - write the context. This transaction is run from a
+   * flight step, so we want it to be idempotent. The algorithm is this:
    *
    * <ol>
-   *   <li>try the update, searching explicitly for the locked entry
+   *   <li>try the update, searching explicitly for our created flight
    *   <li>if nothing gets updated, then maybe this is a step restart. We query the row to make sure
    *       that it exists and has a non-null context.
    * </ol>
@@ -307,28 +305,25 @@ public class WorkspaceDao {
    * @param flightId flight id
    */
   @WriteTransaction
-  public void updateAndUnlockCloudContext(
+  public void updateCloudContext(
       UUID workspaceId, CloudPlatform cloudPlatform, String context, String flightId) {
     final String platform = cloudPlatform.toSql();
     final String updateSql =
         "UPDATE cloud_context "
-            + " SET context = :context::json,"
-            + " locking_flight = NULL"
+            + " SET context = :context::json"
             + " WHERE workspace_id = :workspace_id"
-            + " AND cloud_platform = :cloud_platform"
-            + " AND locking_flight = :locking_flight";
+            + " AND cloud_platform = :cloud_platform";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("context", context)
             .addValue("workspace_id", workspaceId.toString())
             .addValue("cloud_platform", platform)
-            .addValue("creating_flight", flightId)
-            .addValue("locking_flight", flightId);
+            .addValue("creating_flight", flightId);
 
     int updatedCount = jdbcTemplate.update(updateSql, params);
     if (updatedCount == 1) {
       // Success path
-      logger.info("Updated and unlocked {} cloud context for workspace {}", platform, workspaceId);
+      logger.info("Updated {} cloud context for workspace {}", platform, workspaceId);
       return;
     }
 
@@ -354,8 +349,7 @@ public class WorkspaceDao {
         "UPDATE cloud_context "
             + " SET context = :context::json"
             + " WHERE workspace_id = :workspace_id"
-            + " AND cloud_platform = :cloud_platform"
-            + " AND locking_flight IS NULL";
+            + " AND cloud_platform = :cloud_platform";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("context", context)
@@ -372,35 +366,17 @@ public class WorkspaceDao {
    * Delete a cloud context for the workspace validating the flight id. This is for use by the
    * original cloud context create flight. We compare the incoming flight id with the
    * creating_flight of the cloud context. We will only delete if they match. That makes sure that
-   * undoing a create does not delete a valid cloud context. This is deprecated and here for
-   * compatibility over the upgrade where we will use the locking_flight column for a similar
-   * purpose.
+   * undoing a create does not delete a valid cloud context.
    *
    * @param workspaceId workspace of the cloud context
    * @param cloudPlatform cloud platform of the cloud context
    * @param flightId flight id making the delete request
    */
-  @Deprecated // TODO: PF-1238 remove
   @WriteTransaction
   public void deleteCloudContextWithCheck(
       UUID workspaceId, CloudPlatform cloudPlatform, String flightId) {
     // lockingFlightId is null because the old create code did not use the column
-    deleteCloudContextWorker(workspaceId, cloudPlatform, flightId, null);
-  }
-
-  /**
-   * Delete and unlock a cloud context. This is used in undo of the create context flights to make
-   * sure we do not delete a conflicting cloud context during error processing.
-   *
-   * @param workspaceId workspace of the cloud context
-   * @param cloudPlatform cloud platform of the cloud context
-   * @param flightId flight id making the delete request
-   */
-  @WriteTransaction
-  public void deleteAndUnlockCloudContext(
-      UUID workspaceId, CloudPlatform cloudPlatform, String flightId) {
-    // creatingFlightId is not checked (null) because the new create code does not use the column
-    deleteCloudContextWorker(workspaceId, cloudPlatform, null, flightId);
+    deleteCloudContextWorker(workspaceId, cloudPlatform, flightId);
   }
 
   /**
@@ -412,7 +388,7 @@ public class WorkspaceDao {
    */
   @WriteTransaction
   public void deleteCloudContext(UUID workspaceId, CloudPlatform cloudPlatform) {
-    deleteCloudContextWorker(workspaceId, cloudPlatform, null, null);
+    deleteCloudContextWorker(workspaceId, cloudPlatform, null);
   }
 
   /**
@@ -423,15 +399,9 @@ public class WorkspaceDao {
    * @param creatingFlightId if non-null, then it is compared to the creating_flight to make sure a
    *     conflicting create does not delete a valid cloud context. This behavior can be removed when
    *     we are able to do PF-1238.
-   * @param lockingFlightId always compared to the locking_flight. The lock will be null when we are
-   *     deleting a previously created flight. The lock will be not-null when we are cleaning a
-   *     failed context create flight.
    */
   private void deleteCloudContextWorker(
-      UUID workspaceId,
-      CloudPlatform cloudPlatform,
-      @Nullable String creatingFlightId,
-      @Nullable String lockingFlightId) {
+      UUID workspaceId, CloudPlatform cloudPlatform, @Nullable String creatingFlightId) {
     final String platform = cloudPlatform.toSql();
     String sql =
         "DELETE FROM cloud_context "
@@ -443,14 +413,6 @@ public class WorkspaceDao {
             .addValue("workspace_id", workspaceId.toString())
             .addValue("cloud_platform", platform);
 
-    if (StringUtils.isEmpty(lockingFlightId)) {
-      sql = sql + " AND locking_flight IS NULL";
-    } else {
-      sql = sql + " AND locking_flight = :locking_flight";
-      params.addValue("locking_flight", lockingFlightId);
-    }
-
-    // TODO: PF-1238 remove
     if (StringUtils.isNotEmpty(creatingFlightId)) {
       sql = sql + " AND creating_flight = :creating_flight";
       params.addValue("creating_flight", creatingFlightId);
@@ -506,8 +468,7 @@ public class WorkspaceDao {
     String sql =
         "SELECT context FROM cloud_context"
             + " WHERE workspace_id = :workspace_id"
-            + " AND cloud_platform = :cloud_platform"
-            + " AND locking_flight IS NULL";
+            + " AND cloud_platform = :cloud_platform";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
