@@ -49,7 +49,10 @@ import org.slf4j.LoggerFactory;
 public class ClientTestUtils {
 
   public static final String TEST_BUCKET_NAME = "terra_wsm_test_resource";
-  public static final String TEST_BUCKET_FILE_NAME = "hello_world.txt";
+  public static final String TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS =
+      "terra_wsm_fine_grained_test_bucket";
+  public static final String TEST_FILE_IN_FINE_GRAINED_BUCKET = "foo/monkey_sees_monkey_dos.txt";
+  public static final String TEST_FOLDER_IN_FINE_GRAINED_BUCKET = "foo/";
   public static final String TEST_BQ_DATASET_NAME = "terra_wsm_test_dataset";
   public static final String TEST_BQ_DATATABLE_NAME = "terra wsm test data table";
   public static final String TEST_BQ_DATASET_PROJECT = "terra-kernel-k8s";

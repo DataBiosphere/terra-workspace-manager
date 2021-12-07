@@ -7,6 +7,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
+import static scripts.utils.ClientTestUtils.TEST_FILE_IN_FINE_GRAINED_BUCKET;
 import static scripts.utils.ClientTestUtils.getOrFail;
 import static scripts.utils.GcsBucketTestFixtures.GCS_BLOB_NAME;
 import static scripts.utils.GcsBucketTestFixtures.RESOURCE_PREFIX;
@@ -28,8 +30,8 @@ import bio.terra.workspace.model.ControlledResourceIamRole;
 import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
-import bio.terra.workspace.model.GcpGcsBucketFileResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GcpGcsObjectResource;
 import bio.terra.workspace.model.GrantRoleRequestBody;
 import bio.terra.workspace.model.IamRole;
 import bio.terra.workspace.model.ResourceCloneDetails;
@@ -69,7 +71,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
   private GcpBigQueryDatasetResource copyResourceDataset;
   private GcpBigQueryDatasetResource privateDataset;
   private GcpGcsBucketResource sourceBucketReference;
-  private GcpGcsBucketFileResource sourceBucketFileReference;
+  private GcpGcsObjectResource sourceBucketFileReference;
   private String copyDefinitionDatasetName;
   private String copyResourceDatasetName;
   private String nameSuffix;
@@ -186,7 +188,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     // Create reference to GCS bucket with COPY_REFERENCE
     final ApiClient apiClient = ClientTestUtils.getClientForTestUser(sourceOwnerUser, server);
-    final var referencedGcpResourceApi = new ReferencedGcpResourceApi(apiClient);
+    ReferencedGcpResourceApi referencedGcpResourceApi = new ReferencedGcpResourceApi(apiClient);
     final String bucketReferenceName = RandomStringUtils.random(16, true, false);
 
     sourceBucketReference =
@@ -197,11 +199,13 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
             CloningInstructionsEnum.REFERENCE);
 
     sourceBucketFileReference =
-        ResourceMaker.makeGcsBucketFileReference(
+        ResourceMaker.makeGcsObjectReference(
             referencedGcpResourceApi,
             getWorkspaceId(),
-            "a_reference_to_hello_world_txt",
-            CloningInstructionsEnum.REFERENCE);
+            "a_reference_to_foo_monkey_sees_monkey_dos",
+            CloningInstructionsEnum.REFERENCE,
+            TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
+            TEST_FILE_IN_FINE_GRAINED_BUCKET);
 
     // create reference to BQ dataset with COPY_NOTHING
     sourceDatasetReference =
@@ -461,7 +465,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertEquals(CloneResourceResult.SUCCEEDED, bucketFileReferenceDetails.getResult());
     assertEquals(
         CloningInstructionsEnum.REFERENCE, bucketFileReferenceDetails.getCloningInstructions());
-    assertEquals(ResourceType.GCS_BUCKET_FILE, bucketFileReferenceDetails.getResourceType());
+    assertEquals(ResourceType.GCS_OBJECT, bucketFileReferenceDetails.getResourceType());
     assertEquals(StewardshipType.REFERENCED, bucketFileReferenceDetails.getStewardshipType());
     assertNotNull(bucketFileReferenceDetails.getDestinationResourceId());
     assertNull(bucketFileReferenceDetails.getErrorMessage());
