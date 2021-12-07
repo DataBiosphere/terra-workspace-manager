@@ -95,9 +95,7 @@ public class ResourceMaker {
         () -> resourceApi.createBigQueryDatasetReference(body, workspaceId));
   }
 
-  /**
-   * Updates the name, description or referencing target of a BQ dataset reference.
-   */
+  /** Updates the name, description or referencing target of a BQ dataset reference. */
   public static void updateBigQueryDatasetReference(
       ReferencedGcpResourceApi resourceApi,
       UUID workspace,
@@ -194,9 +192,7 @@ public class ResourceMaker {
     return resourceApi.createDataRepoSnapshotReference(body, workspaceId);
   }
 
-  /**
-   * Updates name, description, and/or referencing target of a data repo snapshot reference.
-   */
+  /** Updates name, description, and/or referencing target of a data repo snapshot reference. */
   public static void updateDataRepoSnapshotReferenceResource(
       ReferencedGcpResourceApi resourceApi,
       UUID workspaceId,

@@ -20,7 +20,6 @@ import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloningInstructionsEnum;
-import bio.terra.workspace.model.DataRepoSnapshotAttributes;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
