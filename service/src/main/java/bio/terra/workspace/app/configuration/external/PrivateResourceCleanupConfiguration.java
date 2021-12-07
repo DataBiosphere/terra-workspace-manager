@@ -14,7 +14,7 @@ public class PrivateResourceCleanupConfiguration {
   /** How frequently to run the private resource cleanup loop, in minutes */
   private int pollingIntervalMinutes;
 
-  /** Seconds to wait after startup to begin status check polling */
+  /** Seconds to wait after startup to begin cleanup check polling */
   private int startupWaitSeconds;
 
   public boolean isEnabled() {
@@ -29,8 +29,8 @@ public class PrivateResourceCleanupConfiguration {
     return pollingIntervalMinutes;
   }
 
-  public void setPollingIntervalMinutes(int pollingIntervalSeconds) {
-    this.pollingIntervalMinutes = pollingIntervalSeconds;
+  public void setPollingIntervalMinutes(int pollingIntervalMinutes) {
+    this.pollingIntervalMinutes = pollingIntervalMinutes;
   }
 
   public int getStartupWaitSeconds() {

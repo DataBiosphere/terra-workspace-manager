@@ -12,8 +12,10 @@ import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
+import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.Optional;
@@ -73,6 +75,10 @@ public class CopyGcsBucketDefinitionStep implements Step {
         Optional.ofNullable(
                 inputParameters.get(ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class))
             .orElseGet(this::randomBucketName);
+    final PrivateResourceState privateResourceState =
+        sourceBucket.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE
+            ? PrivateResourceState.INITIALIZING
+            : null;
     // Store effective bucket name for destination
     workingMap.put(ControlledResourceKeys.DESTINATION_BUCKET_NAME, bucketName);
     final UUID destinationWorkspaceId =
@@ -87,7 +93,7 @@ public class CopyGcsBucketDefinitionStep implements Step {
             description,
             sourceBucket.getCloningInstructions(),
             sourceBucket.getAssignedUser().orElse(null),
-            sourceBucket.getPrivateResourceState().orElse(null),
+            privateResourceState,
             sourceBucket.getAccessScope(),
             sourceBucket.getManagedBy(),
             sourceBucket.getApplicationId(),

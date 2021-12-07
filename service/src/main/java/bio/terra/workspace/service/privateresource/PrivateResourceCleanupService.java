@@ -76,7 +76,8 @@ public class PrivateResourceCleanupService {
       return;
     }
     logger.info("Beginning resource cleanup cronjob");
-    // Use a one-second shorter duration here to ensure we don't skip a run due to run time.
+    // Use a one-second shorter duration here to ensure we don't skip a run by moving slightly too
+    // quickly.
     Duration claimTime =
         Duration.ofMinutes(configuration.getPollingIntervalMinutes()).minus(Duration.ofSeconds(1));
     // Attempt to claim the latest run of this job to ensure only one pod runs the cleanup job.
@@ -87,7 +88,7 @@ public class PrivateResourceCleanupService {
 
     // First, read all unique (workspace, private user pairs) from WSM's database
     List<WorkspaceUserPair> resourcesToValidate = workspaceDao.getPrivateResourceUsers();
-    logger.info("Resources to validate: {}", resourcesToValidate);
+    // For each pair, validate that the user is still in the workspace (i.e. can read the workspace)
     for (WorkspaceUserPair workspaceUserPair : resourcesToValidate) {
       try {
         boolean userHasPermission =
@@ -104,12 +105,12 @@ public class PrivateResourceCleanupService {
               "Cleaning up resources for user {} from workspace {}",
               workspaceUserPair.getUserEmail(),
               workspaceUserPair.getWorkspaceId());
-          launchCleanupFlight(workspaceUserPair);
+          runCleanupFlight(workspaceUserPair);
         }
       } catch (SamForbiddenException forbiddenEx) {
         // Older workspaces do not have the "manager" role, so WSM cannot read permissions from
         // them and will never be able to. Mark this as a LEGACY resource so we don't keep polling.
-        logger.info("Found LEGACY workspace {}", workspaceUserPair.getWorkspaceId());
+        logger.warn("Found LEGACY workspace {}", workspaceUserPair.getWorkspaceId());
         resourceDao.setPrivateResourcesStateForWorkspaceUser(
             workspaceUserPair.getWorkspaceId(),
             workspaceUserPair.getUserEmail(),
@@ -118,7 +119,7 @@ public class PrivateResourceCleanupService {
     }
   }
 
-  private void launchCleanupFlight(WorkspaceUserPair workspaceUserPair) {
+  private void runCleanupFlight(WorkspaceUserPair workspaceUserPair) {
     String description =
         "Clean up after user "
             + workspaceUserPair.getUserEmail()

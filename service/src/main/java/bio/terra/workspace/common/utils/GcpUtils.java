@@ -14,15 +14,11 @@ import com.google.cloud.ServiceOptions;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 /** Utilities for interacting with Google Cloud APIs within {@link Step}s. */
 public class GcpUtils {
   private GcpUtils() {}
-
-  private static final Logger logger = LoggerFactory.getLogger(GcpUtils.class);
 
   /** Try to delete the Project associated with {@code projectId}. */
   public static void deleteProject(String projectId, CloudResourceManagerCow resourceManager)
@@ -105,25 +101,11 @@ public class GcpUtils {
   }
 
   public static String getWsmSaEmail() {
-    return getWsmSaEmailOrWarn()
-        .orElseThrow(
-            () ->
-                new SaCredentialsMissingException(
-                    "Unable to find WSM service account credentials. Ensure WSM is actually running as a service account"));
-  }
-
-  /**
-   * Similar to {@code getWsmSaEmail}, but log a warning instead of throwing an error when no SA is
-   * available. Use this method in calls which may run as part of unit tests, where WSM does not run
-   * as a service account.
-   */
-  public static Optional<String> getWsmSaEmailOrWarn() {
     try {
-      return Optional.of(getWsmSaEmail(GoogleCredentials.getApplicationDefault()));
+      return getWsmSaEmail(GoogleCredentials.getApplicationDefault());
     } catch (IOException e) {
-      logger.warn(
-          "Unable to find WSM service account credentials. This is expected for unit tests but should not happen anywhere else.");
-      return Optional.empty();
+      throw new SaCredentialsMissingException(
+          "Unable to find WSM service account credentials. Ensure WSM is actually running as a service account");
     }
   }
 }

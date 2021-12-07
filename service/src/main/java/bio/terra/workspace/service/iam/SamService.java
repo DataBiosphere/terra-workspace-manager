@@ -916,16 +916,13 @@ public class SamService {
             new AccessPolicyMembershipV2().addRolesItem(workspaceRole.toSamRole()));
       }
     }
-    // We always give WSM's service account the 'manager' role for admin control of workspaces,
-    // unless the service is not running as a service account (i.e. during unit tests).
-    GcpUtils.getWsmSaEmailOrWarn()
-        .map(
-            wsmSa ->
-                policyMap.put(
-                    WsmIamRole.MANAGER.toSamRole(),
-                    new AccessPolicyMembershipV2()
-                        .addRolesItem(WsmIamRole.MANAGER.toSamRole())
-                        .addMemberEmailsItem(wsmSa)));
+    // We always give WSM's service account the 'manager' role for admin control of workspaces.
+    String wsmSa = GcpUtils.getWsmSaEmail();
+    policyMap.put(
+        WsmIamRole.MANAGER.toSamRole(),
+        new AccessPolicyMembershipV2()
+            .addRolesItem(WsmIamRole.MANAGER.toSamRole())
+            .addMemberEmailsItem(wsmSa));
     return policyMap;
   }
 
