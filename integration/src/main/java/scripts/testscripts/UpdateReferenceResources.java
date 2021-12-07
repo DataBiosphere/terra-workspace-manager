@@ -20,6 +20,7 @@ import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloningInstructionsEnum;
+import bio.terra.workspace.model.DataRepoSnapshotAttributes;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.GcpBigQueryDataTableAttributes;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
@@ -45,6 +46,8 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
 
   private ReferencedGcpResourceApi fullAccessApi;
   private ReferencedGcpResourceApi partialAccessApi;
+
+  private String dataRepoSnapshotId2;
 
   @MonotonicNonNull private UUID bqDatasetResourceId;
   @MonotonicNonNull private UUID bqTableResourceId;
@@ -104,6 +107,22 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
   }
 
   @Override
+  public void setParameters(List<String> parameters) throws Exception {
+    // TODO: Refactor this function when TestRunner starts supporting parameterMap
+    super.setParameters(parameters);
+    if (parameters == null || parameters.size() < 4) {
+      throw new IllegalArgumentException(
+          "Must provide Spend Profile ID, 2 Data Repo snapshot IDs, and 2 Data Repo Instance Names in the parameters list");
+    } else {
+      // "spendProfileId = parameters.get(0);" fetches Spend Profile ID and is already implemented
+      // in the super class.
+      // dataRepoSnapshotId and dataRepoInstanceName are the second and third value in the params
+      // list and are implemented in the super class DataRepoTestScriptBase.
+      dataRepoSnapshotId2 = parameters.get(3);
+    }
+  }
+
+  @Override
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
     // Add {@code userWithPartialAccess} as workspace reader, though this will not affect
@@ -129,6 +148,42 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
         fullAccessApi.getDataRepoSnapshotReference(getWorkspaceId(), dataRepoSnapshotResourceId);
     assertEquals(newSnapshotReferenceName, snapshotResource.getMetadata().getName());
     assertEquals(newSnapshotReferenceDescription, snapshotResource.getMetadata().getDescription());
+    assertFalse(
+        partialAccessResourceApi.checkReferenceAccess(
+            getWorkspaceId(), dataRepoSnapshotResourceId));
+
+    DataRepoSnapshotAttributes snapshotAttributes = new DataRepoSnapshotAttributes();
+    snapshotAttributes.setSnapshot(dataRepoSnapshotId2);
+    snapshotAttributes.setInstanceName(getDataRepoInstanceName());
+    assertThrows(
+        ApiException.class,
+        () ->
+            ResourceMaker.updateDataRepoSnapshotReferenceResource(
+                partialAccessApi,
+                getWorkspaceId(),
+                dataRepoSnapshotResourceId,
+                newSnapshotReferenceName,
+                newSnapshotReferenceDescription,
+                snapshotAttributes));
+    ResourceMaker.updateDataRepoSnapshotReferenceResource(
+        fullAccessApi,
+        getWorkspaceId(),
+        dataRepoSnapshotResourceId,
+        newSnapshotReferenceName,
+        newSnapshotReferenceDescription,
+        snapshotAttributes);
+    DataRepoSnapshotResource snapshotResourceSecondUpdate =
+        fullAccessApi.getDataRepoSnapshotReference(getWorkspaceId(), dataRepoSnapshotResourceId);
+    assertEquals(newSnapshotReferenceName, snapshotResourceSecondUpdate.getMetadata().getName());
+    assertEquals(
+        newSnapshotReferenceDescription,
+        snapshotResourceSecondUpdate.getMetadata().getDescription());
+    assertEquals(dataRepoSnapshotId2, snapshotResourceSecondUpdate.getAttributes().getSnapshot());
+    assertEquals(
+        getDataRepoInstanceName(), snapshotResourceSecondUpdate.getAttributes().getInstanceName());
+    assertTrue(
+        partialAccessResourceApi.checkReferenceAccess(
+            getWorkspaceId(), dataRepoSnapshotResourceId));
 
     // Update BQ dataset's name and description
     String newDatasetName = "newDatasetName";
