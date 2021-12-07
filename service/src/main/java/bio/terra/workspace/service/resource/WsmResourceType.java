@@ -9,8 +9,8 @@ import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedDataRepoSnapshotResource;
-import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketFileResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedGcsBucketResource;
+import bio.terra.workspace.service.resource.referenced.ReferencedGcsObjectResource;
 import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import javax.annotation.Nullable;
@@ -36,11 +36,11 @@ public enum WsmResourceType {
       ApiResourceType.GCS_BUCKET,
       ReferencedGcsBucketResource.class,
       ControlledGcsBucketResource.class),
-  GCS_BUCKET_FILE(
+  GCS_OBJECT(
       CloudPlatform.GCP,
-      "GCS_BUCKET_FILE",
-      ApiResourceType.GCS_BUCKET_FILE,
-      ReferencedGcsBucketFileResource.class,
+      "GCS_OBJECT",
+      ApiResourceType.GCS_OBJECT,
+      ReferencedGcsObjectResource.class,
       /*controlledClass=*/ null),
   BIG_QUERY_DATASET(
       CloudPlatform.GCP,

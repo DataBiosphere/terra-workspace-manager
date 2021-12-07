@@ -106,19 +106,25 @@ public class ValidationUtils {
     }
   }
 
-  public static void validateBucketFileName(String fileName) {
-    int nameLength = fileName.getBytes(StandardCharsets.UTF_8).length;
+  /**
+   * Validate GCS object name.
+   *
+   * @param objectName full path to the object in the bucket
+   * @throws InvalidNameException
+   */
+  public static void validateGcsObjectName(String objectName) {
+    int nameLength = objectName.getBytes(StandardCharsets.UTF_8).length;
     if (nameLength < 1 || nameLength > 1024) {
       throw new InvalidNameException(
-          "bucket file names must contain any sequence of valid Unicode characters, of length 1-1024 bytes when UTF-8 encoded");
+          "bucket object names must contain any sequence of valid Unicode characters, of length 1-1024 bytes when UTF-8 encoded");
     }
-    if (fileName.startsWith(ACME_CHALLENGE_PREFIX)) {
+    if (objectName.startsWith(ACME_CHALLENGE_PREFIX)) {
       throw new InvalidNameException(
-          "bucket file name cannot start with .well-known/acme-challenge/");
+          "bucket object name cannot start with .well-known/acme-challenge/");
     }
     for (String disallowedObjectName : DISALLOWED_OBJECT_NAMES) {
-      if (disallowedObjectName.equals(fileName)) {
-        throw new InvalidNameException("bucket file name cannot be . or ..");
+      if (disallowedObjectName.equals(objectName)) {
+        throw new InvalidNameException("bucket object name cannot be . or ..");
       }
     }
   }

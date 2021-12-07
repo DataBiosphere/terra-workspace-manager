@@ -5,8 +5,8 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketFileAttributes;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketFileResource;
+import bio.terra.workspace.generated.model.ApiGcpGcsObjectAttributes;
+import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
@@ -20,9 +20,9 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
-public class ReferencedGcsBucketFileResource extends ReferencedResource {
+public class ReferencedGcsObjectResource extends ReferencedResource {
   private final String bucketName;
-  private final String fileName;
+  private final String objectName;
 
   /**
    * Constructor for serialized form for Stairway use and used by the builder
@@ -33,20 +33,20 @@ public class ReferencedGcsBucketFileResource extends ReferencedResource {
    * @param description description - may be null
    * @param cloningInstructions cloning instructions
    * @param bucketName bucket name
-   * @param fileName name for the file in the bucket
+   * @param objectName name for the file in the bucket
    */
   @JsonCreator
-  public ReferencedGcsBucketFileResource(
+  public ReferencedGcsObjectResource(
       @JsonProperty("workspaceId") UUID workspaceId,
       @JsonProperty("resourceId") UUID resourceId,
       @JsonProperty("name") String name,
       @JsonProperty("description") @Nullable String description,
       @JsonProperty("cloningInstructions") CloningInstructions cloningInstructions,
       @JsonProperty("bucketName") String bucketName,
-      @JsonProperty("fileName") String fileName) {
+      @JsonProperty("objectName") String objectName) {
     super(workspaceId, resourceId, name, description, cloningInstructions);
     this.bucketName = bucketName;
-    this.fileName = fileName;
+    this.objectName = objectName;
     validate();
   }
 
@@ -55,12 +55,12 @@ public class ReferencedGcsBucketFileResource extends ReferencedResource {
    *
    * @param dbResource database form of resources
    */
-  public ReferencedGcsBucketFileResource(DbResource dbResource) {
+  public ReferencedGcsObjectResource(DbResource dbResource) {
     super(dbResource);
-    ReferencedGcsBucketFileAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ReferencedGcsBucketFileAttributes.class);
+    ReferencedGcsObjectAttributes attributes =
+        DbSerDes.fromJson(dbResource.getAttributes(), ReferencedGcsObjectAttributes.class);
     this.bucketName = attributes.getBucketName();
-    this.fileName = attributes.getFileName();
+    this.objectName = attributes.getObjectName();
     validate();
   }
 
@@ -68,42 +68,42 @@ public class ReferencedGcsBucketFileResource extends ReferencedResource {
     return bucketName;
   }
 
-  public String getFileName() {
-    return fileName;
+  public String getObjectName() {
+    return objectName;
   }
 
-  public ApiGcpGcsBucketFileAttributes toApiAttributes() {
-    return new ApiGcpGcsBucketFileAttributes().bucketName(getBucketName()).fileName(getFileName());
+  public ApiGcpGcsObjectAttributes toApiAttributes() {
+    return new ApiGcpGcsObjectAttributes().bucketName(getBucketName()).fileName(getObjectName());
   }
 
-  public ApiGcpGcsBucketFileResource toApiModel() {
-    return new ApiGcpGcsBucketFileResource()
+  public ApiGcpGcsObjectResource toApiModel() {
+    return new ApiGcpGcsObjectResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
   }
 
   @Override
   public WsmResourceType getResourceType() {
-    return WsmResourceType.GCS_BUCKET_FILE;
+    return WsmResourceType.GCS_OBJECT;
   }
 
   @Override
   public String attributesToJson() {
-    return DbSerDes.toJson(new ReferencedGcsBucketFileAttributes(bucketName, fileName));
+    return DbSerDes.toJson(new ReferencedGcsObjectAttributes(bucketName, objectName));
   }
 
   @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.GCS_BUCKET_FILE) {
-      throw new InconsistentFieldsException("Expected GCS_BUCKET_FILE");
+    if (getResourceType() != WsmResourceType.GCS_OBJECT) {
+      throw new InconsistentFieldsException("Expected GCS_OBJECT");
     }
-    if (Strings.isNullOrEmpty(getBucketName()) || Strings.isNullOrEmpty(getFileName())) {
+    if (Strings.isNullOrEmpty(getBucketName()) || Strings.isNullOrEmpty(getObjectName())) {
       throw new MissingRequiredFieldException(
-          "Missing required field for ReferenceGcsBucketFileResource.");
+          "Missing required field for ReferenceGcsObjectResource.");
     }
     ValidationUtils.validateBucketName(getBucketName());
-    ValidationUtils.validateBucketFileName(getFileName());
+    ValidationUtils.validateGcsObjectName(getObjectName());
   }
 
   @Override
@@ -115,7 +115,7 @@ public class ReferencedGcsBucketFileResource extends ReferencedResource {
     // have the Storage APIs enabled.
     Optional<AuthenticatedUserRequest> maybePetCreds =
         petSaService.getWorkspacePetCredentials(getWorkspaceId(), userRequest);
-    return crlService.canReadGcsBucket(bucketName, maybePetCreds.orElse(userRequest));
+    return crlService.canReadGcsObject(bucketName, objectName, maybePetCreds.orElse(userRequest));
   }
 
   /**
@@ -127,7 +127,7 @@ public class ReferencedGcsBucketFileResource extends ReferencedResource {
   public Builder toBuilder() {
     return builder()
         .bucketName(getBucketName())
-        .fileName(getFileName())
+        .fileName(getObjectName())
         .cloningInstructions(getCloningInstructions())
         .description(getDescription())
         .name(getName())
@@ -183,9 +183,9 @@ public class ReferencedGcsBucketFileResource extends ReferencedResource {
       return this;
     }
 
-    public ReferencedGcsBucketFileResource build() {
+    public ReferencedGcsObjectResource build() {
       // On the create path, we can omit the resourceId and have it filled in by the builder.
-      return new ReferencedGcsBucketFileResource(
+      return new ReferencedGcsObjectResource(
           workspaceId,
           Optional.ofNullable(resourceId).orElse(UUID.randomUUID()),
           name,

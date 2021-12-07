@@ -1,8 +1,10 @@
 package scripts.testscripts;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static scripts.utils.ClientTestUtils.TEST_BUCKET_FILE_NAME;
 import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME;
+import static scripts.utils.ClientTestUtils.TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS;
+import static scripts.utils.ClientTestUtils.TEST_FILE_IN_FINE_GRAINED_BUCKET;
+import static scripts.utils.ClientTestUtils.TEST_FOLDER_IN_FINE_GRAINED_BUCKET;
 
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
@@ -10,15 +12,15 @@ import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiClient;
 import bio.terra.workspace.client.ApiException;
 import bio.terra.workspace.model.CloneReferencedGcpDataRepoSnapshotResourceResult;
-import bio.terra.workspace.model.CloneReferencedGcpGcsBucketFileResourceResult;
 import bio.terra.workspace.model.CloneReferencedGcpGcsBucketResourceResult;
+import bio.terra.workspace.model.CloneReferencedGcpGcsObjectResourceResult;
 import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
 import bio.terra.workspace.model.CloningInstructionsEnum;
 import bio.terra.workspace.model.DataRepoSnapshotResource;
 import bio.terra.workspace.model.GcpBigQueryDataTableResource;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
-import bio.terra.workspace.model.GcpGcsBucketFileResource;
 import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.GcpGcsObjectResource;
 import bio.terra.workspace.model.ResourceMetadata;
 import bio.terra.workspace.model.ResourceType;
 import bio.terra.workspace.model.StewardshipType;
@@ -32,12 +34,13 @@ import scripts.utils.DataRepoTestScriptBase;
 import scripts.utils.ResourceMaker;
 
 public class CloneReferencedResources extends DataRepoTestScriptBase {
+  private static final Logger logger = LoggerFactory.getLogger(CloneReferencedResources.class);
 
   private static final String DATASET_RESOURCE_NAME = "dataset_resource_name";
   private static final String DATA_TABLE_RESOURCE_NAME = "data_table_resource_name";
-  private static final Logger logger = LoggerFactory.getLogger(CloneReferencedResources.class);
   private static final String CLONED_BUCKET_RESOURCE_NAME = "a_new_name";
   private static final String CLONED_BUCKET_FILE_RESOURCE_NAME = "a_new_name_for_the_bucket_file";
+  private static final String CLONED_FOO_FOLDER_RESOURCE_NAME = "a_new_name_for_the_foo_folder";
   private static final String CLONED_DATASET_RESOURCE_NAME = "a_cloned_reference";
   private static final String CLONED_DATASET_DESCRIPTION = "Second star to the right.";
   private static final String CLONED_DATA_TABLE_REFERENCE = "a_cloned_data_table_reference";
@@ -45,7 +48,10 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
 
   private DataRepoSnapshotResource sourceDataRepoSnapshotReference;
   private GcpGcsBucketResource sourceBucketReference;
-  private GcpGcsBucketFileResource sourceBucketFileReference;
+  // Reference to gs://terra_wsm_fine_grained_test_bucket/foo/monkey_sees_monkey_dos.txt
+  private GcpGcsObjectResource sourceGcsObjectReference;
+  // Reference to gs://terra_wsm_fine_grained_test_bucket/foo/
+  private GcpGcsObjectResource sourceBucketFolderReference;
   private GcpBigQueryDatasetResource sourceBigQueryDatasetReference;
   private GcpBigQueryDataTableResource sourceBigQueryDataTableReference;
   private UUID destinationWorkspaceId;
@@ -58,17 +64,28 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
     ApiClient apiClient = ClientTestUtils.getClientForTestUser(testUsers.get(0), server);
     referencedGcpResourceApi = new ReferencedGcpResourceApi(apiClient);
     String bucketReferenceName = RandomStringUtils.random(16, true, false);
-    String bucketFileReferenceName =
-        RandomStringUtils.random(1024, /*letters=*/ true, /*numbers=*/ true);
 
     // create reference to existing test bucket
     sourceBucketReference =
         ResourceMaker.makeGcsBucketReference(
             referencedGcpResourceApi, getWorkspaceId(), bucketReferenceName);
 
-    sourceBucketFileReference =
-        ResourceMaker.makeGcsBucketFileReference(
-            referencedGcpResourceApi, getWorkspaceId(), bucketFileReferenceName);
+    sourceGcsObjectReference =
+        ResourceMaker.makeGcsObjectReference(
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            "reference_to_foo_monkey_sees_monkey_dos",
+            null,
+            TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
+            TEST_FILE_IN_FINE_GRAINED_BUCKET);
+    sourceBucketFolderReference =
+        ResourceMaker.makeGcsObjectReference(
+            referencedGcpResourceApi,
+            getWorkspaceId(),
+            "reference_to_foo_folder",
+            null,
+            TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
+            TEST_FOLDER_IN_FINE_GRAINED_BUCKET);
 
     sourceBigQueryDatasetReference =
         ResourceMaker.makeBigQueryDatasetReference(
@@ -139,37 +156,76 @@ public class CloneReferencedResources extends DataRepoTestScriptBase {
             .name(CLONED_BUCKET_FILE_RESOURCE_NAME)
             .destinationWorkspaceId(destinationWorkspaceId);
     logger.info(
-        "Cloning GCS Bucket file Reference\n\tworkspaceId: {}\n\tresourceId: {}\ninto\n\tworkspaceId: {}",
-        sourceBucketFileReference.getMetadata().getWorkspaceId(),
-        sourceBucketFileReference.getMetadata().getResourceId(),
+        "Cloning GCS Bucket object Reference\n\tworkspaceId: {}\n\tresourceId: {}\ninto\n\tworkspaceId: {}",
+        sourceGcsObjectReference.getMetadata().getWorkspaceId(),
+        sourceGcsObjectReference.getMetadata().getResourceId(),
         destinationWorkspaceId);
-    final CloneReferencedGcpGcsBucketFileResourceResult cloneBucketFileReferenceResult =
-        referencedGcpResourceApi.cloneGcpGcsBucketFileReference(
+    final CloneReferencedGcpGcsObjectResourceResult cloneBucketFileReferenceResult =
+        referencedGcpResourceApi.cloneGcpGcsObjectReference(
             cloneBucketFileReferenceRequestBody,
             getWorkspaceId(),
-            sourceBucketFileReference.getMetadata().getResourceId());
+            sourceGcsObjectReference.getMetadata().getResourceId());
     assertEquals(getWorkspaceId(), cloneBucketFileReferenceResult.getSourceWorkspaceId());
     assertEquals(
         StewardshipType.REFERENCED,
         cloneBucketFileReferenceResult.getResource().getMetadata().getStewardshipType());
     assertEquals(
-        ResourceType.GCS_BUCKET_FILE,
+        ResourceType.GCS_OBJECT,
         cloneBucketFileReferenceResult.getResource().getMetadata().getResourceType());
     assertEquals(
-        sourceBucketFileReference.getMetadata().getResourceId(),
+        sourceGcsObjectReference.getMetadata().getResourceId(),
         cloneBucketFileReferenceResult.getSourceResourceId());
     assertEquals(
-        sourceBucketFileReference.getMetadata().getDescription(),
+        sourceGcsObjectReference.getMetadata().getDescription(),
         cloneBucketFileReferenceResult.getResource().getMetadata().getDescription());
     assertEquals(
         CLONED_BUCKET_FILE_RESOURCE_NAME,
         cloneBucketFileReferenceResult.getResource().getMetadata().getName());
     assertEquals(
-        TEST_BUCKET_NAME,
+        TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
         cloneBucketFileReferenceResult.getResource().getAttributes().getBucketName());
     assertEquals(
-        TEST_BUCKET_FILE_NAME,
+        TEST_FILE_IN_FINE_GRAINED_BUCKET,
         cloneBucketFileReferenceResult.getResource().getAttributes().getFileName());
+
+    // clone source reference to destination
+    CloneReferencedResourceRequestBody cloneFooFolderReferenceRequestBody =
+        new CloneReferencedResourceRequestBody()
+            .cloningInstructions(CloningInstructionsEnum.REFERENCE)
+            .name(CLONED_FOO_FOLDER_RESOURCE_NAME)
+            .destinationWorkspaceId(destinationWorkspaceId);
+    logger.info(
+        "Cloning GCS Bucket folder Reference\n\tworkspaceId: {}\n\tresourceId: {}\ninto\n\tworkspaceId: {}",
+        sourceBucketFolderReference.getMetadata().getWorkspaceId(),
+        sourceBucketFolderReference.getMetadata().getResourceId(),
+        destinationWorkspaceId);
+    CloneReferencedGcpGcsObjectResourceResult cloneFooFolderReferenceResult =
+        referencedGcpResourceApi.cloneGcpGcsObjectReference(
+            cloneFooFolderReferenceRequestBody,
+            getWorkspaceId(),
+            sourceBucketFolderReference.getMetadata().getResourceId());
+    assertEquals(getWorkspaceId(), cloneFooFolderReferenceResult.getSourceWorkspaceId());
+    assertEquals(
+        StewardshipType.REFERENCED,
+        cloneFooFolderReferenceResult.getResource().getMetadata().getStewardshipType());
+    assertEquals(
+        ResourceType.GCS_OBJECT,
+        cloneFooFolderReferenceResult.getResource().getMetadata().getResourceType());
+    assertEquals(
+        sourceBucketFolderReference.getMetadata().getResourceId(),
+        cloneFooFolderReferenceResult.getSourceResourceId());
+    assertEquals(
+        sourceBucketFolderReference.getMetadata().getDescription(),
+        cloneFooFolderReferenceResult.getResource().getMetadata().getDescription());
+    assertEquals(
+        CLONED_FOO_FOLDER_RESOURCE_NAME,
+        cloneFooFolderReferenceResult.getResource().getMetadata().getName());
+    assertEquals(
+        TEST_BUCKET_NAME_WITH_FINE_GRAINED_ACCESS,
+        cloneFooFolderReferenceResult.getResource().getAttributes().getBucketName());
+    assertEquals(
+        TEST_FOLDER_IN_FINE_GRAINED_BUCKET,
+        cloneFooFolderReferenceResult.getResource().getAttributes().getFileName());
 
     final var cloneBigQueryDatasetRequestBody =
         new CloneReferencedResourceRequestBody()
