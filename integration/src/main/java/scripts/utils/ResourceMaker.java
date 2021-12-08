@@ -48,6 +48,11 @@ import bio.terra.workspace.model.JobReport;
 import bio.terra.workspace.model.ManagedBy;
 import bio.terra.workspace.model.PrivateResourceUser;
 import bio.terra.workspace.model.ReferenceResourceCommonFields;
+import bio.terra.workspace.model.UpdateBigQueryDataTableReferenceRequestBody;
+import bio.terra.workspace.model.UpdateBigQueryDatasetReferenceRequestBody;
+import bio.terra.workspace.model.UpdateDataRepoSnapshotReferenceRequestBody;
+import bio.terra.workspace.model.UpdateGcsBucketObjectReferenceRequestBody;
+import bio.terra.workspace.model.UpdateGcsBucketReferenceRequestBody;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
@@ -90,6 +95,29 @@ public class ResourceMaker {
         () -> resourceApi.createBigQueryDatasetReference(body, workspaceId));
   }
 
+  /** Updates the name, description or referencing target of a BQ dataset reference. */
+  public static void updateBigQueryDatasetReference(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspace,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable GcpBigQueryDatasetAttributes attributes)
+      throws ApiException {
+    UpdateBigQueryDatasetReferenceRequestBody body =
+        new UpdateBigQueryDatasetReferenceRequestBody();
+    if (name != null) {
+      body.setName(name);
+    }
+    if (description != null) {
+      body.setDescription(description);
+    }
+    if (attributes != null) {
+      body.setResourceAttributes(attributes);
+    }
+    resourceApi.updateBigQueryDatasetReferenceResource(body, workspace, resourceId);
+  }
+
   /**
    * Calls WSM to create a referenced BigQuery table in the specified workspace.
    *
@@ -117,6 +145,29 @@ public class ResourceMaker {
         () -> resourceApi.createBigQueryDataTableReference(body, workspaceId));
   }
 
+  /** Updates name, description and/or referencing target of BigQuery data table reference. */
+  public static void updateBigQueryDataTableReference(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable GcpBigQueryDataTableAttributes attributes)
+      throws ApiException {
+    UpdateBigQueryDataTableReferenceRequestBody body =
+        new UpdateBigQueryDataTableReferenceRequestBody();
+    if (name != null) {
+      body.setName(name);
+    }
+    if (description != null) {
+      body.setDescription(description);
+    }
+    if (attributes != null) {
+      body.setResourceAttributes(attributes);
+    }
+    resourceApi.updateBigQueryDataTableReferenceResource(body, workspaceId, resourceId);
+  }
+
   /** Calls WSM to create a referenced TDR snapshot in the specified workspace. */
   public static DataRepoSnapshotResource makeDataRepoSnapshotReference(
       ReferencedGcpResourceApi resourceApi,
@@ -139,6 +190,30 @@ public class ResourceMaker {
                     .instanceName(dataRepoInstanceName));
 
     return resourceApi.createDataRepoSnapshotReference(body, workspaceId);
+  }
+
+  /** Updates name, description, and/or referencing target of a data repo snapshot reference. */
+  public static void updateDataRepoSnapshotReferenceResource(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable DataRepoSnapshotAttributes attributes)
+      throws ApiException {
+    UpdateDataRepoSnapshotReferenceRequestBody body =
+        new UpdateDataRepoSnapshotReferenceRequestBody();
+    if (name != null) {
+      body.setName(name);
+    }
+    if (description != null) {
+      body.setDescription(description);
+    }
+    if (attributes != null) {
+      body.setResourceAttributes(attributes);
+    }
+
+    resourceApi.updateDataRepoSnapshotReferenceResource(body, workspaceId, resourceId);
   }
 
   /**
@@ -210,6 +285,28 @@ public class ResourceMaker {
         () -> resourceApi.createBucketReference(body, workspaceId));
   }
 
+  /** Updates name, description, and/or referencing target for GCS bucket reference. */
+  public static void updateGcsBucketReference(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable GcpGcsBucketAttributes attributes)
+      throws ApiException {
+    UpdateGcsBucketReferenceRequestBody body = new UpdateGcsBucketReferenceRequestBody();
+    if (name != null) {
+      body.setName(name);
+    }
+    if (description != null) {
+      body.setDescription(description);
+    }
+    if (attributes != null) {
+      body.setResourceAttributes(attributes);
+    }
+    resourceApi.updateBucketReferenceResource(body, workspaceId, resourceId);
+  }
+
   /**
    * Calls WSM to create a referenced GCS bucket object in the specified workspace.
    *
@@ -238,6 +335,29 @@ public class ResourceMaker {
     logger.info("Making reference to a gcs bucket file");
     return ClientTestUtils.getWithRetryOnException(
         () -> resourceApi.createGcsObjectReference(body, workspaceId));
+  }
+
+  /** Updates name, description, and/or referencing target for GCS bucket object reference. */
+  public static void updateGcsBucketObjectReference(
+      ReferencedGcpResourceApi resourceApi,
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable GcpGcsObjectAttributes attributes)
+      throws ApiException {
+    UpdateGcsBucketObjectReferenceRequestBody body =
+        new UpdateGcsBucketObjectReferenceRequestBody();
+    if (name != null) {
+      body.setName(name);
+    }
+    if (description != null) {
+      body.setDescription(description);
+    }
+    if (attributes != null) {
+      body.setResourceAttributes(attributes);
+    }
+    resourceApi.updateBucketObjectReferenceResource(body, workspaceId, resourceId);
   }
 
   public static GcpGcsBucketResource makeGcsBucketReference(

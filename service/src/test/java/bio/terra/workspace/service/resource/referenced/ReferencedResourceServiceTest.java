@@ -102,7 +102,67 @@ class ReferencedResourceServiceTest extends BaseUnitTest {
   }
 
   @Test
-  void testUpdate() {
+  void updateDataRepoReferenceTarget_updateSnapshotIdOnly() {
+    referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
+    referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
+
+    UUID resourceId = referenceResource.getResourceId();
+    ReferencedResource originalResource =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+    String originalName = referenceResource.getName();
+    String originalDescription = referenceResource.getDescription();
+    String originalInstanceName =
+        referenceResource.castToDataRepoSnapshotResource().getInstanceName();
+
+    String newSnapshotId = "new_snapshot_id";
+    ReferencedResource updatedResource =
+        originalResource.castToDataRepoSnapshotResource().toBuilder()
+            .snapshotId(newSnapshotId)
+            .build();
+
+    referenceResourceService.updateReferenceResource(
+        workspaceId, referenceResource.getResourceId(), null, null, updatedResource, USER_REQUEST);
+
+    ReferencedResource result =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+    assertEquals(originalName, result.getName());
+    assertEquals(originalDescription, result.getDescription());
+    assertEquals(originalInstanceName, result.castToDataRepoSnapshotResource().getInstanceName());
+    assertEquals(newSnapshotId, result.castToDataRepoSnapshotResource().getSnapshotId());
+  }
+
+  @Test
+  void updateDataRepoReferenceTarget_updateSnapshotIdAndInstanceName() {
+    referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
+    referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
+
+    UUID resourceId = referenceResource.getResourceId();
+    ReferencedResource originalResource =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+    String originalName = referenceResource.getName();
+    String originalDescription = referenceResource.getDescription();
+
+    String newSnapshotId = "new_snapshot_id";
+    String newInstanceName = "new_instance_name";
+    ReferencedResource updatedResource =
+        originalResource.castToDataRepoSnapshotResource().toBuilder()
+            .snapshotId(newSnapshotId)
+            .instanceName(newInstanceName)
+            .build();
+
+    referenceResourceService.updateReferenceResource(
+        workspaceId, referenceResource.getResourceId(), null, null, updatedResource, USER_REQUEST);
+
+    ReferencedResource result =
+        referenceResourceService.getReferenceResource(workspaceId, resourceId, USER_REQUEST);
+    assertEquals(originalName, result.getName());
+    assertEquals(originalDescription, result.getDescription());
+    assertEquals(newInstanceName, result.castToDataRepoSnapshotResource().getInstanceName());
+    assertEquals(newSnapshotId, result.castToDataRepoSnapshotResource().getSnapshotId());
+  }
+
+  @Test
+  void updateNameAndDescription() {
     referenceResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceId);
     referenceResourceService.createReferenceResource(referenceResource, USER_REQUEST);
 

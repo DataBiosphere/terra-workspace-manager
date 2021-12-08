@@ -54,7 +54,9 @@ public class ClientTestUtils {
   public static final String TEST_FILE_IN_FINE_GRAINED_BUCKET = "foo/monkey_sees_monkey_dos.txt";
   public static final String TEST_FOLDER_IN_FINE_GRAINED_BUCKET = "foo/";
   public static final String TEST_BQ_DATASET_NAME = "terra_wsm_test_dataset";
+  public static final String TEST_BQ_DATASET_NAME_2 = "terra_wsm_test_dataset_2";
   public static final String TEST_BQ_DATATABLE_NAME = "terra wsm test data table";
+  public static final String TEST_BQ_DATATABLE_NAME_2 = "terra wsm test data table 2";
   public static final String TEST_BQ_DATASET_PROJECT = "terra-kernel-k8s";
   public static final String RESOURCE_NAME_PREFIX = "terratest";
   // We may want this to be a test parameter. It has to match what is in the config or in the helm

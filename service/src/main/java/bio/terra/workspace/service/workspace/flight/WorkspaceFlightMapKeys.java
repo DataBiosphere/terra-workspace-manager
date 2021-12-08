@@ -29,11 +29,6 @@ public final class WorkspaceFlightMapKeys {
     public static final String UPDATE_PARAMETERS = "updateParameters";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
 
-    public static final String RESOURCE_NAME = "resourceName";
-    public static final String PREVIOUS_RESOURCE_NAME = "previousResourceName";
-    public static final String RESOURCE_DESCRIPTION = "resourceDescription";
-    public static final String PREVIOUS_RESOURCE_DESCRIPTION = "previousResourceDescription";
-
     public static final String RESOURCE_ROLES_TO_REMOVE = "resourceRolesToRemove";
     public static final String REMOVED_USER_IS_WORKSPACE_MEMBER = "removedUserIsWorkspaceMember";
 
@@ -71,6 +66,11 @@ public final class WorkspaceFlightMapKeys {
   public static class ResourceKeys {
     public static final String RESOURCE_ID = "resourceId";
     public static final String RESOURCE_TYPE = "resourceType";
+    public static final String RESOURCE_NAME = "resourceName";
+    public static final String PREVIOUS_RESOURCE_NAME = "previousResourceName";
+    public static final String RESOURCE_DESCRIPTION = "resourceDescription";
+    public static final String PREVIOUS_RESOURCE_DESCRIPTION = "previousResourceDescription";
+    public static final String PREVIOUS_ATTRIBUTES = "previousAttributes";
 
     private ResourceKeys() {}
   }

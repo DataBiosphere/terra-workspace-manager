@@ -23,6 +23,7 @@
     "integration/PrivateControlledAiNotebookInstanceLifecycle.json",
     "integration/PrivateControlledGcsBucketLifecycle.json",
     "integration/RemoveUser.json",
+    "integration/UpdateReferenceResources.json",
     "integration/ValidateReferencedResources.json",
     "integration/WorkspaceLifecycle.json"
   ]

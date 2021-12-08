@@ -532,7 +532,8 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     patch:
-      summary: Update name or description of a snapshot reference in a workspace.
+      deprecated: true
+      summary: (DEPRECATED) Update name or description of a snapshot reference in a workspace.
       operationId: updateDataRepoSnapshotReference
       tags: [ReferencedGcpResource]
       requestBody:
@@ -541,6 +542,25 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Update name, description or referencing target of a snapshot reference in a workspace.
+      operationId: updateDataRepoSnapshotReferenceResource
+      tags: [ReferencedGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDataRepoSnapshotReferenceRequestBody'
       responses:
         '204':
           description: OK
@@ -650,7 +670,8 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     patch:
-      summary: Update name or description of a GCS object reference in a workspace.
+      deprecated: true
+      summary: (DEPRECATED) Update name or description of a bucket object reference in a workspace.
       operationId: updateGcsObjectReference
       tags: [ReferencedGcpResource]
       requestBody:
@@ -659,6 +680,25 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Update name, description or referencing target of a bucket object reference in a workspace.
+      operationId: updateBucketObjectReferenceResource
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGcsBucketObjectReferenceRequestBody'
       responses:
         '204':
           description: OK
@@ -767,7 +807,8 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     patch:
-      summary: Update name or description of a bucket reference in a workspace.
+      deprecated: true
+      summary: (DEPRECATED) Update name or description of a bucket reference in a workspace.
       operationId: updateBucketReference
       tags: [ReferencedGcpResource]
       requestBody:
@@ -785,6 +826,25 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+    post:
+      summary: Update name, description or the referencing target of a bucket reference in a workspace
+      operationId: updateBucketReferenceResource
+      tags: [ReferencedGcpResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGcsBucketReferenceRequestBody'
+        responses:
+          '204':
+            description: OK
+          '403':
+            $ref: '#/components/responses/PermissionDenied'
+          '404':
+            $ref: '#/components/responses/NotFound'
+          '500':
+            $ref: '#/components/responses/ServerError'
     delete:
       summary: Delete Gcp bucket reference
       operationId: deleteBucketReference
@@ -882,7 +942,8 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     patch:
-      summary: Update name or description of a BigQuery data table reference in a workspace.
+      deprecated: true
+      summary: (DEPRECATED) Update name or description of a BigQuery data table reference in a workspace.
       operationId: updateBigQueryDataTableReference
       tags: [ ReferencedGcpResource ]
       requestBody:
@@ -891,6 +952,25 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Update name, description or referencing target of a BigQuery data table reference in a workspace.
+      operationId: updateBigQueryDataTableReferenceResource
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBigQueryDataTableReferenceRequestBody'
       responses:
         '204':
           description: OK
@@ -998,7 +1078,8 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     patch:
-      summary: Update name or description of a BigQuery dataset reference in a workspace.
+      deprecated: true
+      summary: (DEPRECATED) Update name or description of a BigQuery dataset reference in a workspace.
       operationId: updateBigQueryDatasetReference
       tags: [ReferencedGcpResource]
       requestBody:
@@ -1007,6 +1088,25 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateDataReferenceRequestBody'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Update name, description or referencing target of a BigQuery dataset reference in a workspace.
+      operationId: updateBigQueryDatasetReferenceResource
+      tags: [ ReferencedGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBigQueryDatasetReferenceRequestBody'
       responses:
         '204':
           description: OK
@@ -1843,6 +1943,61 @@ components:
           $ref: "#/components/schemas/Name"
         description:
           type: string
+
+    UpdateGcsBucketReferenceRequestBody:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        resourceAttributes:
+          description: attributes specific to GCS bucket
+          $ref: '#/components/schemas/GcpGcsBucketAttributes'
+
+    UpdateGcsBucketObjectReferenceRequestBody:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        resourceAttributes:
+          description: attributes specific to GCS bucket object
+          $ref: '#/components/schemas/GcpGcsObjectAttributes'
+
+    UpdateBigQueryDatasetReferenceRequestBody:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        resourceAttributes:
+          description: attributes specific to BigQuery dataset
+          $ref: '#/components/schemas/GcpBigQueryDatasetAttributes'
+
+    UpdateBigQueryDataTableReferenceRequestBody:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        resourceAttributes:
+          description: attributes specific to BigQuery data table
+          $ref: '#/components/schemas/GcpBigQueryDataTableAttributes'
+
+    UpdateDataRepoSnapshotReferenceRequestBody:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+        resourceAttributes:
+          description: attributes specific to data repo snapshot
+          $ref: '#/components/schemas/DataRepoSnapshotAttributes'
 
     # TODO(PF-404): remove this in favor of reference-type specific objects.
     DataReferenceMetadata:

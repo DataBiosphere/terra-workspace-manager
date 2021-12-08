@@ -1,33 +1,30 @@
-package bio.terra.workspace.service.resource.controlled.flight.update;
+package bio.terra.workspace.service.resource.referenced.flight.update;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
+import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 
-public class UpdateControlledResourceMetadataStep implements Step {
-
+/** A step to update the resource reference's name, description, and/or attributes. */
+public class UpdateReferenceMetadataStep implements Step {
   private final ResourceDao resourceDao;
-  private final UUID resourceId;
+  private final ReferencedResource referencedResource;
   private final UUID workspaceId;
-  private final ControlledResourceMetadataManager controlledResourceMetadataManager;
+  private final UUID resourceId;
 
-  public UpdateControlledResourceMetadataStep(
-      ControlledResourceMetadataManager controlledResourceMetadataManager,
-      ResourceDao resourceDao,
-      UUID workspaceId,
-      UUID resourceId) {
+  public UpdateReferenceMetadataStep(
+      ResourceDao resourceDao, ReferencedResource referencedResource) {
     this.resourceDao = resourceDao;
-    this.resourceId = resourceId;
-    this.workspaceId = workspaceId;
-    this.controlledResourceMetadataManager = controlledResourceMetadataManager;
+    this.referencedResource = referencedResource;
+    workspaceId = referencedResource.getWorkspaceId();
+    resourceId = referencedResource.getResourceId();
   }
 
   @Override
@@ -37,25 +34,29 @@ public class UpdateControlledResourceMetadataStep implements Step {
     final String resourceName = inputParameters.get(ResourceKeys.RESOURCE_NAME, String.class);
     final String resourceDescription =
         inputParameters.get(ResourceKeys.RESOURCE_DESCRIPTION, String.class);
-    final AuthenticatedUserRequest userRequest =
-        inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    controlledResourceMetadataManager.updateControlledResourceMetadata(
-        workspaceId, resourceId, resourceName, resourceDescription, userRequest);
+
+    boolean updated =
+        resourceDao.updateResource(
+            workspaceId,
+            resourceId,
+            resourceName,
+            resourceDescription,
+            referencedResource.attributesToJson());
+    FlightUtils.setResponse(flightContext, updated, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }
 
-  /**
-   * Restore the previous values of the metadata.
-   *
-   * @param flightContext
-   */
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     final FlightMap workingMap = flightContext.getWorkingMap();
     final String previousName = workingMap.get(ResourceKeys.PREVIOUS_RESOURCE_NAME, String.class);
     final String previousDescription =
         workingMap.get(ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION, String.class);
-    resourceDao.updateResource(workspaceId, resourceId, previousName, previousDescription);
+    final String previousAttributes =
+        workingMap.get(ResourceKeys.PREVIOUS_ATTRIBUTES, String.class);
+
+    resourceDao.updateResource(
+        workspaceId, resourceId, previousName, previousDescription, previousAttributes);
     return StepResult.getStepResultSuccess();
   }
 }

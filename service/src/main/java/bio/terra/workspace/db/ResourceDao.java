@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -362,49 +363,39 @@ public class ResourceDao {
     storeResource(resource);
   }
 
-  @WriteTransaction
-  public boolean updateResource(
-      UUID workspaceId, UUID resourceId, String name, String description) {
-    if (name == null && description == null) {
+  private boolean updateResourceWorker(
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable String attributes) {
+    if (name == null && description == null && attributes == null) {
       return false;
     }
 
     var params = new MapSqlParameterSource();
 
-    if (name != null) {
+    if (!StringUtils.isEmpty(name)) {
       params.addValue("name", name);
     }
-
-    if (description != null) {
+    if (!StringUtils.isEmpty(description)) {
       params.addValue("description", description);
     }
+    if (!StringUtils.isEmpty(attributes)) {
+      params.addValue("attributes", attributes);
+    }
 
-    return updateResourceColumns(workspaceId, resourceId, params);
-  }
-
-  /**
-   * This is an open ended method for constructing the SQL update statement. To use it, build the
-   * parameter list making the param name equal to the column name you want to update. The method
-   * generates the column_name = :column_name list. It is an error if the params map is empty.
-   *
-   * @param columnParams sql parameters
-   * @param workspaceId workspace identifier - not strictly necessarily, but an extra validation
-   * @param resourceId resource identifier
-   */
-  private boolean updateResourceColumns(
-      UUID workspaceId, UUID resourceId, MapSqlParameterSource columnParams) {
     StringBuilder sb = new StringBuilder("UPDATE resource SET ");
 
-    sb.append(DbUtils.setColumnsClause(columnParams));
+    sb.append(DbUtils.setColumnsClause(params, "attributes"));
+
     sb.append(" WHERE workspace_id = :workspace_id AND resource_id = :resource_id");
 
-    MapSqlParameterSource queryParams = new MapSqlParameterSource();
-    queryParams
-        .addValues(columnParams.getValues())
+    params
         .addValue("workspace_id", workspaceId.toString())
         .addValue("resource_id", resourceId.toString());
 
-    int rowsAffected = jdbcTemplate.update(sb.toString(), queryParams);
+    int rowsAffected = jdbcTemplate.update(sb.toString(), params);
     boolean updated = rowsAffected > 0;
 
     logger.info(
@@ -414,6 +405,36 @@ public class ResourceDao {
         workspaceId);
 
     return updated;
+  }
+
+  /**
+   * Update name, description, and/or attributes of the resource.
+   *
+   * @param name name of the resource, may be null if it does not need to be updated
+   * @param description description of the resource, may be null if it does not need to be updated
+   * @param attributes resource-type specific attributes, may be null if it does not need to be
+   *     updated .
+   */
+  @WriteTransaction
+  public boolean updateResource(
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable String attributes) {
+    return updateResourceWorker(workspaceId, resourceId, name, description, attributes);
+  }
+
+  /**
+   * Update name and/or description of the resource.
+   *
+   * @param name name of the resource, may be null if it does not need to be updated
+   * @param description description of the resource, may be null if it does not need to be updated
+   */
+  @WriteTransaction
+  public boolean updateResource(
+      UUID workspaceId, UUID resourceId, @Nullable String name, @Nullable String description) {
+    return updateResourceWorker(workspaceId, resourceId, name, description, /*attributes=*/ null);
   }
 
   /**

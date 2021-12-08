@@ -12,17 +12,23 @@ import bio.terra.workspace.service.resource.ValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils;
 import bio.terra.workspace.service.resource.referenced.flight.create.CreateReferenceResourceFlight;
+import bio.terra.workspace.service.resource.referenced.flight.update.UpdateReferenceResourceFlight;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ReferencedResourceService {
+
+  private final Logger logger = LoggerFactory.getLogger(ReferencedResourceService.class);
 
   private final JobService jobService;
   private final ResourceDao resourceDao;
@@ -76,8 +82,7 @@ public class ReferencedResourceService {
   }
 
   /**
-   * At this moment, the only updates on references we are doing are to name and description so this
-   * is a common implementation. If we get more complicated, we can break it out.
+   * Updates name and/or description of the reference resource.
    *
    * @param workspaceId workspace of interest
    * @param resourceId resource to update
@@ -90,6 +95,27 @@ public class ReferencedResourceService {
       @Nullable String name,
       @Nullable String description,
       AuthenticatedUserRequest userRequest) {
+    updateReferenceResource(
+        workspaceId, resourceId, name, description, /*referencedResource=*/ null, userRequest);
+  }
+
+  /**
+   * Updates name, description and/or referencing traget of the reference resource.
+   *
+   * @param workspaceId workspace of interest
+   * @param resourceId resource to update
+   * @param name name to change - may be null
+   * @param description description to change - may be null
+   * @param resource referencedResource to be updated to - may be null if not intending to update
+   *     referencing target.
+   */
+  public void updateReferenceResource(
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable ReferencedResource resource,
+      AuthenticatedUserRequest userRequest) {
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceId, SamConstants.SamWorkspaceAction.UPDATE_REFERENCE);
     // Name may be null if the user is not updating it in this request.
@@ -98,9 +124,30 @@ public class ReferencedResourceService {
     }
     // Description may also be null, but this validator accepts null descriptions.
     ValidationUtils.validateResourceDescriptionName(description);
-    resourceDao.updateResource(workspaceId, resourceId, name, description);
-  }
+    boolean updated;
+    if (resource != null) {
+      JobBuilder createJob =
+          jobService
+              .newJob(
+                  "Update reference target",
+                  UUID.randomUUID().toString(),
+                  UpdateReferenceResourceFlight.class,
+                  resource,
+                  userRequest)
+              .addParameter(
+                  WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_TYPE,
+                  resource.getResourceType().name())
+              .addParameter(ResourceKeys.RESOURCE_NAME, name)
+              .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, description);
 
+      updated = createJob.submitAndWait(Boolean.class);
+    } else {
+      updated = resourceDao.updateResource(workspaceId, resourceId, name, description);
+    }
+    if (!updated) {
+      logger.warn("There's no update to the referenced resource");
+    }
+  }
   /**
    * Delete a reference. The only state we hold for a reference is in the metadata database so we
    * directly delete that.
