@@ -30,9 +30,7 @@ import bio.terra.workspace.service.resource.referenced.ReferencedResource;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -365,22 +363,6 @@ public class ResourceDao {
     storeResource(resource);
   }
 
-  @WriteTransaction
-  private boolean updateResource(
-      UUID workspaceId, UUID resourceId, Map<String, String> updateParams) {
-
-    var params = new MapSqlParameterSource();
-
-    updateParams.forEach(
-        (k, v) -> {
-          if (!StringUtils.isEmpty(k) && !StringUtils.isEmpty(v)) {
-            params.addValue(k, v);
-          }
-        });
-
-    return updateResourceColumns(workspaceId, resourceId, params);
-  }
-
   /**
    * Update name, description, and/or attributes of the resource.
    *
@@ -396,12 +378,48 @@ public class ResourceDao {
       @Nullable String name,
       @Nullable String description,
       @Nullable String attributes) {
-    if (name == null & description == null && attributes == null) {
+    if (name == null && description == null && attributes == null) {
       return false;
     }
-    Map<String, String> updateParams = getUpdateParams(name, description, attributes);
 
-    return updateResource(workspaceId, resourceId, updateParams);
+    var params = new MapSqlParameterSource();
+
+    if (!StringUtils.isEmpty(name)) {
+      params.addValue("name", name);
+    }
+    if (!StringUtils.isEmpty(description)) {
+      params.addValue("description", description);
+    }
+    if (!StringUtils.isEmpty(attributes)) {
+      params.addValue("attributes", attributes);
+    }
+
+    StringBuilder sb = new StringBuilder("UPDATE resource SET ");
+
+    if (params.hasValue("attributes")) {
+      sb.append(DbUtils.setColumnsClause(params, "attributes"));
+    } else {
+      sb.append(DbUtils.setColumnsClause(params));
+    }
+
+    sb.append(" WHERE workspace_id = :workspace_id AND resource_id = :resource_id");
+
+    MapSqlParameterSource queryParams = new MapSqlParameterSource();
+    queryParams
+        .addValues(params.getValues())
+        .addValue("workspace_id", workspaceId.toString())
+        .addValue("resource_id", resourceId.toString());
+
+    int rowsAffected = jdbcTemplate.update(sb.toString(), queryParams);
+    boolean updated = rowsAffected > 0;
+
+    logger.info(
+        "{} record for resource {} in workspace {}",
+        (updated ? "Updated" : "No Update - did not find"),
+        resourceId,
+        workspaceId);
+
+    return updated;
   }
 
   /**
@@ -413,22 +431,7 @@ public class ResourceDao {
   @WriteTransaction
   public boolean updateResource(
       UUID workspaceId, UUID resourceId, @Nullable String name, @Nullable String description) {
-    if (name == null & description == null) {
-      return false;
-    }
-    Map<String, String> updateParams = getUpdateParams(name, description, null);
-
-    return updateResource(workspaceId, resourceId, updateParams);
-  }
-
-  /** Gets a map of the params that needs to be updated. */
-  private static Map<String, String> getUpdateParams(
-      @Nullable String name, @Nullable String description, @Nullable String attributes) {
-    Map<String, String> updateParams = new HashMap<>();
-    updateParams.put("name", name);
-    updateParams.put("description", description);
-    updateParams.put("attributes", attributes);
-    return updateParams;
+    return updateResource(workspaceId, resourceId, name, description, null);
   }
 
   /**
@@ -444,7 +447,7 @@ public class ResourceDao {
       UUID workspaceId, UUID resourceId, MapSqlParameterSource columnParams) {
     StringBuilder sb = new StringBuilder("UPDATE resource SET ");
 
-    sb.append(DbUtils.setColumnsClause(columnParams));
+    sb.append(DbUtils.setColumnsClause(columnParams, "attributes"));
     sb.append(" WHERE workspace_id = :workspace_id AND resource_id = :resource_id");
 
     MapSqlParameterSource queryParams = new MapSqlParameterSource();

@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.referenced.flight.update;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -27,13 +28,14 @@ public class UpdateReferenceResourceFlight extends Flight {
     // Perform access verification
     addStep(new ValidateReferenceStep(appContext), RetryRules.cloud());
 
+    RetryRule shortDatabaseRetryRule = RetryRules.shortDatabase();
     addStep(
         new RetrieveReferenceMetadataStep(
             appContext.getResourceDao(), resource.getWorkspaceId(), resource.getResourceId()),
-        RetryRules.shortDatabase());
+        shortDatabaseRetryRule);
 
     addStep(
         new UpdateReferenceMetadataStep(appContext.getResourceDao(), resource),
-        RetryRules.shortDatabase());
+        shortDatabaseRetryRule);
   }
 }
