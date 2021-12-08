@@ -102,96 +102,96 @@ public class ControllerUtils {
     // Private access scope
     switch (managedBy) {
       case MANAGED_BY_APPLICATION:
-      {
-        // Supplying a user is optional for applications
-        if (inputUser == null) {
-          return new PrivateUserRole.Builder().present(false).build();
-        }
-
-        // We have a private user, so make sure the email is present and valid
-        String userEmail = commonFields.getPrivateResourceUser().getUserName();
-        ControllerValidationUtils.validateEmail(userEmail);
-
-        // Validate that the assigned user is a member of the workspace. It must have at least
-        // READ action.
-        SamRethrow.onInterrupted(
-            () ->
-                samService.userIsAuthorized(
-                    SamConstants.SamResource.WORKSPACE,
-                    workspaceId.toString(),
-                    SamConstants.SamWorkspaceAction.READ,
-                    userEmail,
-                    userRequest),
-            "validate private user is workspace member");
-
-        // Translate the incoming role list into our internal model form
-        // This also validates that the incoming API model values are correct.
-        List<ControlledResourceIamRole> roles =
-            commonFields.getPrivateResourceUser().getPrivateResourceIamRoles().stream()
-                .map(ControlledResourceIamRole::fromApiModel)
-                .collect(Collectors.toList());
-        if (roles.isEmpty()) {
-          throw new ValidationException(
-              "You must specify at least one role when you specify PrivateResourceIamRoles");
-        }
-
-        // The legal options for the assigned user of an application is READER
-        // or WRITER. EDITOR is not allowed. We take the "max" of READER and WRITER.
-        var maxRole = ControlledResourceIamRole.READER;
-        for (ControlledResourceIamRole role : roles) {
-          if (role == ControlledResourceIamRole.WRITER) {
-            if (maxRole == ControlledResourceIamRole.READER) {
-              maxRole = role;
-            }
-          } else if (role != ControlledResourceIamRole.READER) {
-            throw new ValidationException(
-                "For application private controlled resources, only READER and WRITER roles are allowed. Found "
-                    + role.toApiModel());
+        {
+          // Supplying a user is optional for applications
+          if (inputUser == null) {
+            return new PrivateUserRole.Builder().present(false).build();
           }
+
+          // We have a private user, so make sure the email is present and valid
+          String userEmail = commonFields.getPrivateResourceUser().getUserName();
+          ControllerValidationUtils.validateEmail(userEmail);
+
+          // Validate that the assigned user is a member of the workspace. It must have at least
+          // READ action.
+          SamRethrow.onInterrupted(
+              () ->
+                  samService.userIsAuthorized(
+                      SamConstants.SamResource.WORKSPACE,
+                      workspaceId.toString(),
+                      SamConstants.SamWorkspaceAction.READ,
+                      userEmail,
+                      userRequest),
+              "validate private user is workspace member");
+
+          // Translate the incoming role list into our internal model form
+          // This also validates that the incoming API model values are correct.
+          List<ControlledResourceIamRole> roles =
+              commonFields.getPrivateResourceUser().getPrivateResourceIamRoles().stream()
+                  .map(ControlledResourceIamRole::fromApiModel)
+                  .collect(Collectors.toList());
+          if (roles.isEmpty()) {
+            throw new ValidationException(
+                "You must specify at least one role when you specify PrivateResourceIamRoles");
+          }
+
+          // The legal options for the assigned user of an application is READER
+          // or WRITER. EDITOR is not allowed. We take the "max" of READER and WRITER.
+          var maxRole = ControlledResourceIamRole.READER;
+          for (ControlledResourceIamRole role : roles) {
+            if (role == ControlledResourceIamRole.WRITER) {
+              if (maxRole == ControlledResourceIamRole.READER) {
+                maxRole = role;
+              }
+            } else if (role != ControlledResourceIamRole.READER) {
+              throw new ValidationException(
+                  "For application private controlled resources, only READER and WRITER roles are allowed. Found "
+                      + role.toApiModel());
+            }
+          }
+          return new PrivateUserRole.Builder()
+              .present(true)
+              .userEmail(userEmail)
+              .role(maxRole)
+              .build();
         }
-        return new PrivateUserRole.Builder()
-            .present(true)
-            .userEmail(userEmail)
-            .role(maxRole)
-            .build();
-      }
 
       case MANAGED_BY_USER:
-      {
-        // TODO: PF-1218 The target state is that supplying a user is not allowed.
-        //  However, current CLI and maybe UI are supplying all or part of the structure,
-        //  so tolerate all states: no-input, only roles, roles and user
+        {
+          // TODO: PF-1218 The target state is that supplying a user is not allowed.
+          //  However, current CLI and maybe UI are supplying all or part of the structure,
+          //  so tolerate all states: no-input, only roles, roles and user
           /* Target state:
           // Supplying a user is not allowed. The creating user is always the assigned user.
           validateNoInputUser(inputUser);
           */
 
-        // Fill in the user role for the creating user
-        String userEmail =
-            SamRethrow.onInterrupted(
-                () -> samService.getUserEmailFromSam(userRequest), "getUserEmailFromSam");
+          // Fill in the user role for the creating user
+          String userEmail =
+              SamRethrow.onInterrupted(
+                  () -> samService.getUserEmailFromSam(userRequest), "getUserEmailFromSam");
 
-        // TODO: PF-1218 temporarily allow user spec and make sure it matches the requesting
-        //  user. Ignore the role list. If the user name is specified, then make sure it
-        //  matches the requesting name.
-        if (inputUser != null && inputUser.getUserName() != null) {
-          if (!StringUtils.equalsIgnoreCase(userEmail, inputUser.getUserName())) {
-            throw new BadRequestException(
-                "User ("
-                    + userEmail
-                    + ") may only assign a private controlled resource to themselves");
+          // TODO: PF-1218 temporarily allow user spec and make sure it matches the requesting
+          //  user. Ignore the role list. If the user name is specified, then make sure it
+          //  matches the requesting name.
+          if (inputUser != null && inputUser.getUserName() != null) {
+            if (!StringUtils.equalsIgnoreCase(userEmail, inputUser.getUserName())) {
+              throw new BadRequestException(
+                  "User ("
+                      + userEmail
+                      + ") may only assign a private controlled resource to themselves");
+            }
           }
-        }
 
-        // At this time, all private resources grant EDITOR permission to the resource user.
-        // This could be parameterized if we ever have reason to grant different permissions
-        // to different objects.
-        return new PrivateUserRole.Builder()
-            .present(true)
-            .userEmail(userEmail)
-            .role(ControlledResourceIamRole.EDITOR)
-            .build();
-      }
+          // At this time, all private resources grant EDITOR permission to the resource user.
+          // This could be parameterized if we ever have reason to grant different permissions
+          // to different objects.
+          return new PrivateUserRole.Builder()
+              .present(true)
+              .userEmail(userEmail)
+              .role(ControlledResourceIamRole.EDITOR)
+              .build();
+        }
 
       default:
         throw new InternalLogicException("Unknown managedBy enum");
@@ -204,7 +204,6 @@ public class ControllerUtils {
           "PrivateResourceUser can only be specified by applications for private resources");
     }
   }
-
 
   private ControllerUtils() {}
 }
