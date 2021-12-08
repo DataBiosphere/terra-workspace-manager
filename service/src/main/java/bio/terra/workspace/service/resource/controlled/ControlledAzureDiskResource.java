@@ -28,6 +28,7 @@ public class ControlledAzureDiskResource extends ControlledResource {
       @JsonProperty("assignedUser") String assignedUser,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
+      @JsonProperty("applicationId") UUID applicationId,
       @JsonProperty("diskName") String diskName,
       @JsonProperty("region") String region,
       @JsonProperty("size") int size) {
@@ -40,7 +41,8 @@ public class ControlledAzureDiskResource extends ControlledResource {
         cloningInstructions,
         assignedUser,
         accessScope,
-        managedBy);
+        managedBy,
+        applicationId);
     this.diskName = diskName;
     this.region = region;
     this.size = size;
@@ -137,6 +139,7 @@ public class ControlledAzureDiskResource extends ControlledResource {
     private String assignedUser;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
+    private UUID applicationId;
     private String diskName;
     private String region;
     private int size;
@@ -197,6 +200,11 @@ public class ControlledAzureDiskResource extends ControlledResource {
       return this;
     }
 
+    public ControlledAzureDiskResource.Builder applicationId(UUID applicationId) {
+      this.applicationId = applicationId;
+      return this;
+    }
+
     public ControlledAzureDiskResource build() {
       return new ControlledAzureDiskResource(
           workspaceId,
@@ -207,6 +215,7 @@ public class ControlledAzureDiskResource extends ControlledResource {
           assignedUser,
           accessScope,
           managedBy,
+          applicationId,
           diskName,
           region,
           size);

@@ -222,8 +222,7 @@ public class WorkspaceService {
       AzureCloudContext azureContext) {
 
     Workspace workspace =
-        validateWorkspaceAndAction(
-            userRequest, workspaceId, SamWorkspaceAction.WRITE);
+        validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
     stageService.assertMcWorkspace(workspace, "createCloudContext");
 
     jobService

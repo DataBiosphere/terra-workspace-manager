@@ -27,6 +27,7 @@ public class ControlledAzureStorageResource extends ControlledResource {
       @JsonProperty("assignedUser") String assignedUser,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
+      @JsonProperty("applicationId") UUID applicationId,
       @JsonProperty("storageAccountName") String storageAccountName,
       @JsonProperty("region") String region) {
 
@@ -38,7 +39,8 @@ public class ControlledAzureStorageResource extends ControlledResource {
         cloningInstructions,
         assignedUser,
         accessScope,
-        managedBy);
+        managedBy,
+        applicationId);
     this.storageAccountName = storageAccountName;
     this.region = region;
     validate();
@@ -132,6 +134,7 @@ public class ControlledAzureStorageResource extends ControlledResource {
     private String assignedUser;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
+    private UUID applicationId;
     private String storageAccountName;
     private String region;
 
@@ -186,6 +189,11 @@ public class ControlledAzureStorageResource extends ControlledResource {
       return this;
     }
 
+    public ControlledAzureStorageResource.Builder applicationId(UUID applicationId) {
+      this.applicationId = applicationId;
+      return this;
+    }
+
     public ControlledAzureStorageResource build() {
       return new ControlledAzureStorageResource(
           workspaceId,
@@ -196,6 +204,7 @@ public class ControlledAzureStorageResource extends ControlledResource {
           assignedUser,
           accessScope,
           managedBy,
+          applicationId,
           storageAccountName,
           region);
     }

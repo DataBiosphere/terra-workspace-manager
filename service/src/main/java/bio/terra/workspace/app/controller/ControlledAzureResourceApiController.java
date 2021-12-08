@@ -90,6 +90,9 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
   public ResponseEntity<ApiCreatedControlledAzureDisk> createAzureDisk(
       UUID workspaceId, ApiCreateControlledAzureDiskRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final PrivateUserRole privateUserRole =
+        ControllerUtils.computePrivateUserRole(
+            workspaceId, body.getCommon(), userRequest, samService);
 
     ControlledAzureDiskResource resource =
         ControlledAzureDiskResource.builder()
@@ -99,7 +102,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             .description(body.getCommon().getDescription())
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(assignedUserFromBodyOrToken(body.getCommon(), userRequest))
+            .assignedUser(privateUserRole.getUserEmail())
             .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
             .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
             .diskName(body.getAzureDisk().getName())
@@ -107,12 +110,10 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             .size(body.getAzureDisk().getSize())
             .build();
 
-    List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
-
     // TODO: make createDisk call async once we have things working e2e
     final var createdDisk =
         controlledResourceService.createDisk(
-            resource, body.getAzureDisk(), privateRoles, userRequest);
+            resource, body.getAzureDisk(), privateUserRole.getRole(), userRequest);
     var response =
         new ApiCreatedControlledAzureDisk()
             .resourceId(createdDisk.getResourceId())
@@ -144,7 +145,8 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             .build();
 
     final ControlledAzureIpResource createdIp =
-        controlledResourceService.createIp(resource, body.getAzureIp(), privateUserRole.getRole(), userRequest);
+        controlledResourceService.createIp(
+            resource, body.getAzureIp(), privateUserRole.getRole(), userRequest);
     var response =
         new ApiCreatedControlledAzureIp()
             .resourceId(createdIp.getResourceId())
@@ -156,6 +158,9 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
   public ResponseEntity<ApiCreatedControlledAzureStorage> createAzureStorage(
       UUID workspaceId, @Valid ApiCreateControlledAzureStorageRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final PrivateUserRole privateUserRole =
+        ControllerUtils.computePrivateUserRole(
+            workspaceId, body.getCommon(), userRequest, samService);
 
     ControlledAzureStorageResource resource =
         ControlledAzureStorageResource.builder()
@@ -165,18 +170,16 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             .description(body.getCommon().getDescription())
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(assignedUserFromBodyOrToken(body.getCommon(), userRequest))
+            .assignedUser(privateUserRole.getUserEmail())
             .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
             .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
             .storageAccountName(body.getAzureStorage().getName())
             .region(body.getAzureStorage().getRegion())
             .build();
 
-    List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
-
     final ControlledAzureStorageResource createdStorage =
         controlledResourceService.createStorage(
-            resource, body.getAzureStorage(), privateRoles, userRequest);
+            resource, body.getAzureStorage(), privateUserRole.getRole(), userRequest);
     var response =
         new ApiCreatedControlledAzureStorage()
             .resourceId(createdStorage.getResourceId())
@@ -188,6 +191,9 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
   public ResponseEntity<ApiCreatedControlledAzureVmResult> createAzureVm(
       UUID workspaceId, @Valid ApiCreateControlledAzureVmRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final PrivateUserRole privateUserRole =
+        ControllerUtils.computePrivateUserRole(
+            workspaceId, body.getCommon(), userRequest, samService);
 
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
@@ -197,7 +203,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             .description(body.getCommon().getDescription())
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(assignedUserFromBodyOrToken(body.getCommon(), userRequest))
+            .assignedUser(privateUserRole.getUserEmail())
             .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
             .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
             .vmName(body.getAzureVm().getName())
@@ -209,13 +215,11 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             .diskId(body.getAzureVm().getDiskId())
             .build();
 
-    List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
-
     final String jobId =
         controlledResourceService.createVm(
             resource,
             body.getAzureVm(),
-            privateRoles,
+            privateUserRole.getRole(),
             body.getJobControl(),
             ControllerUtils.getAsyncResultEndpoint(
                 request, body.getJobControl().getId(), "create-result"),
@@ -251,6 +255,9 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
   public ResponseEntity<ApiCreatedControlledAzureNetwork> createAzureNetwork(
       UUID workspaceId, ApiCreateControlledAzureNetworkRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final PrivateUserRole privateUserRole =
+        ControllerUtils.computePrivateUserRole(
+            workspaceId, body.getCommon(), userRequest, samService);
 
     ControlledAzureNetworkResource resource =
         ControlledAzureNetworkResource.builder()
@@ -260,7 +267,7 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             .description(body.getCommon().getDescription())
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
-            .assignedUser(assignedUserFromBodyOrToken(body.getCommon(), userRequest))
+            .assignedUser(privateUserRole.getUserEmail())
             .accessScope(AccessScopeType.fromApi(body.getCommon().getAccessScope()))
             .managedBy(ManagedByType.fromApi(body.getCommon().getManagedBy()))
             .networkName(body.getAzureNetwork().getName())
@@ -270,11 +277,9 @@ public class ControlledAzureResourceApiController implements ControlledAzureReso
             .region(body.getAzureNetwork().getRegion())
             .build();
 
-    List<ControlledResourceIamRole> privateRoles = privateRolesFromBody(body.getCommon());
-
     final ControlledAzureNetworkResource createdNetwork =
         controlledResourceService.createNetwork(
-            resource, body.getAzureNetwork(), privateRoles, userRequest);
+            resource, body.getAzureNetwork(), privateUserRole.getRole(), userRequest);
     var response =
         new ApiCreatedControlledAzureNetwork()
             .resourceId(createdNetwork.getResourceId())

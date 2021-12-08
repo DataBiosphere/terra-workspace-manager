@@ -104,13 +104,13 @@ public class ControlledResourceService {
   public ControlledAzureStorageResource createStorage(
       ControlledAzureStorageResource resource,
       ApiAzureStorageCreationParameters creationParameters,
-      List<ControlledResourceIamRole> privateResourceIamRoles,
+      ControlledResourceIamRole privateResourceIamRole,
       AuthenticatedUserRequest userRequest) {
 
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
                 resource,
-                privateResourceIamRoles,
+                privateResourceIamRole,
                 new ApiJobControl().id(UUID.randomUUID().toString()),
                 null,
                 userRequest)
@@ -121,13 +121,13 @@ public class ControlledResourceService {
   public ControlledAzureDiskResource createDisk(
       ControlledAzureDiskResource resource,
       ApiAzureDiskCreationParameters creationParameters,
-      List<ControlledResourceIamRole> privateResourceIamRoles,
+      ControlledResourceIamRole privateResourceIamRole,
       AuthenticatedUserRequest userRequest) {
 
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
                 resource,
-                privateResourceIamRoles,
+                privateResourceIamRole,
                 new ApiJobControl().id(UUID.randomUUID().toString()),
                 null,
                 userRequest)
@@ -138,13 +138,13 @@ public class ControlledResourceService {
   public ControlledAzureNetworkResource createNetwork(
       ControlledAzureNetworkResource resource,
       ApiAzureNetworkCreationParameters creationParameters,
-      List<ControlledResourceIamRole> privateResourceIamRoles,
+      ControlledResourceIamRole privateResourceIamRole,
       AuthenticatedUserRequest userRequest) {
 
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
                 resource,
-                privateResourceIamRoles,
+                privateResourceIamRole,
                 new ApiJobControl().id(UUID.randomUUID().toString()),
                 null,
                 userRequest)
@@ -155,14 +155,14 @@ public class ControlledResourceService {
   public String createVm(
       ControlledAzureVmResource resource,
       ApiAzureVmCreationParameters creationParameters,
-      List<ControlledResourceIamRole> privateResourceIamRoles,
+      ControlledResourceIamRole privateResourceIamRole,
       ApiJobControl jobControl,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
 
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
-                resource, privateResourceIamRoles, jobControl, resultPath, userRequest)
+                resource, privateResourceIamRole, jobControl, resultPath, userRequest)
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     return jobBuilder.submit();
   }

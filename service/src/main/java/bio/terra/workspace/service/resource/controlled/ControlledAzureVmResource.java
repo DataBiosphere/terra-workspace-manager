@@ -33,6 +33,7 @@ public class ControlledAzureVmResource extends ControlledResource {
       @JsonProperty("assignedUser") String assignedUser,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
+      @JsonProperty("applicationId") UUID applicationId,
       @JsonProperty("vmName") String vmName,
       @JsonProperty("region") String region,
       @JsonProperty("vmSize") String vmSize,
@@ -49,7 +50,8 @@ public class ControlledAzureVmResource extends ControlledResource {
         cloningInstructions,
         assignedUser,
         accessScope,
-        managedBy);
+        managedBy,
+        applicationId);
     this.vmName = vmName;
     this.region = region;
     this.vmSize = vmSize;
@@ -204,6 +206,7 @@ public class ControlledAzureVmResource extends ControlledResource {
     private String assignedUser;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
+    private UUID applicationId;
     private String vmName;
     private String region;
     private String vmSize;
@@ -288,6 +291,11 @@ public class ControlledAzureVmResource extends ControlledResource {
       return this;
     }
 
+    public ControlledAzureVmResource.Builder applicationId(UUID applicationId) {
+      this.applicationId = applicationId;
+      return this;
+    }
+
     public ControlledAzureVmResource build() {
       return new ControlledAzureVmResource(
           workspaceId,
@@ -298,6 +306,7 @@ public class ControlledAzureVmResource extends ControlledResource {
           assignedUser,
           accessScope,
           managedBy,
+          applicationId,
           vmName,
           region,
           vmSize,
