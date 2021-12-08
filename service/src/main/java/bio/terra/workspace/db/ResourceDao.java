@@ -435,40 +435,6 @@ public class ResourceDao {
   }
 
   /**
-   * This is an open ended method for constructing the SQL update statement. To use it, build the
-   * parameter list making the param name equal to the column name you want to update. The method
-   * generates the column_name = :column_name list. It is an error if the params map is empty.
-   *
-   * @param columnParams sql parameters
-   * @param workspaceId workspace identifier - not strictly necessarily, but an extra validation
-   * @param resourceId resource identifier
-   */
-  private boolean updateResourceColumns(
-      UUID workspaceId, UUID resourceId, MapSqlParameterSource columnParams) {
-    StringBuilder sb = new StringBuilder("UPDATE resource SET ");
-
-    sb.append(DbUtils.setColumnsClause(columnParams, "attributes"));
-    sb.append(" WHERE workspace_id = :workspace_id AND resource_id = :resource_id");
-
-    MapSqlParameterSource queryParams = new MapSqlParameterSource();
-    queryParams
-        .addValues(columnParams.getValues())
-        .addValue("workspace_id", workspaceId.toString())
-        .addValue("resource_id", resourceId.toString());
-
-    int rowsAffected = jdbcTemplate.update(sb.toString(), queryParams);
-    boolean updated = rowsAffected > 0;
-
-    logger.info(
-        "{} record for resource {} in workspace {}",
-        (updated ? "Updated" : "No Update - did not find"),
-        resourceId,
-        workspaceId);
-
-    return updated;
-  }
-
-  /**
    * Create a controlled resource in the database
    *
    * @param controlledResource controlled resource to create
