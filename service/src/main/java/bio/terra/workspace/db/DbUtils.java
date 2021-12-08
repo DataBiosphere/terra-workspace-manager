@@ -24,20 +24,16 @@ public class DbUtils {
       throw new MissingRequiredFieldException("Must specify some data to be updated.");
     }
     Set<String> jsonColumnSet = new HashSet(Arrays.asList(jsonColumns));
-    for (String jsonColumn : jsonColumns) {
-      sb.append(jsonColumn).append(" = cast(:").append(jsonColumn).append(" AS jsonb)");
-    }
     for (int i = 0; i < parameterNames.length; i++) {
       String columnName = parameterNames[i];
-      // If the param needs to be cast as jsonb, it has already been appended to sb so we can
-      // skip here.
-      if (jsonColumnSet.contains(columnName)) {
-        continue;
-      }
       if (i > 0) {
         sb.append(", ");
       }
-      sb.append(columnName).append(" = :").append(columnName);
+      if (jsonColumnSet.contains(columnName)) {
+        sb.append(columnName).append(" = cast(:").append(columnName).append(" AS jsonb)");
+      } else {
+        sb.append(columnName).append(" = :").append(columnName);
+      }
     }
 
     return sb.toString();

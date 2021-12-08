@@ -363,16 +363,7 @@ public class ResourceDao {
     storeResource(resource);
   }
 
-  /**
-   * Update name, description, and/or attributes of the resource.
-   *
-   * @param name name of the resource, may be null if it does not need to be updated
-   * @param description description of the resource, may be null if it does not need to be updated
-   * @param attributes resource-type specific attributes, may be null if it does not need to be
-   *     updated .
-   */
-  @WriteTransaction
-  public boolean updateResource(
+  private boolean updateResourceWorker(
       UUID workspaceId,
       UUID resourceId,
       @Nullable String name,
@@ -404,13 +395,11 @@ public class ResourceDao {
 
     sb.append(" WHERE workspace_id = :workspace_id AND resource_id = :resource_id");
 
-    MapSqlParameterSource queryParams = new MapSqlParameterSource();
-    queryParams
-        .addValues(params.getValues())
+    params
         .addValue("workspace_id", workspaceId.toString())
         .addValue("resource_id", resourceId.toString());
 
-    int rowsAffected = jdbcTemplate.update(sb.toString(), queryParams);
+    int rowsAffected = jdbcTemplate.update(sb.toString(), params);
     boolean updated = rowsAffected > 0;
 
     logger.info(
@@ -423,6 +412,24 @@ public class ResourceDao {
   }
 
   /**
+   * Update name, description, and/or attributes of the resource.
+   *
+   * @param name name of the resource, may be null if it does not need to be updated
+   * @param description description of the resource, may be null if it does not need to be updated
+   * @param attributes resource-type specific attributes, may be null if it does not need to be
+   *     updated .
+   */
+  @WriteTransaction
+  public boolean updateResource(
+      UUID workspaceId,
+      UUID resourceId,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable String attributes) {
+    return updateResourceWorker(workspaceId, resourceId, name, description, attributes);
+  }
+
+  /**
    * Update name and/or description of the resource.
    *
    * @param name name of the resource, may be null if it does not need to be updated
@@ -431,7 +438,7 @@ public class ResourceDao {
   @WriteTransaction
   public boolean updateResource(
       UUID workspaceId, UUID resourceId, @Nullable String name, @Nullable String description) {
-    return updateResource(workspaceId, resourceId, name, description, null);
+    return updateResourceWorker(workspaceId, resourceId, name, description, /*attributes=*/ null);
   }
 
   /**
