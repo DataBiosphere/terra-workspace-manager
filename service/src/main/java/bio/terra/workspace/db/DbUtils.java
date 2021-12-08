@@ -20,7 +20,7 @@ public class DbUtils {
   public static String setColumnsClause(MapSqlParameterSource columnParams, String... jsonColumns) {
     StringBuilder sb = new StringBuilder();
     String[] parameterNames = columnParams.getParameterNames();
-    if (parameterNames.length == 0 && jsonColumns.length == 0) {
+    if (parameterNames.length == 0) {
       throw new MissingRequiredFieldException("Must specify some data to be updated.");
     }
     Set<String> jsonColumnSet = new HashSet(Arrays.asList(jsonColumns));

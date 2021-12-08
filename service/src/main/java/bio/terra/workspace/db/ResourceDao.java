@@ -387,11 +387,7 @@ public class ResourceDao {
 
     StringBuilder sb = new StringBuilder("UPDATE resource SET ");
 
-    if (params.hasValue("attributes")) {
-      sb.append(DbUtils.setColumnsClause(params, "attributes"));
-    } else {
-      sb.append(DbUtils.setColumnsClause(params));
-    }
+    sb.append(DbUtils.setColumnsClause(params, "attributes"));
 
     sb.append(" WHERE workspace_id = :workspace_id AND resource_id = :resource_id");
 
