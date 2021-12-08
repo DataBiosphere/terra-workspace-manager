@@ -112,7 +112,7 @@ public class UpdateReferenceResources extends DataRepoTestScriptBase {
     super.setParameters(parameters);
     if (parameters == null || parameters.size() < 4) {
       throw new IllegalArgumentException(
-          "Must provide Spend Profile ID, 2 Data Repo snapshot IDs, and 2 Data Repo Instance Names in the parameters list");
+          "Must provide Spend Profile ID, 2 Data Repo snapshot IDs, and 1 Data Repo Instance Names in the parameters list");
     } else {
       // "spendProfileId = parameters.get(0);" fetches Spend Profile ID and is already implemented
       // in the super class.

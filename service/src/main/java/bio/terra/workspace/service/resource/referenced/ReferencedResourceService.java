@@ -82,8 +82,7 @@ public class ReferencedResourceService {
   }
 
   /**
-   * At this moment, the only updates on references we are doing are to name and description so this
-   * is a common implementation. If we get more complicated, we can break it out.
+   * Updates name and/or description of the reference resource.
    *
    * @param workspaceId workspace of interest
    * @param resourceId resource to update
@@ -100,6 +99,15 @@ public class ReferencedResourceService {
         workspaceId, resourceId, name, description, /*referencedResource=*/ null, userRequest);
   }
 
+  /**
+   * Updates name, description and/or referencing traget of the reference resource.
+   * @param workspaceId workspace of interest
+   * @param resourceId resource to update
+   * @param name name to change - may be null
+   * @param description description to change - may be null
+   * @param resource referencedResource to be updated to - may be null if not intending to update
+   * referencing target.
+   */
   public void updateReferenceResource(
       UUID workspaceId,
       UUID resourceId,
