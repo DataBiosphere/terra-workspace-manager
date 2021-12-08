@@ -15,8 +15,7 @@ public class DbUtils {
    * empty.
    *
    * @param columnParams map of sql parameters.
-   * @param jsonColumns param columns that needs to be cast as jsonb. If a param exists in both
-   *     columnParams and jsonColumns, the jsonColumns takes precedence and it will be cast.
+   * @param jsonColumns param columns that needs to be cast as jsonb.
    */
   public static String setColumnsClause(MapSqlParameterSource columnParams, String... jsonColumns) {
     StringBuilder sb = new StringBuilder();
@@ -30,6 +29,8 @@ public class DbUtils {
     }
     for (int i = 0; i < parameterNames.length; i++) {
       String columnName = parameterNames[i];
+      // If the param needs to be cast as jsonb, it has already been appended to sb so we can
+      // skip here.
       if (jsonColumnSet.contains(columnName)) {
         continue;
       }
