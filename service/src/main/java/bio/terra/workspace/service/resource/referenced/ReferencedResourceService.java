@@ -101,12 +101,13 @@ public class ReferencedResourceService {
 
   /**
    * Updates name, description and/or referencing traget of the reference resource.
+   *
    * @param workspaceId workspace of interest
    * @param resourceId resource to update
    * @param name name to change - may be null
    * @param description description to change - may be null
    * @param resource referencedResource to be updated to - may be null if not intending to update
-   * referencing target.
+   *     referencing target.
    */
   public void updateReferenceResource(
       UUID workspaceId,
