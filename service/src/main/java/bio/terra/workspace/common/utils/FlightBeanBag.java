@@ -1,7 +1,7 @@
 package bio.terra.workspace.common.utils;
 
-import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.buffer.BufferService;

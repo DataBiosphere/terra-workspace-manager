@@ -30,6 +30,7 @@ public class ControlledAzureNetworkResource extends ControlledResource {
       @JsonProperty("assignedUser") String assignedUser,
       @JsonProperty("accessScope") AccessScopeType accessScope,
       @JsonProperty("managedBy") ManagedByType managedBy,
+      @JsonProperty("applicationId") UUID applicationId,
       @JsonProperty("networkName") String networkName,
       @JsonProperty("subnetName") String subnetName,
       @JsonProperty("addressSpaceCidr") String addressSpaceCidr,
@@ -44,7 +45,8 @@ public class ControlledAzureNetworkResource extends ControlledResource {
         cloningInstructions,
         assignedUser,
         accessScope,
-        managedBy);
+        managedBy,
+        applicationId);
     this.networkName = networkName;
     this.subnetName = subnetName;
     this.addressSpaceCidr = addressSpaceCidr;
@@ -180,6 +182,7 @@ public class ControlledAzureNetworkResource extends ControlledResource {
     private String assignedUser;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
+    private UUID applicationId;
     private String networkName;
     private String subnetName;
     private String addressSpaceCidr;
@@ -252,6 +255,11 @@ public class ControlledAzureNetworkResource extends ControlledResource {
       return this;
     }
 
+    public ControlledAzureNetworkResource.Builder applicationId(UUID applicationId) {
+      this.applicationId = applicationId;
+      return this;
+    }
+
     public ControlledAzureNetworkResource build() {
       return new ControlledAzureNetworkResource(
           workspaceId,
@@ -262,6 +270,7 @@ public class ControlledAzureNetworkResource extends ControlledResource {
           assignedUser,
           accessScope,
           managedBy,
+          applicationId,
           networkName,
           subnetName,
           addressSpaceCidr,

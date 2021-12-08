@@ -207,6 +207,7 @@ public class ControlledResourceFixtures {
         // TODO: these should be changed when we group the resources
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_USER,
+        null,
         ipName,
         region);
   }
@@ -222,6 +223,7 @@ public class ControlledResourceFixtures {
         // TODO: these should be changed when we group the resources
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_USER,
+        null,
         diskName,
         region,
         size);
@@ -239,6 +241,7 @@ public class ControlledResourceFixtures {
         // TODO: these should be changed when we group the resources
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_USER,
+        null,
         creationParameters.getName(),
         creationParameters.getSubnetName(),
         creationParameters.getAddressSpaceCidr(),
@@ -258,6 +261,7 @@ public class ControlledResourceFixtures {
         // TODO: these should be changed when we group the resources
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_USER,
+        null,
         storageAccountName,
         region);
   }
@@ -274,6 +278,7 @@ public class ControlledResourceFixtures {
         // TODO: these should be changed when we group the resources
         AccessScopeType.ACCESS_SCOPE_PRIVATE,
         ManagedByType.MANAGED_BY_USER,
+        null,
         creationParameters.getName(),
         creationParameters.getRegion(),
         creationParameters.getVmSize(),
