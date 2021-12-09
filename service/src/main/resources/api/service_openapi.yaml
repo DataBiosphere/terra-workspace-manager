@@ -836,15 +836,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateGcsBucketReferenceRequestBody'
-        responses:
-          '204':
-            description: OK
-          '403':
-            $ref: '#/components/responses/PermissionDenied'
-          '404':
-            $ref: '#/components/responses/NotFound'
-          '500':
-            $ref: '#/components/responses/ServerError'
+      responses:
+        '204':
+          description: OK
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
     delete:
       summary: Delete Gcp bucket reference
       operationId: deleteBucketReference
