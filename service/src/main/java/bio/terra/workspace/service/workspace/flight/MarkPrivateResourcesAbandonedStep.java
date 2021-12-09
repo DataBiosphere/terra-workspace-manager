@@ -15,6 +15,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Step for marking all of user's private resources in a workspace as ABANDONED. This doesn't change
+ * any permissions (that happens in the previous {@code RemovePrivateResourceAccessStep}), but makes
+ * it clear to WSM and other workspace users that no users have access to this resource.
+ */
 public class MarkPrivateResourcesAbandonedStep implements Step {
 
   private final ResourceDao resourceDao;

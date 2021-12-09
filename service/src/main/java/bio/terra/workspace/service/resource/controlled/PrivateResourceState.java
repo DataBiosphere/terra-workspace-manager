@@ -1,16 +1,23 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.common.exception.SerializationException;
-import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.generated.model.ApiPrivateResourceState;
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * State tracking for private resources. Private resources are assigned to individual users, and we
+ * revoke resource access when users leave a workspace.
+ */
 public enum PrivateResourceState {
+  // ABANDONED state represents a resource which no users have access to.
   ABANDONED("ABANDONED", ApiPrivateResourceState.ABANDONED),
+  // ACTIVE state represents a resource which a single user has access to
   ACTIVE("ACTIVE", ApiPrivateResourceState.ACTIVE),
+  // INITIALIZING state represents a resource which is being created.
   INITIALIZING("INITIALIZING", ApiPrivateResourceState.INITIALIZING),
-  LEGACY("LEGACY", ApiPrivateResourceState.LEGACY);
+  // NOT_APPLICABLE state represents shared resources, or private resources created in legacy
+  // workspaces where WSM is not able to determine workspace membership.
+  NOT_APPLICABLE("NOT_APPLICABLE", ApiPrivateResourceState.NOT_APPLICABLE);
 
   private final String dbString;
   private final ApiPrivateResourceState apiState;
@@ -22,25 +29,6 @@ public enum PrivateResourceState {
 
   public ApiPrivateResourceState toApiModel() {
     return apiState;
-  }
-
-  public static PrivateResourceState fromApi(ApiPrivateResourceState apiState) {
-    if (apiState == null) {
-      throw new MissingRequiredFieldException("Valid ApiPrivateResourceState is required");
-    }
-
-    switch (apiState) {
-      case ABANDONED:
-        return PrivateResourceState.ABANDONED;
-      case ACTIVE:
-        return PrivateResourceState.ACTIVE;
-      case INITIALIZING:
-        return PrivateResourceState.INITIALIZING;
-      case LEGACY:
-        return PrivateResourceState.LEGACY;
-      default:
-        throw new InternalLogicException("Unknown ApiPrivateResourceState");
-    }
   }
 
   public String toSql() {

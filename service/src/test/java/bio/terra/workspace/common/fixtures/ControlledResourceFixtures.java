@@ -203,7 +203,6 @@ public class ControlledResourceFixtures {
         .description("my notebook description")
         .cloningInstructions(CloningInstructions.COPY_NOTHING)
         .assignedUser("myusername@mydomain.mine")
-        .privateResourceState(PrivateResourceState.INITIALIZING)
         .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
         .managedBy(ManagedByType.MANAGED_BY_USER)
         .instanceId("my-instance-id")

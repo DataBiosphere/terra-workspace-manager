@@ -2339,7 +2339,7 @@ components:
       - ABANDONED
       - ACTIVE
       - INITIALIZING
-      - LEGACY
+      - NOT_APPLICABLE
 
     ReferenceResourceCommonFields:
       type: object

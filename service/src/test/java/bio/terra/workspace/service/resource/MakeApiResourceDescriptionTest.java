@@ -228,7 +228,6 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
               .description(description)
               .cloningInstructions(cloning)
               .assignedUser(assignedUser)
-              .privateResourceState(PrivateResourceState.INITIALIZING)
               .accessScope(accessScopeType)
               .managedBy(managedByType)
               .location("us-east1-b")

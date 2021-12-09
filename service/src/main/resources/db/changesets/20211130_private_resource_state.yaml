@@ -9,6 +9,6 @@ databaseChangeLog:
         - column:
             name: private_resource_state
             type: text
-            defaultValue: LEGACY
+            defaultValue: NOT_APPLICABLE
             remarks: |
-              From PrivateResourceState: ABANDONED, ACTIVE, INITIALIZING, LEGACY
+              From PrivateResourceState: ABANDONED, ACTIVE, INITIALIZING, NOT_APPLICABLE

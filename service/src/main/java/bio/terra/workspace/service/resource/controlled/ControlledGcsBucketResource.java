@@ -11,7 +11,9 @@ import bio.terra.workspace.service.resource.WsmResourceType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class ControlledGcsBucketResource extends ControlledResource {
   private final String bucketName;
@@ -133,7 +135,8 @@ public class ControlledGcsBucketResource extends ControlledResource {
     private String description;
     private CloningInstructions cloningInstructions;
     private String assignedUser;
-    private PrivateResourceState privateResourceState;
+    // Default value is NOT_APPLICABLE for shared resources and INITIALIZING for private resources.
+    @Nullable private PrivateResourceState privateResourceState;
     private AccessScopeType accessScope;
     private ManagedByType managedBy;
     private UUID applicationId;
@@ -180,6 +183,12 @@ public class ControlledGcsBucketResource extends ControlledResource {
       return this;
     }
 
+    private PrivateResourceState defaultPrivateResourceState() {
+      return this.accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE
+          ? PrivateResourceState.INITIALIZING
+          : PrivateResourceState.NOT_APPLICABLE;
+    }
+
     public Builder accessScope(AccessScopeType accessScope) {
       this.accessScope = accessScope;
       return this;
@@ -203,7 +212,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
           description,
           cloningInstructions,
           assignedUser,
-          privateResourceState,
+          Optional.ofNullable(privateResourceState).orElse(defaultPrivateResourceState()),
           accessScope,
           managedBy,
           applicationId,

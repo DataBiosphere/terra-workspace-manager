@@ -13,7 +13,7 @@ public class CronjobDaoTest extends BaseUnitTest {
   @Autowired CronjobDao cronjobDao;
 
   @Test
-  public void successfullyClaimJob() throws InterruptedException {
+  public void claimJob_claimAfterInterval_succeeds() throws InterruptedException {
     String jobName = "TEST_JOB";
     // Guarantee the job is claimed at the start of this test.
     assertTrue(cronjobDao.claimJob(jobName, Duration.ZERO));
@@ -23,7 +23,7 @@ public class CronjobDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void failedClaimsDoNotWrite() throws InterruptedException {
+  public void claimJob_claimBeforeInterval_fails() throws InterruptedException {
     String jobName = "TEST_JOB";
     // Guarantee the job is claimed at the start of this test.
     assertTrue(cronjobDao.claimJob(jobName, Duration.ZERO));
@@ -38,7 +38,7 @@ public class CronjobDaoTest extends BaseUnitTest {
   }
 
   @Test
-  public void jobNamesAreIndependent() throws InterruptedException {
+  public void claimJob_independentJobClaims_succeed() throws InterruptedException {
     String jobName = "TEST_JOB";
     String secondJobName = "SECOND_JOB";
     // Guarantee both jobs are claimed at the start of this test.

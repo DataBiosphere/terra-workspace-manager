@@ -473,7 +473,7 @@ public class ResourceDao {
   @WriteTransaction
   public void setPrivateResourceState(
       ControlledResource resource, PrivateResourceState privateResourceState) {
-    String sql =
+    final String sql =
         "UPDATE resource SET private_resource_state = :private_resource_state WHERE workspace_id = :workspace_id AND resource_id = :resource_id AND access_scope = :private_access_scope";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
@@ -488,7 +488,7 @@ public class ResourceDao {
   @WriteTransaction
   public void setPrivateResourcesStateForWorkspaceUser(
       UUID workspaceId, String userEmail, PrivateResourceState state) {
-    String sql =
+    final String sql =
         "UPDATE resource SET private_resource_state = :private_resource_state WHERE workspace_id = :workspace_id AND assigned_user = :user_email";
     MapSqlParameterSource params =
         new MapSqlParameterSource()

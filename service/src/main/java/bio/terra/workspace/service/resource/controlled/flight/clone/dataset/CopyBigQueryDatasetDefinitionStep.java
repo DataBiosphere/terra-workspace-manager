@@ -11,10 +11,8 @@ import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.resource.controlled.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -86,15 +84,10 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
             ControlledResourceKeys.LOCATION,
             ControlledResourceKeys.LOCATION,
             String.class);
-    PrivateResourceState privateResourceState =
-        sourceDataset.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE
-            ? PrivateResourceState.INITIALIZING
-            : null;
     final ControlledBigQueryDatasetResource destinationResource =
         ControlledBigQueryDatasetResource.builder()
             .accessScope(sourceDataset.getAccessScope())
             .assignedUser(sourceDataset.getAssignedUser().orElse(null))
-            .privateResourceState(privateResourceState)
             .cloningInstructions(sourceDataset.getCloningInstructions())
             .datasetName(datasetName)
             .description(description)

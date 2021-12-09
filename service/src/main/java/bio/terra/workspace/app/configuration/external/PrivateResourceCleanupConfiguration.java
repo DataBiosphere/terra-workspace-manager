@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.configuration.external;
 
+import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -12,10 +13,10 @@ public class PrivateResourceCleanupConfiguration {
   private boolean enabled;
 
   /** How frequently to run the private resource cleanup loop, in minutes */
-  private int pollingIntervalMinutes;
+  private Duration pollingInterval;
 
   /** Seconds to wait after startup to begin cleanup check polling */
-  private int startupWaitSeconds;
+  private Duration startupWait;
 
   public boolean isEnabled() {
     return enabled;
@@ -25,19 +26,19 @@ public class PrivateResourceCleanupConfiguration {
     this.enabled = enabled;
   }
 
-  public int getPollingIntervalMinutes() {
-    return pollingIntervalMinutes;
+  public Duration getPollingInterval() {
+    return pollingInterval;
   }
 
-  public void setPollingIntervalMinutes(int pollingIntervalMinutes) {
-    this.pollingIntervalMinutes = pollingIntervalMinutes;
+  public void setPollingInterval(Duration pollingInterval) {
+    this.pollingInterval = pollingInterval;
   }
 
-  public int getStartupWaitSeconds() {
-    return startupWaitSeconds;
+  public Duration getStartupWait() {
+    return startupWait;
   }
 
-  public void setStartupWaitSeconds(int startupWaitSeconds) {
-    this.startupWaitSeconds = startupWaitSeconds;
+  public void setStartupWait(Duration startupWait) {
+    this.startupWait = startupWait;
   }
 }

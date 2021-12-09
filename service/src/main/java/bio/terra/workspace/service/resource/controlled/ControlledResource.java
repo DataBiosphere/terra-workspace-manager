@@ -126,8 +126,10 @@ public abstract class ControlledResource extends WsmResource {
           "Application managed resource without an application id");
     }
 
-    if ((privateResourceState == null)
-        == (getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
+    // Shared resources must have NOT_APPLICABLE private resource state. Private resources can have
+    // any of the private resource states, including NOT_APPLICABLE.
+    if (getAccessScope() == AccessScopeType.ACCESS_SCOPE_SHARED &&
+        privateResourceState != PrivateResourceState.NOT_APPLICABLE) {
       throw new InconsistentFieldsException(
           "Private resource state must be non-null for private resources and null for all other types.");
     }

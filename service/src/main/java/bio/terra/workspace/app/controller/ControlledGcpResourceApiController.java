@@ -49,7 +49,6 @@ import bio.terra.workspace.service.resource.controlled.ControlledGcsBucketResour
 import bio.terra.workspace.service.resource.controlled.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.ManagedByType;
-import bio.terra.workspace.service.resource.controlled.PrivateResourceState;
 import bio.terra.workspace.service.resource.controlled.PrivateUserRole;
 import bio.terra.workspace.service.resource.controlled.exception.InvalidControlledResourceException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -105,10 +104,6 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
     ManagedByType managedBy = ManagedByType.fromApi(body.getCommon().getManagedBy());
     AccessScopeType accessScopeType = AccessScopeType.fromApi(body.getCommon().getAccessScope());
-    PrivateResourceState privateResourceState =
-        accessScopeType.equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-            ? PrivateResourceState.INITIALIZING
-            : null;
 
     ControlledGcsBucketResource resource =
         ControlledGcsBucketResource.builder()
@@ -119,7 +114,6 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
             .assignedUser(privateUserRole.getUserEmail())
-            .privateResourceState(privateResourceState)
             .accessScope(accessScopeType)
             .managedBy(managedBy)
             .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
@@ -340,10 +334,6 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
     ManagedByType managedBy = ManagedByType.fromApi(body.getCommon().getManagedBy());
     AccessScopeType accessScopeType = AccessScopeType.fromApi(body.getCommon().getAccessScope());
-    PrivateResourceState privateResourceState =
-        accessScopeType.equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-            ? PrivateResourceState.INITIALIZING
-            : null;
 
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
@@ -354,7 +344,6 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
             .assignedUser(privateUserRole.getUserEmail())
-            .privateResourceState(privateResourceState)
             .accessScope(accessScopeType)
             .managedBy(managedBy)
             .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))
@@ -395,10 +384,6 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
 
     ManagedByType managedBy = ManagedByType.fromApi(body.getCommon().getManagedBy());
     AccessScopeType accessScopeType = AccessScopeType.fromApi(body.getCommon().getAccessScope());
-    PrivateResourceState privateResourceState =
-        accessScopeType.equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-            ? PrivateResourceState.INITIALIZING
-            : null;
 
     ControlledAiNotebookInstanceResource resource =
         ControlledAiNotebookInstanceResource.builder()
@@ -409,7 +394,6 @@ public class ControlledGcpResourceApiController implements ControlledGcpResource
             .cloningInstructions(
                 CloningInstructions.fromApiModel(body.getCommon().getCloningInstructions()))
             .assignedUser(privateUserRole.getUserEmail())
-            .privateResourceState(privateResourceState)
             .accessScope(accessScopeType)
             .managedBy(managedBy)
             .applicationId(controlledResourceService.getAssociatedApp(managedBy, userRequest))

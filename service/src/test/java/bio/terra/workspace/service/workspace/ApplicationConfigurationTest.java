@@ -26,18 +26,22 @@ public class ApplicationConfigurationTest extends BaseTest {
 
   private static final UUID LEO_UUID = UUID.fromString("4BD1D59D-5827-4375-A41D-BBC65919F269");
   private static final UUID CARMEN_UUID = UUID.fromString("EB9D37F5-BAD7-4951-AE9A-86B3F03F4DD7");
+  private static final UUID TEST_WSM_APP_UUID =
+      UUID.fromString("E4C0924A-3D7D-4D3D-8DE4-3D2CF50C3818");
 
   @Test
   public void configurationTest() {
     // This test has to be in sync with the contents of application-configuration-test.yml
     List<WsmApplication> wsmApps = appDao.listApplications();
-    assertEquals(wsmApps.size(), 2);
+    assertEquals(wsmApps.size(), 3);
 
     for (WsmApplication wsmApp : wsmApps) {
       if (wsmApp.getApplicationId().equals(LEO_UUID)) {
         checkLeo(wsmApp);
       } else if (wsmApp.getApplicationId().equals(CARMEN_UUID)) {
         checkCarmen(wsmApp);
+      } else if (wsmApp.getApplicationId().equals(TEST_WSM_APP_UUID)) {
+        checkTestWsmApp(wsmApp);
       } else {
         fail();
       }
@@ -56,5 +60,12 @@ public class ApplicationConfigurationTest extends BaseTest {
     assertEquals(leoApp.getDescription(), "musical performance framework");
     assertEquals(leoApp.getServiceAccount(), "carmen@terra-dev.iam.gserviceaccount.com");
     assertEquals(leoApp.getState(), WsmApplicationState.DEPRECATED);
+  }
+
+  private void checkTestWsmApp(WsmApplication leoApp) {
+    assertEquals(leoApp.getDisplayName(), "TestWsmApp");
+    assertEquals(leoApp.getDescription(), "WSM test application");
+    assertEquals(leoApp.getServiceAccount(), "Elizabeth.Shadowmoon@test.firecloud.org");
+    assertEquals(leoApp.getState(), WsmApplicationState.OPERATING);
   }
 }

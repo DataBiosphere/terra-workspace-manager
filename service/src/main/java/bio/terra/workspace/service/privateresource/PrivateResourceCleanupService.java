@@ -63,23 +63,38 @@ public class PrivateResourceCleanupService {
   @PostConstruct
   public void startStatusChecking() {
     if (configuration.isEnabled()) {
+      // Per scheduleAtFixedRate documentation, if a single execution runs longer than the polling
+      // interval, subsequent executions may start late but will not concurrently execute.
       scheduler.scheduleAtFixedRate(
-          this::cleanupResources,
-          configuration.getStartupWaitSeconds(),
-          TimeUnit.SECONDS.convert(configuration.getPollingIntervalMinutes(), TimeUnit.MINUTES),
+          this::cleanupResourcesSuppressExceptions,
+          configuration.getStartupWait().toSeconds(),
+          configuration.getPollingInterval().toSeconds(),
           TimeUnit.SECONDS);
     }
   }
 
-  public void cleanupResources() {
+  /**
+   * Run {@code cleanupResources}, suppressing all thrown exceptions. This is helpful as {@code
+   * ScheduledExecutorService.scheduleAtFixedRate} will stop running if any execution throws an
+   * exception. Suppressing these exceptions ensures we do not stop cleaning up resources if a
+   * single run fails.
+   */
+  public void cleanupResourcesSuppressExceptions() {
+    try {
+      cleanupResources();
+    } catch (Exception e) {
+      logger.error("Error during privateResourceCleanup execution: ", e);
+    }
+  }
+
+  private void cleanupResources() {
     if (!configuration.isEnabled()) {
       return;
     }
     logger.info("Beginning resource cleanup cronjob");
     // Use a one-second shorter duration here to ensure we don't skip a run by moving slightly too
     // quickly.
-    Duration claimTime =
-        Duration.ofMinutes(configuration.getPollingIntervalMinutes()).minus(Duration.ofSeconds(1));
+    Duration claimTime = configuration.getPollingInterval().minus(Duration.ofSeconds(1));
     // Attempt to claim the latest run of this job to ensure only one pod runs the cleanup job.
     if (!cronjobDao.claimJob(PRIVATE_RESOURCE_CLEANUP_JOB_NAME, claimTime)) {
       logger.info("Another pod has executed this job more recently. Ending resource cleanup.");
@@ -109,12 +124,13 @@ public class PrivateResourceCleanupService {
         }
       } catch (SamForbiddenException forbiddenEx) {
         // Older workspaces do not have the "manager" role, so WSM cannot read permissions from
-        // them and will never be able to. Mark this as a LEGACY resource so we don't keep polling.
-        logger.warn("Found LEGACY workspace {}", workspaceUserPair.getWorkspaceId());
+        // them and will never be able to. Mark these resources as NOT_APPLICABLE so we don't keep
+        // polling.
+        logger.warn("Found legacy workspace {}", workspaceUserPair.getWorkspaceId());
         resourceDao.setPrivateResourcesStateForWorkspaceUser(
             workspaceUserPair.getWorkspaceId(),
             workspaceUserPair.getUserEmail(),
-            PrivateResourceState.LEGACY);
+            PrivateResourceState.NOT_APPLICABLE);
       }
     }
   }

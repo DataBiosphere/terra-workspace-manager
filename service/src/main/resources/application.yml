@@ -61,8 +61,8 @@ workspace:
 
   private-resource-cleanup:
     enabled: true
-    polling-interval-minutes: 15
-    startup-wait-seconds: 5
+    polling-interval: "15m"
+    startup-wait: "5s"
 
   sam.base-path: ${env.urls.sam}
 
